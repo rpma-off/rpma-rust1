@@ -6,7 +6,7 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::UserPreferences;
 use crate::domains::settings::ipc::settings::core::{
-    handle_settings_error, load_app_settings, update_app_settings,
+    handle_settings_error, load_app_settings, settings_user_id, update_app_settings,
 };
 
 use serde::Deserialize;
@@ -63,7 +63,7 @@ pub async fn update_general_settings(
 
     let correlation_id_clone = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     // Only admins can update system-wide settings
     if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) {
@@ -111,11 +111,11 @@ pub async fn update_user_preferences(
 
     let correlation_id_clone = request.correlation_id.clone();
     let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     let mut preferences: UserPreferences = state
         .settings_service
-        .get_user_settings(&user.id)
+        .get_user_settings(&settings_user_id(&user))
         .map_err(|e| handle_settings_error(e, "Load user preferences"))?
         .preferences;
 
@@ -170,7 +170,7 @@ pub async fn update_user_preferences(
 
     state
         .settings_service
-        .update_user_preferences(&user.id, &preferences)
+        .update_user_preferences(&settings_user_id(&user), &preferences)
         .map(|_| {
             ApiResponse::success("User preferences updated successfully".to_string())
                 .with_correlation_id(correlation_id_clone.clone())
@@ -192,14 +192,16 @@ pub async fn update_user_performance(
     info!("Updating user performance settings");
 
     let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&user.user_id);
+    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
-        .update_user_performance(&user.id, &request)
+        .update_user_performance(&settings_user_id(&user), &request)
         .map(|_| {
             ApiResponse::success("Performance settings updated successfully".to_string())
                 .with_correlation_id(correlation_id.clone())
         })
         .map_err(|e| handle_settings_error(e, "Update user performance"))
 }
+
+
