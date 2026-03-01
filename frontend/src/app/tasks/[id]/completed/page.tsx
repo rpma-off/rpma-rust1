@@ -23,8 +23,9 @@ import {
 import { toast } from 'sonner';
 import { reportsService } from '@/domains/reports';
 import { getUserFullName } from '@/shared/utils';
-import { useInterventionData, useWorkflowStepData, PPF_STEP_CONFIG } from '@/domains/interventions';
+import { useInterventionData, useWorkflowStepData, PPF_STEP_CONFIG, getPPFStepPath } from '@/domains/interventions';
 import type { Intervention } from '@/shared/types';
+import type { StepType } from '@/lib/backend';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/shared/hooks';
 import {
@@ -69,6 +70,13 @@ export default function TaskCompletedPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string>('');
   const [lastExportTime, setLastExportTime] = useState<Date | null>(null);
+  const workflowStepsArray = Object.entries(workflowSteps).map(([stepId, stepData]) => ({
+    id: stepId,
+    title: PPF_STEP_CONFIG[stepId as keyof typeof PPF_STEP_CONFIG]?.label || stepId,
+    status: stepData?.step_status || 'pending',
+    completed_at: stepData?.completed_at,
+    collected_data: stepData?.collected_data,
+  }));
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -322,6 +330,66 @@ export default function TaskCompletedPage() {
     });
   };
 
+  const downloadJsonFile = (data: unknown, fileName: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadDataJson = () => {
+    if (!fullInterventionData) {
+      toast.error(t('errors.interventionDataUnavailable'));
+      return;
+    }
+
+    const nowDate = new Date().toISOString().split('T')[0];
+    const payload = {
+      exported_at: new Date().toISOString(),
+      task_id: taskId,
+      intervention: fullInterventionData,
+      steps: workflowStepsArray,
+    };
+    const fileName = `intervention-${fullInterventionData.id}-workflow-data-${nowDate}.json`;
+    downloadJsonFile(payload, fileName);
+    toast.success('Donnees JSON telechargees');
+  };
+
+  const handleEditStep = (stepId: string) => {
+    const stepType = stepId as StepType;
+    router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(stepType)}`);
+  };
+
+  const handleDownloadStepData = (stepId: string) => {
+    if (!fullInterventionData) {
+      toast.error(t('errors.interventionDataUnavailable'));
+      return;
+    }
+
+    const stepData = workflowStepsArray.find((step) => step.id === stepId);
+    if (!stepData) {
+      toast.error("Etape introuvable");
+      return;
+    }
+
+    const nowDate = new Date().toISOString().split('T')[0];
+    const fileName = `intervention-${fullInterventionData.id}-step-${stepId}-${nowDate}.json`;
+    downloadJsonFile(
+      {
+        exported_at: new Date().toISOString(),
+        task_id: taskId,
+        intervention_id: fullInterventionData.id,
+        step: stepData,
+      },
+      fileName
+    );
+  };
+
   if (loading) {
     return (
       <PageShell>
@@ -373,18 +441,11 @@ export default function TaskCompletedPage() {
   const checklistTotal = task.checklist_items?.length || 0;
   const progressPercentage = interventionData?.progress_percentage || 100;
 
-  const workflowStepsArray = Object.entries(workflowSteps).map(([stepId, stepData]) => ({
-    id: stepId,
-    title: PPF_STEP_CONFIG[stepId as keyof typeof PPF_STEP_CONFIG]?.label || stepId,
-    status: stepData?.step_status || 'pending',
-    completed_at: stepData?.completed_at,
-    collected_data: stepData?.collected_data,
-  }));
-
   return (
     <div className="min-h-screen bg-gray-50">
       <CompletedActionBar
         onSaveReport={handleSaveReport}
+        onDownloadDataJson={handleDownloadDataJson}
         onShareTask={handleShareTask}
         onPrintReport={handlePrintReport}
         onBackToTask={() => router.push(`/tasks/${taskId}`)}
@@ -433,6 +494,8 @@ export default function TaskCompletedPage() {
                   steps={workflowStepsArray}
                   expandedSteps={expandedWorkflowSteps}
                   onToggleStep={toggleWorkflowStep}
+                  onEditStep={handleEditStep}
+                  onDownloadStep={handleDownloadStepData}
                 />
               </CardContent>
             </Card>

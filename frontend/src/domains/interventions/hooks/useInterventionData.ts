@@ -46,11 +46,18 @@ export function useInterventionData(taskId: string) {
         let intervention = null;
 
         // Check if we got an active intervention
-        if (activeResult && typeof activeResult === 'object' && 'type' in activeResult) {
-          const typedResult = activeResult as { type: string; intervention?: Record<string, unknown> };
-
-          if ((typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') && typedResult.intervention) {
-            intervention = typedResult.intervention;
+        if (activeResult && typeof activeResult === 'object') {
+          const directResult = activeResult as { intervention?: Record<string, unknown> };
+          if (directResult.intervention) {
+            intervention = directResult.intervention;
+          } else if ('type' in activeResult) {
+            const typedResult = activeResult as { type: string; intervention?: Record<string, unknown> };
+            if (
+              (typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') &&
+              typedResult.intervention
+            ) {
+              intervention = typedResult.intervention;
+            }
           }
         }
 

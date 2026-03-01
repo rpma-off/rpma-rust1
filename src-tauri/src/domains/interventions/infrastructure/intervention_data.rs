@@ -185,6 +185,7 @@ impl InterventionDataService {
         request: &AdvanceStepRequest,
     ) -> InterventionResult<()> {
         step.collected_data = Some(request.collected_data.clone());
+        step.step_data = step.collected_data.clone();
         step.notes = request.notes.clone();
 
         if let Some(photos) = &request.photos {
@@ -209,6 +210,7 @@ impl InterventionDataService {
                 }
                 step.collected_data =
                     Some(serde_json::to_value(obj).unwrap_or(request.collected_data.clone()));
+                step.step_data = step.collected_data.clone();
             }
         }
 
@@ -590,5 +592,44 @@ impl InterventionDataService {
             ("Installation".to_string(), StepType::Installation),
             ("Finalisation".to_string(), StepType::Finalization),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domains::interventions::domain::models::step::InterventionStep;
+    use crate::domains::interventions::infrastructure::intervention_types::AdvanceStepRequest;
+    use crate::test_utils::TestDatabase;
+
+    #[test]
+    fn update_step_with_data_mirrors_collected_data_to_step_data() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionDataService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        let request = AdvanceStepRequest {
+            intervention_id: "intervention-1".to_string(),
+            step_id: step.id.clone(),
+            collected_data: serde_json::json!({
+                "checklist": { "clean_dry": true },
+                "notes": "ok"
+            }),
+            photos: None,
+            notes: Some("draft note".to_string()),
+            quality_check_passed: true,
+            issues: None,
+        };
+
+        service
+            .update_step_with_data(&mut step, &request)
+            .expect("Failed to update step");
+
+        assert_eq!(step.collected_data, step.step_data);
+        assert_eq!(step.notes, Some("draft note".to_string()));
     }
 }

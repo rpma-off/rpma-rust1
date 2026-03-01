@@ -1,7 +1,25 @@
 import React from 'react';
-import { CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, ChevronDown, ChevronUp, Pencil, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PPF_STEP_CONFIG } from '@/domains/interventions';
+
+const STEP_META: Record<string, { label: string; description: string }> = {
+  inspection: {
+    label: 'Inspection',
+    description: 'Etat du vehicule, defauts pre-existants, photos, conditions (temp/hum)',
+  },
+  preparation: {
+    label: 'Preparation',
+    description: 'Degraissage surface, decoupe du film, verification materiaux',
+  },
+  installation: {
+    label: 'Installation',
+    description: 'Pose du film PPF zone par zone avec controle qualite continu',
+  },
+  finalization: {
+    label: 'Finalisation',
+    description: 'Inspection finale, photos, notes et validation client',
+  },
+};
 
 type WorkflowStepStatus = 'completed' | 'in_progress' | 'pending';
 
@@ -17,20 +35,34 @@ type WorkflowCompletionTimelineProps = {
   steps: WorkflowStep[];
   expandedSteps: Set<string>;
   onToggleStep: (stepId: string) => void;
+  onEditStep?: (stepId: string) => void;
+  onDownloadStep?: (stepId: string) => void;
+};
+
+const prettyKey = (key: string): string =>
+  key
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const countChecked = (record: Record<string, boolean> | null | undefined) => {
+  if (!record) return { checked: 0, total: 0 };
+  const entries = Object.entries(record);
+  return {
+    checked: entries.filter(([, value]) => Boolean(value)).length,
+    total: entries.length,
+  };
 };
 
 export function WorkflowCompletionTimeline({
   steps,
   expandedSteps,
   onToggleStep,
+  onEditStep,
+  onDownloadStep,
 }: WorkflowCompletionTimelineProps) {
-  const getStepIcon = (stepId: string) => {
-    const config = PPF_STEP_CONFIG[stepId as keyof typeof PPF_STEP_CONFIG];
-    return config?.icon || CheckCircle;
-  };
-
   const formatCompletionTime = (dateString: string | null | undefined) => {
-    if (!dateString) return '—';
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleString('fr-FR', {
       day: 'numeric',
       month: 'short',
@@ -42,9 +74,9 @@ export function WorkflowCompletionTimeline({
   return (
     <div className="space-y-3">
       {steps.map((step, index) => {
-        const Icon = getStepIcon(step.id);
         const isExpanded = expandedSteps.has(step.id);
         const isCompleted = step.status === 'completed';
+        const hasDetails = Boolean(step.collected_data && Object.keys(step.collected_data).length > 0);
 
         return (
           <div
@@ -74,31 +106,28 @@ export function WorkflowCompletionTimeline({
                 )}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
                       <span className="text-sm font-extrabold text-gray-900">
-                        {PPF_STEP_CONFIG[step.id as keyof typeof PPF_STEP_CONFIG]?.label ||
-                          step.title}
+                        {STEP_META[step.id]?.label || step.title}
                       </span>
                       <span
                         className={cn(
                           'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
-                          isCompleted
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-600'
+                          isCompleted ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
                         )}
                       >
                         {isCompleted ? 'Terminé' : 'En cours'}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">
-                      {PPF_STEP_CONFIG[step.id as keyof typeof PPF_STEP_CONFIG]?.description}
+                      {STEP_META[step.id]?.description}
                     </p>
                   </div>
 
-                  {step.collected_data && (
+                  {hasDetails && (
                     <div className="flex-shrink-0">
                       {isExpanded ? (
                         <ChevronUp className="h-4 w-4 text-gray-400" />
@@ -118,8 +147,31 @@ export function WorkflowCompletionTimeline({
               </div>
             </button>
 
-            {isExpanded && step.collected_data && (
-              <div className="mt-4 pl-14 border-t border-gray-100 pt-4">
+            <div className="mt-3 flex flex-wrap items-center gap-2 pl-14">
+              {onEditStep && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                  onClick={() => onEditStep(step.id)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Modifier l&apos;etape
+                </button>
+              )}
+              {onDownloadStep && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-50"
+                  onClick={() => onDownloadStep(step.id)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Télécharger données
+                </button>
+              )}
+            </div>
+
+            {isExpanded && hasDetails && (
+              <div className="mt-4 border-t border-gray-100 pt-4 pl-14">
                 <WorkflowStepDetails step={step} />
               </div>
             )}
@@ -132,205 +184,168 @@ export function WorkflowCompletionTimeline({
 
 function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
   const data = step.collected_data as Record<string, unknown> | null;
-
   if (!data) return null;
 
-  const getStepType = (stepId: string): 'preparation' | 'installation' | 'finalization' | 'inspection' | 'other' => {
-    if (stepId.includes('preparation')) return 'preparation';
-    if (stepId.includes('installation')) return 'installation';
-    if (stepId.includes('finalization')) return 'finalization';
-    if (stepId.includes('inspection')) return 'inspection';
-    return 'other';
-  };
+  const rawJson = JSON.stringify(data, null, 2);
 
-  const stepType = getStepType(step.id);
-
-  const renderPreparationDetails = () => {
-    const environment = data.environment as Record<string, unknown> | null;
-    const checklist = data.checklist as Record<string, boolean> | null;
+  const renderInspection = () => {
+    const checklist = (data.checklist as Record<string, boolean> | undefined) ?? undefined;
+    const defects = (data.defects as Array<Record<string, unknown>> | undefined) ?? [];
+    const environment = (data.environment as Record<string, unknown> | undefined) ?? undefined;
+    const notes = typeof data.notes === 'string' ? data.notes : null;
+    const checklistCounts = countChecked(checklist);
 
     return (
       <div className="space-y-3">
+        {checklist && checklistCounts.total > 0 && (
+          <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
+            Checklist: {checklistCounts.checked}/{checklistCounts.total}
+          </div>
+        )}
+        {Array.isArray(defects) && defects.length > 0 && (
+          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Défauts: {defects.length}</div>
+        )}
         {environment && (
           <div className="grid grid-cols-2 gap-2">
             {environment.temp_celsius != null && (
-              <div className="flex items-center gap-2 p-2 bg-red-50 rounded-lg">
-                <span className="text-2xl">🌡️</span>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-red-600">Température</div>
-                  <div className="text-sm font-bold text-red-700">
-                    {String(Number(environment.temp_celsius))}°C
-                  </div>
-                </div>
+              <div className="rounded-lg bg-red-50 p-2 text-xs text-red-700">
+                Température: {String(environment.temp_celsius)}°C
               </div>
             )}
             {environment.humidity_percent != null && (
-              <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-                <span className="text-2xl">💧</span>
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-blue-600">Humidité</div>
-                  <div className="text-sm font-bold text-blue-700">
-                    {String(Number(environment.humidity_percent))}%
-                  </div>
-                </div>
+              <div className="rounded-lg bg-blue-50 p-2 text-xs text-blue-700">
+                Humidité: {String(environment.humidity_percent)}%
               </div>
             )}
           </div>
         )}
+        {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
+      </div>
+    );
+  };
 
-        {checklist && (
-          <div>
-            <div className="text-xs font-semibold text-gray-700 mb-2">Étapes de préparation</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              {Object.entries(checklist).map(([key, completed]) => (
-                <div
-                  key={key}
-                  className={cn(
-                    'flex items-center gap-2 p-2 rounded-lg text-sm',
-                    completed ? 'bg-emerald-50' : 'bg-gray-50'
-                  )}
-                >
-                  <span className={completed ? 'text-emerald-600' : 'text-gray-400'}>
-                    {completed ? '✓' : '○'}
-                  </span>
-                  <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
-                    {key === 'wash' ? 'Lavage' :
-                     key === 'clay_bar' ? 'Clay Bar' :
-                     key === 'degrease' ? 'Dégraissage' :
-                     key === 'masking' ? 'Masquage' : String(key)}
-                  </span>
-                </div>
-              ))}
-            </div>
-           </div>
-         )}
+  const renderPreparation = () => {
+    const surfaceChecklist = (data.surfaceChecklist as Record<string, boolean> | undefined) ?? undefined;
+    const cutChecklist = (data.cutChecklist as Record<string, boolean> | undefined) ?? undefined;
+    const materialsChecklist = (data.materialsChecklist as Record<string, boolean> | undefined) ?? undefined;
+    const notes = typeof data.notes === 'string' ? data.notes : null;
 
-         {data.notes != null && (
-           <div className="p-3 bg-gray-50 rounded-lg">
-             <div className="text-xs font-semibold text-gray-700 mb-1">Notes</div>
-             <div className="text-sm text-gray-600">{String(data.notes as string)}</div>
-           </div>
-         )}
-       </div>
-     );
-   };
-
-   const renderInstallationDetails = () => {
-    const notes = data.notes as string | undefined;
-    const photoUrls = data.photo_urls as string[] | undefined;
+    const surfaceCounts = countChecked(surfaceChecklist);
+    const cutCounts = countChecked(cutChecklist);
+    const materialsCounts = countChecked(materialsChecklist);
 
     return (
-      <div className="space-y-3">
-        {photoUrls && photoUrls.length > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg">
-            <span className="text-2xl">📸</span>
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-purple-600">
-                Photos prises
-              </div>
-              <div className="text-sm font-bold text-purple-700">{photoUrls.length}</div>
-            </div>
+      <div className="space-y-2">
+        {surfaceCounts.total > 0 && (
+          <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
+            Surface checklist: {surfaceCounts.checked}/{surfaceCounts.total}
           </div>
         )}
+        {cutCounts.total > 0 && (
+          <div className="rounded-lg bg-violet-50 p-2 text-xs text-violet-700">
+            Cut checklist: {cutCounts.checked}/{cutCounts.total}
+          </div>
+        )}
+        {materialsCounts.total > 0 && (
+          <div className="rounded-lg bg-sky-50 p-2 text-xs text-sky-700">
+            Matériaux: {materialsCounts.checked}/{materialsCounts.total}
+          </div>
+        )}
+        {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
+      </div>
+    );
+  };
 
-        {notes != null && notes.length > 0 && (
-           <div className="p-3 bg-gray-50 rounded-lg">
-             <div className="text-xs font-semibold text-gray-700 mb-1">Notes</div>
-             <div className="text-sm text-gray-600">{notes}</div>
-           </div>
-         )}
-       </div>
-     );
-   };
+  const renderInstallation = () => {
+    const zones = (data.zones as Array<Record<string, unknown>> | undefined) ?? [];
+    const activeZoneId = typeof data.activeZoneId === 'string' ? data.activeZoneId : null;
+    const notes = typeof data.notes === 'string' ? data.notes : null;
 
-   const renderFinalizationDetails = () => {
-    const qcChecklist = data.qc_checklist as Record<string, boolean> | null;
-    const customerSignature = data.customer_signature as Record<string, unknown> | null;
+    const completed = zones.filter((zone) => zone.status === 'completed').length;
+    const withPhotos = zones.filter((zone) => Array.isArray(zone.photos) && zone.photos.length > 0).length;
+    const numericScores = zones
+      .map((zone) => zone.quality_score)
+      .filter((score): score is number => typeof score === 'number');
+    const avgScore =
+      numericScores.length > 0
+        ? (numericScores.reduce((acc, score) => acc + score, 0) / numericScores.length).toFixed(1)
+        : null;
 
     return (
-      <div className="space-y-3">
-        {qcChecklist && (
-          <div>
-            <div className="text-xs font-semibold text-gray-700 mb-2">Contrôle qualité</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              {Object.entries(qcChecklist).map(([key, completed]) => (
-                <div
-                  key={key}
-                  className={cn(
-                    'flex items-center gap-2 p-2 rounded-lg text-sm',
-                    completed ? 'bg-emerald-50' : 'bg-gray-50'
-                  )}
-                >
-                  <span className={completed ? 'text-emerald-600' : 'text-gray-400'}>
-                    {completed ? '✓' : '○'}
-                  </span>
-                  <span className={completed ? 'text-gray-900' : 'text-gray-500'}>
-                    {key === 'edges_sealed' ? 'Bords scellés' :
-                     key === 'no_bubbles' ? 'Aucune bulle' :
-                     key === 'smooth_surface' ? 'Surface lisse' :
-                     key === 'alignment_correct' ? 'Alignement correct' :
-                     key === 'no_dust' ? 'Pas de poussière' : String(key)}
-                  </span>
-                </div>
-              ))}
-            </div>
+      <div className="space-y-2">
+        {zones.length > 0 && (
+          <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
+            Zones terminées: {completed}/{zones.length}
           </div>
         )}
+        {zones.length > 0 && (
+          <div className="rounded-lg bg-indigo-50 p-2 text-xs text-indigo-700">
+            Zones avec photos: {withPhotos}/{zones.length}
+          </div>
+        )}
+        {avgScore && (
+          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Score moyen: {avgScore}/10</div>
+        )}
+        {activeZoneId && (
+          <div className="rounded-lg bg-gray-50 p-2 text-xs text-gray-600">Zone active: {activeZoneId}</div>
+        )}
+        {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
+      </div>
+    );
+  };
 
-         {customerSignature && (
-           <div className="p-3 bg-emerald-50 rounded-lg">
-             <div className="text-xs font-semibold text-emerald-700 mb-2">
-               Signature client
-             </div>
-              <div className="space-y-1 text-sm text-emerald-600">
-                <div>
-                  <span className="font-medium">Signataire:</span>{' '}
-                  {String(customerSignature.signatory as string | undefined || 'N/A')}
-                </div>
-                {customerSignature.customer_comments != null && (
-                   <div className="italic">
-                     &quot;{String(customerSignature.customer_comments as string)}&quot;
-                   </div>
-                 )}
-              </div>
-            </div>
-          )}
+  const renderFinalization = () => {
+    const checklist =
+      ((data.checklist as Record<string, boolean> | undefined) ??
+        (data.qc_checklist as Record<string, boolean> | undefined)) ||
+      undefined;
+    const notes =
+      (typeof data.notes === 'string' ? data.notes : null) ??
+      (typeof data.customer_comments === 'string' ? data.customer_comments : null);
+    const checklistCounts = countChecked(checklist);
 
-          {data.notes != null && (
-             <div className="p-3 bg-gray-50 rounded-lg">
-               <div className="text-xs font-semibold text-gray-700 mb-1">Notes</div>
-               <div className="text-sm text-gray-600">{String(data.notes as string)}</div>
-             </div>
-           )}
-       </div>
-     );
-   };
+    return (
+      <div className="space-y-2">
+        {checklist && checklistCounts.total > 0 && (
+          <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
+            Checklist final: {checklistCounts.checked}/{checklistCounts.total}
+          </div>
+        )}
+        {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
+      </div>
+    );
+  };
 
-   const renderInspectionDetails = () => {
-    const notes = data.notes as string | undefined;
+  const renderRawFallback = () => (
+    <div className="space-y-2">
+      <div className="text-xs font-semibold text-gray-600">Structure non reconnue, affichage brut:</div>
+      <pre className="max-h-64 overflow-auto rounded-lg bg-gray-900 p-3 text-[11px] text-gray-100">{rawJson}</pre>
+    </div>
+  );
 
-     return (
-       <div className="space-y-3">
-         {notes != null && notes.length > 0 && (
-           <div className="p-3 bg-blue-50 rounded-lg">
-             <div className="text-xs font-semibold text-blue-700 mb-1">Observations</div>
-             <div className="text-sm text-blue-600">{notes}</div>
-           </div>
-         )}
-       </div>
-     );
-   };
+  const rendererByStep: Record<string, () => React.ReactNode> = {
+    inspection: renderInspection,
+    preparation: renderPreparation,
+    installation: renderInstallation,
+    finalization: renderFinalization,
+  };
 
-  switch (stepType) {
-    case 'preparation':
-      return renderPreparationDetails();
-    case 'installation':
-      return renderInstallationDetails();
-    case 'finalization':
-      return renderFinalizationDetails();
-    case 'inspection':
-      return renderInspectionDetails();
-    default:
-      return null;
-  }
+  const rendered = rendererByStep[step.id]?.() ?? renderRawFallback();
+  const shouldShowRaw = !rendererByStep[step.id];
+
+  return (
+    <div className="space-y-3">
+      {rendered}
+      {shouldShowRaw && (
+        <details>
+          <summary className="cursor-pointer text-xs font-semibold text-gray-600">Voir JSON brut</summary>
+          <pre className="mt-2 max-h-64 overflow-auto rounded-lg bg-gray-900 p-3 text-[11px] text-gray-100">
+            {Object.entries(data)
+              .map(([key, value]) => `${prettyKey(key)}: ${JSON.stringify(value, null, 2)}`)
+              .join('\n')}
+          </pre>
+        </details>
+      )}
+    </div>
+  );
 }

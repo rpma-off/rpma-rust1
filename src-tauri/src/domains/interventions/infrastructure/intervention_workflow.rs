@@ -669,6 +669,7 @@ impl InterventionWorkflowService {
 
         // Update step with collected data (similar to advance_step but without marking as completed)
         step.collected_data = Some(request.collected_data.clone());
+        step.step_data = step.collected_data.clone();
         step.notes = request.notes.clone();
 
         if let Some(photos) = &request.photos {
@@ -738,6 +739,7 @@ impl InterventionWorkflowService {
         let updated_step = finalization_step.map(|mut step| {
             if let Some(collected_data) = &request.collected_data {
                 step.collected_data = Some(collected_data.clone());
+                step.step_data = step.collected_data.clone();
             }
 
             if let Some(photos) = &request.photos {
@@ -1009,5 +1011,46 @@ mod tests {
         request.photos = None;
         request.issues = Some(vec!["issue-1".to_string()]);
         assert!(InterventionWorkflowService::has_completion_data(&request));
+    }
+
+    #[test]
+    fn test_save_step_progress_mirrors_collected_data_to_step_data() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        let step_id = step.id.clone();
+        service
+            .data
+            .save_step(&step)
+            .expect("Failed to seed step in database");
+
+        let request = SaveStepProgressRequest {
+            step_id: step_id.clone(),
+            collected_data: serde_json::json!({
+                "checklist": { "clean_dry": true },
+                "notes": "saved draft"
+            }),
+            notes: Some("saved note".to_string()),
+            photos: None,
+        };
+
+        let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+        let updated = runtime
+            .block_on(service.save_step_progress(request, "test-correlation", Some("tech-1")))
+            .expect("Failed to save step progress");
+
+        assert_eq!(updated.collected_data, updated.step_data);
+
+        let persisted = service
+            .data
+            .get_step(&step_id)
+            .expect("Failed to fetch saved step")
+            .expect("Step should exist");
+        assert_eq!(persisted.collected_data, persisted.step_data);
     }
 }

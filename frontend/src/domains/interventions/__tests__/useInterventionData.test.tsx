@@ -133,4 +133,31 @@ describe('useInterventionData', () => {
     expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-2', 'test-token');
     expect(result.current.data?.steps).toHaveLength(1);
   });
+
+  it('accepts direct { intervention } active response shape', async () => {
+    mockInterventions.getActiveByTask.mockResolvedValue({
+      intervention: {
+        id: 'inter-3',
+        task_id: 'task-3',
+        workflow_type: 'ppf',
+        status: 'active',
+        current_step: 1,
+        progress_percentage: 25,
+        started_at: null,
+        completed_at: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+    } as never);
+    mockInterventions.getProgress.mockResolvedValue({ steps: [] } as never);
+
+    const wrapper = createWrapper();
+    const { result } = renderHook(() => useInterventionData('task-3'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-3', 'test-token');
+  });
 });

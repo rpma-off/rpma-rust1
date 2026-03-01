@@ -68,15 +68,20 @@ export default function FinalizationStepPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const hasHydratedFromServerRef = useRef(false);
 
   useEffect(() => {
+    if (!stepRecord) return;
     const collected = (stepRecord?.collected_data ?? {}) as FinalizationDraft;
     setChecklist(collected.checklist ?? {});
     setNotes(collected.notes ?? '');
     setPhotos(stepRecord?.photo_urls ?? []);
-  }, [stepRecord?.id, stepRecord?.photo_urls]);
+    hasHydratedFromServerRef.current = true;
+    autosaveReady.current = false;
+  }, [stepRecord, stepRecord?.updated_at, stepRecord?.collected_data, stepRecord?.photo_urls]);
 
   useEffect(() => {
+    if (!hasHydratedFromServerRef.current) return;
     if (!autosaveReady.current) {
       autosaveReady.current = true;
       return;

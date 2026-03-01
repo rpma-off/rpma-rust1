@@ -80,8 +80,10 @@ export default function InspectionStepPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const autosaveReady = useRef(false);
+  const hasHydratedFromServerRef = useRef(false);
 
   useEffect(() => {
+    if (!stepRecord) return;
     const collected = (stepRecord?.collected_data ?? {}) as InspectionDraft;
     const normalizedDefects = Array.isArray(collected.defects)
       ? collected.defects.map((defect) => ({
@@ -105,9 +107,19 @@ export default function InspectionStepPage() {
       humidity_percent: collected.environment?.humidity_percent ?? intervention?.humidity_percentage ?? null,
     });
     setPhotos(stepRecord?.photo_urls ?? []);
-  }, [stepRecord?.id, stepRecord?.photo_urls, intervention?.humidity_percentage, intervention?.temperature_celsius]);
+    hasHydratedFromServerRef.current = true;
+    autosaveReady.current = false;
+  }, [
+    stepRecord,
+    stepRecord?.updated_at,
+    stepRecord?.collected_data,
+    stepRecord?.photo_urls,
+    intervention?.humidity_percentage,
+    intervention?.temperature_celsius,
+  ]);
 
   useEffect(() => {
+    if (!hasHydratedFromServerRef.current) return;
     if (!autosaveReady.current) {
       autosaveReady.current = true;
       return;

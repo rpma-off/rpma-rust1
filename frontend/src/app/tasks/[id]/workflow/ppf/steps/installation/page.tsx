@@ -97,8 +97,10 @@ export default function InstallationStepPage() {
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const hasHydratedFromServerRef = useRef(false);
 
   useEffect(() => {
+    if (!stepRecord) return;
     const collected = (stepRecord?.collected_data ?? {}) as InstallationDraft;
     const baseZones = buildZoneList(task?.ppf_zones ?? null);
     const savedZones = Array.isArray(collected.zones) ? collected.zones : [];
@@ -135,7 +137,9 @@ export default function InstallationStepPage() {
     setZones(adjustedZones as ZoneDraft[]);
     setActiveZoneId(activeCandidate);
     setNotes(collected.notes ?? '');
-  }, [stepRecord?.id, task?.ppf_zones]);
+    hasHydratedFromServerRef.current = true;
+    autosaveReady.current = false;
+  }, [stepRecord, stepRecord?.updated_at, stepRecord?.collected_data, task?.ppf_zones]);
 
   const allPhotos = useMemo(() => {
     const set = new Set<string>();
@@ -146,6 +150,7 @@ export default function InstallationStepPage() {
   }, [zones]);
 
   useEffect(() => {
+    if (!hasHydratedFromServerRef.current) return;
     if (!autosaveReady.current) {
       autosaveReady.current = true;
       return;
