@@ -227,22 +227,22 @@ pub async fn send_task_message(
         ));
     }
 
-    let send_request = crate::domains::notifications::domain::models::message::SendMessageRequest {
-        message_type,
-        recipient_id: task.client_id.clone().or(task.technician_id.clone()),
-        recipient_email,
-        recipient_phone,
-        subject: Some(format!("Task {} update", task.task_number)),
-        body: body.to_string(),
-        template_id: None,
-        task_id: Some(task.id.clone()),
-        client_id: task.client_id.clone(),
-        priority: Some("normal".to_string()),
-        scheduled_at: None,
-        correlation_id: request.correlation_id.clone(),
-    };
-
-    let sent_message = state.message_service.send_message(&send_request).await?;
+    let sent_message = state
+        .message_service
+        .send_message_raw(
+            message_type,
+            task.client_id.clone().or(task.technician_id.clone()),
+            recipient_email,
+            recipient_phone,
+            Some(format!("Task {} update", task.task_number)),
+            body.to_string(),
+            Some(task.id.clone()),
+            task.client_id.clone(),
+            Some("normal".to_string()),
+            None,
+            request.correlation_id.clone(),
+        )
+        .await?;
 
     Ok(
         ApiResponse::success(format!("Message queued: {}", sent_message.id))
@@ -311,23 +311,23 @@ pub async fn report_task_issue(
         .map_err(|e| AppError::Database(format!("Failed to report task issue: {}", e)))?;
 
     if matches!(severity.as_str(), "high" | "critical") {
-        let escalation =
-            crate::domains::notifications::domain::models::message::SendMessageRequest {
-                message_type: "in_app".to_string(),
-                recipient_id: task.technician_id.clone(),
-                recipient_email: None,
-                recipient_phone: None,
-                subject: Some(format!("Task {} issue escalation", task.task_number)),
-                body: format!("{} (severity: {})", description, severity),
-                template_id: None,
-                task_id: Some(task.id.clone()),
-                client_id: task.client_id.clone(),
-                priority: Some("high".to_string()),
-                scheduled_at: None,
-                correlation_id: request.correlation_id.clone(),
-            };
-
-        if let Err(err) = state.message_service.send_message(&escalation).await {
+        if let Err(err) = state
+            .message_service
+            .send_message_raw(
+                "in_app".to_string(),
+                task.technician_id.clone(),
+                None,
+                None,
+                Some(format!("Task {} issue escalation", task.task_number)),
+                format!("{} (severity: {})", description, severity),
+                Some(task.id.clone()),
+                task.client_id.clone(),
+                Some("high".to_string()),
+                None,
+                request.correlation_id.clone(),
+            )
+            .await
+        {
             warn!(
                 error = %err,
                 task_id = %task.id,
@@ -841,6 +841,32 @@ pub async fn task_crud(
                         error!("Task creation failed: {}", e);
                         AppError::Database(format!("Failed to create task: {}", e))
                     })?;
+
+                // Create notification for assigned technician
+                if let Some(technician_id) = &task.technician_id {
+                    if technician_id != &current_user.user_id {
+                        if let Err(e) = state
+                            .message_service
+                            .send_message_raw(
+                                "in_app".to_string(),
+                                Some(technician_id.clone()),
+                                None,
+                                None,
+                                Some(format!("Nouvelle tache assignee: {}", task.title)),
+                                format!("La tache '{}' vous a ete assignee.", task.title),
+                                Some(task.id.clone()),
+                                task.client_id.clone(),
+                                Some("normal".to_string()),
+                                None,
+                                Some(correlation_id.clone()),
+                            )
+                            .await
+                        {
+                            error!("Failed to create task assignment notification: {}", e);
+                        }
+                    }
+                }
+
                 Ok(
                     crate::commands::ApiResponse::success(crate::commands::TaskResponse::Created(
                         task,
@@ -873,6 +899,9 @@ pub async fn task_crud(
             // Add role check for task update
             check_task_permission!(&current_user.role, "update");
 
+            // Check if status is being updated for notification
+            let status_updated = data.status.is_some();
+
             // Add input validation for update
             let validator = ValidationService::new();
             let validated_action = validator
@@ -899,6 +928,56 @@ pub async fn task_crud(
                         error!("Task update failed: {}", e);
                         AppError::Database(format!("Failed to update task: {}", e))
                     })?;
+
+                // Create notification for assigned technician if reassigned
+                if let Some(technician_id) = &task.technician_id {
+                    if technician_id != &current_user.user_id {
+                        if let Err(e) = state
+                            .message_service
+                            .send_message_raw(
+                                "in_app".to_string(),
+                                Some(technician_id.clone()),
+                                None,
+                                None,
+                                Some(format!("Tache mise a jour: {}", task.title)),
+                                format!("La tache '{}' vous est assignee.", task.title),
+                                Some(task.id.clone()),
+                                task.client_id.clone(),
+                                Some("normal".to_string()),
+                                None,
+                                Some(correlation_id.clone()),
+                            )
+                            .await
+                        {
+                            error!("Failed to create task assignment notification: {}", e);
+                        }
+                    }
+                }
+
+                // Create notification for status change
+                if status_updated {
+                    let status = task.status.to_string();
+                    if let Err(e) = state
+                        .message_service
+                        .send_message_raw(
+                            "in_app".to_string(),
+                            Some(current_user.user_id.clone()),
+                            None,
+                            None,
+                            Some(format!("Statut de tache mis a jour: {}", task.title)),
+                            format!("Le statut de la tache '{}' est maintenant '{}'.", task.title, status),
+                            Some(task.id.clone()),
+                            task.client_id.clone(),
+                            Some("normal".to_string()),
+                            None,
+                            Some(correlation_id.clone()),
+                        )
+                        .await
+                    {
+                        error!("Failed to create task update notification: {}", e);
+                    }
+                }
+
                 Ok(
                     crate::commands::ApiResponse::success(crate::commands::TaskResponse::Updated(
                         task,

@@ -4,12 +4,12 @@ import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
 const InventoryDashboard = dynamic(
-  () => import('@/domains/inventory/components/InventoryDashboard').then((mod) => ({ default: mod.InventoryDashboard })),
+  () => import('@/domains/inventory').then((mod) => ({ default: mod.InventoryDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 
 const InventoryLayout = dynamic(
-  () => import('@/domains/inventory/components/InventoryLayout').then((mod) => ({ default: mod.InventoryLayout })),
+  () => import('@/domains/inventory').then((mod) => ({ default: mod.InventoryLayout })),
   { loading: () => <LoadingState />, ssr: false }
 );
 

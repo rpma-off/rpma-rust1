@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, BarChart3, Trash2, X, LogOut, User, Shield, HelpCircle } from 'lucide-react';
+import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, Trash2, X, LogOut, User, Shield, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/domains/auth';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -26,7 +26,6 @@ const mainItems: NavItem[] = [
   { href: '/settings', label: 'Préférences', icon: <Settings className="h-5 w-5" /> },
   { href: '/tasks', label: 'Flux de travail', icon: <Workflow className="h-5 w-5" /> },
   { href: '/interventions', label: 'Activité', icon: <Activity className="h-5 w-5" /> },
-  { href: '/analytics', label: 'Analytique', icon: <BarChart3 className="h-5 w-5" /> },
   { label: 'Corbeille', icon: <Trash2 className="h-5 w-5" />, disabled: true },
 ];
 

@@ -4,12 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle, Settings } from 'lucide-react';
 import { Button, TaskErrorBoundary } from '@/shared/ui';
-import { TaskAttachments, TaskOverview, TaskTimeline, taskGateway, TaskWithDetails } from '@/domains/tasks';
-import { TaskHeaderBand, TaskStepperBand, StatusBadge } from '@/domains/tasks/components/TaskDetail';
-import EnhancedActionsCard from '@/domains/tasks/components/TaskActions/EnhancedActionsCard';
-import { InterventionWorkflowService } from '@/domains/interventions/services/intervention-workflow.service';
+import {
+  TaskAttachments,
+  TaskOverview,
+  TaskTimeline,
+  taskGateway,
+  TaskWithDetails,
+  TaskHeaderBand,
+  TaskStepperBand,
+  StatusBadge,
+  EnhancedActionsCard,
+  getTaskDisplayTitle,
+} from '@/domains/tasks';
+import { InterventionWorkflowService } from '@/domains/interventions';
 import { bigintToNumber, handleError, LogDomain } from '@/shared/utils';
-import { getTaskDisplayTitle } from '@/domains/tasks/utils/display';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
 import { useTranslation } from '@/shared/hooks';

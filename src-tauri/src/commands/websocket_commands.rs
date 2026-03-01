@@ -70,7 +70,7 @@ pub async fn broadcast_websocket_message(
     request: BroadcastWSMessageRequest,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
@@ -85,7 +85,7 @@ pub async fn send_websocket_message_to_client(
     request: SendWSMessageRequest,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
@@ -130,7 +130,7 @@ pub async fn broadcast_task_update(
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
@@ -177,7 +177,7 @@ pub async fn broadcast_intervention_update(
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
@@ -232,7 +232,7 @@ pub async fn broadcast_client_update(
     data: serde_json::Value,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
@@ -264,7 +264,7 @@ pub async fn broadcast_system_notification(
     level: String,
     correlation_id: Option<String>,
 ) -> AppResult<()> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
     let _correlation_id =
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 

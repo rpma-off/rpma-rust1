@@ -19,7 +19,7 @@ pub struct LoginRequest {
 
 /// Login command
 #[tauri::command]
-#[instrument(skip(state), fields(email = %request.email))]
+#[instrument(skip(state, request), fields(email = %request.email))]
 pub async fn auth_login(
     request: LoginRequest,
     state: AppState<'_>,
@@ -58,7 +58,7 @@ pub async fn auth_login(
 
 /// Create account command
 #[tauri::command]
-#[instrument(skip(state), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
+#[instrument(skip(state, request), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
 pub async fn auth_create_account(
     request: SignupRequest,
     state: AppState<'_>,
@@ -141,7 +141,7 @@ pub async fn auth_logout(
             error = %e,
             "Logout failed"
         );
-        AppError::Authentication(format!("Logout failed: {}", e))
+        AppError::Authentication("Logout failed. Please try again.".to_string())
     })?;
 
     info!(
@@ -167,7 +167,7 @@ pub async fn auth_validate_session(
 
     let session = auth_service.validate_session(&session_token).map_err(|e| {
         warn!("Session validation failed: {}", e);
-        AppError::Authentication(format!("Session validation failed: {}", e))
+        AppError::Authentication("Session validation failed. Please log in again.".to_string())
     })?;
 
     crate::commands::update_correlation_context_user(&session.user_id);

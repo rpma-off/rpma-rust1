@@ -11,6 +11,7 @@ export { UserForm } from '../components/UserForm';
 export { ChangeRoleDialog } from '../components/ChangeRoleDialog';
 
 export { userService, AuthService, authService, TechnicianService } from '../server';
+export { technicianService } from '../services';
 
 export type {
   UserAccount,

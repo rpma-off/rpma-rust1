@@ -13,16 +13,13 @@ jest.mock('@tauri-apps/api/core', () => ({
   invoke: jest.fn(),
 }));
 
-jest.mock('@/domains/auth/services/sessionToken', () => ({
+jest.mock('@/domains/auth', () => ({
   getSessionToken: jest.fn(),
 }));
 
 jest.mock('../metrics', () => ({ recordMetric: jest.fn() }));
 jest.mock('@/lib/logging', () => ({
   logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
-}));
-jest.mock('@/domains/analytics/services/performance-monitor', () => ({
-  performanceMonitor: { recordMetric: jest.fn() },
 }));
 jest.mock('@/lib/logging/types', () => ({
   LogDomain: { API: 'api' },
@@ -39,7 +36,7 @@ import { NOT_IMPLEMENTED_COMMANDS } from '../utils';
 // Retrieve mock references after all jest.mock calls
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as { invoke: jest.Mock };
 const { getSessionToken: mockGetSessionToken } = jest.requireMock(
-  '@/domains/auth/services/sessionToken'
+  '@/domains/auth'
 ) as { getSessionToken: jest.Mock };
 
 describe('safeInvoke – session_token auto-injection', () => {
@@ -50,14 +47,50 @@ describe('safeInvoke – session_token auto-injection', () => {
   });
 
   describe('protected command + token available', () => {
-    it('injects session_token into the args sent to invoke', async () => {
+    it('injects both sessionToken and session_token into args sent to invoke', async () => {
       mockGetSessionToken.mockResolvedValue('my-session-token');
 
       await safeInvoke('task_crud', { request: { action: { action: 'Get', id: '1' } } });
 
       expect(mockInvoke).toHaveBeenCalledWith(
         'task_crud',
-        expect.objectContaining({ session_token: 'my-session-token' })
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
+      );
+    });
+
+    it('injects both token key variants for protected health and telemetry commands', async () => {
+      mockGetSessionToken.mockResolvedValue('my-session-token');
+
+      await safeInvoke('health_check');
+      await safeInvoke('get_device_info');
+      await safeInvoke('get_performance_stats');
+
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        1,
+        'health_check',
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
+      );
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        2,
+        'get_device_info',
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
+      );
+      expect(mockInvoke).toHaveBeenNthCalledWith(
+        3,
+        'get_performance_stats',
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
       );
     });
 
@@ -86,6 +119,10 @@ describe('safeInvoke – session_token auto-injection', () => {
       expect(mockInvoke).toHaveBeenCalledWith(
         'get_active_sessions',
         expect.objectContaining({ sessionToken: 'camel-token' })
+      );
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'get_active_sessions',
+        expect.not.objectContaining({ session_token: 'auto-token' })
       );
     });
   });
@@ -223,4 +260,3 @@ describe('safeInvoke – session_token auto-injection', () => {
     });
   });
 });
-

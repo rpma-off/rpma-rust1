@@ -16,7 +16,6 @@ export const ROUTES = {
     USERS: '/admin/users',
     SETTINGS: '/admin/settings',
     TASKS: '/admin/tasks',
-    ANALYTICS: '/admin/analytics',
     AUDIT: '/admin/audit',
     LOGS: '/admin/logs',
     CALENDAR: '/admin/calendar',

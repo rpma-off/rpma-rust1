@@ -8,7 +8,7 @@ const loggerMock = {
   logUserAction: jest.fn(),
 };
 
-jest.mock('@/hooks/useLogger', () => ({
+jest.mock('@/shared/hooks/useLogger', () => ({
   useLogger: () => loggerMock,
 }));
 

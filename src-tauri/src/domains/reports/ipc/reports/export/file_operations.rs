@@ -221,7 +221,7 @@ pub async fn save_pdf_to_path(
         let dest_path = Path::new(&file_path);
 
         // Verify source file exists and get its size
-        let source_metadata = match source_path.metadata() {
+        let source_metadata = match tokio::fs::metadata(source_path).await {
             Ok(metadata) => metadata,
             Err(e) => {
                 error!("Cannot access source PDF file {}: {}", generated_path, e);
@@ -235,7 +235,7 @@ pub async fn save_pdf_to_path(
         let expected_size = source_metadata.len();
         if expected_size == 0 {
             error!("Generated PDF file is empty: {}", generated_path);
-            let _ = std::fs::remove_file(&generated_path); // Cleanup empty file
+            let _ = tokio::fs::remove_file(&generated_path).await; // Cleanup empty file
             return Err(crate::commands::errors::AppError::Internal(
                 "Generated PDF file is empty".to_string(),
             ));
@@ -249,7 +249,7 @@ pub async fn save_pdf_to_path(
                     if available < (expected_size + safety_margin) {
                         error!("Insufficient disk space: {} bytes available, {} bytes needed + {} bytes safety margin",
                                available, expected_size, safety_margin);
-                        let _ = std::fs::remove_file(&generated_path); // Cleanup
+                        let _ = tokio::fs::remove_file(&generated_path).await; // Cleanup
                         return Err(crate::commands::errors::AppError::Io(format!(
                             "Insufficient disk space ({} MB available, {} MB needed)",
                             available / (1024 * 1024),
@@ -265,7 +265,7 @@ pub async fn save_pdf_to_path(
         }
 
         // CRASH PROTECTION: Use atomic file operations where possible
-        match std::fs::copy(&generated_path, file_path) {
+        match tokio::fs::copy(&generated_path, file_path).await {
             Ok(bytes_copied) => {
                 info!(
                     "File copy operation succeeded: {} bytes copied",
@@ -277,8 +277,8 @@ pub async fn save_pdf_to_path(
                         expected_size, bytes_copied
                     );
                     // Attempt to remove the incomplete destination file
-                    let _ = std::fs::remove_file(file_path);
-                    let _ = std::fs::remove_file(&generated_path);
+                    let _ = tokio::fs::remove_file(file_path).await;
+                    let _ = tokio::fs::remove_file(&generated_path).await;
                     return Err(crate::commands::errors::AppError::Io(format!(
                         "File copy incomplete: expected {} bytes, copied {} bytes",
                         expected_size, bytes_copied
@@ -291,11 +291,11 @@ pub async fn save_pdf_to_path(
                 );
 
                 // CRASH PROTECTION: Verify destination file integrity
-                match dest_path.metadata() {
+                match tokio::fs::metadata(dest_path).await {
                     Ok(dest_metadata) => {
                         if dest_metadata.len() == expected_size {
                             // Clean up temporary file only after successful verification
-                            if let Err(cleanup_err) = std::fs::remove_file(&generated_path) {
+                            if let Err(cleanup_err) = tokio::fs::remove_file(&generated_path).await {
                                 error!(
                                     "Failed to cleanup temporary file {}: {}",
                                     generated_path, cleanup_err
@@ -308,8 +308,8 @@ pub async fn save_pdf_to_path(
                                 expected_size,
                                 dest_metadata.len()
                             );
-                            let _ = std::fs::remove_file(file_path);
-                            let _ = std::fs::remove_file(&generated_path);
+                            let _ = tokio::fs::remove_file(file_path).await;
+                            let _ = tokio::fs::remove_file(&generated_path).await;
                             return Err(crate::commands::errors::AppError::Io(
                                 "Destination file verification failed".to_string(),
                             ));
@@ -317,7 +317,7 @@ pub async fn save_pdf_to_path(
                     }
                     Err(e) => {
                         error!("Failed to verify destination file {}: {}", file_path, e);
-                        let _ = std::fs::remove_file(&generated_path);
+                        let _ = tokio::fs::remove_file(&generated_path).await;
                         return Err(crate::commands::errors::AppError::Io(format!(
                             "Destination file verification failed: {}",
                             e
@@ -327,7 +327,7 @@ pub async fn save_pdf_to_path(
             }
             Err(e) => {
                 error!("Failed to copy PDF to destination {}: {}", file_path, e);
-                let _ = std::fs::remove_file(&generated_path); // Cleanup
+                let _ = tokio::fs::remove_file(&generated_path).await; // Cleanup
 
                 // Provide more specific error messages for common issues
                 let error_msg = if e.kind() == std::io::ErrorKind::PermissionDenied {
@@ -386,7 +386,8 @@ async fn generate_pdf_with_timeout(
     .await?;
 
     // Get file size
-    let file_size = std::fs::metadata(&output_path)
+    let file_size = tokio::fs::metadata(&output_path)
+        .await
         .map(|m| m.len())
         .unwrap_or(0);
 

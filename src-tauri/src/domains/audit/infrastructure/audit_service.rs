@@ -5,9 +5,6 @@
 
 use crate::commands::AppResult;
 use crate::db::Database;
-use crate::domains::clients::domain::models::client::*;
-use crate::domains::interventions::domain::models::intervention::*;
-use crate::domains::tasks::domain::models::task::*;
 use rusqlite::params;
 
 use chrono::{DateTime, Utc};
@@ -272,14 +269,14 @@ impl AuditService {
     }
 
     /// Create audit event for task operations
-    pub fn log_task_event(
+    pub fn log_task_event<TPrevious: Serialize, TNew: Serialize>(
         &self,
         event_type: AuditEventType,
         user_id: &str,
         task_id: &str,
         description: &str,
-        previous_task: Option<&Task>,
-        new_task: Option<&Task>,
+        previous_task: Option<&TPrevious>,
+        new_task: Option<&TNew>,
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
@@ -314,14 +311,14 @@ impl AuditService {
     }
 
     /// Create audit event for client operations
-    pub fn log_client_event(
+    pub fn log_client_event<TPrevious: Serialize, TNew: Serialize>(
         &self,
         event_type: AuditEventType,
         user_id: &str,
         client_id: &str,
         description: &str,
-        previous_client: Option<&Client>,
-        new_client: Option<&Client>,
+        previous_client: Option<&TPrevious>,
+        new_client: Option<&TNew>,
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
@@ -353,14 +350,14 @@ impl AuditService {
     }
 
     /// Create audit event for intervention operations
-    pub fn log_intervention_event(
+    pub fn log_intervention_event<TPrevious: Serialize, TNew: Serialize>(
         &self,
         event_type: AuditEventType,
         user_id: &str,
         intervention_id: &str,
         description: &str,
-        previous_intervention: Option<&Intervention>,
-        new_intervention: Option<&Intervention>,
+        previous_intervention: Option<&TPrevious>,
+        new_intervention: Option<&TNew>,
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {

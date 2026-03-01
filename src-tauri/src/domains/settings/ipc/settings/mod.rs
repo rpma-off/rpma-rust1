@@ -12,3 +12,15 @@ pub mod profile;
 pub mod security;
 
 // Re-export all commands for backward compatibility
+#[allow(unused_imports)]
+pub use accessibility::*;
+#[allow(unused_imports)]
+pub use audit::*;
+#[allow(unused_imports)]
+pub use notifications::*;
+#[allow(unused_imports)]
+pub use preferences::*;
+#[allow(unused_imports)]
+pub use profile::*;
+#[allow(unused_imports)]
+pub use security::*;

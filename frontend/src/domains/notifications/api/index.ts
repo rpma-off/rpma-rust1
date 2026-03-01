@@ -9,6 +9,15 @@ export { MessageComposer } from '../components/MessageComposer';
 export { MessageInbox } from '../components/MessageInbox';
 export { NotificationPreferences } from '../components/NotificationPreferences';
 
+export { NotificationBell } from '../components/NotificationBell';
+export { NotificationPanel } from '../components/NotificationPanel';
+export { NotificationInitializer } from '../components/NotificationInitializer';
+
+export { useNotificationStore } from '../stores/notificationStore';
+export { useNotificationUpdates } from '../hooks/useNotificationUpdates';
+
+export { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../services/notificationActions';
+
 export { notificationService, NotificationService } from '../server';
 
 export type {
@@ -21,3 +30,5 @@ export type {
   NotificationPreferences as NotificationPreferencesType,
   UseMessagesResult,
 } from './types';
+
+export type * from './notificationTypes';

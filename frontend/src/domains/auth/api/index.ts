@@ -6,6 +6,7 @@ export { AuthProvider, AuthContext } from './AuthProvider';
 export { useAuth } from './useAuth';
 export { useAuthActions } from './useAuthActions';
 export { authBootstrap } from './bootstrapAdmin';
+export { getSessionToken, requireSessionToken } from '../services/sessionToken';
 export { default as PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 export { LoginForm } from '../components/LoginForm';
 export { SignupForm } from '../components/SignupForm';

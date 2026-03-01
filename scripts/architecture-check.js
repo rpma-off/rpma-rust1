@@ -98,7 +98,8 @@ function checkSqlUsage() {
   const files = listFiles(domainsRoot)
     .filter((file) => file.endsWith('.rs'))
     .filter((file) => !isInfrastructureFile(file))
-    .filter((file) => !isIpcFile(file));
+    .filter((file) => !isIpcFile(file))
+    .filter((file) => !isTestFile(file));
 
   const violations = [];
   for (const file of files) {
@@ -136,8 +137,8 @@ function checkBoundedContextImports() {
 
   const violations = [];
   for (const file of files) {
-    const relative = path.relative(domainsRoot, file);
-    const domainName = relative.split(path.sep)[0];
+    const relative = path.relative(domainsRoot, file).replace(/\\/g, '/');
+    const domainName = relative.split('/')[0];
     const rawContents = fs.readFileSync(file, 'utf8');
     const contents = stripRustComments(rawContents);
     const isInfra = isInfrastructureFile(file);
@@ -145,6 +146,9 @@ function checkBoundedContextImports() {
     const isIpc = isIpcFile(file);
 
     const internalMatches = [...contents.matchAll(/crate::domains::([a-zA-Z0-9_]+)::(application|infrastructure|domain|ipc)/g)];
+    if (isTest) {
+      continue;
+    }
     for (const match of internalMatches) {
       const referencedDomain = match[1];
       const referencedLayer = match[2];

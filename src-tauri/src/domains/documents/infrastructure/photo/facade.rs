@@ -6,7 +6,7 @@
 pub use super::metadata::{PhotoMetadataService, PhotoMetadataUpdate};
 pub use super::processing::PhotoProcessingService;
 pub use super::statistics::{PhotoStatisticsService, PhotoStats};
-pub use super::storage::{PhotoStorageService, StorageProvider};
+pub use super::storage::{PhotoStorageService, PhotoStorageSettings, StorageProvider};
 pub use super::upload::PhotoUploadService;
 
 use crate::db::Database;
@@ -98,7 +98,7 @@ impl PhotoService {
     /// Create new photo service with storage configuration
     pub fn new(
         db: Database,
-        storage_settings: &crate::domains::settings::domain::models::settings::StorageSettings,
+        storage_settings: &PhotoStorageSettings,
     ) -> PhotoResult<Self> {
         let storage = PhotoStorageService::new(db.clone(), storage_settings)?;
         let processing = PhotoProcessingService::new();
@@ -196,7 +196,7 @@ impl PhotoService {
         };
 
         // Get file metadata
-        let metadata = std::fs::metadata(&file_path)?;
+        let metadata = tokio::fs::metadata(&file_path).await?;
         let file_size = metadata.len() as i64;
 
         // Extract image dimensions and quality scores

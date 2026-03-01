@@ -1,9 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { CalendarDashboard } from '@/domains/workflow';
+
+const CalendarDashboard = dynamic(
+  () => import('@/domains/calendar').then((module) => module.CalendarDashboard)
+);
 
 export default function Home() {
   const router = useRouter();
@@ -34,4 +38,3 @@ export default function Home() {
     </div>
   );
 }
-

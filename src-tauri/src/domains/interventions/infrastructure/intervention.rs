@@ -128,7 +128,7 @@ impl InterventionService {
     pub fn get_intervention_photos(
         &self,
         intervention_id: &str,
-    ) -> InterventionResult<Vec<crate::domains::documents::domain::models::photo::Photo>> {
+    ) -> InterventionResult<Vec<InterventionPhoto>> {
         self.data.get_intervention_photos(intervention_id)
     }
 

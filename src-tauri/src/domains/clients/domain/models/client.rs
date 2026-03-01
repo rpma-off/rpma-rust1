@@ -136,7 +136,7 @@ pub struct ClientWithTasks {
     pub last_synced_at: Option<i64>,
 
     // Associated tasks
-    pub tasks: Option<Vec<crate::domains::tasks::domain::models::task::Task>>,
+    pub tasks: Option<Vec<crate::shared::services::cross_domain::Task>>,
 }
 
 /// Conversion implementations for database operations
@@ -148,7 +148,7 @@ pub struct ClientQuery {
     pub search: Option<String>,
     pub customer_type: Option<CustomerType>,
     pub sort_by: Option<String>,
-    pub sort_order: Option<crate::domains::tasks::domain::models::task::SortOrder>,
+    pub sort_order: Option<crate::shared::services::cross_domain::SortOrder>,
 }
 
 impl Default for ClientQuery {
@@ -159,7 +159,7 @@ impl Default for ClientQuery {
             search: None,
             customer_type: None,
             sort_by: Some("created_at".to_string()),
-            sort_order: Some(crate::domains::tasks::domain::models::task::SortOrder::Desc),
+            sort_order: Some(crate::shared::services::cross_domain::SortOrder::Desc),
         }
     }
 }
@@ -168,7 +168,7 @@ impl Default for ClientQuery {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientListResponse {
     pub data: Vec<Client>,
-    pub pagination: crate::domains::tasks::domain::models::task::PaginationInfo,
+    pub pagination: crate::shared::services::cross_domain::PaginationInfo,
     pub statistics: Option<ClientStatistics>,
 }
 
@@ -352,3 +352,4 @@ fn parse_timestamp_millis(value: &str) -> Option<i64> {
 fn is_valid_email(email: &str) -> bool {
     email.contains('@') && email.contains('.') && email.len() >= 5
 }
+

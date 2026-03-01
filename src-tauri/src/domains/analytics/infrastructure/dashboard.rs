@@ -15,8 +15,11 @@ impl DashboardService {
         Self { repo }
     }
 
-    /// Build date condition for SQL WHERE clause
-    fn build_date_condition(&self, time_range: Option<String>) -> Option<String> {
+    /// Build a cutoff timestamp string from a time range.
+    ///
+    /// Returns the formatted timestamp value (not a SQL fragment) so that
+    /// the repository can use it as a parameterized query value.
+    fn build_date_cutoff(&self, time_range: Option<String>) -> Option<String> {
         time_range
             .map(|range| {
                 let now = chrono::Utc::now();
@@ -27,10 +30,7 @@ impl DashboardService {
                     "year" => now - chrono::Duration::days(365),
                     _ => return None,
                 };
-                Some(format!(
-                    "created_at >= '{}'",
-                    cutoff_date.format("%Y-%m-%d %H:%M:%S")
-                ))
+                Some(cutoff_date.format("%Y-%m-%d %H:%M:%S").to_string())
             })
             .flatten()
     }
@@ -69,10 +69,10 @@ impl DashboardService {
         let mut stats = Map::new();
 
         // Calculate date filter based on time range
-        let date_condition = self.build_date_condition(time_range.clone());
+        let date_cutoff = self.build_date_cutoff(time_range.clone());
 
         // Total tasks (with date filter if provided)
-        let total_tasks = self.repo.count_tasks(date_condition.as_deref())?;
+        let total_tasks = self.repo.count_tasks(date_cutoff.as_deref())?;
         stats.insert("total".to_string(), Value::Number(total_tasks.into()));
 
         // For now, use mock data for task status breakdown since we need to ensure table structure

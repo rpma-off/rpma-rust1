@@ -66,14 +66,34 @@ impl fmt::Display for AppError {
             AppError::Authentication(msg) => write!(f, "Authentication error: {}", msg),
             AppError::Authorization(msg) => write!(f, "Authorization error: {}", msg),
             AppError::Validation(msg) => write!(f, "Validation error: {}", msg),
-            AppError::Database(msg) => write!(f, "Database error: {}", msg),
+            AppError::Database(_) => {
+                write!(
+                    f,
+                    "Database error: A database error occurred. Please try again."
+                )
+            }
             AppError::NotFound(msg) => write!(f, "Not found: {}", msg),
-            AppError::Internal(msg) => write!(f, "Internal error: {}", msg),
-            AppError::Network(msg) => write!(f, "Network error: {}", msg),
-            AppError::Io(msg) => write!(f, "I/O error: {}", msg),
-            AppError::Configuration(msg) => write!(f, "Configuration error: {}", msg),
+            AppError::Internal(_) => {
+                write!(
+                    f,
+                    "Internal error: An internal error occurred. Please try again."
+                )
+            }
+            AppError::Network(_) => write!(
+                f,
+                "Network error: A network error occurred. Please check your connection."
+            ),
+            AppError::Io(_) => write!(f, "I/O error: A file operation error occurred."),
+            AppError::Configuration(_) => {
+                write!(f, "Configuration error: A configuration error occurred.")
+            }
             AppError::RateLimit(msg) => write!(f, "Rate limit exceeded: {}", msg),
-            AppError::Sync(msg) => write!(f, "Synchronization error: {}", msg),
+            AppError::Sync(_) => {
+                write!(
+                    f,
+                    "Synchronization error: Synchronization failed. Please try again."
+                )
+            }
             AppError::InterventionAlreadyActive(msg) => {
                 write!(f, "Intervention already active: {}", msg)
             }
@@ -522,6 +542,54 @@ mod tests {
             }
             _ => panic!("Expected Internal variant"),
         }
+    }
+
+    #[test]
+    fn test_display_sanitizes_server_error_variants() {
+        let db = AppError::Database("SQLITE_ERROR: no such table users".to_string()).to_string();
+        assert!(
+            !db.contains("SQLITE_ERROR"),
+            "Database display leaked SQL internals: {}",
+            db
+        );
+        assert_eq!(
+            db,
+            "Database error: A database error occurred. Please try again."
+        );
+
+        let internal =
+            AppError::Internal("thread 'main' panicked at src/main.rs:12".to_string()).to_string();
+        assert!(
+            !internal.contains("panicked"),
+            "Internal display leaked stack trace: {}",
+            internal
+        );
+        assert_eq!(
+            internal,
+            "Internal error: An internal error occurred. Please try again."
+        );
+
+        let internal_unwrap =
+            AppError::Internal("called `Option::unwrap()` on a `None` value".to_string())
+                .to_string();
+        assert!(
+            !internal_unwrap.contains("unwrap"),
+            "Internal display leaked panic details: {}",
+            internal_unwrap
+        );
+        assert_eq!(
+            internal_unwrap,
+            "Internal error: An internal error occurred. Please try again."
+        );
+
+        let io =
+            AppError::Io("/home/user/secret/file.db: permission denied".to_string()).to_string();
+        assert!(
+            !io.contains("/home"),
+            "I/O display leaked file path: {}",
+            io
+        );
+        assert_eq!(io, "I/O error: A file operation error occurred.");
     }
 
     #[test]

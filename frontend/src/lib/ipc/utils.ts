@@ -1,8 +1,7 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { recordMetric } from './metrics';
 import { logger } from '../logging';
-import { performanceMonitor } from '@/domains/analytics/services/performance-monitor';
-import { getSessionToken } from '@/domains/auth/services/sessionToken';
+import { getSessionToken } from '@/domains/auth';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
@@ -52,10 +51,7 @@ const PUBLIC_COMMANDS = new Set([
   'ui_gps_get_current_position',
   'ui_initiate_customer_call',
   // System info / health
-  'health_check',
   'get_app_info',
-  'get_device_info',
-  'get_performance_stats',
 ]);
 
 const KNOWN_CLIENT_ERRORS = new Set([
@@ -168,7 +164,7 @@ export async function safeInvoke<T>(
     correlation_id: correlationId,
   };
 
-  // Auto-inject session_token for protected commands when not already supplied
+  // Auto-inject session token for protected commands when not already supplied
   const isProtected = !PUBLIC_COMMANDS.has(command);
   const hasExplicitToken =
     argsWithCorrelation.session_token !== null && argsWithCorrelation.session_token !== undefined ||
@@ -176,6 +172,7 @@ export async function safeInvoke<T>(
   if (isProtected && !hasExplicitToken) {
     const token = await getSessionToken();
     if (token) {
+      argsWithCorrelation.sessionToken = token;
       argsWithCorrelation.session_token = token;
     } else {
       const authError: EnhancedError = new Error(
@@ -303,14 +300,6 @@ export async function safeInvoke<T>(
       timestamp: Date.now(),
     });
 
-    // Record in performance monitor
-    performanceMonitor.recordMetric({
-      command,
-      duration,
-      success: true,
-      timestamp: Date.now(),
-    });
-
     return data;
 
   } catch (error) {
@@ -356,15 +345,6 @@ export async function safeInvoke<T>(
 
     // Record metric
     recordMetric({
-      command,
-      duration,
-      success: false,
-      error: errorMessage,
-      timestamp: Date.now(),
-    });
-
-    // Record in performance monitor
-    performanceMonitor.recordMetric({
       command,
       duration,
       success: false,

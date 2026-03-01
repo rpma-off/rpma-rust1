@@ -87,7 +87,7 @@ pub async fn generate_intervention_pdf_report(
             tracing::info!("PDF generation completed successfully");
 
             // Get file size
-            let file_size = match std::fs::metadata(&output_path) {
+            let file_size = match tokio::fs::metadata(&output_path).await {
                 Ok(metadata) => Some(metadata.len()),
                 Err(e) => {
                     tracing::warn!("Could not get file size: {}", e);

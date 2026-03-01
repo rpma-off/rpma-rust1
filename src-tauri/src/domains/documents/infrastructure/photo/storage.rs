@@ -15,6 +15,28 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 use tracing::warn;
 
+/// Photo storage settings local to the documents domain.
+#[derive(Debug, Clone)]
+pub struct PhotoStorageSettings {
+    pub photo_storage_type: String,
+    pub local_storage_path: Option<String>,
+    pub cloud_provider: Option<String>,
+    pub cloud_bucket: Option<String>,
+    pub cloud_region: Option<String>,
+}
+
+impl Default for PhotoStorageSettings {
+    fn default() -> Self {
+        Self {
+            photo_storage_type: "local".to_string(),
+            local_storage_path: None,
+            cloud_provider: None,
+            cloud_bucket: None,
+            cloud_region: None,
+        }
+    }
+}
+
 /// Storage provider types
 #[derive(Debug, Clone)]
 pub enum StorageProvider {
@@ -52,7 +74,7 @@ impl PhotoStorageService {
     /// Create new photo storage service with storage configuration
     pub fn new(
         db: Database,
-        storage_settings: &crate::domains::settings::domain::models::settings::StorageSettings,
+        storage_settings: &PhotoStorageSettings,
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<Self> {
         let storage_provider = Self::create_storage_provider(storage_settings)?;
         let local_storage_path = Self::get_local_storage_path(storage_settings)?;
@@ -66,7 +88,7 @@ impl PhotoStorageService {
 
     /// Create storage provider from settings
     fn create_storage_provider(
-        settings: &crate::domains::settings::domain::models::settings::StorageSettings,
+        settings: &PhotoStorageSettings,
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<StorageProvider> {
         match settings.photo_storage_type.as_str() {
             "local" => Ok(StorageProvider::Local),
@@ -119,7 +141,7 @@ impl PhotoStorageService {
 
     /// Parse cloud provider from settings
     fn parse_cloud_provider(
-        settings: &crate::domains::settings::domain::models::settings::StorageSettings,
+        settings: &PhotoStorageSettings,
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<CloudProvider> {
         match settings.cloud_provider.as_deref() {
             Some("aws_s3") => Ok(CloudProvider::AwsS3),
@@ -141,7 +163,7 @@ impl PhotoStorageService {
 
     /// Get local storage path from settings
     fn get_local_storage_path(
-        settings: &crate::domains::settings::domain::models::settings::StorageSettings,
+        settings: &PhotoStorageSettings,
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<PathBuf> {
         match &settings.local_storage_path {
             Some(path) => Ok(PathBuf::from(path)),

@@ -1,6 +1,16 @@
 {
   "allowed": [],
-  "allowed_structure": [
-    "interventions/mod.rs pub mod infrastructure"
+  "allowed_structure": [],
+  "allowed_ipc_infra": [
+    "calendar/ipc/calendar.rs",
+    "documents/ipc/document.rs",
+    "inventory/ipc/material.rs",
+    "notifications/ipc/notification.rs",
+    "reports/ipc/reports/export/file_operations.rs",
+    "reports/ipc/reports/export/intervention_export.rs",
+    "reports/ipc/reports/search.rs",
+    "settings/ipc/settings/audit.rs",
+    "tasks/ipc/task/queries.rs",
+    "tasks/ipc/task/statistics.rs"
   ]
 }

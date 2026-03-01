@@ -40,9 +40,9 @@ use rpma_ppf_intervention::domains::notifications::domain::models::message::{
     UpdateNotificationPreferencesRequest,
 };
 use rpma_ppf_intervention::domains::notifications::domain::models::notification::{
-    EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationMessage,
-    NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType, SmsConfig,
-    SmsProvider, TemplateVariables,
+    EmailConfig, EmailProvider, Notification, NotificationChannel, NotificationConfig,
+    NotificationMessage, NotificationPriority, NotificationStatus, NotificationTemplate,
+    NotificationType, SmsConfig, SmsProvider, TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
     CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse, QuoteExportResponse,
@@ -607,6 +607,9 @@ fn main() {
     type_definitions.push_str("\n");
     // Domain: notifications
     type_definitions.push_str("// @domain:notifications\n");
+    type_definitions
+        .push_str(&Notification::export_to_string().expect("Failed to export Notification type"));
+    type_definitions.push_str("\n");
     type_definitions.push_str(
         &NotificationChannel::export_to_string()
             .expect("Failed to export NotificationChannel type"),

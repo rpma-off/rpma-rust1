@@ -18,5 +18,9 @@ pub mod tests;
 #[cfg(test)]
 mod smoke_tests;
 
-// Type generation for frontend
+#[cfg(test)]
+mod boundary_tests;
+
+// Type generation for frontend (only available with export-types feature)
+#[cfg(feature = "export-types")]
 pub use domains::inventory::domain::models::material_ts::*;

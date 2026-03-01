@@ -4,11 +4,11 @@
 //! using genpdf library for automatic pagination and better layout management.
 
 use crate::commands::AppResult;
-use crate::domains::clients::domain::models::client::Client;
-use crate::domains::documents::domain::models::photo::Photo;
-use crate::domains::interventions::domain::models::intervention::InterventionStatus;
-use crate::domains::interventions::domain::models::step::InterventionStep;
-use crate::domains::interventions::domain::models::step::StepStatus;
+use crate::shared::services::cross_domain::Client;
+use crate::shared::services::cross_domain::Photo;
+use crate::shared::services::cross_domain::InterventionStatus;
+use crate::shared::services::cross_domain::InterventionStep;
+use crate::shared::services::cross_domain::StepStatus;
 use crate::shared::contracts::common::*;
 
 use chrono::Utc;
@@ -17,20 +17,20 @@ use std::path::Path;
 
 /// Comprehensive PDF report generator for PPF interventions
 pub struct InterventionPdfReport {
-    intervention: crate::domains::interventions::domain::models::intervention::Intervention,
+    intervention: crate::shared::services::cross_domain::Intervention,
     steps: Vec<InterventionStep>,
     photos: Vec<Photo>,
-    materials: Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>,
+    materials: Vec<crate::shared::services::cross_domain::MaterialConsumption>,
     client: Option<Client>,
 }
 
 impl InterventionPdfReport {
     /// Create a new PDF report instance
     pub fn new(
-        intervention: crate::domains::interventions::domain::models::intervention::Intervention,
+        intervention: crate::shared::services::cross_domain::Intervention,
         steps: Vec<InterventionStep>,
         photos: Vec<Photo>,
-        materials: Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>,
+        materials: Vec<crate::shared::services::cross_domain::MaterialConsumption>,
         client: Option<Client>,
     ) -> Self {
         Self {
@@ -655,3 +655,4 @@ impl InterventionPdfReport {
         Ok(())
     }
 }
+

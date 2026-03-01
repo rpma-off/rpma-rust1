@@ -48,22 +48,22 @@ import type { CreateUserRequest, UserAccount } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const WorkflowExecutionDashboard = dynamic(
-  () => import('@/domains/workflow/components/WorkflowExecutionDashboard').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
+  () => import('@/domains/interventions').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 
 const QualityAssuranceDashboard = dynamic(
-  () => import('@/domains/admin/components/QualityAssuranceDashboard').then((mod) => ({ default: mod.QualityAssuranceDashboard })),
+  () => import('@/domains/admin').then((mod) => ({ default: mod.QualityAssuranceDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 
 const PhotoDocumentationDashboard = dynamic(
-  () => import('@/domains/admin/components/PhotoDocumentationDashboard').then((mod) => ({ default: mod.PhotoDocumentationDashboard })),
+  () => import('@/domains/admin').then((mod) => ({ default: mod.PhotoDocumentationDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 
 const SecurityDashboard = dynamic(
-  () => import('@/domains/admin/components/SecurityDashboard').then((mod) => ({ default: mod.SecurityDashboard })),
+  () => import('@/domains/admin').then((mod) => ({ default: mod.SecurityDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
 

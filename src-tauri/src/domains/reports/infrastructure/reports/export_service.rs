@@ -286,7 +286,8 @@ impl ExportReportService {
         .await?;
 
         // Get file size
-        let file_size = std::fs::metadata(&output_path)
+        let file_size = tokio::fs::metadata(&output_path)
+            .await
             .map(|m| m.len())
             .unwrap_or(0);
 
@@ -334,11 +335,11 @@ impl ExportReportService {
         content.push_str(&format!(
             "Statut: {}\n",
             match intervention_data.intervention.status {
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Pending => "En attente",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::InProgress => "En cours",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Paused => "En pause",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Completed => "TerminÃƒÂ©e",
-                crate::domains::interventions::domain::models::intervention::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Pending => "En attente",
+                crate::shared::services::cross_domain::InterventionStatus::InProgress => "En cours",
+                crate::shared::services::cross_domain::InterventionStatus::Paused => "En pause",
+                crate::shared::services::cross_domain::InterventionStatus::Completed => "TerminÃƒÂ©e",
+                crate::shared::services::cross_domain::InterventionStatus::Cancelled => "AnnulÃƒÂ©e",
             }
         ));
         content.push_str(&format!(
@@ -374,12 +375,13 @@ impl ExportReportService {
         ));
 
         // Write to file
-        std::fs::write(&output_path, content).map_err(|e| {
+        tokio::fs::write(&output_path, content).await.map_err(|e| {
             AppError::Internal(format!("Failed to write fallback text file: {}", e))
         })?;
 
         // Get file size
-        let file_size = std::fs::metadata(&output_path)
+        let file_size = tokio::fs::metadata(&output_path)
+            .await
             .map(|m| m.len())
             .unwrap_or(0);
 
@@ -419,3 +421,4 @@ impl ExportReportService {
         Ok(crate::domains::reports::ipc::reports::utils::format_report_data_for_csv(&json_value))
     }
 }
+

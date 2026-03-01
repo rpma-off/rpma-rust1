@@ -108,7 +108,7 @@ export const TaskActionBar: React.FC<TaskActionBarProps> = React.memo(({
             </>
           ) : (
             <>
-              Valider l'étape
+              Valider l&apos;étape
               <ArrowRight className="h-4 w-4" />
             </>
           )}

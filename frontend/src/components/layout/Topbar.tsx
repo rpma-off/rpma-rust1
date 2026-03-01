@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
+import { Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { NotificationBell } from '@/domains/notifications';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -81,13 +82,7 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
           >
             <Search className="h-5 w-5" />
           </button>
-          <button
-            className="p-2 rounded-full hover:bg-white/15 transition-colors relative"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-white" />
-          </button>
+          <NotificationBell />
         </div>
       </div>
     </header>
