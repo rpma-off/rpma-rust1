@@ -1,10 +1,10 @@
 //! Simple test to verify the workflow strategy pattern works correctly
 
-use crate::shared::services::cross_domain::{Intervention, InterventionType};
 use crate::domains::tasks::infrastructure::workflow_strategy::{
     EnvironmentConditions, ExpressPPFStrategy, StandardPPFStrategy, WorkflowContext,
     WorkflowStrategy, WorkflowStrategyFactory,
 };
+use crate::shared::services::cross_domain::{Intervention, InterventionType};
 
 #[test]
 fn test_strategy_factory_standard_workflow() {

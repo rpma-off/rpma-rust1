@@ -6,7 +6,7 @@ use crate::shared::repositories::cache::Cache;
 use std::sync::Arc;
 
 /// Helper function to create notifications from domain events
-/// 
+///
 /// This module provides utilities for creating in-app notifications
 /// in response to domain events (tasks, interventions, quotes, etc.).
 pub struct NotificationHelper;
@@ -33,8 +33,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -60,8 +62,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -86,8 +90,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -105,15 +111,20 @@ impl NotificationHelper {
             created_at: chrono::Utc::now(),
             r#type: "QuoteCreated".to_string(),
             title: "Nouveau devis créé".to_string(),
-            message: format!("Un nouveau devis a été créé pour le client: {}", client_name),
+            message: format!(
+                "Un nouveau devis a été créé pour le client: {}",
+                client_name
+            ),
             entity_type: "quote".to_string(),
             entity_id: quote_id.to_string(),
             entity_url: format!("/quotes/{}", quote_id),
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -138,8 +149,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -164,8 +177,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 
@@ -190,8 +205,10 @@ impl NotificationHelper {
             read: false,
             user_id: user_id.to_string(),
         };
-        
-        repo.save(notification).await.map_err(|e| format!("Failed to create notification: {}", e))?;
+
+        repo.save(notification)
+            .await
+            .map_err(|e| format!("Failed to create notification: {}", e))?;
         Ok(())
     }
 }

@@ -34,4 +34,3 @@ pub(crate) fn ensure_intervention_permission(session: &UserSession) -> Result<()
     }
     Ok(())
 }
-

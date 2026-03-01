@@ -450,5 +450,3 @@ impl SearchReportService {
         })
     }
 }
-
-

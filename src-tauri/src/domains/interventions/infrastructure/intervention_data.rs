@@ -383,12 +383,10 @@ impl InterventionDataService {
         &self,
         intervention_id: &str,
     ) -> InterventionResult<Vec<InterventionPhoto>> {
-        let photos = self
-            .db
-            .query_as::<InterventionPhoto>(
-                "SELECT * FROM photos WHERE intervention_id = ? ORDER BY step_number, captured_at",
-                params![intervention_id],
-            )?;
+        let photos = self.db.query_as::<InterventionPhoto>(
+            "SELECT * FROM photos WHERE intervention_id = ? ORDER BY step_number, captured_at",
+            params![intervention_id],
+        )?;
         Ok(photos)
     }
 

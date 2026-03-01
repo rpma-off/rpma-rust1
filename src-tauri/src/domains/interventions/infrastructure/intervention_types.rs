@@ -145,4 +145,3 @@ pub struct InterventionWithDetails {
     pub intervention: crate::shared::services::cross_domain::Intervention,
     pub steps: Vec<InterventionStepWithPhotos>,
 }
-

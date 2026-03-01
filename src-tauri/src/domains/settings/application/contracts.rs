@@ -61,9 +61,7 @@ pub fn apply_profile_updates(
         let existing_last = parts.collect::<Vec<_>>().join(" ");
         let next_first = normalize_profile_field(first_name).unwrap_or(existing_first);
         let next_last = normalize_profile_field(last_name).unwrap_or(existing_last);
-        let combined = format!("{} {}", next_first, next_last)
-            .trim()
-            .to_string();
+        let combined = format!("{} {}", next_first, next_last).trim().to_string();
         if !combined.is_empty() {
             profile.full_name = combined;
         }

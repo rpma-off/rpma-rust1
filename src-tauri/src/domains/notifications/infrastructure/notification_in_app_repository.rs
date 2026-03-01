@@ -38,9 +38,12 @@ impl NotificationRepository {
                 "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
                 params![user_id, limit],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find notifications by user: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find notifications by user: {}", e))
+            })?;
 
-        self.cache.set(&cache_key, notifications.clone(), ttl::SHORT);
+        self.cache
+            .set(&cache_key, notifications.clone(), ttl::SHORT);
 
         Ok(notifications)
     }
@@ -52,7 +55,9 @@ impl NotificationRepository {
                 "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0",
                 params![user_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to count unread notifications: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to count unread notifications: {}", e))
+            })?;
 
         Ok(count as i32)
     }
@@ -63,7 +68,9 @@ impl NotificationRepository {
                 "UPDATE notifications SET read = 1 WHERE id = ?",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to mark notification as read: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to mark notification as read: {}", e))
+            })?;
 
         self.cache.clear();
 
@@ -76,7 +83,9 @@ impl NotificationRepository {
                 "UPDATE notifications SET read = 1 WHERE user_id = ? AND read = 0",
                 params![user_id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to mark all notifications as read: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to mark all notifications as read: {}", e))
+            })?;
 
         self.cache.clear();
 
@@ -110,10 +119,13 @@ impl Repository<Notification, String> for NotificationRepository {
                 "SELECT * FROM notifications WHERE id = ?",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to find notification by id: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to find notification by id: {}", e))
+            })?;
 
         if let Some(ref notification) = notification {
-            self.cache.set(&cache_key, notification.clone(), ttl::MEDIUM);
+            self.cache
+                .set(&cache_key, notification.clone(), ttl::MEDIUM);
         }
 
         Ok(notification)
@@ -177,7 +189,9 @@ impl Repository<Notification, String> for NotificationRepository {
                 "SELECT COUNT(*) FROM notifications WHERE id = ?",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to check notification existence: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to check notification existence: {}", e))
+            })?;
 
         Ok(exists > 0)
     }
@@ -277,7 +291,9 @@ mod tests {
         let unread = repo.count_unread("user-123").await.unwrap();
         assert_eq!(unread, 2);
 
-        repo.mark_read(&repo.find_by_user("user-123", 1).await.unwrap()[0].id).await.unwrap();
+        repo.mark_read(&repo.find_by_user("user-123", 1).await.unwrap()[0].id)
+            .await
+            .unwrap();
 
         let unread = repo.count_unread("user-123").await.unwrap();
         assert_eq!(unread, 1);

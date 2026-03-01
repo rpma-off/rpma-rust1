@@ -352,4 +352,3 @@ fn parse_timestamp_millis(value: &str) -> Option<i64> {
 fn is_valid_email(email: &str) -> bool {
     email.contains('@') && email.contains('.') && email.len() >= 5
 }
-

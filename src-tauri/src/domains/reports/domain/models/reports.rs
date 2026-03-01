@@ -1163,8 +1163,6 @@ pub struct EntityCounts {
 pub struct SearchResults {
     pub tasks: Vec<crate::shared::services::cross_domain::Task>,
     pub clients: Vec<crate::shared::services::cross_domain::Client>,
-    pub interventions:
-        Vec<crate::shared::services::cross_domain::Intervention>,
+    pub interventions: Vec<crate::shared::services::cross_domain::Intervention>,
     pub total_results: i32,
 }
-

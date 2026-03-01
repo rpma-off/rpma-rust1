@@ -3,8 +3,8 @@ use std::sync::Arc;
 use crate::db::Database;
 use crate::domains::notifications::domain::models::notification::Notification;
 use crate::domains::notifications::infrastructure::notification_in_app_repository::NotificationRepository;
-use crate::shared::repositories::cache::Cache;
 use crate::shared::repositories::base::Repository;
+use crate::shared::repositories::cache::Cache;
 
 #[derive(Debug, Clone)]
 pub struct NotificationInAppService {

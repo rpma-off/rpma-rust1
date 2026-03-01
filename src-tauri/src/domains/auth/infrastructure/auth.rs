@@ -1,11 +1,11 @@
 //! Local authentication service for secure session management
 
-use crate::shared::services::security_monitor::SecurityMonitorService;
 use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use crate::shared::services::performance_monitor::PerformanceMonitorService;
+use crate::shared::services::security_monitor::SecurityMonitorService;
 use crate::shared::services::validation::ValidationService;
 use rusqlite::params;
 

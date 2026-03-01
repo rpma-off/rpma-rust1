@@ -1251,8 +1251,8 @@ impl SettingsService {
 #[cfg(test)]
 mod tests {
     use super::SettingsService;
-    use crate::shared::services::cross_domain::AuthService;
     use crate::shared::contracts::auth::{UserAccount, UserRole};
+    use crate::shared::services::cross_domain::AuthService;
     use chrono::Utc;
     use rusqlite::params;
     use std::sync::Arc;

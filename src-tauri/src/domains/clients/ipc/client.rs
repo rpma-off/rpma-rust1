@@ -587,6 +587,3 @@ async fn handle_client_statistics(
     }))
     .with_correlation_id(correlation_id.clone()))
 }
-
-
-

@@ -118,6 +118,10 @@ jobs:
         working-directory: src-tauri
         run: cargo test --all --verbose
 
+      - name: Rust – migrations fresh DB guard
+        working-directory: src-tauri
+        run: cargo test migrations_fresh_db --verbose
+
       # ── Coverage (stable only) ────────────────────────────
       - name: Coverage – install tarpaulin
         if: matrix.rust == 'stable'

@@ -96,10 +96,7 @@ pub struct PhotoService {
 
 impl PhotoService {
     /// Create new photo service with storage configuration
-    pub fn new(
-        db: Database,
-        storage_settings: &PhotoStorageSettings,
-    ) -> PhotoResult<Self> {
+    pub fn new(db: Database, storage_settings: &PhotoStorageSettings) -> PhotoResult<Self> {
         let storage = PhotoStorageService::new(db.clone(), storage_settings)?;
         let processing = PhotoProcessingService::new();
         let upload = PhotoUploadService::new(db.clone());

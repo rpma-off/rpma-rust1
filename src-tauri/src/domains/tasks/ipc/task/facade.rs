@@ -965,7 +965,10 @@ pub async fn task_crud(
                             None,
                             None,
                             Some(format!("Statut de tache mis a jour: {}", task.title)),
-                            format!("Le statut de la tache '{}' est maintenant '{}'.", task.title, status),
+                            format!(
+                                "Le statut de la tache '{}' est maintenant '{}'.",
+                                task.title, status
+                            ),
                             Some(task.id.clone()),
                             task.client_id.clone(),
                             Some("normal".to_string()),

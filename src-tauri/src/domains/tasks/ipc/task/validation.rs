@@ -70,7 +70,8 @@ pub async fn check_task_assignment(
     let max_tasks_per_user = state
         .settings_service
         .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))? as usize;
+        .map_err(|e| AppError::db_sanitized("get_settings", &e))?
+        as usize;
 
     let facade = TasksFacade::new(
         state.task_service.clone(),
@@ -151,7 +152,8 @@ pub async fn validate_task_assignment_change(
     let max_tasks_per_user = state
         .settings_service
         .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))? as usize;
+        .map_err(|e| AppError::db_sanitized("get_settings", &e))?
+        as usize;
 
     let facade = TasksFacade::new(
         state.task_service.clone(),

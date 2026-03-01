@@ -2,10 +2,10 @@
 //!
 //! Tests the full flow of creating, retrieving, and managing notifications.
 
+use chrono::Utc;
 use rpma_ppf_intervention::domains::notifications::domain::models::notification::Notification;
 use rpma_ppf_intervention::domains::notifications::infrastructure::notification_in_app_repository::NotificationRepository;
 use rpma_ppf_intervention::shared::repositories::cache::Cache;
-use chrono::Utc;
 
 #[tokio::test]
 async fn test_create_and_retrieve_notification() {
@@ -14,7 +14,7 @@ async fn test_create_and_retrieve_notification() {
     let repo = NotificationRepository::new(db.db(), cache);
 
     let user_id = "test_user_1";
-    
+
     // Create a notification
     let notification = Notification {
         id: uuid::Uuid::new_v4().to_string(),
@@ -29,11 +29,16 @@ async fn test_create_and_retrieve_notification() {
         user_id: user_id.to_string(),
     };
 
-    repo.save(notification.clone()).await.expect("Failed to save notification");
+    repo.save(notification.clone())
+        .await
+        .expect("Failed to save notification");
 
     // Retrieve notifications for user
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
-    
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
+
     assert_eq!(retrieved.len(), 1);
     assert_eq!(retrieved[0].id, notification.id);
     assert_eq!(retrieved[0].title, notification.title);
@@ -63,17 +68,27 @@ async fn test_mark_notification_as_read() {
         user_id: user_id.to_string(),
     };
 
-    repo.save(notification).await.expect("Failed to save notification");
+    repo.save(notification)
+        .await
+        .expect("Failed to save notification");
 
     // Verify it's unread
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved[0].read, false);
 
     // Mark as read
-    repo.mark_read(&notification_id).await.expect("Failed to mark as read");
+    repo.mark_read(&notification_id)
+        .await
+        .expect("Failed to mark as read");
 
     // Verify it's now read
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved[0].read, true);
 }
 
@@ -100,11 +115,16 @@ async fn test_count_unread_notifications() {
             user_id: user_id.to_string(),
         };
 
-        repo.save(notification).await.expect("Failed to save notification");
+        repo.save(notification)
+            .await
+            .expect("Failed to save notification");
     }
 
     // Count unread (should be 3 - tasks 1, 3, 5)
-    let count = repo.count_unread(user_id).await.expect("Failed to count unread");
+    let count = repo
+        .count_unread(user_id)
+        .await
+        .expect("Failed to count unread");
     assert_eq!(count, 3);
 }
 
@@ -131,19 +151,29 @@ async fn test_mark_all_as_read() {
             user_id: user_id.to_string(),
         };
 
-        repo.save(notification).await.expect("Failed to save notification");
+        repo.save(notification)
+            .await
+            .expect("Failed to save notification");
     }
 
     // Verify all are unread
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved.len(), 3);
     assert!(retrieved.iter().all(|n| !n.read));
 
     // Mark all as read
-    repo.mark_all_read(user_id).await.expect("Failed to mark all as read");
+    repo.mark_all_read(user_id)
+        .await
+        .expect("Failed to mark all as read");
 
     // Verify all are now read
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert!(retrieved.iter().all(|n| n.read));
 }
 
@@ -170,18 +200,29 @@ async fn test_delete_notification() {
         user_id: user_id.to_string(),
     };
 
-    repo.save(notification).await.expect("Failed to save notification");
+    repo.save(notification)
+        .await
+        .expect("Failed to save notification");
 
     // Verify it exists
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved.len(), 1);
 
     // Delete it
-    let deleted = repo.delete(&notification_id).await.expect("Failed to delete");
+    let deleted = repo
+        .delete(&notification_id)
+        .await
+        .expect("Failed to delete");
     assert!(deleted);
 
     // Verify it's gone
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved.len(), 0);
 }
 
@@ -211,14 +252,19 @@ async fn test_notifications_ordered_by_created_at() {
 
         let id = notification.id.clone();
         ids.push(id);
-        repo.save(notification).await.expect("Failed to save notification");
+        repo.save(notification)
+            .await
+            .expect("Failed to save notification");
         tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
     }
 
     // Retrieve and verify order (most recent first)
-    let retrieved = repo.find_by_user(user_id, 10).await.expect("Failed to retrieve");
+    let retrieved = repo
+        .find_by_user(user_id, 10)
+        .await
+        .expect("Failed to retrieve");
     assert_eq!(retrieved.len(), 5);
-    
+
     // First in list should be most recently created
     assert_eq!(retrieved[0].id, ids[4]);
     assert_eq!(retrieved[1].id, ids[3]);

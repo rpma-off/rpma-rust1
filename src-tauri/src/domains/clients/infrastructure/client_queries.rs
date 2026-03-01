@@ -252,4 +252,3 @@ impl ClientQueriesService {
             .map_err(|e| format!("Failed to get recently active clients: {}", e))
     }
 }
-
