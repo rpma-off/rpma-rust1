@@ -289,7 +289,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       if (interventionData && interventionData.steps) {
         // If we have workflow data, try to update the workflow step
         // Find the current step that might contain checklist data
-        const currentStep = interventionData.steps.find((step: { collected_data?: Record<string, unknown> }) =>
+        const currentStep = interventionData.steps.find((step: { collected_data?: Record<string, unknown> | null }) =>
           step.collected_data &&
           (step.collected_data.checklist || step.collected_data.qc_checklist)
         );

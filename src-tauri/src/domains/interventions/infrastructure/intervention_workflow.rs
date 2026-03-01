@@ -661,10 +661,17 @@ impl InterventionWorkflowService {
             step.id, step.intervention_id, step.step_number, step.step_status
         );
 
-        // Set step to in-progress if not already set
-        if step.step_status == StepStatus::Pending {
-            step.step_status = StepStatus::InProgress;
-            step.started_at = TimestampString::now();
+        // Preserve completed steps when users edit data after finalization.
+        // Pending steps still transition to in-progress on first draft save.
+        match step.step_status {
+            StepStatus::Pending => {
+                step.step_status = StepStatus::InProgress;
+                step.started_at = TimestampString::now();
+            }
+            StepStatus::Completed => {
+                step.step_status = StepStatus::Completed;
+            }
+            _ => {}
         }
 
         // Update step with collected data (similar to advance_step but without marking as completed)
@@ -1051,6 +1058,50 @@ mod tests {
             .get_step(&step_id)
             .expect("Failed to fetch saved step")
             .expect("Step should exist");
+        assert_eq!(persisted.collected_data, persisted.step_data);
+    }
+
+    #[test]
+    fn test_save_step_progress_keeps_completed_status() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let service = InterventionWorkflowService::new(test_db.db());
+        let mut step = InterventionStep::new(
+            "intervention-1".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        step.step_status = StepStatus::Completed;
+        step.completed_at = TimestampString::now();
+        let step_id = step.id.clone();
+
+        service
+            .data
+            .save_step(&step)
+            .expect("Failed to seed completed step");
+
+        let request = SaveStepProgressRequest {
+            step_id: step_id.clone(),
+            collected_data: serde_json::json!({
+                "checklist": { "clean_dry": true }
+            }),
+            notes: Some("edited after completion".to_string()),
+            photos: Some(vec!["/tmp/completed-edit.jpg".to_string()]),
+        };
+
+        let runtime = tokio::runtime::Runtime::new().expect("Failed to create runtime");
+        let updated = runtime
+            .block_on(service.save_step_progress(request, "test-correlation", Some("tech-1")))
+            .expect("Failed to save completed step progress");
+
+        assert_eq!(updated.step_status, StepStatus::Completed);
+
+        let persisted = service
+            .data
+            .get_step(&step_id)
+            .expect("Failed to fetch saved step")
+            .expect("Step should exist");
+        assert_eq!(persisted.step_status, StepStatus::Completed);
         assert_eq!(persisted.collected_data, persisted.step_data);
     }
 }

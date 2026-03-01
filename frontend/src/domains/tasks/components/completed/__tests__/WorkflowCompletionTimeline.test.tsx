@@ -60,4 +60,28 @@ describe('WorkflowCompletionTimeline', () => {
 
     expect(screen.getByText(/Structure non reconnue/i)).toBeInTheDocument();
   });
+
+  it('uses step_data when collected_data is empty', () => {
+    render(
+      <WorkflowCompletionTimeline
+        steps={[
+          {
+            id: 'inspection',
+            title: 'Inspection',
+            status: 'completed',
+            collected_data: null,
+            step_data: {
+              checklist: { clean_dry: true },
+              notes: 'legacy payload',
+            },
+          },
+        ]}
+        expandedSteps={new Set(['inspection'])}
+        onToggleStep={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText(/Checklist:/i)).toBeInTheDocument();
+    expect(screen.getByText(/legacy payload/i)).toBeInTheDocument();
+  });
 });

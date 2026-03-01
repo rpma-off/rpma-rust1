@@ -16,6 +16,7 @@ import {
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
 import type { Defect } from '@/domains/interventions';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
 
 const CHECKLIST_ITEMS = [
   {
@@ -84,7 +85,7 @@ export default function InspectionStepPage() {
 
   useEffect(() => {
     if (!stepRecord) return;
-    const collected = (stepRecord?.collected_data ?? {}) as InspectionDraft;
+    const collected = getEffectiveStepData(stepRecord) as InspectionDraft;
     const normalizedDefects = Array.isArray(collected.defects)
       ? collected.defects.map((defect) => ({
           ...defect,
@@ -181,15 +182,24 @@ export default function InspectionStepPage() {
     }
   };
 
+  const handleDownloadStepData = () => {
+    if (!intervention?.id || !stepRecord) return;
+    const payload = buildStepExportPayload(taskId, intervention.id, stepRecord);
+    const nowDate = new Date().toISOString().split('T')[0];
+    downloadJsonFile(payload, `intervention-${intervention.id}-step-inspection-${nowDate}.json`);
+  };
+
   return (
     <PpfWorkflowLayout
       stepId="inspection"
       actionBar={{
         summary: summaryText,
         onSaveDraft: handleSaveDraft,
+        onDownloadData: handleDownloadStepData,
         onValidate: handleValidate,
         validateLabel: 'Inspection',
         saveDisabled: isSaving,
+        downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
       }}
     >

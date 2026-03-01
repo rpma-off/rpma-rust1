@@ -15,6 +15,7 @@ import {
   usePpfWorkflow,
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
 
 const ZONE_CHECKLIST = [
   { id: 'surface_ready', title: 'Surface dégraissée et sèche', required: true },
@@ -101,7 +102,7 @@ export default function InstallationStepPage() {
 
   useEffect(() => {
     if (!stepRecord) return;
-    const collected = (stepRecord?.collected_data ?? {}) as InstallationDraft;
+    const collected = getEffectiveStepData(stepRecord) as InstallationDraft;
     const baseZones = buildZoneList(task?.ppf_zones ?? null);
     const savedZones = Array.isArray(collected.zones) ? collected.zones : [];
     const merged: ZoneDraft[] = baseZones.map((zone) => {
@@ -290,15 +291,24 @@ export default function InstallationStepPage() {
     }
   };
 
+  const handleDownloadStepData = () => {
+    if (!intervention?.id || !stepRecord) return;
+    const payload = buildStepExportPayload(taskId, intervention.id, stepRecord);
+    const nowDate = new Date().toISOString().split('T')[0];
+    downloadJsonFile(payload, `intervention-${intervention.id}-step-installation-${nowDate}.json`);
+  };
+
   return (
     <PpfWorkflowLayout
       stepId="installation"
       actionBar={{
         summary: summaryText,
         onSaveDraft: handleSaveDraft,
+        onDownloadData: handleDownloadStepData,
         onValidate: handleValidate,
         validateLabel: 'Installation',
         saveDisabled: isSaving,
+        downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
       }}
     >

@@ -92,6 +92,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
       if (options?.invalidate) {
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(step.intervention_id) });
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+        queryClient.invalidateQueries({ queryKey: ['intervention-data', taskId] });
       }
 
       if (options?.showToast) {

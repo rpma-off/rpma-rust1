@@ -12,6 +12,7 @@ import {
   usePpfWorkflow,
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
 
 const FINAL_CHECKLIST = [
   {
@@ -72,7 +73,7 @@ export default function FinalizationStepPage() {
 
   useEffect(() => {
     if (!stepRecord) return;
-    const collected = (stepRecord?.collected_data ?? {}) as FinalizationDraft;
+    const collected = getEffectiveStepData(stepRecord) as FinalizationDraft;
     setChecklist(collected.checklist ?? {});
     setNotes(collected.notes ?? '');
     setPhotos(stepRecord?.photo_urls ?? []);
@@ -137,15 +138,24 @@ export default function FinalizationStepPage() {
     }
   };
 
+  const handleDownloadStepData = () => {
+    if (!intervention?.id || !stepRecord) return;
+    const payload = buildStepExportPayload(taskId, intervention.id, stepRecord);
+    const nowDate = new Date().toISOString().split('T')[0];
+    downloadJsonFile(payload, `intervention-${intervention.id}-step-finalization-${nowDate}.json`);
+  };
+
   return (
     <PpfWorkflowLayout
       stepId="finalization"
       actionBar={{
         summary: summaryText,
         onSaveDraft: handleSaveDraft,
+        onDownloadData: handleDownloadStepData,
         onValidate: handleValidate,
         validateLabel: 'Finalisation',
         saveDisabled: isSaving,
+        downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
       }}
     >

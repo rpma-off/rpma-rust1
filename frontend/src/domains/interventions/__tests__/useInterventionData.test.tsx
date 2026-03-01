@@ -160,4 +160,48 @@ describe('useInterventionData', () => {
 
     expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-3', 'test-token');
   });
+
+  it('uses step_data as fallback when collected_data is null', async () => {
+    mockInterventions.getActiveByTask.mockResolvedValue({
+      intervention: {
+        id: 'inter-4',
+        task_id: 'task-4',
+        workflow_type: 'ppf',
+        status: 'completed',
+        current_step: 4,
+        progress_percentage: 100,
+        started_at: null,
+        completed_at: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+      },
+    } as never);
+
+    mockInterventions.getProgress.mockResolvedValue({
+      steps: [
+        {
+          id: 'step-4',
+          step_type: 'finalization',
+          step_status: 'completed',
+          collected_data: null,
+          step_data: { checklist: { no_bubbles: true } },
+          photo_urls: null,
+          notes: 'saved on old record',
+          completed_at: null,
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        },
+      ],
+    } as never);
+
+    const wrapper = createWrapper();
+    const { result } = renderHook(() => useInterventionData('task-4'), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(result.current.data?.steps?.[0]?.collected_data).toEqual({ checklist: { no_bubbles: true } });
+    expect(result.current.data?.steps?.[0]?.step_data).toEqual({ checklist: { no_bubbles: true } });
+  });
 });

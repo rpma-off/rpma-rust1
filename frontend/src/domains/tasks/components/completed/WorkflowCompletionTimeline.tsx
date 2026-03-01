@@ -29,6 +29,7 @@ type WorkflowStep = {
   status: WorkflowStepStatus | string;
   completed_at?: string | null;
   collected_data?: Record<string, unknown> | null;
+  step_data?: Record<string, unknown> | null;
 };
 
 type WorkflowCompletionTimelineProps = {
@@ -76,7 +77,10 @@ export function WorkflowCompletionTimeline({
       {steps.map((step, index) => {
         const isExpanded = expandedSteps.has(step.id);
         const isCompleted = step.status === 'completed';
-        const hasDetails = Boolean(step.collected_data && Object.keys(step.collected_data).length > 0);
+        const hasDetails = Boolean(
+          (step.collected_data && Object.keys(step.collected_data).length > 0) ||
+          (step.step_data && Object.keys(step.step_data).length > 0)
+        );
 
         return (
           <div
@@ -183,7 +187,7 @@ export function WorkflowCompletionTimeline({
 }
 
 function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
-  const data = step.collected_data as Record<string, unknown> | null;
+  const data = (step.collected_data ?? step.step_data ?? null) as Record<string, unknown> | null;
   if (!data) return null;
 
   const rawJson = JSON.stringify(data, null, 2);

@@ -6,9 +6,13 @@ interface InterventionStep {
   id: string;
   step_type: string;
   step_status: string;
-  collected_data: Record<string, unknown>;
+  collected_data: Record<string, unknown> | null;
+  step_data?: Record<string, unknown> | null;
   photo_urls: string[] | null;
   notes: string | null;
+  measurements?: Record<string, unknown> | null;
+  observations?: unknown[] | null;
+  validation_data?: Record<string, unknown> | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -33,6 +37,15 @@ interface InterventionData {
  */
 export function useInterventionData(taskId: string) {
   const { session } = useAuth();
+
+  const normalizeStep = (step: InterventionStep): InterventionStep => ({
+    ...step,
+    collected_data: step.collected_data ?? step.step_data ?? {},
+    step_data: step.step_data ?? null,
+    measurements: step.measurements ?? null,
+    observations: step.observations ?? null,
+    validation_data: step.validation_data ?? null,
+  });
 
   return useQuery({
     queryKey: ['intervention-data', taskId],
@@ -80,7 +93,10 @@ export function useInterventionData(taskId: string) {
           : null;
 
         if (existingSteps) {
-          return { ...intervention, steps: existingSteps } as InterventionData;
+          return {
+            ...intervention,
+            steps: existingSteps.map(normalizeStep),
+          } as InterventionData;
         }
 
         // Get steps data for this intervention
@@ -88,7 +104,7 @@ export function useInterventionData(taskId: string) {
 
         return {
           ...intervention,
-          steps: (stepsResult?.steps || []) as unknown as InterventionStep[]
+          steps: ((stepsResult?.steps || []) as unknown as InterventionStep[]).map(normalizeStep)
         } as InterventionData;
       } catch (error) {
         console.error('Failed to fetch intervention data:', error);

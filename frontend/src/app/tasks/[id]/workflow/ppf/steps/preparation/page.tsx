@@ -12,6 +12,7 @@ import {
   usePpfWorkflow,
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
 
 const SURFACE_CHECKLIST = [
   {
@@ -105,7 +106,7 @@ export default function PreparationStepPage() {
 
   useEffect(() => {
     if (!stepRecord) return;
-    const collected = (stepRecord?.collected_data ?? {}) as PreparationDraft;
+    const collected = getEffectiveStepData(stepRecord) as PreparationDraft;
     setSurfaceChecklist(collected.surfaceChecklist ?? {});
     setCutChecklist(collected.cutChecklist ?? {});
     setMaterialsChecklist(collected.materialsChecklist ?? {});
@@ -176,15 +177,24 @@ export default function PreparationStepPage() {
     }
   };
 
+  const handleDownloadStepData = () => {
+    if (!intervention?.id || !stepRecord) return;
+    const payload = buildStepExportPayload(taskId, intervention.id, stepRecord);
+    const nowDate = new Date().toISOString().split('T')[0];
+    downloadJsonFile(payload, `intervention-${intervention.id}-step-preparation-${nowDate}.json`);
+  };
+
   return (
     <PpfWorkflowLayout
       stepId="preparation"
       actionBar={{
         summary: summaryText,
         onSaveDraft: handleSaveDraft,
+        onDownloadData: handleDownloadStepData,
         onValidate: handleValidate,
         validateLabel: 'Préparation',
         saveDisabled: isSaving,
+        downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
       }}
     >

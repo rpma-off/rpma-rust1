@@ -493,8 +493,9 @@ impl InterventionRepository {
                 observations, photo_count, required_photos_completed, photo_urls, validation_data,
                 validation_errors, validation_score, requires_supervisor_approval, approved_by,
                 approved_at, rejection_reason, location_lat, location_lon, location_accuracy,
+                device_timestamp, server_timestamp, title, notes, synced, last_synced_at,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             params![
                 step.id, step.intervention_id, step.step_number, step.step_name, f.step_type, f.step_status,
                 step.description, f.instructions_json, f.quality_checkpoints_json, step.is_mandatory, step.requires_photos,
@@ -503,6 +504,7 @@ impl InterventionRepository {
                 f.observations_json, step.photo_count, step.required_photos_completed, f.photo_urls_json, f.validation_data_json,
                 f.validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
                 step.approved_at.inner(), step.rejection_reason, step.location_lat, step.location_lon, step.location_accuracy,
+                step.device_timestamp.inner(), step.server_timestamp.inner(), step.title, step.notes, step.synced, step.last_synced_at.inner(),
                 step.created_at, step.updated_at
             ],
         )?;
@@ -778,5 +780,104 @@ impl InterventionRepository {
         .map_err(|e| {
             InterventionError::Database(format!("Failed to count archived interventions: {}", e))
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
+    use crate::shared::contracts::common::TimestampString;
+    use crate::test_utils::TestDatabase;
+
+    fn build_step(intervention_id: &str, step_number: i32) -> InterventionStep {
+        let mut step = InterventionStep::new(
+            intervention_id.to_string(),
+            step_number,
+            format!("Step {}", step_number),
+            StepType::Inspection,
+        );
+        step.step_status = StepStatus::Completed;
+        step.step_data = Some(serde_json::json!({"legacy": true}));
+        step.collected_data = Some(serde_json::json!({"notes": "from_collected"}));
+        step.measurements = Some(serde_json::json!({"temp_c": 22.5}));
+        step.photo_urls = Some(vec!["/tmp/photo-a.jpg".to_string()]);
+        step.notes = Some("persisted-note".to_string());
+        step.title = Some("persisted-title".to_string());
+        step.synced = true;
+        step.device_timestamp = TimestampString::new(Some(1_700_000_000_000));
+        step.server_timestamp = TimestampString::new(Some(1_700_000_000_100));
+        step.last_synced_at = TimestampString::new(Some(1_700_000_000_200));
+        step
+    }
+
+    #[test]
+    fn save_step_with_tx_persists_extended_fields() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let db = test_db.db();
+        let repository = InterventionRepository::new(db.clone());
+        let step = build_step("intervention-1", 1);
+
+        let mut conn = db
+            .get_connection()
+            .expect("Failed to get connection for transaction");
+        let tx = conn
+            .transaction()
+            .expect("Failed to open transaction");
+        repository
+            .save_step_with_tx(&tx, &step)
+            .expect("Failed to save step with transaction");
+        tx.commit().expect("Failed to commit transaction");
+
+        let persisted = repository
+            .get_step(&step.id)
+            .expect("Failed to read saved step")
+            .expect("Expected saved step");
+
+        assert_eq!(persisted.step_data, step.step_data);
+        assert_eq!(persisted.collected_data, step.collected_data);
+        assert_eq!(persisted.measurements, step.measurements);
+        assert_eq!(persisted.photo_urls, step.photo_urls);
+        assert_eq!(persisted.notes, step.notes);
+        assert_eq!(persisted.title, step.title);
+        assert_eq!(persisted.synced, step.synced);
+        assert_eq!(persisted.device_timestamp.inner(), step.device_timestamp.inner());
+        assert_eq!(persisted.server_timestamp.inner(), step.server_timestamp.inner());
+        assert_eq!(persisted.last_synced_at.inner(), step.last_synced_at.inner());
+    }
+
+    #[test]
+    fn get_intervention_steps_returns_step_data_fields() {
+        let test_db = TestDatabase::new().expect("Failed to create test database");
+        let db = test_db.db();
+        let repository = InterventionRepository::new(db);
+
+        let step_1 = build_step("intervention-2", 1);
+        let mut step_2 = build_step("intervention-2", 2);
+        step_2.step_type = StepType::Preparation;
+        step_2.collected_data = Some(serde_json::json!({"checklist": {"wash": true}}));
+        step_2.step_data = Some(serde_json::json!({"legacy_checklist": {"wash": true}}));
+        step_2.photo_urls = Some(vec!["/tmp/photo-b.jpg".to_string()]);
+        step_2.notes = Some("prep-note".to_string());
+
+        repository.save_step(&step_1).expect("Failed to seed step 1");
+        repository.save_step(&step_2).expect("Failed to seed step 2");
+
+        let steps = repository
+            .get_intervention_steps("intervention-2")
+            .expect("Failed to fetch intervention steps");
+
+        assert_eq!(steps.len(), 2);
+        assert_eq!(steps[0].step_data, step_1.step_data);
+        assert_eq!(steps[0].collected_data, step_1.collected_data);
+        assert_eq!(steps[0].photo_urls, step_1.photo_urls);
+        assert_eq!(steps[0].notes, step_1.notes);
+        assert_eq!(steps[0].measurements, step_1.measurements);
+
+        assert_eq!(steps[1].step_data, step_2.step_data);
+        assert_eq!(steps[1].collected_data, step_2.collected_data);
+        assert_eq!(steps[1].photo_urls, step_2.photo_urls);
+        assert_eq!(steps[1].notes, step_2.notes);
+        assert_eq!(steps[1].measurements, step_2.measurements);
     }
 }

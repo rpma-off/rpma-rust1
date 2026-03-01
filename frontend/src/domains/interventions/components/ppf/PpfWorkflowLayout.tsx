@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Save } from 'lucide-react';
 import { Button } from '@/shared/ui/ui/button';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { ErrorState } from '@/shared/ui/layout/ErrorState';
@@ -17,9 +17,12 @@ import { PPF_STEP_CONFIG } from './ppfWorkflow.config';
 type ActionBarConfig = {
   summary?: string;
   onSaveDraft?: () => void;
+  onDownloadData?: () => void;
   onValidate?: () => void;
+  downloadLabel?: string;
   validateLabel?: string;
   saveDisabled?: boolean;
+  downloadDisabled?: boolean;
   validateDisabled?: boolean;
   isSaving?: boolean;
   isValidating?: boolean;
@@ -191,6 +194,17 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
                 <Save className="mr-2 h-4 w-4" />
                 Sauvegarder brouillon
               </Button>
+              {actionBar.onDownloadData && (
+                <Button
+                  variant="outline"
+                  className={cn('h-9 text-xs font-semibold', actionBar.downloadDisabled && 'opacity-50')}
+                  onClick={actionBar.onDownloadData}
+                  disabled={actionBar.downloadDisabled}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {actionBar.downloadLabel ?? 'Télécharger données'}
+                </Button>
+              )}
               <Button
                 className={cn(
                   'h-10 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700',
