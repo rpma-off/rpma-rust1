@@ -3,7 +3,7 @@ import PPFWorkflowLayout from './layout';
 
 const providerSpy = jest.fn();
 
-jest.mock('@/domains/interventions', () => ({
+jest.mock('@/domains/interventions/api/PPFWorkflowProvider', () => ({
   PPFWorkflowProvider: ({ taskId, children }: { taskId: string; children: React.ReactNode }) => {
     providerSpy(taskId);
     return <div data-testid="workflow-provider">{children}</div>;

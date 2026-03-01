@@ -1,4 +1,4 @@
-import { PPFWorkflowProvider } from '@/domains/interventions';
+import { PPFWorkflowProvider } from '@/domains/interventions/api/PPFWorkflowProvider';
 
 interface PPFWorkflowLayoutProps {
   children: React.ReactNode;

@@ -47,18 +47,21 @@ describe('safeInvoke – session_token auto-injection', () => {
   });
 
   describe('protected command + token available', () => {
-    it('injects session_token into the args sent to invoke', async () => {
+    it('injects both sessionToken and session_token into args sent to invoke', async () => {
       mockGetSessionToken.mockResolvedValue('my-session-token');
 
       await safeInvoke('task_crud', { request: { action: { action: 'Get', id: '1' } } });
 
       expect(mockInvoke).toHaveBeenCalledWith(
         'task_crud',
-        expect.objectContaining({ session_token: 'my-session-token' })
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
       );
     });
 
-    it('injects session_token for health and telemetry commands that are no longer public', async () => {
+    it('injects both token key variants for protected health and telemetry commands', async () => {
       mockGetSessionToken.mockResolvedValue('my-session-token');
 
       await safeInvoke('health_check');
@@ -68,17 +71,26 @@ describe('safeInvoke – session_token auto-injection', () => {
       expect(mockInvoke).toHaveBeenNthCalledWith(
         1,
         'health_check',
-        expect.objectContaining({ session_token: 'my-session-token' })
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
       );
       expect(mockInvoke).toHaveBeenNthCalledWith(
         2,
         'get_device_info',
-        expect.objectContaining({ session_token: 'my-session-token' })
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
       );
       expect(mockInvoke).toHaveBeenNthCalledWith(
         3,
         'get_performance_stats',
-        expect.objectContaining({ session_token: 'my-session-token' })
+        expect.objectContaining({
+          sessionToken: 'my-session-token',
+          session_token: 'my-session-token'
+        })
       );
     });
 
@@ -107,6 +119,10 @@ describe('safeInvoke – session_token auto-injection', () => {
       expect(mockInvoke).toHaveBeenCalledWith(
         'get_active_sessions',
         expect.objectContaining({ sessionToken: 'camel-token' })
+      );
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'get_active_sessions',
+        expect.not.objectContaining({ session_token: 'auto-token' })
       );
     });
   });

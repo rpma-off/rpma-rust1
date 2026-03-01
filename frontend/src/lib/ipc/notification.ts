@@ -27,28 +27,28 @@ export const notificationApi = {
    * Get notifications for current user
    */
   get: async (sessionToken: string): Promise<GetNotificationsResponse> => {
-    return safeInvoke('get_notifications', { session_token: sessionToken });
+    return safeInvoke('get_notifications', { sessionToken });
   },
 
   /**
    * Mark a notification as read
    */
   markRead: async (id: string, sessionToken: string): Promise<SuccessResponse> => {
-    return safeInvoke('mark_notification_read', { id, session_token: sessionToken });
+    return safeInvoke('mark_notification_read', { id, sessionToken });
   },
 
   /**
    * Mark all notifications as read
    */
   markAllRead: async (sessionToken: string): Promise<SuccessResponse> => {
-    return safeInvoke('mark_all_notifications_read', { session_token: sessionToken });
+    return safeInvoke('mark_all_notifications_read', { sessionToken });
   },
 
   /**
    * Delete a notification
    */
   delete: async (id: string, sessionToken: string): Promise<SuccessResponse> => {
-    return safeInvoke('delete_notification', { id, session_token: sessionToken });
+    return safeInvoke('delete_notification', { id, sessionToken });
   },
 
   /**

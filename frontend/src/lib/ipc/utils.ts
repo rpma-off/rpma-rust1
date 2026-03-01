@@ -164,7 +164,7 @@ export async function safeInvoke<T>(
     correlation_id: correlationId,
   };
 
-  // Auto-inject session_token for protected commands when not already supplied
+  // Auto-inject session token for protected commands when not already supplied
   const isProtected = !PUBLIC_COMMANDS.has(command);
   const hasExplicitToken =
     argsWithCorrelation.session_token !== null && argsWithCorrelation.session_token !== undefined ||
@@ -172,6 +172,7 @@ export async function safeInvoke<T>(
   if (isProtected && !hasExplicitToken) {
     const token = await getSessionToken();
     if (token) {
+      argsWithCorrelation.sessionToken = token;
       argsWithCorrelation.session_token = token;
     } else {
       const authError: EnhancedError = new Error(
