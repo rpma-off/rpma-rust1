@@ -283,8 +283,8 @@ const PPF_STEP_DEFS: Array<{
   },
   {
     step_type: 'preparation',
-    step_name: 'PrÃ©paration',
-    description: 'Nettoyage, dÃ©graissage et dÃ©coupe film',
+    step_name: 'Préparation',
+    description: 'Nettoyage, dégraissage et découpe film',
     min_photos_required: 0,
     max_photos_allowed: 6,
     estimated_duration_seconds: 18 * 60
@@ -300,7 +300,7 @@ const PPF_STEP_DEFS: Array<{
   {
     step_type: 'finalization',
     step_name: 'Finalisation',
-    description: 'ContrÃ´le qualitÃ© final et photos',
+    description: 'Contrôle qualité final et photos',
     min_photos_required: 3,
     max_photos_allowed: 8,
     estimated_duration_seconds: 8 * 60
