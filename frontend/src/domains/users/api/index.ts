@@ -5,6 +5,8 @@
 export { UsersProvider, useUsersContext } from './UsersProvider';
 export { useUsers } from './useUsers';
 export { useUserActions } from './useUserActions';
+export { useUserList } from '../hooks/useUserList';
+export type { UseUserListReturn } from '../hooks/useUserList';
 
 export { UserList } from '../components/UserList';
 export { UserForm } from '../components/UserForm';
