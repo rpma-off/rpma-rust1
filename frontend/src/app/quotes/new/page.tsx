@@ -22,7 +22,7 @@ import {
   QuoteVehicleCustomerCard,
   QuoteDetailsCard,
   QuoteTotalsCard,
-} from '@/domains/quotes/components';
+} from '@/domains/quotes';
 import type {
   CreateQuoteRequest,
   QuotePartInput,

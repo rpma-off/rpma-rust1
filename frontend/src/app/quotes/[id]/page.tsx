@@ -17,13 +17,12 @@ import {
   useQuoteAttachments,
   QuoteStatusBadge,
   QuoteConvertDialog,
-} from '@/domains/quotes';
-import { QuoteImagesManager, QuoteDocumentsManager } from '@/domains/quotes/components';
-import {
+  QuoteImagesManager,
+  QuoteDocumentsManager,
   QuoteCustomerResponse,
   QuotePublicLinkCard,
   QuoteShareDialog,
-} from '@/domains/quotes/components';
+} from '@/domains/quotes';
 import { formatCents } from '@/domains/quotes/utils/formatting';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -356,7 +355,7 @@ export default function QuoteDetailPage() {
                       <div className="flex justify-between pb-2">
                         <dt className="text-gray-500 flex items-center gap-2">
                           <Clock className="h-3.5 w-3.5" />
-                          Valide jusqu'au
+                          Valide jusqu&apos;au
                         </dt>
                         <dd className="font-medium">{new Date(quote.valid_until).toLocaleDateString('fr-FR')}</dd>
                       </div>
@@ -547,7 +546,7 @@ export default function QuoteDetailPage() {
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                       >
                         <option value="service">Service</option>
-                        <option value="labor">Main d'œuvre</option>
+                        <option value="labor">Main d&apos;œuvre</option>
                         <option value="material">Matériel</option>
                         <option value="discount">Remise</option>
                       </select>
@@ -735,7 +734,7 @@ export default function QuoteDetailPage() {
               <Clock className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-4 text-lg font-medium text-gray-900">Historique</h3>
               <p className="mt-2 text-sm text-gray-500">
-                L'historique des modifications sera bientôt disponible.
+                L&apos;historique des modifications sera bientôt disponible.
               </p>
             </div>
           </TabsContent>

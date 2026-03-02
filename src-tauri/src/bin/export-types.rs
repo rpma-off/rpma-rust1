@@ -46,8 +46,10 @@ use rpma_ppf_intervention::domains::notifications::domain::models::notification:
     NotificationType, SmsConfig, SmsProvider, TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
-    CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse, QuoteExportResponse,
-    QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus, TaskCreatedInfo,
+    AttachmentType, CreateQuoteAttachmentRequest, CreateQuoteItemRequest, CreateQuoteRequest,
+    CustomerQuoteResponse, CustomerResponseAction, Quote, QuoteAcceptResponse, QuoteAttachment,
+    QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuotePublicViewResponse,
+    QuoteQuery, QuoteShareResponse, QuoteStatus, TaskCreatedInfo, UpdateQuoteAttachmentRequest,
     UpdateQuoteItemRequest, UpdateQuoteRequest,
 };
 use rpma_ppf_intervention::domains::reports::domain::models::report_capabilities::ReportCapabilities;
@@ -91,11 +93,12 @@ use rpma_ppf_intervention::domains::interventions::{
 
 // Import command request types
 use rpma_ppf_intervention::commands::{CompressedApiResponse, UserAction};
+use rpma_ppf_intervention::domains::notifications::SendNotificationRequest;
+use rpma_ppf_intervention::domains::notifications::UpdateNotificationConfigRequest;
+use rpma_ppf_intervention::domains::users::CreateUserRequest;
+use rpma_ppf_intervention::domains::users::UpdateUserRequest;
+use rpma_ppf_intervention::domains::users::UserListResponse;
 use rpma_ppf_intervention::shared::ipc::response::ApiError;
-// use rpma_ppf_intervention::domains::users::application::contracts::{CreateUserRequest, UpdateUserRequest, UserListResponse};
-// use rpma_ppf_intervention::domains::notifications::{
-//     SendNotificationRequest, UpdateNotificationConfigRequest,
-// };
 
 fn main() {
     use std::fs;
@@ -461,6 +464,43 @@ fn main() {
         &QuoteExportResponse::export_to_string()
             .expect("Failed to export QuoteExportResponse type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuoteShareResponse::export_to_string().expect("Failed to export QuoteShareResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuotePublicViewResponse::export_to_string()
+            .expect("Failed to export QuotePublicViewResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AttachmentType::export_to_string().expect("Failed to export AttachmentType type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &QuoteAttachment::export_to_string().expect("Failed to export QuoteAttachment type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateQuoteAttachmentRequest::export_to_string()
+            .expect("Failed to export CreateQuoteAttachmentRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateQuoteAttachmentRequest::export_to_string()
+            .expect("Failed to export UpdateQuoteAttachmentRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CustomerResponseAction::export_to_string()
+            .expect("Failed to export CustomerResponseAction type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CustomerQuoteResponse::export_to_string()
+            .expect("Failed to export CustomerQuoteResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: interventions
@@ -642,15 +682,15 @@ fn main() {
         &NotificationConfig::export_to_string().expect("Failed to export NotificationConfig type"),
     );
     type_definitions.push_str("\n");
-    // type_definitions.push_str(
-    //     &UpdateNotificationConfigRequest::export_to_string()
-    //         .expect("Failed to export UpdateNotificationConfigRequest type"),
-    // );
-    // type_definitions.push_str("\n");
-    // type_definitions.push_str(
-    //     &SendNotificationRequest::export_to_string()
-    //         .expect("Failed to export SendNotificationRequest type"),
-    // );
+    type_definitions.push_str(
+        &UpdateNotificationConfigRequest::export_to_string()
+            .expect("Failed to export UpdateNotificationConfigRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SendNotificationRequest::export_to_string()
+            .expect("Failed to export SendNotificationRequest type"),
+    );
     type_definitions.push_str("\n");
     type_definitions.push_str(&Message::export_to_string().expect("Failed to export Message type"));
     type_definitions.push_str("\n");
@@ -697,20 +737,20 @@ fn main() {
     type_definitions.push_str("\n");
     // Domain: auth (user command types)
     type_definitions.push_str("// @domain:auth\n");
-    // type_definitions.push_str(
-    //     &CreateUserRequest::export_to_string().expect("Failed to export CreateUserRequest type"),
-    // );
-    // type_definitions.push_str("\n");
-    // type_definitions.push_str(
-    //     &UpdateUserRequest::export_to_string().expect("Failed to export UpdateUserRequest type"),
-    // );
+    type_definitions.push_str(
+        &CreateUserRequest::export_to_string().expect("Failed to export CreateUserRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateUserRequest::export_to_string().expect("Failed to export UpdateUserRequest type"),
+    );
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&UserAction::export_to_string().expect("Failed to export UserAction type"));
     type_definitions.push_str("\n");
-    // type_definitions.push_str(
-    //     &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
-    // );
+    type_definitions.push_str(
+        &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: tasks (status types)
@@ -907,6 +947,14 @@ fn main() {
         "Photo",
         "PhotoType",
         "PhotoCategory",
+        "QuoteShareResponse",
+        "QuotePublicViewResponse",
+        "AttachmentType",
+        "QuoteAttachment",
+        "CreateQuoteAttachmentRequest",
+        "UpdateQuoteAttachmentRequest",
+        "CustomerResponseAction",
+        "CustomerQuoteResponse",
         "Intervention",
         "InterventionStatus",
         "InterventionType",
@@ -940,8 +988,8 @@ fn main() {
         "SmsProvider",
         "SmsConfig",
         "NotificationConfig",
-        // "UpdateNotificationConfigRequest",
-        // "SendNotificationRequest",
+        "UpdateNotificationConfigRequest",
+        "SendNotificationRequest",
         "Message",
         "MessageType",
         "MessageStatus",
@@ -953,10 +1001,10 @@ fn main() {
         "SendMessageRequest",
         "NotificationPreferences",
         "UpdateNotificationPreferencesRequest",
-        // "CreateUserRequest",
-        // "UpdateUserRequest",
+        "CreateUserRequest",
+        "UpdateUserRequest",
         "UserAction",
-        // "UserListResponse",
+        "UserListResponse",
         "StatusDistribution",
         "StatusTransitionRequest",
         "UserSettings",

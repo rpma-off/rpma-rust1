@@ -10,7 +10,7 @@ import { PageShell } from '@/shared/ui/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { QuotesListTable, QuotesStatusTabs } from '@/domains/quotes/components';
+import { QuotesListTable, QuotesStatusTabs } from '@/domains/quotes';
 import type { QuoteStatus } from '@/shared/types';
 
 type ActiveTab = 'all' | QuoteStatus;

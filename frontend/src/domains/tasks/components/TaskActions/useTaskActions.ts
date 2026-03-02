@@ -5,7 +5,8 @@ import { TaskWithDetails } from '@/types/task.types';
 import { toast } from 'sonner';
 import { taskService } from '../../services';
 import { useAuth } from '@/domains/auth';
-import { InterventionWorkflowService } from '@/domains/interventions';
+import { safeInvoke } from '@/lib/ipc';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { phone } from '@/lib/utils/phone';
 import { createStatusUpdate, createPriorityUpdate, createNotesUpdate } from './task-updates';
 
@@ -99,10 +100,24 @@ export function useTaskActions(task: TaskWithDetails) {
         notes: null,
       };
 
-      return await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+      const result = await safeInvoke(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
+        action: { action: 'Start', data: interventionData },
+        sessionToken: user.token
+      });
+
+      if (result === null || typeof result !== 'object') {
+        throw new Error('Invalid response: expected object');
+      }
+      if ('type' in result) {
+        const workflowResponse = result as { type: string; intervention: unknown; steps: unknown[] };
+        if (workflowResponse.type === 'Started') {
+          return { success: true, intervention: workflowResponse.intervention, steps: workflowResponse.steps };
+        }
+      }
+      throw new Error('Invalid response format for intervention start');
     },
     onSuccess: (result) => {
-      if (result.success) {
+      if (result.success && result.intervention) {
         queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
         queryClient.invalidateQueries({ queryKey: ['interventions'] });
         toast.success('Intervention démarrée avec succès');

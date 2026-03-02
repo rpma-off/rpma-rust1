@@ -16,6 +16,7 @@ export { MonitoringTab } from '../components/MonitoringTab';
 export { QualityAssuranceDashboard } from '../components/QualityAssuranceDashboard';
 export { PhotoDocumentationDashboard } from '../components/PhotoDocumentationDashboard';
 export { SecurityDashboard } from '../components/SecurityDashboard';
+export { default as ConfigurationPageContent } from '../components/ConfigurationPageContent';
 
 export type {
   AdminConfiguration,

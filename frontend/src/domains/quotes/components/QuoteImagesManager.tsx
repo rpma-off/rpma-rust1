@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, Image as ImageIcon, Loader2, X, Upload } from 'lucide-react';
 import { compressImage, formatFileSize } from '@/domains/quotes/utils/image-compression';
-import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes';
+import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes/hooks/useQuotes';
 
 import type { QuoteAttachment } from '@/types/quote.types';
 

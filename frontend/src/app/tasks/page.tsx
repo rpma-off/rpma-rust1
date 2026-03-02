@@ -1,6 +1,6 @@
 'use client';
 
-import TasksPageContent from '@/domains/tasks/components/TasksPageContent';
+import { TasksPageContent } from '@/domains/tasks';
 
 export default function TasksPage() {
   return <TasksPageContent />;

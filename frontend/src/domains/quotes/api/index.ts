@@ -1,4 +1,4 @@
-﻿/**
+/**
  * quotes Domain - Public API
  */
 

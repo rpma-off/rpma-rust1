@@ -1,4 +1,4 @@
-﻿{
+{
     "version":  1,
     "description":  "Known boundary coverage violations tracked for progressive refactoring. New violations will cause boundary:enforce to fail.",
     "allowed":  [

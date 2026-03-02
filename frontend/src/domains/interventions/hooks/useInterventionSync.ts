@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AuthSecureStorage } from '@/lib/secureStorage';
-import { taskService } from '@/domains/tasks/services';
+import { safeInvoke } from '@/lib/ipc';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { interventionWorkflowService } from '../services';
 import { interventionKeys } from '@/lib/query-keys';
 import type {
@@ -43,12 +44,7 @@ export function useInterventionSync({
 
         console.log('Fetching active intervention for task:', currentTaskId);
 
-        const taskResult = await taskService.getTaskById(currentTaskId);
-        if (!taskResult.success || !taskResult.data) {
-          throw new Error('Task not found');
-        }
-
-        const result = await interventionWorkflowService.getActiveByTask(taskResult.data.id, sessionToken);
+        const result = await interventionWorkflowService.getActiveByTask(currentTaskId, sessionToken);
         console.log('IPC result for active intervention:', result);
 
         const interventionData = result.data;
