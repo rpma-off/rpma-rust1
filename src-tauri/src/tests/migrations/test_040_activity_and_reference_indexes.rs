@@ -1,26 +1,29 @@
 //! Migration 040 tests: activity and inventory reference indexes
+//!
+//! On fresh databases, schema.sql creates the `sessions` table directly
+//! (user_sessions never exists). Migration 040 is already recorded in the
+//! baseline version seed and is a no-op. This test verifies the
+//! inventory_transactions reference index exists on a fresh database.
 
 use super::test_framework::MigrationTestContext;
 
 #[test]
-fn test_migration_040_adds_recent_activity_and_reference_indexes() {
-    let mut ctx =
-        MigrationTestContext::at_version(39).expect("Failed to create migration test context");
+fn test_migration_040_fresh_db_inventory_reference_index_exists() {
+    let ctx =
+        MigrationTestContext::at_version(40).expect("Failed to create migration test context");
 
-    ctx.migrate_to_version(40)
-        .expect("Failed to run migration 040");
-
-    let session_index_exists: i64 = ctx
+    // On fresh DB, user_sessions indexes should not exist
+    let old_session_index_exists: i64 = ctx
         .conn
         .query_row(
             "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='idx_user_sessions_last_activity_user'",
             [],
             |row| row.get(0),
         )
-        .expect("Failed to check session activity index");
+        .expect("Failed to check old session activity index");
     assert_eq!(
-        session_index_exists, 1,
-        "idx_user_sessions_last_activity_user index should exist"
+        old_session_index_exists, 0,
+        "user_sessions index should not exist on fresh DB"
     );
 
     let reference_index_exists: i64 = ctx

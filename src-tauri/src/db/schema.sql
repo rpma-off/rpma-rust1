@@ -808,7 +808,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = 1;
 CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
 
--- Table 7.5: sessions (replaces old user_sessions — kept in sync with migration 041)
+-- Table 7.5: sessions (kept in sync with migration 041)
 CREATE TABLE IF NOT EXISTS sessions (
   id            TEXT    PRIMARY KEY,  -- UUID session token
   user_id       TEXT    NOT NULL,
@@ -1555,6 +1555,26 @@ CREATE INDEX IF NOT EXISTS idx_events_technician_date ON calendar_events(technic
 CREATE INDEX IF NOT EXISTS idx_events_date_range ON calendar_events(start_datetime, end_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_status_technician ON calendar_events(status, technician_id);
 
+-- Table 14: notifications (kept in sync with migration 044)
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    entity_url TEXT NOT NULL,
+    read BOOLEAN DEFAULT 0,
+    user_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
+
 -- Views
 -- View for optimized client statistics (kept in sync with migration 042)
 CREATE VIEW IF NOT EXISTS client_statistics AS
@@ -1599,22 +1619,21 @@ WHERE t.scheduled_date IS NOT NULL
 
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
--- The current schema.sql represents version 43 of the database schema
+-- The current schema.sql represents version 47 of the database schema
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize baseline schema versions 1..43 to keep version history contiguous.
--- schema.sql already incorporates all changes from migrations 040-043, so fresh
--- databases must not attempt to re-run those migrations (040 references the old
--- user_sessions table which no longer exists in the baseline schema).
+-- Initialize baseline schema versions 1..47 to keep version history contiguous.
+-- schema.sql already incorporates all changes from migrations 001-047, so fresh
+-- databases must not attempt to re-run those migrations.
 WITH RECURSIVE baseline_versions(version) AS (
     SELECT 1
     UNION ALL
     SELECT version + 1
     FROM baseline_versions
-    WHERE version < 43
+    WHERE version < 47
 )
 INSERT OR IGNORE INTO schema_version (version)
 SELECT version FROM baseline_versions;

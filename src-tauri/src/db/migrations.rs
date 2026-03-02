@@ -3222,4 +3222,151 @@ mod tests {
             "DB version must equal the latest migration version after a full run"
         );
     }
+
+    /// Schema drift detection: a fresh DB created via schema.sql must contain
+    /// the same set of tables, views, indexes, and triggers as one that is
+    /// constructed purely through initialize_or_migrate().
+    #[test]
+    fn test_schema_drift_fresh_vs_initialize_or_migrate() {
+        // --- Database A: fresh install via initialize_or_migrate ---
+        let temp_a = NamedTempFile::new().expect("temp A");
+        let db_a = Database::new(temp_a.path(), "").expect("db A");
+        db_a.initialize_or_migrate()
+            .expect("initialize_or_migrate must succeed on an empty DB");
+
+        // --- Database B: init() + migrate(latest) + ensure_required_views ---
+        let temp_b = NamedTempFile::new().expect("temp B");
+        let db_b = Database::new(temp_b.path(), "").expect("db B");
+        db_b.init().expect("init schema");
+        let latest = Database::get_latest_migration_version();
+        db_b.migrate(latest).expect("migrate to latest");
+        db_b.ensure_required_views().expect("ensure views");
+
+        let conn_a = db_a.get_connection().expect("conn A");
+        let conn_b = db_b.get_connection().expect("conn B");
+
+        // Helper: collect sorted list of (type, name) from sqlite_master
+        fn schema_objects(conn: &rusqlite::Connection) -> Vec<(String, String)> {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT type, name FROM sqlite_master \
+                     WHERE name NOT LIKE 'sqlite_%' \
+                     ORDER BY type, name",
+                )
+                .expect("prepare");
+            let rows: Vec<(String, String)> = stmt
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                .expect("query_map")
+                .filter_map(|r| r.ok())
+                .collect();
+            rows
+        }
+
+        let objects_a = schema_objects(&conn_a);
+        let objects_b = schema_objects(&conn_b);
+
+        // Both databases must have the same schema objects
+        assert_eq!(
+            objects_a, objects_b,
+            "Schema drift detected: fresh DB (initialize_or_migrate) differs from init+migrate.\n\
+             Only in A: {:?}\nOnly in B: {:?}",
+            objects_a
+                .iter()
+                .filter(|o| !objects_b.contains(o))
+                .collect::<Vec<_>>(),
+            objects_b
+                .iter()
+                .filter(|o| !objects_a.contains(o))
+                .collect::<Vec<_>>(),
+        );
+    }
+
+    /// Verify that schema_version is properly populated on a fresh database
+    /// created via initialize_or_migrate.
+    #[test]
+    fn test_schema_version_fully_populated_on_fresh_db() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.initialize_or_migrate()
+            .expect("initialize_or_migrate must succeed on fresh DB");
+
+        let latest = Database::get_latest_migration_version();
+        let version = db.get_version().expect("Failed to get version");
+        assert_eq!(
+            version, latest,
+            "schema_version must be at latest ({}) after fresh initialize_or_migrate",
+            latest,
+        );
+
+        // Verify all versions 1..latest are present
+        let conn = db.get_connection().expect("conn");
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM schema_version", [], |row| row.get(0))
+            .expect("count schema_version");
+        assert_eq!(
+            count, latest as i64,
+            "schema_version must contain exactly {} rows (one per migration)",
+            latest,
+        );
+    }
+
+    /// Verify that ensure_required_views is called during initialize_or_migrate
+    /// and that the views exist.
+    #[test]
+    fn test_ensure_required_views_after_initialize_or_migrate() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.initialize_or_migrate()
+            .expect("initialize_or_migrate must succeed");
+
+        let conn = db.get_connection().expect("conn");
+        for view in ["client_statistics", "calendar_tasks"] {
+            let exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='view' AND name=?1",
+                    params![view],
+                    |row| row.get(0),
+                )
+                .expect("query view");
+            assert_eq!(exists, 1, "View '{}' must exist after initialize_or_migrate", view);
+        }
+    }
+
+    /// Verify no user_sessions table exists on a fresh database.
+    #[test]
+    fn test_no_user_sessions_on_fresh_db() {
+        let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+        let db = Database::new(temp_file.path(), "").expect("Failed to create database");
+
+        db.initialize_or_migrate()
+            .expect("initialize_or_migrate must succeed");
+
+        let conn = db.get_connection().expect("conn");
+        let user_sessions_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("query");
+        assert_eq!(
+            user_sessions_exists, 0,
+            "user_sessions table must not exist on a fresh database"
+        );
+
+        // sessions table should exist
+        let sessions_exists: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='sessions'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("query");
+        assert_eq!(
+            sessions_exists, 1,
+            "sessions table must exist on a fresh database"
+        );
+    }
 }
