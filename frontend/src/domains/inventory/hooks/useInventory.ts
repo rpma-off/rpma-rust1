@@ -84,6 +84,21 @@ function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+function extractMaterialList(result: unknown): Material[] {
+  if (Array.isArray(result)) {
+    return result as Material[];
+  }
+
+  if (result && typeof result === 'object' && 'data' in result) {
+    const data = (result as { data?: unknown }).data;
+    if (Array.isArray(data)) {
+      return data as Material[];
+    }
+  }
+
+  return [];
+}
+
 export function useInventory(query?: InventoryQuery) {
   const { user } = useAuth();
   const sessionToken = user?.token;
@@ -112,7 +127,7 @@ export function useInventory(query?: InventoryQuery) {
         limit: query?.limit,
         offset: query?.offset,
       });
-      setMaterials(result.data || []);
+      setMaterials(extractMaterialList(result));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -168,7 +183,7 @@ export function useInventory(query?: InventoryQuery) {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
-    Promise.all([
+    Promise.allSettled([
       fetchMaterials(),
       fetchStats(),
       fetchLowStock(),
@@ -184,7 +199,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.material.create(request, sessionToken);
-    await Promise.all([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
   }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
 
@@ -194,7 +209,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.material.update(id, request, sessionToken);
-    await Promise.all([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
   }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
 
@@ -204,7 +219,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.stock.updateStock(request, sessionToken);
-    await Promise.all([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
   }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
 
@@ -214,7 +229,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     await inventoryIpc.consumption.recordConsumption(request, sessionToken);
-    await Promise.all([fetchMaterials(), fetchStats()]);
+    await Promise.allSettled([fetchMaterials(), fetchStats()]);
   }, [fetchMaterials, fetchStats, sessionToken]);
 
   const getMaterial = useCallback(async (id: string): Promise<Material | null> => {

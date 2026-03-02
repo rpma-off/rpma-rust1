@@ -13,6 +13,7 @@ import type {
 } from '@/shared/types';
 import type { Pagination } from '@/types/api';
 import type { JsonValue } from '@/types/json';
+import { unwrapApiResponse, validateMaterialListPayload } from './response-utils';
 
 type PaginationInfo = {
   page: number;
@@ -447,13 +448,11 @@ export const reportingOperations = {
    * @returns Promise resolving to low stock materials
    */
   getLowStockMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
+    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
       sessionToken
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Material[] }).data)) {
-        return (result as unknown as { data: Material[] }).data;
-      }
-      throw new Error('Invalid response format for get low stock materials');
+    }).then(async result => {
+      const payload = await unwrapApiResponse<unknown>(result, 'get low stock materials', sessionToken);
+      return validateMaterialListPayload(payload, 'get low stock materials');
     }),
 
   /**
@@ -462,13 +461,11 @@ export const reportingOperations = {
    * @returns Promise resolving to expired materials
    */
   getExpiredMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
+    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
       sessionToken
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Material[] }).data)) {
-        return (result as unknown as { data: Material[] }).data;
-      }
-      throw new Error('Invalid response format for get expired materials');
+    }).then(async result => {
+      const payload = await unwrapApiResponse<unknown>(result, 'get expired materials', sessionToken);
+      return validateMaterialListPayload(payload, 'get expired materials');
     }),
 
   /**

@@ -43,7 +43,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           <Label htmlFor="sku" className="text-foreground">{t('inventory.skuLabel')} *</Label>
           <Input
             id="sku"
-            value={formData.sku}
+            value={formData.sku ?? ''}
             onChange={(e) => updateFormData('sku', e.target.value)}
             required
           />
@@ -52,7 +52,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           <Label htmlFor="name" className="text-foreground">{t('inventory.nameLabel')} *</Label>
           <Input
             id="name"
-            value={formData.name}
+            value={formData.name ?? ''}
             onChange={(e) => updateFormData('name', e.target.value)}
             required
           />
@@ -63,7 +63,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
         <Label htmlFor="description" className="text-foreground">{t('inventory.description')}</Label>
         <Textarea
           id="description"
-          value={formData.description}
+          value={formData.description ?? ''}
           onChange={(e) => updateFormData('description', e.target.value)}
           rows={3}
         />
@@ -111,7 +111,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
           <Label htmlFor="currency" className="text-foreground">{t('inventory.currency')}</Label>
           <Input
             id="currency"
-            value={formData.currency}
+            value={formData.currency ?? ''}
             onChange={(e) => updateFormData('currency', e.target.value)}
             placeholder="EUR"
           />
@@ -126,7 +126,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="current_stock"
             type="number"
             step="0.01"
-            value={formData.current_stock}
+            value={formData.current_stock ?? 0}
             onChange={(e) => updateFormData('current_stock', parseFloat(e.target.value) || 0)}
           />
         </div>
@@ -136,7 +136,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="minimum_stock"
             type="number"
             step="0.01"
-            value={formData.minimum_stock}
+            value={formData.minimum_stock ?? ''}
             onChange={(e) => updateFormData('minimum_stock', e.target.value ? parseFloat(e.target.value) : undefined)}
           />
         </div>
@@ -146,7 +146,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="maximum_stock"
             type="number"
             step="0.01"
-            value={formData.maximum_stock}
+            value={formData.maximum_stock ?? ''}
             onChange={(e) => updateFormData('maximum_stock', e.target.value ? parseFloat(e.target.value) : undefined)}
           />
         </div>
@@ -160,7 +160,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="unit_cost"
             type="number"
             step="0.01"
-            value={formData.unit_cost}
+            value={formData.unit_cost ?? ''}
             onChange={(e) => updateFormData('unit_cost', e.target.value ? parseFloat(e.target.value) : undefined)}
           />
         </div>
@@ -170,7 +170,7 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
             id="reorder_point"
             type="number"
             step="0.01"
-            value={formData.reorder_point}
+            value={formData.reorder_point ?? ''}
             onChange={(e) => updateFormData('reorder_point', e.target.value ? parseFloat(e.target.value) : undefined)}
           />
         </div>
@@ -180,8 +180,8 @@ export function MaterialForm({ material, onClose }: MaterialFormProps) {
       <div className="flex items-center space-x-2">
         <Checkbox
           id="is_active"
-          checked={formData.is_active}
-          onCheckedChange={(checked) => updateFormData('is_active', checked)}
+          checked={formData.is_active ?? false}
+          onCheckedChange={(checked) => updateFormData('is_active', checked === true)}
         />
         <Label htmlFor="is_active" className="text-foreground">{t('inventory.active')}</Label>
       </div>
