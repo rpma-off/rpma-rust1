@@ -14,7 +14,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes';
+import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes/hooks/useQuotes';
 import type { QuoteAttachment } from '@/types/quote.types';
 import { formatFileSize } from '@/domains/quotes/utils/image-compression';
 

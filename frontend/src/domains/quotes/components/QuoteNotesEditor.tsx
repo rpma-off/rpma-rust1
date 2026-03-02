@@ -72,7 +72,7 @@ export function QuoteNotesEditor({
             className="resize-none"
           />
           <p className="text-xs text-muted-foreground">
-            Cette note est uniquement visible par l'équipe interne.
+            Cette note est uniquement visible par l&apos;équipe interne.
           </p>
         </div>
       )}

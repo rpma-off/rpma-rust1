@@ -69,7 +69,7 @@ export function QuoteTotalsCard({
 
         {/* Labor Subtotal */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Main d'œuvre</span>
+          <span className="text-muted-foreground">Main d&apos;œuvre</span>
           <span>{formatCents(laborSubtotal)}</span>
         </div>
 

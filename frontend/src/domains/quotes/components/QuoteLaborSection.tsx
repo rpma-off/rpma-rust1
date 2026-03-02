@@ -68,7 +68,7 @@ export function QuoteLaborSection({
   return (
     <div className="rounded-lg border p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Main d'œuvre</h3>
+        <h3 className="text-sm font-semibold">Main d&apos;œuvre</h3>
         <Button
           type="button"
           variant="outline"
@@ -141,7 +141,7 @@ export function QuoteLaborSection({
           {/* Subtotal */}
           <div className="flex justify-end pt-1 text-sm">
             <span className="font-medium">
-              Sous-total main d'œuvre: {formatCents(laborSubtotal)}
+              Sous-total main d&apos;œuvre: {formatCents(laborSubtotal)}
             </span>
           </div>
         </>
@@ -154,7 +154,7 @@ export function QuoteLaborSection({
           onClick={addLabor}
         >
           <Plus className="mr-1 h-4 w-4" />
-          <span className="text-sm">Ajouter une ligne de main d'œuvre</span>
+          <span className="text-sm">Ajouter une ligne de main d&apos;œuvre</span>
         </button>
       )}
     </div>
