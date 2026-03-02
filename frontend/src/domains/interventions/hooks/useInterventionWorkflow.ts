@@ -46,7 +46,8 @@ export function useInterventionWorkflow({
       interventionId: state.intervention?.id,
       component: 'PPF Workflow',
     };
-    const appError = handleApiError(originalError ?? errorMessage, errorContext);
+    const normalizedError = originalError instanceof Error ? originalError : new Error(errorMessage);
+    const appError = handleApiError(normalizedError, errorContext);
 
     console.error(
       `${errorContext.component}[Task: ${errorContext.taskId || 'unknown'}, Intervention: ${errorContext.interventionId || 'none'}]:`,
