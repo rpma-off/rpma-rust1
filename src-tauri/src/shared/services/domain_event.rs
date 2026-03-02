@@ -6,8 +6,6 @@
 
 pub use crate::shared::services::event_system::DomainEvent;
 
-/// Re-export the event factory for convenient access
-pub use crate::shared::services::event_bus::event_factory;
 use chrono::{DateTime, Utc};
 
 impl DomainEvent {

@@ -1,4 +1,5 @@
-use crate::commands::{ApiError, AppState};
+use crate::commands::AppState;
+use crate::shared::ipc::response::ApiError;
 use crate::domains::notifications::domain::models::message::*;
 use tracing;
 

@@ -7,6 +7,6 @@ mod bus;
 mod events;
 
 pub use bus::{
-    publish_event, register_handler, set_global_event_bus, DomainEventBus, DomainEventHandler,
+    publish_event, register_handler, set_global_event_bus, DomainEventHandler,
 };
-pub use events::{DomainEvent, InterventionFinalized, MaterialConsumed};
+pub use events::{DomainEvent, InterventionFinalized};

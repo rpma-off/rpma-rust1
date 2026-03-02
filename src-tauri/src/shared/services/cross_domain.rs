@@ -10,7 +10,6 @@
 
 // --- Intervention domain services ---
 pub use crate::domains::interventions::infrastructure::intervention::InterventionService;
-pub use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 
 // --- Client domain services ---
 pub use crate::domains::clients::infrastructure::client::ClientService;
@@ -31,9 +30,8 @@ pub use crate::domains::auth::infrastructure::auth::AuthService;
 pub use crate::domains::clients::domain::models::client::Client;
 pub use crate::domains::documents::domain::models::photo::Photo;
 pub use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus, InterventionType,
+    Intervention, InterventionStatus,
 };
 pub use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
 pub use crate::domains::inventory::domain::models::material::MaterialConsumption;
-pub use crate::domains::sync::domain::models::sync::EntityType as SyncEntityType;
 pub use crate::domains::tasks::domain::models::task::{PaginationInfo, SortOrder, Task, TaskQuery};

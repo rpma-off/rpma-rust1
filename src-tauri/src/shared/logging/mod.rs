@@ -3,11 +3,8 @@
 //! This module fences the legacy top-level `crate::logging` module behind a
 //! shared entry point so bounded contexts can depend on `shared::logging`.
 
-pub use crate::logging::{
-    clear_global_logger, get_global_logger, set_global_logger, LogDomain, LogEntry, LogError,
-    LogLayer, LogSeverity, RPMARequestLogger, RepositoryLogger, ServiceLogger,
-};
-pub use crate::logging::{correlation, middleware};
+pub use crate::logging::{LogDomain, RPMARequestLogger};
+pub use crate::logging::correlation;
 
 #[cfg(test)]
 mod tests {

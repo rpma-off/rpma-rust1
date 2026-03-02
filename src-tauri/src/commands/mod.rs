@@ -25,9 +25,8 @@ pub mod user {
 
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::contracts::auth::UserRole;
-pub use crate::shared::ipc::response::{ApiError, ApiResponse, CompressedApiResponse};
+pub use crate::shared::ipc::response::{ApiResponse, CompressedApiResponse};
 pub use correlation_helpers::*;
-pub use error_utils::*;
 pub use errors::{AppError, AppResult};
 
 use crate::authenticate;
@@ -52,9 +51,7 @@ use crate::domains::clients::domain::models::client::ClientWithTasks;
 use crate::domains::tasks::domain::models::task::*;
 
 use crate::domains::clients::domain::models::client::Client;
-pub use crate::domains::users::application::{
-    CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
-};
+pub use crate::domains::users::application::{UserAction, UserResponse};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info, instrument, warn};
 

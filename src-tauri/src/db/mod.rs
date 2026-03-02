@@ -22,8 +22,7 @@ use tracing::{debug, warn};
 // Re-export connection functions for backward compatibility
 pub use connection::{checkpoint_wal, initialize_pool};
 
-// Re-export operation pool for routing database operations
-pub use operation_pool::{OperationPoolConfig, OperationPoolManager, OperationType, PoolStats};
+// Operation pool is available via `operation_pool` submodule when needed
 
 /// Trait for types that can be constructed from a SQLite row
 pub trait FromSqlRow: Sized {
@@ -33,8 +32,6 @@ pub trait FromSqlRow: Sized {
 /// NOTE: Repository trait lives in shared::repositories::base
 /// Use `use crate::shared::repositories::base::Repository` for repository operations
 /// This module retains legacy QueryBuilder for backward compatibility
-/// Backward compatibility: Re-export Repository from shared::repositories::base
-pub use crate::shared::repositories::base::Repository;
 
 /// Query builder for complex queries
 pub struct QueryBuilder {
@@ -115,8 +112,8 @@ pub struct AsyncDatabase {
 /// For new code, use RepoResult<T> from repositories::base which provides structured RepoError
 pub type DbResult<T> = Result<T, String>;
 
-// Re-export RepoResult and RepoError for new code
-pub use crate::shared::repositories::base::{RepoError, RepoResult};
+// Re-export RepoError for the From impl; RepoResult available via shared::repositories::base
+use crate::shared::repositories::base::RepoError;
 
 /// Compatibility: Allow RepoError to be converted to String for legacy DbResult usage
 impl From<RepoError> for String {
