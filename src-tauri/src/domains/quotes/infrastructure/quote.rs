@@ -964,7 +964,8 @@ mod tests {
         let db = Arc::new(crate::test_utils::setup_test_db_sync());
         let cache = Arc::new(Cache::new(100));
         let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-        let service = QuoteService::new(repo, db.clone());
+        let event_bus = Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+        let service = QuoteService::new(repo, db.clone(), event_bus);
 
         // Insert test client
         let now = chrono::Utc::now().timestamp_millis();
@@ -1101,6 +1102,8 @@ mod tests {
                 valid_until: None,
                 notes: Some("new notes".to_string()),
                 terms: None,
+                discount_type: None,
+                discount_value: None,
                 vehicle_plate: None,
                 vehicle_make: None,
                 vehicle_model: None,

@@ -97,10 +97,12 @@ impl QuoteRepository {
             r#"
             SELECT
                 id, quote_number, client_id, task_id, status,
-                valid_until, notes, terms,
+                valid_until, description, notes, terms,
                 subtotal, tax_total, total,
                 discount_type, discount_value, discount_amount,
                 vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                public_token, shared_at, view_count, last_viewed_at,
+                customer_message,
                 created_at, updated_at, created_by
             FROM quotes
             WHERE id = ?
@@ -153,10 +155,12 @@ impl QuoteRepository {
             r#"
             SELECT
                 id, quote_number, client_id, task_id, status,
-                valid_until, notes, terms,
+                valid_until, description, notes, terms,
                 subtotal, tax_total, total,
                 discount_type, discount_value, discount_amount,
                 vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                public_token, shared_at, view_count, last_viewed_at,
+                customer_message,
                 created_at, updated_at, created_by
             FROM quotes
             {}
@@ -827,6 +831,7 @@ mod tests {
             task_id: None,
             status: QuoteStatus::Draft,
             valid_until: None,
+            description: None,
             notes: None,
             terms: None,
             subtotal: 0,
@@ -840,6 +845,11 @@ mod tests {
             vehicle_model: None,
             vehicle_year: None,
             vehicle_vin: None,
+            public_token: None,
+            shared_at: None,
+            view_count: 0,
+            last_viewed_at: None,
+            customer_message: None,
             created_at: now,
             updated_at: now,
             created_by: Some("test_user".to_string()),
