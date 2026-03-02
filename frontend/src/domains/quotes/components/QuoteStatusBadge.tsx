@@ -2,6 +2,8 @@
 
 import { FileText, Send, CheckCircle, XCircle, Clock, CheckCheck, AlertCircle } from 'lucide-react';
 import type { QuoteStatus } from '@/types/quote.types';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
   draft: 'bg-gray-100 text-gray-800',
@@ -41,11 +43,14 @@ export interface QuoteStatusBadgeProps {
 export function QuoteStatusBadge({ status, showIcon = true }: QuoteStatusBadgeProps) {
   const Icon = STATUS_ICONS[status];
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[status]}`}
+    <Badge
+      className={cn(
+        'gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium normal-case tracking-normal',
+        STATUS_COLORS[status]
+      )}
     >
       {showIcon && <Icon className="h-3 w-3" />}
       {STATUS_LABELS[status]}
-    </span>
+    </Badge>
   );
 }
