@@ -174,7 +174,7 @@ describe('ipcClient.auth IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledWith(
         `auth:session:${token}`,
         'auth_validate_session',
-        { session_token: token },
+        { sessionToken: token },
         expect.any(Function),
         30000
       );
