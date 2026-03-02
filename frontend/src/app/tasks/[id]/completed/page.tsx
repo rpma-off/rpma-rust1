@@ -23,7 +23,7 @@ import {
 import { toast } from 'sonner';
 import { documentReportOperations } from '@/domains/documents';
 import { getUserFullName } from '@/shared/utils';
-import { useInterventionData, useWorkflowStepData, PPF_STEP_CONFIG, getPPFStepPath } from '@/domains/interventions';
+import { useInterventionData, useWorkflowStepData, PPF_STEP_CONFIG, getPPFStepPath, buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
 import type { Intervention } from '@/shared/types';
 import type { InterventionStep, StepType } from '@/lib/backend';
 import { useQueryClient } from '@tanstack/react-query';
@@ -46,7 +46,6 @@ import {
   MessageSquare,
   Signature,
 } from 'lucide-react';
-import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
 
 export default function TaskCompletedPage() {
   const router = useRouter();

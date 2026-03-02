@@ -22,8 +22,8 @@ import {
   QuoteCustomerResponse,
   QuotePublicLinkCard,
   QuoteShareDialog,
+  formatCents,
 } from '@/domains/quotes';
-import { formatCents } from '@/domains/quotes/utils/formatting';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';

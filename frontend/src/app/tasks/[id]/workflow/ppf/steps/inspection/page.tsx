@@ -16,7 +16,7 @@ import {
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
 import type { Defect } from '@/domains/interventions';
-import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
 
 const CHECKLIST_ITEMS = [
   {

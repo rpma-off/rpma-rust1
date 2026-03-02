@@ -52,3 +52,5 @@ export type {
 
 export { computeQuoteStats } from '../utils/quote-stats';
 export type { QuotePageStats } from '../utils/quote-stats';
+
+export { formatCents } from '../utils/formatting';
