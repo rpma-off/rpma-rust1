@@ -469,18 +469,27 @@ CREATE TABLE IF NOT EXISTS quotes (
   client_id TEXT NOT NULL REFERENCES clients(id),
   task_id TEXT REFERENCES tasks(id),
   status TEXT NOT NULL DEFAULT 'draft'
-    CHECK(status IN ('draft', 'sent', 'accepted', 'rejected', 'expired')),
+    CHECK(status IN ('draft', 'sent', 'accepted', 'rejected', 'expired', 'changes_requested')),
   valid_until INTEGER,
+  description TEXT,
   notes TEXT,
   terms TEXT,
   subtotal INTEGER NOT NULL DEFAULT 0,
   tax_total INTEGER NOT NULL DEFAULT 0,
   total INTEGER NOT NULL DEFAULT 0,
+  discount_type TEXT,
+  discount_value INTEGER,
+  discount_amount INTEGER,
   vehicle_plate TEXT,
   vehicle_make TEXT,
   vehicle_model TEXT,
   vehicle_year TEXT,
   vehicle_vin TEXT,
+  public_token TEXT,
+  shared_at INTEGER,
+  view_count INTEGER NOT NULL DEFAULT 0,
+  last_viewed_at INTEGER,
+  customer_message TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   created_by TEXT
@@ -508,11 +517,27 @@ CREATE INDEX IF NOT EXISTS idx_quotes_client_id ON quotes(client_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
 CREATE INDEX IF NOT EXISTS idx_quotes_created_at ON quotes(created_at);
 CREATE INDEX IF NOT EXISTS idx_quotes_task_id ON quotes(task_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_quotes_public_token ON quotes(public_token) WHERE public_token IS NOT NULL;
 
 -- Indexes for quote_items
 CREATE INDEX IF NOT EXISTS idx_quote_items_quote_id ON quote_items(quote_id);
 CREATE INDEX IF NOT EXISTS idx_quote_items_position ON quote_items(quote_id, position);
 CREATE INDEX IF NOT EXISTS idx_quote_items_material_id ON quote_items(material_id);
+
+CREATE TABLE IF NOT EXISTS quote_attachments (
+  id TEXT PRIMARY KEY NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size INTEGER NOT NULL,
+  mime_type TEXT NOT NULL,
+  attachment_type TEXT NOT NULL DEFAULT 'other' CHECK(attachment_type IN ('image', 'document', 'other')),
+  description TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_quote_attachments_quote_id ON quote_attachments(quote_id);
 
 -- Table 5: clients
 CREATE TABLE IF NOT EXISTS clients (

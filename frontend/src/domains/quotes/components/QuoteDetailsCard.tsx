@@ -67,7 +67,7 @@ export function QuoteDetailsCard({
         </div>
         <div className="space-y-1">
           <Label htmlFor="validUntil" className="text-xs">
-            Valide jusqu'au
+            Valide jusqu&apos;au
           </Label>
           <Input
             id="validUntil"
@@ -85,7 +85,7 @@ export function QuoteDetailsCard({
           className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ClipboardCheck className="h-3.5 w-3.5 shrink-0" />
-          <span>Voir l'inspection</span>
+          <span>Voir l&apos;inspection</span>
         </Link>
       )}
     </div>

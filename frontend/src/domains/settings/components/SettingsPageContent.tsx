@@ -25,27 +25,27 @@ import { PageHeader } from '@/components/ui/page-header';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 // Lazy load tab components to reduce initial bundle size
-const ProfileSettingsTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.ProfileSettingsTab })), {
+const ProfileSettingsTab = dynamic(() => import('./ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PreferencesTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.PreferencesTab })), {
+const PreferencesTab = dynamic(() => import('./PreferencesTab').then(mod => ({ default: mod.PreferencesTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const SecurityTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.SecurityTab })), {
+const SecurityTab = dynamic(() => import('./SecurityTab').then(mod => ({ default: mod.SecurityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const PerformanceTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.PerformanceTab })), {
+const PerformanceTab = dynamic(() => import('./PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const AccessibilityTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.AccessibilityTab })), {
+const AccessibilityTab = dynamic(() => import('./AccessibilityTab').then(mod => ({ default: mod.AccessibilityTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const NotificationsTab = dynamic(() => import('@/domains/settings').then(mod => ({ default: mod.NotificationsTab })), {
+const NotificationsTab = dynamic(() => import('./NotificationsTab').then(mod => ({ default: mod.NotificationsTab })), {
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 

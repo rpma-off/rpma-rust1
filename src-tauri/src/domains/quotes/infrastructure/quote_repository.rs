@@ -47,12 +47,12 @@ impl QuoteRepository {
                 r#"
                 INSERT INTO quotes (
                     id, quote_number, client_id, task_id, status,
-                    valid_until, notes, terms,
+                    valid_until, description, notes, terms,
                     subtotal, tax_total, total,
                     discount_type, discount_value, discount_amount,
                     vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
                     created_at, updated_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 "#,
                 params![
                     quote.id,
@@ -61,6 +61,7 @@ impl QuoteRepository {
                     quote.task_id,
                     quote.status.to_string(),
                     quote.valid_until,
+                    quote.description,
                     quote.notes,
                     quote.terms,
                     quote.subtotal,
