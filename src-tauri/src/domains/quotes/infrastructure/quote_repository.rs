@@ -52,7 +52,7 @@ impl QuoteRepository {
                     discount_type, discount_value, discount_amount,
                     vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
                     created_at, updated_at, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 "#,
                 params![
                     quote.id,
