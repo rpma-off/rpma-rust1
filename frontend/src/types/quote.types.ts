@@ -20,6 +20,7 @@ export type AttachmentType = 'image' | 'document' | 'other';
  */
 export interface Quote {
   id: string;
+  title: string;
   quote_number: string;
   client_id: string;
   task_id: string | null;
@@ -38,6 +39,11 @@ export interface Quote {
   vehicle_model: string | null;
   vehicle_year: string | null;
   vehicle_vin: string | null;
+  customer_message?: string | null;
+  public_token?: string | null;
+  shared_at?: string | null;
+  view_count?: number | null;
+  last_viewed_at?: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -74,6 +80,7 @@ export interface QuoteAttachment {
   mime_type: string;
   attachment_type: AttachmentType;
   description: string | null;
+  include_in_invoice: boolean;
   created_at: string;
   created_by: string | null;
 }
@@ -112,6 +119,9 @@ export interface CreateQuoteRequest {
   valid_until?: number | null;
   notes?: string | null;
   terms?: string | null;
+  discount_amount?: number | null;
+  discount_type?: string | null;
+  discount_value?: number | null;
   vehicle_plate?: string | null;
   vehicle_make?: string | null;
   vehicle_model?: string | null;
@@ -174,6 +184,7 @@ export interface CreateQuoteAttachmentRequest {
   mime_type: string;
   attachment_type?: AttachmentType | null;
   description?: string | null;
+  include_in_invoice?: boolean;
 }
 
 /**
@@ -182,6 +193,7 @@ export interface CreateQuoteAttachmentRequest {
 export interface UpdateQuoteAttachmentRequest {
   description?: string | null;
   attachment_type?: AttachmentType | null;
+  include_in_invoice?: boolean;
 }
 
 /**
@@ -213,7 +225,7 @@ export interface ApiResponse<T> {
 }
 
 /**
- * Quote filters for the list page
+ * Quote filters for list page
  */
 export interface QuoteFilters {
   search?: string;
@@ -224,4 +236,84 @@ export interface QuoteFilters {
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
   [key: string]: string | number | null | undefined;
+}
+
+/**
+ * Quote part for parts section
+ */
+export interface QuotePart {
+  id: string;
+  name: string;
+  description?: string;
+  quantity: number;
+  price: number;
+}
+
+/**
+ * Quote labor item for labor section
+ */
+export interface QuoteLaborItem {
+  id: string;
+  name: string;
+  description?: string;
+  hours: number;
+  hourlyRate: number;
+}
+
+/**
+ * Quote page stats for status tabs
+ */
+export interface QuotePageStats {
+  total: number;
+  draft: number;
+  sent: number;
+  accepted: number;
+  rejected: number;
+  expired: number;
+  converted: number;
+  changes_requested: number;
+}
+
+export function computeQuoteStats(quotes: any[]): QuotePageStats {
+  const stats = {
+    total: 0,
+    draft: 0,
+    sent: 0,
+    accepted: 0,
+    rejected: 0,
+    expired: 0,
+    converted: 0,
+    changes_requested: 0,
+  };
+
+  quotes.forEach(q => {
+    stats.total++;
+    const status = q.status as QuoteStatus;
+    if (status && stats[status as keyof QuotePageStats] !== undefined) {
+      (stats as any)[status]++;
+    }
+  });
+
+  return stats;
+}
+
+/**
+ * Quote part input for parts section
+ */
+export interface QuotePartInput {
+  part_number: string | null;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+/**
+ * Quote labor input for labor section
+ */
+export interface QuoteLaborInput {
+  description: string;
+  hours: number;
+  rate: number;
+  total: number;
 }

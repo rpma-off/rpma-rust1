@@ -10,7 +10,8 @@ use crate::domains::quotes::application::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentsGetRequest,
     QuoteAttachmentUpdateRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
     QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
-    QuoteStatusRequest, QuoteUpdateRequest,
+    QuoteStatusRequest, QuoteUpdateRequest, QuoteShareRequest, QuoteRevokeRequest,
+    QuotePublicViewRequest, QuoteAcknowledgeRequest,
 };
 
 // --- Helper: check RBAC for quotes ---
@@ -619,6 +620,165 @@ pub async fn quote_attachment_delete(
         }
         Err(e) => {
             error!("Failed to delete attachment: {}", e);
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state, request))]
+pub async fn quote_generate_share_link(
+    request: QuoteShareRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<QuoteShareResponse>, AppError> {
+    debug!("quote_generate_share_link command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    Span::current().record(
+        "correlation_id",
+        tracing::field::display(correlation_id.as_str()),
+    );
+    let current_user = authenticate!(&request.session_token, &state);
+    Span::current().record(
+        "user_id",
+        tracing::field::display(current_user.user_id.as_str()),
+    );
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    check_quote_permission(&current_user.role, "update")?;
+
+    match state.quote_service.generate_share_link(&request.quote_id) {
+        Ok(response) => {
+            info!(quote_id = %request.quote_id, "Quote share link generated");
+            Ok(ApiResponse::success(response)
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to generate share link");
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state, request))]
+pub async fn quote_revoke_share_link(
+    request: QuoteRevokeRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    debug!("quote_revoke_share_link command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    Span::current().record(
+        "correlation_id",
+        tracing::field::display(correlation_id.as_str()),
+    );
+    let current_user = authenticate!(&request.session_token, &state);
+    Span::current().record(
+        "user_id",
+        tracing::field::display(current_user.user_id.as_str()),
+    );
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    check_quote_permission(&current_user.role, "update")?;
+
+    match state.quote_service.revoke_share_link(&request.quote_id) {
+        Ok(_) => {
+            info!(quote_id = %request.quote_id, "Quote share link revoked");
+            Ok(ApiResponse::success(true)
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to revoke share link");
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_get_by_public_token(
+    public_token: String,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Quote>, AppError> {
+    debug!("quote_get_by_public_token command received (public endpoint)");
+    let correlation_id = crate::commands::init_correlation_context(&None, None);
+
+    match state.quote_service.track_public_view(&public_token) {
+        Ok(response) => {
+            info!(
+                public_token = %public_token,
+                view_count = response.view_count,
+                "Quote public view tracked"
+            );
+            Ok(ApiResponse::success(response.quote)
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get quote by public token");
+            Ok(ApiResponse::error(AppError::NotFound(e))
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_customer_response(
+    request: CustomerQuoteResponse,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    debug!("quote_customer_response command received (public endpoint)");
+    let correlation_id = crate::commands::init_correlation_context(&None, None);
+
+    let action = request.action.clone();
+    let quote_id = request.quote_id.clone();
+
+    match state.quote_service.handle_customer_response(request) {
+        Ok(_) => {
+            info!(
+                quote_id = %quote_id,
+                action = %action,
+                "Customer response handled successfully"
+            );
+            Ok(ApiResponse::success(true)
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to handle customer response");
+            Ok(ApiResponse::error(AppError::Validation(e))
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state, request))]
+pub async fn quote_acknowledge_response(
+    request: QuoteAcknowledgeRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    debug!("quote_acknowledge_response command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    Span::current().record(
+        "correlation_id",
+        tracing::field::display(correlation_id.as_str()),
+    );
+    let current_user = authenticate!(&request.session_token, &state);
+    Span::current().record(
+        "user_id",
+        tracing::field::display(current_user.user_id.as_str()),
+    );
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    check_quote_permission(&current_user.role, "update")?;
+
+    match state.quote_service.acknowledge_response(&request.quote_id) {
+        Ok(_) => {
+            info!(quote_id = %request.quote_id, "Quote customer response acknowledged");
+            Ok(ApiResponse::success(true)
+                .with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to acknowledge response");
             Ok(ApiResponse::error(AppError::Validation(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }

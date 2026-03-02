@@ -11,7 +11,8 @@ async fn map_quote_error_returns_validation_for_validation_keyword() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let service = Arc::new(QuoteService::new(repo, db));
+    let event_bus = Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+    let service = Arc::new(QuoteService::new(repo, db, event_bus));
     let facade = QuotesFacade::new(service);
     let err = facade.map_quote_error("update", "validation failed");
     assert!(matches!(err, AppError::Validation(_)));
@@ -22,7 +23,8 @@ async fn map_quote_error_returns_internal_for_unknown() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let service = Arc::new(QuoteService::new(repo, db));
+    let event_bus = Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+    let service = Arc::new(QuoteService::new(repo, db, event_bus));
     let facade = QuotesFacade::new(service);
     let err = facade.map_quote_error("send", "timeout");
     assert!(matches!(err, AppError::Internal(_)));

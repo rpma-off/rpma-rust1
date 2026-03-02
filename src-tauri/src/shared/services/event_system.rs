@@ -177,6 +177,37 @@ pub enum DomainEvent {
         metadata: Option<serde_json::Value>,
     },
 
+    // Quote Events
+    QuoteShared {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        shared_by: String,
+        shared_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteCustomerResponded {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        action: String,
+        customer_id: Option<String>,
+        responded_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteConvertedToTask {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        task_id: String,
+        converted_by: String,
+        converted_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
     // User Events
     UserCreated {
         id: String,
@@ -457,6 +488,9 @@ impl InMemoryEventBus {
             DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
             DomainEvent::QuoteRejected { .. } => "QuoteRejected",
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
+            DomainEvent::QuoteShared { .. } => "QuoteShared",
+            DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
+            DomainEvent::QuoteConvertedToTask { .. } => "QuoteConvertedToTask",
         }
         .to_string()
     }
@@ -597,6 +631,9 @@ impl EventProcessor {
             DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
             DomainEvent::QuoteRejected { .. } => "QuoteRejected",
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
+            DomainEvent::QuoteShared { .. } => "QuoteShared",
+            DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
+            DomainEvent::QuoteConvertedToTask { .. } => "QuoteConvertedToTask",
         }
     }
 }
@@ -699,6 +736,9 @@ impl EventProjection {
             DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
             DomainEvent::QuoteRejected { .. } => "QuoteRejected",
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
+            DomainEvent::QuoteShared { .. } => "QuoteShared",
+            DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
+            DomainEvent::QuoteConvertedToTask { .. } => "QuoteConvertedToTask",
         };
 
         if let Some(handler) = self.handlers.get(event_type) {

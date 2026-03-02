@@ -1,0 +1,328 @@
+app-index.tsx:25  02/03/2026, 15:49:27 [CORR:req-mm9aoqdx-000b-hvr9p9] [FRONTEND] [API] [ERROR] IPC call failed: quote_list | user_id: 821a740e-0188-4677-ab43-99b41794db61 | data: {"command":"quote_list","correlation_id":"ipc-1772462967639-8999","error":"Database error: A database error occurred. Please try again.","error_code":"DATABASE_ERROR","duration_ms":522} {id: '1772462967669-uaxxgplzpmk', timestamp: '2026-03-02T14:49:27.669Z', correlation_id: 'req-mm9aoqdx-000b-hvr9p9', layer: 'FRONTEND', domain: 'API', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+safeInvoke @ utils.ts:229
+await in safeInvoke
+list @ quotes.ipc.ts:18
+eval @ useQuotes.ts:51
+eval @ useQuotes.ts:74
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+reconnectPassiveEffects @ react-dom.development.js:23406
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23456
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23485
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+reconnectPassiveEffects @ react-dom.development.js:23404
+recursivelyTraverseReconnectPassiveEffects @ react-dom.development.js:23386
+commitPassiveMountOnFiber @ react-dom.development.js:23341
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23267
+commitPassiveMountEffects @ react-dom.development.js:23225
+flushPassiveEffectsImpl @ react-dom.development.js:26497
+flushPassiveEffects @ react-dom.development.js:26438
+eval @ react-dom.development.js:26172
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  02/03/2026, 15:49:27 [CORR:req-mm9aoqdx-000b-hvr9p9] [FRONTEND] [API] [ERROR] IPC call failed: quote_list | user_id: 821a740e-0188-4677-ab43-99b41794db61 | data: {"command":"quote_list","correlation_id":"ipc-1772462967852-8362","error":"Database error: A database error occurred. Please try again.","error_code":"DATABASE_ERROR","duration_ms":682} {id: '1772462967870-cs7amfzbcmi', timestamp: '2026-03-02T14:49:27.870Z', correlation_id: 'req-mm9aoqdx-000b-hvr9p9', layer: 'FRONTEND', domain: 'API', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+safeInvoke @ utils.ts:229
+await in safeInvoke
+list @ quotes.ipc.ts:18
+eval @ useQuotes.ts:51
+eval @ useQuotes.ts:74
+commitHookEffectListMount @ react-dom.development.js:21102
+invokePassiveEffectMountInDEV @ react-dom.development.js:23980
+invokeEffectsInDev @ react-dom.development.js:26852
+legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
+commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
+flushPassiveEffectsImpl @ react-dom.development.js:26514
+flushPassiveEffects @ react-dom.development.js:26438
+eval @ react-dom.development.js:26172
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  Warning: React does not recognize the `hitAreaMargins` prop on a DOM element. If you intentionally want it to appear in the DOM as a custom attribute, spell it as lowercase `hitareamargins` instead. If you accidentally passed it from a parent component, remove it from the DOM element.
+    at div
+    at Zt (webpack-internal:///(app-pages-browser)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1852:21)
+    at _c2 (webpack-internal:///(app-pages-browser)/./src/components/ui/resizable.tsx:35:11)
+    at div
+    at Ut (webpack-internal:///(app-pages-browser)/./node_modules/react-resizable-panels/dist/react-resizable-panels.js:1437:21)
+    at form
+    at div
+    at PageShell (webpack-internal:///(app-pages-browser)/./src/shared/ui/layout/PageShell.tsx:13:11)
+    at NewQuotePage (webpack-internal:///(app-pages-browser)/./src/app/quotes/new/page.tsx:37:78)
+    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at div
+    at main
+    at div
+    at div
+    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
+    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
+    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/app/AppNavigation.tsx:15:11)
+    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:110:11)
+    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
+    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
+    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/shared/ui/theme-provider.tsx:13:11)
+    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/domains/auth/api/AuthProvider.tsx:35:11)
+    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
+    at Providers (webpack-internal:///(app-pages-browser)/./src/app/providers.tsx:21:11)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:623:9)
+    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:402:9)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:497:11)
+    at div
+    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:177:11)
+    at body
+    at html
+    at RootLayout (Server)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
+    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
+    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
+    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
+    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+printWarning @ react-dom.development.js:94
+error @ react-dom.development.js:68
+validateProperty @ react-dom.development.js:5628
+warnUnknownProperties @ react-dom.development.js:5784
+validateProperties @ react-dom.development.js:5808
+validatePropertiesInDevelopment @ react-dom.development.js:32622
+setInitialProperties @ react-dom.development.js:33389
+finalizeInitialChildren @ react-dom.development.js:35515
+completeWork @ react-dom.development.js:19782
+completeUnitOfWork @ react-dom.development.js:25963
+performUnitOfWork @ react-dom.development.js:25759
+workLoopConcurrent @ react-dom.development.js:25734
+renderRootConcurrent @ react-dom.development.js:25690
+performConcurrentWorkOnRoot @ react-dom.development.js:24504
+workLoop @ scheduler.development.js:256
+flushWork @ scheduler.development.js:225
+performWorkUntilDeadline @ scheduler.development.js:534
+app-index.tsx:25  02/03/2026, 15:51:41 [CORR:req-mm9arm27-000m-w6ap4n] [FRONTEND] [API] [ERROR] IPC call failed: quote_create | user_id: 821a740e-0188-4677-ab43-99b41794db61 | data: {"command":"quote_create","correlation_id":"ipc-1772463101699-7542","error":"Validation error: Database error: Failed to create quote: table quotes has no column named discount_type","error_code":"VALIDATION_ERROR","duration_ms":159} {id: '1772463101710-aupnven677', timestamp: '2026-03-02T14:51:41.710Z', correlation_id: 'req-mm9arm27-000m-w6ap4n', layer: 'FRONTEND', domain: 'API', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:171
+error @ logger.ts:273
+safeInvoke @ utils.ts:229
+await in safeInvoke
+create @ quotes.ipc.ts:6
+eval @ useQuotes.ts:142
+handleSubmit @ page.tsx:101
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:20703
+executeDispatch @ react-dom.development.js:32128
+processDispatchQueueItemsInOrder @ react-dom.development.js:32160
+processDispatchQueue @ react-dom.development.js:32173
+dispatchEventsForPlugins @ react-dom.development.js:32184
+eval @ react-dom.development.js:32374
+batchedUpdates$1 @ react-dom.development.js:24953
+batchedUpdates @ react-dom.development.js:28844
+dispatchEventForPluginEventSystem @ react-dom.development.js:32373
+dispatchEvent @ react-dom.development.js:30141
+dispatchDiscreteEvent @ react-dom.development.js:30112

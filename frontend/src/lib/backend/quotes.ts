@@ -20,7 +20,35 @@ export type QuoteItemKind = "labor" | "material" | "service" | "discount";
 /**
  * Main Quote entity
  */
-export type Quote = { id: string, quote_number: string, client_id: string, task_id: string | null, status: QuoteStatus, valid_until: string | null, notes: string | null, terms: string | null, subtotal: bigint, tax_total: bigint, total: bigint, discount_type: string | null, discount_value: bigint | null, discount_amount: bigint | null, vehicle_plate: string | null, vehicle_make: string | null, vehicle_model: string | null, vehicle_year: string | null, vehicle_vin: string | null, created_at: string, updated_at: string, created_by: string | null, 
+export type Quote = { id: string, quote_number: string, client_id: string, task_id: string | null, status: QuoteStatus, valid_until: string | null, 
+/**
+ * Public-facing description (shown to customer)
+ */
+description: string | null, 
+/**
+ * Internal notes (only visible to staff)
+ */
+notes: string | null, terms: string | null, subtotal: bigint, tax_total: bigint, total: bigint, discount_type: string | null, discount_value: bigint | null, discount_amount: bigint | null, vehicle_plate: string | null, vehicle_make: string | null, vehicle_model: string | null, vehicle_year: string | null, vehicle_vin: string | null, 
+/**
+ * Public sharing token (null if not shared)
+ */
+public_token: string | null, 
+/**
+ * When the quote was shared publicly
+ */
+shared_at: string | null, 
+/**
+ * Number of times the public link was viewed
+ */
+view_count: number, 
+/**
+ * Last time the public link was viewed
+ */
+last_viewed_at: string | null, 
+/**
+ * Customer response message (for changes_requested or accepted status)
+ */
+customer_message: string | null, created_at: string, updated_at: string, created_by: string | null, 
 /**
  * Items included in this quote (populated when loading by ID)
  */

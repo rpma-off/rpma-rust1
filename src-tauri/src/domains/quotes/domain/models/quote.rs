@@ -109,6 +109,9 @@ pub struct Quote {
     #[serde(serialize_with = "serialize_optional_timestamp")]
     #[ts(type = "string | null")]
     pub valid_until: Option<i64>,
+    /// Public-facing description (shown to customer)
+    pub description: Option<String>,
+    /// Internal notes (only visible to staff)
     pub notes: Option<String>,
     pub terms: Option<String>,
     pub subtotal: i64,
@@ -122,6 +125,20 @@ pub struct Quote {
     pub vehicle_model: Option<String>,
     pub vehicle_year: Option<String>,
     pub vehicle_vin: Option<String>,
+    /// Public sharing token (null if not shared)
+    pub public_token: Option<String>,
+    /// When the quote was shared publicly
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub shared_at: Option<i64>,
+    /// Number of times the public link was viewed
+    pub view_count: i32,
+    /// Last time the public link was viewed
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub last_viewed_at: Option<i64>,
+    /// Customer response message (for changes_requested or accepted status)
+    pub customer_message: Option<String>,
     #[serde(serialize_with = "serialize_timestamp")]
     #[ts(type = "string")]
     pub created_at: i64,
@@ -279,6 +296,26 @@ pub struct QuoteExportResponse {
     pub file_path: String,
 }
 
+/// Response for quote sharing link generation
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct QuoteShareResponse {
+    pub quote_id: String,
+    pub public_token: String,
+    pub shared_at: i64,
+}
+
+/// Response for public quote view
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct QuotePublicViewResponse {
+    pub quote_id: String,
+    pub public_token: String,
+    pub created_at: i64,
+    pub expires_at: i64,
+    pub quote: Quote,
+    pub view_count: i32,
+    pub last_viewed_at: Option<i64>,
+}
+
 /// Attachment type enumeration for quote attachments
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 pub enum AttachmentType {
@@ -367,6 +404,44 @@ pub struct UpdateQuoteAttachmentRequest {
     pub attachment_type: Option<AttachmentType>,
 }
 
+/// Customer quote response action
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum CustomerResponseAction {
+    Accepted,
+    ChangesRequested,
+}
+
+impl std::fmt::Display for CustomerResponseAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Accepted => "accepted",
+            Self::ChangesRequested => "changes_requested",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl std::str::FromStr for CustomerResponseAction {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "accepted" => Ok(Self::Accepted),
+            "changes_requested" => Ok(Self::ChangesRequested),
+            _ => Err(format!("Invalid customer response action: {}", s)),
+        }
+    }
+}
+
+/// Customer quote response (public endpoint)
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct CustomerQuoteResponse {
+    pub quote_id: String,
+    pub public_token: String,
+    pub action: CustomerResponseAction,
+    pub message: Option<String>,
+}
+
 // --- FromSqlRow implementations ---
 
 fn get_i64_from_row(row: &Row, column: &str) -> rusqlite::Result<i64> {
@@ -421,6 +496,7 @@ impl FromSqlRow for Quote {
                 _ => QuoteStatus::Draft,
             },
             valid_until: get_optional_i64_from_row(row, "valid_until")?,
+            description: row.get("description")?,
             notes: row.get("notes")?,
             terms: row.get("terms")?,
             subtotal: get_i64_from_row(row, "subtotal")?,
@@ -434,6 +510,11 @@ impl FromSqlRow for Quote {
             vehicle_model: row.get("vehicle_model")?,
             vehicle_year: row.get("vehicle_year")?,
             vehicle_vin: row.get("vehicle_vin")?,
+            public_token: row.get("public_token")?,
+            shared_at: get_optional_i64_from_row(row, "shared_at")?,
+            view_count: row.get("view_count").unwrap_or(0),
+            last_viewed_at: get_optional_i64_from_row(row, "last_viewed_at")?,
+            customer_message: row.get("customer_message")?,
             created_at: get_i64_from_row(row, "created_at")?,
             updated_at: get_i64_from_row(row, "updated_at")?,
             created_by: row.get("created_by")?,

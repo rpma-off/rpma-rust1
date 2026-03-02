@@ -2,6 +2,7 @@
 //!
 //! Provides database access patterns for Quote and QuoteItem entities.
 
+use chrono::Utc;
 use crate::db::Database;
 use crate::domains::quotes::domain::models::quote::{
     AttachmentType, Quote, QuoteAttachment, CreateQuoteAttachmentRequest, QuoteItem, QuoteQuery, QuoteStatus, UpdateQuoteAttachmentRequest,
@@ -96,10 +97,12 @@ impl QuoteRepository {
             r#"
             SELECT
                 id, quote_number, client_id, task_id, status,
-                valid_until, notes, terms,
+                valid_until, description, notes, terms,
                 subtotal, tax_total, total,
                 discount_type, discount_value, discount_amount,
                 vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                public_token, shared_at, view_count, last_viewed_at,
+                customer_message,
                 created_at, updated_at, created_by
             FROM quotes
             WHERE id = ?
@@ -152,10 +155,12 @@ impl QuoteRepository {
             r#"
             SELECT
                 id, quote_number, client_id, task_id, status,
-                valid_until, notes, terms,
+                valid_until, description, notes, terms,
                 subtotal, tax_total, total,
                 discount_type, discount_value, discount_amount,
                 vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                public_token, shared_at, view_count, last_viewed_at,
+                customer_message,
                 created_at, updated_at, created_by
             FROM quotes
             {}
@@ -658,6 +663,153 @@ impl QuoteRepository {
     fn invalidate_cache(&self, id: &str) {
         self.cache.remove(&self.cache_key_builder.id(id));
     }
+
+    /// Find quote by public token (for public link access)
+    pub fn find_by_public_token(&self, public_token: &str) -> RepoResult<Option<Quote>> {
+        let cache_key = self.cache_key_builder.id(&format!("public_{}", public_token));
+
+        if let Some(quote) = self.cache.get::<Quote>(&cache_key) {
+            return Ok(Some(quote));
+        }
+
+        let mut quote = match self.db.query_single_as::<Quote>(
+            r#"
+            SELECT
+                id, quote_number, client_id, task_id, status,
+                valid_until, description, notes, terms,
+                subtotal, tax_total, total,
+                discount_type, discount_value, discount_amount,
+                vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                public_token, shared_at, view_count, last_viewed_at,
+                customer_message,
+                created_at, updated_at, created_by
+            FROM quotes
+            WHERE public_token = ?
+            "#,
+            params![public_token],
+        ) {
+            Ok(quote) => match quote {
+                Some(q) => q,
+                None => return Ok(None),
+            },
+            Err(e) => return Err(RepoError::Database(format!("Failed to find quote: {}", e))),
+        };
+
+        // Load items
+        let items = self.find_items_by_quote_id(&quote.id)?;
+        quote.items = items;
+
+        self.cache.set(&cache_key, quote.clone(), ttl::MEDIUM);
+        Ok(Some(quote))
+    }
+
+    /// Update quote sharing token and timestamp
+    pub fn update_sharing_token(
+        &self,
+        quote_id: &str,
+        public_token: &str,
+        shared_at: i64,
+    ) -> RepoResult<()> {
+        self.db
+            .execute(
+                r#"
+                UPDATE quotes
+                SET public_token = ?, shared_at = ?
+                WHERE id = ?
+                "#,
+                params![public_token, shared_at, quote_id],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to update sharing token: {}", e)))?;
+
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
+
+    /// Clear quote sharing data (revoke public link)
+    pub fn clear_sharing_data(&self, quote_id: &str) -> RepoResult<()> {
+        self.db
+            .execute(
+                r#"
+                UPDATE quotes
+                SET public_token = NULL, shared_at = NULL, view_count = 0, last_viewed_at = NULL
+                WHERE id = ?
+                "#,
+                params![quote_id],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to clear sharing data: {}", e)))?;
+
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
+
+    /// Update quote with customer response (status and message)
+    pub fn update_customer_response(
+        &self,
+        quote_id: &str,
+        status: &QuoteStatus,
+        customer_message: &Option<String>,
+    ) -> RepoResult<()> {
+        self.db
+            .execute(
+                r#"
+                UPDATE quotes
+                SET status = ?, customer_message = ?, updated_at = ?
+                WHERE id = ?
+                "#,
+                params![
+                    status.to_string(),
+                    customer_message,
+                    Utc::now().timestamp_millis(),
+                    quote_id,
+                ],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to update customer response: {}", e)))?;
+
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
+
+    /// Acknowledge customer response (reset to draft, clear message)
+    pub fn acknowledge_response(&self, quote_id: &str) -> RepoResult<()> {
+        self.db
+            .execute(
+                r#"
+                UPDATE quotes
+                SET status = 'draft', customer_message = NULL, updated_at = ?
+                WHERE id = ?
+                "#,
+                params![
+                    Utc::now().timestamp_millis(),
+                    quote_id,
+                ],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to acknowledge response: {}", e)))?;
+
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
+
+    /// Track public link view (increment view count and update last viewed)
+    pub fn track_public_view(
+        &self,
+        quote_id: &str,
+        last_viewed_at: i64,
+        view_count: i32,
+    ) -> RepoResult<()> {
+        self.db
+            .execute(
+                r#"
+                UPDATE quotes
+                SET view_count = ?, last_viewed_at = ?
+                WHERE id = ?
+                "#,
+                params![view_count, last_viewed_at, quote_id],
+            )
+            .map_err(|e| RepoError::Database(format!("Failed to track public view: {}", e)))?;
+
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -679,6 +831,7 @@ mod tests {
             task_id: None,
             status: QuoteStatus::Draft,
             valid_until: None,
+            description: None,
             notes: None,
             terms: None,
             subtotal: 0,
@@ -692,6 +845,11 @@ mod tests {
             vehicle_model: None,
             vehicle_year: None,
             vehicle_vin: None,
+            public_token: None,
+            shared_at: None,
+            view_count: 0,
+            last_viewed_at: None,
+            customer_message: None,
             created_at: now,
             updated_at: now,
             created_by: Some("test_user".to_string()),

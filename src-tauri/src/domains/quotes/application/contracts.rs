@@ -116,3 +116,32 @@ pub struct QuoteAttachmentDeleteRequest {
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct QuoteShareRequest {
+    pub session_token: String,
+    pub quote_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct QuoteRevokeRequest {
+    pub session_token: String,
+    pub quote_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct QuotePublicViewRequest {
+    pub public_token: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct QuoteAcknowledgeRequest {
+    pub session_token: String,
+    pub quote_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}

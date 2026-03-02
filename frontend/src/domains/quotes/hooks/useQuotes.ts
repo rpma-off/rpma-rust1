@@ -503,3 +503,117 @@ export function useQuoteAttachmentActions() {
 
   return { createAttachment, updateAttachment, deleteAttachment, loading, error };
 }
+
+// --- useConvertQuoteToTask ---
+
+interface QuoteConvertResponse {
+  task_id: string;
+  task_number: string;
+  quote_id: string;
+}
+
+interface VehicleInfo {
+  plate: string;
+  make: string;
+  model: string;
+  year: string;
+  vin: string;
+  scheduledDate?: string;
+}
+
+export function useConvertQuoteToTask() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const convertQuoteToTask = useCallback(
+    async (
+      quoteId: string,
+      vehicleInfo: VehicleInfo
+    ): Promise<QuoteConvertResponse | null> => {
+      if (!user?.token) {
+        setError(new Error('Not authenticated'));
+        return null;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await quotesIpc.convertToTask(quoteId, vehicleInfo, user.token);
+        const response = result as unknown as ApiResponse<QuoteConvertResponse>;
+
+        if (response?.success && response.data) {
+          return response.data;
+        }
+
+        const errorMsg = response?.error?.message || 'Conversion failed';
+        setError(new Error(errorMsg));
+        return null;
+      } catch (err: unknown) {
+        const errorObj = err instanceof Error ? err : new Error('Unknown error');
+        setError(errorObj);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.token]
+  );
+
+  return { convertQuoteToTask, loading, error };
+}
+
+// --- useQuotePublicLink ---
+
+export function useQuotePublicLink() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const generatePublicLink = useCallback(
+    async (id: string): Promise<Quote | null> => {
+      if (!user?.token) return null;
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await quotesIpc.generatePublicLink(id, user.token);
+        const response = result as unknown as ApiResponse<Quote>;
+        if (response?.success && response.data) {
+          return response.data;
+        }
+        if (response?.error) {
+          throw new Error(response.error.message);
+        }
+        return null;
+      } catch (err: unknown) {
+        setError(normalizeError(err));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.token],
+  );
+
+  const revokePublicLink = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user?.token) return false;
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await quotesIpc.revokePublicLink(id, user.token);
+        const response = result as unknown as ApiResponse<boolean>;
+        return response?.success ?? false;
+      } catch (err: unknown) {
+        setError(normalizeError(err));
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.token],
+  );
+
+  return { generatePublicLink, revokePublicLink, loading, error };
+}

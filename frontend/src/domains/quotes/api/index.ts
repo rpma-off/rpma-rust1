@@ -14,6 +14,8 @@ export {
   useQuoteExportPdf,
   useQuoteAttachments,
   useQuoteAttachmentActions,
+  useConvertQuoteToTask,
+  useQuotePublicLink,
 } from '../hooks/useQuotes';
 
 export type { QuotesDomainContextValue } from './types';
@@ -23,6 +25,20 @@ export {
   QuoteItemsTable,
   QuoteTotals,
   QuoteAttachmentsManager,
+  QuoteConvertDialog,
+  QuoteImagesManager,
+  QuoteDocumentsManager,
+  QuotePartsSection,
+  QuoteLaborSection,
+  QuoteNotesEditor,
+  QuoteVehicleCustomerCard,
+  QuoteDetailsCard,
+  QuoteTotalsCard,
+  QuoteCustomerResponse,
+  QuotePublicLinkCard,
+  QuoteShareDialog,
+  QuotesListTable,
+  QuotesStatusTabs,
   STATUS_LABELS,
 } from '../components';
 export type {
@@ -30,6 +46,8 @@ export type {
   QuoteItemsTableProps,
   QuoteTotalsProps,
   QuoteAttachmentsManagerProps,
+  QuotePartInput,
+  QuoteLaborInput,
 } from '../components';
 
 export { computeQuoteStats } from '../utils/quote-stats';

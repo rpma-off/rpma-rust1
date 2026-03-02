@@ -26,6 +26,7 @@ mod test_035_tasks_deleted_at_index;
 mod test_037_quotes;
 mod test_038_inventory_transaction_lookup_index;
 mod test_040_activity_and_reference_indexes;
+mod test_047_add_quotes_missing_columns;
 
 // Re-export test macros
 pub use test_framework::*;

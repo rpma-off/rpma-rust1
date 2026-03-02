@@ -5,6 +5,7 @@
 
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
+use crate::shared::event_bus::publish_event;
 use crate::shared::repositories::base::RepoError;
 use chrono::Utc;
 use rusqlite::params;
@@ -76,6 +77,7 @@ impl QuoteService {
             task_id: req.task_id.clone(),
             status: QuoteStatus::Draft,
             valid_until: req.valid_until,
+            description: None,
             notes: req.notes.clone(),
             terms: req.terms.clone(),
             subtotal: 0,
@@ -89,6 +91,11 @@ impl QuoteService {
             vehicle_model: req.vehicle_model.clone(),
             vehicle_year: req.vehicle_year.clone(),
             vehicle_vin: req.vehicle_vin.clone(),
+            public_token: None,
+            shared_at: None,
+            view_count: 0,
+            last_viewed_at: None,
+            customer_message: None,
             created_at: now,
             updated_at: now,
             created_by: Some(user_id.to_string()),
@@ -799,6 +806,151 @@ impl QuoteService {
 
         Ok(())
     }
+
+    /// Generate public sharing link for a quote
+    pub fn generate_share_link(&self, quote_id: &str) -> Result<QuoteShareResponse, String> {
+        let quote = self
+            .repo
+            .find_by_id(quote_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Quote not found".to_string())?;
+
+        let now = Utc::now().timestamp_millis();
+        let public_token = format!("qt_{}", Uuid::new_v4());
+
+        self.repo
+            .update_sharing_token(quote_id, &public_token, now)?;
+
+        info!(
+            quote_id = %quote_id,
+            public_token = %public_token,
+            "Quote public link generated"
+        );
+
+        Ok(QuoteShareResponse {
+            quote_id: quote_id.to_string(),
+            public_token,
+            shared_at: now,
+        })
+    }
+
+    /// Revoke public sharing link for a quote
+    pub fn revoke_share_link(&self, quote_id: &str) -> Result<(), String> {
+        let quote = self
+            .repo
+            .find_by_id(quote_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Quote not found".to_string())?;
+
+        self.repo.clear_sharing_data(quote_id)?;
+
+        info!(
+            quote_id = %quote_id,
+            "Quote public link revoked"
+        );
+
+        Ok(())
+    }
+
+    /// Handle customer quote response (public endpoint - no auth)
+    pub fn handle_customer_response(&self, request: CustomerQuoteResponse) -> Result<(), String> {
+        let quote = self
+            .repo
+            .find_by_public_token(&request.public_token)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Quote not found or link expired".to_string())?;
+
+        if quote.id != request.quote_id {
+            return Err("Quote ID mismatch".to_string());
+        }
+
+        // Only allow responses on draft or sent quotes
+        if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
+            return Err("This quote can no longer be updated".to_string());
+        }
+
+        // Update quote status and customer message
+        let new_status = match request.action {
+            CustomerResponseAction::Accepted => QuoteStatus::Accepted,
+            CustomerResponseAction::ChangesRequested => QuoteStatus::ChangesRequested,
+        };
+
+        self.repo
+            .update_customer_response(&quote.id, &new_status, &request.message)?;
+
+        // Emit domain event for notifications
+        publish_event(
+            crate::shared::event_bus::events::QuoteCustomerResponded {
+                quote_id: quote.id.clone(),
+                quote_number: quote.quote_number.clone(),
+                action: request.action.to_string(),
+                customer_id: Some(quote.client_id.clone()),
+                responded_at_ms: Utc::now().timestamp_millis(),
+            }
+            .into(),
+        );
+
+        Ok(())
+    }
+
+    /// Acknowledge customer response (admin action - reset to draft)
+    pub fn acknowledge_response(&self, quote_id: &str) -> Result<(), String> {
+        let quote = self
+            .repo
+            .find_by_id(quote_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Quote not found".to_string())?;
+
+        if !matches!(
+            quote.status,
+            QuoteStatus::Accepted | QuoteStatus::ChangesRequested
+        ) {
+            return Err("Quote does not have a pending customer response".to_string());
+        }
+
+        self.repo.acknowledge_response(quote_id)?;
+
+        info!(
+            quote_id = %quote_id,
+            "Quote customer response acknowledged"
+        );
+
+        Ok(())
+    }
+
+    /// Track public link view and return quote data
+    pub fn track_public_view(&self, public_token: &str) -> Result<QuotePublicViewResponse, String> {
+        let mut quote = self
+            .repo
+            .find_by_public_token(public_token)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "Quote not found or link expired".to_string())?;
+
+        let now = Utc::now().timestamp_millis();
+        let view_count = quote.view_count + 1;
+
+        self.repo.track_public_view(&quote.id, now, view_count)?;
+
+        // Update quote with new view data
+        quote.view_count = view_count;
+        quote.last_viewed_at = Some(now);
+
+        info!(
+            quote_id = %quote.id,
+            view_count = view_count,
+            "Quote public view tracked"
+        );
+
+        Ok(QuotePublicViewResponse {
+            quote_id: quote.id.clone(),
+            public_token: quote.public_token.clone().unwrap_or_default(),
+            created_at: quote.created_at,
+            expires_at: quote.valid_until.unwrap_or(now + 86400000),
+            quote,
+            view_count,
+            last_viewed_at: Some(now),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -812,7 +964,8 @@ mod tests {
         let db = Arc::new(crate::test_utils::setup_test_db_sync());
         let cache = Arc::new(Cache::new(100));
         let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-        let service = QuoteService::new(repo, db.clone());
+        let event_bus = Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+        let service = QuoteService::new(repo, db.clone(), event_bus);
 
         // Insert test client
         let now = chrono::Utc::now().timestamp_millis();
@@ -949,6 +1102,8 @@ mod tests {
                 valid_until: None,
                 notes: Some("new notes".to_string()),
                 terms: None,
+                discount_type: None,
+                discount_value: None,
                 vehicle_plate: None,
                 vehicle_make: None,
                 vehicle_model: None,

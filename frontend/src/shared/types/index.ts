@@ -21,18 +21,27 @@ export type {
 export type {
   QuoteStatus,
   QuoteItemKind,
+  AttachmentType,
   Quote,
   QuoteItem,
+  QuoteAttachment,
   QuoteQuery,
   QuoteListResponse,
   CreateQuoteRequest,
   UpdateQuoteRequest,
   CreateQuoteItemRequest,
   UpdateQuoteItemRequest,
+  CreateQuoteAttachmentRequest,
+  UpdateQuoteAttachmentRequest,
   QuoteAcceptResponse,
   QuoteExportResponse,
   QuoteFilters,
+  QuotePageStats,
+  QuotePartInput,
+  QuoteLaborInput,
 } from '@/types/quote.types';
+
+export { computeQuoteStats } from '@/types/quote.types';
 
 export type {
   ConfigurationItem,

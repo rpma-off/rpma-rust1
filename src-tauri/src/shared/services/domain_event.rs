@@ -40,6 +40,9 @@ impl DomainEvent {
             DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
             DomainEvent::QuoteRejected { .. } => "QuoteRejected",
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
+            DomainEvent::QuoteShared { .. } => "QuoteShared",
+            DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
+            DomainEvent::QuoteConvertedToTask { .. } => "QuoteConvertedToTask",
         }
     }
 
@@ -74,6 +77,9 @@ impl DomainEvent {
             DomainEvent::QuoteAccepted { timestamp, .. } => *timestamp,
             DomainEvent::QuoteRejected { timestamp, .. } => *timestamp,
             DomainEvent::QuoteConverted { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteShared { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteCustomerResponded { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteConvertedToTask { timestamp, .. } => *timestamp,
         }
     }
 }

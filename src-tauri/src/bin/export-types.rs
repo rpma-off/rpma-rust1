@@ -90,13 +90,12 @@ use rpma_ppf_intervention::domains::interventions::{
 };
 
 // Import command request types
-use rpma_ppf_intervention::commands::{
-    ApiError, CompressedApiResponse, CreateUserRequest, UpdateUserRequest, UserAction,
-    UserListResponse,
-};
-use rpma_ppf_intervention::domains::notifications::{
-    SendNotificationRequest, UpdateNotificationConfigRequest,
-};
+use rpma_ppf_intervention::commands::{CompressedApiResponse, UserAction};
+use rpma_ppf_intervention::shared::ipc::response::ApiError;
+// use rpma_ppf_intervention::domains::users::application::contracts::{CreateUserRequest, UpdateUserRequest, UserListResponse};
+// use rpma_ppf_intervention::domains::notifications::{
+//     SendNotificationRequest, UpdateNotificationConfigRequest,
+// };
 
 fn main() {
     use std::fs;
@@ -643,15 +642,15 @@ fn main() {
         &NotificationConfig::export_to_string().expect("Failed to export NotificationConfig type"),
     );
     type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &UpdateNotificationConfigRequest::export_to_string()
-            .expect("Failed to export UpdateNotificationConfigRequest type"),
-    );
-    type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &SendNotificationRequest::export_to_string()
-            .expect("Failed to export SendNotificationRequest type"),
-    );
+    // type_definitions.push_str(
+    //     &UpdateNotificationConfigRequest::export_to_string()
+    //         .expect("Failed to export UpdateNotificationConfigRequest type"),
+    // );
+    // type_definitions.push_str("\n");
+    // type_definitions.push_str(
+    //     &SendNotificationRequest::export_to_string()
+    //         .expect("Failed to export SendNotificationRequest type"),
+    // );
     type_definitions.push_str("\n");
     type_definitions.push_str(&Message::export_to_string().expect("Failed to export Message type"));
     type_definitions.push_str("\n");
@@ -698,20 +697,20 @@ fn main() {
     type_definitions.push_str("\n");
     // Domain: auth (user command types)
     type_definitions.push_str("// @domain:auth\n");
-    type_definitions.push_str(
-        &CreateUserRequest::export_to_string().expect("Failed to export CreateUserRequest type"),
-    );
-    type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &UpdateUserRequest::export_to_string().expect("Failed to export UpdateUserRequest type"),
-    );
+    // type_definitions.push_str(
+    //     &CreateUserRequest::export_to_string().expect("Failed to export CreateUserRequest type"),
+    // );
+    // type_definitions.push_str("\n");
+    // type_definitions.push_str(
+    //     &UpdateUserRequest::export_to_string().expect("Failed to export UpdateUserRequest type"),
+    // );
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&UserAction::export_to_string().expect("Failed to export UserAction type"));
     type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
-    );
+    // type_definitions.push_str(
+    //     &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
+    // );
     type_definitions.push_str("\n\n");
 
     // Domain: tasks (status types)
@@ -941,8 +940,8 @@ fn main() {
         "SmsProvider",
         "SmsConfig",
         "NotificationConfig",
-        "UpdateNotificationConfigRequest",
-        "SendNotificationRequest",
+        // "UpdateNotificationConfigRequest",
+        // "SendNotificationRequest",
         "Message",
         "MessageType",
         "MessageStatus",
@@ -954,10 +953,10 @@ fn main() {
         "SendMessageRequest",
         "NotificationPreferences",
         "UpdateNotificationPreferencesRequest",
-        "CreateUserRequest",
-        "UpdateUserRequest",
+        // "CreateUserRequest",
+        // "UpdateUserRequest",
         "UserAction",
-        "UserListResponse",
+        // "UserListResponse",
         "StatusDistribution",
         "StatusTransitionRequest",
         "UserSettings",

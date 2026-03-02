@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   FileText,
@@ -64,6 +66,7 @@ export function QuoteDocumentsManager({
           mime_type: file.type,
           file_size: file.size,
           attachment_type: 'document',
+          include_in_invoice: true,
         });
 
         if (result) {
@@ -98,7 +101,7 @@ export function QuoteDocumentsManager({
     }
   }, [quoteId, deleteAttachment, refetch]);
 
-  const handleUpdateDescription = useCallback(async (attachmentId: string, description: string) => {
+  const handleDescriptionChange = useCallback(async (attachmentId: string, description: string) => {
     setFiles((prev) =>
       prev.map((f) =>
         f.id === attachmentId ? { ...f, description } : f
@@ -106,6 +109,16 @@ export function QuoteDocumentsManager({
     );
 
     await updateAttachment(quoteId, attachmentId, { description });
+  }, [quoteId, updateAttachment]);
+
+  const handleToggleInvoice = useCallback(async (attachmentId: string, checked: boolean) => {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === attachmentId ? { ...f, include_in_invoice: checked } : f
+      )
+    );
+
+    await updateAttachment(quoteId, attachmentId, { include_in_invoice: checked });
   }, [quoteId, updateAttachment]);
 
   function getFileIcon(mimeType: string) {
@@ -192,6 +205,14 @@ export function QuoteDocumentsManager({
                     {formatFileSize(file.file_size)}
                   </p>
                 </div>
+                <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <Switch
+                    checked={file.include_in_invoice ?? true}
+                    onCheckedChange={(checked) => handleToggleInvoice(file.id, checked ?? true)}
+                    className="scale-75"
+                  />
+                  PDF
+                </label>
                 <Button
                   type="button"
                   variant="ghost"
