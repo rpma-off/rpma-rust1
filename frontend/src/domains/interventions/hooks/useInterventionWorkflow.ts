@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { handleErrorWithLogging } from '@/lib/utils/error-utils';
+import { getUserFriendlyMessage, handleApiError } from '@/lib/utils/errorHandling';
 import { useInterventionState } from './useInterventionState';
 import { useInterventionActions } from './useInterventionActions';
 import { useInterventionSync } from './useInterventionSync';
@@ -41,16 +41,20 @@ export function useInterventionWorkflow({
 
   // Error handling
   const handleError = useCallback((errorMessage: string, originalError?: unknown) => {
-    handleErrorWithLogging(
+    const errorContext = {
+      taskId,
+      interventionId: state.intervention?.id,
+      component: 'PPF Workflow',
+    };
+    const appError = handleApiError(originalError ?? errorMessage, errorContext);
+
+    console.error(
+      `${errorContext.component}[Task: ${errorContext.taskId || 'unknown'}, Intervention: ${errorContext.interventionId || 'none'}]:`,
       errorMessage,
-      originalError,
-      {
-        taskId,
-        interventionId: state.intervention?.id,
-        component: 'PPF Workflow'
-      },
-      onError
+      originalError
     );
+
+    onError?.(getUserFriendlyMessage(appError));
   }, [onError, taskId, state.intervention?.id]);
 
   // Actions (mutations)
