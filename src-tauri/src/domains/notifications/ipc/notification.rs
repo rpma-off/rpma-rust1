@@ -2,11 +2,10 @@
 
 use crate::commands::AppState;
 use crate::domains::notifications::application::{
-    SendNotificationRequest, UpdateNotificationConfigRequest,
+    build_notification_config, SendNotificationRequest, UpdateNotificationConfigRequest,
 };
 use crate::domains::notifications::domain::models::notification::{
-    EmailConfig, EmailProvider, NotificationChannel, NotificationConfig, NotificationType,
-    SmsConfig, SmsProvider, TemplateVariables,
+    NotificationChannel, NotificationType, TemplateVariables,
 };
 use crate::domains::notifications::infrastructure::notification::NotificationService;
 use lazy_static::lazy_static;
@@ -41,59 +40,8 @@ pub async fn initialize_notification_service(
     // Update correlation context with user_id
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let email_config = if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
-        config.email_provider,
-        config.email_api_key,
-        config.email_from_email,
-        config.email_from_name,
-    ) {
-        let email_provider = match provider.as_str() {
-            "sendgrid" => EmailProvider::SendGrid,
-            "mailgun" => EmailProvider::Mailgun,
-            "smtp" => EmailProvider::Smtp,
-            _ => return Err("Invalid email provider".to_string()),
-        };
-
-        Some(EmailConfig {
-            provider: email_provider,
-            api_key,
-            from_email,
-            from_name,
-        })
-    } else {
-        None
-    };
-
-    let sms_config = if let (Some(provider), Some(api_key), Some(from_number)) = (
-        config.sms_provider,
-        config.sms_api_key,
-        config.sms_from_number,
-    ) {
-        let sms_provider = match provider.as_str() {
-            "twilio" => SmsProvider::Twilio,
-            "aws_sns" => SmsProvider::AwsSns,
-            _ => return Err("Invalid SMS provider".to_string()),
-        };
-
-        Some(SmsConfig {
-            provider: sms_provider,
-            api_key,
-            from_number,
-        })
-    } else {
-        None
-    };
-
-    let notification_config = NotificationConfig {
-        email: email_config,
-        sms: sms_config,
-        push_enabled: config.push_enabled.unwrap_or(true),
-        quiet_hours_start: config.quiet_hours_start,
-        quiet_hours_end: config.quiet_hours_end,
-        timezone: config
-            .timezone
-            .unwrap_or_else(|| "Europe/Paris".to_string()),
-    };
+    // Build config via application layer
+    let notification_config = build_notification_config(&config)?;
 
     let service = NotificationService::new(notification_config);
     let mut global_service = NOTIFICATION_SERVICE.lock().await;
