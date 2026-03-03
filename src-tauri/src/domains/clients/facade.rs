@@ -36,12 +36,26 @@ impl ClientsFacade {
 
     /// Map a raw service error string into a structured AppError.
     pub fn map_service_error(&self, context: &str, error: &str) -> AppError {
-        if error.contains("not found") {
+        let normalized = error.to_lowercase();
+        if normalized.contains("not found") {
             AppError::NotFound(format!("{}: {}", context, error))
-        } else if error.contains("validation") || error.contains("invalid") {
-            AppError::Validation(format!("{}: {}", context, error))
+        } else if normalized.contains("permission")
+            || normalized.contains("only update")
+            || normalized.contains("only delete")
+        {
+            AppError::Authorization(error.to_string())
+        } else if normalized.contains("validation")
+            || normalized.contains("invalid")
+            || normalized.contains("required")
+            || normalized.contains("cannot")
+            || normalized.contains("must")
+            || normalized.contains("already exists")
+            || normalized.contains("too long")
+            || normalized.contains("duplicate")
+        {
+            AppError::Validation(error.to_string())
         } else {
-            AppError::Internal(format!("{}: {}", context, error))
+            AppError::db_sanitized(context, error)
         }
     }
 }

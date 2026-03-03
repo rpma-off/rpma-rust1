@@ -217,6 +217,12 @@ impl CreateClientRequest {
             }
         }
 
+        if let Some(ref phone) = self.phone {
+            if !is_valid_phone(phone) {
+                return Err("Invalid phone number format".to_string());
+            }
+        }
+
         if let Some(ref notes) = self.notes {
             if notes.len() > 1000 {
                 return Err("Notes must be 1000 characters or less".to_string());
@@ -349,6 +355,18 @@ fn parse_timestamp_millis(value: &str) -> Option<i64> {
 }
 
 /// Simple email validation
-fn is_valid_email(email: &str) -> bool {
-    email.contains('@') && email.contains('.') && email.len() >= 5
+pub(crate) fn is_valid_email(email: &str) -> bool {
+    let email_regex = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        .unwrap_or_else(|_| regex::Regex::new(r".+@.+\..+").expect("fallback email regex"));
+    email_regex.is_match(email)
+        && !email.contains("..")
+        && !email.starts_with('.')
+        && !email.ends_with('.')
+        && email.len() <= 254
+}
+
+/// Simple phone validation
+pub(crate) fn is_valid_phone(phone: &str) -> bool {
+    let digits_only: String = phone.chars().filter(|c| c.is_ascii_digit()).collect();
+    (7..=20).contains(&digits_only.len())
 }

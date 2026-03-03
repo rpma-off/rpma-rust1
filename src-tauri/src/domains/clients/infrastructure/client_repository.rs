@@ -31,7 +31,12 @@ impl ClientQuery {
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
         if let Some(search) = &self.search {
-            conditions.push("(name LIKE ? OR email LIKE ? OR phone LIKE ?)".to_string());
+            conditions.push(
+                "(name LIKE ? OR email LIKE ? OR phone LIKE ? OR company_name LIKE ? OR contact_person LIKE ?)"
+                    .to_string(),
+            );
+            params.push(format!("%{}%", search).into());
+            params.push(format!("%{}%", search).into());
             params.push(format!("%{}%", search).into());
             params.push(format!("%{}%", search).into());
             params.push(format!("%{}%", search).into());
@@ -92,8 +97,8 @@ impl ClientQuery {
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
         let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
-            Some("ASC") => "ASC",
-            Some("DESC") => "DESC",
+            Some(order) if order.eq_ignore_ascii_case("asc") => "ASC",
+            Some(order) if order.eq_ignore_ascii_case("desc") => "DESC",
             _ => "DESC",
         };
         Ok(format!("ORDER BY {} {}", sort_by, sort_order))
@@ -243,7 +248,8 @@ impl ClientRepository {
             eprintln!("Invalid order clause, using default: {}", e);
             "ORDER BY created_at DESC".to_string()
         });
-        let (limit, _offset) = query.build_limit_offset().unwrap_or((50, None));
+        let (limit, offset) = query.build_limit_offset().unwrap_or((50, None));
+        let offset = offset.unwrap_or(0);
 
         let sql = format!(
             r#"
@@ -257,13 +263,14 @@ impl ClientRepository {
             FROM clients
             {}
             {}
-            LIMIT ?
+            LIMIT ? OFFSET ?
             "#,
             where_clause, order_clause
         );
 
         let mut params_vec: Vec<rusqlite::types::Value> = params;
         params_vec.push(limit.into());
+        params_vec.push(offset.into());
 
         let clients = self
             .db

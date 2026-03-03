@@ -23,10 +23,10 @@ async fn map_service_error_returns_validation_for_invalid_input() {
 }
 
 #[tokio::test]
-async fn map_service_error_returns_internal_for_unknown_errors() {
+async fn map_service_error_returns_database_for_unknown_errors() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(ClientService::new_with_db(db));
     let facade = ClientsFacade::new(service);
     let err = facade.map_service_error("update_client", "timeout");
-    assert!(matches!(err, AppError::Internal(_)));
+    assert!(matches!(err, AppError::Database(_)));
 }

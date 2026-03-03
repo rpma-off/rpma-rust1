@@ -140,20 +140,31 @@ export const SignupRequestSchema = z.object({
  * Client-related schemas
  */
 export const CreateClientRequestSchema = z.object({
-  name: z.string().min(1, 'Client name is required'),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
+  name: z.string().min(1, 'Client name is required').max(100, 'Client name cannot exceed 100 characters'),
+  email: z.string().email('Invalid email format').nullable().optional(),
+  phone: z
+    .string()
+    .nullable()
+    .optional()
+    .refine(
+      (value) => {
+        if (!value) return true;
+        const digits = value.replace(/\D/g, '');
+        return digits.length >= 7 && digits.length <= 20;
+      },
+      { message: 'Invalid phone number format' }
+    ),
   customer_type: z.enum(['individual', 'business']).default('individual'),
-  address_street: z.string().optional(),
-  address_city: z.string().optional(),
-  address_state: z.string().optional(),
-  address_zip: z.string().optional(),
-  address_country: z.string().optional(),
-  tax_id: z.string().optional(),
-  company_name: z.string().optional(),
-  contact_person: z.string().optional(),
-  notes: z.string().optional(),
-  tags: z.string().optional(),
+  address_street: z.string().nullable().optional(),
+  address_city: z.string().nullable().optional(),
+  address_state: z.string().nullable().optional(),
+  address_zip: z.string().nullable().optional(),
+  address_country: z.string().nullable().optional(),
+  tax_id: z.string().nullable().optional(),
+  company_name: z.string().max(100, 'Company name cannot exceed 100 characters').nullable().optional(),
+  contact_person: z.string().max(100, 'Contact person cannot exceed 100 characters').nullable().optional(),
+  notes: z.string().max(1000, 'Notes cannot exceed 1000 characters').nullable().optional(),
+  tags: z.string().max(500, 'Tags cannot exceed 500 characters').nullable().optional(),
 });
 
 export const UpdateClientRequestSchema = CreateClientRequestSchema.partial().extend({

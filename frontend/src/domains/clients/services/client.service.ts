@@ -1,10 +1,17 @@
-import type { Client, ClientWithTasks } from '@/lib/backend';
-import type { CreateClientDTO, ClientListResponse, ClientStats } from '@/types/client.types';
+import type {
+  Client,
+  ClientWithTasks,
+  ClientListResponse,
+  ClientQuery,
+  CreateClientRequest,
+  UpdateClientRequest,
+  PaginationInfo,
+} from '@/lib/backend';
+import type { CreateClientDTO, ClientStats } from '@/types/client.types';
 import type { ServiceResponse, ApiResponse } from '@/types/unified.types';
 import { ApiError } from '@/types/unified.types';
 import { ipcClient } from '@/lib/ipc';
-import type { ClientQuery, PaginationInfo } from '@/lib/backend';
-import type { UpdateClientRequest as IpcUpdateClientRequest } from '@/lib/validation/ipc-schemas';
+import { CreateClientRequestSchema, UpdateClientRequestSchema } from '@/lib/validation/ipc-schemas';
 
 interface LegacyStatisticsResponse<T> {
   type: 'Statistics';
@@ -24,6 +31,52 @@ function isLegacyStatisticsResponse<T>(value: unknown): value is LegacyStatistic
 // Export types
 export type { ClientWithTasks, ClientStats };
 export type ClientWithStats = Client;
+
+const normalizeOptionalText = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const buildCreateRequest = (data: CreateClientDTO): CreateClientRequest => ({
+  name: data.name.trim(),
+  email: normalizeOptionalText(data.email),
+  phone: normalizeOptionalText(data.phone),
+  customer_type: data.customer_type,
+  address_street: normalizeOptionalText(data.address_street),
+  address_city: normalizeOptionalText(data.address_city),
+  address_state: normalizeOptionalText(data.address_state),
+  address_zip: normalizeOptionalText(data.address_zip),
+  address_country: normalizeOptionalText(data.address_country),
+  tax_id: normalizeOptionalText(data.tax_id),
+  company_name: normalizeOptionalText(data.company_name),
+  contact_person: normalizeOptionalText(data.contact_person),
+  notes: normalizeOptionalText(data.notes),
+  tags: normalizeOptionalText(data.tags),
+});
+
+const buildUpdateRequest = (
+  id: string,
+  body: Record<string, unknown>
+): UpdateClientRequest => ({
+  id,
+  name: normalizeOptionalText(body.name),
+  email: normalizeOptionalText(body.email),
+  phone: normalizeOptionalText(body.phone),
+  customer_type: (body.customer_type ?? null) as UpdateClientRequest['customer_type'],
+  address_street: normalizeOptionalText(body.address_street),
+  address_city: normalizeOptionalText(body.address_city),
+  address_state: normalizeOptionalText(body.address_state),
+  address_zip: normalizeOptionalText(body.address_zip),
+  address_country: normalizeOptionalText(body.address_country),
+  tax_id: normalizeOptionalText(body.tax_id),
+  company_name: normalizeOptionalText(body.company_name),
+  contact_person: normalizeOptionalText(body.contact_person),
+  notes: normalizeOptionalText(body.notes),
+  tags: normalizeOptionalText(body.tags),
+});
 
 // Client service class
 export class ClientService {
@@ -50,7 +103,16 @@ export class ClientService {
     }
 
     try {
-      const client = await ipcClient.clients.create(data, sessionToken);
+      const payload = buildCreateRequest(data);
+      const validation = CreateClientRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.errors[0]?.message ?? 'Invalid client payload',
+          status: 400,
+        };
+      }
+      const client = await ipcClient.clients.create(validation.data, sessionToken);
       return { success: true, data: client, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -67,7 +129,16 @@ export class ClientService {
     }
 
     try {
-      const client = await ipcClient.clients.update(id, body as IpcUpdateClientRequest, sessionToken);
+      const payload = buildUpdateRequest(id, body as Record<string, unknown>);
+      const validation = UpdateClientRequestSchema.safeParse(payload);
+      if (!validation.success) {
+        return {
+          success: false,
+          error: validation.error.errors[0]?.message ?? 'Invalid client update payload',
+          status: 400,
+        };
+      }
+      const client = await ipcClient.clients.update(id, validation.data, sessionToken);
       return { success: true, data: client, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));

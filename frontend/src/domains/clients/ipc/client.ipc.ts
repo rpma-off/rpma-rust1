@@ -48,7 +48,8 @@ export const clientIpc = {
       }
     });
     const payload = extractAndValidate(result) as JsonValue;
-    return unwrapTaggedArray<Client>(payload, 'SearchResults', 'client search');
+    const clients = unwrapTaggedArray<Client>(payload, 'SearchResults', 'client search');
+    return clients.map((client) => validateClient(client));
   },
 
   list: async (filters: Partial<ClientQuery>, sessionToken: string): Promise<ClientListResponse> => {

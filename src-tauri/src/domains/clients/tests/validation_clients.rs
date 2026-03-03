@@ -92,6 +92,29 @@ async fn validate_create_request_rejects_invalid_email() {
 }
 
 #[tokio::test]
+async fn validate_create_request_rejects_invalid_phone() {
+    let req = CreateClientRequest {
+        name: "Test Client".to_string(),
+        email: Some("test@example.com".to_string()),
+        phone: Some("invalid-phone".to_string()),
+        customer_type: CustomerType::Individual,
+        address_street: None,
+        address_city: None,
+        address_state: None,
+        address_zip: None,
+        address_country: None,
+        tax_id: None,
+        company_name: None,
+        contact_person: None,
+        notes: None,
+        tags: None,
+    };
+    let result = CreateClientRequest::validate(&req);
+    assert!(result.is_err());
+    assert!(result.unwrap_err().contains("phone"));
+}
+
+#[tokio::test]
 async fn create_client_rejects_duplicate_email() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = ClientService::new_with_db(db);

@@ -6,7 +6,9 @@
 use crate::domains::clients::domain::models::client::{
     ClientListResponse, ClientQuery, CreateClientRequest, UpdateClientRequest,
 };
-use crate::domains::clients::infrastructure::client_repository::ClientRepository;
+use crate::domains::clients::infrastructure::client_repository::{
+    ClientQuery as RepoClientQuery, ClientRepository,
+};
 use crate::shared::repositories::Repository;
 use crate::shared::services::cross_domain::Client;
 use chrono::{Datelike, Utc};
@@ -157,61 +159,41 @@ impl ClientService {
 
     /// Get clients with filtering and pagination
     pub async fn get_clients(&self, query: ClientQuery) -> Result<ClientListResponse, String> {
-        // Handle different query scenarios using repository methods
-        let clients = if let Some(search_term) = &query.search {
-            // Use search_simple method
-            self.client_repo
-                .search_simple(
-                    search_term,
-                    query.limit.unwrap_or(20) as usize,
-                    ((query.page.unwrap_or(1) - 1) * query.limit.unwrap_or(20)) as usize,
-                )
-                .await
-                .map_err(|e| format!("Failed to search clients: {}", e))?
-        } else if let Some(customer_type) = &query.customer_type {
-            // Use find_by_customer_type method
-            self.client_repo
-                .find_by_customer_type(customer_type.clone())
-                .await
-                .map_err(|e| format!("Failed to get clients by type: {}", e))?
-        } else {
-            // Use find_all method
-            self.client_repo
-                .find_all()
-                .await
-                .map_err(|e| format!("Failed to get all clients: {}", e))?
+        let page = query.page.unwrap_or(1).max(1);
+        let limit = query.limit.unwrap_or(20).min(200).max(1);
+        let offset = (page - 1) * limit;
+        let sort_order = query.sort_order.map(|order| order.to_string());
+
+        let repo_query = RepoClientQuery {
+            search: query.search.clone(),
+            customer_type: query.customer_type.clone(),
+            email: None,
+            phone: None,
+            city: None,
+            tags: None,
+            limit: Some(limit as i64),
+            offset: Some(offset as i64),
+            sort_by: query.sort_by.clone(),
+            sort_order,
         };
 
-        // Apply pagination manually if needed
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(20);
-        let start = ((page - 1) * limit) as usize;
-        let end = (start + limit as usize).min(clients.len());
-        let paginated_clients = if start < clients.len() {
-            clients[start..end].to_vec()
-        } else {
-            Vec::new()
+        let clients = self
+            .client_repo
+            .search(repo_query.clone())
+            .await
+            .map_err(|e| format!("Failed to list clients: {}", e))?;
+
+        let count_query = RepoClientQuery {
+            limit: None,
+            offset: None,
+            ..repo_query
         };
 
-        // Get total count
-        let total = if let Some(_search_term) = &query.search {
-            // For search, we need to get total count differently
-            // This is a limitation of the current repository structure
-            // In a real scenario, we might add a count_search method
-            clients.len() as i64
-        } else if let Some(customer_type) = &query.customer_type {
-            // Use repository to count by customer type
-            self.client_repo
-                .count_by_customer_type(customer_type)
-                .await
-                .map_err(|e| format!("Failed to count clients by type: {}", e))? as i64
-        } else {
-            // Use repository to count all
-            self.client_repo
-                .count_all()
-                .await
-                .map_err(|e| format!("Failed to count all clients: {}", e))? as i64
-        };
+        let total = self
+            .client_repo
+            .count(count_query)
+            .await
+            .map_err(|e| format!("Failed to count clients: {}", e))?;
 
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
 
@@ -228,7 +210,7 @@ impl ClientService {
             );
 
         Ok(ClientListResponse {
-            data: paginated_clients,
+            data: clients,
             pagination: crate::shared::services::cross_domain::PaginationInfo {
                 page,
                 limit,
@@ -282,7 +264,10 @@ impl ClientService {
             client.email = req.email.clone();
         }
 
-        if let Some(_phone) = &req.phone {
+        if let Some(phone) = &req.phone {
+            if !crate::domains::clients::domain::models::client::is_valid_phone(phone) {
+                return Err("Invalid phone number format".to_string());
+            }
             client.phone = req.phone.clone();
         }
 
@@ -607,5 +592,5 @@ impl crate::db::FromSqlRow for ClientStat {
 
 /// Simple email validation
 fn is_valid_email(email: &str) -> bool {
-    email.contains('@') && email.contains('.') && email.len() >= 5
+    crate::domains::clients::domain::models::client::is_valid_email(email)
 }

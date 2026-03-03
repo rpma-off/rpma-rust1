@@ -5,6 +5,7 @@ use crate::domains::clients::application::{
     required_permission, sanitize_client_action, ClientCrudRequest,
 };
 use crate::domains::clients::domain::models::client::ClientWithTasks;
+use crate::domains::clients::ClientsFacade;
 use crate::shared::services::cross_domain::Task;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -38,8 +39,91 @@ pub async fn client_crud(
     // Determine required permission via application layer
     let permission = required_permission(&action);
 
-    // Validate and sanitize action data via application layer
-    let validated_action = sanitize_client_action(action)?;
+            ClientAction::Create {
+                data: crate::domains::clients::domain::models::client::CreateClientRequest {
+                    name: validated_name,
+                    email: validated_email,
+                    phone: validated_phone,
+                    customer_type: data.customer_type.clone(),
+                    address_street: data.address_street.clone(),
+                    address_city: data.address_city.clone(),
+                    address_state: data.address_state.clone(),
+                    address_zip: data.address_zip.clone(),
+                    address_country: data.address_country.clone(),
+                    tax_id: data.tax_id.clone(),
+                    company_name: validated_company_name,
+                    contact_person: validated_contact_person,
+                    notes: validated_notes,
+                    tags: validated_tags,
+                },
+            }
+        }
+        ClientAction::Update { id, data } => {
+            let validated_name = match data.name.as_deref() {
+                Some(name) => Some(
+                    validator
+                        .sanitize_text_input(name, "name", 100)
+                        .map_err(|e| AppError::Validation(format!("Name validation failed: {}", e)))?,
+                ),
+                None => None,
+            };
+            let validated_email = validator
+                .validate_client_email(data.email.as_deref())
+                .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
+            let validated_phone = validator
+                .validate_phone(data.phone.as_deref())
+                .map_err(|e| AppError::Validation(format!("Phone validation failed: {}", e)))?;
+            let validated_company_name = validator
+                .sanitize_optional_text(data.company_name.as_deref(), "company_name", 100)
+                .map_err(|e| {
+                    AppError::Validation(format!("Company name validation failed: {}", e))
+                })?;
+            let validated_contact_person = validator
+                .sanitize_optional_text(data.contact_person.as_deref(), "contact_person", 100)
+                .map_err(|e| {
+                    AppError::Validation(format!("Contact person validation failed: {}", e))
+                })?;
+            let validated_notes = validator
+                .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
+                .map_err(|e| AppError::Validation(format!("Notes validation failed: {}", e)))?;
+            let validated_tags = if let Some(tags_str) = &data.tags {
+                let tags: Vec<String> = serde_json::from_str(tags_str)
+                    .map_err(|e| AppError::Validation(format!("Invalid tags JSON: {}", e)))?;
+                let mut validated = Vec::new();
+                for tag in tags {
+                    let sanitized = validator
+                        .sanitize_text_input(&tag, "tag", 50)
+                        .map_err(|e| AppError::Validation(format!("Tag validation failed: {}", e)))?;
+                    validated.push(sanitized);
+                }
+                Some(serde_json::to_string(&validated).unwrap_or_default())
+            } else {
+                None
+            };
+
+            ClientAction::Update {
+                id: id.clone(),
+                data: crate::domains::clients::domain::models::client::UpdateClientRequest {
+                    id: id.clone(),
+                    name: validated_name,
+                    email: validated_email,
+                    phone: validated_phone,
+                    customer_type: data.customer_type.clone(),
+                    address_street: data.address_street.clone(),
+                    address_city: data.address_city.clone(),
+                    address_state: data.address_state.clone(),
+                    address_zip: data.address_zip.clone(),
+                    address_country: data.address_country.clone(),
+                    tax_id: data.tax_id.clone(),
+                    company_name: validated_company_name,
+                    contact_person: validated_contact_person,
+                    notes: validated_notes,
+                    tags: validated_tags,
+                },
+            }
+        }
+        _ => action, // ClientAction doesn't implement Clone, so we can't clone
+    };
 
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
@@ -73,7 +157,7 @@ pub async fn client_crud(
     }
 
     let client_service = state.client_service.clone();
-
+    let clients_facade = ClientsFacade::new(client_service.clone());
     let task_service = state.task_service.clone();
 
     // Add timeout wrapper for client operations to prevent hanging
@@ -83,7 +167,7 @@ pub async fn client_crud(
             match validated_action {
                 ClientAction::Create { data } => {
                     handle_client_creation(
-                        client_service,
+                        &clients_facade,
                         data,
                         &current_user.user_id,
                         Some(correlation_id.clone()),
@@ -91,11 +175,12 @@ pub async fn client_crud(
                     .await
                 }
                 ClientAction::Get { id } => {
-                    handle_client_retrieval(client_service, &id, Some(correlation_id.clone())).await
+                    handle_client_retrieval(&clients_facade, &id, Some(correlation_id.clone()))
+                        .await
                 }
                 ClientAction::GetWithTasks { id } => {
                     handle_client_with_tasks_retrieval(
-                        client_service,
+                        &clients_facade,
                         task_service,
                         &id,
                         Some(correlation_id.clone()),
@@ -104,7 +189,7 @@ pub async fn client_crud(
                 }
                 ClientAction::Update { id, data } => {
                     handle_client_update(
-                        client_service,
+                        &clients_facade,
                         &id,
                         data,
                         &current_user.user_id,
@@ -114,7 +199,7 @@ pub async fn client_crud(
                 }
                 ClientAction::Delete { id } => {
                     handle_client_deletion(
-                        client_service,
+                        &clients_facade,
                         &id,
                         &current_user.user_id,
                         Some(correlation_id.clone()),
@@ -122,7 +207,7 @@ pub async fn client_crud(
                     .await
                 }
                 ClientAction::List { filters } => {
-                    handle_client_listing(client_service, filters, Some(correlation_id.clone()))
+                    handle_client_listing(&clients_facade, filters, Some(correlation_id.clone()))
                         .await
                 }
                 ClientAction::ListWithTasks {
@@ -130,7 +215,7 @@ pub async fn client_crud(
                     limit_tasks,
                 } => {
                     handle_client_listing_with_tasks(
-                        client_service,
+                        &clients_facade,
                         task_service,
                         filters,
                         limit_tasks,
@@ -140,7 +225,7 @@ pub async fn client_crud(
                 }
                 ClientAction::Search { query, limit } => {
                     handle_client_search(
-                        client_service,
+                        &clients_facade,
                         &query,
                         limit,
                         Some(correlation_id.clone()),
@@ -148,7 +233,7 @@ pub async fn client_crud(
                     .await
                 }
                 ClientAction::Stats => {
-                    handle_client_statistics(client_service, Some(correlation_id.clone())).await
+                    handle_client_statistics(&clients_facade, Some(correlation_id.clone())).await
                 }
             }
         },
@@ -169,19 +254,20 @@ pub async fn client_crud(
 
 /// Handle client creation
 async fn handle_client_creation(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     data: crate::domains::clients::domain::models::client::CreateClientRequest,
     user_id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     info!("Creating new client");
 
-    let client = client_service
+    let client = clients_facade
+        .client_service()
         .create_client_async(data, user_id)
         .await
         .map_err(|e| {
             error!("Failed to create client: {}", e);
-            AppError::db_sanitized("create_client", &e)
+            clients_facade.map_service_error("create_client", &e)
         })?;
     info!("Client created successfully with ID: {}", client.id);
 
@@ -194,15 +280,20 @@ async fn handle_client_creation(
 
 /// Handle client retrieval
 async fn handle_client_retrieval(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    clients_facade.validate_client_id(id)?;
     debug!("Retrieving client with ID: {}", id);
-    let client = client_service.get_client_async(id).await.map_err(|e| {
-        error!("Failed to retrieve client {}: {}", id, e);
-        AppError::db_sanitized("get_client", &e)
-    })?;
+    let client = clients_facade
+        .client_service()
+        .get_client_async(id)
+        .await
+        .map_err(|e| {
+            error!("Failed to retrieve client {}: {}", id, e);
+            clients_facade.map_service_error("get_client", &e)
+        })?;
 
     match client {
         Some(client) => {
@@ -225,16 +316,21 @@ async fn handle_client_retrieval(
 
 /// Handle client retrieval with tasks
 async fn handle_client_with_tasks_retrieval(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     task_service: std::sync::Arc<crate::shared::services::cross_domain::TaskService>,
     id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    clients_facade.validate_client_id(id)?;
     debug!("Retrieving client with tasks for ID: {}", id);
-    let client = client_service.get_client_async(id).await.map_err(|e| {
-        error!("Failed to retrieve client {}: {}", id, e);
-        AppError::db_sanitized("get_client", &e)
-    })?;
+    let client = clients_facade
+        .client_service()
+        .get_client_async(id)
+        .await
+        .map_err(|e| {
+            error!("Failed to retrieve client {}: {}", id, e);
+            clients_facade.map_service_error("get_client", &e)
+        })?;
 
     match client {
         Some(client) => {
@@ -258,7 +354,7 @@ async fn handle_client_with_tasks_retrieval(
                 .await
                 .map_err(|e| {
                     error!("Failed to retrieve tasks for client {}: {}", id, e);
-                    AppError::db_sanitized("get_tasks", &e)
+                    clients_facade.map_service_error("get_tasks", &e)
                 })?;
 
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
@@ -314,19 +410,21 @@ async fn handle_client_with_tasks_retrieval(
 
 /// Handle client update
 async fn handle_client_update(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     id: &str,
     data: crate::domains::clients::domain::models::client::UpdateClientRequest,
     user_id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    clients_facade.validate_client_id(id)?;
     info!("Updating client with ID: {}", id);
-    let client = client_service
+    let client = clients_facade
+        .client_service()
         .update_client_async(data, user_id)
         .await
         .map_err(|e| {
             error!("Failed to update client {}: {}", id, e);
-            AppError::db_sanitized("update_client", &e)
+            clients_facade.map_service_error("update_client", &e)
         })?;
     info!("Client {} updated successfully", id);
 
@@ -339,18 +437,20 @@ async fn handle_client_update(
 
 /// Handle client deletion
 async fn handle_client_deletion(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     id: &str,
     user_id: &str,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    clients_facade.validate_client_id(id)?;
     info!("Deleting client with ID: {}", id);
-    client_service
+    clients_facade
+        .client_service()
         .delete_client_async(id, user_id)
         .await
         .map_err(|e| {
             error!("Failed to delete client {}: {}", id, e);
-            AppError::db_sanitized("delete_client", &e)
+            clients_facade.map_service_error("delete_client", &e)
         })?;
     info!("Client {} deleted successfully", id);
     Ok(ApiResponse::success(serde_json::json!({
@@ -361,17 +461,18 @@ async fn handle_client_deletion(
 
 /// Handle client listing
 async fn handle_client_listing(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     filters: crate::domains::clients::domain::models::client::ClientQuery,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Listing clients with filters: {:?}", filters);
-    let clients = client_service
+    let clients = clients_facade
+        .client_service()
         .get_clients_async(filters)
         .await
         .map_err(|e| {
             error!("Failed to list clients: {}", e);
-            AppError::db_sanitized("list_clients", &e)
+            clients_facade.map_service_error("list_clients", &e)
         })?;
     debug!("Retrieved {} clients", clients.data.len());
     Ok(ApiResponse::success(serde_json::json!({
@@ -383,7 +484,7 @@ async fn handle_client_listing(
 
 /// Handle client listing with tasks
 async fn handle_client_listing_with_tasks(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     task_service: std::sync::Arc<crate::shared::services::cross_domain::TaskService>,
     filters: crate::domains::clients::domain::models::client::ClientQuery,
     limit_tasks: Option<i32>,
@@ -393,12 +494,13 @@ async fn handle_client_listing_with_tasks(
         "Listing clients with tasks, filters: {:?}, limit_tasks: {:?}",
         filters, limit_tasks
     );
-    let clients = client_service
+    let clients = clients_facade
+        .client_service()
         .get_clients_async(filters)
         .await
         .map_err(|e| {
             error!("Failed to list clients: {}", e);
-            AppError::db_sanitized("list_clients", &e)
+            clients_facade.map_service_error("list_clients", &e)
         })?;
     debug!("Retrieved {} clients", clients.data.len());
 
@@ -426,7 +528,7 @@ async fn handle_client_listing_with_tasks(
             .await
             .map_err(|e| {
                 error!("Failed to retrieve tasks for client {}: {}", client.id, e);
-                AppError::db_sanitized("get_tasks", &e)
+                clients_facade.map_service_error("get_tasks", &e)
             })?;
 
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
@@ -474,18 +576,19 @@ async fn handle_client_listing_with_tasks(
 
 /// Handle client search
 async fn handle_client_search(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     query: &str,
     limit: i32,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Searching clients with query: {}, limit: {}", query, limit);
-    let clients = client_service
+    let clients = clients_facade
+        .client_service()
         .search_clients_async(query, 1, limit)
         .await
         .map_err(|e| {
             error!("Failed to search clients: {}", e);
-            AppError::db_sanitized("search_clients", &e)
+            clients_facade.map_service_error("search_clients", &e)
         })?;
     debug!("Found {} clients matching query", clients.len());
     Ok(ApiResponse::success(serde_json::json!({
@@ -497,14 +600,18 @@ async fn handle_client_search(
 
 /// Handle client statistics
 async fn handle_client_statistics(
-    client_service: std::sync::Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    clients_facade: &ClientsFacade,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     debug!("Retrieving client statistics");
-    let stats = client_service.get_client_stats_async().await.map_err(|e| {
-        error!("Failed to retrieve client statistics: {}", e);
-        AppError::db_sanitized("get_client_stats", &e)
-    })?;
+    let stats = clients_facade
+        .client_service()
+        .get_client_stats_async()
+        .await
+        .map_err(|e| {
+            error!("Failed to retrieve client statistics: {}", e);
+            clients_facade.map_service_error("get_client_stats", &e)
+        })?;
     debug!("Client statistics retrieved: {:?}", stats);
     Ok(ApiResponse::success(serde_json::json!({
         "type": "Statistics",
