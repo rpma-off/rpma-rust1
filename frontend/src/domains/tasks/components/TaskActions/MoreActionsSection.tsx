@@ -1,17 +1,12 @@
 import React from 'react';
 import { MoreVertical } from 'lucide-react';
 import { InlineActionButton } from './InlineActionButton';
+import type { TaskActionItem } from './TaskActionButton';
 
 interface MoreActionsSectionProps {
   showMoreActions: boolean;
   toggleMoreActions: () => void;
-  actions: Array<{
-    id: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    onClick: () => void;
-    disabled?: boolean;
-  }>;
+  actions: TaskActionItem[];
   onActionClick: (action: () => void) => void;
 }
 

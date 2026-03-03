@@ -14,3 +14,5 @@ export { useVirtualScrolling, useTaskVirtualScrolling, useSOPVirtualScrolling, u
 export { useIsMobile } from './use-mobile';
 export { useAuthRedirect } from './useAuthRedirect';
 export { useAdminBootstrapCheck } from './useAdminBootstrapCheck';
+export { useFilterState } from './useFilterState';
+export { useDashboardTaskFiltering } from './useDashboardTaskFiltering';

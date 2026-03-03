@@ -1,15 +1,9 @@
 import React from 'react';
 import { IconActionButton } from './IconActionButton';
+import type { TaskActionItem } from './TaskActionButton';
 
 interface SecondaryActionsGridProps {
-  actions: Array<{
-    id: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    count?: number;
-    onClick: () => void;
-    disabled?: boolean;
-  }>;
+  actions: TaskActionItem[];
   onActionClick: (action: () => void) => void;
   columns?: 2 | 3;
 }

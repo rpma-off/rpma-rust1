@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { TaskStatus, TaskPriority } from '@/lib/backend';
+import { useFilterState } from '@/shared/hooks/useFilterState';
 
 interface TaskFilters {
   status: TaskStatus | 'all';
@@ -20,11 +21,7 @@ export function useTaskFilters({
   initialFilters: _initialFilters = {},
   onFiltersChange,
 }: UseTaskFiltersProps = {}) {
-  const updateFilters = useCallback((newFilters: Partial<TaskFilters>) => {
-    // This would be handled by the parent component's state management
-    // The actual filter state is managed in useTaskState
-    onFiltersChange?.(newFilters as TaskFilters);
-  }, [onFiltersChange]);
+  const { updateFilters, clearFilters: clearFilterState, hasActiveFilters: hasActiveFromState } = useFilterState<TaskFilters>(onFiltersChange);
 
   const setStatusFilter = useCallback((status: TaskStatus | 'all') => {
     updateFilters({ status });
@@ -47,7 +44,7 @@ export function useTaskFilters({
   }, [updateFilters]);
 
   const clearFilters = useCallback(() => {
-    updateFilters({
+    clearFilterState({
       status: 'all',
       priority: 'all',
       search: '',
@@ -56,17 +53,19 @@ export function useTaskFilters({
       startDate: undefined,
       endDate: undefined,
     });
-  }, [updateFilters]);
+  }, [clearFilterState]);
 
   const hasActiveFilters = useCallback((filters: TaskFilters) => {
-    return filters.status !== 'all' ||
-           filters.priority !== 'all' ||
-           filters.search !== '' ||
-           !!filters.assignedTo ||
-           !!filters.vehicleId ||
-           !!filters.startDate ||
-           !!filters.endDate;
-  }, []);
+    return hasActiveFromState(filters, (currentFilters) =>
+      currentFilters.status !== 'all' ||
+      currentFilters.priority !== 'all' ||
+      currentFilters.search !== '' ||
+      !!currentFilters.assignedTo ||
+      !!currentFilters.vehicleId ||
+      !!currentFilters.startDate ||
+      !!currentFilters.endDate
+    );
+  }, [hasActiveFromState]);
 
   return {
     updateFilters,

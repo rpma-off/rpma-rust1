@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ import {
   TaskHeaderBand,
   TaskStepperBand,
   StatusBadge,
-  EnhancedActionsCard,
+  ActionsCard,
   getTaskDisplayTitle,
 } from '@/domains/tasks';
 import { InterventionWorkflowService } from '@/domains/interventions';
@@ -446,7 +446,7 @@ export default function TaskDetailPage() {
             <main className="space-y-6">
               {/* Enhanced Actions Section */}
               <section id="task-actions" className="scroll-mt-28">
-                <EnhancedActionsCard
+                <ActionsCard
                   task={task}
                   isAssignedToCurrentUser={isAssignedToCurrentUser}
                   isAvailable={isTaskAvailable}
@@ -521,7 +521,7 @@ export default function TaskDetailPage() {
 
         {showMobileActionBar && (
           <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--rpma-border))] bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/85 pb-[calc(env(safe-area-inset-bottom)+8px)] px-3 pt-2 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
-            <EnhancedActionsCard
+            <ActionsCard
               task={task}
               isAssignedToCurrentUser={isAssignedToCurrentUser}
               isAvailable={isTaskAvailable}
@@ -538,5 +538,6 @@ export default function TaskDetailPage() {
     </TaskErrorBoundary>
   );
 }
+
 
 

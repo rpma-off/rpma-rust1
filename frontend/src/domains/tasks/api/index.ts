@@ -21,7 +21,6 @@ export { ActionsCard, ActionButtons } from '../components/TaskActions';
 export { QuickAddDialog } from '../components/QuickAddDialog';
 export { FilterDrawer } from '../components/FilterDrawer';
 export { TaskHeaderBand, TaskStepperBand, StatusBadge } from '../components/TaskDetail';
-export { EnhancedActionsCard } from '../components/TaskActions';
 export {
   CompletedHero,
   WorkflowCompletionTimeline,
