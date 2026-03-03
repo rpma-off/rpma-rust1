@@ -34,3 +34,18 @@ pub(crate) fn ensure_intervention_permission(session: &UserSession) -> Result<()
     }
     Ok(())
 }
+
+/// Authorization rule for intervention/task ownership checks.
+///
+/// Admins and supervisors can access any resource (including unassigned ones),
+/// while technicians can only access resources assigned to their user ID.
+pub(crate) fn can_access_own_or_privileged(
+    assigned_user_id: Option<&str>,
+    session: &UserSession,
+) -> bool {
+    let is_privileged = matches!(
+        session.role,
+        UserRole::Admin | UserRole::Supervisor
+    );
+    is_privileged || assigned_user_id.is_some_and(|id| id == session.user_id.as_str())
+}

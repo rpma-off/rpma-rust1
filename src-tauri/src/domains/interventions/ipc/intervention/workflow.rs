@@ -22,18 +22,14 @@ fn ensure_technician_assignment(
     assigned_technician_id: Option<&str>,
     action: &str,
 ) -> Result<(), AppError> {
-    if !matches!(session.role, UserRole::Technician) {
-        return Ok(());
-    }
-
-    if assigned_technician_id != Some(session.user_id.as_str()) {
-        return Err(AppError::Authorization(format!(
+    if super::can_access_own_or_privileged(assigned_technician_id, session) {
+        Ok(())
+    } else {
+        Err(AppError::Authorization(format!(
             "Technician can only {} for assigned tasks",
             action
-        )));
+        )))
     }
-
-    Ok(())
 }
 
 async fn ensure_task_assignment(

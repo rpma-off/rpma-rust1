@@ -18,22 +18,6 @@ fn default_quality_check_passed() -> bool {
     true
 }
 
-/// Authorization rule for intervention ownership checks.
-///
-/// Admins and supervisors can access any intervention (including unassigned ones),
-/// while technicians can only access interventions assigned to their user ID.
-fn can_access_intervention(
-    technician_id: Option<&str>,
-    session: &crate::shared::contracts::auth::UserSession,
-) -> bool {
-    let is_privileged = matches!(
-        session.role,
-        crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor
-    );
-    is_privileged || technician_id.is_some_and(|id| id == session.user_id.as_str())
-}
-
 /// Validates intervention existence and enforces access control for the current session.
 ///
 /// Returns `Ok(())` when the intervention exists and the current session is authorized,
@@ -53,23 +37,11 @@ fn ensure_intervention_access(
         })?
         .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", intervention_id)))?;
 
-    if !can_access_intervention(intervention.technician_id.as_deref(), session) {
+    if !super::can_access_own_or_privileged(intervention.technician_id.as_deref(), session) {
         return Err(AppError::Authorization(unauthorized_message.to_string()));
     }
 
     Ok(())
-}
-
-#[derive(Deserialize)]
-pub struct InterventionProgressQueryRequest {
-    pub page: Option<u32>,
-    pub limit: Option<u32>,
-    pub status: Option<String>,
-    pub technician_id: Option<String>,
-    pub task_id: Option<String>,
-    pub priority: Option<String>,
-    pub from_date: Option<String>,
-    pub to_date: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -463,7 +435,7 @@ pub async fn intervention_progress(
 
 #[cfg(test)]
 mod tests {
-    use super::can_access_intervention;
+    use super::super::can_access_own_or_privileged;
     use crate::shared::contracts::auth::{UserRole, UserSession};
 
     fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
@@ -480,42 +452,42 @@ mod tests {
     #[test]
     fn allows_owner_technician_access() {
         let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(can_access_intervention(Some("tech-1"), &session));
+        assert!(can_access_own_or_privileged(Some("tech-1"), &session));
     }
 
     #[test]
     fn denies_non_owner_technician_access() {
         let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(!can_access_intervention(Some("tech-2"), &session));
+        assert!(!can_access_own_or_privileged(Some("tech-2"), &session));
     }
 
     #[test]
     fn allows_supervisor_access() {
         let session = session_with_role(UserRole::Supervisor, "sup-1");
-        assert!(can_access_intervention(Some("tech-2"), &session));
+        assert!(can_access_own_or_privileged(Some("tech-2"), &session));
     }
 
     #[test]
     fn allows_admin_access() {
         let session = session_with_role(UserRole::Admin, "admin-1");
-        assert!(can_access_intervention(Some("tech-2"), &session));
+        assert!(can_access_own_or_privileged(Some("tech-2"), &session));
     }
 
     #[test]
     fn denies_unassigned_intervention_for_technician() {
         let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(!can_access_intervention(None, &session));
+        assert!(!can_access_own_or_privileged(None, &session));
     }
 
     #[test]
     fn allows_admin_access_to_unassigned_intervention() {
         let session = session_with_role(UserRole::Admin, "admin-1");
-        assert!(can_access_intervention(None, &session));
+        assert!(can_access_own_or_privileged(None, &session));
     }
 
     #[test]
     fn allows_supervisor_access_to_unassigned_intervention() {
         let session = session_with_role(UserRole::Supervisor, "sup-1");
-        assert!(can_access_intervention(None, &session));
+        assert!(can_access_own_or_privileged(None, &session));
     }
 }
