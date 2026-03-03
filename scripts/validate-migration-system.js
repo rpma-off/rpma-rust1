@@ -114,7 +114,7 @@ class MigrationSystemValidator {
         const result = {
             name: 'fresh_db_simulation',
             ok: true,
-            command: 'cargo test migrations_fresh_db --verbose',
+            command: 'cargo test db::migrations::tests:: -- --test-threads=1',
         };
 
         try {

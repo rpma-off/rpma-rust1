@@ -89,6 +89,14 @@ impl Database {
         Ok(())
     }
 
+    /// Ensure legacy runtime artifacts removed after migrations.
+    fn ensure_required_legacy_cleanup(&self) -> DbResult<()> {
+        let conn = self.get_connection()?;
+        conn.execute_batch("DROP TRIGGER IF EXISTS user_insert_create_settings;")
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     /// Canonical startup initialization sequence used by runtime startup.
     pub fn initialize_or_migrate(&self) -> DbResult<()> {
         if !self.is_initialized()? {
@@ -111,6 +119,7 @@ impl Database {
             self.migrate(latest_version)?;
         }
 
+        self.ensure_required_legacy_cleanup()?;
         self.ensure_required_views()?;
         Ok(())
     }
@@ -2788,6 +2797,24 @@ mod tests {
     use rusqlite::params;
     use tempfile::NamedTempFile;
 
+    fn reset_schema_version_to(conn: &rusqlite::Connection, max_inclusive: i32) {
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000))",
+            [],
+        )
+        .expect("Failed to ensure schema_version exists");
+        conn.execute("DELETE FROM schema_version", [])
+            .expect("Failed to clear schema_version");
+
+        for v in 1..=max_inclusive {
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_version (version) VALUES (?1)",
+                params![v],
+            )
+            .expect("Failed to insert schema_version");
+        }
+    }
+
     /// Regression test: migration 038 must succeed even when inventory_transactions is absent.
     ///
     /// Simulates a DB that has schema_version at 37 but is missing the
@@ -2810,18 +2837,7 @@ mod tests {
         // Pretend migrations 1-37 have already been applied
         {
             let conn = db.get_connection().expect("Failed to get connection");
-            conn.execute(
-                "CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000))",
-                [],
-            )
-            .expect("Failed to create schema_version");
-            for v in 1..=37_i32 {
-                conn.execute(
-                    "INSERT OR IGNORE INTO schema_version (version) VALUES (?1)",
-                    params![v],
-                )
-                .expect("Failed to insert schema_version");
-            }
+            reset_schema_version_to(&conn, 37);
         }
 
         // Applying migration 38 must not panic or return an error
@@ -3124,13 +3140,27 @@ mod tests {
                 "#,
             )
             .expect("Failed to create legacy user_settings schema");
-            conn.execute("DELETE FROM schema_version WHERE version >= 44", [])
-                .expect("Failed to reset schema version for 044+ replay");
+            reset_schema_version_to(&conn, 43);
         }
 
         // Apply 044/045 so the trigger exists.
         db.migrate(45)
             .expect("Migration 045 must apply in legacy-schema test setup");
+
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            let trigger_exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name='user_insert_create_settings'",
+                    [],
+                    |row| row.get(0),
+                )
+                .expect("Failed to query sqlite_master for trigger");
+            assert_eq!(
+                trigger_exists, 1,
+                "user_insert_create_settings trigger must exist after migration 045"
+            );
+        }
 
         {
             let conn = db.get_connection().expect("Failed to get connection");
@@ -3157,6 +3187,21 @@ mod tests {
         // Drop trigger via migration 046 and verify insert now succeeds.
         db.migrate(46)
             .expect("Migration 046 must drop signup trigger on legacy schema");
+
+        {
+            let conn = db.get_connection().expect("Failed to get connection");
+            let trigger_exists: i64 = conn
+                .query_row(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name='user_insert_create_settings'",
+                    [],
+                    |row| row.get(0),
+                )
+                .expect("Failed to query sqlite_master for trigger");
+            assert_eq!(
+                trigger_exists, 0,
+                "user_insert_create_settings trigger must be absent after migration 046"
+            );
+        }
 
         {
             let conn = db.get_connection().expect("Failed to get connection");
