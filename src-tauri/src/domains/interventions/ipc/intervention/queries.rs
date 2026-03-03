@@ -3,7 +3,9 @@
 //! Thin IPC adapters delegating progress/query operations to the interventions facade.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{InterventionsCommand, InterventionsFacade, InterventionsResponse};
+use crate::domains::interventions::{
+    InterventionsCommand, InterventionsFacade, InterventionsResponse,
+};
 use crate::shared::auth_middleware::AuthMiddleware;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -71,7 +73,8 @@ async fn intervention_ctx(
     session_token: &str,
     correlation_id: &Option<String>,
 ) -> Result<crate::shared::ipc::CommandContext, AppError> {
-    let ctx = AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
     super::ensure_intervention_permission(&ctx.session)?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
     Ok(ctx)
@@ -140,9 +143,9 @@ pub async fn intervention_advance_step(
         )
         .await?
     {
-        InterventionsResponse::AdvancedStep(response) => Ok(
-            ApiResponse::success(response.step).with_correlation_id(Some(ctx.correlation_id)),
-        ),
+        InterventionsResponse::AdvancedStep(response) => {
+            Ok(ApiResponse::success(response.step).with_correlation_id(Some(ctx.correlation_id)))
+        }
         _ => Err(AppError::Internal(
             "Unexpected interventions facade response".to_string(),
         )),
@@ -150,7 +153,10 @@ pub async fn intervention_advance_step(
 }
 
 #[tauri::command]
-#[instrument(skip(state, session_token, progress_data), fields(user_id, correlation_id))]
+#[instrument(
+    skip(state, session_token, progress_data),
+    fields(user_id, correlation_id)
+)]
 pub async fn intervention_save_step_progress(
     intervention_id: String,
     step_id: String,
@@ -183,7 +189,9 @@ pub async fn intervention_save_step_progress(
         Ok(_) => Err(AppError::Internal(
             "Unexpected interventions facade response".to_string(),
         )),
-        Err(_) => Err(AppError::Database("Failed to save step progress".to_string())),
+        Err(_) => Err(AppError::Database(
+            "Failed to save step progress".to_string(),
+        )),
     }
 }
 
@@ -235,10 +243,10 @@ pub async fn intervention_progress(
     };
 
     match facade.execute(command, &ctx, &state.task_service).await? {
-        InterventionsResponse::ProgressWithSteps { progress, steps } => Ok(
-            ApiResponse::success(InterventionProgressResponse::Retrieved { progress, steps })
-                .with_correlation_id(Some(ctx.correlation_id)),
-        ),
+        InterventionsResponse::ProgressWithSteps { progress, steps } => Ok(ApiResponse::success(
+            InterventionProgressResponse::Retrieved { progress, steps },
+        )
+        .with_correlation_id(Some(ctx.correlation_id))),
         InterventionsResponse::AdvancedStep(response) => Ok(ApiResponse::success(
             InterventionProgressResponse::StepAdvanced {
                 step: Box::new(response.step),

@@ -35,5 +35,8 @@ fn test_migration_030_fresh_db_sessions_table_exists() {
             |row| row.get(0),
         )
         .expect("Failed to check sessions table");
-    assert_eq!(sessions_exists, 1, "sessions table should exist on fresh DB");
+    assert_eq!(
+        sessions_exists, 1,
+        "sessions table should exist on fresh DB"
+    );
 }

@@ -62,9 +62,7 @@ pub enum DocumentsResponse {
     Unit,
     PhotoData(Vec<u8>),
     Photo(crate::domains::documents::domain::models::photo::Photo),
-    Report(
-        crate::domains::documents::domain::models::report_export::InterventionReportResult,
-    ),
+    Report(crate::domains::documents::domain::models::report_export::InterventionReportResult),
     SavedPath(String),
 }
 
@@ -187,11 +185,9 @@ impl DocumentsFacade {
                     user,
                 )?;
 
-                let saved_path = report_export_service::save_intervention_report(
-                    &intervention_data,
-                    &file_path,
-                )
-                .await?;
+                let saved_path =
+                    report_export_service::save_intervention_report(&intervention_data, &file_path)
+                        .await?;
 
                 Ok(DocumentsResponse::SavedPath(saved_path))
             }

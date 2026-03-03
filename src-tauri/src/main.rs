@@ -1,4 +1,4 @@
-﻿// Prevents additional console window on Windows in release builds
+// Prevents additional console window on Windows in release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
@@ -434,4 +434,3 @@ fn main() {
         .map_err(|e| error!("Failed to run Tauri application: {}", e))
         .unwrap_or_else(|_| std::process::exit(1));
 }
-

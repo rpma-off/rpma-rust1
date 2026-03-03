@@ -45,7 +45,10 @@ pub async fn document_store_photo(
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
-            DocumentsCommand::StorePhoto { request, image_data },
+            DocumentsCommand::StorePhoto {
+                request,
+                image_data,
+            },
             &ctx.session,
             &services(&state),
         )

@@ -15,29 +15,28 @@ use crate::domains::notifications::domain::models::notification::{
 pub fn build_notification_config(
     config: &UpdateNotificationConfigRequest,
 ) -> Result<NotificationConfig, String> {
-    let email_config =
-        if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
-            config.email_provider.as_deref(),
-            config.email_api_key.as_deref(),
-            config.email_from_email.as_deref(),
-            config.email_from_name.as_deref(),
-        ) {
-            let email_provider = match provider {
-                "sendgrid" => EmailProvider::SendGrid,
-                "mailgun" => EmailProvider::Mailgun,
-                "smtp" => EmailProvider::Smtp,
-                _ => return Err("Invalid email provider".to_string()),
-            };
-
-            Some(EmailConfig {
-                provider: email_provider,
-                api_key: api_key.to_owned(),
-                from_email: from_email.to_owned(),
-                from_name: from_name.to_owned(),
-            })
-        } else {
-            None
+    let email_config = if let (Some(provider), Some(api_key), Some(from_email), Some(from_name)) = (
+        config.email_provider.as_deref(),
+        config.email_api_key.as_deref(),
+        config.email_from_email.as_deref(),
+        config.email_from_name.as_deref(),
+    ) {
+        let email_provider = match provider {
+            "sendgrid" => EmailProvider::SendGrid,
+            "mailgun" => EmailProvider::Mailgun,
+            "smtp" => EmailProvider::Smtp,
+            _ => return Err("Invalid email provider".to_string()),
         };
+
+        Some(EmailConfig {
+            provider: email_provider,
+            api_key: api_key.to_owned(),
+            from_email: from_email.to_owned(),
+            from_name: from_name.to_owned(),
+        })
+    } else {
+        None
+    };
 
     let sms_config = if let (Some(provider), Some(api_key), Some(from_number)) = (
         config.sms_provider.as_deref(),

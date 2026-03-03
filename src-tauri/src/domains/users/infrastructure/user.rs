@@ -1,4 +1,4 @@
-﻿//! User service for user management operations
+//! User service for user management operations
 
 use crate::commands::AppError;
 use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
@@ -410,4 +410,3 @@ mod tests {
         assert!(matches!(err, AppError::Validation(_)));
     }
 }
-

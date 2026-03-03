@@ -2,13 +2,14 @@
 //!
 //! Provides database access patterns for Quote and QuoteItem entities.
 
-use chrono::Utc;
 use crate::db::Database;
 use crate::domains::quotes::domain::models::quote::{
-    AttachmentType, Quote, QuoteAttachment, CreateQuoteAttachmentRequest, QuoteItem, QuoteQuery, QuoteStatus, UpdateQuoteAttachmentRequest,
+    AttachmentType, CreateQuoteAttachmentRequest, Quote, QuoteAttachment, QuoteItem, QuoteQuery,
+    QuoteStatus, UpdateQuoteAttachmentRequest,
 };
 use crate::shared::repositories::base::{RepoError, RepoResult};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
+use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -667,7 +668,9 @@ impl QuoteRepository {
 
     /// Find quote by public token (for public link access)
     pub fn find_by_public_token(&self, public_token: &str) -> RepoResult<Option<Quote>> {
-        let cache_key = self.cache_key_builder.id(&format!("public_{}", public_token));
+        let cache_key = self
+            .cache_key_builder
+            .id(&format!("public_{}", public_token));
 
         if let Some(quote) = self.cache.get::<Quote>(&cache_key) {
             return Ok(Some(quote));
@@ -764,7 +767,9 @@ impl QuoteRepository {
                     quote_id,
                 ],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to update customer response: {}", e)))?;
+            .map_err(|e| {
+                RepoError::Database(format!("Failed to update customer response: {}", e))
+            })?;
 
         self.invalidate_cache(quote_id);
         Ok(())
@@ -779,10 +784,7 @@ impl QuoteRepository {
                 SET status = 'draft', customer_message = NULL, updated_at = ?
                 WHERE id = ?
                 "#,
-                params![
-                    Utc::now().timestamp_millis(),
-                    quote_id,
-                ],
+                params![Utc::now().timestamp_millis(), quote_id,],
             )
             .map_err(|e| RepoError::Database(format!("Failed to acknowledge response: {}", e)))?;
 

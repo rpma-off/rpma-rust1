@@ -1,4 +1,4 @@
-﻿//! Background Sync Service - PRD-08 Implementation
+//! Background Sync Service - PRD-08 Implementation
 //!
 //! Provides automatic bidirectional synchronization between local SQLite
 //! and remote Supabase with background processing and error handling.
@@ -514,4 +514,3 @@ impl Clone for BackgroundSyncService {
         }
     }
 }
-

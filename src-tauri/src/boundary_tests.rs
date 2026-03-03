@@ -59,3 +59,37 @@ fn application_layers_accessible_within_crate() {
     let _ = std::any::type_name::<SignupRequest>();
     let _ = std::any::type_name::<SendNotificationRequest>();
 }
+
+/// Guardrail: task domain modules must not depend on infrastructure modules.
+#[test]
+fn task_domain_does_not_import_task_infrastructure() {
+    use std::fs;
+    use std::path::Path;
+
+    fn scan(path: &Path, violations: &mut Vec<String>) {
+        if path.is_dir() {
+            for entry in fs::read_dir(path).expect("read_dir failed") {
+                let entry = entry.expect("dir entry failed");
+                scan(&entry.path(), violations);
+            }
+            return;
+        }
+
+        if path.extension().and_then(|s| s.to_str()) != Some("rs") {
+            return;
+        }
+
+        let content = fs::read_to_string(path).expect("read file failed");
+        if content.contains("crate::domains::tasks::infrastructure::") {
+            violations.push(path.display().to_string());
+        }
+    }
+
+    let mut violations = Vec::new();
+    scan(Path::new("src/domains/tasks/domain"), &mut violations);
+    assert!(
+        violations.is_empty(),
+        "Task domain imports infrastructure modules: {:?}",
+        violations
+    );
+}

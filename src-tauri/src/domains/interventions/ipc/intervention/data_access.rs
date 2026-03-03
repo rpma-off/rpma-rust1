@@ -7,7 +7,9 @@
 //! - Getting individual intervention steps
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{InterventionsCommand, InterventionsFacade, InterventionsResponse};
+use crate::domains::interventions::{
+    InterventionsCommand, InterventionsFacade, InterventionsResponse,
+};
 use crate::shared::auth_middleware::AuthMiddleware;
 use tracing::{error, info, instrument};
 
@@ -23,8 +25,8 @@ pub async fn intervention_get(
     ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
     AppError,
 > {
-    let ctx = AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id)
-        .await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
 
     info!(intervention_id = %id, "Getting intervention");
@@ -65,8 +67,8 @@ pub async fn intervention_get_active_by_task(
     ApiResponse<Vec<crate::domains::interventions::domain::models::intervention::Intervention>>,
     AppError,
 > {
-    let ctx = AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id)
-        .await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
 
     info!(task_id = %task_id, "Getting active interventions for task");
@@ -107,8 +109,8 @@ pub async fn intervention_get_latest_by_task(
     ApiResponse<Option<crate::domains::interventions::domain::models::intervention::Intervention>>,
     AppError,
 > {
-    let ctx = AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id)
-        .await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
 
     info!(task_id = %task_id, "Getting latest intervention for task");
@@ -150,8 +152,8 @@ pub async fn intervention_get_step(
     ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>,
     AppError,
 > {
-    let ctx = AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id)
-        .await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
 
     info!(intervention_id = %intervention_id, step_id = %step_id, "Getting intervention step");

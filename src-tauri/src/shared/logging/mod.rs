@@ -3,8 +3,8 @@
 //! This module fences the legacy top-level `crate::logging` module behind a
 //! shared entry point so bounded contexts can depend on `shared::logging`.
 
-pub use crate::logging::{LogDomain, RPMARequestLogger};
 pub use crate::logging::correlation;
+pub use crate::logging::{LogDomain, RPMARequestLogger};
 
 #[cfg(test)]
 mod tests {

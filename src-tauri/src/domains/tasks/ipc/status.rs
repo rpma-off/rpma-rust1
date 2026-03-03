@@ -1,6 +1,7 @@
 use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::domains::tasks::domain::models::task::Task;
 
@@ -31,11 +32,7 @@ pub async fn task_transition_status(
             .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
             .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
-        if task.technician_id.as_ref() != Some(&current_user.user_id) {
-            return Err(AppError::Authorization(
-                "Technician can only transition their own assigned tasks".to_string(),
-            ));
-        }
+        task_policy_service::check_task_permissions(&current_user, &task, "edit")?;
     }
 
     let task = state.task_service.transition_status(

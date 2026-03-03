@@ -1,4 +1,4 @@
-﻿//! Performance monitoring commands for admin interface
+//! Performance monitoring commands for admin interface
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
@@ -287,4 +287,3 @@ pub async fn configure_cache_settings(
             .with_correlation_id(Some(correlation_id.clone())),
     )
 }
-

@@ -1,4 +1,4 @@
-﻿//! Task-related types for the Tasks bounded context.
+//! Task-related types for the Tasks bounded context.
 //!
 //! This module defines types used by task commands that aren't part of the main models.
 
@@ -111,4 +111,3 @@ pub struct TaskWithClient {
     pub client_name: String,
     pub client_id: String,
 }
-

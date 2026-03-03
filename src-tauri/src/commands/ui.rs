@@ -149,8 +149,9 @@ pub async fn get_entity_counts(
         crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
 
     let pool = state.db.pool().clone();
-    let counts =
-        tokio::task::spawn_blocking(move || crate::shared::services::system::SystemService::get_entity_counts(&pool))
+    let counts = tokio::task::spawn_blocking(move || {
+        crate::shared::services::system::SystemService::get_entity_counts(&pool)
+    })
     .await
     .map_err(|e| super::AppError::Internal(format!("Task join error: {}", e)))?
     .map_err(super::AppError::Database)?;

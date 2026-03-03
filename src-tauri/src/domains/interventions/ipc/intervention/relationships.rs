@@ -1,4 +1,4 @@
-﻿//! Intervention relationship operations
+//! Intervention relationship operations
 //!
 //! This module handles complex intervention operations involving
 //! multiple entities and joined queries:
@@ -307,4 +307,3 @@ pub async fn intervention_management(
         }
     }
 }
-

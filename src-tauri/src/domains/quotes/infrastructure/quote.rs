@@ -210,9 +210,7 @@ impl QuoteService {
             }
         }
 
-        self.repo
-            .update(id, &req)
-            .map_err(Self::map_repo_error)?;
+        self.repo.update(id, &req).map_err(Self::map_repo_error)?;
 
         // Recalculate totals after updating discount
         self.recalculate_totals(id)?;
@@ -270,9 +268,7 @@ impl QuoteService {
             updated_at: now,
         };
 
-        self.repo
-            .add_item(&item)
-            .map_err(Self::map_repo_error)?;
+        self.repo.add_item(&item).map_err(Self::map_repo_error)?;
         self.recalculate_totals(quote_id)?;
 
         self.repo

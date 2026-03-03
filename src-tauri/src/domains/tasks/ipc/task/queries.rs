@@ -4,7 +4,9 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::domain::models::task::{Task, TaskListResponse, TaskPriority, TaskStatus};
+use crate::domains::tasks::domain::models::task::{
+    Task, TaskListResponse, TaskPriority, TaskStatus,
+};
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use serde::Deserialize;
@@ -104,7 +106,10 @@ pub async fn get_tasks_with_clients(
         status: filter.status.as_deref().and_then(TaskStatus::from_str_opt),
         technician_id: filter.assigned_to.clone(),
         client_id: filter.client_id.clone(),
-        priority: filter.priority.as_deref().and_then(TaskPriority::from_str_opt),
+        priority: filter
+            .priority
+            .as_deref()
+            .and_then(TaskPriority::from_str_opt),
         search: None,
         from_date: filter.date_from.map(|d| d.to_rfc3339()),
         to_date: filter.date_to.map(|d| d.to_rfc3339()),

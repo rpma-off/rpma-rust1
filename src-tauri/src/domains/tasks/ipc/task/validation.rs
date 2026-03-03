@@ -4,11 +4,11 @@
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AvailabilityCheckResponse, ValidationResult,
 };
 use crate::domains::tasks::TasksFacade;
-use crate::shared::contracts::auth::UserRole;
 use tracing::{debug, info};
 
 /// Request for checking task assignment eligibility
@@ -54,17 +54,13 @@ pub async fn check_task_assignment(
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    if !matches!(session.role, UserRole::Admin | UserRole::Supervisor) {
-        return Err(AppError::Authorization(
-            "User not authorized to assign tasks".to_string(),
-        ));
-    }
+    task_policy_service::ensure_assignment_management_role(&session)?;
 
     let task = state
         .task_service
         .get_task_async(&request.task_id)
         .await
-        .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?
+        .map_err(|e| AppError::db_sanitized("tasks.assignment.fetch_task", e))?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     let max_tasks_per_user = state
@@ -136,17 +132,13 @@ pub async fn validate_task_assignment_change(
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    if !matches!(session.role, UserRole::Admin | UserRole::Supervisor) {
-        return Err(AppError::Authorization(
-            "User not authorized to change task assignments".to_string(),
-        ));
-    }
+    task_policy_service::ensure_assignment_management_role(&session)?;
 
     let task = state
         .task_service
         .get_task_async(&request.task_id)
         .await
-        .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?
+        .map_err(|e| AppError::db_sanitized("tasks.assignment_change.fetch_task", e))?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     let max_tasks_per_user = state

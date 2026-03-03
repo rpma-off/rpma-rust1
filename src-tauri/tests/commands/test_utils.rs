@@ -194,4 +194,3 @@ pub async fn create_test_technician(
     )
     .unwrap()
 }
-

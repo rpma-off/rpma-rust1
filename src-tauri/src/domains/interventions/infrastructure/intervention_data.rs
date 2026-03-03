@@ -12,6 +12,7 @@ use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus, InterventionType,
 };
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
+use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_types::{
@@ -69,6 +70,11 @@ impl InterventionDataService {
         intervention.updated_at = now();
 
         // Set intervention properties from request
+        intervention_state_machine::validate_transition(
+            &intervention.status,
+            &InterventionStatus::InProgress,
+        )
+        .map_err(InterventionError::BusinessRule)?;
         intervention.status = InterventionStatus::InProgress;
         intervention.started_at = TimestampString::now();
         intervention.technician_id = Some(request.technician_id.clone());

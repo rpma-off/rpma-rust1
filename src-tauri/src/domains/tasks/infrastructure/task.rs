@@ -1,4 +1,4 @@
-﻿//! # Task Service Module
+//! # Task Service Module
 //!
 //! This module provides the main entry point for all task-related operations in the RPMA backend.
 //! It follows a clean architecture pattern by orchestrating operations across specialized service modules.
@@ -617,4 +617,3 @@ impl TaskService {
         import_service.get_tasks_for_export(query)
     }
 }
-

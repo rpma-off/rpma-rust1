@@ -60,7 +60,11 @@ pub async fn user_crud(
         .await?;
     let response = match domain_response {
         UsersDomainResponse::Crud(payload) => payload,
-        _ => return Err(AppError::Internal("Unexpected users facade response".to_string())),
+        _ => {
+            return Err(AppError::Internal(
+                "Unexpected users facade response".to_string(),
+            ))
+        }
     };
 
     Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
@@ -102,7 +106,9 @@ pub async fn bootstrap_first_admin(
             info!("Bootstrap completed for user: {}", user_id);
             Ok(ApiResponse::success(message).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal("Unexpected users facade response".to_string())),
+        _ => Err(AppError::Internal(
+            "Unexpected users facade response".to_string(),
+        )),
     }
 }
 
@@ -140,7 +146,9 @@ pub async fn has_admins(
             debug!("Admin check completed: has_admins={}", has_admin);
             Ok(ApiResponse::success(has_admin).with_correlation_id(Some(corr)))
         }
-        _ => Err(AppError::Internal("Unexpected users facade response".to_string())),
+        _ => Err(AppError::Internal(
+            "Unexpected users facade response".to_string(),
+        )),
     }
 }
 

@@ -7,7 +7,9 @@ use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowAction, InterventionWorkflowResponse,
     StartInterventionRequest,
 };
-use crate::domains::interventions::{InterventionsCommand, InterventionsFacade, InterventionsResponse};
+use crate::domains::interventions::{
+    InterventionsCommand, InterventionsFacade, InterventionsResponse,
+};
 use crate::shared::auth_middleware::AuthMiddleware;
 use tracing::instrument;
 
@@ -16,7 +18,8 @@ async fn workflow_ctx(
     session_token: &str,
     correlation_id: &Option<String>,
 ) -> Result<crate::shared::ipc::CommandContext, AppError> {
-    let ctx = AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
+    let ctx =
+        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
     tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
     Ok(ctx)
 }
@@ -121,7 +124,7 @@ pub async fn intervention_finalize(
 ) -> Result<
     ApiResponse<crate::domains::interventions::infrastructure::intervention_types::FinalizeInterventionResponse>,
     AppError,
-> {
+>{
     let ctx = workflow_ctx(&state, &session_token, &request.correlation_id).await?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 

@@ -56,10 +56,7 @@ impl SettingsAccessPolicy {
     /// * User-level categories → any authenticated user may modify
     ///   **their own** settings (the caller identity is validated by the
     ///   IPC layer before reaching here).
-    pub fn ensure_access(
-        user: &UserSession,
-        category: SettingsCategory,
-    ) -> Result<(), AppError> {
+    pub fn ensure_access(user: &UserSession, category: SettingsCategory) -> Result<(), AppError> {
         if Self::is_admin_only(category) && !matches!(user.role, UserRole::Admin) {
             return Err(AppError::Authorization(
                 "Only administrators can manage application-wide settings".to_string(),
@@ -136,9 +133,7 @@ mod tests {
     #[test]
     fn technician_cannot_access_admin_only_categories() {
         let tech = session(UserRole::Technician);
-        assert!(
-            SettingsAccessPolicy::ensure_access(&tech, SettingsCategory::AppSettings).is_err()
-        );
+        assert!(SettingsAccessPolicy::ensure_access(&tech, SettingsCategory::AppSettings).is_err());
         assert!(
             SettingsAccessPolicy::ensure_access(&tech, SettingsCategory::SystemConfig).is_err()
         );

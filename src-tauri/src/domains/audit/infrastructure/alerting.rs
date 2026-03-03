@@ -214,10 +214,10 @@ impl AlertingService {
                     cooldown_minutes: row.get(7)?,
                     last_triggered: {
                         let ts_str: Option<String> = row.get(8)?;
-                        ts_str.map(|s| {
+                        ts_str.and_then(|s| {
                             DateTime::parse_from_rfc3339(&s)
-                                .unwrap()
-                                .with_timezone(&Utc)
+                                .map(|dt| dt.with_timezone(&Utc))
+                                .ok()
                         })
                     },
                 })

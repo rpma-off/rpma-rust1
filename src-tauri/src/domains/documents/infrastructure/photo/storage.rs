@@ -1,4 +1,4 @@
-﻿//! Photo Storage Module - Storage provider interface and CRUD operations
+//! Photo Storage Module - Storage provider interface and CRUD operations
 //!
 //! This module handles photo storage operations including:
 //! - Storage provider configuration and management
@@ -675,4 +675,3 @@ mod tests {
         assert!(result.is_err());
     }
 }
-

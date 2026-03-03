@@ -6,14 +6,8 @@
 pub mod bus;
 pub mod events;
 
-pub use bus::{
-    publish_event, register_handler, set_global_event_bus, DomainEventHandler,
-};
+pub use bus::{publish_event, register_handler, set_global_event_bus, DomainEventHandler};
 pub use events::{
-    DomainEvent,
-    InterventionFinalized,
-    MaterialConsumed,
-    QuoteShared,
-    QuoteCustomerResponded,
-    QuoteConvertedToTask,
+    DomainEvent, InterventionFinalized, MaterialConsumed, QuoteConvertedToTask,
+    QuoteCustomerResponded, QuoteShared,
 };

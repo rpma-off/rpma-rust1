@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 pub use crate::domains::tasks::domain::models::task::TaskStatus;
-use crate::domains::tasks::infrastructure::task_validation::validate_status_transition;
+use crate::domains::tasks::domain::services::task_state_machine::validate_status_transition;
 
 impl TaskStatus {
     pub fn can_transition_to(&self, new_status: &TaskStatus) -> bool {

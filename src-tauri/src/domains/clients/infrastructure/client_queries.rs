@@ -1,4 +1,4 @@
-﻿//! Client Queries Service - Query and search operations for clients
+//! Client Queries Service - Query and search operations for clients
 //!
 //! This service handles all client query operations including:
 //! - Listing clients with filters and pagination
@@ -252,4 +252,3 @@ impl ClientQueriesService {
             .map_err(|e| format!("Failed to get recently active clients: {}", e))
     }
 }
-

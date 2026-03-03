@@ -17,9 +17,15 @@ use chrono::Utc;
 
 #[derive(Debug)]
 pub enum InterventionsCommand {
-    Get { intervention_id: String },
-    GetActiveByTask { task_id: String },
-    GetLatestByTask { task_id: String },
+    Get {
+        intervention_id: String,
+    },
+    GetActiveByTask {
+        task_id: String,
+    },
+    GetLatestByTask {
+        task_id: String,
+    },
     GetStep {
         intervention_id: String,
         step_id: String,
@@ -228,11 +234,7 @@ impl InterventionsFacade {
             .map_err(|_| AppError::Database("Failed to get task".to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
 
-        self.ensure_technician_assignment(
-            &ctx.session,
-            task.technician_id.as_deref(),
-            action,
-        )
+        self.ensure_technician_assignment(&ctx.session, task.technician_id.as_deref(), action)
     }
 
     fn to_service_start_request(
@@ -298,7 +300,11 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
 
-                self.check_intervention_access(&ctx.session.user_id, &ctx.session.role, &intervention)?;
+                self.check_intervention_access(
+                    &ctx.session.user_id,
+                    &ctx.session.role,
+                    &intervention,
+                )?;
                 Ok(InterventionsResponse::Intervention(intervention))
             }
             InterventionsCommand::GetActiveByTask { task_id } => {
@@ -308,7 +314,10 @@ impl InterventionsFacade {
                     .unwrap_or(false);
                 self.check_task_intervention_access(&ctx.session.role, task_access)?;
 
-                let payload = match self.intervention_service.get_active_intervention_by_task(&task_id) {
+                let payload = match self
+                    .intervention_service
+                    .get_active_intervention_by_task(&task_id)
+                {
                     Ok(Some(intervention)) => vec![intervention],
                     Ok(None) => vec![],
                     Err(_) => {
@@ -328,7 +337,9 @@ impl InterventionsFacade {
                 let intervention = self
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
-                    .map_err(|_| AppError::Database("Failed to get latest intervention".to_string()))?;
+                    .map_err(|_| {
+                        AppError::Database("Failed to get latest intervention".to_string())
+                    })?;
                 Ok(InterventionsResponse::OptionalIntervention(intervention))
             }
             InterventionsCommand::GetStep {
@@ -343,7 +354,11 @@ impl InterventionsFacade {
                     .ok_or_else(|| {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
-                self.check_intervention_access(&ctx.session.user_id, &ctx.session.role, &intervention)?;
+                self.check_intervention_access(
+                    &ctx.session.user_id,
+                    &ctx.session.role,
+                    &intervention,
+                )?;
                 let step = self
                     .intervention_service
                     .get_step(&step_id)
@@ -503,8 +518,13 @@ impl InterventionsFacade {
             }
             InterventionsCommand::Start { request } => {
                 self.ensure_intervention_permission(ctx)?;
-                self.ensure_task_assignment(ctx, task_service, &request.task_id, "start interventions")
-                    .await?;
+                self.ensure_task_assignment(
+                    ctx,
+                    task_service,
+                    &request.task_id,
+                    "start interventions",
+                )
+                .await?;
                 match self
                     .intervention_service
                     .get_active_intervention_by_task(&request.task_id)
@@ -578,7 +598,9 @@ impl InterventionsFacade {
                         &ctx.correlation_id,
                         Some(&ctx.session.user_id),
                     )
-                    .map_err(|_| AppError::Database("Failed to finalize intervention".to_string()))?;
+                    .map_err(|_| {
+                        AppError::Database("Failed to finalize intervention".to_string())
+                    })?;
                 Ok(InterventionsResponse::Finalized(response))
             }
             InterventionsCommand::WorkflowStart { request } => {
@@ -693,7 +715,9 @@ impl InterventionsFacade {
                         &ctx.correlation_id,
                         Some(&ctx.session.user_id),
                     )
-                    .map_err(|_| AppError::Database("Failed to finalize intervention".to_string()))?;
+                    .map_err(|_| {
+                        AppError::Database("Failed to finalize intervention".to_string())
+                    })?;
                 Ok(InterventionsResponse::Workflow(
                     InterventionWorkflowResponse::Finalized {
                         intervention: response.intervention,

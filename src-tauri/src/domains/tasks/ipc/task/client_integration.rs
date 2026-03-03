@@ -1,8 +1,9 @@
-﻿//! Task-client relationship management
+//! Task-client relationship management
 //!
 //! This module handles operations that involve task and client interactions.
 
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 
@@ -113,8 +114,9 @@ pub async fn get_tasks_with_client_details(
             None
         };
 
-        let relationship_status =
-            determine_client_relationship_status(task_with_client, client_details.is_some());
+        let relationship_status = task_policy_service::relationship_status_from_task_status(
+            &task_with_client.task.status,
+        );
 
         let enhanced_task = TaskWithClientDetails {
             task: task_with_client.task.clone(),
@@ -140,43 +142,6 @@ pub async fn get_tasks_with_client_details(
     );
 
     Ok(ApiResponse::success(enhanced_tasks).with_correlation_id(Some(correlation_id)))
-}
-
-/// Determine the relationship status between task and client
-fn determine_client_relationship_status(
-    task_with_client: &crate::domains::tasks::infrastructure::task_client_integration::TaskWithClient,
-    _has_client_details: bool,
-) -> String {
-    // Check task status first
-    match task_with_client.task.status {
-        crate::domains::tasks::domain::models::task::TaskStatus::Completed => {
-            // Note: customer_satisfaction field doesn't exist in Task model
-            // For now, just mark as completed
-            "completed".to_string()
-        }
-        crate::domains::tasks::domain::models::task::TaskStatus::Cancelled => {
-            "cancelled".to_string()
-        }
-        crate::domains::tasks::domain::models::task::TaskStatus::InProgress => {
-            // NOTE: Implement schedule tracking logic
-            "in_progress".to_string()
-        }
-        crate::domains::tasks::domain::models::task::TaskStatus::Pending => {
-            // Simplified status - could be enhanced with actual client status
-            "pending".to_string()
-        }
-        crate::domains::tasks::domain::models::task::TaskStatus::OnHold => "on_hold".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Draft => "draft".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Scheduled => {
-            "scheduled".to_string()
-        }
-        crate::domains::tasks::domain::models::task::TaskStatus::Invalid => "invalid".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Archived => "archived".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Failed => "failed".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Overdue => "overdue".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Assigned => "assigned".to_string(),
-        crate::domains::tasks::domain::models::task::TaskStatus::Paused => "paused".to_string(),
-    }
 }
 
 /// Validate task-client relationship
@@ -268,4 +233,3 @@ pub async fn get_client_task_summary(
 
     Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id)))
 }
-

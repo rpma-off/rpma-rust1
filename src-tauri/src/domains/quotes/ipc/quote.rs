@@ -7,11 +7,11 @@ use tracing::{debug, error, info, instrument, Span};
 
 use crate::authenticate;
 use crate::domains::quotes::application::{
-    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentsGetRequest,
-    QuoteAttachmentUpdateRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
-    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
-    QuoteStatusRequest, QuoteUpdateRequest, QuoteShareRequest, QuoteRevokeRequest,
-    QuoteAcknowledgeRequest,
+    QuoteAcknowledgeRequest, QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest,
+    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
+    QuoteDeleteRequest, QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest,
+    QuoteItemUpdateRequest, QuoteListRequest, QuoteRevokeRequest, QuoteShareRequest,
+    QuoteStatusRequest, QuoteUpdateRequest,
 };
 
 // --- Commands ---
@@ -43,8 +43,7 @@ pub async fn quote_create(
         }
         Err(e) => {
             error!(error = %e, "Failed to create quote");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -124,8 +123,7 @@ pub async fn quote_update(
         }
         Err(e) => {
             error!("Failed to update quote: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -151,8 +149,7 @@ pub async fn quote_delete(
         }
         Err(e) => {
             error!("Failed to delete quote: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -175,8 +172,7 @@ pub async fn quote_item_add(
         }
         Err(e) => {
             error!("Failed to add quote item: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -204,8 +200,7 @@ pub async fn quote_item_update(
         }
         Err(e) => {
             error!("Failed to update quote item: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -228,8 +223,7 @@ pub async fn quote_item_delete(
         }
         Err(e) => {
             error!("Failed to delete quote item: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -253,8 +247,7 @@ pub async fn quote_mark_sent(
         }
         Err(e) => {
             error!("Failed to mark quote as sent: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -278,8 +271,7 @@ pub async fn quote_mark_accepted(
         }
         Err(e) => {
             error!("Failed to accept quote: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -303,8 +295,7 @@ pub async fn quote_mark_rejected(
         }
         Err(e) => {
             error!("Failed to reject quote: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -475,13 +466,14 @@ pub async fn quote_attachments_get(
 
     match facade.get_attachments(&current_user.role, &request.quote_id) {
         Ok(attachments) => {
-            Ok(ApiResponse::success(attachments)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(attachments).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(_e) => {
             error!("Failed to get quote attachments");
-            Ok(ApiResponse::error(AppError::Database("Failed to retrieve attachments".to_string()))
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(AppError::Database(
+                "Failed to retrieve attachments".to_string(),
+            ))
+            .with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -510,13 +502,11 @@ pub async fn quote_attachment_create(
                 attachment_id = %attachment.id,
                 "Attachment created successfully"
             );
-            Ok(ApiResponse::success(attachment)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(attachment).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to create attachment: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -549,13 +539,11 @@ pub async fn quote_attachment_update(
                 attachment_id = %request.attachment_id,
                 "Attachment updated successfully"
             );
-            Ok(ApiResponse::success(attachment)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(attachment).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to update attachment: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -589,13 +577,11 @@ pub async fn quote_attachment_delete(
                     "Attachment deleted successfully"
                 );
             }
-            Ok(ApiResponse::success(deleted)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(deleted).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to delete attachment: {}", e);
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -623,13 +609,11 @@ pub async fn quote_generate_share_link(
     match facade.generate_share_link(&current_user.role, &request.quote_id) {
         Ok(response) => {
             info!(quote_id = %request.quote_id, "Quote share link generated");
-            Ok(ApiResponse::success(response)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to generate share link");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -657,15 +641,15 @@ pub async fn quote_revoke_share_link(
     match facade.revoke_share_link(&current_user.role, &request.quote_id) {
         Ok(true) => {
             info!(quote_id = %request.quote_id, "Quote share link revoked");
-            Ok(ApiResponse::success(true)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(true).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to revoke share link");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
-        Ok(false) => Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(false) => {
+            Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone())))
+        }
     }
 }
 
@@ -694,8 +678,7 @@ pub async fn quote_get_by_public_token(
         }
         Err(e) => {
             error!(error = %e, "Failed to get quote by public token");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
 }
@@ -723,15 +706,15 @@ pub async fn quote_customer_response(
                 action = %action,
                 "Customer response handled successfully"
             );
-            Ok(ApiResponse::success(true)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(true).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to handle customer response");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
-        Ok(false) => Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(false) => {
+            Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone())))
+        }
     }
 }
 
@@ -758,14 +741,14 @@ pub async fn quote_acknowledge_response(
     match facade.acknowledge_response(&current_user.role, &request.quote_id) {
         Ok(true) => {
             info!(quote_id = %request.quote_id, "Quote customer response acknowledged");
-            Ok(ApiResponse::success(true)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(true).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to acknowledge response");
-            Ok(ApiResponse::error(e)
-                .with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
-        Ok(false) => Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone()))),
+        Ok(false) => {
+            Ok(ApiResponse::success(false).with_correlation_id(Some(correlation_id.clone())))
+        }
     }
 }

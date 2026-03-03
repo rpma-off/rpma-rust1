@@ -113,7 +113,7 @@ impl TaskRepository {
         new_status: &str,
         reason: Option<&str>,
     ) -> RepoResult<Task> {
-        let conn = self
+        let mut conn = self
             .db
             .get_connection()
             .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
@@ -121,7 +121,7 @@ impl TaskRepository {
         let now = chrono::Utc::now().timestamp();
 
         let tx = conn
-            .unchecked_transaction()
+            .transaction()
             .map_err(|e| RepoError::Database(format!("Failed to start transaction: {}", e)))?;
 
         tx.execute(
@@ -131,14 +131,11 @@ impl TaskRepository {
         .map_err(|e| RepoError::Database(format!("Failed to update status: {}", e)))?;
 
         tx.execute(
-            "INSERT OR IGNORE INTO task_history (task_id, old_status, new_status, reason, changed_at)
+            "INSERT INTO task_history (task_id, old_status, new_status, reason, changed_at)
              VALUES (?1, ?2, ?3, ?4, ?5)",
             rusqlite::params![task_id, old_status, new_status, reason, now],
         )
-        .unwrap_or_else(|e| {
-            tracing::warn!(task_id = task_id, error = %e, "Failed to insert task history record");
-            0
-        });
+        .map_err(|e| RepoError::Database(format!("Failed to insert task history: {}", e)))?;
 
         tx.commit()
             .map_err(|e| RepoError::Database(format!("Failed to commit transaction: {}", e)))?;

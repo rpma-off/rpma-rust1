@@ -1,4 +1,4 @@
-﻿//! Task command facade
+//! Task command facade
 //!
 //! This module provides the main API interface for task operations,
 //! delegating to specialized modules while maintaining backward compatibility.
@@ -6,6 +6,7 @@
 use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState, TaskAction};
+use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
 use crate::domains::tasks::TasksFacade;
@@ -137,7 +138,7 @@ pub async fn add_task_note(
         .task_service
         .get_task_async(&request.task_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_note", e))?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     check_task_permissions(&current_user, &task, "edit")?;
@@ -159,7 +160,7 @@ pub async fn add_task_note(
         .task_service
         .update_task_async(update_request, &current_user.user_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to add task note: {}", e)))?;
+        .map_err(|e| AppError::db_sanitized("tasks.add_note", e))?;
 
     Ok(
         ApiResponse::success(format!("Note added to task {}", request.task_id))
@@ -187,7 +188,7 @@ pub async fn send_task_message(
         .task_service
         .get_task_async(&request.task_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_message", e))?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     check_task_permissions(&current_user, &task, "edit")?;
@@ -260,7 +261,7 @@ pub async fn report_task_issue(
         .task_service
         .get_task_async(&request.task_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_issue", e))?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     check_task_permissions(&current_user, &task, "edit")?;
@@ -283,7 +284,7 @@ pub async fn report_task_issue(
         .task_service
         .update_task_async(update_request, &current_user.user_id)
         .await
-        .map_err(|e| AppError::Database(format!("Failed to report task issue: {}", e)))?;
+        .map_err(|e| AppError::db_sanitized("tasks.report_issue", e))?;
 
     if matches!(severity.as_str(), "high" | "critical") {
         if let Err(err) = state
@@ -353,7 +354,9 @@ pub async fn export_tasks_csv(
             .filter
             .as_ref()
             .and_then(|f| f.priority.as_ref())
-            .and_then(|p| crate::domains::tasks::domain::models::task::TaskPriority::from_str_opt(p)),
+            .and_then(|p| {
+                crate::domains::tasks::domain::models::task::TaskPriority::from_str_opt(p)
+            }),
         search: None,
         from_date: request
             .filter
@@ -371,7 +374,7 @@ pub async fn export_tasks_csv(
     let tasks = state
         .task_service
         .get_tasks_for_export(query)
-        .map_err(|e| AppError::Database(format!("Failed to get tasks for export: {}", e)))?;
+        .map_err(|e| AppError::db_sanitized("tasks.export.fetch", e))?;
 
     if tasks.is_empty() {
         warn!("No tasks found for export");
@@ -386,7 +389,7 @@ pub async fn export_tasks_csv(
     let csv_content = state
         .task_service
         .export_to_csv(&tasks, request.include_client_data.unwrap_or(false))
-        .map_err(|e| AppError::Database(format!("Failed to export tasks: {}", e)))?;
+        .map_err(|e| AppError::db_sanitized("tasks.export.csv", e))?;
 
     info!("Successfully exported {} tasks to CSV", tasks.len());
     Ok(ApiResponse::success(csv_content).with_correlation_id(Some(correlation_id.clone())))
@@ -428,7 +431,7 @@ pub async fn import_tasks_bulk(
             request.update_existing.unwrap_or(false),
         )
         .await
-        .map_err(|e| AppError::Database(format!("Import failed: {}", e)))?;
+        .map_err(|e| AppError::db_sanitized("tasks.import.bulk", e))?;
 
     // Create tasks from parsed data
     let errors = import_result.errors.clone();
@@ -500,7 +503,7 @@ pub async fn delay_task(
         .await
         .map_err(|e| {
             error!("Task delay failed: {}", e);
-            AppError::Database(format!("Failed to delay task: {}", e))
+            AppError::db_sanitized("tasks.delay", e)
         })?;
 
     // Update notes if provided
@@ -516,7 +519,7 @@ pub async fn delay_task(
             .await
             .map_err(|e| {
                 error!("Task notes update failed: {}", e);
-                AppError::Database(format!("Failed to update task notes: {}", e))
+                AppError::db_sanitized("tasks.delay.update_notes", e)
             })?;
     }
 
@@ -527,7 +530,7 @@ pub async fn delay_task(
         .await
         .map_err(|e| {
             error!("Failed to re-fetch task: {}", e);
-            AppError::Database(format!("Failed to re-fetch task: {}", e))
+            AppError::db_sanitized("tasks.delay.refetch", e)
         })?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
@@ -614,7 +617,7 @@ pub async fn edit_task(
         .await
         .map_err(|e| {
             error!("Task update failed: {}", e);
-            AppError::Database(format!("Failed to update task: {}", e))
+            AppError::db_sanitized("tasks.edit", e)
         })?;
 
     // NOTE: Implement task notification sending for updates
@@ -629,8 +632,7 @@ pub fn validate_status_change(
     current: &crate::domains::tasks::domain::models::task::TaskStatus,
     new: &crate::domains::tasks::domain::models::task::TaskStatus,
 ) -> Result<(), AppError> {
-    crate::domains::tasks::infrastructure::task_validation::validate_status_transition(current, new)
-        .map_err(AppError::TaskInvalidTransition)
+    task_policy_service::validate_status_change(current, new)
 }
 
 /// Check permissions for task operations
@@ -639,39 +641,8 @@ pub fn check_task_permissions(
     task: &Task,
     operation: &str,
 ) -> Result<(), AppError> {
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => Ok(()),
-        crate::shared::contracts::auth::UserRole::Supervisor => Ok(()),
-        crate::shared::contracts::auth::UserRole::Technician => {
-            // Technician can only operate on their assigned tasks
-            if task.technician_id.as_ref() == Some(&session.user_id) {
-                Ok(())
-            } else {
-                Err(AppError::Authorization(
-                    "Technician can only operate on their assigned tasks".to_string(),
-                ))
-            }
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            // Viewer can only view tasks
-            match operation {
-                "view" => Ok(()),
-                _ => Err(AppError::Authorization(
-                    "Viewer can only view tasks".to_string(),
-                )),
-            }
-        }
-    }
+    task_policy_service::check_task_permissions(session, task, operation)
 }
-
-/// Fields that a Technician is allowed to modify on their assigned tasks.
-const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
-    "status",
-    "notes",
-    "checklist_completed",
-    "lot_film",
-    "actual_duration",
-];
 
 /// Validate that a Technician is not attempting to change restricted fields.
 ///
@@ -679,78 +650,7 @@ const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
 pub fn enforce_technician_field_restrictions(
     req: &crate::domains::tasks::domain::models::task::UpdateTaskRequest,
 ) -> Result<(), AppError> {
-    let mut forbidden: Vec<&str> = Vec::new();
-
-    if req.title.is_some() {
-        forbidden.push("title");
-    }
-    if req.description.is_some() {
-        forbidden.push("description");
-    }
-    if req.priority.is_some() {
-        forbidden.push("priority");
-    }
-    if req.vehicle_plate.is_some() {
-        forbidden.push("vehicle_plate");
-    }
-    if req.vehicle_model.is_some() {
-        forbidden.push("vehicle_model");
-    }
-    if req.vehicle_year.is_some() {
-        forbidden.push("vehicle_year");
-    }
-    if req.vehicle_make.is_some() {
-        forbidden.push("vehicle_make");
-    }
-    if req.vin.is_some() {
-        forbidden.push("vin");
-    }
-    if req.ppf_zones.is_some() {
-        forbidden.push("ppf_zones");
-    }
-    if req.custom_ppf_zones.is_some() {
-        forbidden.push("custom_ppf_zones");
-    }
-    if req.client_id.is_some() {
-        forbidden.push("client_id");
-    }
-    if req.customer_name.is_some() {
-        forbidden.push("customer_name");
-    }
-    if req.customer_email.is_some() {
-        forbidden.push("customer_email");
-    }
-    if req.customer_phone.is_some() {
-        forbidden.push("customer_phone");
-    }
-    if req.customer_address.is_some() {
-        forbidden.push("customer_address");
-    }
-    if req.scheduled_date.is_some() {
-        forbidden.push("scheduled_date");
-    }
-    if req.estimated_duration.is_some() {
-        forbidden.push("estimated_duration");
-    }
-    if req.technician_id.is_some() {
-        forbidden.push("technician_id");
-    }
-    if req.template_id.is_some() {
-        forbidden.push("template_id");
-    }
-    if req.workflow_id.is_some() {
-        forbidden.push("workflow_id");
-    }
-
-    if forbidden.is_empty() {
-        Ok(())
-    } else {
-        Err(AppError::Authorization(format!(
-            "Technician cannot modify fields: {}. Allowed: {}",
-            forbidden.join(", "),
-            TECHNICIAN_ALLOWED_FIELDS.join(", ")
-        )))
-    }
+    task_policy_service::enforce_technician_field_restrictions(req)
 }
 
 /// Task CRUD command handler
@@ -796,7 +696,7 @@ pub async fn task_crud(
                     .await
                     .map_err(|e| {
                         error!("Task creation failed: {}", e);
-                        AppError::Database(format!("Failed to create task: {}", e))
+                        AppError::db_sanitized("tasks.create", e)
                     })?;
 
                 // Create notification for assigned technician
@@ -839,7 +739,7 @@ pub async fn task_crud(
         crate::commands::TaskAction::Get { id } => {
             let task = state.task_service.get_task_async(&id).await.map_err(|e| {
                 error!("Task retrieval failed: {}", e);
-                AppError::Database(format!("Failed to get task: {}", e))
+                AppError::db_sanitized("tasks.get", e)
             })?;
             match task {
                 Some(task) => Ok(crate::commands::ApiResponse::success(
@@ -883,7 +783,7 @@ pub async fn task_crud(
                     .await
                     .map_err(|e| {
                         error!("Task update failed: {}", e);
-                        AppError::Database(format!("Failed to update task: {}", e))
+                        AppError::db_sanitized("tasks.update", e)
                     })?;
 
                 // Create notification for assigned technician if reassigned
@@ -960,7 +860,7 @@ pub async fn task_crud(
                 .await
                 .map_err(|e| {
                     error!("Task deletion failed: {}", e);
-                    AppError::Database(format!("Failed to delete task: {}", e))
+                    AppError::db_sanitized("tasks.delete", e)
                 })?;
             Ok(
                 crate::commands::ApiResponse::success(crate::commands::TaskResponse::Deleted)
@@ -1253,4 +1153,3 @@ mod tests {
         }
     }
 }
-

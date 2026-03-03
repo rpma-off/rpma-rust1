@@ -821,9 +821,7 @@ mod tests {
         let mut conn = db
             .get_connection()
             .expect("Failed to get connection for transaction");
-        let tx = conn
-            .transaction()
-            .expect("Failed to open transaction");
+        let tx = conn.transaction().expect("Failed to open transaction");
         repository
             .save_step_with_tx(&tx, &step)
             .expect("Failed to save step with transaction");
@@ -841,9 +839,18 @@ mod tests {
         assert_eq!(persisted.notes, step.notes);
         assert_eq!(persisted.title, step.title);
         assert_eq!(persisted.synced, step.synced);
-        assert_eq!(persisted.device_timestamp.inner(), step.device_timestamp.inner());
-        assert_eq!(persisted.server_timestamp.inner(), step.server_timestamp.inner());
-        assert_eq!(persisted.last_synced_at.inner(), step.last_synced_at.inner());
+        assert_eq!(
+            persisted.device_timestamp.inner(),
+            step.device_timestamp.inner()
+        );
+        assert_eq!(
+            persisted.server_timestamp.inner(),
+            step.server_timestamp.inner()
+        );
+        assert_eq!(
+            persisted.last_synced_at.inner(),
+            step.last_synced_at.inner()
+        );
     }
 
     #[test]
@@ -860,8 +867,12 @@ mod tests {
         step_2.photo_urls = Some(vec!["/tmp/photo-b.jpg".to_string()]);
         step_2.notes = Some("prep-note".to_string());
 
-        repository.save_step(&step_1).expect("Failed to seed step 1");
-        repository.save_step(&step_2).expect("Failed to seed step 2");
+        repository
+            .save_step(&step_1)
+            .expect("Failed to seed step 1");
+        repository
+            .save_step(&step_2)
+            .expect("Failed to seed step 2");
 
         let steps = repository
             .get_intervention_steps("intervention-2")

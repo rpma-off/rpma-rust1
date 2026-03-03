@@ -3,8 +3,8 @@ use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::shared::ipc::errors::AppError;
-use crate::shared::services::event_system::InMemoryEventBus;
 use crate::shared::repositories::Cache;
+use crate::shared::services::event_system::InMemoryEventBus;
 use std::sync::Arc;
 
 #[tokio::test]

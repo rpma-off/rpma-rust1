@@ -12,6 +12,7 @@ use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
+use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_types::*;
 use crate::domains::interventions::infrastructure::workflow_strategy::{
@@ -21,8 +22,8 @@ use crate::domains::interventions::infrastructure::workflow_validation::Workflow
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::event_bus::{publish_event, InterventionFinalized};
 use crate::shared::logging::{LogDomain, RPMARequestLogger};
-use serde_json::json;
 use chrono::Utc;
+use serde_json::json;
 use tracing::info;
 
 use std::sync::Arc;
@@ -770,6 +771,11 @@ impl InterventionWorkflowService {
         intervention.final_observations = request.final_observations;
         intervention.customer_signature = request.customer_signature;
         intervention.customer_comments = request.customer_comments;
+        intervention_state_machine::validate_transition(
+            &intervention.status,
+            &InterventionStatus::Completed,
+        )
+        .map_err(InterventionError::BusinessRule)?;
         intervention.status = InterventionStatus::Completed;
         intervention.completed_at = TimestampString(Some(crate::shared::contracts::common::now()));
         intervention.updated_at = crate::shared::contracts::common::now();
@@ -882,6 +888,11 @@ impl InterventionWorkflowService {
         }
 
         // Update intervention status to cancelled
+        intervention_state_machine::validate_transition(
+            &intervention.status,
+            &InterventionStatus::Cancelled,
+        )
+        .map_err(InterventionError::BusinessRule)?;
         intervention.status = InterventionStatus::Cancelled;
         intervention.updated_at = chrono::Utc::now().timestamp_millis();
         intervention.updated_by = Some(user_id.to_string());

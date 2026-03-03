@@ -266,7 +266,8 @@ impl Database {
                     version == 14 && e.to_string().contains("duplicate column name: avatar_url");
                 let syntax_near_exists = e.to_string().contains("near \"EXISTS\": syntax error");
                 if syntax_near_exists {
-                    let normalized_sql = sql_content.replace("ADD COLUMN IF NOT EXISTS", "ADD COLUMN");
+                    let normalized_sql =
+                        sql_content.replace("ADD COLUMN IF NOT EXISTS", "ADD COLUMN");
                     for statement in normalized_sql.split(';') {
                         let stmt = statement.trim();
                         if stmt.is_empty() {
@@ -3336,7 +3337,8 @@ mod tests {
 
         // Both databases must have the same schema objects
         assert_eq!(
-            objects_a, objects_b,
+            objects_a,
+            objects_b,
             "Schema drift detected: fresh DB (initialize_or_migrate) differs from init+migrate.\n\
              Only in A: {:?}\nOnly in B: {:?}",
             objects_a
@@ -3399,7 +3401,11 @@ mod tests {
                     |row| row.get(0),
                 )
                 .expect("query view");
-            assert_eq!(exists, 1, "View '{}' must exist after initialize_or_migrate", view);
+            assert_eq!(
+                exists, 1,
+                "View '{}' must exist after initialize_or_migrate",
+                view
+            );
         }
     }
 

@@ -43,9 +43,6 @@ pub(crate) fn can_access_own_or_privileged(
     assigned_user_id: Option<&str>,
     session: &UserSession,
 ) -> bool {
-    let is_privileged = matches!(
-        session.role,
-        UserRole::Admin | UserRole::Supervisor
-    );
+    let is_privileged = matches!(session.role, UserRole::Admin | UserRole::Supervisor);
     is_privileged || assigned_user_id.is_some_and(|id| id == session.user_id.as_str())
 }

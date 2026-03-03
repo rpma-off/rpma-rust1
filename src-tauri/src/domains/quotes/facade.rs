@@ -131,7 +131,11 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
-    pub fn mark_accepted(&self, role: &UserRole, id: &str) -> Result<QuoteAcceptResponse, AppError> {
+    pub fn mark_accepted(
+        &self,
+        role: &UserRole,
+        id: &str,
+    ) -> Result<QuoteAcceptResponse, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
             .mark_accepted(id)
@@ -213,13 +217,19 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
-    pub fn track_public_view(&self, public_token: &str) -> Result<QuotePublicViewResponse, AppError> {
+    pub fn track_public_view(
+        &self,
+        public_token: &str,
+    ) -> Result<QuotePublicViewResponse, AppError> {
         self.quote_service
             .track_public_view(public_token)
             .map_err(AppError::NotFound)
     }
 
-    pub fn handle_customer_response(&self, request: CustomerQuoteResponse) -> Result<bool, AppError> {
+    pub fn handle_customer_response(
+        &self,
+        request: CustomerQuoteResponse,
+    ) -> Result<bool, AppError> {
         self.quote_service
             .handle_customer_response(request)
             .map(|_| true)
@@ -234,4 +244,3 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 }
-

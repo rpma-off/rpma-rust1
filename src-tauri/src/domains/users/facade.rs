@@ -17,7 +17,10 @@ pub struct UsersServices {
 #[derive(Debug)]
 pub enum UsersCommand {
     Crud(UserAction),
-    BootstrapFirstAdmin { user_id: String, session_token: String },
+    BootstrapFirstAdmin {
+        user_id: String,
+        session_token: String,
+    },
     HasAdmins,
 }
 
@@ -137,14 +140,15 @@ impl UsersFacade {
                                 role,
                                 &data.password,
                             )
-                            .map_err(|e| AppError::Database(format!("User creation failed: {}", e)))?;
+                            .map_err(|e| {
+                                AppError::Database(format!("User creation failed: {}", e))
+                            })?;
                         UserResponse::Created(user)
                     }
                     UserAction::Get { id } => {
-                        let user = services
-                            .auth_service
-                            .get_user(&id)
-                            .map_err(|e| AppError::Database(format!("User retrieval failed: {}", e)))?;
+                        let user = services.auth_service.get_user(&id).map_err(|e| {
+                            AppError::Database(format!("User retrieval failed: {}", e))
+                        })?;
                         match user {
                             Some(user) => UserResponse::Found(user),
                             None => UserResponse::NotFound,
@@ -166,7 +170,9 @@ impl UsersFacade {
                                 role,
                                 data.is_active,
                             )
-                            .map_err(|e| AppError::Database(format!("User update failed: {}", e)))?;
+                            .map_err(|e| {
+                                AppError::Database(format!("User update failed: {}", e))
+                            })?;
                         UserResponse::Updated(user)
                     }
                     UserAction::Delete { id } => {
@@ -175,24 +181,27 @@ impl UsersFacade {
                             &id,
                             "delete your own account",
                         )?;
-                        services
-                            .auth_service
-                            .delete_user(&id)
-                            .map_err(|e| AppError::Database(format!("User deletion failed: {}", e)))?;
+                        services.auth_service.delete_user(&id).map_err(|e| {
+                            AppError::Database(format!("User deletion failed: {}", e))
+                        })?;
                         UserResponse::Deleted
                     }
                     UserAction::List { limit, offset } => {
                         let users = services
                             .auth_service
                             .list_users(Some(limit.unwrap_or(50)), Some(offset.unwrap_or(0)))
-                            .map_err(|e| AppError::Database(format!("User listing failed: {}", e)))?;
+                            .map_err(|e| {
+                                AppError::Database(format!("User listing failed: {}", e))
+                            })?;
                         UserResponse::List(UserListResponse { data: users })
                     }
                     UserAction::ChangePassword { id, new_password } => {
                         services
                             .auth_service
                             .change_password(&id, &new_password)
-                            .map_err(|e| AppError::Database(format!("Password change failed: {}", e)))?;
+                            .map_err(|e| {
+                                AppError::Database(format!("Password change failed: {}", e))
+                            })?;
                         UserResponse::PasswordChanged
                     }
                     UserAction::ChangeRole { id, new_role } => {
@@ -231,7 +240,10 @@ impl UsersFacade {
                 session_token,
             } => {
                 self.validate_bootstrap_request(&user_id, &session_token, &ctx.session.user_id)?;
-                let message = services.user_service.bootstrap_first_admin(&user_id).await?;
+                let message = services
+                    .user_service
+                    .bootstrap_first_admin(&user_id)
+                    .await?;
                 Ok(UsersDomainResponse::BootstrapMessage(message))
             }
             UsersCommand::HasAdmins => {

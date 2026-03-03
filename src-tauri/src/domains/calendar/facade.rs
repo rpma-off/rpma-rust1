@@ -83,7 +83,10 @@ impl fmt::Debug for CalendarFacade {
 
 impl CalendarFacade {
     pub fn new(calendar_service: Arc<CalendarService>, db: Arc<crate::db::Database>) -> Self {
-        Self { calendar_service, db }
+        Self {
+            calendar_service,
+            db,
+        }
     }
 
     pub fn is_ready(&self) -> bool {
