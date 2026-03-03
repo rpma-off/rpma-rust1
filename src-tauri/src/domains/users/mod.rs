@@ -1,8 +1,5 @@
 mod facade;
-pub(crate) use facade::UsersCommand;
-pub(crate) use facade::UsersDomainResponse;
-pub(crate) use facade::UsersFacade;
-pub(crate) use facade::UsersServices;
+pub(crate) use facade::{UsersCommand, UsersDomainResponse, UsersFacade, UsersServices};
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
 pub use application::{CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse};

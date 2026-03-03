@@ -73,8 +73,8 @@ function checkDomainFacadeAndVisibility(structureAllowlist) {
     if (!/^\s*mod\s+facade;\s*$/m.test(contents)) {
       violations.push(`${dir.name}/mod.rs must declare 'mod facade;'`);
     }
-    if (!/^\s*pub\(crate\)\s+use\s+facade::[A-Za-z0-9_]+;\s*$/m.test(contents)) {
-      violations.push(`${dir.name}/mod.rs must re-export exactly one facade with pub(crate) use`);
+    if (!/^\s*pub\(crate\)\s+use\s+facade::(?:[A-Za-z0-9_]+|\{[^}]+\});\s*$/m.test(contents)) {
+      violations.push(`${dir.name}/mod.rs must re-export facade types with pub(crate) use`);
     }
     // Check for pub mod domain without feature gate
     // Only flag if the pub mod domain line is NOT preceded by a cfg(feature) attribute
