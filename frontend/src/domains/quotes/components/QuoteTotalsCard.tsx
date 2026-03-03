@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { computeTotalsFromSubtotals } from '@/domains/quotes/utils/quote-calculations';
 
 type DiscountType = 'none' | 'percentage' | 'fixed';
 
@@ -38,23 +39,14 @@ export function QuoteTotalsCard({
 }: QuoteTotalsCardProps) {
   const cs = getCurrencySymbol(currencyCode);
 
-  // Calculate subtotals
-  const subtotal = partsSubtotal + laborSubtotal;
+  const rawSubtotal = partsSubtotal + laborSubtotal;
 
-  // Calculate discount amount
-  const discountAmount =
-    discountType === 'percentage'
-      ? subtotal * (discountValue / 100)
-      : discountType === 'fixed'
-      ? Math.min(discountValue, subtotal)
-      : 0;
-
-  // Calculate tax amount
-  const taxableAmount = subtotal - discountAmount;
-  const taxAmount = taxableAmount * (taxRate / 100);
-
-  // Calculate total
-  const total = taxableAmount + taxAmount;
+  const { subtotal, taxTotal, total, discountAmount } = computeTotalsFromSubtotals(
+    rawSubtotal,
+    taxRate,
+    discountType,
+    discountValue
+  );
 
   return (
     <div className="rounded-lg border p-3 space-y-2">
@@ -129,7 +121,7 @@ export function QuoteTotalsCard({
             />
             <span className="text-muted-foreground">%</span>
           </div>
-          <span>{formatCents(taxAmount)}</span>
+          <span>{formatCents(taxTotal)}</span>
         </div>
 
         {/* Total */}

@@ -8,7 +8,6 @@ use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::shared::event_bus::publish_event;
 use crate::shared::repositories::base::RepoError;
 use chrono::Utc;
-use rusqlite::params;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
@@ -60,15 +59,13 @@ impl QuoteService {
     /// Create a new quote
     pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str) -> Result<Quote, String> {
         req.validate()?;
-        if !self.client_exists(&req.client_id)? {
-            return Err(
-                "Client introuvable. Veuillez sélectionner un client existant.".to_string(),
-            );
-        }
 
         let now = Utc::now().timestamp_millis();
         let id = Uuid::new_v4().to_string();
-        let quote_number = self.repo.next_quote_number().map_err(|e| e.to_string())?;
+        let quote_number = self
+            .repo
+            .next_quote_number()
+            .map_err(|_| "Impossible de générer le numéro de devis.".to_string())?;
 
         let mut quote = Quote {
             id: id.clone(),
@@ -122,7 +119,9 @@ impl QuoteService {
                 created_at: now,
                 updated_at: now,
             };
-            self.repo.add_item(&item).map_err(|e| e.to_string())?;
+            self.repo
+                .add_item(&item)
+                .map_err(|_| "Impossible d'ajouter un article au devis.".to_string())?;
             quote.items.push(item);
         }
 
@@ -133,30 +132,32 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(&id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Quote not found after creation".to_string())?;
+            .map_err(|_| "Impossible de récupérer le devis après création.".to_string())?
+            .ok_or_else(|| "Devis introuvable après création.".to_string())?;
 
         info!(quote_id = %id, "Quote created: {}", quote.quote_number);
         Ok(quote)
     }
 
-    fn client_exists(&self, client_id: &str) -> Result<bool, String> {
-        let exists: bool = self
-            .db
-            .query_single_value(
-                "SELECT EXISTS(SELECT 1 FROM clients WHERE id = ?)",
-                params![client_id],
-            )
-            .map_err(|e| format!("Failed to validate client reference: {}", e))?;
-        Ok(exists)
-    }
-
     fn map_create_repo_error(error: RepoError) -> String {
         match error {
-            RepoError::Database(message) if message.contains("FOREIGN KEY constraint failed") => {
+            RepoError::Database(ref message)
+                if message.contains("FOREIGN KEY constraint failed") =>
+            {
                 "Référence invalide: client ou tâche introuvable.".to_string()
             }
-            other => other.to_string(),
+            RepoError::NotFound(msg) => msg,
+            _ => "Impossible de créer le devis. Veuillez réessayer.".to_string(),
+        }
+    }
+
+    /// Map a repository error to a user-friendly string, hiding raw DB details.
+    fn map_repo_error(error: RepoError) -> String {
+        match error {
+            RepoError::NotFound(msg) => msg,
+            RepoError::Validation(msg) => msg,
+            RepoError::Conflict(msg) => msg,
+            _ => "Opération impossible. Veuillez réessayer.".to_string(),
         }
     }
 
@@ -184,7 +185,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
@@ -209,14 +210,16 @@ impl QuoteService {
             }
         }
 
-        self.repo.update(id, &req).map_err(|e| e.to_string())?;
+        self.repo
+            .update(id, &req)
+            .map_err(Self::map_repo_error)?;
 
         // Recalculate totals after updating discount
         self.recalculate_totals(id)?;
 
         self.repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after update".to_string())
     }
 
@@ -225,14 +228,14 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Only draft quotes can be deleted".to_string());
         }
 
-        self.repo.delete(id).map_err(|e| e.to_string())
+        self.repo.delete(id).map_err(Self::map_repo_error)
     }
 
     /// Add an item to a quote (Draft only)
@@ -242,7 +245,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
@@ -267,12 +270,14 @@ impl QuoteService {
             updated_at: now,
         };
 
-        self.repo.add_item(&item).map_err(|e| e.to_string())?;
+        self.repo
+            .add_item(&item)
+            .map_err(Self::map_repo_error)?;
         self.recalculate_totals(quote_id)?;
 
         self.repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after item add".to_string())
     }
 
@@ -286,7 +291,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
@@ -295,13 +300,13 @@ impl QuoteService {
 
         self.repo
             .update_item(item_id, quote_id, &req)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         self.recalculate_totals(quote_id)?;
 
         self.repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after item update".to_string())
     }
 
@@ -310,7 +315,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
@@ -319,13 +324,13 @@ impl QuoteService {
 
         self.repo
             .delete_item(item_id, quote_id)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         self.recalculate_totals(quote_id)?;
 
         self.repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after item delete".to_string())
     }
 
@@ -334,7 +339,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Draft {
@@ -346,13 +351,13 @@ impl QuoteService {
 
         self.repo
             .update_status(id, &QuoteStatus::Sent)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         info!(quote_id = %id, "Quote marked as sent");
 
         self.repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after status update".to_string())
     }
 
@@ -362,7 +367,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if quote.status != QuoteStatus::Sent {
@@ -374,7 +379,7 @@ impl QuoteService {
 
         self.repo
             .update_status(id, &QuoteStatus::Accepted)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         let mut task_created = None;
 
@@ -384,7 +389,7 @@ impl QuoteService {
                 Ok(task_id) => {
                     self.repo
                         .link_task(id, &task_id)
-                        .map_err(|e| e.to_string())?;
+                        .map_err(Self::map_repo_error)?;
                     task_created = Some(TaskCreatedInfo {
                         task_id: task_id.clone(),
                     });
@@ -408,7 +413,7 @@ impl QuoteService {
         let updated_quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after acceptance".to_string())?;
 
         info!(quote_id = %id, "Quote accepted");
@@ -424,7 +429,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
@@ -436,14 +441,14 @@ impl QuoteService {
 
         self.repo
             .update_status(id, &QuoteStatus::Rejected)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         info!(quote_id = %id, "Quote rejected");
 
         let updated_quote = self
             .repo
             .find_by_id(id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after rejection".to_string())?;
 
         // Emit QuoteRejected event
@@ -457,7 +462,7 @@ impl QuoteService {
         let items = self
             .repo
             .find_items_by_quote_id(quote_id)
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         let mut subtotal: i64 = 0;
         let mut tax_total: i64 = 0;
@@ -479,7 +484,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         for item in &items {
@@ -505,7 +510,7 @@ impl QuoteService {
                 discounted_tax_total,
                 total,
             )
-            .map_err(|e| e.to_string())?;
+            .map_err(Self::map_repo_error)?;
 
         debug!(quote_id = %quote_id, subtotal = subtotal_after_discount, tax_total = discounted_tax_total, total, discount_amount, "Recalculated totals");
         Ok(())
@@ -516,7 +521,7 @@ impl QuoteService {
         let quote = self
             .repo
             .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
+            .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
         let discount_amount = match (quote.discount_type.as_deref(), quote.discount_value) {
