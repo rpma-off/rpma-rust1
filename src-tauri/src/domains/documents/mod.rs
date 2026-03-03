@@ -1,6 +1,5 @@
 mod facade;
-#[cfg(test)]
-pub(crate) use facade::DocumentsFacade;
+pub(crate) use facade::{DocumentsCommand, DocumentsFacade, DocumentsResponse, DocumentsServices};
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
 pub mod domain;

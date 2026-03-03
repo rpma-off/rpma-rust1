@@ -2,16 +2,27 @@
 //!
 //! Exposes photo storage and retrieval operations to the frontend.
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
 use crate::domains::documents::domain::models::photo::Photo;
 use crate::domains::documents::domain::models::report_export::InterventionReportResult;
 use crate::domains::documents::infrastructure::photo::{
     GetPhotosRequest, GetPhotosResponse, PhotoMetadataUpdate, StorePhotoRequest, StorePhotoResponse,
 };
-use crate::domains::documents::infrastructure::report_export as report_export_service;
+use crate::domains::documents::{
+    DocumentsCommand, DocumentsFacade, DocumentsResponse, DocumentsServices,
+};
+use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
-use tracing::{error, info, instrument};
+use tracing::{info, instrument};
+
+fn services(state: &AppState<'_>) -> DocumentsServices {
+    DocumentsServices {
+        db: state.db.clone(),
+        intervention_service: state.intervention_service.clone(),
+        client_service: state.client_service.clone(),
+        app_data_dir: state.app_data_dir.clone(),
+    }
+}
 
 /// Store a new photo for an intervention step.
 #[tauri::command]
@@ -23,19 +34,30 @@ pub async fn document_store_photo(
     image_data: Vec<u8>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<StorePhotoResponse>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = AuthMiddleware::authenticate_command(
+        &session_token,
+        &state,
+        Some(UserRole::Technician),
+        &correlation_id,
+    )
+    .await?;
 
-    match state.photo_service.store_photo(request, image_data).await {
-        Ok(response) => {
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::StorePhoto { request, image_data },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::StorePhoto(response) => {
             info!(photo_id = %response.photo.id, "Photo stored");
-            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, "Failed to store photo");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -48,18 +70,24 @@ pub async fn document_get_photos(
     request: GetPhotosRequest,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<GetPhotosResponse>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
-    match state.photo_service.get_photos(request) {
-        Ok(response) => {
-            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::GetPhotos { request },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::Photos(response) => {
+            Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, "Failed to get photos");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -72,18 +100,24 @@ pub async fn document_get_photo(
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Option<Photo>>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
-    match state.photo_service.get_photo(&photo_id) {
-        Ok(photo) => {
-            Ok(ApiResponse::success(photo).with_correlation_id(Some(correlation_id.clone())))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::GetPhoto { photo_id },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::OptionalPhoto(photo) => {
+            Ok(ApiResponse::success(photo).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, photo_id = %photo_id, "Failed to get photo");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -96,19 +130,29 @@ pub async fn document_delete_photo(
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = AuthMiddleware::authenticate_command(
+        &session_token,
+        &state,
+        Some(UserRole::Technician),
+        &correlation_id,
+    )
+    .await?;
 
-    match state.photo_service.delete_photo(&photo_id) {
-        Ok(()) => {
-            info!(photo_id = %photo_id, "Photo deleted");
-            Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id.clone())))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::DeletePhoto { photo_id },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::Unit => {
+            Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, photo_id = %photo_id, "Failed to delete photo");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -121,18 +165,24 @@ pub async fn document_get_photo_data(
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Vec<u8>>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
-    match state.photo_service.read_photo_data(&photo_id) {
-        Ok(data) => {
-            Ok(ApiResponse::success(data).with_correlation_id(Some(correlation_id.clone())))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::GetPhotoData { photo_id },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::PhotoData(data) => {
+            Ok(ApiResponse::success(data).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, photo_id = %photo_id, "Failed to read photo data");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -146,22 +196,29 @@ pub async fn document_update_photo_metadata(
     updates: PhotoMetadataUpdate,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Photo>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let _current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = AuthMiddleware::authenticate_command(
+        &session_token,
+        &state,
+        Some(UserRole::Technician),
+        &correlation_id,
+    )
+    .await?;
 
-    match state
-        .photo_service
-        .update_photo_metadata(&photo_id, updates)
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::UpdatePhotoMetadata { photo_id, updates },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
     {
-        Ok(photo) => {
-            info!(photo_id = %photo_id, "Photo metadata updated");
-            Ok(ApiResponse::success(photo).with_correlation_id(Some(correlation_id.clone())))
+        DocumentsResponse::Photo(photo) => {
+            Ok(ApiResponse::success(photo).with_correlation_id(Some(ctx.correlation_id)))
         }
-        Err(e) => {
-            error!(error = %e, photo_id = %photo_id, "Failed to update photo metadata");
-            Err(crate::commands::AppError::Internal(e.to_string()))
-        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
     }
 }
 
@@ -174,28 +231,25 @@ pub async fn export_intervention_report(
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<InterventionReportResult>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
-    let intervention_data = report_export_service::get_intervention_with_details(
-        &intervention_id,
-        &state.db,
-        Some(&state.intervention_service),
-        Some(&state.client_service),
-    )
-    .await?;
-
-    report_export_service::check_intervention_export_permissions(
-        intervention_data.intervention.technician_id.clone(),
-        &current_user,
-    )?;
-
-    let result =
-        report_export_service::export_intervention_report(&intervention_data, &state.app_data_dir)
-            .await?;
-
-    Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id)))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::ExportInterventionReport { intervention_id },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::Report(result) => {
+            Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
+    }
 }
 
 /// Save an intervention report directly to a user-selected path.
@@ -208,25 +262,26 @@ pub async fn save_intervention_report(
     file_path: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx =
+        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
-    let intervention_data = report_export_service::get_intervention_with_details(
-        &intervention_id,
-        &state.db,
-        Some(&state.intervention_service),
-        Some(&state.client_service),
-    )
-    .await?;
-
-    report_export_service::check_intervention_export_permissions(
-        intervention_data.intervention.technician_id.clone(),
-        &current_user,
-    )?;
-
-    let saved_path =
-        report_export_service::save_intervention_report(&intervention_data, &file_path).await?;
-
-    Ok(ApiResponse::success(saved_path).with_correlation_id(Some(correlation_id)))
+    let facade = DocumentsFacade::new(state.photo_service.clone());
+    match facade
+        .execute(
+            DocumentsCommand::SaveInterventionReport {
+                intervention_id,
+                file_path,
+            },
+            &ctx.session,
+            &services(&state),
+        )
+        .await?
+    {
+        DocumentsResponse::SavedPath(path) => {
+            Ok(ApiResponse::success(path).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(crate::commands::AppError::Internal(
+            "Unexpected documents facade response".to_string(),
+        )),
+    }
 }
