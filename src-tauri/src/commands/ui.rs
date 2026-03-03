@@ -137,6 +137,48 @@ pub async fn dashboard_get_stats(
     Ok(super::ApiResponse::success(payload).with_correlation_id(Some(correlation_id)))
 }
 
+/// Get lightweight entity counters for dashboard cards.
+#[command]
+pub async fn get_entity_counts(
+    session_token: String,
+    state: super::AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
+    let current_user = authenticate!(&session_token, &state, super::UserRole::Viewer);
+    let correlation_id =
+        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
+
+    let pool = state.db.pool().clone();
+    let counts = tokio::task::spawn_blocking(move || -> Result<(i64, i64, i64), String> {
+        let conn = pool
+            .get()
+            .map_err(|e| format!("Failed to get database connection: {}", e))?;
+
+        let tasks: i64 = conn
+            .query_row("SELECT COUNT(*) FROM tasks", [], |row| row.get(0))
+            .map_err(|e| format!("Failed to count tasks: {}", e))?;
+        let clients: i64 = conn
+            .query_row("SELECT COUNT(*) FROM clients", [], |row| row.get(0))
+            .map_err(|e| format!("Failed to count clients: {}", e))?;
+        let interventions: i64 = conn
+            .query_row("SELECT COUNT(*) FROM interventions", [], |row| row.get(0))
+            .map_err(|e| format!("Failed to count interventions: {}", e))?;
+
+        Ok((tasks, clients, interventions))
+    })
+    .await
+    .map_err(|e| super::AppError::Internal(format!("Task join error: {}", e)))?
+    .map_err(super::AppError::Database)?;
+
+    let payload = serde_json::json!({
+        "tasks": counts.0,
+        "clients": counts.1,
+        "interventions": counts.2
+    });
+
+    Ok(super::ApiResponse::success(payload).with_correlation_id(Some(correlation_id)))
+}
+
 /// Get recent activities for admin dashboard
 #[command]
 pub async fn get_recent_activities(

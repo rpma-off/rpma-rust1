@@ -27,7 +27,7 @@ export const PUT = withAuth(async (request: NextRequestWithUser) => {
       return NextResponse.json({ error: 'Admins cannot change their own role.' }, { status: 403 });
     }
 
-    const result = await userService.updateUserRole(userId, role);
+    const result = await userService.updateUserRole(userId, role, request.token);
 
     if (!result.success) {
       console.error('Error updating role:', result.error);

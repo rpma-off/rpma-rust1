@@ -1222,10 +1222,10 @@ export const ipcClient = {
   // Sync operations
   sync: {
     start: () =>
-      safeInvoke<void>('sync_start'),
+      safeInvoke<void>('sync_start_background_service'),
 
     stop: () =>
-      safeInvoke<void>('sync_stop'),
+      safeInvoke<void>('sync_stop_background_service'),
 
      getStatus: () =>
        cachedInvoke('sync:status', 'sync_get_status', undefined, undefined, 5000),

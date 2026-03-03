@@ -698,10 +698,13 @@ pub async fn quote_revoke_share_link(
 #[instrument(skip(state))]
 pub async fn quote_get_by_public_token(
     public_token: String,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Quote>, AppError> {
     debug!("quote_get_by_public_token command received (public endpoint)");
     let correlation_id = crate::commands::init_correlation_context(&None, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     match state.quote_service.track_public_view(&public_token) {
         Ok(response) => {
@@ -725,10 +728,13 @@ pub async fn quote_get_by_public_token(
 #[instrument(skip(state))]
 pub async fn quote_customer_response(
     request: CustomerQuoteResponse,
+    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<bool>, AppError> {
     debug!("quote_customer_response command received (public endpoint)");
     let correlation_id = crate::commands::init_correlation_context(&None, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let action = request.action.clone();
     let quote_id = request.quote_id.clone();

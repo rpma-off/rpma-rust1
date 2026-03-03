@@ -12,18 +12,49 @@ export interface User {
 }
 
 export class UserService {
-  static async getUsers(_params?: {
+  private static normalizeRoleForSignup(role: string): 'admin' | 'technician' | 'supervisor' | 'viewer' | undefined {
+    if (role === 'manager') {
+      return 'supervisor';
+    }
+    if (role === 'admin' || role === 'technician' || role === 'supervisor' || role === 'viewer') {
+      return role;
+    }
+    return undefined;
+  }
+
+  private static requireSessionToken(sessionToken?: string): string {
+    if (!sessionToken) {
+      throw new Error('Authentication required');
+    }
+    return sessionToken;
+  }
+
+  static async getUsers(params?: {
     search?: string;
     role?: string;
     page?: number;
     pageSize?: number;
     sortBy?: string;
     sortOrder?: string;
-  }): Promise<ServiceResponse<User[]>> {
+  }, sessionToken?: string): Promise<ServiceResponse<User[]>> {
     try {
+      const token = this.requireSessionToken(sessionToken);
+      const limit = params?.pageSize ?? 50;
+      const offset = params?.page ? (params.page - 1) * limit : 0;
+      const result = await ipcClient.users.list(limit, offset, token);
+
+      const users = result?.data?.map(u => ({
+        id: u.id,
+        email: u.email,
+        firstName: u.first_name || '',
+        lastName: u.last_name || '',
+        role: u.role || '',
+        isActive: u.is_active ?? true
+      })) || [];
+
       return {
         success: true,
-        data: [],
+        data: users,
         status: 200,
       };
     } catch (error) {
@@ -36,9 +67,10 @@ export class UserService {
     }
   }
 
-  static async getUser(id: string): Promise<ServiceResponse<User | null>> {
+  static async getUser(id: string, sessionToken?: string): Promise<ServiceResponse<User | null>> {
     try {
-      const result = await ipcClient.users.get(id, 'mock-token');
+      const token = this.requireSessionToken(sessionToken);
+      const result = await ipcClient.users.get(id, token);
       return {
         success: true,
         data: result as User | null,
@@ -54,8 +86,8 @@ export class UserService {
     }
   }
 
-  static async getUserById(id: string): Promise<ServiceResponse<User | null>> {
-    return this.getUser(id);
+  static async getUserById(id: string, sessionToken?: string): Promise<ServiceResponse<User | null>> {
+    return this.getUser(id, sessionToken);
   }
 
   static async createUser(userData: {
@@ -64,7 +96,7 @@ export class UserService {
     first_name: string;
     last_name: string;
     role: string;
-  }): Promise<ServiceResponse<User>> {
+  }, sessionToken?: string): Promise<ServiceResponse<User>> {
     try {
       const createRequest: CreateUserRequest = {
         email: userData.email,
@@ -73,11 +105,33 @@ export class UserService {
         password: userData.password,
         role: userData.role,
       };
-      const result = await ipcClient.users.create(createRequest, 'mock-token');
 
+      if (sessionToken) {
+        const result = await ipcClient.users.create(createRequest, sessionToken);
+        return {
+          success: true,
+          data: result as unknown as User,
+          status: 201,
+        };
+      }
+
+      const session = await ipcClient.auth.createAccount({
+        email: createRequest.email,
+        first_name: createRequest.first_name,
+        last_name: createRequest.last_name,
+        password: createRequest.password,
+        role: this.normalizeRoleForSignup(createRequest.role),
+      });
       return {
         success: true,
-        data: result as unknown as User,
+        data: {
+          id: session.user_id,
+          email: session.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          role: session.role,
+          isActive: true,
+        },
         status: 201,
       };
     } catch (error) {
@@ -90,8 +144,9 @@ export class UserService {
     }
   }
 
-  static async updateUser(id: string, updates: Partial<User>): Promise<User> {
+  static async updateUser(id: string, updates: Partial<User>, sessionToken?: string): Promise<User> {
     try {
+      const token = this.requireSessionToken(sessionToken);
       const updateRequest: UpdateUserRequest = {
         email: updates.email ?? null,
         first_name: updates.firstName ?? null,
@@ -99,24 +154,25 @@ export class UserService {
         role: updates.role ?? null,
         is_active: updates.isActive ?? null,
       };
-      const result = await ipcClient.users.update(id, updateRequest, 'mock-token');
+      const result = await ipcClient.users.update(id, updateRequest, token);
       return result as unknown as User;
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to update user');
     }
   }
 
-  static async deleteUser(id: string): Promise<void> {
+  static async deleteUser(id: string, sessionToken?: string): Promise<void> {
     try {
-      await ipcClient.users.delete(id, 'mock-token');
+      const token = this.requireSessionToken(sessionToken);
+      await ipcClient.users.delete(id, token);
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to delete user');
     }
   }
 
-  static async updateUserRole(id: string, role: string): Promise<ServiceResponse<User>> {
+  static async updateUserRole(id: string, role: string, sessionToken?: string): Promise<ServiceResponse<User>> {
     try {
-      const user = await this.updateUser(id, { role });
+      const user = await this.updateUser(id, { role }, sessionToken);
       return {
         success: true,
         data: user,

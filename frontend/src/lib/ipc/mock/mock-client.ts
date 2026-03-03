@@ -253,8 +253,8 @@ export const ipcClient = {
       invoke('has_admins')
   },
   sync: {
-    start: () => invoke('sync_start'),
-    stop: () => invoke('sync_stop'),
+    start: () => invoke('sync_start_background_service'),
+    stop: () => invoke('sync_stop_background_service'),
     getStatus: () => invoke('sync_get_status'),
     syncNow: () => invoke('sync_now'),
     getOperationsForEntity: () => invoke('sync_get_operations_for_entity')

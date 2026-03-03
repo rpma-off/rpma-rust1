@@ -13,7 +13,7 @@ async function getHandler(request: NextRequestWithUser, _context?: unknown) {
   try {
     logger.info(LogContext.AUTH, 'Fetching profile for user', { userId: user.id });
 
-    const result = await userService.getUserById(user.id);
+    const result = await userService.getUserById(user.id, request.token);
 
     if (result.error) {
       logger.warn(LogContext.AUTH, 'User profile not found or error fetching', { userId: user.id, error: getErrorMessage(result.error) });
@@ -35,7 +35,7 @@ async function patchHandler(request: NextRequestWithUser, _context?: unknown) {
     const body = await request.json();
     logger.info(LogContext.AUTH, 'Updating profile for user', { userId: user.id, updates: Object.keys(body) });
 
-    const result = await userService.updateUser(user.id, body);
+    const result = await userService.updateUser(user.id, body, request.token);
 
     logger.info(LogContext.AUTH, 'Profile updated successfully', { userId: user.id });
     return NextResponse.json({ success: true, profile: result });

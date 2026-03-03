@@ -571,14 +571,20 @@ export function useQuotePublicLink() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  interface QuoteShareLinkResponse {
+    quote_id: string;
+    public_token: string;
+    shared_at: number;
+  }
+
   const generatePublicLink = useCallback(
-    async (id: string): Promise<Quote | null> => {
+    async (id: string): Promise<QuoteShareLinkResponse | null> => {
       if (!user?.token) return null;
       try {
         setLoading(true);
         setError(null);
         const result = await quotesIpc.generatePublicLink(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
+        const response = result as unknown as ApiResponse<QuoteShareLinkResponse>;
         if (response?.success && response.data) {
           return response.data;
         }

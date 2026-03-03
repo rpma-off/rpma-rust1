@@ -112,28 +112,19 @@ export const quotesIpc = {
     },
     sessionToken: string
   ) => {
-    const result = await safeInvoke('quote_convert_to_task', {
-      request: {
-        session_token: sessionToken,
-        quote_id: quoteId,
-        vehicle_plate: vehicleInfo.plate,
-        vehicle_make: vehicleInfo.make,
-        vehicle_model: vehicleInfo.model,
-        vehicle_year: vehicleInfo.year,
-        vehicle_vin: vehicleInfo.vin,
-        scheduled_date: vehicleInfo.scheduledDate,
-      }
-    });
-    return result;
+    void quoteId;
+    void vehicleInfo;
+    void sessionToken;
+    throw new Error('Quote-to-task conversion is not implemented by backend IPC');
   },
 
   generatePublicLink: (id: string, sessionToken: string) =>
-    safeInvoke('quote_generate_public_link', {
-      request: { session_token: sessionToken, id }
+    safeInvoke('quote_generate_share_link', {
+      request: { session_token: sessionToken, quote_id: id }
     }),
 
   revokePublicLink: (id: string, sessionToken: string) =>
-    safeInvoke('quote_revoke_public_link', {
-      request: { session_token: sessionToken, id }
+    safeInvoke('quote_revoke_share_link', {
+      request: { session_token: sessionToken, quote_id: id }
     }),
 };

@@ -1,9 +1,9 @@
-﻿ import { NextRequest, NextResponse } from 'next/server';
- import { userService } from '@/domains/users/server';
- import { withAuth } from '@/lib/middleware/auth.middleware';
- import { z } from 'zod';
+import { NextResponse } from 'next/server';
+import { userService } from '@/domains/users/server';
+import { withAuth, type NextRequestWithUser } from '@/lib/middleware/auth.middleware';
+import { z } from 'zod';
 
- export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 // Zod schema for GET query parameters
 const GetUsersQuerySchema = z.object({
@@ -24,7 +24,7 @@ const CreateUserBodySchema = z.object({
 });
 
 // GET /api/admin/users - Get all users (admin only)
-export const GET = withAuth(async (request: NextRequest, _context?: unknown) => {
+export const GET = withAuth(async (request: NextRequestWithUser, _context?: unknown) => {
   try {
     const { searchParams } = new URL(request.url);
     const query = Object.fromEntries(searchParams.entries());
@@ -35,7 +35,7 @@ export const GET = withAuth(async (request: NextRequest, _context?: unknown) => 
       return NextResponse.json({ error: 'Invalid query parameters', details: validation.error.flatten() }, { status: 400 });
     }
 
-    const result = await userService.getUsers(validation.data);
+    const result = await userService.getUsers(validation.data, request.token);
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });
@@ -53,7 +53,7 @@ export const GET = withAuth(async (request: NextRequest, _context?: unknown) => 
 }, 'admin');
 
 // POST /api/admin/users - Create new user (admin only)
-export const POST = withAuth(async (request: NextRequest, _context?: unknown) => {
+export const POST = withAuth(async (request: NextRequestWithUser, _context?: unknown) => {
   try {
     const body = await request.json();
     const validation = CreateUserBodySchema.safeParse(body);
@@ -72,8 +72,8 @@ export const POST = withAuth(async (request: NextRequest, _context?: unknown) =>
     const first_name = nameParts[0];
     const last_name = nameParts.slice(1).join(' ');
 
-    const result = await userService.createUser({ email, password, first_name, last_name, role });
-    
+    const result = await userService.createUser({ email, password, first_name, last_name, role }, request.token);
+
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
@@ -88,4 +88,3 @@ export const POST = withAuth(async (request: NextRequest, _context?: unknown) =>
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }, 'admin');
-

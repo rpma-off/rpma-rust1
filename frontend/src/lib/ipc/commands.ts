@@ -106,6 +106,11 @@ export const IPC_COMMANDS = {
   SEND_NOTIFICATION: 'send_notification',
   TEST_NOTIFICATION_CONFIG: 'test_notification_config',
   GET_NOTIFICATION_STATUS: 'get_notification_status',
+  GET_NOTIFICATIONS: 'get_notifications',
+  MARK_NOTIFICATION_READ: 'mark_notification_read',
+  MARK_ALL_NOTIFICATIONS_READ: 'mark_all_notifications_read',
+  DELETE_NOTIFICATION: 'delete_notification',
+  CREATE_NOTIFICATION: 'create_notification',
   GET_RECENT_ACTIVITIES: 'get_recent_activities',
 
   // Message commands
@@ -142,6 +147,7 @@ export const IPC_COMMANDS = {
   // Dashboard commands
   DASHBOARD_GET_STATS: 'dashboard_get_stats',
   GET_ENTITY_COUNTS: 'get_entity_counts',
+  REPORTS_GET_CAPABILITIES: 'reports_get_capabilities',
 
   // User commands
   USER_CRUD: 'user_crud',
@@ -245,6 +251,15 @@ export const IPC_COMMANDS = {
   QUOTE_MARK_ACCEPTED: 'quote_mark_accepted',
   QUOTE_MARK_REJECTED: 'quote_mark_rejected',
   QUOTE_EXPORT_PDF: 'quote_export_pdf',
+  QUOTE_ATTACHMENTS_GET: 'quote_attachments_get',
+  QUOTE_ATTACHMENT_CREATE: 'quote_attachment_create',
+  QUOTE_ATTACHMENT_UPDATE: 'quote_attachment_update',
+  QUOTE_ATTACHMENT_DELETE: 'quote_attachment_delete',
+  QUOTE_GENERATE_SHARE_LINK: 'quote_generate_share_link',
+  QUOTE_REVOKE_SHARE_LINK: 'quote_revoke_share_link',
+  QUOTE_GET_BY_PUBLIC_TOKEN: 'quote_get_by_public_token',
+  QUOTE_CUSTOMER_RESPONSE: 'quote_customer_response',
+  QUOTE_ACKNOWLEDGE_RESPONSE: 'quote_acknowledge_response',
 
   // WebSocket commands
   INIT_WEBSOCKET_SERVER: 'init_websocket_server',
