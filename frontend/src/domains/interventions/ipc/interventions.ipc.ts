@@ -17,6 +17,13 @@ import type {
   FinalizeInterventionRequest
 } from '@/lib/backend';
 
+/** Assert result is a non-null object, or throw. */
+function ensureObject(result: JsonValue, context: string): asserts result is JsonObject {
+  if (result === null || typeof result !== 'object') {
+    throw new Error(`Invalid response: expected object for ${context}`);
+  }
+}
+
 export const interventionsIpc = {
   start: async (data: StartInterventionRequest, sessionToken: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
@@ -24,9 +31,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'intervention start');
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
       if (workflowResponse.type === 'Started') {
@@ -42,9 +47,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'intervention get');
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Retrieved') {
@@ -105,9 +108,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'advance step');
     if ('type' in result) {
       const progressResponse = result as unknown as {
         type: string;
@@ -128,9 +129,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'get step');
     if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepRetrieved') {
@@ -146,9 +145,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'get progress');
     if ('type' in result) {
       const progressResponse = result as unknown as {
         type: string;
@@ -178,9 +175,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'save step progress');
     if ('type' in result) {
       const progressResponse = result as unknown as { type: string; step: InterventionStep };
       if (progressResponse.type === 'StepProgressSaved') {
@@ -196,9 +191,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'update workflow');
     if ('type' in result) {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention };
       if (workflowResponse.type === 'Updated') {
@@ -214,9 +207,7 @@ export const interventionsIpc = {
       sessionToken: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'finalize intervention');
     if ('type' in result) {
       const workflowResponse = result as unknown as {
         type: string;
@@ -247,9 +238,7 @@ export const interventionsIpc = {
       session_token: sessionToken
     });
 
-    if (result === null || typeof result !== 'object') {
-      throw new Error('Invalid response: expected object');
-    }
+    ensureObject(result, 'intervention list');
     if ('type' in result) {
       const managementResponse = result as unknown as { type: string; interventions: Intervention[]; total: number };
       if (managementResponse.type === 'List') {
