@@ -9,6 +9,7 @@ import type {
   MaterialStats,
   InventoryStats,
   InterventionMaterialSummary,
+  LowStockMaterial,
   MaterialType,
   UnitOfMeasure,
 } from '../api/types';
@@ -106,7 +107,7 @@ export function useInventory(query?: InventoryQuery) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<InventoryStats | null>(null);
-  const [lowStockMaterials, setLowStockMaterials] = useState<Material[]>([]);
+  const [lowStockMaterials, setLowStockMaterials] = useState<LowStockMaterial[]>([]);
   const [expiredMaterials, setExpiredMaterials] = useState<Material[]>([]);
 
   const fetchMaterials = useCallback(async () => {
@@ -157,7 +158,7 @@ export function useInventory(query?: InventoryQuery) {
 
     try {
       const result = await inventoryIpc.reporting.getLowStockMaterials(sessionToken);
-      setLowStockMaterials(result);
+      setLowStockMaterials(result.items);
     } catch (err) {
       console.error('Failed to fetch low stock materials:', err);
     }

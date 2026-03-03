@@ -11,12 +11,12 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/domains/auth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
-import type { Material, InventoryMovementSummary } from '@/shared/types';
+import type { LowStockMaterial, InventoryMovementSummary } from '@/shared/types';
 
 export function InventoryReports() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [lowStockMaterials, setLowStockMaterials] = useState<Material[]>([]);
+  const [lowStockMaterials, setLowStockMaterials] = useState<LowStockMaterial[]>([]);
   const [movementSummary, setMovementSummary] = useState<InventoryMovementSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function InventoryReports() {
         inventoryIpc.getLowStockMaterials(user.token),
         inventoryIpc.getMovementSummaries(user.token),
       ]);
-      setLowStockMaterials(lowStock);
+      setLowStockMaterials(lowStock.items);
       setMovementSummary(movements);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -102,7 +102,7 @@ export function InventoryReports() {
               </TableHeader>
               <TableBody>
                 {lowStockMaterials.map((material) => (
-                  <TableRow key={material.id} className="border-border hover:bg-[hsl(var(--rpma-surface))]/35">
+                  <TableRow key={material.material_id} className="border-border hover:bg-[hsl(var(--rpma-surface))]/35">
                     <TableCell className="text-foreground font-mono">{material.sku}</TableCell>
                     <TableCell className="text-foreground">{material.name}</TableCell>
                     <TableCell>
@@ -111,7 +111,7 @@ export function InventoryReports() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {material.minimum_stock ?? t('common.notDefined')} {material.unit_of_measure}
+                      {material.minimum_stock} {material.unit_of_measure}
                     </TableCell>
                   </TableRow>
                 ))}

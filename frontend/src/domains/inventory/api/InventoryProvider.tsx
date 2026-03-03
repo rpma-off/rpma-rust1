@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { useInventory } from '../hooks/useInventory';
-import type { InventoryQuery } from '../hooks/useInventory';
+import { useInventory } from './useInventory';
+import type { InventoryQuery } from './useInventory';
 
 type InventoryContextValue = ReturnType<typeof useInventory>;
 

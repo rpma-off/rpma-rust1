@@ -40,7 +40,7 @@ jest.mock('../hooks/useInventoryStats', () => ({
   useInventoryStats: jest.fn(),
 }));
 
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../api';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 
 // Mock child components

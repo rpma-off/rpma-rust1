@@ -23,16 +23,14 @@ interface ResizableHandleProps {
   className?: string;
   withHandle?: boolean;
   disabled?: boolean;
-  hitAreaMargins?: number;
 }
 
 const ResizableHandle = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.Separator>,
   ResizableHandleProps
->(({ className, withHandle, disabled, hitAreaMargins }, ref) => (
+>(({ className, withHandle, disabled }, ref) => (
   <ResizablePrimitive.Separator
     disabled={disabled}
-    hitAreaMargins={hitAreaMargins}
     className={cn(
       "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:bg-border data-[orientation=vertical]:h-px data-[orientation=vertical]:w-full data-[orientation=vertical]:after:left-0 data-[orientation=vertical]:after:h-1 data-[orientation=vertical]:after:-translate-y-1/2 hover:bg-accent/50 [&[data-orientation=vertical]>div]:rotate-90",
       className

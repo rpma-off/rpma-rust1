@@ -5,7 +5,7 @@ export * from './alert-dialog';
 export * from './animations';
 export * from './avatar';
 export * from './badge';
-export { Button as UIButton } from './button';
+export { Button, Button as UIButton } from './button';
 export * from './checkbox';
 export * from './collapsible-section';
 export * from './command';

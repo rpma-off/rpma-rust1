@@ -1,4 +1,4 @@
-import { useInventory, type InventoryQuery } from '../hooks/useInventory';
+import { useInventory, type InventoryQuery } from './useInventory';
 
 export function useInventoryActions(query?: InventoryQuery) {
   const inventory = useInventory(query);

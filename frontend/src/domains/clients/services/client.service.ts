@@ -108,7 +108,7 @@ export class ClientService {
       if (!validation.success) {
         return {
           success: false,
-          error: validation.error.errors[0]?.message ?? 'Invalid client payload',
+          error: validation.error.issues[0]?.message ?? 'Invalid client payload',
           status: 400,
         };
       }
@@ -134,7 +134,7 @@ export class ClientService {
       if (!validation.success) {
         return {
           success: false,
-          error: validation.error.errors[0]?.message ?? 'Invalid client update payload',
+          error: validation.error.issues[0]?.message ?? 'Invalid client update payload',
           status: 400,
         };
       }

@@ -64,6 +64,17 @@ impl std::fmt::Display for UnitOfMeasure {
     }
 }
 
+fn parse_unit_of_measure(unit: &str) -> UnitOfMeasure {
+    match unit {
+        "piece" => UnitOfMeasure::Piece,
+        "meter" => UnitOfMeasure::Meter,
+        "liter" => UnitOfMeasure::Liter,
+        "gram" => UnitOfMeasure::Gram,
+        "roll" => UnitOfMeasure::Roll,
+        _ => UnitOfMeasure::Piece,
+    }
+}
+
 /// Material inventory item
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
 #[ts(export)]
@@ -211,6 +222,46 @@ impl Material {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+pub struct LowStockMaterial {
+    pub material_id: String,
+    pub sku: String,
+    pub name: String,
+    pub unit_of_measure: UnitOfMeasure,
+    pub current_stock: f64,
+    pub reserved_stock: f64,
+    pub available_stock: f64,
+    pub minimum_stock: f64,
+    pub effective_threshold: f64,
+    pub shortage_quantity: f64,
+}
+
+impl FromSqlRow for LowStockMaterial {
+    fn from_row(row: &Row) -> rusqlite::Result<Self> {
+        let unit_str: String = row.get("unit_of_measure")?;
+        Ok(Self {
+            material_id: row.get("material_id")?,
+            sku: row.get("sku")?,
+            name: row.get("name")?,
+            unit_of_measure: parse_unit_of_measure(&unit_str),
+            current_stock: row.get("current_stock")?,
+            reserved_stock: row.get("reserved_stock")?,
+            available_stock: row.get("available_stock")?,
+            minimum_stock: row.get("minimum_stock")?,
+            effective_threshold: row.get("effective_threshold")?,
+            shortage_quantity: row.get("shortage_quantity")?,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
+#[ts(export)]
+pub struct LowStockMaterialsResponse {
+    pub items: Vec<LowStockMaterial>,
+    pub total: i32,
+}
+
 impl FromSqlRow for Material {
     fn from_row(row: &Row) -> rusqlite::Result<Self> {
         let material_type_str: String = row.get("material_type")?;
@@ -230,14 +281,7 @@ impl FromSqlRow for Material {
         };
 
         let unit_str: String = row.get("unit_of_measure")?;
-        let unit_of_measure = match unit_str.as_str() {
-            "piece" => UnitOfMeasure::Piece,
-            "meter" => UnitOfMeasure::Meter,
-            "liter" => UnitOfMeasure::Liter,
-            "gram" => UnitOfMeasure::Gram,
-            "roll" => UnitOfMeasure::Roll,
-            _ => UnitOfMeasure::Piece, // Default fallback
-        };
+        let unit_of_measure = parse_unit_of_measure(&unit_str);
 
         Ok(Self {
             id: row.get("id")?,

@@ -5,7 +5,7 @@ use crate::domains::clients::application::{
     required_permission, sanitize_client_action, ClientCrudRequest,
 };
 use crate::domains::clients::domain::models::client::ClientWithTasks;
-use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::facade::ClientsFacade;
 use crate::shared::services::cross_domain::Task;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -38,92 +38,7 @@ pub async fn client_crud(
 
     // Determine required permission via application layer
     let permission = required_permission(&action);
-
-            ClientAction::Create {
-                data: crate::domains::clients::domain::models::client::CreateClientRequest {
-                    name: validated_name,
-                    email: validated_email,
-                    phone: validated_phone,
-                    customer_type: data.customer_type.clone(),
-                    address_street: data.address_street.clone(),
-                    address_city: data.address_city.clone(),
-                    address_state: data.address_state.clone(),
-                    address_zip: data.address_zip.clone(),
-                    address_country: data.address_country.clone(),
-                    tax_id: data.tax_id.clone(),
-                    company_name: validated_company_name,
-                    contact_person: validated_contact_person,
-                    notes: validated_notes,
-                    tags: validated_tags,
-                },
-            }
-        }
-        ClientAction::Update { id, data } => {
-            let validated_name = match data.name.as_deref() {
-                Some(name) => Some(
-                    validator
-                        .sanitize_text_input(name, "name", 100)
-                        .map_err(|e| AppError::Validation(format!("Name validation failed: {}", e)))?,
-                ),
-                None => None,
-            };
-            let validated_email = validator
-                .validate_client_email(data.email.as_deref())
-                .map_err(|e| AppError::Validation(format!("Email validation failed: {}", e)))?;
-            let validated_phone = validator
-                .validate_phone(data.phone.as_deref())
-                .map_err(|e| AppError::Validation(format!("Phone validation failed: {}", e)))?;
-            let validated_company_name = validator
-                .sanitize_optional_text(data.company_name.as_deref(), "company_name", 100)
-                .map_err(|e| {
-                    AppError::Validation(format!("Company name validation failed: {}", e))
-                })?;
-            let validated_contact_person = validator
-                .sanitize_optional_text(data.contact_person.as_deref(), "contact_person", 100)
-                .map_err(|e| {
-                    AppError::Validation(format!("Contact person validation failed: {}", e))
-                })?;
-            let validated_notes = validator
-                .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
-                .map_err(|e| AppError::Validation(format!("Notes validation failed: {}", e)))?;
-            let validated_tags = if let Some(tags_str) = &data.tags {
-                let tags: Vec<String> = serde_json::from_str(tags_str)
-                    .map_err(|e| AppError::Validation(format!("Invalid tags JSON: {}", e)))?;
-                let mut validated = Vec::new();
-                for tag in tags {
-                    let sanitized = validator
-                        .sanitize_text_input(&tag, "tag", 50)
-                        .map_err(|e| AppError::Validation(format!("Tag validation failed: {}", e)))?;
-                    validated.push(sanitized);
-                }
-                Some(serde_json::to_string(&validated).unwrap_or_default())
-            } else {
-                None
-            };
-
-            ClientAction::Update {
-                id: id.clone(),
-                data: crate::domains::clients::domain::models::client::UpdateClientRequest {
-                    id: id.clone(),
-                    name: validated_name,
-                    email: validated_email,
-                    phone: validated_phone,
-                    customer_type: data.customer_type.clone(),
-                    address_street: data.address_street.clone(),
-                    address_city: data.address_city.clone(),
-                    address_state: data.address_state.clone(),
-                    address_zip: data.address_zip.clone(),
-                    address_country: data.address_country.clone(),
-                    tax_id: data.tax_id.clone(),
-                    company_name: validated_company_name,
-                    contact_person: validated_contact_person,
-                    notes: validated_notes,
-                    tags: validated_tags,
-                },
-            }
-        }
-        _ => action, // ClientAction doesn't implement Clone, so we can't clone
-    };
+    let validated_action = sanitize_client_action(action)?;
 
     // Centralized authentication
     let current_user = authenticate!(&session_token, &state);
@@ -354,7 +269,7 @@ async fn handle_client_with_tasks_retrieval(
                 .await
                 .map_err(|e| {
                     error!("Failed to retrieve tasks for client {}: {}", id, e);
-                    clients_facade.map_service_error("get_tasks", &e)
+                    clients_facade.map_service_error("get_tasks", &e.to_string())
                 })?;
 
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
@@ -528,7 +443,7 @@ async fn handle_client_listing_with_tasks(
             .await
             .map_err(|e| {
                 error!("Failed to retrieve tasks for client {}: {}", client.id, e);
-                clients_facade.map_service_error("get_tasks", &e)
+                clients_facade.map_service_error("get_tasks", &e.to_string())
             })?;
 
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();

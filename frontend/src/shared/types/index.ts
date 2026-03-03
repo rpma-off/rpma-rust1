@@ -116,6 +116,8 @@ export type {
   UnitOfMeasure,
   InventoryTransactionType,
   Material,
+  LowStockMaterial,
+  LowStockMaterialsResponse,
   MaterialConsumption,
   MaterialStats,
   InventoryStats,

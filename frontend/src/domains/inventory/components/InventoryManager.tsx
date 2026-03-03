@@ -12,7 +12,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { VirtualizedTable } from '@/components/ui/virtualized-table';
 import { StockLevelIndicator } from './StockLevelIndicator';
 import { MaterialForm } from './MaterialForm';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../api';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Material, MaterialType } from '@/shared/types';

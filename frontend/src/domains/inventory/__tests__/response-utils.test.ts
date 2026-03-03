@@ -1,4 +1,4 @@
-import { unwrapApiResponse, validateMaterialListPayload } from '../server/response-utils';
+import { unwrapApiResponse, validateLowStockPayload, validateMaterialListPayload } from '../server/response-utils';
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 
@@ -82,5 +82,32 @@ describe('inventory response-utils', () => {
   it('accepts list payload in items wrapper', () => {
     const result = validateMaterialListPayload({ items: [material] }, 'low stock');
     expect(result).toEqual([material]);
+  });
+
+  it('validates strict low stock response payload', () => {
+    const result = validateLowStockPayload({
+      total: 1,
+      items: [{
+        material_id: 'mat-1',
+        sku: 'SKU-1',
+        name: 'Material 1',
+        unit_of_measure: 'meter',
+        current_stock: 1,
+        reserved_stock: 0,
+        available_stock: 1,
+        minimum_stock: 5,
+        effective_threshold: 5,
+        shortage_quantity: 4,
+      }],
+    }, 'low stock');
+
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+  });
+
+  it('rejects invalid strict low stock payload', () => {
+    expect(() => validateLowStockPayload({ total: 1, items: [{ sku: 'SKU-1' }] }, 'low stock')).toThrow(
+      'Invalid low stock item payload for low stock'
+    );
   });
 });

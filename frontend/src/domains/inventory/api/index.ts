@@ -30,6 +30,8 @@ export type {
   InterventionMaterialSummary,
   MaterialConsumptionSummary,
   InventoryMovementSummary,
+  LowStockMaterial,
+  LowStockMaterialsResponse,
 } from './types';
 
 export type {

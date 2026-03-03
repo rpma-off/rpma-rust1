@@ -57,4 +57,4 @@ const ButtonGroup = React.forwardRef<
 ))
 ButtonGroup.displayName = "ButtonGroup"
 
-export { ButtonGroup, ButtonGroupButton as Button }
+export { ButtonGroup, ButtonGroupButton }

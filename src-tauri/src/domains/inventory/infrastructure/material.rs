@@ -1,13 +1,17 @@
-﻿//! Material Service - PPF Material Inventory and Consumption Management
+//! Material Service - PPF Material Inventory and Consumption Management
 //!
 //! This service handles material inventory management, consumption tracking,
 //! and integration with PPF intervention workflows.
 
 use crate::db::Database;
+use crate::domains::inventory::domain::material::{
+    available_stock, effective_threshold, is_low_stock_with_policy, DEFAULT_LOW_STOCK_THRESHOLD,
+};
 use crate::domains::inventory::domain::models::material::{
     InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
-    InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
-    MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,
+    InventoryTransactionType, LowStockMaterial, LowStockMaterialsResponse, Material,
+    MaterialCategory, MaterialConsumption, MaterialConsumptionSummary, MaterialStats, MaterialType,
+    Supplier, UnitOfMeasure,
 };
 use crate::shared::contracts::auth::UserRole;
 use rusqlite::params;
@@ -773,10 +777,9 @@ impl MaterialService {
             r#"
             SELECT COUNT(*) FROM materials
             WHERE is_active = 1
-              AND current_stock <= COALESCE(minimum_stock, 0)
-              AND minimum_stock IS NOT NULL
+              AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
             "#,
-            [],
+            params![DEFAULT_LOW_STOCK_THRESHOLD],
         )?;
 
         let expired_materials: i32 = self.db.query_single_value(
@@ -824,16 +827,62 @@ impl MaterialService {
     }
 
     /// Get low stock materials
-    pub fn get_low_stock_materials(&self) -> MaterialResult<Vec<Material>> {
+    pub fn get_low_stock_materials(&self) -> MaterialResult<LowStockMaterialsResponse> {
+        let threshold_fallback = effective_threshold(None);
         let sql = r#"
-            SELECT * FROM materials
+            SELECT
+              id AS material_id,
+              sku,
+              name,
+              unit_of_measure,
+              current_stock,
+              0.0 AS reserved_stock,
+              (current_stock - 0.0) AS available_stock,
+              COALESCE(minimum_stock, ?) AS minimum_stock,
+              COALESCE(minimum_stock, ?) AS effective_threshold,
+              CASE
+                WHEN (current_stock - 0.0) < COALESCE(minimum_stock, ?)
+                  THEN COALESCE(minimum_stock, ?) - (current_stock - 0.0)
+                ELSE 0.0
+              END AS shortage_quantity
+            FROM materials
             WHERE is_active = 1
-              AND current_stock <= COALESCE(minimum_stock, 0)
-              AND minimum_stock IS NOT NULL
-            ORDER BY current_stock ASC
+              AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
+            ORDER BY shortage_quantity DESC, available_stock ASC, name ASC
         "#;
 
-        Ok(self.db.query_as::<Material>(sql, [])?)
+        let raw_items = self.db.query_as::<LowStockMaterial>(
+            sql,
+            params![
+                threshold_fallback,
+                threshold_fallback,
+                threshold_fallback,
+                threshold_fallback,
+                threshold_fallback
+            ],
+        )?;
+
+        let items: Vec<LowStockMaterial> = raw_items
+            .into_iter()
+            .filter(|item| {
+                is_low_stock_with_policy(
+                    item.current_stock,
+                    Some(item.minimum_stock),
+                    Some(item.reserved_stock),
+                )
+            })
+            .map(|mut item| {
+                item.available_stock =
+                    available_stock(item.current_stock, Some(item.reserved_stock));
+                item.effective_threshold = effective_threshold(Some(item.minimum_stock));
+                item
+            })
+            .collect();
+
+        Ok(LowStockMaterialsResponse {
+            total: items.len() as i32,
+            items,
+        })
     }
 
     /// Get expired materials
@@ -1626,10 +1675,10 @@ impl MaterialService {
             .query_single_value(
                 r#"
                 SELECT COUNT(*) FROM materials
-                WHERE is_active = 1 AND minimum_stock IS NOT NULL
-                  AND current_stock <= minimum_stock
+                WHERE is_active = 1
+                  AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
                 "#,
-                [],
+                params![DEFAULT_LOW_STOCK_THRESHOLD],
             )
             .unwrap_or(0);
 
@@ -2266,4 +2315,3 @@ mod inventory_ipc_fix_tests {
         assert!(result.unwrap().is_empty());
     }
 }
-

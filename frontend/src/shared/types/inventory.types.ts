@@ -68,6 +68,24 @@ export interface Material {
   last_synced_at?: string;
 }
 
+export interface LowStockMaterial {
+  material_id: string;
+  sku: string;
+  name: string;
+  unit_of_measure: UnitOfMeasure;
+  current_stock: number;
+  reserved_stock: number;
+  available_stock: number;
+  minimum_stock: number;
+  effective_threshold: number;
+  shortage_quantity: number;
+}
+
+export interface LowStockMaterialsResponse {
+  items: LowStockMaterial[];
+  total: number;
+}
+
 // Material consumption record
 export interface MaterialConsumption {
   // Identifiers

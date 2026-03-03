@@ -16,6 +16,7 @@ import type {
   Material,
   MaterialConsumption,
   MaterialStats,
+  LowStockMaterialsResponse,
 } from '../api/types';
 
 export const inventoryIpc = {
@@ -47,8 +48,8 @@ export const inventoryIpc = {
   getMaterialStats: (sessionToken: string): Promise<MaterialStats> =>
     safeInvoke<MaterialStats>(IPC_COMMANDS.MATERIAL_GET_STATS, { sessionToken } as JsonObject),
 
-  getLowStockMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<Material[]>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, { sessionToken } as JsonObject),
+  getLowStockMaterials: (sessionToken: string): Promise<LowStockMaterialsResponse> =>
+    reportingOperations.getLowStockMaterials(sessionToken),
 
   getMovementSummaries: (sessionToken: string): Promise<InventoryMovementSummary[]> =>
     safeInvoke<InventoryMovementSummary[]>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, { sessionToken } as JsonObject),

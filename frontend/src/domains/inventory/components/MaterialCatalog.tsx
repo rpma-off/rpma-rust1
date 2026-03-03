@@ -28,7 +28,7 @@ import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } fr
 import { useMaterials } from '../hooks/useMaterials';
 import type { Material, MaterialType } from '../api/types';
 import { useInventoryStats } from '../hooks/useInventoryStats';
-import { useInventory } from '../hooks/useInventory';
+import { useInventory } from '../api';
 import { MaterialForm } from './MaterialForm';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks/useTranslation';

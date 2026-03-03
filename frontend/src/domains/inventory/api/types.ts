@@ -12,5 +12,7 @@ export type {
   InterventionMaterialSummary,
   MaterialConsumptionSummary,
   InventoryMovementSummary,
+  LowStockMaterial,
+  LowStockMaterialsResponse,
 } from '@/shared/types/inventory.types';
 

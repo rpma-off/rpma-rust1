@@ -57,7 +57,7 @@ pub async fn material_get(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -89,7 +89,7 @@ pub async fn material_get_by_sku(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -125,7 +125,7 @@ pub async fn material_list(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
@@ -254,7 +254,7 @@ pub async fn material_get_intervention_consumption(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -286,7 +286,7 @@ pub async fn material_get_intervention_summary(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -317,7 +317,7 @@ pub async fn material_get_stats(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
@@ -341,11 +341,11 @@ pub async fn material_get_low_stock(
     session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
+    ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -376,7 +376,7 @@ pub async fn material_get_expired(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -407,7 +407,7 @@ pub async fn inventory_get_stats(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.inventory_service.clone();
@@ -506,7 +506,7 @@ pub async fn material_get_consumption_history(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -573,7 +573,7 @@ pub async fn material_get_transaction_history(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -640,7 +640,7 @@ pub async fn material_list_categories(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -708,7 +708,7 @@ pub async fn material_list_suppliers(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -735,11 +735,11 @@ pub async fn material_get_low_stock_materials(
     session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
+    ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -770,7 +770,7 @@ pub async fn material_get_expired_materials(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();
@@ -804,7 +804,7 @@ pub async fn material_get_inventory_movement_summary(
     crate::commands::AppError,
 > {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let service = state.material_service.clone();

@@ -3,6 +3,7 @@ import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type {
   InventoryMovementSummary,
   InventoryTransaction,
+  LowStockMaterialsResponse,
   Material,
   MaterialCategory,
   MaterialConsumption,
@@ -13,7 +14,7 @@ import type {
 } from '@/shared/types';
 import type { Pagination } from '@/types/api';
 import type { JsonValue } from '@/types/json';
-import { unwrapApiResponse, validateMaterialListPayload } from './response-utils';
+import { unwrapApiResponse, validateLowStockPayload, validateMaterialListPayload } from './response-utils';
 
 type PaginationInfo = {
   page: number;
@@ -447,12 +448,12 @@ export const reportingOperations = {
    * @param sessionToken - User's session token
    * @returns Promise resolving to low stock materials
    */
-  getLowStockMaterials: (sessionToken: string): Promise<Material[]> =>
+  getLowStockMaterials: (sessionToken: string): Promise<LowStockMaterialsResponse> =>
     safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
       sessionToken
     }).then(async result => {
       const payload = await unwrapApiResponse<unknown>(result, 'get low stock materials', sessionToken);
-      return validateMaterialListPayload(payload, 'get low stock materials');
+      return validateLowStockPayload(payload, 'get low stock materials');
     }),
 
   /**

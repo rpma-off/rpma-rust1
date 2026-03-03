@@ -1,6 +1,6 @@
 import { safeInvoke } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
-import type { Material } from '@/shared/types';
+import type { LowStockMaterial, LowStockMaterialsResponse, Material } from '@/shared/types';
 import type { JsonObject } from '@/types/json';
 
 type ApiErrorShape = {
@@ -134,4 +134,41 @@ export function validateMaterialListPayload(payload: unknown, ctx: string): Mate
   }
 
   return maybeList;
+}
+
+function isLowStockMaterialLike(value: unknown): value is LowStockMaterial {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.material_id === 'string' &&
+    typeof value.sku === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.unit_of_measure === 'string' &&
+    typeof value.current_stock === 'number' &&
+    typeof value.reserved_stock === 'number' &&
+    typeof value.available_stock === 'number' &&
+    typeof value.minimum_stock === 'number' &&
+    typeof value.effective_threshold === 'number' &&
+    typeof value.shortage_quantity === 'number'
+  );
+}
+
+export function validateLowStockPayload(payload: unknown, ctx: string): LowStockMaterialsResponse {
+  if (!isRecord(payload)) {
+    throw new Error(`Invalid response format for ${ctx}`);
+  }
+
+  const items = payload.items;
+  const total = payload.total;
+  if (!Array.isArray(items) || typeof total !== 'number') {
+    throw new Error(`Invalid low stock response shape for ${ctx}`);
+  }
+
+  if (!items.every(isLowStockMaterialLike)) {
+    throw new Error(`Invalid low stock item payload for ${ctx}`);
+  }
+
+  return { items, total };
 }
