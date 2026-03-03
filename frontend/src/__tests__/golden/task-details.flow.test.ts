@@ -9,7 +9,7 @@
  */
 
 jest.mock('@tauri-apps/api/core', () => ({ invoke: jest.fn() }));
-jest.mock('@/domains/auth', () => ({ getSessionToken: jest.fn() }));
+jest.mock('@/shared/contracts/session', () => ({ getSessionToken: jest.fn() }));
 jest.mock('@/lib/ipc/metrics', () => ({ recordMetric: jest.fn() }));
 jest.mock('@/lib/logging', () => ({
   logger: { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() },
@@ -35,7 +35,7 @@ const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as {
   invoke: jest.Mock;
 };
 const { getSessionToken } = jest.requireMock(
-  '@/domains/auth',
+  '@/shared/contracts/session',
 ) as { getSessionToken: jest.Mock };
 
 describe('Golden Flow – Task Details & List', () => {
@@ -100,3 +100,4 @@ describe('Golden Flow – Task Details & List', () => {
     expect(result).toHaveProperty('total', 42);
   });
 });
+

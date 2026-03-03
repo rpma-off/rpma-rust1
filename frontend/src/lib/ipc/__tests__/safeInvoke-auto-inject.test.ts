@@ -13,7 +13,7 @@ jest.mock('@tauri-apps/api/core', () => ({
   invoke: jest.fn(),
 }));
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/contracts/session', () => ({
   getSessionToken: jest.fn(),
 }));
 
@@ -36,7 +36,7 @@ import { NOT_IMPLEMENTED_COMMANDS } from '../utils';
 // Retrieve mock references after all jest.mock calls
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as { invoke: jest.Mock };
 const { getSessionToken: mockGetSessionToken } = jest.requireMock(
-  '@/domains/auth'
+  '@/shared/contracts/session'
 ) as { getSessionToken: jest.Mock };
 
 describe('safeInvoke – session_token auto-injection', () => {
@@ -260,3 +260,4 @@ describe('safeInvoke – session_token auto-injection', () => {
     });
   });
 });
+

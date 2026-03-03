@@ -98,7 +98,8 @@ jobs:
 
       - name: Scripts checks (arch/type-drift/schema)
         run: |
-          node scripts/architecture-check.js || true
+          node scripts/architecture-check.js --strict || true
+          node scripts/anti-spaghetti-guards.js
           node scripts/enforce-backend-module-boundaries.js
           node scripts/ci-type-drift-check.js || true
           node scripts/detect-schema-drift.js || true

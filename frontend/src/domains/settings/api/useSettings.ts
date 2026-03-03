@@ -85,7 +85,6 @@ export function useSettings(): UseSettingsResult {
 
   useEffect(() => {
     // Refetch from backend on mount and when the token changes.
-    fetchedRef.current = true;
     void refetch();
   }, [refetch]);
 

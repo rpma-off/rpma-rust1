@@ -1,7 +1,7 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { recordMetric } from './metrics';
 import { logger } from '../logging';
-import { getSessionToken } from '@/domains/auth';
+import { getSessionToken } from '@/shared/contracts/session';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';

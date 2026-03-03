@@ -12,6 +12,7 @@ use crate::commands::streaming::{
 };
 use crate::commands::AppResult;
 use crate::commands::{AppState, UserRole};
+use crate::domains::sync::domain::stream_policy::estimate_total_chunks;
 use base64::{engine::general_purpose, Engine as _};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
@@ -206,11 +207,7 @@ pub async fn send_stream_chunk(
         .await
         .map_err(|e| crate::commands::AppError::Internal(format!("Failed to add chunk: {}", e)))?;
 
-    let total_chunks = {
-        // Get metadata for total chunks
-        // This is a simplified implementation - in production you'd store this in the session
-        request.chunk.chunk_index + if request.chunk.is_last { 1 } else { 2 }
-    };
+    let total_chunks = estimate_total_chunks(request.chunk.chunk_index, request.chunk.is_last);
 
     Ok(SendStreamChunkResponse {
         completed,
