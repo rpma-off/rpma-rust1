@@ -9,7 +9,8 @@
  *   - Application services > 200 lines (Rust)
  *   - Excessive match/if nesting > 4 depth (Rust + TypeScript)
  *   - Repeated logic patterns across domains
- *   - Fat React components > 300 lines (TSX)
+ *   - Fat React components > 200 lines (TSX)
+ *   - Forced split/refactor rules for oversized, mixed-responsibility files/components
  *
  * Returns:
  *   - High-risk file list with Maintainability Risk Score (1–10)
@@ -31,7 +32,14 @@ const CONFIG = {
         ipcHandlerLines: 40,
         applicationServiceLines: 200,
         nestingDepth: 4,
-        reactComponentLines: 300,
+        reactComponentLines: 200,
+        forceSplitLines: 500,
+        forceSplitMethods: 10,
+        forceSplitResponsibilities: 3,
+        repeatedLogicThreshold: 3,
+        minRepeatedLogicLineLength: 20,
+        forceRefactorUseEffects: 5,
+        forceRefactorDerivedStates: 3,
     },
     excludedDirs: ['node_modules', '.next', 'dist', 'target', '__tests__', '.git'],
     projectRoot: path.join(__dirname, '..'),
@@ -92,6 +100,8 @@ function computeRiskScore(findings) {
     let score = 0;
     for (const f of findings) {
         switch (f.type) {
+            case 'force-split':
+            case 'force-refactor-component': score += 10; break;
             case 'fat-react-component': score += 3; break;
             case 'long-function': score += 2; break;
             case 'fat-ipc-handler': score += 2; break;
@@ -178,6 +188,81 @@ function countBranchingStatements(lines) {
     return count;
 }
 
+function countRepeatedLogic(lines) {
+    const counts = new Map();
+    for (const line of lines) {
+        const normalised = line
+            .trim()
+            .replace(/\/\/.*$/, '')
+            .replace(/"[^"]*"|'[^']*'|`[^`]*`/g, '"STR"')
+            .replace(/\b\d+\b/g, 'N');
+        if (normalised.length < CONFIG.thresholds.minRepeatedLogicLineLength) continue;
+        counts.set(normalised, (counts.get(normalised) || 0) + 1);
+    }
+    return [...counts.values()].filter(v => v >= CONFIG.thresholds.repeatedLogicThreshold).length;
+}
+
+function detectResponsibilities(lines, language) {
+    const text = lines.join('\n');
+    const categories = [
+        [/(SELECT|INSERT|UPDATE|DELETE|query!|query\(|execute\(|sqlx::|rusqlite)/i, 'database'],
+        [/(read_to_string|readFileSync|writeFileSync|write_all|File::|fs::|std::fs|open\(|write\()/i, 'filesystem'],
+        [/(fetch\(|axios|reqwest|http::|invoke\()/i, 'network'],
+        [/(validate|sanitize|schema|zod|validator)/i, 'validation'],
+        [/(calculate|pricing|business|rule|policy|workflow|eligibility)/i, 'business-rules'],
+        [/(map\(|filter\(|reduce\(|transform|serialize|deserialize|to_json|from_json)/i, 'transformation'],
+        [/(console\.|tracing::|log::|println!|debug!|warn!|error!)/i, 'logging'],
+    ];
+
+    const matched = new Set();
+    for (const [pattern, name] of categories) {
+        if (pattern.test(text)) matched.add(name);
+    }
+    if (language === 'tsx' || language === 'ts') {
+        if (/\buseEffect\s*\(/.test(text)) matched.add('react-effects');
+    }
+    return matched.size;
+}
+
+function hasMixedIoAndBusiness(lines) {
+    const text = lines.join('\n');
+    const io = /(SELECT|INSERT|UPDATE|DELETE|query!|query\(|execute\(|sqlx::|rusqlite|read_to_string|readFileSync|writeFileSync|write_all|File::|fs::|std::fs|fetch\(|axios|reqwest|http::|invoke\()/i.test(text);
+    const business = /(calculate|pricing|business|rule|policy|workflow|eligibility|validate|sanitize)/i.test(text);
+    return io && business;
+}
+
+function enforceForceSplitRule({ lines, methodCount, findings, language }) {
+    const responsibilities = detectResponsibilities(lines, language);
+    const repeatedLogicClusters = countRepeatedLogic(lines);
+    const mixedIoBusiness = hasMixedIoAndBusiness(lines);
+    if (
+        lines.length > CONFIG.thresholds.forceSplitLines &&
+        methodCount > CONFIG.thresholds.forceSplitMethods &&
+        responsibilities > CONFIG.thresholds.forceSplitResponsibilities &&
+        mixedIoBusiness &&
+        repeatedLogicClusters > 0
+    ) {
+        findings.push({
+            type: 'force-split',
+            message: `File triggers FORCE SPLIT (${lines.length} lines, ${methodCount} methods, ${responsibilities} responsibilities, mixed IO/business, repeated logic)`,
+            line: 1,
+            suggestion: 'Split this file into focused modules to separate IO concerns from business logic and deduplicate repeated flows',
+            patchHint: '// Split into separate modules (IO adapters, domain services, shared helpers) and keep each responsibility isolated.',
+        });
+    }
+}
+
+function countDerivedStates(lines) {
+    return lines.filter(line => {
+        const t = line.trim();
+        return (
+            /const\s+\w+\s*=\s*useMemo\s*\(/.test(t) ||
+            /const\s+\w+\s*=\s*(?:\[[^\]]*\]|\w+)\.(map|filter|reduce|sort|find)\(/.test(t) ||
+            /const\s+\w+\s*=\s*.*\?.*:/.test(t)
+        );
+    }).length;
+}
+
 function analyseRustFile(filePath) {
     const lines = readLines(filePath);
     const rel = relPath(filePath);
@@ -185,6 +270,7 @@ function analyseRustFile(filePath) {
 
     // --- Function length ---
     const functions = extractRustFunctions(lines);
+    const methodCount = functions.length;
     for (const fn of functions) {
         if (fn.lineCount > CONFIG.thresholds.functionLines) {
             findings.push({
@@ -236,6 +322,9 @@ function analyseRustFile(filePath) {
             patchHint: `// BEFORE: if a { if b { if c { if d { /* logic */ } } } }\n// AFTER:  if !a || !b || !c || !d { return Err(…); }\n//         /* logic */`,
         });
     }
+
+    // --- Force split rule ---
+    enforceForceSplitRule({ lines, methodCount, findings, language: 'rust' });
 
     return findings;
 }
@@ -305,6 +394,7 @@ function analyseTsFile(filePath) {
 
     // --- Long functions inside TS/TSX ---
     const functions = extractTsFunctions(lines);
+    const methodCount = functions.length;
     for (const fn of functions) {
         if (fn.lineCount > CONFIG.thresholds.functionLines) {
             findings.push({
@@ -327,6 +417,28 @@ function analyseTsFile(filePath) {
             suggestion: 'Use early returns, optional chaining (?.), or extract nested logic to helper functions',
             patchHint: `// BEFORE: if (a) { if (b) { if (c) { … } } }\n// AFTER:  if (!a || !b || !c) return;\n//         …`,
         });
+    }
+
+    // --- Force split rule (non-component files too) ---
+    enforceForceSplitRule({ lines, methodCount, findings, language: isTsx ? 'tsx' : 'ts' });
+
+    // --- Force refactor React component rule ---
+    if (isTsx) {
+        const useEffectCount = lines.filter(line => /\buseEffect\s*\(/.test(line)).length;
+        const derivedStateCount = countDerivedStates(lines);
+        if (
+            lines.length > CONFIG.thresholds.reactComponentLines &&
+            useEffectCount > CONFIG.thresholds.forceRefactorUseEffects &&
+            derivedStateCount > CONFIG.thresholds.forceRefactorDerivedStates
+        ) {
+            findings.push({
+                type: 'force-refactor-component',
+                message: `Component triggers FORCE REFACTOR (${lines.length} lines, ${useEffectCount} useEffect, ${derivedStateCount} derived states)`,
+                line: 1,
+                suggestion: 'Extract custom hooks/sub-components to reduce effect density and derived state sprawl',
+                patchHint: '// Split component into UI sub-sections and move orchestration logic into dedicated hooks.',
+            });
+        }
     }
 
     return findings;
