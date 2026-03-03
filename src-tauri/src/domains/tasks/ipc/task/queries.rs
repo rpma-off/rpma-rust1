@@ -228,27 +228,7 @@ pub async fn get_task_statistics(
 
     // Apply role-based filtering to statistics
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {
-            // Admin can see all statistics
-        }
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // Supervisor can see statistics for their region/department
-            // TODO: Add region-based filtering when user.region field is available
-            // if let Some(region) = &user.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            // Technician can only see their own statistics
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            // Viewer has limited access to statistics
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Get statistics from service
     let stats = state.task_service.get_task_statistics().map_err(|e| {
@@ -276,22 +256,7 @@ pub async fn get_completion_rate(
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {}
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Calculate completion rate
     let stats = state.task_service.get_task_statistics().map_err(|e| {
@@ -325,22 +290,7 @@ pub async fn get_average_duration_by_status(
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {}
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Get average durations by status
     let avg_durations_vec = state
@@ -378,22 +328,7 @@ pub async fn get_priority_distribution(
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {}
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Get priority distribution
     let priority_dist_vec = state

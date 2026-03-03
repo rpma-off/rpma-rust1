@@ -48,27 +48,7 @@ pub async fn get_tasks_with_client_details(
 
     // Apply role-based access control
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {
-            // Admin can see all tasks
-        }
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // Supervisor can see tasks in their regions
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            // Technician can only see their assigned tasks
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            // Viewer can only see their assigned tasks (read-only access)
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Set pagination defaults
     let page = request.page.unwrap_or(1).max(1);

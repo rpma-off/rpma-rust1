@@ -192,18 +192,7 @@ pub async fn send_task_message(
 
     check_task_permissions(&current_user, &task, "edit")?;
 
-    let message_type = request
-        .message_type
-        .clone()
-        .unwrap_or_else(|| "in_app".to_string())
-        .to_lowercase();
-
-    if !matches!(message_type.as_str(), "email" | "sms" | "in_app") {
-        return Err(AppError::Validation(format!(
-            "Unsupported message_type: {}",
-            message_type
-        )));
-    }
+    let message_type = TasksFacade::validate_message_type(request.message_type.as_deref())?;
 
     let recipient_email = if message_type == "email" {
         task.customer_email.clone()
@@ -263,23 +252,9 @@ pub async fn report_task_issue(
 
     let issue_type = request.issue_type.trim();
     let description = request.description.trim();
-    if issue_type.is_empty() || description.is_empty() {
-        return Err(AppError::Validation(
-            "issue_type and description are required".to_string(),
-        ));
-    }
+    TasksFacade::validate_issue_fields(issue_type, description)?;
 
-    let severity = request
-        .severity
-        .clone()
-        .unwrap_or_else(|| "medium".to_string())
-        .to_lowercase();
-    if !matches!(severity.as_str(), "low" | "medium" | "high" | "critical") {
-        return Err(AppError::Validation(format!(
-            "Unsupported severity: {}",
-            severity
-        )));
-    }
+    let severity = TasksFacade::validate_severity(request.severity.as_deref())?;
 
     let task = state
         .task_service
@@ -371,32 +346,14 @@ pub async fn export_tasks_csv(
             .filter
             .as_ref()
             .and_then(|f| f.status.as_ref())
-            .and_then(|s| match s.as_str() {
-                "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-                "in_progress" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
-                }
-                "completed" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed)
-                }
-                "cancelled" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled)
-                }
-                _ => None,
-            }),
+            .and_then(|s| crate::domains::tasks::domain::models::task::TaskStatus::from_str_opt(s)),
         technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
         client_id: request.filter.as_ref().and_then(|f| f.client_id.clone()),
         priority: request
             .filter
             .as_ref()
             .and_then(|f| f.priority.as_ref())
-            .and_then(|p| match p.as_str() {
-                "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
-                "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
-                "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
-                "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
-                _ => None,
-            }),
+            .and_then(|p| crate::domains::tasks::domain::models::task::TaskPriority::from_str_opt(p)),
         search: None,
         from_date: request
             .filter

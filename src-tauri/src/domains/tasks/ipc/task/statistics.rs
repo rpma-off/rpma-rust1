@@ -33,27 +33,7 @@ pub async fn get_task_statistics(
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-
-    match session.role {
-        crate::shared::contracts::auth::UserRole::Admin => {
-            // Admin can see all statistics
-        }
-        crate::shared::contracts::auth::UserRole::Supervisor => {
-            // Supervisor can see statistics for their region/department
-            // TODO: Add region filtering when UserSession has region field
-            // if let Some(region) = &session.region {
-            //     filter.region = Some(region.clone());
-            // }
-        }
-        crate::shared::contracts::auth::UserRole::Technician => {
-            // Technician can only see their own statistics
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-        crate::shared::contracts::auth::UserRole::Viewer => {
-            // Viewer has limited access to statistics
-            filter.assigned_to = Some(session.user_id.clone());
-        }
-    }
+    filter.apply_role_scope(&session.role, &session.user_id);
 
     // Get statistics from service
     let stats = state.task_service.get_task_statistics().map_err(|e| {
