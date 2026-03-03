@@ -127,7 +127,7 @@ interface BackendResponse<T = JsonValue> {
 interface EnhancedError extends Error {
   code?: string;
   originalMessage?: string;
-  details?: Record<string, unknown> | null;
+  details?: JsonValue | null;
   correlationId?: string;
   alreadyLogged?: boolean;
 }
@@ -239,7 +239,7 @@ export async function safeInvoke<T>(
         const error: EnhancedError = new Error(userFriendlyMessage);
         error.code = errorCode;
         error.originalMessage = errorMsg;
-        error.details = apiResult.error?.details;
+        error.details = (apiResult.error?.details as JsonValue | null | undefined) ?? null;
         error.correlationId = backendCorrelationId;
         error.alreadyLogged = true;
         throw error;
@@ -272,7 +272,7 @@ export async function safeInvoke<T>(
         const error: EnhancedError = new Error(userFriendlyMessage);
         error.code = errorCode;
         error.originalMessage = errorMsg;
-        error.details = (errObj.details as Record<string, unknown> | null) ?? null;
+        error.details = (errObj.details as JsonValue | null | undefined) ?? null;
         error.correlationId = effectiveCorrelationId;
         error.alreadyLogged = true;
         throw error;

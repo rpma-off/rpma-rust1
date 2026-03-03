@@ -1,12 +1,12 @@
 use crate::db::Database;
-use crate::domains::documents::infrastructure::photo::PhotoService;
+use crate::domains::documents::infrastructure::photo::{PhotoService, PhotoStorageSettings};
 use crate::domains::documents::DocumentsFacade;
 use std::sync::Arc;
 
 #[tokio::test]
 async fn documents_facade_is_ready() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
+    let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
@@ -18,7 +18,7 @@ async fn documents_facade_is_ready() {
 #[tokio::test]
 async fn validate_photo_extension_accepts_jpg() {
     let db = Database::new_in_memory().await.expect("in-memory database");
-    let settings = crate::domains::settings::domain::models::settings::StorageSettings {
+    let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };

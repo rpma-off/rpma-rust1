@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+﻿import { useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
@@ -92,7 +92,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
       if (options?.invalidate) {
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(step.intervention_id) });
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
-        queryClient.invalidateQueries({ queryKey: ['intervention-data', taskId] });
+        queryClient.invalidateQueries({ queryKey: interventionKeys.byTaskData(taskId) });
       }
 
       if (options?.showToast) {
@@ -234,3 +234,4 @@ export function usePpfWorkflow(taskIdOverride?: string) {
     setQualityScore,
   };
 }
+

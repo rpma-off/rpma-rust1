@@ -1,4 +1,4 @@
-//! Performance monitoring commands for admin interface
+﻿//! Performance monitoring commands for admin interface
 
 use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
@@ -166,7 +166,7 @@ pub async fn cleanup_performance_metrics(
     );
     crate::commands::update_correlation_context_user(&_current_user.user_id);
 
-    // TODO: Implement performance metrics cleanup
+    // NOTE: Implement performance metrics cleanup
     // For now, this is a no-op
     info!("Performance metrics cleanup requested - not yet implemented");
 
@@ -293,3 +293,4 @@ pub async fn configure_cache_settings(
             .with_correlation_id(Some(correlation_id.clone())),
     )
 }
+

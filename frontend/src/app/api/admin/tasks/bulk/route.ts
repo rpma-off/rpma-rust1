@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(request: Request) {
-  console.log('Bulk action endpoint called');
+  console.info('Bulk action endpoint called');
   
   try {
     const supabase = getSupabaseAdmin();
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     // Process the bulk action
     if (action === 'delete') {
-      console.log(`Deleting ${taskIds.length} tasks`);
+      console.info(`Deleting ${taskIds.length} tasks`);
       
       // Process in chunks to avoid hitting limits
       const chunkSize = 10;
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       // Process each chunk
       for (let index = 0; index < chunks.length; index++) {
         const chunk = chunks[index];
-        console.log(`Processing chunk ${index + 1}/${chunks.length}`);
+        console.info(`Processing chunk ${index + 1}/${chunks.length}`);
         
         try {
           // Delete related photos
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
             throw new Error(`Failed to delete tasks: ${taskError.message}`);
           }
           
-          console.log(`Successfully processed chunk ${index + 1}/${chunks.length}`);
+          console.info(`Successfully processed chunk ${index + 1}/${chunks.length}`);
           
         } catch (error) {
           console.error(`Error in chunk ${index + 1}:`, error);
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       );
       
     } else if (action === 'invalidate') {
-      console.log(`Invalidating ${taskIds.length} tasks`);
+      console.info(`Invalidating ${taskIds.length} tasks`);
 
       // Process in chunks
       const chunkSize = 10;
@@ -163,3 +163,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

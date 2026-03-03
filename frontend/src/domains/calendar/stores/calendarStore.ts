@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
 
@@ -180,7 +180,7 @@ export const useCalendarStore = create<CalendarState>()(
       
       addEvent: (event: Record<string, unknown>) => {
         // Implementation to add event to state
-        console.log('Adding event:', event);
+        console.info('Adding event:', event);
       },
       
       setEventTypeFilter: (type: string) => {
@@ -204,3 +204,4 @@ export const useCalendarStore = create<CalendarState>()(
     }
   )
 );
+

@@ -469,18 +469,27 @@ CREATE TABLE IF NOT EXISTS quotes (
   client_id TEXT NOT NULL REFERENCES clients(id),
   task_id TEXT REFERENCES tasks(id),
   status TEXT NOT NULL DEFAULT 'draft'
-    CHECK(status IN ('draft', 'sent', 'accepted', 'rejected', 'expired')),
+    CHECK(status IN ('draft', 'sent', 'accepted', 'rejected', 'expired', 'changes_requested')),
   valid_until INTEGER,
+  description TEXT,
   notes TEXT,
   terms TEXT,
   subtotal INTEGER NOT NULL DEFAULT 0,
   tax_total INTEGER NOT NULL DEFAULT 0,
   total INTEGER NOT NULL DEFAULT 0,
+  discount_type TEXT,
+  discount_value INTEGER,
+  discount_amount INTEGER,
   vehicle_plate TEXT,
   vehicle_make TEXT,
   vehicle_model TEXT,
   vehicle_year TEXT,
   vehicle_vin TEXT,
+  public_token TEXT,
+  shared_at INTEGER,
+  view_count INTEGER NOT NULL DEFAULT 0,
+  last_viewed_at INTEGER,
+  customer_message TEXT,
   created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
   created_by TEXT
@@ -508,11 +517,27 @@ CREATE INDEX IF NOT EXISTS idx_quotes_client_id ON quotes(client_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
 CREATE INDEX IF NOT EXISTS idx_quotes_created_at ON quotes(created_at);
 CREATE INDEX IF NOT EXISTS idx_quotes_task_id ON quotes(task_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_quotes_public_token ON quotes(public_token) WHERE public_token IS NOT NULL;
 
 -- Indexes for quote_items
 CREATE INDEX IF NOT EXISTS idx_quote_items_quote_id ON quote_items(quote_id);
 CREATE INDEX IF NOT EXISTS idx_quote_items_position ON quote_items(quote_id, position);
 CREATE INDEX IF NOT EXISTS idx_quote_items_material_id ON quote_items(material_id);
+
+CREATE TABLE IF NOT EXISTS quote_attachments (
+  id TEXT PRIMARY KEY NOT NULL,
+  quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_path TEXT NOT NULL,
+  file_size INTEGER NOT NULL,
+  mime_type TEXT NOT NULL,
+  attachment_type TEXT NOT NULL DEFAULT 'other' CHECK(attachment_type IN ('image', 'document', 'other')),
+  description TEXT,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  created_by TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_quote_attachments_quote_id ON quote_attachments(quote_id);
 
 -- Table 5: clients
 CREATE TABLE IF NOT EXISTS clients (
@@ -783,7 +808,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(is_active) WHERE is_active = 1;
 CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
 
--- Table 7.5: sessions (replaces old user_sessions — kept in sync with migration 041)
+-- Table 7.5: sessions (kept in sync with migration 041)
 CREATE TABLE IF NOT EXISTS sessions (
   id            TEXT    PRIMARY KEY,  -- UUID session token
   user_id       TEXT    NOT NULL,
@@ -1530,6 +1555,26 @@ CREATE INDEX IF NOT EXISTS idx_events_technician_date ON calendar_events(technic
 CREATE INDEX IF NOT EXISTS idx_events_date_range ON calendar_events(start_datetime, end_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_status_technician ON calendar_events(status, technician_id);
 
+-- Table 14: notifications (kept in sync with migration 044)
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    entity_url TEXT NOT NULL,
+    read BOOLEAN DEFAULT 0,
+    user_id TEXT NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
+
 -- Views
 -- View for optimized client statistics (kept in sync with migration 042)
 CREATE VIEW IF NOT EXISTS client_statistics AS
@@ -1574,22 +1619,21 @@ WHERE t.scheduled_date IS NOT NULL
 
 -- Schema Version Management
 -- This table tracks which database migrations have been applied
--- The current schema.sql represents version 43 of the database schema
+-- The current schema.sql represents version 47 of the database schema
 CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
 );
 
--- Initialize baseline schema versions 1..43 to keep version history contiguous.
--- schema.sql already incorporates all changes from migrations 040-043, so fresh
--- databases must not attempt to re-run those migrations (040 references the old
--- user_sessions table which no longer exists in the baseline schema).
+-- Initialize baseline schema versions 1..47 to keep version history contiguous.
+-- schema.sql already incorporates all changes from migrations 001-047, so fresh
+-- databases must not attempt to re-run those migrations.
 WITH RECURSIVE baseline_versions(version) AS (
     SELECT 1
     UNION ALL
     SELECT version + 1
     FROM baseline_versions
-    WHERE version < 43
+    WHERE version < 47
 )
 INSERT OR IGNORE INTO schema_version (version)
 SELECT version FROM baseline_versions;

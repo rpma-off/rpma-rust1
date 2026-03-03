@@ -4,6 +4,7 @@ import { useTasks } from '@/domains/tasks';
 import { toast } from 'sonner';
 import { logger, LogDomain } from '@/lib/logging';
 import { safeInvoke } from '@/lib/ipc/utils';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { TaskStatus } from '@/lib/backend';
 import type { JsonObject } from '@/types/json';
 import { useAuth } from '@/domains/auth/api/useAuth';
@@ -145,7 +146,7 @@ export function useRealTimeUpdates(options: UseRealTimeUpdatesOptions = {}) {
     const initWSServer = async () => {
       try {
         // Initialize WebSocket server on backend
-        await safeInvoke<void>('init_websocket_server', {
+        await safeInvoke<void>(IPC_COMMANDS.INIT_WEBSOCKET_SERVER, {
           session_token: user?.token ?? '',
           port: 8080,
         });
@@ -174,7 +175,7 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      await safeInvoke<void>('broadcast_task_update', {
+      await safeInvoke<void>(IPC_COMMANDS.BROADCAST_TASK_UPDATE, {
         session_token: user?.token ?? '',
         taskId,
         updateType,
@@ -191,7 +192,7 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      await safeInvoke<void>('broadcast_intervention_update', {
+      await safeInvoke<void>(IPC_COMMANDS.BROADCAST_INTERVENTION_UPDATE, {
         session_token: user?.token ?? '',
         interventionId,
         updateType,
@@ -208,7 +209,7 @@ export function useRealTimeBroadcast() {
     data: Record<string, unknown>
   ) => {
     try {
-      await safeInvoke<void>('broadcast_client_update', {
+      await safeInvoke<void>(IPC_COMMANDS.BROADCAST_CLIENT_UPDATE, {
         session_token: user?.token ?? '',
         clientId,
         updateType,
@@ -225,7 +226,7 @@ export function useRealTimeBroadcast() {
     level: string = 'info'
   ) => {
     try {
-      await safeInvoke<void>('broadcast_system_notification', {
+      await safeInvoke<void>(IPC_COMMANDS.BROADCAST_SYSTEM_NOTIFICATION, {
         session_token: user?.token ?? '',
         title,
         message,

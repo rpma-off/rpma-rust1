@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import type { JsonObject } from '@/types/json';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { InlineLoading } from '@/components/ui/loading';
 import enhancedToast from '@/lib/enhanced-toast';
+import { taskKeys } from '@/lib/query-keys';
 
 interface EditTaskModalProps {
   task: TaskWithDetails;
@@ -52,13 +53,13 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
       return await ipcClient.tasks.editTask(task.id, updates as JsonObject, user.token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      enhancedToast.success('Tâche mise à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      enhancedToast.success('Tâche mise Ã  jour avec succès');
       onOpenChange(false);
     },
     onError: (error) => {
-      enhancedToast.error('Erreur lors de la mise à jour de la tâche');
+      enhancedToast.error('Erreur lors de la mise Ã  jour de la tâche');
       console.error('Edit task error:', error);
     }
   });
@@ -245,9 +246,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
               {editTaskMutation.isPending ? (
                 <span className="inline-flex items-center gap-2">
                   <InlineLoading size="sm" />
-                  Mise à jour...
+                  Mise Ã  jour...
                 </span>
-              ) : 'Mettre à jour'}
+              ) : 'Mettre Ã  jour'}
             </Button>
           </div>
         </form>
@@ -257,3 +258,4 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
 };
 
 export default EditTaskModal;
+

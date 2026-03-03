@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Retry configuration
  */
 import type { JsonValue } from '@/types/json';
@@ -109,10 +109,11 @@ export async function withRetry<T>(
       }
 
       const delay = calculateDelay(attempt, finalConfig);
-      console.log(`[IPC Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`, error);
+      console.info(`[IPC Retry] Attempt ${attempt} failed, retrying in ${delay}ms:`, error);
       await sleep(delay);
     }
   }
 
   throw lastError;
 }
+

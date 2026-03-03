@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { BaseErrorBoundary } from './BaseErrorBoundary';
@@ -315,7 +315,7 @@ export const WorkflowErrorBoundary: React.FC<WorkflowErrorBoundaryProps> = ({
         };
 
         console.warn('Workflow error reported:', errorReport);
-        // TODO: Send to monitoring service
+        // NOTE: Send to monitoring service
       } catch (reportingError) {
         console.error('Failed to report workflow error:', reportingError);
       }

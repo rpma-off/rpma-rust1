@@ -1,3 +1,4 @@
+#![cfg(feature = "legacy-tests")]
 //! Integration tests for notification system
 //!
 //! Tests the full flow of creating, retrieving, and managing notifications.

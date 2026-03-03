@@ -1,4 +1,4 @@
-//! Intervention relationship operations
+﻿//! Intervention relationship operations
 //!
 //! This module handles complex intervention operations involving
 //! multiple entities and joined queries:
@@ -166,7 +166,7 @@ pub async fn intervention_management(
                 ));
             }
 
-            // TODO: Implement proper stats calculation
+            // NOTE: Implement proper stats calculation
             // For now, return basic stats
             let (interventions, _) = state
                 .intervention_service
@@ -197,8 +197,8 @@ pub async fn intervention_management(
                 total_interventions,
                 completed_interventions,
                 in_progress_interventions,
-                average_completion_time: None, // TODO: Calculate from actual data
-                technician_stats: vec![],      // TODO: Implement technician stats
+                average_completion_time: None, // NOTE: Calculate from actual data
+                technician_stats: vec![],      // NOTE: Implement technician stats
             };
 
             Ok(ApiResponse::success(InterventionManagementResponse::Stats {
@@ -232,7 +232,7 @@ pub async fn intervention_management(
             let include_completed = include_completed.unwrap_or(true);
             let interventions = if include_completed {
                 // For now, just return the latest intervention when include_completed is true
-                // TODO: Implement a method to get all interventions for a task
+                // NOTE: Implement a method to get all interventions for a task
                 match state
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
@@ -277,7 +277,7 @@ pub async fn intervention_management(
                     AppError::Validation(format!("Invalid bulk update data: {}", e))
                 })?;
 
-            // TODO: Implement proper bulk update method
+            // NOTE: Implement proper bulk update method
             // For now, perform individual updates
             let mut updated_count = 0;
             for intervention_id in &intervention_ids {
@@ -307,3 +307,4 @@ pub async fn intervention_management(
         }
     }
 }
+

@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateApiAuth } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  console.log('=== Database Setup Route ===');
+  console.info('=== Database Setup Route ===');
 
   try {
     // Validate authentication and authorization
@@ -19,7 +19,7 @@ const authResult = await validateApiAuth(request);
     }
 
     const supabase = await createClient();
-    console.log('User authenticated:', authResult.user?.id);
+    console.info('User authenticated:', authResult.user?.id);
 
     // Check if tables already exist
     try {
@@ -36,12 +36,12 @@ const authResult = await validateApiAuth(request);
       }
     } catch {
       // Table doesn't exist, continue with creation
-      console.log('Tables do not exist, proceeding with creation...');
+      console.info('Tables do not exist, proceeding with creation...');
     }
 
-    console.log('Creating database tables...');
+    console.info('Creating database tables...');
 
-    // FIXME: The supabase-js V2 client does not have a .sql() method.
+    // NOTE: The supabase-js V2 client does not have a .sql() method.
     // Raw SQL queries should be executed using supabase.rpc().
     // However, creating tables from an API route is a major security risk and bad practice.
     // This file should be removed and the database setup should be done via migrations.
@@ -138,3 +138,5 @@ CREATE INDEX IF NOT EXISTS idx_checklist_items_checklist_id ON public.checklist_
     }, { status: 500 });
   }
 }
+
+

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { safeInvoke } from '@/lib/ipc/utils';
 import { AuthSecureStorage } from '@/lib/secureStorage';
+import { safeInvoke } from '@/lib/ipc/core';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
 
 interface EntityCounts {
   tasks: number;
@@ -30,8 +31,8 @@ export function useEntityCounts(): UseEntityCountsReturn {
         throw new Error('Authentication required');
       }
 
-      const response: Record<string, number> = await safeInvoke('get_entity_counts', {
-        sessionToken: session.token
+      const response = await safeInvoke<EntityCounts>(IPC_COMMANDS.GET_ENTITY_COUNTS, {
+        sessionToken: session.token,
       });
       setCounts({
         tasks: response.tasks || 0,
@@ -48,7 +49,7 @@ export function useEntityCounts(): UseEntityCountsReturn {
   };
 
   useEffect(() => {
-    fetchCounts();
+    void fetchCounts();
   }, []);
 
   return {
@@ -58,3 +59,4 @@ export function useEntityCounts(): UseEntityCountsReturn {
     refetch: fetchCounts,
   };
 }
+

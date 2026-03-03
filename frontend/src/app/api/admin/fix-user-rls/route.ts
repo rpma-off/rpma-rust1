@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from 'next/server';
+﻿import { NextResponse, NextRequest } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 /**
@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('🔧 Fixing user RLS policies...');
+    console.info('ðŸ”§ Fixing user RLS policies...');
     
     // Note: exec_sql function not available, would need to create or use direct SQL execution
-    console.log('⚠️ exec_sql function not available, skipping user RLS policy update');
+    console.info('âš ï¸ exec_sql function not available, skipping user RLS policy update');
 
     // const { error: policyError } = await supabase.rpc('exec_sql', {
     //   sql: `
@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
     const policyError = null; // Placeholder since we're not executing the RPC
 
     if (policyError) {
-      console.error('❌ Error updating user policies:', policyError);
+      console.error('âŒ Error updating user policies:', policyError);
       return NextResponse.json({
         error: 'Failed to update user policies',
         details: (policyError as { message?: string })?.message || 'Unknown error'
       }, { status: 500 });
     }
     
-    console.log('✅ User RLS policies fixed successfully!');
+    console.info('âœ… User RLS policies fixed successfully!');
     
     return NextResponse.json({ 
       success: true, 
@@ -57,10 +57,11 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('❌ Error in user RLS fix:', error);
+    console.error('âŒ Error in user RLS fix:', error);
     return NextResponse.json({ 
       error: 'Internal server error', 
       details: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 500 });
   }
 }
+

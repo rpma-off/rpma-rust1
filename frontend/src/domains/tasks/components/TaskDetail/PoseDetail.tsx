@@ -248,7 +248,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           throw new Error(result.error || 'Failed to assign task');
         }
 
-        console.log('[PoseDetail] Task assigned successfully:', result.data);
+        console.info('[PoseDetail] Task assigned successfully:', result.data);
         toast.success('Intervention assignée avec succès');
       }    } catch (error) {
       console.error('Failed to start task:', error);
@@ -261,7 +261,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       onCompleteTask();
     } else {
       // Task completion handled by parent component
-      console.log('Task completion requested');
+      console.info('Task completion requested');
     }
   }, [onCompleteTask]);
 
@@ -571,6 +571,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 };
 
 export default memo(PoseDetail);
+
 
 
 

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery } from '@tanstack/react-query';
+import { interventionKeys } from '@/lib/query-keys';
 import { useAuth } from '@/domains/auth';
 import { interventionsIpc } from '../ipc/interventions.ipc';
 
@@ -48,7 +49,7 @@ export function useInterventionData(taskId: string) {
   });
 
   return useQuery({
-    queryKey: ['intervention-data', taskId],
+    queryKey: interventionKeys.byTaskData(taskId),
     queryFn: async (): Promise<InterventionData | null> => {
       if (!session?.token || !taskId) return null;
 
@@ -128,3 +129,4 @@ export function useWorkflowStepData(interventionData: InterventionData | null) {
     finalization: interventionData?.steps?.find(step => step.step_type === 'finalization'),
   };
 }
+

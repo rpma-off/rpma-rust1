@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { BaseErrorBoundary } from './BaseErrorBoundary';
@@ -158,7 +158,7 @@ export const TaskErrorBoundary: React.FC<TaskErrorBoundaryProps> = ({
         };
 
         console.warn('Task error reported:', errorReport);
-        // TODO: Send to monitoring service
+        // NOTE: Send to monitoring service
       } catch (reportingError: unknown) {
         console.error('Failed to report task error:', normalizeError(reportingError));
       }

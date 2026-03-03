@@ -12,6 +12,7 @@ export { SecurityTab } from '../components/SecurityTab';
 export { PerformanceTab } from '../components/PerformanceTab';
 export { AccessibilityTab } from '../components/AccessibilityTab';
 export { NotificationsTab } from '../components/NotificationsTab';
+export { default as SettingsPageContent } from '../components/SettingsPageContent';
 
 export { settingsService, configurationService } from '../server';
 

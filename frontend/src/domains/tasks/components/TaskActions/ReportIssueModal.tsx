@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +10,7 @@ import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { InlineLoading } from '@/components/ui/loading';
 import enhancedToast from '@/lib/enhanced-toast';
+import { taskKeys } from '@/lib/query-keys';
 
 interface ReportIssueModalProps {
   task: TaskWithDetails;
@@ -33,7 +34,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
       return await ipcClient.tasks.reportTaskIssue(task.id, issueType, severity, description, user.token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
       enhancedToast.success('Problème signalé avec succès');
       setIssueType('technical');
       setSeverity('medium');
@@ -122,7 +123,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce signalement sera transmis à l&apos;équipe de support pour résolution.</p>
+            <p>Ce signalement sera transmis Ã  l&apos;équipe de support pour résolution.</p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">
@@ -155,3 +156,4 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
 };
 
 export default ReportIssueModal;
+

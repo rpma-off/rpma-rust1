@@ -115,6 +115,40 @@ impl TasksFacade {
         )
     }
 
+    /// Validate a message type and return the canonical lowercase form.
+    pub fn validate_message_type(raw: Option<&str>) -> Result<String, AppError> {
+        let mt = raw.unwrap_or("in_app").to_lowercase();
+        if !matches!(mt.as_str(), "email" | "sms" | "in_app") {
+            return Err(AppError::Validation(format!(
+                "Unsupported message_type: {}",
+                mt
+            )));
+        }
+        Ok(mt)
+    }
+
+    /// Validate an issue severity and return the canonical lowercase form.
+    pub fn validate_severity(raw: Option<&str>) -> Result<String, AppError> {
+        let sev = raw.unwrap_or("medium").to_lowercase();
+        if !matches!(sev.as_str(), "low" | "medium" | "high" | "critical") {
+            return Err(AppError::Validation(format!(
+                "Unsupported severity: {}",
+                sev
+            )));
+        }
+        Ok(sev)
+    }
+
+    /// Validate that issue_type and description are non-empty.
+    pub fn validate_issue_fields(issue_type: &str, description: &str) -> Result<(), AppError> {
+        if issue_type.trim().is_empty() || description.trim().is_empty() {
+            return Err(AppError::Validation(
+                "issue_type and description are required".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
     /// Evaluate whether a user can be assigned to a task and return a
     /// structured [`AssignmentCheckResponse`].
     ///

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Upload, CheckCircle2, AlertCircle, Clock, WifiOff, Camera, X, Eye, Trash2 } from 'lucide-react';
@@ -139,20 +139,20 @@ export function PhotoUpload({
       }
 
       try {
-        console.log('Starting upload process for', files.length, 'files');
+        console.info('Starting upload process for', files.length, 'files');
 
         // Process files in series to avoid overwhelming network
         const results: Array<PromiseSettledResult<unknown>> = [];
         for (const file of files) {
           try {
-            console.log('Uploading file:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+            console.info('Uploading file:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
             const result = await uploadPhoto(file, {
               taskId: taskId || '',  // Make sure taskId is always provided
               type: type,
               maxFileSize: maxFileSize * 1024 * 1024,
               allowedTypes,
               onSuccess: () => {
-                console.log('File upload success:', file.name);
+                console.info('File upload success:', file.name);
               },
               onError: (error: Error) => {
                 console.error('Upload error for file', file.name + ':', error);
@@ -178,7 +178,7 @@ export function PhotoUpload({
         }
 
         if (successfulUploads.length > 0 && onUploadComplete) {
-          console.log('Successfully uploaded', successfulUploads.length, 'files');
+          console.info('Successfully uploaded', successfulUploads.length, 'files');
           onUploadComplete(successfulUploads);
         }
 
@@ -477,3 +477,4 @@ export function PhotoUpload({
 }
 
 export default PhotoUpload;
+

@@ -6,6 +6,7 @@ export { TaskProvider } from './TaskProvider';
 export { useTasks } from './useTasks';
 export { useTaskActions } from './useTaskActions';
 export { taskService, taskApiService, taskPhotoService } from '../server';
+export { default as TasksPageContent } from '../components/TasksPageContent';
 
 export { KanbanBoard } from '../components/KanbanBoard';
 export { TaskAttachments } from '../components/TaskAttachments';
@@ -26,6 +27,7 @@ export {
   CompletedActionBar,
   CompletedSidebar,
   SummaryStats,
+  CompletedTaskPageContent,
 } from '../components/completed';
 
 export * from '../components/TaskForm';
@@ -47,6 +49,7 @@ export { useTaskState } from '../hooks/useTaskState';
 export { useTaskFilters } from '../hooks/useTaskFilters';
 export { useTaskFiltering } from '../hooks/useTaskFiltering';
 export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
+export { useCompletedTaskPage } from '../hooks/useCompletedTaskPage';
 export { taskGateway } from './taskGateway';
 export { getTaskDisplayTitle, getTaskDisplayStatus } from '../utils/display';
 export {

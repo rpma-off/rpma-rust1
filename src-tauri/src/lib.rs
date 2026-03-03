@@ -8,6 +8,13 @@ pub mod memory_management;
 pub mod memory_management_helpers;
 pub mod shared;
 pub mod worker_pool;
+pub mod models {
+    pub mod client {
+        pub use crate::domains::clients::domain::models::client::{
+            CreateClientRequest, CustomerType,
+        };
+    }
+}
 
 #[cfg(test)]
 pub mod test_utils;

@@ -1,4 +1,4 @@
-import { safeInvoke } from './utils';
+﻿import { safeInvoke } from './utils';
 import type { JsonObject, JsonValue } from '@/types/json';
 
 interface CacheEntry<T> {
@@ -119,12 +119,12 @@ export async function cachedInvoke<T>(
   // Check cache first
   const cached = getCached<T>(cacheKey);
   if (cached !== undefined) {
-    console.log(`[IPC Cache] ${command} -> cache hit for key: ${cacheKey}`);
+    console.info(`[IPC Cache] ${command} -> cache hit for key: ${cacheKey}`);
     return cached;
   }
 
   // Cache miss, invoke via safeInvoke (which handles correlation_id, logging, metrics)
-  console.log(`[IPC Cache] ${command} -> cache miss for key: ${cacheKey}, invoking...`);
+  console.info(`[IPC Cache] ${command} -> cache miss for key: ${cacheKey}, invoking...`);
 
   const data = await safeInvoke<T>(command, args, validator);
 
@@ -133,3 +133,4 @@ export async function cachedInvoke<T>(
 
   return data;
 }
+

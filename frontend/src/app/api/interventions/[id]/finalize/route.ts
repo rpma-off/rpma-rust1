@@ -1,6 +1,6 @@
- /**
+﻿ /**
  * API Route: POST /api/interventions/[id]/finalize
- * Finalise une intervention PPF compl�tement
+ * Finalise une intervention PPF complï¿½tement
  * @version 2.0
  * @date 2025-01-20
  */
@@ -12,9 +12,9 @@ import { z } from 'zod';
 import { interventionWorkflowService } from '@/domains/interventions/server';
 import type { FinalizeInterventionRequest } from '@/lib/backend';
 
-// Sch�ma de validation pour finaliser une intervention
+// Schï¿½ma de validation pour finaliser une intervention
 const FinalizeInterventionSchema = z.object({
-  // R�sultats finaux
+  // Rï¿½sultats finaux
   customer_satisfaction: z.number().min(1).max(5).optional(),
   quality_score: z.number().min(0).max(100).optional(),
   final_observations: z.array(z.string()).optional(),
@@ -26,7 +26,7 @@ const FinalizeInterventionSchema = z.object({
   customer_signature: z.string().optional(),
   customer_comments: z.string().optional(),
   
-   // M�triques finales
+   // Mï¿½triques finales
    actual_duration: z.number().min(1).optional(),
    material_usage: z.record(z.string(), z.number()).optional(),
   
@@ -48,7 +48,7 @@ const FinalizeInterventionSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des param�tres de route
+    // 1. Validation des paramï¿½tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // 2. Validation du corps de la requ�te
+    // 2. Validation du corps de la requï¿½te
     const body = await request.json();
     const validationResult = FinalizeInterventionSchema.safeParse(body);
     
@@ -110,7 +110,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // V�rifier que l'intervention est en status FINALIZING
+    // Vï¿½rifier que l'intervention est en status FINALIZING
     if (interventionCheck.data?.status === 'completed') {
       return NextResponse.json(
         { 
@@ -123,9 +123,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 5. Validation des permissions sur l'intervention
-    // TODO: V�rifier que l'utilisateur peut finaliser cette intervention
+    // NOTE: Vï¿½rifier que l'utilisateur peut finaliser cette intervention
 
-    // 6. Validation m�tier de finalisation
+    // 6. Validation mï¿½tier de finalisation
     const finalizationValidation = await validateFinalizationRequirements(interventionId, sessionToken);
     if (!finalizationValidation.valid) {
       return NextResponse.json(
@@ -152,7 +152,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     }
 
-    // 8. Appel du service m�tier
+    // 8. Appel du service mï¿½tier
     const finalizePayload: FinalizeInterventionRequest = {
       intervention_id: interventionId,
       collected_data: validationResult.data as unknown as FinalizeInterventionRequest['collected_data'],
@@ -176,7 +176,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       );
     }
 
-    // 9. Retour de la r�ponse de succ�s avec r�sum� complet
+    // 9. Retour de la rï¿½ponse de succï¿½s avec rï¿½sumï¿½ complet
     const typedData = (result.data ?? {}) as {
       intervention?: { intervention_completed_at?: string };
       completionSummary?: { efficiencyRating?: number; qualityScore?: number };
@@ -212,7 +212,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 /**
- * Valide que l'intervention peut �tre finalis�e
+ * Valide que l'intervention peut ï¿½tre finalisï¿½e
  */
 async function validateFinalizationRequirements(
   interventionId: string,
@@ -229,7 +229,7 @@ async function validateFinalizationRequirements(
   try {
     const workflowService = interventionWorkflowService;
     
-      // V�rifier que toutes les �tapes sont compl�t�es
+      // Vï¿½rifier que toutes les ï¿½tapes sont complï¿½tï¿½es
       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
       if (stepsResult.success && stepsResult.data) {
         const steps: StepSummary[] = (stepsResult.data.data ?? []).map((rawStep) => {
@@ -262,8 +262,8 @@ async function validateFinalizationRequirements(
           errors.push(`Incomplete mandatory steps: ${incompleteSteps.map((s) => s.stepName).join(', ')}`);
         }
 
-         // V�rifier que chaque �tape a le minimum de photos requises
-         // TODO: Rewrite to fetch photos separately from PPFPhotoService
+         // Vï¿½rifier que chaque ï¿½tape a le minimum de photos requises
+         // NOTE: Rewrite to fetch photos separately from PPFPhotoService
          for (const _step of steps) {
            // Temporarily skip photo validation until photos are fetched separately
            // if (step.requiresPhotos && step.minPhotosRequired) {
@@ -275,10 +275,10 @@ async function validateFinalizationRequirements(
          }
         }
 
-    // TODO: Ajouter d'autres validations m�tier
-    // - V�rification des signatures requises
-    // - Validation de la qualit� minimale
-    // - Contr�le des mesures critiques
+    // NOTE: Ajouter d'autres validations mï¿½tier
+    // - Vï¿½rification des signatures requises
+    // - Validation de la qualitï¿½ minimale
+    // - Contrï¿½le des mesures critiques
   }
   catch (error) {
     console.error('Error validating finalization requirements:', error);
@@ -291,7 +291,7 @@ async function validateFinalizationRequirements(
   };
 }
 
-// Gestion des autres m�thodes HTTP
+// Gestion des autres mï¿½thodes HTTP
 export async function GET() {
   return NextResponse.json(
     { error: 'Method not allowed' },
@@ -312,4 +312,5 @@ export async function DELETE() {
     { status: 405 }
   );
 }
+
 

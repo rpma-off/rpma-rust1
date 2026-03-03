@@ -3,6 +3,7 @@ use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::shared::ipc::errors::AppError;
+use crate::shared::services::event_system::InMemoryEventBus;
 use crate::shared::repositories::Cache;
 use std::sync::Arc;
 
@@ -11,7 +12,8 @@ async fn map_quote_error_returns_not_found() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let service = Arc::new(QuoteService::new(repo, db));
+    let event_bus = Arc::new(InMemoryEventBus::new());
+    let service = Arc::new(QuoteService::new(repo, db, event_bus));
     let facade = QuotesFacade::new(service);
     let err = facade.map_quote_error("get_quote", "quote not found");
     assert!(matches!(err, AppError::NotFound(_)));
@@ -22,7 +24,8 @@ async fn map_quote_error_returns_validation_for_invalid() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let service = Arc::new(QuoteService::new(repo, db));
+    let event_bus = Arc::new(InMemoryEventBus::new());
+    let service = Arc::new(QuoteService::new(repo, db, event_bus));
     let facade = QuotesFacade::new(service);
     let err = facade.map_quote_error("create", "invalid amount");
     assert!(matches!(err, AppError::Validation(_)));

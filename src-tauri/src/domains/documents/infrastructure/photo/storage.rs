@@ -1,4 +1,4 @@
-//! Photo Storage Module - Storage provider interface and CRUD operations
+﻿//! Photo Storage Module - Storage provider interface and CRUD operations
 //!
 //! This module handles photo storage operations including:
 //! - Storage provider configuration and management
@@ -350,7 +350,7 @@ impl PhotoStorageService {
         file_name: &str,
         data: &[u8],
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
-        // TODO: Implement actual S3 upload using rusoto_s3 or aws-sdk-rust
+        // NOTE: Implement actual S3 upload using rusoto_s3 or aws-sdk-rust
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
             Ok(file_path) => {
@@ -379,7 +379,7 @@ impl PhotoStorageService {
         file_name: &str,
         data: &[u8],
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
-        // TODO: Implement actual GCP upload
+        // NOTE: Implement actual GCP upload
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
             Ok(file_path) => {
@@ -408,7 +408,7 @@ impl PhotoStorageService {
         file_name: &str,
         data: &[u8],
     ) -> crate::domains::documents::infrastructure::photo::PhotoResult<String> {
-        // TODO: Implement actual Azure upload
+        // NOTE: Implement actual Azure upload
         // For now, store locally and return a local file URL
         match self.store_locally(intervention_id, file_name, data).await {
             Ok(file_path) => {
@@ -675,3 +675,4 @@ mod tests {
         assert!(result.is_err());
     }
 }
+

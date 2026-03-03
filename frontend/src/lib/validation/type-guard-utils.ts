@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Type Guard Utilities
  *
  * Practical utilities for using the comprehensive type guards
@@ -152,7 +152,7 @@ export class DataTransformer {
 export const devValidationHelpers = {
   logTypeCheck: (data: unknown, typeName: string) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 Type check for ${typeName}:`, {
+      console.info(`ðŸ” Type check for ${typeName}:`, {
         data,
         isValid: true // Would need specific type guard
       });
@@ -161,7 +161,7 @@ export const devValidationHelpers = {
 
   warnOnInvalidData: (data: unknown, typeName: string, context: string) => {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(`⚠️ Potentially invalid ${typeName} data in ${context}:`, data);
+      console.warn(`âš ï¸ Potentially invalid ${typeName} data in ${context}:`, data);
     }
   }
 };
@@ -204,3 +204,4 @@ const tasks = DataTransformer.safeTransformTasks(apiResponse.data);
 // tasks is now Task[] | null with full type safety
 `
 };
+

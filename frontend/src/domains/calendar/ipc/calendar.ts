@@ -15,7 +15,7 @@ export async function getCalendarTasks(
   filter: CalendarFilter,
   sessionToken: string
 ): Promise<CalendarTask[]> {
-  return await safeInvoke<CalendarTask[]>('calendar_get_tasks', {
+  return await safeInvoke<CalendarTask[]>(IPC_COMMANDS.CALENDAR_GET_TASKS, {
     request: {
       session_token: sessionToken,
       date_range: filter.date_range,
@@ -32,7 +32,7 @@ export async function checkCalendarConflicts(
   newStart?: string,
   newEnd?: string
 ): Promise<ConflictDetection> {
-  return await safeInvoke<ConflictDetection>('calendar_check_conflicts', {
+  return await safeInvoke<ConflictDetection>(IPC_COMMANDS.CALENDAR_CHECK_CONFLICTS, {
     request: {
       session_token: sessionToken,
       task_id: taskId,

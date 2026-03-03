@@ -43,8 +43,8 @@ fn domain_models_accessible_within_crate() {
 /// Verify that infrastructure layers are accessible within the crate (pub(crate)).
 #[test]
 fn infrastructure_accessible_within_crate() {
-    use crate::domains::interventions::infrastructure::intervention_service::InterventionService;
-    use crate::domains::tasks::infrastructure::task_service::TaskService;
+    use crate::domains::interventions::infrastructure::intervention::InterventionService;
+    use crate::domains::tasks::infrastructure::task::TaskService;
 
     let _ = std::any::type_name::<TaskService>();
     let _ = std::any::type_name::<InterventionService>();

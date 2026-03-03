@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { TaskStatus, TaskPriority } from '@/lib/backend';
+import { TaskPriority, TaskStatus } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
 import { toast } from 'sonner';
 import { taskService } from '../../services';
 import { useAuth } from '@/domains/auth';
 import { InterventionWorkflowService } from '@/domains/interventions';
 import { phone } from '@/lib/utils/phone';
-import { createStatusUpdate, createPriorityUpdate, createNotesUpdate } from './task-updates';
+import { createNotesUpdate, createPriorityUpdate, createStatusUpdate } from './task-updates';
+import { interventionKeys, taskKeys } from '@/lib/query-keys';
 
 export function useTaskActions(task: TaskWithDetails) {
   const { user } = useAuth();
@@ -16,67 +17,67 @@ export function useTaskActions(task: TaskWithDetails) {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: TaskStatus) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createStatusUpdate(newStatus));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Statut mis à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      toast.success('Statut mis a jour avec succes');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour du statut');
+      toast.error('Erreur lors de la mise a jour du statut');
       console.error('Status update error:', error);
     },
   });
 
   const updatePriorityMutation = useMutation({
     mutationFn: async (newPriority: TaskPriority) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createPriorityUpdate(newPriority));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Priorité mise à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      toast.success('Priorite mise a jour avec succes');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour de la priorité');
+      toast.error('Erreur lors de la mise a jour de la priorite');
       console.error('Priority update error:', error);
     },
   });
 
   const assignToMeMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.assignTask(task.id, user.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Tâche assignée avec succès');
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      toast.success('Tache assignee avec succes');
     },
     onError: (error) => {
-      toast.error("Erreur lors de l'assignation");
+      toast.error('Erreur lors de l\'assignation');
       console.error('Assignment error:', error);
     },
   });
 
   const updateNotesMutation = useMutation({
     mutationFn: async (notes: string) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createNotesUpdate(notes));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      toast.success('Notes mises à jour avec succès');
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      toast.success('Notes mises a jour avec succes');
     },
     onError: (error) => {
-      toast.error('Erreur lors de la mise à jour des notes');
+      toast.error('Erreur lors de la mise a jour des notes');
       console.error('Notes update error:', error);
     },
   });
 
   const startInterventionMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      if (!user?.token) throw new Error('Utilisateur non authentifie');
 
       const interventionData = {
         task_id: task.id,
@@ -99,18 +100,24 @@ export function useTaskActions(task: TaskWithDetails) {
         notes: null,
       };
 
-      return await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+      const result = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+
+      if (!result.success || !result.data) {
+        throw new Error(result.error?.message || 'Invalid response format for intervention start');
+      }
+
+      return result.data as { success: boolean; intervention: unknown; steps: unknown[] };
     },
     onSuccess: (result) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-        queryClient.invalidateQueries({ queryKey: ['interventions'] });
-        toast.success('Intervention démarrée avec succès');
+      if (result.success && result.intervention) {
+        queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+        queryClient.invalidateQueries({ queryKey: interventionKeys.all });
+        toast.success('Intervention demarree avec succes');
         router.push(`/tasks/${task.id}/workflow/ppf/steps/preparation`);
       }
     },
     onError: (error) => {
-      toast.error("Erreur lors du démarrage de l'intervention");
+      toast.error('Erreur lors du demarrage de l\'intervention');
       console.error('Start intervention error:', error);
     },
   });
@@ -119,16 +126,16 @@ export function useTaskActions(task: TaskWithDetails) {
     mutationFn: async () => {
       const phoneNumber = task.customer_phone;
       if (!phoneNumber) {
-        toast.error('Aucun numéro de téléphone disponible pour ce client');
+        toast.error('Aucun numero de telephone disponible pour ce client');
         return;
       }
 
       await phone.initiateCustomerCall(phoneNumber);
-      toast.success(`Appel lancé vers ${phoneNumber}`);
+      toast.success(`Appel lance vers ${phoneNumber}`);
     },
     onError: (error) => {
       console.error('Failed to initiate call:', error);
-      toast.error("Erreur lors de l'appel client");
+      toast.error('Erreur lors de l\'appel client');
     },
   });
 

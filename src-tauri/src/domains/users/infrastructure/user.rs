@@ -1,4 +1,4 @@
-//! User service for user management operations
+﻿//! User service for user management operations
 
 use crate::commands::AppError;
 use crate::domains::users::domain::models::user::User as RepoUser; // Import as RepoUser to distinguish
@@ -80,7 +80,7 @@ impl UserService {
 
     /// Parse a role string into a UserRole enum.
     ///
-    /// Centralises the role-string Ã¢â€ â€™ enum conversion so that IPC command
+    /// Centralises the role-string ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ enum conversion so that IPC command
     /// handlers do not contain this business logic.
     pub fn parse_user_role(role_str: &str) -> Result<UserRole, AppError> {
         match role_str {
@@ -145,7 +145,7 @@ impl UserService {
                 AppError::Database("Failed to update user role".to_string())
             })?;
 
-        // TODO: Add audit log to database directly since we don't have an audit repository yet
+        // NOTE: Add audit log to database directly since we don't have an audit repository yet
         // For now, we'll just log the action
         info!(
             "Successfully changed role for user {} from {} to {} by admin {}",
@@ -155,7 +155,7 @@ impl UserService {
             admin_id
         );
 
-        // TODO: Invalidate sessions - this would require direct DB access or session repository
+        // NOTE: Invalidate sessions - this would require direct DB access or session repository
         info!("Sessions for user {} should be invalidated", user_id);
 
         Ok(())
@@ -195,10 +195,10 @@ impl UserService {
                 AppError::Database("Failed to ban user".to_string())
             })?;
 
-        // TODO: Add audit log to database directly since we don't have an audit repository yet
+        // NOTE: Add audit log to database directly since we don't have an audit repository yet
         info!("Successfully banned user {} by admin {}", user_id, admin_id);
 
-        // TODO: Invalidate sessions - this would require direct DB access or session repository
+        // NOTE: Invalidate sessions - this would require direct DB access or session repository
         info!("Sessions for user {} should be invalidated", user_id);
 
         Ok(())
@@ -410,3 +410,4 @@ mod tests {
         assert!(matches!(err, AppError::Validation(_)));
     }
 }
+

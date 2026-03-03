@@ -1,4 +1,4 @@
-// Prevents additional console window on Windows in release builds
+﻿// Prevents additional console window on Windows in release builds
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
@@ -109,9 +109,9 @@ fn main() {
             domains::interventions::ipc::intervention::intervention_save_step_progress,
             domains::interventions::ipc::intervention::intervention_get_progress,
             domains::interventions::ipc::intervention::intervention_get_step,
-            // commands::photo::photo_crud, // TODO: implement photo module
-            // commands::photo::store_photo_with_data, // TODO: implement photo module
-            // commands::photo::get_photo_data, // TODO: implement photo module
+            // commands::photo::photo_crud, // NOTE: implement photo module
+            // commands::photo::store_photo_with_data, // NOTE: implement photo module
+            // commands::photo::get_photo_data, // NOTE: implement photo module
             domains::inventory::ipc::material::material_create,
             domains::inventory::ipc::material::material_get,
             domains::inventory::ipc::material::material_get_by_sku,
@@ -306,11 +306,12 @@ fn main() {
             let app_dir = app
                 .path()
                 .app_data_dir()
-                .expect("Failed to get app data dir");
+                .map_err(|e| format!("Failed to get app data dir: {e}"))?;
             debug!("App data directory: {:?}", app_dir);
 
             // Create directory if not exists
-            std::fs::create_dir_all(&app_dir).expect("Failed to create app data directory");
+            std::fs::create_dir_all(&app_dir)
+                .map_err(|e| format!("Failed to create app data directory: {e}"))?;
             debug!("Created app data directory");
 
             // Database path
@@ -338,12 +339,14 @@ fn main() {
             // Initialize database
             let encryption_key = std::env::var("RPMA_DB_KEY").unwrap_or_else(|_| "".to_string());
             let db_instance = db::Database::new(&db_path, &encryption_key)
-                .expect("Failed to create database connection");
+                .map_err(|e| format!("Failed to create database connection: {e}"))?;
             let db = std::sync::Arc::new(db_instance.clone());
             info!("Database connection established");
 
             // Since we're in a non-async context, we need to use tokio::block_on
-            let repositories = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let runtime = tokio::runtime::Runtime::new()
+                .map_err(|e| format!("Failed to create Tokio runtime: {e}"))?;
+            let repositories = runtime.block_on(async {
                 crate::shared::repositories::Repositories::new(Arc::new(db_instance.clone()), 1000)
                     .await
             });
@@ -410,7 +413,9 @@ fn main() {
                 repositories.clone(),
                 app_dir.clone(),
             );
-            let app_state = service_builder.build().expect("Failed to build services");
+            let app_state = service_builder
+                .build()
+                .map_err(|e| format!("Failed to build services: {e}"))?;
             info!("All services initialized successfully");
 
             // Store in app state
@@ -421,5 +426,6 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .map_err(|e| error!("Failed to run Tauri application: {}", e))
-        .expect("error while running tauri application");
+        .unwrap_or_else(|_| std::process::exit(1));
 }
+

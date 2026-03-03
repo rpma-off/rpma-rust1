@@ -147,7 +147,7 @@ function checkAppDomainInternalImports() {
 
         if (subPath && subPath !== 'index' && !subPath.endsWith('/index')) {
           const isApiRoute = file.includes('/api/');
-          const isServerImport = subPath.startsWith('server/');
+          const isServerImport = subPath === 'server' || subPath.startsWith('server/');
 
           if (isApiRoute && isServerImport) {
             return;

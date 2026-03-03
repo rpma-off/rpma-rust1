@@ -55,6 +55,13 @@ export {
   getCurrentPPFStepId,
 } from '../utils/ppf-workflow';
 
+export {
+  buildStepExportPayload,
+  downloadJsonFile,
+  getEffectiveStepData,
+} from '../utils/step-export';
+export type { StepExportPayload } from '../utils/step-export';
+
 export type {
   PPFInterventionData,
   PPFInterventionStep,

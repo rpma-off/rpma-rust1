@@ -1,4 +1,4 @@
-import { NextResponse, NextRequest } from 'next/server';
+﻿import { NextResponse, NextRequest } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
 /**
@@ -19,18 +19,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('🔧 Fixing RLS policy issue...');
+    console.info('ðŸ”§ Fixing RLS policy issue...');
     
     // Disable the problematic trigger
     // Note: exec_sql function not available, would need to create or use direct SQL execution
-    console.log('⚠️ exec_sql function not available, skipping trigger drop');
+    console.info('âš ï¸ exec_sql function not available, skipping trigger drop');
 
     // const { error: dropError } = await supabase.rpc('exec_sql', {
     //   sql: 'DROP TRIGGER IF EXISTS task_changes_trigger ON public.tasks;'
     // });
 
     // if (dropError) {
-    //   console.error('❌ Error dropping trigger:', dropError);
+    //   console.error('âŒ Error dropping trigger:', dropError);
     //   return NextResponse.json({
     //     error: 'Failed to drop trigger',
     //     details: dropError.message
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     
     // Update RLS policies for task_history
     // Note: exec_sql function not available, would need to create or use direct SQL execution
-    console.log('⚠️ exec_sql function not available, skipping RLS policy update');
+    console.info('âš ï¸ exec_sql function not available, skipping RLS policy update');
 
     // const { error: policyError } = await supabase.rpc('exec_sql', {
     //   sql: `
@@ -66,14 +66,14 @@ export async function POST(request: NextRequest) {
     const policyError = null; // Placeholder since we're not executing the RPC
     
     if (policyError) {
-      console.error('❌ Error updating policies:', policyError);
+      console.error('âŒ Error updating policies:', policyError);
       return NextResponse.json({
         error: 'Failed to update policies',
         details: (policyError as { message?: string })?.message || 'Unknown error'
       }, { status: 500 });
     }
     
-    console.log('✅ RLS fix completed successfully!');
+    console.info('âœ… RLS fix completed successfully!');
     
     return NextResponse.json({ 
       success: true, 
@@ -81,10 +81,11 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('❌ Error in RLS fix:', error);
+    console.error('âŒ Error in RLS fix:', error);
     return NextResponse.json({ 
       error: 'Internal server error', 
       details: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 500 });
   }
 }
+

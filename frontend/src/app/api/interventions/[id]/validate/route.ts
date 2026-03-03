@@ -1,4 +1,4 @@
- /**
+﻿ /**
  * API Route: POST /api/interventions/[id]/validate
  * Validates intervention data and steps for PPF workflow compliance
  * @version 2.0
@@ -37,7 +37,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 1. Validation des param�tres de route
+    // 1. Validation des paramï¿½tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(
 
     const sessionToken = authHeader.replace('Bearer ', '');
 
-    // 3. Parsing du corps de la requ�te
+    // 3. Parsing du corps de la requï¿½te
     let validationOptions: ValidationRequest = {};
     try {
       validationOptions = await request.json();
@@ -80,7 +80,7 @@ export async function POST(
       };
     }
 
-    // 4. R�cup�ration de l'intervention
+    // 4. Rï¿½cupï¿½ration de l'intervention
     const workflowService = interventionWorkflowService;
     const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
 
@@ -96,7 +96,7 @@ export async function POST(
 
     const intervention = interventionResult.data!;
 
-    // 5. Validation des donn�es de base
+    // 5. Validation des donnï¿½es de base
     const validationResult: ValidationResult = {
       isValid: true,
       errors: [],
@@ -110,7 +110,7 @@ export async function POST(
       }
     };
 
-    // Validation des donn�es de base de l'intervention
+    // Validation des donnï¿½es de base de l'intervention
     const interventionData: PPFInterventionData = {
       ...intervention,
       currentStep: intervention.currentStep ?? 0,
@@ -123,7 +123,7 @@ export async function POST(
     validationResult.warnings.push(...dataValidation.warnings);
     validationResult.score -= dataValidation.errors.length * 20;
 
-      // Validation des �tapes si demand�e
+      // Validation des ï¿½tapes si demandï¿½e
      if (validationOptions.validateSteps) {
        const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
        if (stepsResult.success) {
@@ -136,7 +136,7 @@ export async function POST(
      }
    }
 
-    // Validation des photos si demand�e
+    // Validation des photos si demandï¿½e
     if (validationOptions.validatePhotos) {
       const photoService = new PPFPhotoService();
       const photoValidation = await validateInterventionPhotos(photoService, interventionId);
@@ -146,7 +146,7 @@ export async function POST(
       validationResult.score -= photoValidation.errors.length * 10;
     }
 
-    // Validation de conformit� si demand�e
+    // Validation de conformitï¿½ si demandï¿½e
      if (validationOptions.validateCompliance) {
        const complianceValidation = await validateCompliance(interventionData);
       validationResult.details.complianceValidation = complianceValidation.isValid;
@@ -160,13 +160,13 @@ export async function POST(
     validationResult.isValid = validationResult.errors.length === 0;
 
     // 6. Audit logging
-    console.log(`[API] Intervention validation completed: ${interventionId}`, {
+    console.info(`[API] Intervention validation completed: ${interventionId}`, {
       score: validationResult.score,
       errors: validationResult.errors.length,
       warnings: validationResult.warnings.length
     });
 
-    // 7. Retour de la r�ponse
+    // 7. Retour de la rï¿½ponse
     return NextResponse.json(
       {
         success: true,
@@ -193,7 +193,7 @@ export async function POST(
 }
 
 /**
- * Valide les donn�es de base de l'intervention (tout est optionnel)
+ * Valide les donnï¿½es de base de l'intervention (tout est optionnel)
  */
 async function validateInterventionData(intervention: PPFInterventionData) {
   const result = { isValid: true, errors: [] as string[], warnings: [] as string[] };
@@ -209,7 +209,7 @@ async function validateInterventionData(intervention: PPFInterventionData) {
     }
   }
 
-  // Warnings pour les donn�es manquantes (non bloquantes)
+  // Warnings pour les donnï¿½es manquantes (non bloquantes)
   if (!intervention.client_id) {
     result.warnings.push('Client ID is missing');
   }
@@ -234,7 +234,7 @@ async function validateInterventionData(intervention: PPFInterventionData) {
 }
 
 /**
- * Valide les �tapes de l'intervention (toutes optionnelles)
+ * Valide les ï¿½tapes de l'intervention (toutes optionnelles)
  */
 async function validateInterventionSteps(steps: Record<string, unknown>[]) {
   const result = { isValid: true, errors: [] as string[], warnings: [] as string[] };
@@ -244,14 +244,14 @@ async function validateInterventionSteps(steps: Record<string, unknown>[]) {
     return result;
   }
 
-  // Validation l�g�re du statut des �tapes (non bloquante)
+  // Validation lï¿½gï¿½re du statut des ï¿½tapes (non bloquante)
   const inProgressSteps = steps.filter((step: { status?: string }) => step.status === 'in_progress');
 
   if (inProgressSteps.length > 1) {
     result.warnings.push('Multiple steps are in progress (not recommended)');
   }
 
-  // Validation des donn�es sp�cifiques aux �tapes (warnings uniquement)
+  // Validation des donnï¿½es spï¿½cifiques aux ï¿½tapes (warnings uniquement)
   for (const step of steps) {
     if (!step.stepType) {
       result.warnings.push(`Step ${step.id} is missing stepType`);
@@ -279,14 +279,14 @@ async function validateInterventionPhotos(photoService: PPFPhotoService, interve
       return result;
     }
 
-    // Validation des m�tadonn�es des photos (warnings uniquement)
+    // Validation des mï¿½tadonnï¿½es des photos (warnings uniquement)
     for (const photo of photos) {
       // Validation GPS pour les photos (optionnelle)
       if (!photo.gpsCoordinates) {
         result.warnings.push(`Photo ${photo.id} is missing GPS coordinates`);
       }
 
-      // Validation de la qualit�
+      // Validation de la qualitï¿½
       if (typeof photo.qualityScore === 'number' && photo.qualityScore < 70) {
         result.warnings.push(`Photo ${photo.id} has low quality score: ${photo.qualityScore}`);
       }
@@ -310,12 +310,12 @@ async function validateInterventionPhotos(photoService: PPFPhotoService, interve
 }
 
 /**
- * Valide la conformit� de l'intervention (validations l�g�res)
+ * Valide la conformitï¿½ de l'intervention (validations lï¿½gï¿½res)
  */
 async function validateCompliance(intervention: PPFInterventionData) {
   const result = { isValid: true, errors: [] as string[], warnings: [] as string[] };
 
-  // Validation des d�lais (warning uniquement)
+  // Validation des dï¿½lais (warning uniquement)
   if (intervention.created_at) {
     const created = new Date(intervention.created_at);
     const now = new Date();
@@ -332,7 +332,7 @@ async function validateCompliance(intervention: PPFInterventionData) {
     result.warnings.push(`Unusual intervention status: ${intervention.status}`);
   }
 
-  // Validation du progr�s (warning si invalide)
+  // Validation du progrï¿½s (warning si invalide)
   if (intervention.completion_percentage !== undefined && intervention.completion_percentage !== null) {
     if (intervention.completion_percentage < 0 || intervention.completion_percentage > 100) {
       result.warnings.push('Progress percentage should be between 0 and 100');
@@ -341,4 +341,5 @@ async function validateCompliance(intervention: PPFInterventionData) {
 
   return result;
 }
+
 

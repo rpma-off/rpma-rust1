@@ -9,11 +9,23 @@ export class ApiError extends Error {
   details?: JsonValue | null;
   field?: string;
 
-  constructor(message: string, code?: string, status?: number, field?: string) {
+  constructor(
+    message: string,
+    codeOrStatus?: string | number,
+    statusOrField?: number | string,
+    fieldArg?: string
+  ) {
     super(message);
-    this.code = code;
-    this.status = status;
-    this.field = field;
+    if (typeof codeOrStatus === 'number') {
+      this.status = codeOrStatus;
+      this.code = undefined;
+      this.field = typeof statusOrField === 'string' ? statusOrField : undefined;
+      return;
+    }
+
+    this.code = codeOrStatus;
+    this.status = typeof statusOrField === 'number' ? statusOrField : undefined;
+    this.field = fieldArg ?? (typeof statusOrField === 'string' ? statusOrField : undefined);
   }
 }
 

@@ -473,7 +473,6 @@ mod tests {
             "user@example.com".to_string(),
             role,
             "token".to_string(),
-            None,
             3600,
         )
     }

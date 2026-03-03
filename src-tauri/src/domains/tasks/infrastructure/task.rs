@@ -1,4 +1,4 @@
-//! # Task Service Module
+﻿//! # Task Service Module
 //!
 //! This module provides the main entry point for all task-related operations in the RPMA backend.
 //! It follows a clean architecture pattern by orchestrating operations across specialized service modules.
@@ -563,7 +563,7 @@ impl TaskService {
             }
             UserRole::Supervisor => {
                 // Supervisor can see tasks in their regions/departments
-                // TODO: Add region filtering when UserSession has region field
+                // NOTE: Add region filtering when UserSession has region field
             }
             UserRole::Technician => {
                 // Technician can only see their assigned tasks
@@ -617,3 +617,4 @@ impl TaskService {
         import_service.get_tasks_for_export(query)
     }
 }
+

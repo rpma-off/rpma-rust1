@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { BaseErrorBoundary } from './BaseErrorBoundary';
@@ -40,8 +40,8 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
 
     if (message.includes('chunkloaderror') || message.includes('loading chunk')) {
       return {
-        title: 'Mise à jour de l\'application requise',
-        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises à jour.',
+        title: 'Mise Ã  jour de l\'application requise',
+        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises Ã  jour.',
         isRecoverable: true
       };
     }
@@ -49,7 +49,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
     if (message.includes('script error') || message.includes('unexpected token')) {
       return {
         title: 'Erreur de chargement de l\'application',
-        description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dû à un problème de réseau ou à des fichiers corrompus.',
+        description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dÃ» Ã  un problème de réseau ou Ã  des fichiers corrompus.',
         isRecoverable: true
       };
     }
@@ -73,7 +73,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
     if (message.includes('unauthorized') || message.includes('forbidden')) {
       return {
         title: 'Erreur d\'authentification',
-        description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder à cette application. Veuillez vous reconnecter.',
+        description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder Ã  cette application. Veuillez vous reconnecter.',
         isRecoverable: false
       };
     }
@@ -88,7 +88,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
 
     return {
       title: 'Erreur de l\'application',
-      description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'à ce qu\'elle soit rechargée.',
+      description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'Ã  ce qu\'elle soit rechargée.',
       isRecoverable: true
     };
   };
@@ -186,7 +186,7 @@ Stack: ${error.stack}
                      size="lg"
                    >
                      <Home className="h-5 w-5" />
-                     <span>Aller à la connexion</span>
+                     <span>Aller Ã  la connexion</span>
                    </Button>
 
                    <Button
@@ -226,7 +226,7 @@ Stack: ${error.stack}
            {/* Application Info */}
            <div className="text-center text-xs text-gray-500 space-y-1">
              <p>RPMA v2 - Système de gestion des tâches PPF</p>
-             <p>Si cette erreur persiste, veuillez la signaler à votre administrateur système</p>
+             <p>Si cette erreur persiste, veuillez la signaler Ã  votre administrateur système</p>
            </div>
          </CardContent>
       </Card>
@@ -293,7 +293,7 @@ export const GlobalErrorBoundary: React.FC<GlobalErrorBoundaryProps> = ({
         // The logger already handles local storage, so we don't need to duplicate
         logger.debug(LogDomain.SYSTEM, 'Error report details', { error_report: errorReport });
 
-        // TODO: Send to monitoring service with high priority
+        // NOTE: Send to monitoring service with high priority
         // This should trigger alerts for the development team
       } catch (reportingError: unknown) {
         console.error('Failed to report global error:', normalizeError(reportingError));
@@ -314,9 +314,9 @@ export const GlobalErrorBoundary: React.FC<GlobalErrorBoundaryProps> = ({
       url: window.location.href
     };
 
-    console.log('User initiated error report:', errorDetails);
+    console.info('User initiated error report:', errorDetails);
 
-    // TODO: Open error reporting modal or redirect to support
+    // NOTE: Open error reporting modal or redirect to support
   };
 
   return (
@@ -373,3 +373,4 @@ class GlobalErrorWrapper extends React.Component<{
 }
 
 export default GlobalErrorBoundary;
+

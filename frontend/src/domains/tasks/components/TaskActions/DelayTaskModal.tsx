@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { ipcClient } from '@/lib/ipc';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { InlineLoading } from '@/components/ui/loading';
 import enhancedToast from '@/lib/enhanced-toast';
+import { taskKeys } from '@/lib/query-keys';
 
 interface DelayTaskModalProps {
   task: TaskWithDetails;
@@ -32,8 +33,8 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
       return await ipcClient.tasks.delayTask(task.id, newDate, reason, user.token);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
       enhancedToast.success('Tâche reportée avec succès');
       setNewDate('');
       setReason('');
@@ -88,7 +89,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Reporter la t�che</DialogTitle>
+          <DialogTitle>Reporter la tï¿½che</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -121,7 +122,7 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
               id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Expliquez pourquoi cette t�che doit �tre report�e..."
+              placeholder="Expliquez pourquoi cette tï¿½che doit ï¿½tre reportï¿½e..."
               rows={3}
               required
               className="bg-muted border-border text-foreground"
@@ -158,3 +159,4 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
 };
 
 export default DelayTaskModal;
+

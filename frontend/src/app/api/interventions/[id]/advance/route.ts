@@ -1,6 +1,6 @@
- /**
+﻿ /**
  * API Route: POST /api/interventions/[id]/advance
- * Avance d'une �tape dans le workflow d'intervention PPF
+ * Avance d'une ï¿½tape dans le workflow d'intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -16,7 +16,7 @@ import { handleApiError } from '@/lib/api-error';
 import { ApiResponseFactory, HttpStatus } from '@/lib/http-status';
 import type { AdvanceStepRequest } from '@/lib/backend';
 
-// Sch�ma de validation pour avancer une �tape - red�fini pour �viter le bug
+// Schï¿½ma de validation pour avancer une ï¿½tape - redï¿½fini pour ï¿½viter le bug
 const AdvanceStepSchema = z.object({
   stepNumber: z.number().int().min(1, 'Step number must be at least 1').max(4, 'Step number must be at most 4'),
   data: z.record(z.string(), z.unknown()).optional(),
@@ -38,7 +38,7 @@ const AdvanceStepSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des param�tres de route
+    // 1. Validation des paramï¿½tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -56,10 +56,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 2. Validation du corps de la requ�te
+    // 2. Validation du corps de la requï¿½te
     const body = await request.json();
 
-    // V�rification de s�curit� pour le sch�ma Zod
+    // Vï¿½rification de sï¿½curitï¿½ pour le schï¿½ma Zod
     if (!AdvanceStepSchema || typeof AdvanceStepSchema.safeParse !== 'function') {
       console.error('[API] CRITICAL: AdvanceStepSchema is not properly defined!');
       return NextResponse.json(ApiResponseFactory.error(
@@ -106,9 +106,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 5. Validation des permissions sur l'intervention
-    // TODO: V�rifier que l'utilisateur peut modifier cette intervention
+    // NOTE: Vï¿½rifier que l'utilisateur peut modifier cette intervention
 
-    // 6. Validation des donn�es m�tier sp�cifiques à l'�tape
+    // 6. Validation des donnï¿½es mï¿½tier spï¿½cifiques Ã  l'ï¿½tape
     const stepValidation = await validateStepSpecificData(dto.stepNumber, dto.data);
     if (!stepValidation.valid) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -117,7 +117,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 7. Appel du service m�tier
+    // 7. Appel du service mï¿½tier
     const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
     if (!stepsResult.success || !stepsResult.data) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -157,7 +157,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ));
     }
 
-    // 8. Retour de la r�ponse de succ�s
+    // 8. Retour de la rï¿½ponse de succï¿½s
     return NextResponse.json(
       ApiResponseFactory.success(result.data),
       { status: HttpStatus.OK }
@@ -169,9 +169,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 /**
- * Validation sp�cifique aux donn�es de chaque �tape
- * Note: La validation d�taill�e est g�r�e par le PPFValidationService
- * Cette fonction ne fait que des v�rifications de base
+ * Validation spï¿½cifique aux donnï¿½es de chaque ï¿½tape
+ * Note: La validation dï¿½taillï¿½e est gï¿½rï¿½e par le PPFValidationService
+ * Cette fonction ne fait que des vï¿½rifications de base
  */
 async function validateStepSpecificData(
   stepNumber: number,
@@ -195,7 +195,7 @@ async function validateStepSpecificData(
   };
 }
 
-// Gestion des autres m�thodes HTTP
+// Gestion des autres mï¿½thodes HTTP
 export async function GET() {
   return NextResponse.json(ApiResponseFactory.error(
     'Method not allowed',
@@ -216,4 +216,5 @@ export async function DELETE() {
     HttpStatus.METHOD_NOT_ALLOWED
   ));
 }
+
 

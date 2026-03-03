@@ -18,6 +18,9 @@
  * @date 2025-01-20
  */
 
+import { ApiError } from '@/lib/api-error';
+export { ApiError };
+
 // ==================== SERVICE RESPONSE TYPES ====================
 
 /**
@@ -46,42 +49,6 @@ export interface ApiResponse<T = unknown> {
 // ServiceResponse is now defined above
 
 // ==================== ERROR HANDLING TYPES ====================
-
-/**
- * Custom API Error class for better error handling
- */
-export class ApiError extends Error {
-  public readonly status: number;
-  public readonly code?: string;
-  public readonly details?: Record<string, unknown>;
-  public readonly timestamp: string;
-
-  constructor(
-    message: string,
-    status: number = 500,
-    code?: string,
-    details?: Record<string, unknown>
-  ) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.code = code;
-    this.details = details;
-    this.timestamp = new Date().toISOString();
-  }
-
-  public toJSON() {
-    return {
-      name: this.name,
-      message: this.message,
-      status: this.status,
-      code: this.code,
-      details: this.details,
-      timestamp: this.timestamp,
-      stack: this.stack
-    };
-  }
-}
 
 // ==================== CONFIGURATION TYPES ====================
 

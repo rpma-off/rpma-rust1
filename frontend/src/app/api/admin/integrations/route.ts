@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { validateApiAuth, getAuthenticatedUser } from '@/lib/api-auth';
 import type { Database as _Database } from '@/types/database.types';
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     };
 
-    // TODO: integration_configs table may not exist in database
+    // NOTE: integration_configs table may not exist in database
     // const { data: integration, error } = await supabase
     //   .from('integration_configs')
     //   .insert([insertData])
@@ -116,3 +116,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

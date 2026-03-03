@@ -1,17 +1,6 @@
 // Shared API types for frontend-backend communication
-
-export class ApiError extends Error {
-   code?: string;
-   details?: Record<string, unknown>;
-   field?: string;
-   constructor(message: string, code?: string, details?: Record<string, unknown>, field?: string) {
-      super(message);
-      this.code = code;
-      this.details = details;
-      this.field = field;
-      Object.setPrototypeOf(this, ApiError.prototype);
-   }
-}
+import { ApiError } from '@/lib/api-error';
+export { ApiError };
 
 export interface Pagination {
   page: number;

@@ -221,18 +221,29 @@ lazy_static::lazy_static! {
 }
 
 pub fn set_global_logger(logger: RPMARequestLogger) {
-    *GLOBAL_LOGGER.lock().expect("Global logger mutex poisoned") = Some(logger);
+    if let Ok(mut guard) = GLOBAL_LOGGER.lock() {
+        *guard = Some(logger);
+    } else {
+        error!("Failed to acquire global logger mutex while setting logger");
+    }
 }
 
 pub fn get_global_logger() -> Option<RPMARequestLogger> {
-    GLOBAL_LOGGER
-        .lock()
-        .expect("Global logger mutex poisoned")
-        .clone()
+    match GLOBAL_LOGGER.lock() {
+        Ok(guard) => guard.clone(),
+        Err(_) => {
+            error!("Failed to acquire global logger mutex while reading logger");
+            None
+        }
+    }
 }
 
 pub fn clear_global_logger() {
-    *GLOBAL_LOGGER.lock().expect("Global logger mutex poisoned") = None;
+    if let Ok(mut guard) = GLOBAL_LOGGER.lock() {
+        *guard = None;
+    } else {
+        error!("Failed to acquire global logger mutex while clearing logger");
+    }
 }
 
 /// Service-level logging helper that reads correlation context from thread-local storage

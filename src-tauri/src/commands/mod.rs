@@ -22,6 +22,38 @@ pub mod user {
         bootstrap_first_admin, has_admins, user_crud, BootstrapFirstAdminRequest, UserCrudRequest,
     };
 }
+pub mod client {
+    pub use crate::domains::clients::application::ClientCrudRequest;
+    pub use crate::domains::clients::ipc::client::client_crud;
+}
+pub mod auth {
+    use crate::shared::app_state::AppState;
+    use crate::shared::ipc::{ApiResponse, AppError};
+    use serde::Deserialize;
+
+    pub use crate::domains::auth::ipc::auth::{
+        auth_create_account, auth_login, auth_logout, auth_validate_session, LoginRequest,
+        SignupRequest,
+    };
+
+    #[derive(Debug, Deserialize)]
+    pub struct RefreshTokenRequest {
+        pub refresh_token: String,
+        #[serde(default)]
+        pub correlation_id: Option<String>,
+    }
+
+    #[tauri::command]
+    pub async fn auth_refresh_token(
+        _request: RefreshTokenRequest,
+        _state: AppState<'_>,
+    ) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError>
+    {
+        Ok(ApiResponse::error(AppError::Validation(
+            "Token refresh is not supported in this build".to_string(),
+        )))
+    }
+}
 
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::contracts::auth::UserRole;
@@ -312,13 +344,6 @@ pub async fn vacuum_database(
 
     info!("Database vacuum completed successfully");
     Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
-}
-
-/// Client request structure
-#[derive(Deserialize, Debug)]
-pub struct ClientCrudRequest {
-    pub action: ClientAction,
-    pub session_token: String,
 }
 
 #[cfg(test)]

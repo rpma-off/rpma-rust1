@@ -1,4 +1,4 @@
-use crate::domains::auth::domain::models::auth::{UserRole, UserSession};
+use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::domains::users::application::UserAction;
 use crate::domains::users::UsersFacade;
 use crate::shared::ipc::errors::AppError;
@@ -10,7 +10,6 @@ fn build_session(user_id: &str, role: UserRole) -> UserSession {
         "test@example.com".to_string(),
         role,
         "token-123".to_string(),
-        None,
         3600,
     )
 }

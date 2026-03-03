@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Database } from '@/types/database.types';
@@ -36,7 +36,7 @@ export async function DELETE(
       );
     }
 
-    console.log('Attempting to delete task with ID:', taskId);
+    console.info('Attempting to delete task with ID:', taskId);
     
     try {
       const { data: task, error: taskError } = await supabase
@@ -65,7 +65,7 @@ export async function DELETE(
         throw deleteError;
       }
       
-      console.log('Task and related records deleted successfully');
+      console.info('Task and related records deleted successfully');
 
       return NextResponse.json({ success: true });
     } catch (error) {
@@ -148,3 +148,4 @@ export async function GET(
     );
   }
 }
+

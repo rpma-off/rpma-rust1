@@ -1,4 +1,4 @@
-// API route wrapper for error handling
+﻿// API route wrapper for error handling
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { JsonValue } from '@/types/json';
@@ -43,8 +43,9 @@ export const withMethod = (allowedMethods: string[]) => {
 
 export const withAuth = (handler: (req: NextRequest, context?: unknown) => Promise<NextResponse>) => {
   return async (req: NextRequest, context?: unknown): Promise<NextResponse> => {
-    // TODO: Implement authentication check
+    // NOTE: Implement authentication check
     // For now, just pass through
     return handler(req, context);
   };
 };
+

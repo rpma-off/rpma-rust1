@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Individual IPC metric entry
  */
 export interface IpcMetric {
@@ -148,15 +148,15 @@ export function clearMetrics(): void {
 export function logMetrics(): void {
   const summary = getMetricsSummary();
   console.group('IPC Metrics Summary');
-  console.log('Total Calls:', summary.totalCalls);
-  console.log('Success Rate:', `${(summary.successRate * 100).toFixed(2)}%`);
-  console.log('Average Duration:', `${summary.averageDuration.toFixed(2)}ms`);
-  console.log('P95 Duration:', `${summary.p95Duration.toFixed(2)}ms`);
-  console.log('P99 Duration:', `${summary.p99Duration.toFixed(2)}ms`);
+  console.info('Total Calls:', summary.totalCalls);
+  console.info('Success Rate:', `${(summary.successRate * 100).toFixed(2)}%`);
+  console.info('Average Duration:', `${summary.averageDuration.toFixed(2)}ms`);
+  console.info('P95 Duration:', `${summary.p95Duration.toFixed(2)}ms`);
+  console.info('P99 Duration:', `${summary.p99Duration.toFixed(2)}ms`);
 
   console.group('Command Details');
   summary.commands.forEach(cmd => {
-    console.log(`${cmd.command}: ${cmd.successfulCalls}/${cmd.totalCalls} (${(cmd.successRate * 100).toFixed(2)}%), avg: ${cmd.averageDuration.toFixed(2)}ms`);
+    console.info(`${cmd.command}: ${cmd.successfulCalls}/${cmd.totalCalls} (${(cmd.successRate * 100).toFixed(2)}%), avg: ${cmd.averageDuration.toFixed(2)}ms`);
   });
   console.groupEnd();
   console.groupEnd();

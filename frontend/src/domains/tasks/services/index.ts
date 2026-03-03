@@ -18,3 +18,7 @@ export type {
   WorkflowStepTemplate,
   SOPInstruction,
 } from './workflow-templates.service';
+export {
+  printCompletedInterventionReport,
+  saveCompletedInterventionReport,
+} from './completed-task-report.service';

@@ -1,4 +1,4 @@
-//! Material Service - PPF Material Inventory and Consumption Management
+﻿//! Material Service - PPF Material Inventory and Consumption Management
 //!
 //! This service handles material inventory management, consumption tracking,
 //! and integration with PPF intervention workflows.
@@ -489,7 +489,7 @@ impl MaterialService {
 
         self.save_material(&material)?;
 
-        // TODO: Log stock transaction for audit trail
+        // NOTE: Log stock transaction for audit trail
 
         Ok(material)
     }
@@ -1657,7 +1657,7 @@ impl MaterialService {
             )
             .unwrap_or(0.0);
 
-        // Get materials by category Ã¢â‚¬â€ fix: GROUP BY must match the COALESCE in SELECT.
+        // Get materials by category ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â fix: GROUP BY must match the COALESCE in SELECT.
         // Also handles missing material_categories table gracefully (returns empty map).
         let materials_by_category: HashMap<String, i32> = match self.db.get_connection() {
             Ok(conn) => {
@@ -1686,7 +1686,7 @@ impl MaterialService {
             Err(_) => HashMap::new(),
         };
 
-        // Get recent transactions Ã¢â‚¬â€ return empty vec on error instead of propagating
+        // Get recent transactions ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â return empty vec on error instead of propagating
         let recent_transactions = self
             .list_recent_inventory_transactions(10)
             .unwrap_or_default();
@@ -1711,7 +1711,7 @@ impl MaterialService {
     ///
     /// Root cause fix: Date filter conditions (it.performed_at) were placed in WHERE,
     /// which converted the LEFT JOIN into an INNER JOIN for materials with no
-    /// transactions Ã¢â‚¬â€ causing them to disappear. Fixed by moving date conditions
+    /// transactions ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â causing them to disappear. Fixed by moving date conditions
     /// into the JOIN ON clause so materials without transactions still appear
     /// with zero totals.
     pub fn get_inventory_movement_summary(
@@ -2266,3 +2266,4 @@ mod inventory_ipc_fix_tests {
         assert!(result.unwrap().is_empty());
     }
 }
+

@@ -6,6 +6,10 @@ export { AdminProvider, useAdminContext } from './AdminProvider';
 export { useAdminConfiguration } from './useAdminConfiguration';
 export { useAdminActions } from './useAdminActions';
 export { useSystemHealth } from '../hooks/useSystemHealth';
+export { useAdminDashboard } from '../hooks/useAdminDashboard';
+export type { SystemStats, RecentActivity, UseAdminDashboardReturn } from '../hooks/useAdminDashboard';
+export { useAdminUserManagement } from '../hooks/useAdminUserManagement';
+export type { UseAdminUserManagementReturn } from '../hooks/useAdminUserManagement';
 
 export { SystemSettingsTab } from '../components/SystemSettingsTab';
 export { BusinessRulesTab } from '../components/BusinessRulesTab';
@@ -16,6 +20,7 @@ export { MonitoringTab } from '../components/MonitoringTab';
 export { QualityAssuranceDashboard } from '../components/QualityAssuranceDashboard';
 export { PhotoDocumentationDashboard } from '../components/PhotoDocumentationDashboard';
 export { SecurityDashboard } from '../components/SecurityDashboard';
+export { default as ConfigurationPageContent } from '../components/ConfigurationPageContent';
 
 export type {
   AdminConfiguration,

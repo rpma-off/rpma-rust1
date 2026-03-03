@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, ChevronDown, ChevronUp } from 'lucide-react';
@@ -92,7 +92,7 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
         userId: 'unknown', // Would come from auth context
       };
 
-      // TODO: Send to monitoring service (Sentry, LogRocket, etc.)
+      // NOTE: Send to monitoring service (Sentry, LogRocket, etc.)
       console.warn('Error reported:', errorReport);
     } catch (reportingError) {
       console.error('Failed to report error:', reportingError);
@@ -126,7 +126,7 @@ export class BaseErrorBoundary extends Component<BaseErrorBoundaryProps, ErrorBo
     if (!error) return 'Une erreur inattendue s\'est produite';
 
     if (error.message.includes('ChunkLoadError')) {
-      return 'Échec du chargement des ressources de l\'application. Cela peut être dû à un problème de réseau.';
+      return 'Échec du chargement des ressources de l\'application. Cela peut être dÃ» Ã  un problème de réseau.';
     }
     if (error.message.includes('Network Error')) {
       return 'Erreur de connexion réseau. Veuillez vérifier votre connexion internet.';

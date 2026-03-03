@@ -12,7 +12,7 @@ import {
   usePpfWorkflow,
 } from '@/domains/interventions';
 import type { StepType } from '@/lib/backend';
-import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions/utils/step-export';
+import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
 
 const FINAL_CHECKLIST = [
   {

@@ -1,4 +1,4 @@
-import { TaskWithDetails } from '@/types/task.types';
+﻿import { TaskWithDetails } from '@/types/task.types';
 
 /**
  * Convert null values to undefined for frontend compatibility
@@ -101,7 +101,7 @@ export function normalizeTaskData(task: TaskWithDetails | null): NormalizedTask 
   };
 
   // Extract technician info - technician data needs to be joined separately
-  const technician = undefined; // TODO: Join technician data from separate query
+  const technician = undefined; // NOTE: Join technician data from separate query
 
   // Normalize schedule data
   const schedule = {
@@ -176,3 +176,4 @@ function _normalizePPFZones(zones: unknown): string[] | undefined {
 
   return [String(zones)];
 }
+

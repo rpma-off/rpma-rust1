@@ -4,10 +4,10 @@ import { compressImage, formatFileSize } from '../utils/image-compression';
 describe('compressImage', () => {
   beforeEach(() => {
     global.Image = class {
-      onload: () => {};
-      onerror: () => {};
-      src: '';
-    } as any;
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      src = '';
+    } as unknown as typeof Image;
   });
 
   afterEach(() => {

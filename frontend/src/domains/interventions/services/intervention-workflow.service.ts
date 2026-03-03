@@ -1,4 +1,4 @@
-// PPF Intervention Workflow Service
+﻿// PPF Intervention Workflow Service
 import type { ApiResponse } from '@/types/api';
 import { ApiError } from '@/types/api';
 import { interventionsIpc } from '../ipc/interventions.ipc';
@@ -38,7 +38,7 @@ export class InterventionWorkflowService {
         console.warn('[InterventionWorkflow]', logData);
         break;
       default:
-        console.log('[InterventionWorkflow]', logData);
+        console.info('[InterventionWorkflow]', logData);
     }
   }
 
@@ -345,3 +345,4 @@ export class InterventionWorkflowService {
 }
 
 export const interventionWorkflowService = InterventionWorkflowService;
+

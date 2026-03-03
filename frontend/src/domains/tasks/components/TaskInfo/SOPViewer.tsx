@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,7 +55,7 @@ export function SOPViewer({ template, stepNumber: _stepNumber, taskId: _taskId }
             </div>
           )}
 
-          {/* TODO: Add estimated_duration_minutes to SOPTemplate interface */}
+          {/* NOTE: Add estimated_duration_minutes to SOPTemplate interface */}
           {/* {template.estimated_duration_minutes && (
             <div className="text-sm">
               <span className="font-medium">Durée estimée:</span> {template.estimated_duration_minutes} minutes

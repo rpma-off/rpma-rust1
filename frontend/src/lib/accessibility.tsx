@@ -61,7 +61,7 @@ export function useA11y() {
 
           if (e.key === 'Escape') {
             // Could emit an event to close the modal
-            console.log('Escape pressed in focus trap');
+            console.info('Escape pressed in focus trap');
           }
         };
 
@@ -422,3 +422,4 @@ export const Disclosure: React.FC<DisclosureProps> = ({
     </div>
   );
 };
+

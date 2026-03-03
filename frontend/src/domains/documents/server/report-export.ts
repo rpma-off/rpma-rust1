@@ -1,4 +1,5 @@
 import { safeInvoke } from '@/lib/ipc/utils';
+import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import type { ServiceResponse } from '@/types/unified.types';
 
@@ -26,7 +27,7 @@ export const documentReportOperations = {
           return { success: false, error: 'Authentification requise', status: 401 };
         }
 
-        const result = await safeInvoke<InterventionReportResult>('export_intervention_report', {
+        const result = await safeInvoke<InterventionReportResult>(IPC_COMMANDS.EXPORT_INTERVENTION_REPORT, {
           intervention_id: interventionId,
           session_token: session.token
         });
@@ -73,7 +74,7 @@ export const documentReportOperations = {
         return { success: false, error: 'Aucun chemin de fichier selectionne', status: 400 };
       }
 
-      const result = await safeInvoke<string>('save_intervention_report', {
+      const result = await safeInvoke<string>(IPC_COMMANDS.SAVE_INTERVENTION_REPORT, {
         intervention_id: interventionId,
         file_path: filePath,
         session_token: session.token

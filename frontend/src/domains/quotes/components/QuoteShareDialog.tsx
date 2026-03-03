@@ -175,7 +175,7 @@ export function QuoteShareDialog({
                         >
                           <Mail className="h-3.5 w-3.5" />
                           Email
-                          {!hasEmail && <span className="text-xs">(Pas d'email)</span>}
+                          {!hasEmail && <span className="text-xs">(Pas d&apos;email)</span>}
                         </Label>
                       </div>
                     )}

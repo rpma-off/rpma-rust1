@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
@@ -73,7 +73,7 @@ interface WorkflowContextType {
    updateStepData: (stepId: string, data: StepData) => Promise<void>;
   updateStepStatus: (stepId: string, status: WorkflowStepStatus, data?: StepStatusUpdateData) => void;
   
-  // Timing actions (Chronom�tre)
+  // Timing actions (Chronomï¿½tre)
   startTiming: (stepId: string) => Promise<void>;
   pauseTiming: (stepId: string) => Promise<void>;
   resumeTiming: (stepId: string) => Promise<void>;
@@ -171,7 +171,7 @@ export function WorkflowProvider({
     if (!user) return;
     
     try {
-      console.log('🔍 WorkflowContext: Loading workflow for task:', taskId);
+      console.info('ðŸ” WorkflowContext: Loading workflow for task:', taskId);
       // Guard: if the same task is currently loading, skip duplicate call
       if (loadInProgressRef.current === taskId) {
         return;
@@ -183,19 +183,19 @@ export function WorkflowProvider({
       const workflowData = await workflowService.getWorkflowByTaskId(taskId);
       
       if (workflowData) {
-        console.log('✅ WorkflowContext: Workflow loaded:', workflowData);
+        console.info('âœ… WorkflowContext: Workflow loaded:', workflowData);
         setWorkflow(workflowData);
         
         // Load steps for this workflow
         const stepsData = await workflowService.getWorkflowSteps(workflowData.id);
         setSteps(stepsData || []);
       } else {
-        console.log('⚠️ WorkflowContext: No workflow found for task:', taskId);
+        console.info('âš ï¸ WorkflowContext: No workflow found for task:', taskId);
         setWorkflow(null);
         setSteps([]);
       }
     } catch (error: unknown) {
-      console.error('❌ WorkflowContext: Error loading workflow:', error);
+      console.error('âŒ WorkflowContext: Error loading workflow:', error);
       setError(normalizeError(error));
     } finally {
       setIsLoading(false);
@@ -207,7 +207,7 @@ export function WorkflowProvider({
   // Load workflow when component mounts or taskId changes, or use initialWorkflow
   useEffect(() => {
     if (initialWorkflow) {
-      console.log('✨ WorkflowContext: Using initial workflow from props.');
+      console.info('âœ¨ WorkflowContext: Using initial workflow from props.');
       setWorkflow(mapPPFInterventionToWorkflowExecution(initialWorkflow));
       setSteps(initialWorkflow.steps?.map(mapPpfStepToWorkflowExecutionStep) || []);
     } else if (taskId && user) {
@@ -678,4 +678,5 @@ export function useWorkflow(): WorkflowContextType {
   }
   return context;
 }
+
 

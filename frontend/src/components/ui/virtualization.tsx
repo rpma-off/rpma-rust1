@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface VirtualizedListProps<T> {
@@ -235,7 +235,7 @@ export function usePerformanceMonitor(componentName: string) {
   // Log performance metrics in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`${componentName} rendered ${renderCount.current} times`);
+      console.info(`${componentName} rendered ${renderCount.current} times`);
     }
   }, [componentName]);
 }

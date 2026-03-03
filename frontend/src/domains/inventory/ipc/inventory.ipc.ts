@@ -30,16 +30,16 @@ export const inventoryIpc = {
     safeInvoke<InventoryStats>(IPC_COMMANDS.INVENTORY_GET_STATS, { sessionToken }),
 
   getMaterialBySku: (sessionToken: string, sku: string): Promise<Material | null> =>
-    safeInvoke<Material | null>('material_get_by_sku', { sessionToken, sku } as JsonObject),
+    safeInvoke<Material | null>(IPC_COMMANDS.MATERIAL_GET_BY_SKU, { sessionToken, sku } as JsonObject),
 
   getInterventionConsumption: (sessionToken: string, interventionId: string): Promise<MaterialConsumption[]> =>
-    safeInvoke<MaterialConsumption[]>('material_get_intervention_consumption', {
+    safeInvoke<MaterialConsumption[]>(IPC_COMMANDS.MATERIAL_GET_INTERVENTION_CONSUMPTION, {
       sessionToken,
       interventionId,
     } as JsonObject),
 
   getInterventionSummary: (sessionToken: string, interventionId: string): Promise<InterventionMaterialSummary> =>
-    safeInvoke<InterventionMaterialSummary>('material_get_intervention_summary', {
+    safeInvoke<InterventionMaterialSummary>(IPC_COMMANDS.MATERIAL_GET_INTERVENTION_SUMMARY, {
       sessionToken,
       interventionId,
     } as JsonObject),

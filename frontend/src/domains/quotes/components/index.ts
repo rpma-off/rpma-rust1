@@ -28,3 +28,4 @@ export { QuotePublicLinkCard } from './QuotePublicLinkCard';
 export { QuoteShareDialog } from './QuoteShareDialog';
 export { QuotesListTable } from './QuotesListTable';
 export { QuotesStatusTabs } from './QuotesStatusTabs';
+export { QuoteDetailPageContent } from './QuoteDetailPageContent';

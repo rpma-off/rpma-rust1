@@ -1,4 +1,4 @@
-import type { UpdateTaskRequest, TaskQuery, CreateTaskRequest, PaginationInfo, JsonValue } from '@/lib/backend';
+﻿import type { UpdateTaskRequest, TaskQuery, CreateTaskRequest, PaginationInfo, JsonValue } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 import type { ServiceResponse } from '@/types/unified.types';
 import { ipcClient } from '@/lib/ipc';
@@ -139,8 +139,8 @@ export class TaskService {
    *   limit: 20
    * });
    * if (result.success) {
-   *   console.log(result.data.data); // Array of tasks
-   *   console.log(result.data.pagination); // Pagination info
+   *   console.info(result.data.data); // Array of tasks
+   *   console.info(result.data.pagination); // Pagination info
    * }
    * ```
    */
@@ -294,7 +294,7 @@ export class TaskService {
    * ```typescript
    * try {
    *   await taskService.deleteTask('task-123');
-   *   console.log('Task deleted successfully');
+   *   console.info('Task deleted successfully');
    * } catch (error) {
    *   console.error('Failed to delete task:', error);
    * }
@@ -433,7 +433,7 @@ export class TaskService {
    * ```typescript
    * const result = await taskService.getTaskById('task-123');
    * if (result.success) {
-   *   console.log('Task:', result.data);
+   *   console.info('Task:', result.data);
    * } else {
    *   console.error('Task not found:', result.error);
    * }
@@ -595,4 +595,5 @@ export const taskService = TaskService.getInstance();
 
 // Re-export types for convenience
 export type { TaskWithDetails };
+
 

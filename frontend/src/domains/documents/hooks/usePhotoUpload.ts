@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { taskPhotoService } from '../server';
 
@@ -187,7 +187,7 @@ export function usePhotoUpload(
         // Extract URL from response
         const publicUrl = result.photo?.url;
 
-        console.log('[usePhotoUpload] Upload successful, got URL:', publicUrl);
+        console.info('[usePhotoUpload] Upload successful, got URL:', publicUrl);
 
         if (!publicUrl) {
           throw new Error('Upload complete but no URL was returned.');
@@ -259,4 +259,5 @@ export function usePhotoUpload(
 }
 
 export default usePhotoUpload;
+
 

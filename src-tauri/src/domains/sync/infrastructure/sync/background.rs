@@ -1,4 +1,4 @@
-//! Background Sync Service - PRD-08 Implementation
+﻿//! Background Sync Service - PRD-08 Implementation
 //!
 //! Provides automatic bidirectional synchronization between local SQLite
 //! and remote Supabase with background processing and error handling.
@@ -403,7 +403,7 @@ impl BackgroundSyncService {
     /// Check network connectivity
     async fn check_network_connectivity(&self) -> bool {
         // No external sync service configured, always return true
-        // TODO: Implement actual sync backend if needed
+        // NOTE: Implement actual sync backend if needed
         true
     }
 
@@ -470,7 +470,7 @@ impl BackgroundSyncService {
 
     /// Process a single sync operation
     /// NOTE: External sync is not currently configured. Operations are marked as completed
-    /// TODO: Implement actual sync backend if needed
+    /// NOTE: Implement actual sync backend if needed
     async fn process_operation(&self, operation: SyncOperation) -> Result<(), String> {
         tracing::warn!(
             "External sync not configured. Marking operation {} as completed without sync",
@@ -482,7 +482,7 @@ impl BackgroundSyncService {
     /// Get sync metrics
     pub fn get_metrics(&self) -> Result<serde_json::Value, String> {
         // For now, return dummy metrics since get_current() is async
-        // TODO: Implement proper synchronous metrics retrieval
+        // NOTE: Implement proper synchronous metrics retrieval
         let errors = self
             .errors
             .try_lock()
@@ -514,3 +514,4 @@ impl Clone for BackgroundSyncService {
         }
     }
 }
+

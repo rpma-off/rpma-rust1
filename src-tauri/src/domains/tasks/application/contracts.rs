@@ -1,4 +1,4 @@
-//! Task-related types for the Tasks bounded context.
+﻿//! Task-related types for the Tasks bounded context.
 //!
 //! This module defines types used by task commands that aren't part of the main models.
 
@@ -30,6 +30,29 @@ impl Default for TaskFilter {
             include_completed: Some(false),
             date_from: None,
             date_to: None,
+        }
+    }
+}
+
+impl TaskFilter {
+    /// Apply role-based access control to the filter.
+    ///
+    /// Admins and Supervisors see all tasks (supervisor region filtering is a NOTE).
+    /// Technicians and Viewers are restricted to their own assigned tasks.
+    pub fn apply_role_scope(
+        &mut self,
+        role: &crate::shared::contracts::auth::UserRole,
+        user_id: &str,
+    ) {
+        use crate::shared::contracts::auth::UserRole;
+        match role {
+            UserRole::Admin => {}
+            UserRole::Supervisor => {
+                // NOTE: Add region filtering when UserSession has region field
+            }
+            UserRole::Technician | UserRole::Viewer => {
+                self.assigned_to = Some(user_id.to_string());
+            }
         }
     }
 }
@@ -88,3 +111,4 @@ pub struct TaskWithClient {
     pub client_name: String,
     pub client_id: String,
 }
+

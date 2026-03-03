@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -116,12 +116,12 @@ export function InventoryManager({ className }: InventoryManagerProps) {
 
   const exportInventory = () => {
     // Export functionality would be implemented here
-    console.log('Exporting inventory...');
+    console.info('Exporting inventory...');
   };
 
   const importInventory = () => {
     // Import functionality would be implemented here
-    console.log('Importing inventory...');
+    console.info('Importing inventory...');
   };
 
   const formatCurrency = (amount: number, currency: string) => {
@@ -179,7 +179,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'unit_cost',
-      header: 'Coût unitaire',
+      header: 'CoÃ»t unitaire',
       render: (material: Material) => (
         <div>
           {material.unit_cost ? (
@@ -346,7 +346,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
             <div className="text-2xl font-bold">
               {stats?.total_value 
                 ? formatCurrency(stats.total_value, 'EUR')
-                : '€0.00'
+                : 'â‚¬0.00'
               }
             </div>
             <p className="text-xs text-muted-foreground">Valeur actuelle de l&apos;inventaire</p>
@@ -360,7 +360,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {lowStockMaterials.length} matériau(x) sont en stock faible. 
-            Pensez à recommander prochainement pour éviter les ruptures.
+            Pensez Ã  recommander prochainement pour éviter les ruptures.
           </AlertDescription>
         </Alert>
       )}
@@ -476,7 +476,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
               <p className="text-muted-foreground mb-4">
                 {searchTerm || selectedType || selectedCategory
                   ? 'Essayez de modifier vos filtres ou termes de recherche.'
-                  : 'Commencez par ajouter votre premier matériau à l\'inventaire.'
+                  : 'Commencez par ajouter votre premier matériau Ã  l\'inventaire.'
                 }
               </p>
               {!searchTerm && !selectedType && !selectedCategory && (
@@ -543,3 +543,4 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
- /**
+﻿ /**
  * API Route: GET /api/interventions/[id]/steps
- * R�cup�re les �tapes d'une intervention PPF
+ * Rï¿½cupï¿½re les ï¿½tapes d'une intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
@@ -14,7 +14,7 @@ import { interventionWorkflowService } from '@/domains/interventions/server';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des param�tres de route
+    // 1. Validation des paramï¿½tres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -23,13 +23,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 2. Validation de l'autorisation (optionnelle pour contourner les probl�mes de cookies)
+    // 2. Validation de l'autorisation (optionnelle pour contourner les problï¿½mes de cookies)
     const authHeader = request.headers.get('authorization');
-    console.log('[API] interventions/[id]/steps - Auth check:', { hasAuthHeader: !!authHeader });
+    console.info('[API] interventions/[id]/steps - Auth check:', { hasAuthHeader: !!authHeader });
 
     const sessionToken = authHeader ? authHeader.replace('Bearer ', '') : '';
 
-    // 3. Appel du service m�tier pour r�cup�rer les �tapes
+    // 3. Appel du service mï¿½tier pour rï¿½cupï¿½rer les ï¿½tapes
     const result = await interventionWorkflowService.getInterventionSteps(interventionId, sessionToken);
 
     if (!result.success) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 4. Retour de la r�ponse de succ�s
+    // 4. Retour de la rï¿½ponse de succï¿½s
     return NextResponse.json(
       {
         success: true,
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// Gestion des autres m�thodes HTTP
+// Gestion des autres mï¿½thodes HTTP
 export async function POST() {
   return NextResponse.json(
     { error: 'Method not allowed' },
@@ -85,4 +85,5 @@ export async function DELETE() {
     { status: 405 }
   );
 }
+
 

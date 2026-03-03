@@ -1,4 +1,4 @@
-// src/lib/utils/logger.ts
+﻿// src/lib/utils/logger.ts
 export interface LogMetadata {
   [key: string]: unknown;
 }
@@ -19,7 +19,7 @@ export interface Logger {
 
 class ConsoleLogger implements Logger {
   info(context: LogContext, message: string, metadata?: LogMetadata): void {
-    console.log(`[${context}] ${message}`, metadata);
+    console.info(`[${context}] ${message}`, metadata);
   }
 
   error(context: LogContext, message: string, metadata?: LogMetadata): void {
