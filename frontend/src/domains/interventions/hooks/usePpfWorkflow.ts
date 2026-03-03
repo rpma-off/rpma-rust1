@@ -59,12 +59,12 @@ export function usePpfWorkflow(taskIdOverride?: string) {
   const saveDraft = useCallback(
     async (stepType: StepType, collectedData: JsonValue, options?: DraftOptions) => {
       if (!session?.token) {
-        toast.error('Session expirÃ©e');
+        toast.error('Session expirée');
         return;
       }
       const step = stepRecords.get(stepType);
       if (!step) {
-        toast.error('Ã‰tape introuvable');
+        toast.error('Étape introuvable');
         return;
       }
 
@@ -96,7 +96,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
       }
 
       if (options?.showToast) {
-        toast.success('Brouillon sauvegardÃ©');
+        toast.success('Brouillon sauvegardé');
       }
     },
     [queryClient, session?.token, stepRecords, taskId]
