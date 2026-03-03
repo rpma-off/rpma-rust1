@@ -6,6 +6,7 @@ export { TaskProvider } from './TaskProvider';
 export { useTasks } from './useTasks';
 export { useTaskActions } from './useTaskActions';
 export { taskService, taskApiService, taskPhotoService } from '../server';
+export { taskIpc } from '../ipc';
 export { default as TasksPageContent } from '../components/TasksPageContent';
 
 export { KanbanBoard } from '../components/KanbanBoard';

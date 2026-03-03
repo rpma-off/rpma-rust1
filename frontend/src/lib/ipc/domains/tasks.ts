@@ -1,1 +1,1 @@
-export { taskIpc } from '@/domains/tasks/ipc';
+export { taskIpc } from '@/domains/tasks';

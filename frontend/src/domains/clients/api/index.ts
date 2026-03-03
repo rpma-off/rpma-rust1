@@ -22,6 +22,8 @@ export {
   TechnicianService,
 } from '../server';
 
+export { clientIpc } from '../ipc';
+
 export type {
   Client,
   ClientWithTasks,

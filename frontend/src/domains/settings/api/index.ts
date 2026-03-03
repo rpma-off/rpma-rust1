@@ -15,6 +15,7 @@ export { NotificationsTab } from '../components/NotificationsTab';
 export { default as SettingsPageContent } from '../components/SettingsPageContent';
 
 export { settingsService, configurationService } from '../server';
+export { settingsIpc } from '../ipc/settings.ipc';
 
 export type {
   UserSettings,

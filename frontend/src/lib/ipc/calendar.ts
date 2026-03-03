@@ -1,5 +1,5 @@
 /**
- * @deprecated Import from @/domains/calendar/ipc/calendar instead
+ * @deprecated Import from @/domains/calendar instead
  */
 export {
   getCalendarTasks,
@@ -8,4 +8,4 @@ export {
   rescheduleTask,
   createDateRange,
   createCalendarFilter,
-} from '@/domains/calendar/ipc/calendar';
+} from '@/domains/calendar';

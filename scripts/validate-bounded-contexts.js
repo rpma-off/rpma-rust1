@@ -22,6 +22,8 @@ const FRONTEND_SRC = path.join(FRONTEND_ROOT, 'src');
 const DOMAINS_DIR = path.join(FRONTEND_SRC, 'domains');
 const SHARED_DIR = path.join(FRONTEND_SRC, 'shared');
 const APP_DIR = path.join(FRONTEND_SRC, 'app');
+const LIB_DIR = path.join(FRONTEND_SRC, 'lib');
+const HOOKS_DIR = path.join(FRONTEND_SRC, 'hooks');
 const strictMode =
   process.env.BOUNDED_CONTEXT_STRICT === '1' ||
   process.env.BOUNDED_CONTEXT_STRICT === 'true' ||
@@ -215,16 +217,32 @@ function validateNoInternalImports() {
   }
 
   // App (including app/api) must not import deep domain internals
+  const domainInternalPattern = /@\/domains\/[a-zA-Z0-9_-]+\/(services|ipc|hooks|components)\b/g;
   const appFiles = listFilesRecursive(APP_DIR);
   for (const file of appFiles) {
     const rel = relativeFromFrontend(file);
     const content = readFile(file);
     checksRun++;
 
-    const internalImportPattern = /@\/domains\/[a-zA-Z0-9_-]+\/(services|ipc|hooks|components)\b/g;
     let match;
-    while ((match = internalImportPattern.exec(content)) !== null) {
+    while ((match = domainInternalPattern.exec(content)) !== null) {
       error(`${rel}\n  imports internal domain module '${match[0]}'. Use '@/domains/<domain>' (UI) or '@/domains/<domain>/server' (route handlers).`);
+    }
+  }
+
+  // lib/ and hooks/ must not import deep domain internals (bypass public API)
+  const externalDirs = [LIB_DIR, HOOKS_DIR].filter((d) => fs.existsSync(d));
+  for (const dir of externalDirs) {
+    const externalFiles = listFilesRecursive(dir).filter((f) => !f.includes('__tests__') && !f.includes('.test.'));
+    for (const file of externalFiles) {
+      const rel = relativeFromFrontend(file);
+      const content = readFile(file);
+      checksRun++;
+
+      let match;
+      while ((match = domainInternalPattern.exec(content)) !== null) {
+        error(`${rel}\n  imports internal domain module '${match[0]}'. Use '@/domains/<domain>' (public API) instead.`);
+      }
     }
   }
 

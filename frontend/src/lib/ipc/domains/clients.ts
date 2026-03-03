@@ -149,4 +149,4 @@ export const clientOperations = {
   },
 };
 
-export { clientIpc } from '@/domains/clients/ipc';
+export { clientIpc } from '@/domains/clients';

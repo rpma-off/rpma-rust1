@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getCalendarTasks, checkCalendarConflicts, scheduleTask, createCalendarFilter } from '@/lib/ipc/calendar';
+import { getCalendarTasks, checkCalendarConflicts, scheduleTask, createCalendarFilter } from '../ipc/calendar';
 import type { CalendarTask, ConflictDetection } from '@/lib/backend';
 import { useAuth } from '@/domains/auth';
 
