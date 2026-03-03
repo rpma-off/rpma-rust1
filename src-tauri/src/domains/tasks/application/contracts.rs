@@ -34,6 +34,29 @@ impl Default for TaskFilter {
     }
 }
 
+impl TaskFilter {
+    /// Apply role-based access control to the filter.
+    ///
+    /// Admins and Supervisors see all tasks (supervisor region filtering is a TODO).
+    /// Technicians and Viewers are restricted to their own assigned tasks.
+    pub fn apply_role_scope(
+        &mut self,
+        role: &crate::shared::contracts::auth::UserRole,
+        user_id: &str,
+    ) {
+        use crate::shared::contracts::auth::UserRole;
+        match role {
+            UserRole::Admin => {}
+            UserRole::Supervisor => {
+                // TODO: Add region filtering when UserSession has region field
+            }
+            UserRole::Technician | UserRole::Viewer => {
+                self.assigned_to = Some(user_id.to_string());
+            }
+        }
+    }
+}
+
 /// Task statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TaskStats {

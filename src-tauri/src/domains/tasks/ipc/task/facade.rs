@@ -371,32 +371,14 @@ pub async fn export_tasks_csv(
             .filter
             .as_ref()
             .and_then(|f| f.status.as_ref())
-            .and_then(|s| match s.as_str() {
-                "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-                "in_progress" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
-                }
-                "completed" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed)
-                }
-                "cancelled" => {
-                    Some(crate::domains::tasks::domain::models::task::TaskStatus::Cancelled)
-                }
-                _ => None,
-            }),
+            .and_then(|s| crate::domains::tasks::domain::models::task::TaskStatus::from_str_opt(s)),
         technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
         client_id: request.filter.as_ref().and_then(|f| f.client_id.clone()),
         priority: request
             .filter
             .as_ref()
             .and_then(|f| f.priority.as_ref())
-            .and_then(|p| match p.as_str() {
-                "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
-                "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
-                "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
-                "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
-                _ => None,
-            }),
+            .and_then(|p| crate::domains::tasks::domain::models::task::TaskPriority::from_str_opt(p)),
         search: None,
         from_date: request
             .filter

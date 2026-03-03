@@ -87,6 +87,13 @@ impl std::str::FromStr for TaskStatus {
     }
 }
 
+impl TaskStatus {
+    /// Parse a status string, returning `None` for unknown values.
+    pub fn from_str_opt(s: &str) -> Option<Self> {
+        s.parse().ok()
+    }
+}
+
 /// Task priority enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 #[ts(export)]
@@ -125,6 +132,13 @@ impl std::str::FromStr for TaskPriority {
             "urgent" => Ok(Self::Urgent),
             _ => Err(format!("Unknown task priority: {}", s)),
         }
+    }
+}
+
+impl TaskPriority {
+    /// Parse a priority string, returning `None` for unknown values.
+    pub fn from_str_opt(s: &str) -> Option<Self> {
+        s.parse().ok()
     }
 }
 
