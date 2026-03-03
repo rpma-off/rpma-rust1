@@ -8,8 +8,8 @@ use tauri::command;
 use tracing::{debug, error, info, warn};
 
 use super::ApiResponse;
-use crate::authenticate;
 use crate::commands::{AppState, UserRole};
+use crate::shared::ipc::AuthGuard;
 
 /// Log level enum
 #[derive(Deserialize, Debug)]
@@ -38,12 +38,14 @@ pub async fn send_log_to_frontend(
     state: AppState<'_>,
     log_message: LogMessage,
 ) -> Result<(), String> {
-    let current_user = authenticate!(&log_message.session_token, &state, UserRole::Technician);
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(
+    let _ctx = AuthGuard::require_role(
+        &log_message.session_token,
+        &state,
+        UserRole::Technician,
         &log_message.correlation_id,
-        Some(&current_user.user_id),
-    );
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",
@@ -91,12 +93,14 @@ pub async fn log_task_creation_debug(
     state: AppState<'_>,
     request: LogTaskCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
-    let current_user = authenticate!(&request.session_token, &state, UserRole::Technician);
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(
+    let _ctx = AuthGuard::require_role(
+        &request.session_token,
+        &state,
+        UserRole::Technician,
         &request.correlation_id,
-        Some(&current_user.user_id),
-    );
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     let correlation_id = request.correlation_id.clone();
     debug!(
@@ -129,12 +133,14 @@ pub async fn log_client_creation_debug(
     state: AppState<'_>,
     request: LogClientCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
-    let current_user = authenticate!(&request.session_token, &state, UserRole::Technician);
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(
+    let _ctx = AuthGuard::require_role(
+        &request.session_token,
+        &state,
+        UserRole::Technician,
         &request.correlation_id,
-        Some(&current_user.user_id),
-    );
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     let correlation_id = request.correlation_id.clone();
     debug!(

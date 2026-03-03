@@ -2,7 +2,7 @@
 //!
 //! This module contains commands for window management and system integration.
 
-use crate::authenticate;
+use crate::shared::ipc::AuthGuard;
 use crate::shared::policies::phone_policy::normalize_dialable_phone_number;
 use crate::shared::policies::url_policy::validate_https_url;
 use tauri::{command, Window};
@@ -85,9 +85,13 @@ pub async fn dashboard_get_stats(
     _time_range: Option<String>,
     correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
-    let current_user = authenticate!(&session_token, &state, super::UserRole::Viewer);
-    let correlation_id =
-        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(
+        &session_token,
+        &state,
+        super::UserRole::Viewer,
+        &correlation_id,
+    )
+    .await?;
 
     let payload = serde_json::json!({
         "tasks": { "total": 0, "completed": 0, "pending": 0, "active": 0 },
@@ -96,7 +100,7 @@ pub async fn dashboard_get_stats(
         "sync": { "status": "idle", "pending_operations": 0, "completed_operations": 0 }
     });
 
-    Ok(super::ApiResponse::success(payload).with_correlation_id(Some(correlation_id)))
+    Ok(super::ApiResponse::success(payload).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get lightweight entity counters for dashboard cards.
@@ -106,9 +110,13 @@ pub async fn get_entity_counts(
     state: super::AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
-    let current_user = authenticate!(&session_token, &state, super::UserRole::Viewer);
-    let correlation_id =
-        crate::commands::init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(
+        &session_token,
+        &state,
+        super::UserRole::Viewer,
+        &correlation_id,
+    )
+    .await?;
 
     let pool = state.db.pool().clone();
     let counts = tokio::task::spawn_blocking(move || {
@@ -124,7 +132,7 @@ pub async fn get_entity_counts(
         "interventions": counts.2
     });
 
-    Ok(super::ApiResponse::success(payload).with_correlation_id(Some(correlation_id)))
+    Ok(super::ApiResponse::success(payload).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get recent activities for admin dashboard
@@ -136,14 +144,18 @@ pub async fn get_recent_activities(
 ) -> Result<Vec<serde_json::Value>, String> {
     use tracing::debug;
 
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let current_user = authenticate!(&session_token, &state, super::UserRole::Admin);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = AuthGuard::require_role(
+        &session_token,
+        &state,
+        super::UserRole::Admin,
+        &correlation_id,
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     debug!(
         "Retrieving recent activities for admin: {}",
-        current_user.username
+        ctx.session.username
     );
 
     let activities: Vec<serde_json::Value> = Vec::new();

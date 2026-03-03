@@ -19,9 +19,8 @@ pub struct DocumentsFacade {
 
 pub struct DocumentsServices {
     pub db: Arc<crate::db::Database>,
-    pub intervention_service:
-        Arc<crate::domains::interventions::infrastructure::intervention::InterventionService>,
-    pub client_service: Arc<crate::domains::clients::infrastructure::client::ClientService>,
+    pub intervention_service: Arc<crate::shared::services::cross_domain::InterventionService>,
+    pub client_service: Arc<crate::shared::services::cross_domain::ClientService>,
     pub app_data_dir: std::path::PathBuf,
 }
 

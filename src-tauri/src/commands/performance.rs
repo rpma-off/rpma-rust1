@@ -1,7 +1,8 @@
 //! Performance monitoring commands for admin interface
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::shared::contracts::auth::UserRole;
+use crate::shared::ipc::AuthGuard;
 use crate::shared::services::cache::{CacheManager, CacheType};
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
@@ -74,19 +75,13 @@ pub async fn get_performance_stats(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<PerformanceStatsResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx =
+        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let correlation_id = ctx.correlation_id.clone();
     // Start performance tracking
     let _timer = state
         .command_performance_tracker
         .start_tracking("get_performance_stats", None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     // Get real performance statistics
     let stats = state.performance_monitor_service.get_stats()?;
@@ -116,19 +111,13 @@ pub async fn get_performance_metrics(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<PerformanceMetricResponse>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx =
+        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let correlation_id = ctx.correlation_id.clone();
     // Start performance tracking
     let _timer = state
         .command_performance_tracker
         .start_tracking("get_performance_metrics", None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
 
     let limit = limit.unwrap_or(50).min(200); // Max 200 metrics
     let metrics = state.performance_monitor_service.get_recent_metrics(limit);
@@ -157,14 +146,9 @@ pub async fn cleanup_performance_metrics(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx =
+        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let correlation_id = ctx.correlation_id.clone();
 
     // NOTE: Implement performance metrics cleanup
     // For now, this is a no-op
@@ -184,14 +168,9 @@ pub async fn get_cache_statistics(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CacheStatsResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx =
+        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let correlation_id = ctx.correlation_id.clone();
 
     // Get cache stats from the cache manager
     let cache_manager = CacheManager::default()?;
@@ -229,14 +208,14 @@ pub async fn clear_application_cache(
     request: CacheClearRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    // Check if user is admin
-    let _current_user = authenticate!(
+    let ctx = AuthGuard::require_role(
         &session_token,
         &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+        UserRole::Admin,
+        &request.correlation_id,
+    )
+    .await?;
+    let correlation_id = ctx.correlation_id.clone();
 
     let cache_manager = CacheManager::default()?;
 
@@ -269,14 +248,14 @@ pub async fn configure_cache_settings(
     request: CacheConfigRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    // Check if user is admin
-    let _current_user = authenticate!(
+    let ctx = AuthGuard::require_role(
         &session_token,
         &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+        UserRole::Admin,
+        &request.correlation_id,
+    )
+    .await?;
+    let correlation_id = ctx.correlation_id.clone();
 
     // Note: In a real implementation, this would update the cache manager configuration
     // For now, we'll just return success
