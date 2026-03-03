@@ -8,6 +8,12 @@ import type {
   UserPerformanceSettings,
   UserProfileSettings,
 } from '@/lib/backend';
+import {
+  DEFAULT_PREFERENCES,
+  DEFAULT_ACCESSIBILITY,
+  DEFAULT_NOTIFICATIONS,
+  DEFAULT_PERFORMANCE,
+} from './defaults';
 
 export interface SettingsServiceResponse<T> {
   success: boolean;
@@ -33,68 +39,6 @@ export interface ChangePasswordRequest {
   newPassword?: string;
   confirmPassword?: string;
 }
-
-const DEFAULT_PREFERENCES: UserPreferences = {
-  email_notifications: true,
-  push_notifications: true,
-  task_assignments: true,
-  task_updates: true,
-  system_alerts: true,
-  weekly_reports: false,
-  theme: 'system',
-  language: 'fr',
-  date_format: 'DD/MM/YYYY',
-  time_format: '24h',
-  high_contrast: false,
-  large_text: false,
-  reduce_motion: false,
-  screen_reader: false,
-  auto_refresh: true,
-  refresh_interval: 60,
-};
-
-const DEFAULT_ACCESSIBILITY: UserAccessibilitySettings = {
-  high_contrast: false,
-  large_text: false,
-  reduce_motion: false,
-  screen_reader: false,
-  focus_indicators: true,
-  keyboard_navigation: true,
-  text_to_speech: false,
-  speech_rate: 1,
-  font_size: 16,
-  color_blind_mode: 'none',
-};
-
-const DEFAULT_NOTIFICATIONS: UserNotificationSettings = {
-  email_enabled: true,
-  push_enabled: true,
-  in_app_enabled: true,
-  task_assigned: true,
-  task_updated: true,
-  task_completed: false,
-  task_overdue: true,
-  system_alerts: true,
-  maintenance: false,
-  security_alerts: true,
-  quiet_hours_enabled: false,
-  quiet_hours_start: '22:00',
-  quiet_hours_end: '08:00',
-  digest_frequency: 'never',
-  batch_notifications: false,
-  sound_enabled: true,
-  sound_volume: 70,
-};
-
-const DEFAULT_PERFORMANCE: UserPerformanceSettings = {
-  cache_enabled: true,
-  cache_size: 100,
-  offline_mode: false,
-  sync_on_startup: true,
-  background_sync: true,
-  image_compression: true,
-  preload_data: false,
-};
 
 function ok<T>(data: T): SettingsServiceResponse<T> {
   return { success: true, data };

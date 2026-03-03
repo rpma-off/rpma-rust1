@@ -1,6 +1,8 @@
 use std::sync::Arc;
 
+use crate::domains::settings::domain::policy::{SettingsAccessPolicy, SettingsCategory};
 use crate::domains::settings::infrastructure::settings::SettingsService;
+use crate::shared::contracts::auth::UserSession;
 use crate::shared::ipc::errors::AppError;
 
 /// Facade for the Settings bounded context.
@@ -34,5 +36,14 @@ impl SettingsFacade {
             ));
         }
         Ok(())
+    }
+
+    /// Check RBAC for a given settings category using the domain policy.
+    pub fn ensure_access(
+        &self,
+        user: &UserSession,
+        category: SettingsCategory,
+    ) -> Result<(), AppError> {
+        SettingsAccessPolicy::ensure_access(user, category)
     }
 }

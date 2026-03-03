@@ -75,7 +75,7 @@ export default function NewQuotePage() {
         description: p.part_number || undefined,
         qty: p.quantity,
         unit_price: Math.round(p.unit_price * 100),
-        tax_rate: 20,
+        tax_rate: taxRate,
         position: index,
       })),
       ...labor.map((l, index) => ({
@@ -84,7 +84,7 @@ export default function NewQuotePage() {
         description: undefined,
         qty: l.hours,
         unit_price: Math.round(l.rate * 100),
-        tax_rate: 20,
+        tax_rate: taxRate,
         position: parts.length + index,
       })),
     ];
@@ -105,8 +105,9 @@ export default function NewQuotePage() {
     }
   };
 
-  const partsSubtotal = parts.reduce((sum, p) => sum + p.total, 0);
-  const laborSubtotal = labor.reduce((sum, l) => sum + l.total, 0);
+  // Convert subtotals from euros (form state) to cents for display in QuoteTotalsCard
+  const partsSubtotal = parts.reduce((sum, p) => sum + Math.round(p.total * 100), 0);
+  const laborSubtotal = labor.reduce((sum, l) => sum + Math.round(l.total * 100), 0);
 
   const isFormValid = customerId.trim() && (parts.length > 0 || labor.length > 0);
 

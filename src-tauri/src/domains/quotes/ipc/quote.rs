@@ -38,6 +38,17 @@ fn check_quote_permission(role: &UserRole, operation: &str) -> Result<(), AppErr
     }
 }
 
+/// Map a service error string to the appropriate AppError variant.
+/// "not found" / "introuvable" patterns become NotFound; everything else is Validation.
+fn map_quote_service_error(e: String) -> AppError {
+    let lower = e.to_lowercase();
+    if lower.contains("not found") || lower.contains("introuvable") {
+        AppError::NotFound(e)
+    } else {
+        AppError::Validation(e)
+    }
+}
+
 // --- Commands ---
 
 #[tauri::command]
@@ -70,7 +81,7 @@ pub async fn quote_create(
         }
         Err(e) => {
             error!(error = %e, "Failed to create quote");
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -151,7 +162,7 @@ pub async fn quote_update(
         }
         Err(e) => {
             error!("Failed to update quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -178,7 +189,7 @@ pub async fn quote_delete(
         }
         Err(e) => {
             error!("Failed to delete quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -205,7 +216,7 @@ pub async fn quote_item_add(
         }
         Err(e) => {
             error!("Failed to add quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -232,7 +243,7 @@ pub async fn quote_item_update(
         }
         Err(e) => {
             error!("Failed to update quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -259,7 +270,7 @@ pub async fn quote_item_delete(
         }
         Err(e) => {
             error!("Failed to delete quote item: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -284,7 +295,7 @@ pub async fn quote_mark_sent(
         }
         Err(e) => {
             error!("Failed to mark quote as sent: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -309,7 +320,7 @@ pub async fn quote_mark_accepted(
         }
         Err(e) => {
             error!("Failed to accept quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -334,7 +345,7 @@ pub async fn quote_mark_rejected(
         }
         Err(e) => {
             error!("Failed to reject quote: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -543,7 +554,7 @@ pub async fn quote_attachment_create(
         }
         Err(e) => {
             error!("Failed to create attachment: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -581,7 +592,7 @@ pub async fn quote_attachment_update(
         }
         Err(e) => {
             error!("Failed to update attachment: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -620,7 +631,7 @@ pub async fn quote_attachment_delete(
         }
         Err(e) => {
             error!("Failed to delete attachment: {}", e);
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -654,7 +665,7 @@ pub async fn quote_generate_share_link(
         }
         Err(e) => {
             error!(error = %e, "Failed to generate share link");
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -688,7 +699,7 @@ pub async fn quote_revoke_share_link(
         }
         Err(e) => {
             error!(error = %e, "Failed to revoke share link");
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -751,7 +762,7 @@ pub async fn quote_customer_response(
         }
         Err(e) => {
             error!(error = %e, "Failed to handle customer response");
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -785,7 +796,7 @@ pub async fn quote_acknowledge_response(
         }
         Err(e) => {
             error!(error = %e, "Failed to acknowledge response");
-            Ok(ApiResponse::error(AppError::Validation(e))
+            Ok(ApiResponse::error(map_quote_service_error(e))
                 .with_correlation_id(Some(correlation_id.clone())))
         }
     }

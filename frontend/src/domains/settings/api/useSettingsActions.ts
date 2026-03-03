@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { settingsService } from '../server';
+import { invalidateSettingsCache } from './useSettings';
 import type {
   UseSettingsActionsResult,
   UpdatePreferencesRequest,
@@ -26,7 +27,9 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const updatePreferences = useCallback(
     async (data: UpdatePreferencesRequest) => {
       const response = await withToken((token) => settingsService.updatePreferences(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
@@ -34,7 +37,9 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const updateNotifications = useCallback(
     async (data: UpdateNotificationsRequest) => {
       const response = await withToken((token) => settingsService.updateNotifications(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
@@ -42,7 +47,9 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const updateAccessibility = useCallback(
     async (data: UpdateAccessibilityRequest) => {
       const response = await withToken((token) => settingsService.updateAccessibility(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
@@ -50,7 +57,9 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const updatePerformance = useCallback(
     async (data: UpdatePerformanceRequest) => {
       const response = await withToken((token) => settingsService.updatePerformance(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
@@ -58,7 +67,9 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const updateProfile = useCallback(
     async (data: UpdateProfileRequest) => {
       const response = await withToken((token) => settingsService.updateProfile(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
@@ -66,14 +77,18 @@ export function useSettingsActions(): UseSettingsActionsResult {
   const changePassword = useCallback(
     async (data: ChangePasswordRequest) => {
       const response = await withToken((token) => settingsService.changePassword(token, data));
-      return Boolean(response && (response as { success?: boolean }).success);
+      const ok = Boolean(response && (response as { success?: boolean }).success);
+      if (ok) invalidateSettingsCache();
+      return ok;
     },
     [withToken]
   );
 
   const resetSettings = useCallback(async () => {
     const response = await withToken((token) => settingsService.resetSettings(token));
-    return Boolean(response && (response as { success?: boolean }).success);
+    const ok = Boolean(response && (response as { success?: boolean }).success);
+    if (ok) invalidateSettingsCache();
+    return ok;
   }, [withToken]);
 
   return {
