@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Shield,
@@ -43,8 +43,9 @@ import {
 } from '@/shared/ui/facade';
 import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
-import { ipcClient, convertTimestamps } from '@/shared/utils';
-import type { CreateUserRequest, UserAccount } from '@/shared/types';
+import { useAdminDashboard, useAdminUserManagement } from '@/domains/admin';
+import type { RecentActivity, SystemStats } from '@/domains/admin';
+import type { CreateUserRequest } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const WorkflowExecutionDashboard = dynamic(
@@ -67,197 +68,42 @@ const SecurityDashboard = dynamic(
   { loading: () => <LoadingState />, ssr: false }
 );
 
-interface SystemStats {
-  totalUsers: number;
-  activeUsers: number;
-  totalTasks: number;
-  completedTasks: number;
-  systemHealth: 'healthy' | 'warning' | 'critical';
-  databaseSize: string;
-  uptime: string;
-  lastBackup: string;
-}
-
-interface RecentActivity {
-  id: string;
-  type: 'user_login' | 'task_created' | 'task_completed' | 'system_error' | 'backup_completed' | 'intervention_started' | 'client_created';
-  description: string;
-  timestamp: string;
-  user?: string;
-  severity?: 'low' | 'medium' | 'high';
-}
-
 export default function AdminPage() {
   const { t } = useTranslation();
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
 
-  // User management state
-  const [users, setUsers] = useState<UserAccount[]>([]);
-  const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-
-  // Load real system stats from API
-  const [stats, setStats] = useState<SystemStats>({
-    totalUsers: 0,
-    activeUsers: 0,
-    totalTasks: 0,
-    completedTasks: 0,
-    systemHealth: 'healthy',
-    databaseSize: '0 MB',
-    uptime: '0h 0m',
-    lastBackup: 'Never'
-  });
-
-   // Load real recent activities from API
-   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
-
-   // Store dashboard stats for dashboard components
-   type DashboardStats = Awaited<ReturnType<typeof ipcClient.dashboard.getStats>>;
-   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
-
-  // Load dashboard stats
-  useEffect(() => {
-    const loadStats = async () => {
-      if (!user?.token) return;
-
-      try {
-        const dashboardStats = await ipcClient.dashboard.getStats(user.token);
-
-         // Get real system information
-          const [healthCheck, dbStats] = await Promise.all([
-            ipcClient.admin.healthCheck().catch(() => 'unknown'),
-            ipcClient.admin.getDatabaseStats(user.token).catch(() => ({ size_bytes: 0 }))
-          ]);
-
-        // Store raw dashboard stats for dashboard components
-        setDashboardStats(dashboardStats);
-
-        // Map dashboard stats to SystemStats interface
-        setStats({
-          totalUsers: dashboardStats.users?.total || 0,
-          activeUsers: dashboardStats.users?.active || 0,
-          totalTasks: dashboardStats.tasks?.total || 0,
-          completedTasks: dashboardStats.tasks?.completed || 0,
-          systemHealth: typeof healthCheck === 'string' && healthCheck === 'OK' ? 'healthy' : 'warning',
-           databaseSize: typeof dbStats === 'object' && dbStats && 'size_bytes' in dbStats ?
-             `${Math.round((dbStats as Record<string, unknown>).size_bytes as number / 1024 / 1024)} MB` : 'Unknown',
-          uptime: 'Real-time', // Could be enhanced with actual uptime tracking
-          lastBackup: 'Auto-managed' // Could be enhanced with backup status
-        });
-
-        // Load recent activities from backend
-        try {
-          const activitiesData = await ipcClient.notifications.getRecentActivities(user.token);
-           const mappedActivities: RecentActivity[] = (activitiesData as Record<string, unknown>[]).map((activity) => ({
-            id: activity.id as string,
-            type: activity.type as RecentActivity['type'],
-            description: activity.description as string,
-            timestamp: activity.timestamp as string,
-            user: activity.user as string
-          }));
-          setRecentActivities(mappedActivities);
-        } catch (error) {
-          console.error('Failed to load recent activities:', error);
-          // Fallback to placeholder on error
-          const mappedActivities: RecentActivity[] = [
-            {
-              id: '1',
-              type: 'system_error',
-              description: 'Erreur de chargement des activités récentes',
-              timestamp: new Date().toISOString(),
-              user: 'Système'
-            }
-          ];
-          setRecentActivities(mappedActivities);
-        }
-      } catch (error) {
-        console.error('Failed to load dashboard stats:', error);
-        // Keep default values on error
-      }
-    };
-
-    if (user?.token) {
-      loadStats();
-    }
-   }, [user?.token]);
+  // Domain hooks — no direct IPC calls in page
+  const { stats, recentActivities, dashboardStats } = useAdminDashboard();
+  const {
+    filteredUsers,
+    isLoading: isLoadingUsers,
+    searchQuery: userSearchQuery,
+    roleFilter: userRoleFilter,
+    showAddModal: showAddUserModal,
+    setSearchQuery: setUserSearchQuery,
+    setRoleFilter: setUserRoleFilter,
+    setShowAddModal: setShowAddUserModal,
+    loadUsers,
+    addUser: handleAddUser,
+    deleteUser,
+    updateUserStatus: handleUpdateUserStatus,
+  } = useAdminUserManagement();
 
   // Check if user is admin
   useEffect(() => {
     if (profile && profile.role !== 'admin' && profile.role !== 'supervisor') {
       router.push('/unauthorized');
     }
-   }, [profile, router]);
-
-   // User management functions
-   const loadUsers = useCallback(async () => {
-     if (!user?.token) return;
-
-     try {
-       setIsLoadingUsers(true);
-       const result = await ipcClient.users.list(50, 0, user.token);
-       if (result && result.data) {
-         const normalizedUsers = (result.data || []).map(user => convertTimestamps(user));
-         setUsers(normalizedUsers as UserAccount[]);
-       }
-     } catch (error) {
-       console.error('Failed to load users:', error);
-     } finally {
-       setIsLoadingUsers(false);
-     }
-   }, [user?.token]);
-
-   const handleAddUser = useCallback(async (userData: CreateUserRequest) => {
-     if (!user?.token) return;
-
-     try {
-       await ipcClient.users.create(userData, user.token);
-      setShowAddUserModal(false);
-      loadUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to add user:', error);
-    }
-  }, [user?.token, loadUsers]);
-
-  const handleDeleteUser = async (userId: string) => {
-    if (!user?.token) return;
-
-    if (!confirm(t('users.confirmDelete'))) {
-      return;
-    }
-
-    try {
-      await ipcClient.users.delete(userId, user.token);
-      loadUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
-  };
-
-  const handleUpdateUserStatus = async (userId: string, isActive: boolean) => {
-    if (!user?.token) return;
-
-    try {
-      if (isActive) {
-        await ipcClient.users.unbanUser(userId, user.token);
-      } else {
-        await ipcClient.users.banUser(userId, user.token);
-      }
-      loadUsers(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to update user status:', error);
-    }
-  };
+  }, [profile, router]);
 
   // Load users when users tab is active
   useEffect(() => {
-    if (activeTab === 'users' && user?.token) {
+    if (activeTab === 'users') {
       loadUsers();
     }
-  }, [activeTab, user?.token, loadUsers]);
+  }, [activeTab, loadUsers]);
 
   if (!profile || (profile.role !== 'admin' && profile.role !== 'supervisor')) {
     return (
@@ -269,6 +115,10 @@ export default function AdminPage() {
       </PageShell>
     );
   }
+
+  const handleDeleteUser = (userId: string) => {
+    deleteUser(userId, t('users.confirmDelete'));
+  };
 
   const getActivityIcon = (type: RecentActivity['type']) => {
     switch (type) {
@@ -481,7 +331,7 @@ export default function AdminPage() {
                  <div className="space-y-3">
                    {isLoadingUsers ? (
                      <LoadingState message={t('common.loading')} />
-                   ) : users.length === 0 ? (
+                   ) : filteredUsers.length === 0 ? (
                      <EmptyState
                        icon={<User className="h-8 w-8 text-muted-foreground" />}
                        title={t('users.noUsers')}
@@ -489,14 +339,7 @@ export default function AdminPage() {
                      />
                    ) : (
                      <div className="space-y-2">
-                       {users
-                         .filter(user =>
-                           (userRoleFilter === 'all' || user.role === userRoleFilter) &&
-                           (userSearchQuery === '' ||
-                            `${user.first_name} ${user.last_name}`.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-                            user.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
-                         )
-                         .map((user) => (
+                       {filteredUsers.map((user) => (
                            <div key={user.id} className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
                              <div className="flex items-center gap-3">
                                <div className="w-10 h-10 bg-[hsl(var(--rpma-surface))] rounded-full flex items-center justify-center">
