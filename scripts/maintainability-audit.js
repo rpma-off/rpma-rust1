@@ -33,6 +33,13 @@ const CONFIG = {
         applicationServiceLines: 200,
         nestingDepth: 4,
         reactComponentLines: 200,
+        forceSplitLines: 500,
+        forceSplitMethods: 10,
+        forceSplitResponsibilities: 3,
+        repeatedLogicThreshold: 3,
+        minRepeatedLogicLineLength: 20,
+        forceRefactorUseEffects: 5,
+        forceRefactorDerivedStates: 3,
     },
     excludedDirs: ['node_modules', '.next', 'dist', 'target', '__tests__', '.git'],
     projectRoot: path.join(__dirname, '..'),
@@ -189,10 +196,10 @@ function countRepeatedLogic(lines) {
             .replace(/\/\/.*$/, '')
             .replace(/"[^"]*"|'[^']*'|`[^`]*`/g, '"STR"')
             .replace(/\b\d+\b/g, 'N');
-        if (normalised.length < 20) continue;
+        if (normalised.length < CONFIG.thresholds.minRepeatedLogicLineLength) continue;
         counts.set(normalised, (counts.get(normalised) || 0) + 1);
     }
-    return [...counts.values()].filter(v => v >= 3).length;
+    return [...counts.values()].filter(v => v >= CONFIG.thresholds.repeatedLogicThreshold).length;
 }
 
 function detectResponsibilities(lines, language) {
@@ -229,9 +236,9 @@ function enforceForceSplitRule({ lines, methodCount, findings, language }) {
     const repeatedLogicClusters = countRepeatedLogic(lines);
     const mixedIoBusiness = hasMixedIoAndBusiness(lines);
     if (
-        lines.length > 500 &&
-        methodCount > 10 &&
-        responsibilities > 3 &&
+        lines.length > CONFIG.thresholds.forceSplitLines &&
+        methodCount > CONFIG.thresholds.forceSplitMethods &&
+        responsibilities > CONFIG.thresholds.forceSplitResponsibilities &&
         mixedIoBusiness &&
         repeatedLogicClusters > 0
     ) {
@@ -250,7 +257,7 @@ function countDerivedStates(lines) {
         const t = line.trim();
         return (
             /const\s+\w+\s*=\s*useMemo\s*\(/.test(t) ||
-            /const\s+\w+\s*=\s*.*\.(map|filter|reduce|sort|find)\(/.test(t) ||
+            /const\s+\w+\s*=\s*(?:\[[^\]]*\]|\w+)\.(map|filter|reduce|sort|find)\(/.test(t) ||
             /const\s+\w+\s*=\s*.*\?.*:/.test(t)
         );
     }).length;
@@ -419,7 +426,11 @@ function analyseTsFile(filePath) {
     if (isTsx) {
         const useEffectCount = lines.filter(line => /\buseEffect\s*\(/.test(line)).length;
         const derivedStateCount = countDerivedStates(lines);
-        if (lines.length > 200 && useEffectCount > 5 && derivedStateCount > 3) {
+        if (
+            lines.length > CONFIG.thresholds.reactComponentLines &&
+            useEffectCount > CONFIG.thresholds.forceRefactorUseEffects &&
+            derivedStateCount > CONFIG.thresholds.forceRefactorDerivedStates
+        ) {
             findings.push({
                 type: 'force-refactor-component',
                 message: `Component triggers FORCE REFACTOR (${lines.length} lines, ${useEffectCount} useEffect, ${derivedStateCount} derived states)`,

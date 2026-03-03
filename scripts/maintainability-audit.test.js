@@ -28,6 +28,7 @@ function serviceStep${i}() {
 }
 `).join('\n');
 
+    // Keep file size safely above the FORCE SPLIT line threshold (500+ lines).
     const filler = Array.from({ length: 430 }, (_, i) => `const line${i} = ${i};`).join('\n');
     const content = `
 import fs from 'fs';
@@ -43,7 +44,9 @@ ${filler}
 });
 
 test('flags FORCE REFACTOR for oversized effect-heavy component', () => {
+    // Intentionally effect-heavy/unoptimized test fixture to validate threshold detection.
     const effects = Array.from({ length: 6 }, (_, i) => `useEffect(() => { setCount((v) => v + ${i}); }, []);`).join('\n');
+    // Keep component size safely above the FORCE REFACTOR line threshold (200+ lines).
     const ui = Array.from({ length: 210 }, () => '<div className="row" />').join('\n');
     const content = `
 import { useEffect, useMemo, useState } from 'react';
