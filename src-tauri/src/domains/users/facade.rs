@@ -1,16 +1,15 @@
 use std::sync::Arc;
 
-use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::domains::users::application::{UserAction, UserListResponse, UserResponse};
 use crate::domains::users::domain::UserAccessPolicy;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::shared::contracts::auth::{UserRole, UserSession};
+use crate::shared::contracts::user_account::UserAccountManager;
 use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::CommandContext;
 
-#[derive(Debug, Clone)]
 pub struct UsersServices {
-    pub auth_service: Arc<AuthService>,
+    pub account_manager: Arc<dyn UserAccountManager>,
     pub user_service: Arc<UserService>,
 }
 
@@ -131,7 +130,7 @@ impl UsersFacade {
                     UserAction::Create { data } => {
                         let role = self.parse_role(&data.role)?;
                         let user = services
-                            .auth_service
+                            .account_manager
                             .create_account(
                                 &data.email,
                                 &data.email,
@@ -146,7 +145,7 @@ impl UsersFacade {
                         UserResponse::Created(user)
                     }
                     UserAction::Get { id } => {
-                        let user = services.auth_service.get_user(&id).map_err(|e| {
+                        let user = services.account_manager.get_user(&id).map_err(|e| {
                             AppError::Database(format!("User retrieval failed: {}", e))
                         })?;
                         match user {
@@ -161,7 +160,7 @@ impl UsersFacade {
                         };
 
                         let user = services
-                            .auth_service
+                            .account_manager
                             .update_user(
                                 &id,
                                 data.email.as_deref(),
@@ -181,14 +180,14 @@ impl UsersFacade {
                             &id,
                             "delete your own account",
                         )?;
-                        services.auth_service.delete_user(&id).map_err(|e| {
+                        services.account_manager.delete_user(&id).map_err(|e| {
                             AppError::Database(format!("User deletion failed: {}", e))
                         })?;
                         UserResponse::Deleted
                     }
                     UserAction::List { limit, offset } => {
                         let users = services
-                            .auth_service
+                            .account_manager
                             .list_users(Some(limit.unwrap_or(50)), Some(offset.unwrap_or(0)))
                             .map_err(|e| {
                                 AppError::Database(format!("User listing failed: {}", e))
@@ -197,7 +196,7 @@ impl UsersFacade {
                     }
                     UserAction::ChangePassword { id, new_password } => {
                         services
-                            .auth_service
+                            .account_manager
                             .change_password(&id, &new_password)
                             .map_err(|e| {
                                 AppError::Database(format!("Password change failed: {}", e))

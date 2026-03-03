@@ -9,7 +9,7 @@ use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
     SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
 };
-use crate::domains::tasks::infrastructure::task::TaskService;
+use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::CommandContext;
@@ -173,7 +173,7 @@ impl InterventionsFacade {
 
     /// Enforce that the current user may access interventions belonging to a task.
     ///
-    /// The caller must pass the result of `task_service.check_task_assignment` as
+    /// The caller must pass the result of `task_checker.check_task_assignment` as
     /// `is_assigned_to_task`. Admins and supervisors are always allowed through.
     pub fn check_task_intervention_access(
         &self,
@@ -220,7 +220,7 @@ impl InterventionsFacade {
     async fn ensure_task_assignment(
         &self,
         ctx: &CommandContext,
-        task_service: &Arc<TaskService>,
+        task_checker: &dyn TaskAssignmentChecker,
         task_id: &str,
         action: &str,
     ) -> Result<(), AppError> {
@@ -228,13 +228,13 @@ impl InterventionsFacade {
             return Ok(());
         }
 
-        let task = task_service
-            .get_task_async(task_id)
+        let assignment = task_checker
+            .get_task_assignment(task_id)
             .await
             .map_err(|_| AppError::Database("Failed to get task".to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
 
-        self.ensure_technician_assignment(&ctx.session, task.technician_id.as_deref(), action)
+        self.ensure_technician_assignment(&ctx.session, assignment.technician_id.as_deref(), action)
     }
 
     fn to_service_start_request(
@@ -287,7 +287,7 @@ impl InterventionsFacade {
         &self,
         command: InterventionsCommand,
         ctx: &CommandContext,
-        task_service: &Arc<TaskService>,
+        task_checker: &dyn TaskAssignmentChecker,
     ) -> Result<InterventionsResponse, AppError> {
         match command {
             InterventionsCommand::Get { intervention_id } => {
@@ -309,7 +309,7 @@ impl InterventionsFacade {
             }
             InterventionsCommand::GetActiveByTask { task_id } => {
                 self.validate_task_id(&task_id)?;
-                let task_access = task_service
+                let task_access = task_checker
                     .check_task_assignment(&task_id, &ctx.session.user_id)
                     .unwrap_or(false);
                 self.check_task_intervention_access(&ctx.session.role, task_access)?;
@@ -330,7 +330,7 @@ impl InterventionsFacade {
             }
             InterventionsCommand::GetLatestByTask { task_id } => {
                 self.validate_task_id(&task_id)?;
-                let task_access = task_service
+                let task_access = task_checker
                     .check_task_assignment(&task_id, &ctx.session.user_id)
                     .unwrap_or(false);
                 self.check_task_intervention_access(&ctx.session.role, task_access)?;
@@ -520,7 +520,7 @@ impl InterventionsFacade {
                 self.ensure_intervention_permission(ctx)?;
                 self.ensure_task_assignment(
                     ctx,
-                    task_service,
+                    task_checker,
                     &request.task_id,
                     "start interventions",
                 )
@@ -607,7 +607,7 @@ impl InterventionsFacade {
                 self.ensure_intervention_permission(ctx)?;
                 self.ensure_task_assignment(
                     ctx,
-                    task_service,
+                    task_checker,
                     &request.task_id,
                     "start interventions",
                 )

@@ -98,7 +98,7 @@ pub async fn intervention_get_progress(
         .execute(
             InterventionsCommand::GetProgress { intervention_id },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -139,7 +139,7 @@ pub async fn intervention_advance_step(
                 issues: None,
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -178,7 +178,7 @@ pub async fn intervention_save_step_progress(
                 photos: None,
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await
     {
@@ -242,7 +242,7 @@ pub async fn intervention_progress(
         },
     };
 
-    match facade.execute(command, &ctx, &state.task_service).await? {
+    match facade.execute(command, &ctx, state.task_service.as_ref()).await? {
         InterventionsResponse::ProgressWithSteps { progress, steps } => Ok(ApiResponse::success(
             InterventionProgressResponse::Retrieved { progress, steps },
         )

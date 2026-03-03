@@ -41,7 +41,7 @@ pub async fn intervention_start(
         .execute(
             InterventionsCommand::Start { request },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -73,7 +73,7 @@ pub async fn intervention_update(
         .execute(
             InterventionsCommand::Update { id, data },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -101,7 +101,7 @@ pub async fn intervention_delete(
         .execute(
             InterventionsCommand::Delete { id },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -132,7 +132,7 @@ pub async fn intervention_finalize(
         .execute(
             InterventionsCommand::Finalize { request },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await?
     {
@@ -173,7 +173,7 @@ pub async fn intervention_workflow(
         }
     };
 
-    match facade.execute(command, &ctx, &state.task_service).await? {
+    match facade.execute(command, &ctx, state.task_service.as_ref()).await? {
         InterventionsResponse::Workflow(response) => {
             Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
         }

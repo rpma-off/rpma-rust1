@@ -38,7 +38,7 @@ pub async fn intervention_get(
                 intervention_id: id.clone(),
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await;
     match response {
@@ -80,7 +80,7 @@ pub async fn intervention_get_active_by_task(
                 task_id: task_id.clone(),
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await
     {
@@ -122,7 +122,7 @@ pub async fn intervention_get_latest_by_task(
                 task_id: task_id.clone(),
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await
     {
@@ -166,7 +166,7 @@ pub async fn intervention_get_step(
                 step_id: step_id.clone(),
             },
             &ctx,
-            &state.task_service,
+            state.task_service.as_ref(),
         )
         .await
     {

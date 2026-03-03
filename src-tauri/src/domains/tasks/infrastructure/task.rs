@@ -617,3 +617,28 @@ impl TaskService {
         import_service.get_tasks_for_export(query)
     }
 }
+
+// -- Shared contract implementation --
+
+use async_trait::async_trait;
+use crate::shared::contracts::task_assignment::{TaskAssignmentChecker, TaskAssignmentInfo};
+
+#[async_trait]
+impl TaskAssignmentChecker for TaskService {
+    fn check_task_assignment(&self, task_id: &str, user_id: &str) -> Result<bool, crate::shared::ipc::errors::AppError> {
+        self.validation
+            .check_assignment_eligibility(task_id, user_id)
+            .map_err(convert_to_app_error)
+    }
+
+    async fn get_task_assignment(&self, task_id: &str) -> Result<Option<TaskAssignmentInfo>, crate::shared::ipc::errors::AppError> {
+        let task = self
+            .queries
+            .get_task_async(task_id)
+            .await
+            .map_err(convert_to_app_error)?;
+        Ok(task.map(|t| TaskAssignmentInfo {
+            technician_id: t.technician_id,
+        }))
+    }
+}

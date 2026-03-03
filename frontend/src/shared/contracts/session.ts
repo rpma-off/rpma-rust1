@@ -1,12 +1,20 @@
-import {
-  getSessionToken as getAuthSessionToken,
-  requireSessionToken as requireAuthSessionToken,
-} from '@/domains/auth/services/sessionToken';
+import { AuthSecureStorage } from '@/lib/secureStorage';
 
 export async function getSessionToken(): Promise<string | null> {
-  return getAuthSessionToken();
+  try {
+    const session = await AuthSecureStorage.getSession();
+    return session.token;
+  } catch {
+    return null;
+  }
 }
 
 export async function requireSessionToken(): Promise<string> {
-  return requireAuthSessionToken();
+  const token = await getSessionToken();
+  if (!token) {
+    const error = new Error("Erreur d'authentification. Veuillez vous reconnecter.");
+    (error as Error & { code: string }).code = 'AUTHENTICATION';
+    throw error;
+  }
+  return token;
 }

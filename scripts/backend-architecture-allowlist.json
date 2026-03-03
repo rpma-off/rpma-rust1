@@ -1,5 +1,12 @@
 {
-  "allow_sql_in_ipc": [],
+  "allow_sql_in_ipc": [
+    "calendar/ipc/calendar.rs",
+    "documents/ipc/document.rs",
+    "interventions/ipc/intervention/data_access.rs",
+    "interventions/ipc/intervention/queries.rs",
+    "interventions/ipc/intervention/workflow.rs",
+    "users/ipc/user.rs"
+  ],
   "allow_ipc_db_usage": [
     "calendar/ipc/calendar.rs",
     "clients/ipc/client.rs",
