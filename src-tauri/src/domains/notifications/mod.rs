@@ -6,8 +6,8 @@ pub(crate) mod application;
 pub mod domain;
 #[cfg(not(feature = "export-types"))]
 pub mod domain;
-pub mod infrastructure;
-pub mod ipc;
+pub(crate) mod infrastructure;
+pub(crate) mod ipc;
 #[cfg(test)]
 pub(crate) mod tests;
 

@@ -10,4 +10,3 @@ pub mod ipc;
 pub mod logging;
 pub mod repositories;
 pub mod services;
-pub mod workflow;

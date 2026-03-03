@@ -15,4 +15,3 @@ pub mod security_monitor;
 pub mod system;
 pub mod validation;
 pub mod websocket_event_handler;
-pub mod worker_pool;

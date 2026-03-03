@@ -12,9 +12,3 @@ pub(crate) mod task_repository_streaming;
 pub(crate) mod task_statistics;
 pub(crate) mod task_update;
 pub(crate) mod task_validation;
-pub(crate) mod workflow_cleanup;
-pub(crate) mod workflow_progression;
-pub(crate) mod workflow_strategy;
-#[cfg(test)]
-pub(crate) mod workflow_strategy_tests;
-pub(crate) mod workflow_validation;
