@@ -1,6 +1,5 @@
 import React from 'react';
-import { CheckCircle, Clock, Camera, Shield } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Clock, Camera, Shield } from 'lucide-react';
 
 type CompletedHeroProps = {
   task: {
@@ -9,7 +8,7 @@ type CompletedHeroProps = {
     vehicle_make?: string | null;
     vehicle_model?: string | null;
     vehicle_year?: string | null;
-    customer_name?: string;
+    customer_name?: string | null;
     start_time?: string | null;
     end_time?: string | null;
   };
