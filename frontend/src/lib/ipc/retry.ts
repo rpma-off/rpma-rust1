@@ -42,7 +42,7 @@ export function isRetryableError(error: RetryError): boolean {
   if (enhancedError.code === 'AUTH_FORBIDDEN' || enhancedError.code === 'AUTHORIZATION') {
     return false;
   }
-  if (message.includes('permissions') || message.includes('insufficient permissions')) {
+  if (message.includes('permissions')) {
     return false;
   }
 
