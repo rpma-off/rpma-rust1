@@ -5,7 +5,7 @@
 
 use crate::db::Database;
 use crate::domains::inventory::domain::material::{
-    available_stock, effective_threshold, is_low_stock_with_policy, DEFAULT_LOW_STOCK_THRESHOLD,
+    effective_threshold, DEFAULT_LOW_STOCK_THRESHOLD,
 };
 use crate::domains::inventory::domain::models::material::{
     InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
@@ -827,31 +827,38 @@ impl MaterialService {
     }
 
     /// Get low stock materials
+    ///
+    /// Policy: a material is "low stock" when its available stock (current − reserved)
+    /// falls at or below its effective threshold (minimum_stock, defaulting to
+    /// DEFAULT_LOW_STOCK_THRESHOLD when NULL).  The SQL implements this policy
+    /// directly so no in-process re-filtering is required.
     pub fn get_low_stock_materials(&self) -> MaterialResult<LowStockMaterialsResponse> {
         let threshold_fallback = effective_threshold(None);
+        // reserved_stock is not a DB column; it is always 0.0 (DEFAULT_RESERVED_STOCK).
+        // available_stock = current_stock − 0.0 = current_stock.
         let sql = r#"
             SELECT
-              id AS material_id,
+              id                                    AS material_id,
               sku,
               name,
               unit_of_measure,
               current_stock,
-              0.0 AS reserved_stock,
-              (current_stock - 0.0) AS available_stock,
-              COALESCE(minimum_stock, ?) AS minimum_stock,
-              COALESCE(minimum_stock, ?) AS effective_threshold,
+              0.0                                   AS reserved_stock,
+              current_stock                         AS available_stock,
+              COALESCE(minimum_stock, ?)            AS minimum_stock,
+              COALESCE(minimum_stock, ?)            AS effective_threshold,
               CASE
-                WHEN (current_stock - 0.0) < COALESCE(minimum_stock, ?)
-                  THEN COALESCE(minimum_stock, ?) - (current_stock - 0.0)
+                WHEN current_stock < COALESCE(minimum_stock, ?)
+                  THEN COALESCE(minimum_stock, ?) - current_stock
                 ELSE 0.0
-              END AS shortage_quantity
+              END                                   AS shortage_quantity
             FROM materials
             WHERE is_active = 1
-              AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
+              AND current_stock <= COALESCE(minimum_stock, ?)
             ORDER BY shortage_quantity DESC, available_stock ASC, name ASC
         "#;
 
-        let raw_items = self.db.query_as::<LowStockMaterial>(
+        let items = self.db.query_as::<LowStockMaterial>(
             sql,
             params![
                 threshold_fallback,
@@ -861,23 +868,6 @@ impl MaterialService {
                 threshold_fallback
             ],
         )?;
-
-        let items: Vec<LowStockMaterial> = raw_items
-            .into_iter()
-            .filter(|item| {
-                is_low_stock_with_policy(
-                    item.current_stock,
-                    Some(item.minimum_stock),
-                    Some(item.reserved_stock),
-                )
-            })
-            .map(|mut item| {
-                item.available_stock =
-                    available_stock(item.current_stock, Some(item.reserved_stock));
-                item.effective_threshold = effective_threshold(Some(item.minimum_stock));
-                item
-            })
-            .collect();
 
         Ok(LowStockMaterialsResponse {
             total: items.len() as i32,

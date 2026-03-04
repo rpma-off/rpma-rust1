@@ -27,7 +27,6 @@ import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } from 'lucide-react';
 import { useMaterials } from '../hooks/useMaterials';
 import type { Material, MaterialType } from '../api/types';
-import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useInventory } from '../api';
 import { MaterialForm } from './MaterialForm';
 import { toast } from 'sonner';
@@ -73,8 +72,7 @@ export function MaterialCatalog() {
     search: searchTerm || undefined,
   });
 
-  const { stats } = useInventoryStats();
-  const { updateStock } = useInventory();
+  const { stats, updateStock } = useInventory();
 
   const filteredMaterials = useMemo(() => materials ?? [], [materials]);
   const hasActiveFilters = searchTerm.trim().length > 0 || materialTypeFilter !== 'all' || categoryFilter !== 'all';

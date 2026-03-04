@@ -13,7 +13,6 @@ import { VirtualizedTable } from '@/components/ui/virtualized-table';
 import { StockLevelIndicator } from './StockLevelIndicator';
 import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../api';
-import { useInventoryStats } from '../hooks/useInventoryStats';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Material, MaterialType } from '@/shared/types';
 import { 
@@ -63,8 +62,6 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     active_only: !showInactive,
     limit: 100,
   });
-
-  const { stats: _inventoryStats } = useInventoryStats();
 
   // Filter materials based on search term
   const filteredMaterials = materials.filter(material => 

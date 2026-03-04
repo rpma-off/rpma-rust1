@@ -2,7 +2,18 @@ use crate::domains::inventory::domain::models::material::UnitOfMeasure;
 
 use super::errors::{InventoryDomainError, InventoryDomainResult};
 
+/// Fallback low-stock threshold used when a material has no `minimum_stock` configured.
+///
+/// A value of `0.0` means a material is only flagged as low-stock when its
+/// available stock has reached zero.  Change this constant to apply a different
+/// global default; all SQL queries and domain helpers read from here so the
+/// policy stays centralized in one place.
 pub const DEFAULT_LOW_STOCK_THRESHOLD: f64 = 0.0;
+
+/// Assumed reserved-stock value used in domain calculations.
+/// The `materials` table has no `reserved_stock` column; this constant captures
+/// that assumption explicitly so that `effective_reserved_stock` and
+/// `is_low_stock_with_policy` remain correct if a column is added later.
 pub const DEFAULT_RESERVED_STOCK: f64 = 0.0;
 
 pub fn effective_threshold(minimum_stock: Option<f64>) -> f64 {
