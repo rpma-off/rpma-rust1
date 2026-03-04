@@ -5,6 +5,20 @@ import { useAuth } from '@/domains/auth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
 import type { JsonValue } from '@/types/json';
 import type { MaterialType, UnitOfMeasure } from '../api/types';
+import type { CreateMaterialRequest } from '../server';
+
+// Must stay in sync with the Rust UnitOfMeasure enum in src-tauri/src/models
+const VALID_UNITS: UnitOfMeasure[] = ['piece', 'meter', 'liter', 'gram', 'roll'];
+
+export function normalizeMaterialRequest<T extends { unit_of_measure?: UnitOfMeasure | string }>(
+  data: T
+): Omit<T, 'unit_of_measure'> & { unit_of_measure?: UnitOfMeasure } {
+  const unit = data.unit_of_measure;
+  return {
+    ...data,
+    unit_of_measure: (unit && VALID_UNITS.includes(unit as UnitOfMeasure) ? unit as UnitOfMeasure : undefined),
+  };
+}
 
 interface MaterialFormData {
   sku: string;
@@ -118,11 +132,18 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
       return false;
     }
 
+    // Guard: show user-facing error and abort early (required for create path where unit is mandatory).
+    // normalizeMaterialRequest below provides defense-in-depth for the update path.
+    if (!formData.unit_of_measure || !VALID_UNITS.includes(formData.unit_of_measure)) {
+      setError('Unit of measure is required');
+      return false;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      const requestData = {
+      const requestData = normalizeMaterialRequest({
         ...formData,
         minimum_stock: formData.minimum_stock ?? undefined,
         maximum_stock: formData.maximum_stock ?? undefined,
@@ -139,7 +160,7 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
         warehouse_id: formData.warehouse_id || undefined,
         category_id: formData.category_id || undefined,
         specifications: formData.specifications ?? undefined,
-      };
+      });
 
       if (initialMaterial) {
         const materialId = typeof initialMaterial.id === 'string' ? initialMaterial.id : '';
@@ -150,7 +171,7 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
 
         await inventoryIpc.material.update(materialId, requestData, user.token);
       } else {
-        await inventoryIpc.material.create(requestData, user.token);
+        await inventoryIpc.material.create(requestData as CreateMaterialRequest, user.token);
       }
 
       return true;
