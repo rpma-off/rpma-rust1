@@ -1,2 +1,2 @@
 ﻿export { LoadingSpinner } from './loading';
-export default undefined;
+export { LoadingSpinner as default } from './loading';
