@@ -140,8 +140,6 @@ export function useQuoteDetailPage(quoteId: string) {
     toast.info('Fonctionnalité de duplication à venir');
   };
 
-  const hasCustomerResponse = false;
-  const hasPublicLink = false;
   const isDraft = quote?.status === 'draft';
   const isSent = quote?.status === 'sent';
   const isAccepted = quote?.status === 'accepted';
@@ -173,8 +171,6 @@ export function useQuoteDetailPage(quoteId: string) {
     setNewUnitPrice,
     newDescription,
     setNewDescription,
-    hasCustomerResponse,
-    hasPublicLink,
     isDraft,
     isSent,
     isAccepted,
