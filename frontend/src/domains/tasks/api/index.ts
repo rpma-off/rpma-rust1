@@ -77,20 +77,6 @@ export type {
 export type { UpdateTaskData, TaskPhotoQueryParams } from '../server';
 
 export {
-  WorkflowService,
-  workflowService,
-  WorkflowTemplatesService,
-  workflowTemplatesService,
   TaskWorkflowSyncService,
   taskWorkflowSyncService,
-} from '../services';
-export type {
-  WorkflowExecution,
-  WorkflowExecutionStep,
-  CreateWorkflowExecutionDTO,
-  StartTimingDTO,
-  SignatureDTO,
-  WorkflowTemplate,
-  WorkflowStepTemplate,
-  SOPInstruction,
 } from '../services';

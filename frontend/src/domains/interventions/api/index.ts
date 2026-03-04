@@ -58,6 +58,21 @@ export {
 } from '../utils/step-export';
 export type { StepExportPayload } from '../utils/step-export';
 
+export {
+  WorkflowService,
+  workflowService,
+  WorkflowTemplatesService,
+  workflowTemplatesService,
+} from '../workflow/services';
+export type {
+  CreateWorkflowExecutionDTO,
+  StartTimingDTO,
+  SignatureDTO,
+  WorkflowTemplate,
+  WorkflowStepTemplate,
+  SOPInstruction,
+} from '../workflow/services';
+
 export type {
   PPFInterventionData,
   PPFInterventionStep,
