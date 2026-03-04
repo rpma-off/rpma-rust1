@@ -13,12 +13,15 @@ import {
 } from '@/domains/interventions';
 import type { Intervention } from '@/shared/types';
 import type { InterventionStep, StepType } from '@/lib/backend';
+import type { MaterialConsumption } from '@/shared/types/inventory.types';
 import { interventionKeys } from '@/lib/query-keys';
 import { printCompletedInterventionReport, saveCompletedInterventionReport } from '../services/completed-task-report.service';
 import { downloadJsonFile } from '@/domains/interventions';
 import type { TaskWithDetails } from '@/types/task.types';
 import { useCustomerDisplayName, useCustomerInfo } from './useNormalizedTask';
 import { taskGateway } from '../api/taskGateway';
+import { inventoryIpc } from '@/domains/inventory';
+import { useAuth } from '@/domains/auth';
 
 export function useCompletedTaskPage() {
   const router = useRouter();
@@ -26,10 +29,12 @@ export function useCompletedTaskPage() {
   const taskId = params.id as string;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const [task, setTask] = useState<TaskWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [materials, setMaterials] = useState<MaterialConsumption[]>([]);
   const [expandedWorkflowSteps, setExpandedWorkflowSteps] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
@@ -85,6 +90,26 @@ export function useCompletedTaskPage() {
   useEffect(() => {
     void fetchTask();
   }, [fetchTask]);
+
+  // Redirect if the intervention is loaded but not yet completed
+  useEffect(() => {
+    if (interventionData && interventionData.status !== 'completed') {
+      router.push(`/tasks/${taskId}/workflow/ppf`);
+    }
+  }, [interventionData, router, taskId]);
+
+  // Fetch materials consumption when an intervention ID is known
+  useEffect(() => {
+    if (!interventionData?.id || !session?.token) return;
+
+    inventoryIpc
+      .getInterventionConsumption(session.token, interventionData.id)
+      .then(setMaterials)
+      .catch((err) => {
+        console.error('Failed to load materials consumption:', err);
+        setMaterials([]);
+      });
+  }, [interventionData?.id, session?.token]);
 
   const handleSaveReport = useCallback(async () => {
     if (!task || !fullInterventionData?.id) {
@@ -257,6 +282,7 @@ export function useCompletedTaskPage() {
     customerInfo,
     customerDisplayName,
     fullInterventionData,
+    materials,
     workflowStepsArray,
     workflowSteps,
     expandedWorkflowSteps,

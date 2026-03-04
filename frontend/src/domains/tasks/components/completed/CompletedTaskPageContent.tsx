@@ -29,12 +29,14 @@ import {
   CheckCircle,
   FileText,
   MessageSquare,
+  Package,
   Signature,
   Star,
   TrendingUp,
 } from 'lucide-react';
 import { useTranslation } from '@/shared/hooks';
 import { useCompletedTaskPage } from '../../hooks/useCompletedTaskPage';
+import type { MaterialConsumption } from '@/shared/types/inventory.types';
 
 export function CompletedTaskPageContent() {
   const router = useRouter();
@@ -47,6 +49,7 @@ export function CompletedTaskPageContent() {
     customerInfo,
     customerDisplayName,
     fullInterventionData,
+    materials,
     workflowStepsArray,
     expandedWorkflowSteps,
     duration,
@@ -128,7 +131,7 @@ export function CompletedTaskPageContent() {
 
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <CompletedHero
-          task={task as any}
+          task={task}
           duration={duration}
           photoCount={photoCount}
           checklistCount={checklistCount}
@@ -198,7 +201,7 @@ export function CompletedTaskPageContent() {
                           <div className="flex gap-0.5">
                             {[...Array(5)].map((_, i) => (
                               <span key={i} className={`text-lg ${i < fullInterventionData.customer_satisfaction! ? 'text-amber-500' : 'text-amber-200'}`}>
-                                ?
+                                ★
                               </span>
                             ))}
                           </div>
@@ -283,6 +286,61 @@ export function CompletedTaskPageContent() {
                       </div>
                     </>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {materials.length > 0 && (
+              <Card className="rounded-xl border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5 text-indigo-600" />
+                    Matériaux Utilisés
+                  </CardTitle>
+                  <CardDescription>
+                    Consommation de matériaux durant l&apos;intervention
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {materials.map((m: MaterialConsumption) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-gray-600" title={m.material_id}>
+                            {m.material_id.slice(0, 8)}&hellip;{m.material_id.slice(-4)}
+                          </span>
+                          {m.batch_used && (
+                            <span className="text-xs text-gray-500">Lot: {m.batch_used}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <span>Qté: <span className="font-semibold text-gray-900">{m.quantity_used}</span></span>
+                          {m.waste_quantity > 0 && (
+                            <span className="text-amber-600">Déchet: {m.waste_quantity}</span>
+                          )}
+                          {m.total_cost != null && (
+                            <span className="font-semibold text-indigo-700">
+                              {m.total_cost.toFixed(2)} €
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {materials.some((m: MaterialConsumption) => m.total_cost != null) && (
+                      <div className="mt-3 flex justify-end border-t border-gray-200 pt-3">
+                        <span className="text-sm font-extrabold text-indigo-700">
+                          Total:{' '}
+                          {materials
+                            .reduce((sum: number, m: MaterialConsumption) => sum + (m.total_cost ?? 0), 0)
+                            .toFixed(2)}{' '}
+                          €
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -390,7 +448,7 @@ export function CompletedTaskPageContent() {
 
           <div className="lg:col-span-1">
             <CompletedSidebar
-              task={task as any}
+              task={task}
               customer={{
                 name: customerDisplayName,
                 email: customerInfo?.email,

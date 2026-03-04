@@ -7,14 +7,11 @@ import {
   Car,
   Shield,
   Thermometer,
-  Droplets,
   Clock,
   Badge,
-  FileText,
   CheckCircle,
 } from 'lucide-react';
 import { Badge as UIBadge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 type CompletedSidebarProps = {
   task: {
@@ -26,9 +23,9 @@ type CompletedSidebarProps = {
     vehicle_make?: string | null;
     vehicle_model?: string | null;
     vehicle_year?: string | null;
-    vin?: string;
-    ppf_zones?: string[];
-    custom_ppf_zones?: string[];
+    vin?: string | null;
+    ppf_zones?: Array<string> | null;
+    custom_ppf_zones?: Array<string> | null;
     start_time?: string | null;
     end_time?: string | null;
   };

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   CheckSquare,
   Camera,
-  FileText,
   Star,
   TrendingUp,
   Shield,
@@ -84,7 +83,7 @@ export function SummaryStats({
         icon={<CheckSquare className="h-5 w-5 text-emerald-600" />}
         label="Checklist"
         value={`${checklistCompleted}/${checklistTotal}`}
-        description={`${Math.round((checklistCompleted / checklistTotal) * 100)}% complété`}
+        description={`${checklistTotal > 0 ? Math.round((checklistCompleted / checklistTotal) * 100) : 0}% complété`}
         variant="success"
       />
 
