@@ -76,7 +76,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 };
 
 // Enhanced Progress Indicator for long operations
-export const ProgressIndicator: React.FC<{
+export const OperationProgress: React.FC<{
   progress?: number;
   message?: string;
   showPercentage?: boolean;
