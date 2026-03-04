@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
+import { canAccessInventory } from '@/types/auth.types';
 import { inventoryIpc } from '../ipc/inventory.ipc';
 import type {
   Material,
@@ -80,6 +81,7 @@ export interface InventoryQuery {
 }
 
 const AUTH_ERROR_MESSAGE = 'Authentication required';
+const PERMISSION_ERROR_MESSAGE = 'Insufficient permissions for inventory access';
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -103,6 +105,7 @@ function extractMaterialList(result: unknown): Material[] {
 export function useInventory(query?: InventoryQuery) {
   const { user } = useAuth();
   const sessionToken = user?.token;
+  const hasInventoryAccess = canAccessInventory(user ?? null);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +117,13 @@ export function useInventory(query?: InventoryQuery) {
     if (!sessionToken) {
       setMaterials([]);
       setError(AUTH_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+
+    if (!hasInventoryAccess) {
+      setMaterials([]);
+      setError(PERMISSION_ERROR_MESSAGE);
       setLoading(false);
       return;
     }
@@ -134,10 +144,10 @@ export function useInventory(query?: InventoryQuery) {
     } finally {
       setLoading(false);
     }
-  }, [query?.active_only, query?.category, query?.limit, query?.material_type, query?.offset, sessionToken]);
+  }, [hasInventoryAccess, query?.active_only, query?.category, query?.limit, query?.material_type, query?.offset, sessionToken]);
 
   const fetchStats = useCallback(async () => {
-    if (!sessionToken) {
+    if (!sessionToken || !hasInventoryAccess) {
       setStats(null);
       return;
     }
@@ -148,10 +158,10 @@ export function useInventory(query?: InventoryQuery) {
     } catch (err) {
       console.error('Failed to fetch inventory stats:', err);
     }
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const fetchLowStock = useCallback(async () => {
-    if (!sessionToken) {
+    if (!sessionToken || !hasInventoryAccess) {
       setLowStockMaterials([]);
       return;
     }
@@ -162,10 +172,10 @@ export function useInventory(query?: InventoryQuery) {
     } catch (err) {
       console.error('Failed to fetch low stock materials:', err);
     }
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const fetchExpired = useCallback(async () => {
-    if (!sessionToken) {
+    if (!sessionToken || !hasInventoryAccess) {
       setExpiredMaterials([]);
       return;
     }
@@ -176,7 +186,7 @@ export function useInventory(query?: InventoryQuery) {
     } catch (err) {
       console.error('Failed to fetch expired materials:', err);
     }
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const fetchingRef = useRef(false);
 
@@ -198,80 +208,107 @@ export function useInventory(query?: InventoryQuery) {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     const result = await inventoryIpc.material.create(request, sessionToken);
     await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
+  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
 
   const updateMaterial = useCallback(async (id: string, request: CreateMaterialRequest, _userId?: string) => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     const result = await inventoryIpc.material.update(id, request, sessionToken);
     await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
+  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
 
   const updateStock = useCallback(async (request: UpdateStockRequest) => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     const result = await inventoryIpc.stock.updateStock(request, sessionToken);
     await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, sessionToken]);
+  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
 
   const recordConsumption = useCallback(async (request: RecordConsumptionRequest) => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     await inventoryIpc.consumption.recordConsumption(request, sessionToken);
     await Promise.allSettled([fetchMaterials(), fetchStats()]);
-  }, [fetchMaterials, fetchStats, sessionToken]);
+  }, [fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
 
   const getMaterial = useCallback(async (id: string): Promise<Material | null> => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     return inventoryIpc.material.get(id, sessionToken);
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const getMaterialBySku = useCallback(async (sku: string): Promise<Material | null> => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     return inventoryIpc.getMaterialBySku(sessionToken, sku);
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const getInterventionConsumption = useCallback(async (interventionId: string): Promise<MaterialConsumption[]> => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     return inventoryIpc.getInterventionConsumption(sessionToken, interventionId);
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const getInterventionSummary = useCallback(async (interventionId: string): Promise<InterventionMaterialSummary> => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     return inventoryIpc.getInterventionSummary(sessionToken, interventionId);
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   const getMaterialStats = useCallback(async (): Promise<MaterialStats> => {
     if (!sessionToken) {
       throw new Error(AUTH_ERROR_MESSAGE);
     }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
 
     return inventoryIpc.getMaterialStats(sessionToken);
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   return {
     materials,

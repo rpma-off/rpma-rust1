@@ -82,7 +82,7 @@ describe('InventoryProvider', () => {
   });
 
   it('provides inventory data to consumers', async () => {
-    mockUseAuth.mockReturnValue({ user: { token: 'session-token' } } as never);
+    mockUseAuth.mockReturnValue({ user: { token: 'session-token', role: 'technician' } } as never);
     mockInventoryIpc.material.list.mockResolvedValue({ data: [createMaterial()] } as never);
     mockInventoryIpc.getInventoryStats.mockResolvedValue(createStats() as never);
     mockInventoryIpc.reporting.getLowStockMaterials.mockResolvedValue({ items: [], total: 0 } as never);

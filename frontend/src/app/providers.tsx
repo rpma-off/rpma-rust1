@@ -11,7 +11,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000, // 1 minute
-        retry: 1,
+        retry: (failureCount, error) => {
+          // Never retry authorization/permission failures
+          const err = error as Error & { code?: string };
+          if (err?.code === 'AUTH_FORBIDDEN' || err?.code === 'AUTHORIZATION' || err?.code === 'AUTHENTICATION') {
+            return false;
+          }
+          return failureCount < 1;
+        },
       },
     },
   }));

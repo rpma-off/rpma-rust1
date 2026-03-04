@@ -37,6 +37,15 @@ export function isRetryableError(error: RetryError): boolean {
     return false;
   }
 
+  // Don't retry authorization/permission errors (including French user-friendly messages and error codes)
+  const enhancedError = error as Error & { code?: string };
+  if (enhancedError.code === 'AUTH_FORBIDDEN' || enhancedError.code === 'AUTHORIZATION') {
+    return false;
+  }
+  if (message.includes('permissions')) {
+    return false;
+  }
+
   // Don't retry validation errors
   if (message.includes('400') || message.includes('bad request') || message.includes('validation')) {
     return false;

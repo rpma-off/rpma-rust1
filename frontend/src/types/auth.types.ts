@@ -90,6 +90,14 @@ export function canManageTasks(user: UserSession | null): boolean {
 }
 
 /**
+ * Type guard to check if user can access inventory features.
+ * Viewers are explicitly excluded; technician, supervisor, and admin are allowed.
+ */
+export function canAccessInventory(user: UserSession | null): boolean {
+  return user?.role === 'admin' || user?.role === 'supervisor' || user?.role === 'technician';
+}
+
+/**
  * Get display name for user role
  */
 export function getRoleDisplay(role: UserRole): string {

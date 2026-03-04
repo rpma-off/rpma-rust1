@@ -74,7 +74,7 @@ describe('useInventory', () => {
   });
 
   it('loads inventory data when authenticated', async () => {
-    mockUseAuth.mockReturnValue({ user: { token: 'session-token' } } as never);
+    mockUseAuth.mockReturnValue({ user: { token: 'session-token', role: 'technician' } } as never);
     mockInventoryIpc.material.list.mockResolvedValue({ data: [createMaterial()] } as never);
     mockInventoryIpc.getInventoryStats.mockResolvedValue(createStats() as never);
     mockInventoryIpc.reporting.getLowStockMaterials.mockResolvedValue({ items: [], total: 0 } as never);
@@ -104,5 +104,21 @@ describe('useInventory', () => {
 
     expect(result.current.error).toBe('Authentication required');
     expect(mockInventoryIpc.material.list).not.toHaveBeenCalled();
+  });
+
+  it('returns permission error and does not call IPC for viewer role', async () => {
+    mockUseAuth.mockReturnValue({ user: { token: 'session-token', role: 'viewer' } } as never);
+
+    const { result } = renderHook(() => useInventory());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.error).toBe('Insufficient permissions for inventory access');
+    expect(mockInventoryIpc.material.list).not.toHaveBeenCalled();
+    expect(mockInventoryIpc.getInventoryStats).not.toHaveBeenCalled();
+    expect(mockInventoryIpc.reporting.getLowStockMaterials).not.toHaveBeenCalled();
+    expect(mockInventoryIpc.reporting.getExpiredMaterials).not.toHaveBeenCalled();
   });
 });

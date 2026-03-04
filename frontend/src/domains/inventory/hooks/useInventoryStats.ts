@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/domains/auth';
+import { canAccessInventory } from '@/types/auth.types';
 import { inventoryIpc } from '../ipc/inventory.ipc';
 import type { InventoryStats } from '../api/types';
 
 const AUTH_ERROR_MESSAGE = 'Authentication required';
+const PERMISSION_ERROR_MESSAGE = 'Insufficient permissions for inventory access';
 
 export function useInventoryStats() {
   const { user } = useAuth();
   const sessionToken = user?.token;
+  const hasInventoryAccess = canAccessInventory(user ?? null);
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +22,13 @@ export function useInventoryStats() {
     if (!sessionToken) {
       setStats(null);
       setError(AUTH_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+
+    if (!hasInventoryAccess) {
+      setStats(null);
+      setError(PERMISSION_ERROR_MESSAGE);
       setLoading(false);
       return;
     }
@@ -37,7 +47,7 @@ export function useInventoryStats() {
       setLoading(false);
       fetchingRef.current = false;
     }
-  }, [sessionToken]);
+  }, [hasInventoryAccess, sessionToken]);
 
   useEffect(() => {
     void fetchStats();
