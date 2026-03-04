@@ -1,21 +1,5 @@
-import { useDashboardTaskFiltering } from '@/shared/hooks/useDashboardTaskFiltering';
-import { DashboardTask } from '@/shared/types';
-
-export const useTaskFiltering = (
-  tasks: DashboardTask[],
-  searchTerm: string,
-  activeFilter: string,
-  selectedTechnicianFilter: string,
-  sortBy: string,
-  sortOrder: 'asc' | 'desc'
-): DashboardTask[] => {
-  return useDashboardTaskFiltering({
-    tasks,
-    searchTerm,
-    activeFilter,
-    selectedTechnicianFilter,
-    sortBy,
-    sortOrder,
-  });
-};
-
+/**
+ * @deprecated Use `useDashboardTaskFiltering` from `@/shared/hooks` directly.
+ * This hook is a thin wrapper kept for backward compatibility.
+ */
+export { useDashboardTaskFiltering as useTaskFiltering } from '@/shared/hooks/useDashboardTaskFiltering';

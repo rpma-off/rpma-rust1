@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useMaterialForm } from '../hooks/useMaterialForm';
 import type { MaterialType, UnitOfMeasure } from '../api/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingSpinner } from '@/components/ui/loading';
 import { toast } from 'sonner';
 
 interface MaterialFormProps {
