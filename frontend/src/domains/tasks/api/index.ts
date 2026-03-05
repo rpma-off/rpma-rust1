@@ -50,6 +50,7 @@ export { useTaskFilters } from '../hooks/useTaskFilters';
 export { useTaskFiltering } from '../hooks/useTaskFiltering';
 export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
 export { useCompletedTaskPage } from '../hooks/useCompletedTaskPage';
+export { useTaskDetailPage } from '../hooks/useTaskDetailPage';
 export { taskGateway } from './taskGateway';
 export { getTaskDisplayTitle, getTaskDisplayStatus } from '../utils/display';
 export {
