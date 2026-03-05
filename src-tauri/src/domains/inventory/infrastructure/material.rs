@@ -2006,7 +2006,7 @@ impl MaterialService {
                     tax_id, business_license, payment_terms, lead_time_days,
                     is_active, is_preferred, quality_rating, delivery_rating, on_time_delivery_rate,
                     notes, special_instructions, created_at, updated_at, created_by, updated_by, synced, last_synced_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 "#,
                 params![
                     supplier.id,
