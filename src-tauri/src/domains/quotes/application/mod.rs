@@ -5,6 +5,9 @@
 
 mod contracts;
 pub(crate) mod quote_service;
+mod quote_events;
+mod quote_task_creation;
+mod quote_totals;
 
 pub use contracts::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest,
