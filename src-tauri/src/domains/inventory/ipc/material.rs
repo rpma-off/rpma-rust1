@@ -23,6 +23,44 @@ fn map_material_err(operation: &str, e: MaterialError) -> crate::commands::AppEr
     }
 }
 
+/// Shared implementation for low-stock material queries.
+fn low_stock_impl(
+    service: &crate::domains::inventory::infrastructure::material::MaterialService,
+    correlation_id: &str,
+) -> Result<
+    ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
+    crate::commands::AppError,
+> {
+    match service.get_low_stock_materials() {
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.to_owned())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get low stock materials");
+            Err(map_material_err("get_low_stock_materials", e))
+        }
+    }
+}
+
+/// Shared implementation for expired-material queries.
+fn expired_impl(
+    service: &crate::domains::inventory::infrastructure::material::MaterialService,
+    correlation_id: &str,
+) -> Result<
+    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
+    crate::commands::AppError,
+> {
+    match service.get_expired_materials() {
+        Ok(materials) => {
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.to_owned())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get expired materials");
+            Err(map_material_err("get_expired_materials", e))
+        }
+    }
+}
+
 /// Create a new material
 #[tauri::command]
 #[instrument(skip(state, session_token, request), fields(user_id))]
@@ -342,17 +380,7 @@ pub async fn material_get_low_stock(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
-
-    match service.get_low_stock_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get low stock materials");
-            Err(map_material_err("get_low_stock_materials", e))
-        }
-    }
+    low_stock_impl(&state.material_service, &correlation_id)
 }
 
 /// Get expired materials
@@ -370,17 +398,7 @@ pub async fn material_get_expired(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
-
-    match service.get_expired_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get expired materials");
-            Err(map_material_err("get_expired_materials", e))
-        }
-    }
+    expired_impl(&state.material_service, &correlation_id)
 }
 
 /// Get inventory statistics
@@ -703,17 +721,7 @@ pub async fn material_get_low_stock_materials(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
-
-    match service.get_low_stock_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get low stock materials");
-            Err(map_material_err("get_low_stock_materials", e))
-        }
-    }
+    low_stock_impl(&state.material_service, &correlation_id)
 }
 
 /// Get expired materials
@@ -731,17 +739,7 @@ pub async fn material_get_expired_materials(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.material_service.clone();
-
-    match service.get_expired_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get expired materials");
-            Err(map_material_err("get_expired_materials", e))
-        }
-    }
+    expired_impl(&state.material_service, &correlation_id)
 }
 
 /// Get inventory movement summary
