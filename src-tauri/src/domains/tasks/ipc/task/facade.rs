@@ -1,19 +1,21 @@
 //! Task command facade
 //!
-//! This module provides the main API interface for task operations,
-//! delegating to specialized modules while maintaining backward compatibility.
+//! Thin IPC adapter layer (ADR-005). Each handler authenticates, initialises
+//! correlation context, delegates to the application-layer
+//! [`TaskCommandService`](crate::domains::tasks::application::services::task_command_service::TaskCommandService),
+//! and maps the result into an [`ApiResponse`].
 //!
 //! Request/response DTO structs live in the sibling `types` module.
 
 use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::tasks::application::services::task_command_service::TaskCommandService;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
-use crate::domains::tasks::TasksFacade;
 use crate::shared::services::validation::ValidationService;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info};
 
 // Re-export all request/response types so callers see no change.
 pub use super::types::{
@@ -21,6 +23,16 @@ pub use super::types::{
     ExportTasksCsvRequest, ImportTasksBulkRequest, ReportTaskIssueRequest, SendTaskMessageRequest,
     TaskCrudRequest,
 };
+
+/// Construct a per-request [`TaskCommandService`] from shared application state.
+fn cmd_service(state: &AppState<'_>) -> TaskCommandService {
+    TaskCommandService::new(
+        state.task_service.clone(),
+        state.task_import_service.clone(),
+        state.message_service.clone(),
+        state.db.clone(),
+    )
+}
 
 /// Add a timestamped note to a task.
 #[tracing::instrument(skip(state))]
@@ -33,43 +45,11 @@ pub async fn add_task_note(
     let current_user = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let note = request.note.trim();
-    if note.is_empty() {
-        return Err(AppError::Validation("Note cannot be empty".to_string()));
-    }
+    let result = cmd_service(&state)
+        .add_note(&current_user, &request.task_id, &request.note)
+        .await?;
 
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_note", e))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    check_task_permissions(&current_user, &task, "edit")?;
-
-    let facade = TasksFacade::new(
-        state.task_service.clone(),
-        state.task_import_service.clone(),
-    );
-    let note_entry = facade.format_note_entry(&current_user.user_id, note);
-    let updated_notes = facade.append_note(task.notes.as_deref(), &note_entry);
-
-    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
-        id: Some(task.id.clone()),
-        notes: Some(updated_notes),
-        ..Default::default()
-    };
-
-    state
-        .task_service
-        .update_task_async(update_request, &current_user.user_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.add_note", e))?;
-
-    Ok(
-        ApiResponse::success(format!("Note added to task {}", request.task_id))
-            .with_correlation_id(Some(correlation_id.clone())),
-    )
+    Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id)))
 }
 
 /// Send a task-scoped message through the notifications/message domain service.
@@ -83,65 +63,17 @@ pub async fn send_task_message(
     let current_user = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let body = request.message.trim();
-    if body.is_empty() {
-        return Err(AppError::Validation("Message cannot be empty".to_string()));
-    }
-
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_message", e))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    check_task_permissions(&current_user, &task, "edit")?;
-
-    let message_type = TasksFacade::validate_message_type(request.message_type.as_deref())?;
-
-    let recipient_email = if message_type == "email" {
-        task.customer_email.clone()
-    } else {
-        None
-    };
-    if message_type == "email" && recipient_email.is_none() {
-        return Err(AppError::Validation(
-            "Task has no customer email for email message".to_string(),
-        ));
-    }
-
-    let recipient_phone = if message_type == "sms" {
-        task.customer_phone.clone()
-    } else {
-        None
-    };
-    if message_type == "sms" && recipient_phone.is_none() {
-        return Err(AppError::Validation(
-            "Task has no customer phone for SMS message".to_string(),
-        ));
-    }
-
-    let sent_message = state
-        .message_service
-        .send_message_raw(
-            message_type,
-            task.client_id.clone().or(task.technician_id.clone()),
-            recipient_email,
-            recipient_phone,
-            Some(format!("Task {} update", task.task_number)),
-            body.to_string(),
-            Some(task.id.clone()),
-            task.client_id.clone(),
-            Some("normal".to_string()),
-            None,
+    let result = cmd_service(&state)
+        .send_message(
+            &current_user,
+            &request.task_id,
+            &request.message,
+            request.message_type.as_deref(),
             request.correlation_id.clone(),
         )
         .await?;
 
-    Ok(
-        ApiResponse::success(format!("Message queued: {}", sent_message.id))
-            .with_correlation_id(Some(correlation_id.clone())),
-    )
+    Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id)))
 }
 
 /// Report a task issue and append it to task notes.
@@ -155,74 +87,19 @@ pub async fn report_task_issue(
     let current_user = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let issue_type = request.issue_type.trim();
-    let description = request.description.trim();
-    TasksFacade::validate_issue_fields(issue_type, description)?;
+    let result = cmd_service(&state)
+        .report_issue(
+            &current_user,
+            &request.task_id,
+            &request.issue_type,
+            &request.description,
+            request.severity.as_deref(),
+            request.correlation_id.clone(),
+        )
+        .await?;
 
-    let severity = TasksFacade::validate_severity(request.severity.as_deref())?;
-
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.fetch_task_for_issue", e))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    check_task_permissions(&current_user, &task, "edit")?;
-
-    let facade = TasksFacade::new(
-        state.task_service.clone(),
-        state.task_import_service.clone(),
-    );
-    let issue_entry =
-        facade.format_issue_entry(&current_user.user_id, issue_type, &severity, description);
-    let updated_notes = facade.append_note(task.notes.as_deref(), &issue_entry);
-
-    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
-        id: Some(task.id.clone()),
-        notes: Some(updated_notes),
-        ..Default::default()
-    };
-
-    state
-        .task_service
-        .update_task_async(update_request, &current_user.user_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.report_issue", e))?;
-
-    if matches!(severity.as_str(), "high" | "critical") {
-        if let Err(err) = state
-            .message_service
-            .send_message_raw(
-                "in_app".to_string(),
-                task.technician_id.clone(),
-                None,
-                None,
-                Some(format!("Task {} issue escalation", task.task_number)),
-                format!("{} (severity: {})", description, severity),
-                Some(task.id.clone()),
-                task.client_id.clone(),
-                Some("high".to_string()),
-                None,
-                request.correlation_id.clone(),
-            )
-            .await
-        {
-            warn!(
-                error = %err,
-                task_id = %task.id,
-                "Issue escalation message could not be sent"
-            );
-        }
-    }
-
-    Ok(
-        ApiResponse::success(format!("Issue reported for task {}", request.task_id))
-            .with_correlation_id(Some(correlation_id.clone())),
-    )
+    Ok(ApiResponse::success(result).with_correlation_id(Some(correlation_id)))
 }
-
-// Delegate to validation module
 
 /// Export tasks to CSV command
 #[tracing::instrument(skip(state))]
@@ -233,67 +110,14 @@ pub async fn export_tasks_csv(
 ) -> Result<ApiResponse<String>, AppError> {
     debug!("Exporting tasks to CSV");
 
-    // Initialize correlation context
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let session = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&session.user_id);
 
-    // Authenticate user
-    let _session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&_session.user_id);
+    let csv_content = cmd_service(&state)
+        .export_csv(request.filter.as_ref(), request.include_client_data.unwrap_or(false))?;
 
-    // Build query for export
-    let query = crate::domains::tasks::domain::models::task::TaskQuery {
-        page: Some(1),
-        limit: Some(10000), // Large limit for export
-        status: request
-            .filter
-            .as_ref()
-            .and_then(|f| f.status.as_ref())
-            .and_then(|s| crate::domains::tasks::domain::models::task::TaskStatus::from_str_opt(s)),
-        technician_id: request.filter.as_ref().and_then(|f| f.assigned_to.clone()),
-        client_id: request.filter.as_ref().and_then(|f| f.client_id.clone()),
-        priority: request
-            .filter
-            .as_ref()
-            .and_then(|f| f.priority.as_ref())
-            .and_then(|p| {
-                crate::domains::tasks::domain::models::task::TaskPriority::from_str_opt(p)
-            }),
-        search: None,
-        from_date: request
-            .filter
-            .as_ref()
-            .and_then(|f| f.date_from.map(|d| d.to_rfc3339())),
-        to_date: request
-            .filter
-            .as_ref()
-            .and_then(|f| f.date_to.map(|d| d.to_rfc3339())),
-        sort_by: "created_at".to_string(),
-        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
-    };
-
-    // Get tasks with client information through import service
-    let tasks = state
-        .task_service
-        .get_tasks_for_export(query)
-        .map_err(|e| AppError::db_sanitized("tasks.export.fetch", e))?;
-
-    if tasks.is_empty() {
-        warn!("No tasks found for export");
-        return Ok(ApiResponse::success(
-            "ID,Title,Description,Status,Priority,Client Name,Client Email,Created At,Updated At\n"
-                .to_string(),
-        )
-        .with_correlation_id(Some(correlation_id.clone())));
-    }
-
-    // Export to CSV using the service
-    let csv_content = state
-        .task_service
-        .export_to_csv(&tasks, request.include_client_data.unwrap_or(false))
-        .map_err(|e| AppError::db_sanitized("tasks.export.csv", e))?;
-
-    info!("Successfully exported {} tasks to CSV", tasks.len());
-    Ok(ApiResponse::success(csv_content).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(csv_content).with_correlation_id(Some(correlation_id)))
 }
 
 /// Import tasks from CSV command
@@ -305,141 +129,40 @@ pub async fn import_tasks_bulk(
 ) -> Result<ApiResponse<BulkImportResponse>, AppError> {
     debug!("Bulk importing tasks from CSV");
 
-    // Initialize correlation context
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Authenticate user
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    // Check permissions - only supervisors and admins can bulk import
-    if !matches!(
-        session.role,
-        crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor
-    ) {
-        return Err(AppError::Authorization(
-            "Only supervisors and admins can perform bulk imports".to_string(),
-        ));
-    }
+    let response = cmd_service(&state)
+        .import_bulk(&session, &request.csv_data, request.update_existing.unwrap_or(false))
+        .await?;
 
-    // Use TaskImportService to parse CSV and get task requests
-    let import_result = state
-        .task_service
-        .import_from_csv(
-            &request.csv_data,
-            &session.user_id,
-            request.update_existing.unwrap_or(false),
-        )
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.import.bulk", e))?;
-
-    // Create tasks from parsed data
-    let errors = import_result.errors.clone();
-
-    // Note: The actual task creation logic would require storing parsed task data
-    // For now, the import service validates and returns counts
-    // In a full implementation, you'd iterate through created requests and persist them
-
-    let response = BulkImportResponse {
-        total_processed: import_result.total_processed,
-        successful: import_result.successful,
-        failed: import_result.failed,
-        errors,
-        duplicates_skipped: import_result.duplicates_skipped,
-    };
-
-    info!(
-        "Bulk import completed: {} processed, {} successful, {} failed, {} duplicates skipped",
-        response.total_processed, response.successful, response.failed, response.duplicates_skipped
-    );
-
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id)))
 }
 
 /// Delay task command
 #[tracing::instrument(skip(state))]
 #[tauri::command]
-
 pub async fn delay_task(
     request: DelayTaskRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Delaying task {}", request.task_id);
 
-    // Initialize correlation context
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Authenticate user
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    // Get current task
-    let task_option = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| {
-            debug!("Task not found: {}", e);
-            AppError::NotFound(format!("Task not found: {}", request.task_id))
-        })?;
-
-    let task = task_option
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    // Check permissions
-    check_task_permissions(&session, &task, "edit")?;
-
-    // Use CalendarService.schedule_task to update both task and calendar_events atomically
-    let calendar_service =
-        crate::shared::services::cross_domain::CalendarService::new(state.db.clone());
-    calendar_service
-        .schedule_task(
-            request.task_id.clone(),
-            request.new_scheduled_date.clone(),
-            None,
-            None,
-            &session.user_id,
+    let updated_task = cmd_service(&state)
+        .delay_task(
+            &session,
+            &request.task_id,
+            request.new_scheduled_date,
+            request.additional_notes,
         )
-        .await
-        .map_err(|e| {
-            error!("Task delay failed: {}", e);
-            AppError::db_sanitized("tasks.delay", e)
-        })?;
+        .await?;
 
-    // Update notes if provided
-    if request.additional_notes.is_some() {
-        let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
-            id: Some(request.task_id.clone()),
-            notes: request.additional_notes.clone(),
-            ..Default::default()
-        };
-        state
-            .task_service
-            .update_task_async(update_request, &session.user_id)
-            .await
-            .map_err(|e| {
-                error!("Task notes update failed: {}", e);
-                AppError::db_sanitized("tasks.delay.update_notes", e)
-            })?;
-    }
-
-    // Re-fetch the updated task
-    let updated_task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| {
-            error!("Failed to re-fetch task: {}", e);
-            AppError::db_sanitized("tasks.delay.refetch", e)
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    info!(
-        "Task {} delayed to {}",
-        request.task_id, request.new_scheduled_date
-    );
-    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id)))
 }
 
 /// Edit task command
@@ -451,84 +174,18 @@ pub async fn edit_task(
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Editing task {}", request.task_id);
 
-    // Initialize correlation context
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Authenticate user
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    // Get current task
-    let task_option = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| {
-            debug!("Task not found: {}", e);
-            AppError::NotFound(format!("Task not found: {}", request.task_id))
-        })?;
+    let updated_task = cmd_service(&state)
+        .edit_task(&session, &request.task_id, &request.data)
+        .await?;
 
-    let task = task_option
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    // Check permissions
-    check_task_permissions(&session, &task, "edit")?;
-
-    // Enforce field restrictions for Technician role
-    if session.role == crate::shared::contracts::auth::UserRole::Technician {
-        enforce_technician_field_restrictions(&request.data)?;
-    }
-
-    // Create UpdateTaskRequest from the incoming data
-    let update_request = crate::domains::tasks::domain::models::task::UpdateTaskRequest {
-        id: Some(request.task_id.clone()),
-        title: request.data.title.clone(),
-        description: request.data.description.clone(),
-        priority: request.data.priority,
-        status: request.data.status,
-        vehicle_plate: request.data.vehicle_plate.clone(),
-        vehicle_model: request.data.vehicle_model.clone(),
-        vehicle_year: request.data.vehicle_year.clone(),
-        vehicle_make: request.data.vehicle_make.clone(),
-        vin: request.data.vin.clone(),
-        ppf_zones: request.data.ppf_zones.clone(),
-        custom_ppf_zones: request.data.custom_ppf_zones.clone(),
-        client_id: request.data.client_id.clone(),
-        customer_name: request.data.customer_name.clone(),
-        customer_email: request.data.customer_email.clone(),
-        customer_phone: request.data.customer_phone.clone(),
-        customer_address: request.data.customer_address.clone(),
-        scheduled_date: request.data.scheduled_date.clone(),
-        estimated_duration: request.data.estimated_duration,
-        notes: request.data.notes.clone(),
-        tags: request.data.tags.clone(),
-        technician_id: request.data.technician_id.clone(),
-        ..Default::default()
-    };
-
-    // Validate status change if status is being updated
-    if let Some(new_status) = &update_request.status {
-        validate_status_change(&task.status, new_status)?;
-    }
-
-    // Call the service to update the task
-    let updated_task = state
-        .task_service
-        .update_task_async(update_request, &session.user_id)
-        .await
-        .map_err(|e| {
-            error!("Task update failed: {}", e);
-            AppError::db_sanitized("tasks.edit", e)
-        })?;
-
-    // NOTE: Implement task notification sending for updates
-
-    info!("Task {} updated successfully", request.task_id);
-
-    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id)))
 }
 
-/// Validate status change
+/// Validate status change — thin delegate to policy service.
 pub fn validate_status_change(
     current: &crate::domains::tasks::domain::models::task::TaskStatus,
     new: &crate::domains::tasks::domain::models::task::TaskStatus,
@@ -536,7 +193,7 @@ pub fn validate_status_change(
     task_policy_service::validate_status_change(current, new)
 }
 
-/// Check permissions for task operations
+/// Check permissions for task operations — thin delegate to policy service.
 pub fn check_task_permissions(
     session: &crate::shared::contracts::auth::UserSession,
     task: &Task,
@@ -546,8 +203,6 @@ pub fn check_task_permissions(
 }
 
 /// Validate that a Technician is not attempting to change restricted fields.
-///
-/// Returns an error listing any forbidden fields that the request tries to modify.
 pub fn enforce_technician_field_restrictions(
     req: &crate::domains::tasks::domain::models::task::UpdateTaskRequest,
 ) -> Result<(), AppError> {
@@ -557,7 +212,6 @@ pub fn enforce_technician_field_restrictions(
 /// Task CRUD command handler
 #[tracing::instrument(skip(state))]
 #[tauri::command]
-
 pub async fn task_crud(
     request: TaskCrudRequest,
     state: AppState<'_>,
@@ -567,17 +221,15 @@ pub async fn task_crud(
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     info!("task_crud command received - action: {:?}", action);
 
-    // Authenticate user
     let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    // Handle action
+    let svc = cmd_service(&state);
+
     match action {
         crate::commands::TaskAction::Create { data } => {
-            // V2: Add role check for task creation
             check_task_permission!(&current_user.role, "create");
 
-            // V4: Add input validation
             let validator = ValidationService::new();
             let validated_action = validator
                 .validate_task_action(crate::commands::TaskAction::Create { data })
@@ -600,36 +252,12 @@ pub async fn task_crud(
                         AppError::db_sanitized("tasks.create", e)
                     })?;
 
-                // Create notification for assigned technician
-                if let Some(technician_id) = &task.technician_id {
-                    if technician_id != &current_user.user_id {
-                        if let Err(e) = state
-                            .message_service
-                            .send_message_raw(
-                                "in_app".to_string(),
-                                Some(technician_id.clone()),
-                                None,
-                                None,
-                                Some(format!("Nouvelle tache assignee: {}", task.title)),
-                                format!("La tache '{}' vous a ete assignee.", task.title),
-                                Some(task.id.clone()),
-                                task.client_id.clone(),
-                                Some("normal".to_string()),
-                                None,
-                                Some(correlation_id.clone()),
-                            )
-                            .await
-                        {
-                            error!("Failed to create task assignment notification: {}", e);
-                        }
-                    }
-                }
+                svc.notify_assignment(&task, &current_user.user_id, &correlation_id)
+                    .await;
 
                 Ok(
-                    crate::commands::ApiResponse::success(crate::commands::TaskResponse::Created(
-                        task,
-                    ))
-                    .with_correlation_id(Some(correlation_id.clone())),
+                    ApiResponse::success(crate::commands::TaskResponse::Created(task))
+                        .with_correlation_id(Some(correlation_id)),
                 )
             } else {
                 Err(AppError::Validation(
@@ -643,24 +271,21 @@ pub async fn task_crud(
                 AppError::db_sanitized("tasks.get", e)
             })?;
             match task {
-                Some(task) => Ok(crate::commands::ApiResponse::success(
-                    crate::commands::TaskResponse::Found(task),
-                )
-                .with_correlation_id(Some(correlation_id.clone()))),
-                None => Ok(crate::commands::ApiResponse::success(
-                    crate::commands::TaskResponse::NotFound,
-                )
-                .with_correlation_id(Some(correlation_id.clone()))),
+                Some(task) => Ok(
+                    ApiResponse::success(crate::commands::TaskResponse::Found(task))
+                        .with_correlation_id(Some(correlation_id)),
+                ),
+                None => Ok(
+                    ApiResponse::success(crate::commands::TaskResponse::NotFound)
+                        .with_correlation_id(Some(correlation_id)),
+                ),
             }
         }
         crate::commands::TaskAction::Update { id, data } => {
-            // Add role check for task update
             check_task_permission!(&current_user.role, "update");
 
-            // Check if status is being updated for notification
             let status_updated = data.status.is_some();
 
-            // Add input validation for update
             let validator = ValidationService::new();
             let validated_action = validator
                 .validate_task_action(crate::commands::TaskAction::Update {
@@ -687,63 +312,17 @@ pub async fn task_crud(
                         AppError::db_sanitized("tasks.update", e)
                     })?;
 
-                // Create notification for assigned technician if reassigned
-                if let Some(technician_id) = &task.technician_id {
-                    if technician_id != &current_user.user_id {
-                        if let Err(e) = state
-                            .message_service
-                            .send_message_raw(
-                                "in_app".to_string(),
-                                Some(technician_id.clone()),
-                                None,
-                                None,
-                                Some(format!("Tache mise a jour: {}", task.title)),
-                                format!("La tache '{}' vous est assignee.", task.title),
-                                Some(task.id.clone()),
-                                task.client_id.clone(),
-                                Some("normal".to_string()),
-                                None,
-                                Some(correlation_id.clone()),
-                            )
-                            .await
-                        {
-                            error!("Failed to create task assignment notification: {}", e);
-                        }
-                    }
-                }
+                svc.notify_assignment(&task, &current_user.user_id, &correlation_id)
+                    .await;
 
-                // Create notification for status change
                 if status_updated {
-                    let status = task.status.to_string();
-                    if let Err(e) = state
-                        .message_service
-                        .send_message_raw(
-                            "in_app".to_string(),
-                            Some(current_user.user_id.clone()),
-                            None,
-                            None,
-                            Some(format!("Statut de tache mis a jour: {}", task.title)),
-                            format!(
-                                "Le statut de la tache '{}' est maintenant '{}'.",
-                                task.title, status
-                            ),
-                            Some(task.id.clone()),
-                            task.client_id.clone(),
-                            Some("normal".to_string()),
-                            None,
-                            Some(correlation_id.clone()),
-                        )
-                        .await
-                    {
-                        error!("Failed to create task update notification: {}", e);
-                    }
+                    svc.notify_status_change(&task, &current_user.user_id, &correlation_id)
+                        .await;
                 }
 
                 Ok(
-                    crate::commands::ApiResponse::success(crate::commands::TaskResponse::Updated(
-                        task,
-                    ))
-                    .with_correlation_id(Some(correlation_id.clone())),
+                    ApiResponse::success(crate::commands::TaskResponse::Updated(task))
+                        .with_correlation_id(Some(correlation_id)),
                 )
             } else {
                 Err(AppError::Validation(
@@ -752,7 +331,6 @@ pub async fn task_crud(
             }
         }
         crate::commands::TaskAction::Delete { id } => {
-            // V3: Add role check for task deletion
             check_task_permission!(&current_user.role, "delete");
 
             state
@@ -764,12 +342,11 @@ pub async fn task_crud(
                     AppError::db_sanitized("tasks.delete", e)
                 })?;
             Ok(
-                crate::commands::ApiResponse::success(crate::commands::TaskResponse::Deleted)
-                    .with_correlation_id(Some(correlation_id.clone())),
+                ApiResponse::success(crate::commands::TaskResponse::Deleted)
+                    .with_correlation_id(Some(correlation_id)),
             )
         }
         crate::commands::TaskAction::List { filters } => {
-            // Use the proper task listing implementation
             let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
                 session_token: session_token.clone(),
                 page: None,
@@ -779,41 +356,37 @@ pub async fn task_crud(
                     client_id: filters.client_id,
                     status: filters.status.map(|s| s.to_string()),
                     priority: filters.priority.map(|p| p.to_string()),
-                    region: None, // Will be set by role-based filtering
+                    region: None,
                     include_completed: Some(false),
-                    date_from: None, // NOTE: Add date filtering support
-                    date_to: None,   // NOTE: Add date filtering support
+                    date_from: None,
+                    date_to: None,
                 }),
                 correlation_id: Some(correlation_id.clone()),
             };
 
-            // Call the actual implementation
             let result = get_tasks_with_clients(request, state).await?;
-            // Convert the result to TaskResponse::List
             match result.data {
-                Some(task_list_response) => Ok(crate::commands::ApiResponse::success(
-                    crate::commands::TaskResponse::List(task_list_response),
-                )
-                .with_correlation_id(Some(correlation_id.clone()))),
-                None => Ok(crate::commands::ApiResponse::error(
-                    crate::commands::AppError::NotFound("No tasks found".to_string()),
-                )
-                .with_correlation_id(Some(correlation_id.clone()))),
+                Some(task_list_response) => Ok(
+                    ApiResponse::success(crate::commands::TaskResponse::List(task_list_response))
+                        .with_correlation_id(Some(correlation_id)),
+                ),
+                None => Ok(ApiResponse::error(AppError::NotFound(
+                    "No tasks found".to_string(),
+                ))
+                .with_correlation_id(Some(correlation_id))),
             }
         }
         crate::commands::TaskAction::GetStatistics => {
-            // Call the actual statistics implementation
             let stats_request =
                 crate::domains::tasks::ipc::task::queries::GetTaskStatisticsRequest {
                     session_token: session_token.clone(),
-                    filter: None, // Get all statistics for the user's role
+                    filter: None,
                     correlation_id: Some(correlation_id.clone()),
                 };
 
             let stats_response = get_task_statistics(stats_request, state).await?;
             match stats_response.data {
                 Some(stats) => {
-                    // Convert from service TaskStatistics to response TaskStatistics
                     let response_stats = crate::domains::tasks::ipc::task_types::TaskStatistics {
                         total: stats.total_tasks,
                         completed: stats.completed_tasks,
@@ -821,15 +394,17 @@ pub async fn task_crud(
                         in_progress: stats.in_progress_tasks,
                         overdue: stats.overdue_tasks,
                     };
-                    Ok(crate::commands::ApiResponse::success(
-                        crate::commands::TaskResponse::Statistics(response_stats),
+                    Ok(
+                        ApiResponse::success(crate::commands::TaskResponse::Statistics(
+                            response_stats,
+                        ))
+                        .with_correlation_id(Some(correlation_id)),
                     )
-                    .with_correlation_id(Some(correlation_id.clone())))
                 }
-                None => Ok(crate::commands::ApiResponse::error(
-                    crate::commands::AppError::NotFound("Statistics not available".to_string()),
-                )
-                .with_correlation_id(Some(correlation_id.clone()))),
+                None => Ok(ApiResponse::error(AppError::NotFound(
+                    "Statistics not available".to_string(),
+                ))
+                .with_correlation_id(Some(correlation_id))),
             }
         }
     }
