@@ -247,7 +247,10 @@ pub async fn intervention_progress(
         },
     };
 
-    match facade.execute(command, &ctx, state.task_service.as_ref()).await? {
+    match facade
+        .execute(command, &ctx, state.task_service.as_ref())
+        .await?
+    {
         InterventionsResponse::ProgressWithSteps { progress, steps } => Ok(ApiResponse::success(
             InterventionProgressResponse::Retrieved { progress, steps },
         )

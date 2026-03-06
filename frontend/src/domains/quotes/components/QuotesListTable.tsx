@@ -4,6 +4,7 @@ import { MoreVertical } from 'lucide-react';
 import { formatCents, formatDateShort } from '@/lib/format';
 import { QuoteStatusBadge } from './QuoteStatusBadge';
 import type { Quote } from '@/types/quote.types';
+import type { Client } from '@/types/client.types';
 import {
   Table,
   TableBody,
@@ -20,9 +21,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
+
+interface QuoteWithClient extends Quote {
+  client?: Client;
+}
 
 interface QuotesListTableProps {
-  quotes: Quote[];
+  quotes: QuoteWithClient[];
   onRowClick?: (quoteId: string) => void;
   onView?: (quoteId: string) => void;
   onEdit?: (quoteId: string) => void;
@@ -46,22 +53,41 @@ export function QuotesListTable({
 }: QuotesListTableProps) {
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (quotes.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-sm text-muted-foreground">Aucun devis</p>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-25">N° Devis</TableHead>
+              <TableHead>Titre</TableHead>
+              <TableHead className="hidden md:table-cell">Client</TableHead>
+              <TableHead className="hidden lg:table-cell">Véhicule</TableHead>
+              <TableHead className="w-27.5">Statut</TableHead>
+              <TableHead className="w-22.5">Date</TableHead>
+              <TableHead className="w-22.5 text-right">Total</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
+                <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-28" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -76,13 +102,17 @@ export function QuotesListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {quotes.map((quote) => {
+          {quotes.map((quote, index) => {
             const isAccepted = quote.status === 'accepted';
             const canConvert = isAccepted;
+            const clientName = quote.client?.name || quote.client_id || '-';
 
             return (
-              <TableRow
+              <motion.tr
                 key={quote.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: index * 0.03 }}
                 className={onRowClick ? 'cursor-pointer hover:bg-muted/50' : ''}
                 onClick={() => onRowClick?.(quote.id)}
               >
@@ -91,7 +121,7 @@ export function QuotesListTable({
                 </TableCell>
                 <TableCell className="font-medium">{quote.title || '-'}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">
-                  {quote.client_id || '-'}
+                  {clientName}
                 </TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   {[
@@ -158,7 +188,7 @@ export function QuotesListTable({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-              </TableRow>
+              </motion.tr>
             );
           })}
         </TableBody>

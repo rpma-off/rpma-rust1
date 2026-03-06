@@ -1,16 +1,18 @@
 use crate::commands::AppError;
-use crate::db::{Database, FromSqlRow};
+use crate::db::Database;
 use crate::domains::calendar::domain::models::calendar::*;
-use rusqlite::params;
+use crate::domains::calendar::infrastructure::calendar_repository::CalendarRepository;
 use std::sync::Arc;
 
 pub struct CalendarService {
-    db: Arc<Database>,
+    repo: CalendarRepository,
 }
 
 impl CalendarService {
     pub fn new(db: Arc<Database>) -> Self {
-        Self { db }
+        Self {
+            repo: CalendarRepository::new(db),
+        }
     }
 
     pub async fn get_tasks(
@@ -19,81 +21,8 @@ impl CalendarService {
         technician_ids: Option<Vec<String>>,
         statuses: Option<Vec<String>>,
     ) -> Result<Vec<CalendarTask>, AppError> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(e.to_string()))?;
-
-        let mut sql =
-            String::from("SELECT * FROM calendar_tasks WHERE scheduled_date BETWEEN ?1 AND ?2");
-
-        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![
-            Box::new(date_range.start_date.clone()),
-            Box::new(date_range.end_date.clone()),
-        ];
-
-        // Add technician filter
-        if let Some(tech_ids) = &technician_ids {
-            if !tech_ids.is_empty() {
-                let placeholders = tech_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-                sql.push_str(&format!(" AND technician_id IN ({})", placeholders));
-                for id in tech_ids {
-                    params.push(Box::new(id.clone()));
-                }
-            }
-        }
-
-        // Add status filter
-        if let Some(statuses) = &statuses {
-            if !statuses.is_empty() {
-                let placeholders = statuses.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-                sql.push_str(&format!(" AND status IN ({})", placeholders));
-                for status in statuses {
-                    params.push(Box::new(status.clone()));
-                }
-            }
-        }
-
-        sql.push_str(" ORDER BY scheduled_date, start_time");
-
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(|e| AppError::Database(e.to_string()))?;
-
-        let tasks = stmt
-            .query_map(rusqlite::params_from_iter(params), |row| {
-                Ok(CalendarTask {
-                    id: row.get(0)?,
-                    task_number: row.get(1)?,
-                    title: row.get(2)?,
-                    status: row
-                        .get::<_, String>(3)?
-                        .parse::<crate::domains::calendar::domain::models::calendar::CalendarTaskStatus>()
-                        .unwrap_or(crate::domains::calendar::domain::models::calendar::CalendarTaskStatus::Draft),
-                    priority: row
-                        .get::<_, String>(4)?
-                        .parse::<crate::domains::calendar::domain::models::calendar::CalendarTaskPriority>()
-                        .unwrap_or(
-                            crate::domains::calendar::domain::models::calendar::CalendarTaskPriority::Medium,
-                        ),
-                    scheduled_date: row.get(5)?,
-                    start_time: row.get(6)?,
-                    end_time: row.get(7)?,
-                    vehicle_plate: row.get(8)?,
-                    vehicle_model: row.get(9)?,
-                    technician_id: row.get(10)?,
-                    technician_name: row.get(11)?,
-                    client_id: row.get(12)?,
-                    client_name: row.get(13)?,
-                    estimated_duration: row.get(14)?,
-                    actual_duration: row.get(15)?,
-                })
-            })
-            .map_err(|e| AppError::Database(e.to_string()))?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| AppError::Database(e.to_string()))?;
-
-        Ok(tasks)
+        self.repo
+            .get_tasks(&date_range, technician_ids.as_deref(), statuses.as_deref())
     }
 
     pub async fn check_conflicts(
@@ -110,19 +39,7 @@ impl CalendarService {
             return Err(AppError::Validation("new_date is required".to_string()));
         }
 
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(e.to_string()))?;
-
-        // Get technician for this task
-        let technician_id: Option<String> = conn
-            .query_row(
-                "SELECT technician_id FROM tasks WHERE id = ?1",
-                [&task_id],
-                |row| row.get(0),
-            )
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        let technician_id = self.repo.get_technician_for_task(&task_id)?;
 
         if technician_id.is_none() {
             return Ok(ConflictDetection {
@@ -135,44 +52,13 @@ impl CalendarService {
 
         let tech_id = technician_id.unwrap();
 
-        // Find overlapping tasks for same technician
-        let mut sql = String::from(
-            "SELECT * FROM calendar_tasks 
-             WHERE technician_id = ?1 
-             AND scheduled_date = ?2 
-             AND id != ?3
-             AND status NOT IN ('completed', 'cancelled')",
-        );
-
-        // Canonical overlap: two intervals [A_start, A_end) and [B_start, B_end) overlap
-        // iff A_start < B_end AND A_end > B_start.
-        // Here new=[?4,?5) and existing=[start_time,end_time).
-        // Also match events with NULL end_time that start within the new range.
-        if new_start.is_some() && new_end.is_some() {
-            sql.push_str(
-                " AND (
-                    (start_time IS NOT NULL AND end_time IS NOT NULL AND start_time < ?5 AND end_time > ?4)
-                    OR (start_time IS NOT NULL AND end_time IS NULL AND start_time >= ?4 AND start_time < ?5)
-                )",
-            );
-        }
-
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(|e| AppError::Database(e.to_string()))?;
-
-        let conflicts: Vec<CalendarTask> = if let (Some(start), Some(end)) = (&new_start, &new_end)
-        {
-            stmt.query_map([&tech_id, &new_date, &task_id, start, end], |row| {
-                CalendarTask::from_row(row)
-            })?
-            .collect::<Result<Vec<_>, _>>()?
-        } else {
-            stmt.query_map([&tech_id, &new_date, &task_id], |row| {
-                CalendarTask::from_row(row)
-            })?
-            .collect::<Result<Vec<_>, _>>()?
-        };
+        let conflicts = self.repo.find_conflicting_tasks(
+            &tech_id,
+            &new_date,
+            &task_id,
+            new_start.as_deref(),
+            new_end.as_deref(),
+        )?;
 
         let has_conflict = !conflicts.is_empty();
 
@@ -227,90 +113,13 @@ impl CalendarService {
         if new_date.trim().is_empty() {
             return Err(AppError::Validation("new_date is required".to_string()));
         }
-        let now = chrono::Utc::now().timestamp_millis();
-        let task_id_clone = task_id.clone();
-        let new_date_clone = new_date.clone();
-        let new_start_clone = new_start.clone();
-        let new_end_clone = new_end.clone();
-        let user_id_owned = user_id.to_string();
-
-        self.db
-            .with_transaction(move |tx| {
-                // 1. Update tasks.scheduled_date, start_time, end_time
-                tx.execute(
-                    "UPDATE tasks SET scheduled_date = ?1, start_time = ?2, end_time = ?3, updated_at = ?4, updated_by = ?5 WHERE id = ?6",
-                    params![new_date_clone, new_start_clone, new_end_clone, now, user_id_owned, task_id_clone],
-                )
-                .map_err(|e| format!("Failed to update task schedule: {}", e))?;
-
-                // 2. Update or insert calendar_events linked to this task
-                let existing_event_id: Option<String> = tx
-                    .query_row(
-                        "SELECT id FROM calendar_events WHERE task_id = ?1 AND deleted_at IS NULL",
-                        params![task_id],
-                        |row| row.get(0),
-                    )
-                    .ok();
-
-                let start_datetime = match &new_start {
-                    Some(t) => format!("{}T{}:00", new_date, t),
-                    None => format!("{}T00:00:00", new_date),
-                };
-                let end_datetime = match &new_end {
-                    Some(t) => format!("{}T{}:00", new_date, t),
-                    None => format!("{}T23:59:59", new_date),
-                };
-
-                if let Some(event_id) = existing_event_id {
-                    // Update existing calendar event
-                    tx.execute(
-                        "UPDATE calendar_events SET start_datetime = ?1, end_datetime = ?2, updated_at = ?3, updated_by = ?4 WHERE id = ?5",
-                        params![start_datetime, end_datetime, now, user_id, event_id],
-                    )
-                    .map_err(|e| format!("Failed to update calendar event: {}", e))?;
-                } else {
-                    // Create new calendar event for this task
-                    let event_id = uuid::Uuid::new_v4().to_string();
-                    let task_title: String = tx
-                        .query_row(
-                            "SELECT COALESCE(title, task_number) FROM tasks WHERE id = ?1",
-                            params![task_id],
-                            |row| row.get(0),
-                        )
-                        .unwrap_or_else(|_| format!("Task {}", task_id));
-                    let technician_id: Option<String> = tx
-                        .query_row(
-                            "SELECT technician_id FROM tasks WHERE id = ?1",
-                            params![task_id],
-                            |row| row.get(0),
-                        )
-                        .ok();
-
-                    tx.execute(
-                        r#"INSERT INTO calendar_events
-                            (id, title, start_datetime, end_datetime, all_day, timezone,
-                             event_type, task_id, technician_id, is_recurring, is_virtual,
-                             participants, reminders, status, tags, synced,
-                             created_at, updated_at, created_by, updated_by)
-                           VALUES (?1, ?2, ?3, ?4, 0, 'UTC', 'task', ?5, ?6, 0, 0,
-                                   '[]', '[]', 'confirmed', '[]', 0, ?7, ?7, ?8, ?8)"#,
-                        params![
-                            event_id,
-                            task_title,
-                            start_datetime,
-                            end_datetime,
-                            task_id,
-                            technician_id,
-                            now,
-                            user_id
-                        ],
-                    )
-                    .map_err(|e| format!("Failed to create calendar event: {}", e))?;
-                }
-
-                Ok(())
-            })
-            .map_err(|e| AppError::Database(e))
+        self.repo.upsert_schedule(
+            &task_id,
+            &new_date,
+            new_start.as_deref(),
+            new_end.as_deref(),
+            user_id,
+        )
     }
 
     /// Schedule a task with conflict check: checks for conflicts first, then

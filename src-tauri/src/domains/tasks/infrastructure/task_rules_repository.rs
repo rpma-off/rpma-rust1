@@ -1,7 +1,8 @@
-//! Task Validation Service Module
+//! Task Rules Repository
 //!
-//! This module provides validation logic for task assignments, availability checks,
-//! and conflict detection to ensure proper task management and resource allocation.
+//! DB-backed rule checks for task assignments, availability checks,
+//! and conflict detection. Named "repository" because it queries the database
+//! to enforce business rules (not pure validation).
 
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
@@ -66,13 +67,13 @@ pub fn allowed_transitions(current: &TaskStatus) -> Vec<TaskStatus> {
 
 /// Service for validating task assignments and availability
 #[derive(Debug)]
-pub struct TaskValidationService {
+pub struct TaskRulesRepository {
     db: Arc<Database>,
     settings: SettingsService,
 }
 
-impl TaskValidationService {
-    /// Create a new TaskValidationService instance
+impl TaskRulesRepository {
+    /// Create a new TaskRulesRepository instance
     pub fn new(db: Arc<Database>) -> Self {
         let settings = SettingsService::new(db.clone());
         Self { db, settings }

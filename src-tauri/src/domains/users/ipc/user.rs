@@ -51,7 +51,8 @@ pub async fn user_crud(
 
     let facade = UsersFacade::new();
     let services = UsersServices {
-        account_manager: state.auth_service.clone() as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
+        account_manager: state.auth_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
         user_service: state.user_service.clone(),
     };
 
@@ -87,7 +88,8 @@ pub async fn bootstrap_first_admin(
     )
     .await?;
     let services = UsersServices {
-        account_manager: state.auth_service.clone() as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
+        account_manager: state.auth_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
         user_service: state.user_service.clone(),
     };
     info!("Attempting to bootstrap first admin for user: {}", user_id);
@@ -122,7 +124,8 @@ pub async fn has_admins(
     let corr = crate::commands::init_correlation_context(&correlation_id, None);
     let facade = UsersFacade::new();
     let services = UsersServices {
-        account_manager: state.auth_service.clone() as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
+        account_manager: state.auth_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
         user_service: state.user_service.clone(),
     };
     let system_session = crate::shared::contracts::auth::UserSession {

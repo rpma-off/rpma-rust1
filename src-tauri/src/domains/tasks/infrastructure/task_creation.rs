@@ -7,7 +7,7 @@ use crate::db::Database;
 use crate::domains::tasks::domain::models::task::{
     CreateTaskRequest, Task, TaskPriority, TaskStatus,
 };
-use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
+use crate::domains::tasks::infrastructure::task_rules_repository::TaskRulesRepository;
 use crate::shared::services::validation::ValidationService;
 use chrono::Utc;
 use rusqlite::params;
@@ -68,7 +68,7 @@ impl TaskCreationService {
 
         // Validate technician assignment if specified
         if let Some(ref technician_id) = req.technician_id {
-            let validation_service = TaskValidationService::new(self.db.clone());
+            let validation_service = TaskRulesRepository::new(self.db.clone());
             validation_service
                 .validate_technician_assignment(technician_id, &Some(ppf_zones.clone()))
                 .map_err(|e| {
@@ -212,6 +212,13 @@ impl TaskCreationService {
     }
 
     /// Insert the task into the database and enqueue it for sync.
+    ///
+    /// Both the `tasks` INSERT and the `sync_queue` INSERT run inside a single
+    /// transaction so a crash between the two writes cannot leave a task that
+    /// is permanently missing from the sync queue.  Sync-queue failure is still
+    /// treated as non-fatal (the transaction is committed anyway) to preserve
+    /// offline-first semantics: the task is always created even if sync is
+    /// temporarily unavailable.
     fn persist_task(&self, task: &Task, user_id: &str) -> Result<(), AppError> {
         let status_str = task.status.to_string();
         let priority_str = task.priority.to_string();
@@ -228,9 +235,19 @@ impl TaskCreationService {
                     "[]".to_string()
                 });
 
-        let conn = self.db.get_connection()?;
+        // Serialize the sync payload before acquiring the connection so that a
+        // serialization error never leaves a dangling open transaction.
+        let task_json = serde_json::to_string(task).map_err(|e| {
+            error!("Failed to serialize task for sync queue: {}", e);
+            AppError::Database(format!("Failed to serialize task for sync: {}", e))
+        })?;
 
-        conn.execute(
+        let mut conn = self.db.get_connection()?;
+        let tx = conn
+            .transaction()
+            .map_err(|e| AppError::Database(format!("Failed to start transaction: {}", e)))?;
+
+        tx.execute(
             r#"
             INSERT INTO tasks (
                 id, task_number, title, description, vehicle_plate, vehicle_model, vehicle_year, 
@@ -316,16 +333,11 @@ impl TaskCreationService {
             }
         })?;
 
-        // Add task to sync queue for offline/remote synchronization
-        let task_json = serde_json::to_string(task).map_err(|e| {
-            error!("Failed to serialize task for sync queue: {}", e);
-            AppError::Database(format!("Failed to serialize task for sync: {}", e))
-        })?;
-
-        if let Err(e) = conn.execute(
+        // Add task to sync queue; failure is non-fatal (offline-first semantics)
+        if let Err(e) = tx.execute(
             r#"
             INSERT INTO sync_queue (
-                operation_type, entity_type, entity_id, data, status, 
+                operation_type, entity_type, entity_id, data, status,
                 priority, user_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             "#,
@@ -345,6 +357,9 @@ impl TaskCreationService {
         } else {
             debug!("Task {} added to sync queue", task.id);
         }
+
+        tx.commit()
+            .map_err(|e| AppError::Database(format!("Failed to commit task creation: {}", e)))?;
 
         Ok(())
     }

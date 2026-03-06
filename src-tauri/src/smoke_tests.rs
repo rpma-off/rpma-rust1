@@ -1,6 +1,6 @@
 //! Smoke tests for core services and migrations.
 
-use crate::domains::tasks::infrastructure::task_validation::TaskValidationService;
+use crate::domains::tasks::infrastructure::task_rules_repository::TaskRulesRepository;
 use crate::test_utils::TestDatabase;
 use chrono::Utc;
 use rusqlite::params;
@@ -30,7 +30,7 @@ fn insert_user(db: &crate::db::Database, user_id: &str, role: &str, is_active: b
 fn smoke_task_validation_assignment() {
     let test_db = TestDatabase::new().expect("Failed to create test database");
     let db = test_db.db();
-    let service = TaskValidationService::new(Arc::clone(&db));
+    let service = TaskRulesRepository::new(Arc::clone(&db));
 
     insert_user(db.as_ref(), "tech1", "technician", true);
 

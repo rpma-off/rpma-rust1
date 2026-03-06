@@ -79,8 +79,12 @@ impl InterventionDataService {
         intervention.client_phone = customer_phone;
 
         // Set vehicle info from task (fetch full vehicle details)
-        let (vehicle_model, vehicle_make, vehicle_year, vehicle_vin): 
-            (Option<String>, Option<String>, Option<i32>, Option<String>) = tx
+        let (vehicle_model, vehicle_make, vehicle_year, vehicle_vin): (
+            Option<String>,
+            Option<String>,
+            Option<i32>,
+            Option<String>,
+        ) = tx
             .query_row(
                 "SELECT vehicle_model, vehicle_make, vehicle_year, vin FROM tasks WHERE id = ?",
                 params![request.task_id],

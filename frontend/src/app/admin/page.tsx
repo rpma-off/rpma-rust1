@@ -5,33 +5,14 @@ import dynamic from 'next/dynamic';
 import {
   Shield,
   Users,
-  User,
-  Database,
-  Activity,
-  CheckCircle,
-  XCircle,
-  Clock,
   BarChart3,
   Server,
   Lock,
   UserCheck,
-  RefreshCw,
-  Trash2,
-  Plus,
-  Search,
-  Download
+  Activity,
 } from 'lucide-react';
 import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  EmptyState,
   ErrorState,
-  Input,
   LoadingState,
   PageHeader,
   PageShell,
@@ -44,9 +25,11 @@ import {
 import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
 import { useAdminDashboard, useAdminUserManagement } from '@/domains/admin';
-import type { RecentActivity, SystemStats } from '@/domains/admin';
-import type { CreateUserRequest } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { AdminOverviewTab } from '@/domains/admin/components/AdminOverviewTab';
+import { AdminUsersTab } from '@/domains/admin/components/AdminUsersTab';
+import { AdminSystemTab } from '@/domains/admin/components/AdminSystemTab';
+import { AddUserModal } from '@/domains/admin/components/AddUserModal';
 
 const WorkflowExecutionDashboard = dynamic(
   () => import('@/domains/interventions').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
@@ -120,34 +103,6 @@ export default function AdminPage() {
     deleteUser(userId, t('users.confirmDelete'));
   };
 
-  const getActivityIcon = (type: RecentActivity['type']) => {
-    switch (type) {
-      case 'user_login':
-        return <UserCheck className="h-4 w-4 text-green-400" />;
-      case 'task_created':
-        return <Plus className="h-4 w-4 text-blue-400" />;
-      case 'task_completed':
-        return <CheckCircle className="h-4 w-4 text-emerald-400" />;
-      case 'system_error':
-        return <XCircle className="h-4 w-4 text-red-400" />;
-      case 'backup_completed':
-        return <Database className="h-4 w-4 text-purple-400" />;
-      default:
-        return <Activity className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  const getHealthColor = (health: SystemStats['systemHealth']) => {
-    switch (health) {
-      case 'healthy':
-        return 'text-green-400 bg-green-500/20 border-green-500/30';
-      case 'warning':
-        return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
-      case 'critical':
-        return 'text-red-400 bg-red-500/20 border-red-500/30';
-    }
-  };
-
   return (
     <PageShell>
       {/* Header */}
@@ -207,241 +162,35 @@ export default function AdminPage() {
           </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* System Health */}
-              <Card className="border-[hsl(var(--rpma-border))] bg-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Activity className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    {t('admin.systemHealth')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('tasks.status')}</span>
-                    <Badge className={getHealthColor(stats.systemHealth)}>
-                      {stats.systemHealth === 'healthy' ? `✓ ${t('admin.systemHealth')}` :
-                       stats.systemHealth === 'warning' ? `⚠ ${t('common.warning')}` : `✗ ${t('common.critical')}`}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('common.availability')}</span>
-                    <span className="text-foreground font-medium">{stats.uptime}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('admin.database')}</span>
-                    <span className="text-foreground font-medium">{stats.databaseSize}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              <Card className="border-[hsl(var(--rpma-border))] bg-white md:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Clock className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    {t('audit.activity')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-64 overflow-y-auto">
-                    {recentActivities.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 p-3 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                        <div className="flex-shrink-0 mt-0.5">
-                          {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground font-medium">{activity.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            {activity.user && (
-                              <span className="text-xs text-muted-foreground">{activity.user}</span>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(activity.timestamp).toLocaleString('fr-FR')}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                     ))}
-                   </div>
-                 </CardContent>
-               </Card>
-             </div>
-
-             {/* Dashboard Components */}
-             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-               <WorkflowExecutionDashboard taskStats={dashboardStats?.tasks} />
-               <QualityAssuranceDashboard
-                 clientStats={dashboardStats?.clients}
-                 userStats={dashboardStats?.users}
-               />
-               <PhotoDocumentationDashboard syncStats={dashboardStats?.sync} />
-             </div>
-           </TabsContent>
+          <TabsContent value="overview">
+            <AdminOverviewTab
+              stats={stats}
+              recentActivities={recentActivities}
+              dashboardStats={dashboardStats}
+              WorkflowExecutionDashboard={WorkflowExecutionDashboard}
+              QualityAssuranceDashboard={QualityAssuranceDashboard}
+              PhotoDocumentationDashboard={PhotoDocumentationDashboard}
+            />
+          </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <Card className="border-[hsl(var(--rpma-border))] bg-white">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-foreground">{t('admin.userManagement')}</CardTitle>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t('users.createUser')}
-                  </Button>
-                </div>
-                <CardDescription className="text-muted-foreground">
-                  {t('users.title')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                 <div className="flex items-center justify-between mb-6">
-                   <div className="flex items-center gap-4">
-                     <div className="relative flex-1 max-w-md">
-                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                       <Input
-                         placeholder="Rechercher utilisateurs..."
-                         value={userSearchQuery}
-                         onChange={(e) => setUserSearchQuery(e.target.value)}
-                         className="pl-10"
-                       />
-                     </div>
-                     <select
-                       value={userRoleFilter}
-                       onChange={(e) => setUserRoleFilter(e.target.value)}
-                       className="px-3 py-2 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground text-sm"
-                     >
-                       <option value="all">Tous les rôles</option>
-                       <option value="admin">Administrateur</option>
-                       <option value="supervisor">Superviseur</option>
-                       <option value="technician">Technicien</option>
-                       <option value="viewer">Observateur</option>
-                     </select>
-                   </div>
-                   <Button
-                     onClick={() => setShowAddUserModal(true)}
-                     className="font-medium"
-                   >
-                     <Plus className="h-4 w-4 mr-2" />
-                     Ajouter Utilisateur
-                   </Button>
-                 </div>
-
-                 <div className="space-y-3">
-                   {isLoadingUsers ? (
-                     <LoadingState message={t('common.loading')} />
-                   ) : filteredUsers.length === 0 ? (
-                     <EmptyState
-                       icon={<User className="h-8 w-8 text-muted-foreground" />}
-                       title={t('users.noUsers')}
-                       description={t('empty.noData')}
-                     />
-                   ) : (
-                     <div className="space-y-2">
-                       {filteredUsers.map((user) => (
-                           <div key={user.id} className="flex items-center justify-between p-4 bg-[hsl(var(--rpma-surface))] rounded-lg border border-[hsl(var(--rpma-border))]">
-                             <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 bg-[hsl(var(--rpma-surface))] rounded-full flex items-center justify-center">
-                                 <User className="h-5 w-5 text-foreground" />
-                               </div>
-                               <div>
-                                 <p className="text-foreground font-medium">{user.first_name} {user.last_name}</p>
-                                 <p className="text-muted-foreground text-sm">{user.email}</p>
-                               </div>
-                             </div>
-                             <div className="flex items-center gap-3">
-                               <Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-                                 {user.role === 'admin' ? 'Admin' :
-                                  user.role === 'supervisor' ? 'Superviseur' :
-                                  user.role === 'technician' ? 'Technicien' : 'Observateur'}
-                               </Badge>
-                               <Badge variant={user.is_active ? 'default' : 'destructive'} className="text-xs">
-                                 {user.is_active ? 'Actif' : 'Inactif'}
-                               </Badge>
-                               <div className="flex gap-2">
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
-                                   onClick={() => handleUpdateUserStatus(user.id, !user.is_active)}
-                                   className="border-border/60 text-muted-foreground hover:bg-border/20"
-                                 >
-                                   {user.is_active ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                                 </Button>
-                                 <Button
-                                   variant="outline"
-                                   size="sm"
-                                   onClick={() => handleDeleteUser(user.id)}
-                                   className="border-red-500/60 text-red-400 hover:bg-red-500/20"
-                                 >
-                                   <Trash2 className="h-4 w-4" />
-                                 </Button>
-                               </div>
-                             </div>
-                           </div>
-                         ))}
-                     </div>
-                   )}
-                 </div>
-              </CardContent>
-            </Card>
+            <AdminUsersTab
+              filteredUsers={filteredUsers}
+              isLoading={isLoadingUsers}
+              searchQuery={userSearchQuery}
+              roleFilter={userRoleFilter}
+              setSearchQuery={setUserSearchQuery}
+              setRoleFilter={setUserRoleFilter}
+              onAddUser={() => setShowAddUserModal(true)}
+              onUpdateUserStatus={handleUpdateUserStatus}
+              onDeleteUser={handleDeleteUser}
+            />
           </TabsContent>
 
           {/* System Tab */}
           <TabsContent value="system" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-[hsl(var(--rpma-border))] bg-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Database className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    {t('admin.database')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('common.size')}</span>
-                    <span className="text-foreground font-medium">{stats.databaseSize}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('admin.backup')}</span>
-                    <span className="text-foreground font-medium">{stats.lastBackup}</span>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" className="border-border/60 text-muted-foreground hover:bg-border/20">
-                      <Download className="h-4 w-4 mr-2" />
-                      {t('common.export')}
-                    </Button>
-                    <Button size="sm">
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      {t('admin.backup')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-[hsl(var(--rpma-border))] bg-white">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-foreground">
-                    <Server className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                    {t('analytics.performance')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('common.availability')}</span>
-                    <span className="text-foreground font-medium">{stats.uptime}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('common.cpuLoad')}</span>
-                    <span className="text-green-400 font-medium">23%</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t('common.memory')}</span>
-                    <span className="text-yellow-400 font-medium">67%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <AdminSystemTab stats={stats} />
           </TabsContent>
 
           {/* Security Tab */}
@@ -452,93 +201,11 @@ export default function AdminPage() {
 
       {/* Add User Modal */}
       {showAddUserModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold text-foreground mb-4">{t('users.createUser')}</h3>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target as HTMLFormElement);
-              const userData: CreateUserRequest = {
-                email: String(formData.get('email') || ''),
-                first_name: String(formData.get('firstName') || ''),
-                last_name: String(formData.get('lastName') || ''),
-                role: String(formData.get('role') || ''),
-                password: String(formData.get('password') || '')
-              };
-              handleAddUser(userData);
-            }}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.email')}</label>
-                  <Input
-                    name="email"
-                    type="email"
-                    required
-                    className=""
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.firstName')}</label>
-                    <Input
-                      name="firstName"
-                      required
-                      className=""
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.lastName')}</label>
-                    <Input
-                      name="lastName"
-                      required
-                      className=""
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.role')}</label>
-                  <select
-                    name="role"
-                    required
-                    className="w-full px-3 py-2 bg-white border border-[hsl(var(--rpma-border))] rounded-[6px] text-foreground"
-                  >
-                    <option value="viewer">{t('users.roleViewer')}</option>
-                    <option value="technician">{t('users.roleTechnician')}</option>
-                    <option value="supervisor">{t('users.roleSupervisor')}</option>
-                    <option value="admin">{t('users.roleAdmin')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-1">{t('auth.password')}</label>
-                  <Input
-                    name="password"
-                    type="password"
-                    required
-                    className=""
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAddUserModal(false)}
-                  className="flex-1 border-border/60 text-muted-foreground hover:bg-border/20"
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 font-medium"
-                >
-                  {t('common.add')}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AddUserModal
+          onClose={() => setShowAddUserModal(false)}
+          onAddUser={handleAddUser}
+        />
       )}
     </PageShell>
   );
 }
-

@@ -9,6 +9,7 @@
 
 use crate::db::Database;
 use chrono::{Datelike, Timelike, Utc};
+use rusqlite;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -202,73 +203,61 @@ impl ClientStatisticsService {
         })
     }
 
-    /// Get geographic distribution of clients
+    /// Execute a SQL query that returns (String, i32) pairs — used to de-duplicate
+    /// the repetitive prepare/query_map/collect pattern in geographic stats.
+    fn query_key_count(
+        conn: &rusqlite::Connection,
+        sql: &str,
+    ) -> Result<Vec<(String, i32)>, String> {
+        let mut stmt = conn
+            .prepare(sql)
+            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+        // Assign to a named variable so the borrow on `stmt` ends at the
+        // semicolon and does not leak into the function's tail expression.
+        let rows: Result<Vec<(String, i32)>, _> = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+            })
+            .map_err(|e| format!("Failed to execute query: {}", e))?
+            .collect();
+        rows.map_err(|e| format!("Failed to collect results: {}", e))
+    }
+
+    /// Get geographic distribution of clients.
+    ///
+    /// All three queries share a single pooled connection acquired once at the
+    /// start of the method, reducing pool pressure compared to the previous
+    /// pattern of calling `get_connection()` for each query.
     pub fn get_geographic_stats(&self) -> Result<ClientGeographicStats, String> {
-        // Clients by state
-        let state_sql = "SELECT address_state, COUNT(*) as count FROM clients WHERE deleted_at IS NULL AND address_state IS NOT NULL GROUP BY address_state ORDER BY count DESC";
         let conn = self.db.as_ref().get_connection()?;
-        let mut stmt = conn
-            .prepare(state_sql)
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-        let state_rows = stmt
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-            })
-            .map_err(|e| format!("Failed to execute query: {}", e))?
-            .collect::<Result<Vec<(String, i32)>, _>>()
-            .map_err(|e| format!("Failed to collect results: {}", e))?;
 
-        let mut clients_by_state = HashMap::new();
-        for (state, count) in state_rows {
-            clients_by_state.insert(state, count);
-        }
+        let clients_by_state: HashMap<String, i32> = Self::query_key_count(
+            &conn,
+            "SELECT address_state, COUNT(*) as count FROM clients \
+             WHERE deleted_at IS NULL AND address_state IS NOT NULL \
+             GROUP BY address_state ORDER BY count DESC",
+        )?
+        .into_iter()
+        .collect();
 
-        // Clients by city
-        let city_sql = "SELECT address_city, COUNT(*) as count FROM clients WHERE deleted_at IS NULL AND address_city IS NOT NULL GROUP BY address_city ORDER BY count DESC LIMIT 20";
-        let conn = self.db.as_ref().get_connection()?;
-        let mut stmt = conn
-            .prepare(city_sql)
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-        let city_rows = stmt
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-            })
-            .map_err(|e| format!("Failed to execute query: {}", e))?
-            .collect::<Result<Vec<(String, i32)>, _>>()
-            .map_err(|e| format!("Failed to collect results: {}", e))?;
+        let clients_by_city: HashMap<String, i32> = Self::query_key_count(
+            &conn,
+            "SELECT address_city, COUNT(*) as count FROM clients \
+             WHERE deleted_at IS NULL AND address_city IS NOT NULL \
+             GROUP BY address_city ORDER BY count DESC LIMIT 20",
+        )?
+        .into_iter()
+        .collect();
 
-        let mut clients_by_city = HashMap::new();
-        for (city, count) in city_rows {
-            clients_by_city.insert(city, count);
-        }
-
-        // Top regions (state + city combinations)
-        let region_sql = r#"
-            SELECT
-                COALESCE(address_state, 'Unknown') || ', ' || COALESCE(address_city, 'Unknown') as region,
-                COUNT(*) as count
-            FROM clients
-            WHERE deleted_at IS NULL
-            GROUP BY address_state, address_city
-            ORDER BY count DESC
-            LIMIT 10
-        "#;
-
-        let mut stmt = conn
-            .prepare(region_sql)
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-        let region_rows = stmt
-            .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-            })
-            .map_err(|e| format!("Failed to execute query: {}", e))?
-            .collect::<Result<Vec<(String, i32)>, _>>()
-            .map_err(|e| format!("Failed to collect results: {}", e))?;
-
-        let mut top_regions = Vec::new();
-        for (region, count) in region_rows {
-            top_regions.push((region, count));
-        }
+        let top_regions: Vec<(String, i32)> = Self::query_key_count(
+            &conn,
+            "SELECT COALESCE(address_state, 'Unknown') || ', ' || \
+                    COALESCE(address_city, 'Unknown') as region, \
+                    COUNT(*) as count \
+             FROM clients WHERE deleted_at IS NULL \
+             GROUP BY address_state, address_city \
+             ORDER BY count DESC LIMIT 10",
+        )?;
 
         Ok(ClientGeographicStats {
             clients_by_state,

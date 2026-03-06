@@ -1,54 +1,26 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
 import dynamic from 'next/dynamic';
-import { Plus, Search, Calendar, Car, User, Shield, Eye, Edit, Trash2, RefreshCw, Download, Upload, Grid, List, AlertCircle, Filter, ChevronRight, SearchX } from 'lucide-react';
-import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
-import { taskGateway } from '@/domains/tasks/api/taskGateway';
-import { useTasks } from '@/domains/tasks/api/useTasks';
+import { Plus, Shield, AlertCircle, Download, Filter, RefreshCw, ChevronRight, SearchX } from 'lucide-react';
 import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
 import {
   getStatusBadgeClass,
-  getStatusVariant,
   formatTaskDateTime,
-  formatDateShort,
-  mapTaskErrorToUserMessage,
 } from '@/domains/tasks/utils/task-presentation';
-import { downloadTasksCsv, importTasksFromCsv } from '@/domains/tasks/services/task-csv.service';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
   Badge,
   Button,
   Card,
   CardContent,
   FloatingActionButton,
-  Input,
   PullToRefresh,
   TaskCardSkeleton,
-  VirtualizedTable,
 } from '@/shared/ui/facade';
-import { cn, enhancedToast, getUserFullName, logger } from '@/shared/utils';
-
-import { useAuth } from '@/domains/auth';
-import { technicianService } from '@/domains/users';
-import { useDebounce, useTranslation } from '@/shared/hooks';
-
-// TypeScript interfaces
-// interface TaskPhoto {
-//   id: string;
-//   url: string;
-//   type: 'before' | 'after' | 'during';
-//   created_at: string;
-// }
+import { cn } from '@/shared/utils';
+import { useTasksPage } from '@/domains/tasks/hooks/useTasksPage';
+import { TaskListCard } from './TaskListCard';
+import { TaskListFilters } from './TaskListFilters';
 
 const CalendarView = dynamic(
   () => import('@/domains/calendar').then((mod) => mod.CalendarView),
@@ -60,804 +32,50 @@ const KanbanBoard = dynamic(
   { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
 );
 
-// Loading skeleton component - now using standardized SkeletonCard
-
-// Simplified task card component
-const TaskCard = React.memo(({
-  task,
-  onView,
-  onEdit,
-  onDelete
-}: {
-  task: TaskWithDetails;
-  onView: (task: TaskWithDetails) => void;
-  onEdit: (task: TaskWithDetails) => void;
-  onDelete: (task: TaskWithDetails) => void;
-}) => {
-  const getStatusLabel = useCallback((status: string) => {
-    return getTaskDisplayStatus(status as TaskStatus);
-  }, []);
-
-  const formatDate = useCallback((dateString: string | null) => {
-    return formatDateShort(dateString);
-  }, []);
-
-  return (
-    <div className="animate-fadeIn">
-      <Card className="hover:shadow-sm transition-all duration-200 border border-[hsl(var(--rpma-border))] hover:border-primary/30 bg-white rounded-[10px]">
-        <CardContent className="p-4 md:p-5">
-          <div className="flex flex-col gap-4">
-            {/* Header with Title and Status */}
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-base md:text-lg font-semibold text-foreground line-clamp-2 flex-1 leading-tight">
-                {getTaskDisplayTitle(task)}
-              </h3>
-              <Badge
-                variant={getStatusVariant(task.status || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
-                className="shrink-0 text-xs px-2 py-1"
-              >
-                {getStatusLabel(task.status || 'pending')}
-              </Badge>
-            </div>
-
-            {/* Key Information Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <Car className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <span className="text-foreground font-medium text-sm block truncate">
-                    {task.vehicle_plate || 'Plaque non définie'}
-                  </span>
-                  <span className="text-muted-foreground text-xs truncate block">
-                    {task.vehicle_make && task.vehicle_model ?
-                      `${task.vehicle_make} ${task.vehicle_model}` :
-                      'Véhicule non spécifié'
-                    }
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-foreground text-sm truncate">
-                  {task.customer_name || 'Client non spécifié'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-foreground text-sm">
-                  {task.scheduled_date ? formatDate(task.scheduled_date) : 'Non planifiée'}
-                </span>
-              </div>
-
-              {task.technician && (
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-muted-foreground text-sm truncate">
-                    {getUserFullName(task.technician)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* PPF Zones - Show if available */}
-            {task.ppf_zones && task.ppf_zones.length > 0 && (
-              <div className="flex items-start gap-2 pt-2 border-t border-border/10">
-                <Shield className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <span className="text-muted-foreground text-xs font-medium block mb-1">Zones PPF</span>
-                  <div className="flex flex-wrap gap-1">
-                    {task.ppf_zones.slice(0, 3).map((zone, index) => (
-                      <span
-                        key={index}
-                        className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-md border border-primary/30"
-                      >
-                        {zone}
-                      </span>
-                    ))}
-                    {task.ppf_zones.length > 3 && (
-                      <span className="text-muted-foreground text-xs">
-                        +{task.ppf_zones.length - 3} autres
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-1 pt-2 border-t border-border/10">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onView(task)}
-                className="h-8 w-8 p-0 hover:bg-muted/10 text-muted-foreground hover:text-foreground"
-                title="Voir les détails"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(task)}
-                className="h-8 w-8 p-0 hover:bg-muted/10 text-muted-foreground hover:text-foreground"
-                title="Modifier"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Êtes-vous sÃ»r de vouloir supprimer la tâche &ldquo;{task.title || `Tâche #${task.id.slice(0, 8)}`}&rdquo; ?
-                      Cette action est irréversible.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDelete(task)}
-                      className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                    >
-                      Supprimer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-});
-
-TaskCard.displayName = 'TaskCard';
-
-// Table view component with virtualization
-const TaskTable = React.memo(({
-  tasks,
-  onView,
-  onEdit,
-  onDelete
-}: {
-  tasks: TaskWithDetails[];
-  onView: (task: TaskWithDetails) => void;
-  onEdit: (task: TaskWithDetails) => void;
-  onDelete: (task: TaskWithDetails) => void;
-}) => {
-  const getStatusLabel = useCallback((status: string) => {
-    return getTaskDisplayStatus(status as TaskStatus);
-  }, []);
-
-  const formatDate = useCallback((dateString: string | null) => {
-    if (!dateString) return '-';
-    return formatDateShort(dateString);
-  }, []);
-
-  const columns = [
-    {
-      key: 'title',
-      header: 'Tâche',
-      width: 200,
-      sortable: true,
-      render: (_value: unknown, task: TaskWithDetails) => (
-        <div>
-          <div className="text-sm font-medium text-foreground line-clamp-1">
-            {getTaskDisplayTitle(task)}
-          </div>
-          <div className="text-xs text-muted-foreground md:hidden">
-            {task.vehicle_plate && `${task.vehicle_plate} â¢ `}
-            {formatDate(task.scheduled_date)}
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'vehicle',
-      header: 'Véhicule',
-      width: 150,
-      sortable: true,
-      className: 'hidden sm:table-cell',
-      render: (_value: unknown, task: TaskWithDetails) => (
-        <div>
-          <div className="text-sm text-foreground">
-            {task.vehicle_make && task.vehicle_model
-              ? `${task.vehicle_make} ${task.vehicle_model}`
-              : task.vehicle_plate || '-'
-            }
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {task.vehicle_plate}
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'customer_name',
-      header: 'Client',
-      width: 150,
-      sortable: true,
-      render: (value: unknown) => (
-        <div className="text-sm text-foreground">
-          {String(value || '-')}
-        </div>
-      ),
-    },
-    {
-      key: 'scheduled_date',
-      header: 'Date',
-      width: 120,
-      sortable: true,
-      className: 'hidden md:table-cell',
-      render: (value: unknown) => (
-        <div className="text-sm text-foreground">
-          {formatDate(value as string | null)}
-        </div>
-      ),
-    },
-    {
-      key: 'ppf_zones',
-      header: 'Zones PPF',
-      width: 120,
-      className: 'hidden md:table-cell',
-      render: (value: unknown) => (
-        <div className="text-sm text-foreground">
-          {(value as string[])?.length ? (value as string[]).join(', ') : '-'}
-        </div>
-      ),
-    },
-    {
-      key: 'technician',
-      header: 'Technicien',
-      width: 150,
-      className: 'hidden lg:table-cell',
-      render: (_value: unknown, task: TaskWithDetails) => (
-        <div className="text-sm text-foreground">
-          {task.technician ? getUserFullName(task.technician) : '-'}
-        </div>
-      ),
-    },
-    {
-      key: 'status',
-      header: 'Statut',
-      width: 120,
-      sortable: true,
-      render: (value: unknown) => (
-        <Badge
-          variant={getStatusVariant((value as string) || 'pending') as "workflow-draft" | "workflow-inProgress" | "workflow-completed" | "workflow-cancelled" | "secondary"}
-          className="text-xs"
-        >
-          {getStatusLabel((value as string) || 'pending')}
-        </Badge>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      width: 140,
-      render: (_value: unknown, task: TaskWithDetails) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(task);
-            }}
-            className="h-8 w-8 p-0 touch-manipulation"
-            title="Voir les détails"
-          >
-            <Eye className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(task);
-            }}
-            className="h-8 w-8 p-0 touch-manipulation"
-            title="Modifier"
-          >
-            <Edit className="h-3 w-3" />
-          </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-destructive hover:text-destructive/80 touch-manipulation"
-                  title="Supprimer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Êtes-vous sÃ»r de vouloir supprimer la tâche &ldquo;{task.title || `Tâche #${task.id.slice(0, 8)}`}&rdquo; ?
-                    Cette action est irréversible.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => onDelete(task)}
-                    className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                  >
-                    Supprimer
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <VirtualizedTable
-      data={tasks}
-      columns={columns}
-      height={600}
-      rowHeight={60}
-      onRowClick={(task) => onView(task)}
-      className="bg-background"
-    />
-  );
-});
-
-TaskTable.displayName = 'TaskTable';
-
-// Compact filters component
-const TaskFilters = React.memo(({
-  searchTerm,
-  setSearchTerm,
-  statusFilter,
-  setStatusFilter,
-  dateFilter,
-  setDateFilter,
-  technicianFilter,
-  setTechnicianFilter,
-  ppfZoneFilter,
-  setPpfZoneFilter,
-  technicians,
-  viewMode,
-  setViewMode,
-  onExport,
-  onImport
-}: {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
-  dateFilter: string;
-  setDateFilter: (date: string) => void;
-  technicianFilter: string;
-  setTechnicianFilter: (tech: string) => void;
-  ppfZoneFilter: string;
-  setPpfZoneFilter: (zone: string) => void;
-  technicians: Array<{ id: string; name: string }>;
-    viewMode: 'cards' | 'table' | 'calendar' | 'kanban';
-    setViewMode: (mode: 'cards' | 'table' | 'calendar' | 'kanban') => void;
-  onExport: () => void;
-  onImport: () => void;
-}) => {
-const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  React.useEffect(() => {
-    // This will trigger search when debounced term changes
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  }, [debouncedSearchTerm]);
-
-  const activeFiltersCount = [statusFilter, dateFilter, technicianFilter, ppfZoneFilter].filter(f => f !== 'all').length;
-
-  return (
-    <div className="animate-fadeIn bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] p-4 mb-4 shadow-[var(--rpma-shadow-soft)]">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher tâches, véhicules, clients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-9 rounded-full bg-muted/30 border-border"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 border border-border/60 rounded-full p-1 bg-muted/20">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className={viewMode === 'table' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue liste"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'cards' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('cards')}
-                className={viewMode === 'cards' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue cartes"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('calendar')}
-                className={viewMode === 'calendar' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue calendrier"
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('kanban')}
-                className={viewMode === 'kanban' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue Kanban"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onImport}
-              className="rounded-full border-border/60"
-              title="Importer"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 items-center">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 h-9 bg-white border border-border/60 rounded-full text-foreground text-sm"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="draft">Devis</option>
-            <option value="scheduled">Planifié</option>
-            <option value="in_progress">En cours</option>
-            <option value="completed">Terminé</option>
-            <option value="cancelled">Annulé</option>
-            <option value="archived">Archivé</option>
-          </select>
-
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="px-3 h-9 bg-white border border-border/60 rounded-full text-foreground text-sm"
-          >
-            <option value="all">Toutes les dates</option>
-            <option value="today">Aujourd&apos;hui</option>
-            <option value="week">Cette semaine</option>
-            <option value="month">Ce mois</option>
-            <option value="overdue">En retard</option>
-          </select>
-
-          <select
-            value={technicianFilter}
-            onChange={(e) => setTechnicianFilter(e.target.value)}
-            className="px-3 h-9 bg-white border border-border/60 rounded-full text-foreground text-sm"
-          >
-            <option value="all">Tous les techniciens</option>
-            {technicians.map((tech) => (
-              <option key={tech.id} value={tech.id}>
-                {tech.name}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="text"
-            placeholder="Zone PPF"
-            value={ppfZoneFilter === 'all' ? '' : ppfZoneFilter}
-            onChange={(e) => setPpfZoneFilter(e.target.value || 'all')}
-            className="px-3 h-9 bg-white border border-border/60 rounded-full text-foreground text-sm placeholder-muted-foreground"
-          />
-
-          {activeFiltersCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setStatusFilter('all');
-                setDateFilter('all');
-                setTechnicianFilter('all');
-                setPpfZoneFilter('all');
-                setSearchTerm('');
-              }}
-              className="text-muted-foreground"
-            >
-              Réinitialiser
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onExport}
-            className="rounded-full border-border/60"
-            title="Exporter"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-TaskFilters.displayName = 'TaskFilters';
-
 // Main tasks page component
 export default function TasksPageContent() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('all');
-  const [technicianFilter, setTechnicianFilter] = useState<string>('all');
-  const [ppfZoneFilter, setPpfZoneFilter] = useState<string>('all');
-  const [technicians, setTechnicians] = useState<Array<{ id: string; name: string }>>([]);
-  const [_refreshing, setRefreshing] = useState(false);
-   const [viewMode, setViewMode] = useState<'cards' | 'table' | 'calendar' | 'kanban'>('table');
-   const [selectedDateRange] = useState<{ from?: Date; to?: Date } | undefined>();
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Task filters are handled centrally in AppNavigation component
-
-  // Use the enhanced useTasks hook
   const {
+    user,
+    t,
+    router,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    dateFilter,
+    setDateFilter,
+    technicianFilter,
+    setTechnicianFilter,
+    ppfZoneFilter,
+    setPpfZoneFilter,
+    technicians,
+    viewMode,
+    setViewMode,
+    showFilters,
+    setShowFilters,
     tasks,
     loading,
     error,
-    deleteTask,
-    refetch
-  } = useTasks({
-    status: statusFilter !== 'all' ? statusFilter as TaskStatus : undefined,
-    search: searchTerm,
-    assignedTo: technicianFilter !== 'all' ? technicianFilter : undefined,
-    pageSize: 20,
-    autoFetch: true
-  });
-
-
-
-
-
-  // Memoized filtered tasks
-  const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
-      const matchesSearch = 
-        !searchTerm ||
-        task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.vehicle_make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.vehicle_model?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-      
-      const matchesDate = (() => {
-        if (dateFilter === 'all') return true;
-        if (!task.scheduled_date) return false;
-        
-        const taskDate = new Date(task.scheduled_date);
-        const today = new Date();
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        switch (dateFilter) {
-          case 'today':
-            return taskDate.toDateString() === today.toDateString();
-          case 'week':
-            return taskDate >= startOfWeek && taskDate <= today;
-          case 'month':
-            return taskDate >= startOfMonth && taskDate <= today;
-          case 'overdue':
-            return taskDate < today && task.status !== 'completed';
-          default:
-            return true;
-        }
-      })();
-      
-      const matchesTechnician = technicianFilter === 'all' || task.technician_id === technicianFilter;
-
-      const matchesPpfZone = ppfZoneFilter === 'all' ||
-        (task.ppf_zones && task.ppf_zones.some(zone =>
-          zone.toLowerCase().includes(ppfZoneFilter.toLowerCase())
-        ));
-
-      return matchesSearch && matchesStatus && matchesDate && matchesTechnician && matchesPpfZone;
-    });
-  }, [tasks, searchTerm, statusFilter, dateFilter, technicianFilter, ppfZoneFilter]);
-
-  const statusTabs = useMemo(() => ([
-    { key: 'all', label: t('filters.all'), count: tasks.length, filter: 'all' },
-    { key: 'draft', label: t('tasks.statusDraft'), count: tasks.filter(t => t.status === 'draft').length, filter: 'draft' },
-    { key: 'scheduled', label: t('filters.scheduled'), count: tasks.filter(t => t.status === 'scheduled').length, filter: 'scheduled' },
-    { key: 'in_progress', label: t('tasks.statusInProgress'), count: tasks.filter(t => t.status === 'in_progress').length, filter: 'in_progress' },
-    { key: 'completed', label: t('tasks.statusCompleted'), count: tasks.filter(t => t.status === 'completed').length, filter: 'completed' },
-    { key: 'cancelled', label: t('tasks.statusCancelled'), count: tasks.filter(t => t.status === 'cancelled').length, filter: 'cancelled' },
-    { key: 'archived', label: t('tasks.statusArchived'), count: tasks.filter(t => t.status === 'archived').length, filter: 'archived' },
-  ]), [tasks, t]);
-
-  // Fetch technicians (simplified version - keeping for filters)
-  const fetchTechnicians = useCallback(async () => {
-    try {
-      const technicians = await technicianService.getTechnicians();
-      const technicianUsers = technicians.map((tech) => ({
-        id: tech.id,
-        name: tech.name
-      }));
-      setTechnicians(technicianUsers);
-    } catch (err) {
-      console.error('Failed to fetch technicians:', err);
-      setTechnicians([]);
-    }
-  }, []);
-
-  // Update task status via backend
-  const _handleStatusChange = useCallback(async (taskId: string, newStatus: TaskStatus) => {
-    try {
-      if (!user?.token) {
-        enhancedToast.error('Authentification requise');
-        return;
-      }
-      await taskGateway.editTask(taskId, { status: newStatus }, user.token);
-      enhancedToast.success('Statut mis Ã  jour avec succès');
-      await refetch();
-    } catch (err) {
-      logger.error('Failed to update task status', { taskId, newStatus, error: err });
-      enhancedToast.error('Erreur lors de la mise Ã  jour du statut');
-    }
-   }, [user?.token, refetch]);
-
-  // Handle task actions
-  const handleViewTask = useCallback((task: TaskWithDetails) => {
-    // Navigate to task detail page using Next.js router
-    router.push(`/tasks/${task.id}`);
-  }, [router]);
-
-  const handleEditTask = useCallback((task: TaskWithDetails) => {
-    // Navigate to task edit page using Next.js router
-    router.push(`/tasks/edit/${task.id}`);
-  }, [router]);
-
-  const handleDeleteTask = useCallback(async (task: TaskWithDetails) => {
-    // Confirmation is now handled in the UI component
-    logger.info('Starting task deletion process', {
-      taskId: task.id,
-      taskTitle: task.title,
-      status: task.status,
-      component: 'TasksPage'
-    });
-
-    logger.info('Starting task deletion process', {
-      taskId: task.id,
-      taskTitle: task.title,
-      status: task.status,
-      component: 'TasksPage'
-    });
-
-    try {
-      await deleteTask(task.id);
-      logger.info('Task deletion successful', {
-        taskId: task.id,
-        component: 'TasksPage'
-      });
-      enhancedToast.success('Tâche supprimée avec succès', {
-        action: {
-          label: 'Actualiser',
-          onClick: () => {
-            void refetch();
-          }
-        }
-      });
-    } catch (err) {
-      logger.error('Task deletion failed', {
-        taskId: task.id,
-        error: err instanceof Error ? err.message : 'Unknown error',
-        component: 'TasksPage'
-      });
-
-      enhancedToast.error(mapTaskErrorToUserMessage(err), {
-        action: {
-          label: 'Réessayer',
-          onClick: () => handleDeleteTask(task)
-        }
-      });
-    }
-  }, [deleteTask, refetch]);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await refetch();
-    } catch (error) {
-      console.error('Failed to refresh tasks:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetch]);
-
-  const handleExport = useCallback(async () => {
-    try {
-      if (!user?.token) {
-        enhancedToast.error('Session expirée, veuillez vous reconnecter');
-        return;
-      }
-
-      await downloadTasksCsv({ includeNotes: true, dateRange: selectedDateRange }, user.token);
-      enhancedToast.success('Export terminé avec succès');
-    } catch (error) {
-      console.error('Export failed:', error);
-      enhancedToast.error('Erreur lors de l\'export');
-    }
-  }, [selectedDateRange, user?.token]);
-
-  const handleImport = useCallback(async () => {
-    try {
-      if (!user?.token) {
-        enhancedToast.error('Session expirée, veuillez vous reconnecter');
-        return;
-      }
-
-      await importTasksFromCsv(user.token, () => refetch());
-    } catch (error) {
-      console.error('Import failed:', error);
-      enhancedToast.error('Erreur lors de l\'import');
-    }
-  }, [refetch, user?.token]);
-
-  // Initial data fetch
-  useEffect(() => {
-    fetchTechnicians();
-  }, [fetchTechnicians]);
-
-
+    filteredTasks,
+    statusTabs,
+    handleViewTask,
+    handleEditTask,
+    handleDeleteTask,
+    handleRefresh,
+    handleExport,
+    handleImport,
+  } = useTasksPage();
 
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Accès non autorisé</h1>
-          <p className="text-muted-foreground">Veuillez vous connecter pour accéder Ã  cette page.</p>
+          <p className="text-muted-foreground">Veuillez vous connecter pour accéder à cette page.</p>
         </div>
       </div>
     );
   }
-
-
 
   // Check if running in Tauri environment
   const isTauri = typeof window !== 'undefined' && (window as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__;
@@ -931,7 +149,7 @@ export default function TasksPageContent() {
         </div>
 
         {showFilters && (
-          <TaskFilters
+          <TaskListFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             statusFilter={statusFilter}
@@ -1011,7 +229,7 @@ export default function TasksPageContent() {
                         </div>
                         {secondary.length > 0 && (
                           <div className="text-xs text-muted-foreground">
-                            {secondary.join(' â¢ ')}
+                            {secondary.join(' \u2022 ')}
                           </div>
                         )}
                       </div>
@@ -1039,7 +257,7 @@ export default function TasksPageContent() {
           ) : (
             <div className="space-y-2">
               {filteredTasks.map((task) => (
-                <TaskCard
+                <TaskListCard
                   key={task.id}
                   task={task}
                   onView={handleViewTask}
@@ -1091,8 +309,4 @@ export default function TasksPageContent() {
       </div>
     </div>
   );
-};
-
-TaskTable.displayName = 'TaskTable';
-
-
+}

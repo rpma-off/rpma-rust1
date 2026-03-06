@@ -140,8 +140,5 @@ fn user_settings_default_composes_all_sub_defaults() {
     assert_eq!(d.accessibility.font_size, c.accessibility.font_size);
 
     // Notifications
-    assert_eq!(
-        d.notifications.sound_volume,
-        c.notifications.sound_volume
-    );
+    assert_eq!(d.notifications.sound_volume, c.notifications.sound_volume);
 }

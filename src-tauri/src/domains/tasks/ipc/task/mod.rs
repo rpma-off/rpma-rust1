@@ -9,6 +9,7 @@ pub mod facade;
 pub mod history;
 pub mod queries;
 pub mod statistics;
+pub mod types;
 pub mod validation;
 
 // Re-export the main facade for backward compatibility

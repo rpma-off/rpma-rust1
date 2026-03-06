@@ -185,6 +185,13 @@ export async function safeInvoke<T>(
     }
   }
 
+  // Normalize: ensure both camelCase and snake_case session token forms are always present
+  if (argsWithCorrelation.session_token && !argsWithCorrelation.sessionToken) {
+    argsWithCorrelation.sessionToken = argsWithCorrelation.session_token;
+  } else if (argsWithCorrelation.sessionToken && !argsWithCorrelation.session_token) {
+    argsWithCorrelation.session_token = argsWithCorrelation.sessionToken;
+  }
+
   try {
     // Log IPC call start
     logger.debug(LogDomain.API, `IPC call started: ${command}`, {

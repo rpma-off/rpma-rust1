@@ -167,16 +167,9 @@ export const materialOperations = {
    * @returns Promise resolving to created material
    */
   create: (data: CreateMaterialRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Material }).data;
-      }
-      throw new Error('Invalid response format for material create');
+    safeInvoke<Material>(IPC_COMMANDS.MATERIAL_CREATE, {
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -187,17 +180,10 @@ export const materialOperations = {
    * @returns Promise resolving to updated material
    */
   update: (id: string, data: UpdateMaterialRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_UPDATE, {
+    safeInvoke<Material>(IPC_COMMANDS.MATERIAL_UPDATE, {
+      sessionToken,
       id,
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Material }).data;
-      }
-      throw new Error('Invalid response format for material update');
+      request: { ...data }
     }),
 
   /**
@@ -207,14 +193,9 @@ export const materialOperations = {
    * @returns Promise resolving to material details
    */
   get: (id: string, sessionToken: string): Promise<Material> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET, {
+    safeInvoke<Material>(IPC_COMMANDS.MATERIAL_GET, {
       sessionToken,
       id
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Material }).data;
-      }
-      throw new Error('Invalid response format for material get');
     }),
 
   /**
@@ -239,16 +220,9 @@ export const stockOperations = {
    * @returns Promise resolving to updated material with current stock
    */
   updateStock: (data: UpdateStockRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Material }).data;
-      }
-      throw new Error('Invalid response format for update stock');
+    safeInvoke<Material>(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -258,16 +232,9 @@ export const stockOperations = {
    * @returns Promise resolving to updated material with current stock
    */
   adjustStock: (data: AdjustStockRequest, sessionToken: string): Promise<Material> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Material }).data;
-      }
-      throw new Error('Invalid response format for adjust stock');
+    safeInvoke<Material>(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
+      sessionToken,
+      request: { ...data }
     }),
 };
 
@@ -281,10 +248,8 @@ export const consumptionOperations = {
    */
   recordConsumption: (data: RecordConsumptionRequest, sessionToken: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.MATERIAL_RECORD_CONSUMPTION, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -316,17 +281,9 @@ export const transactionOperations = {
    * @returns Promise resolving to created transaction
    */
   createInventoryTransaction: (data: CreateInventoryTransactionRequest, sessionToken: string): Promise<InventoryTransaction> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      // Validate the response
-      if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as unknown as InventoryTransaction;
-      }
-      throw new Error('Invalid response format for create inventory transaction');
+    safeInvoke<InventoryTransaction>(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -361,16 +318,9 @@ export const categoryOperations = {
    * @returns Promise resolving to created category
    */
   createCategory: (data: CreateMaterialCategoryRequest, sessionToken: string): Promise<MaterialCategory> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: MaterialCategory }).data;
-      }
-      throw new Error('Invalid response format for create category');
+    safeInvoke<MaterialCategory>(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -379,13 +329,8 @@ export const categoryOperations = {
    * @returns Promise resolving to category list
    */
   listCategories: (sessionToken: string): Promise<MaterialCategory[]> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
+    safeInvoke<MaterialCategory[]>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
       sessionToken
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: MaterialCategory[] }).data)) {
-        return (result as unknown as { data: MaterialCategory[] }).data;
-      }
-      throw new Error('Invalid response format for list categories');
     }),
 };
 
@@ -398,16 +343,9 @@ export const supplierOperations = {
    * @returns Promise resolving to created supplier
    */
   createSupplier: (data: CreateSupplierRequest, sessionToken: string): Promise<Supplier> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
-      request: {
-        ...data,
-        session_token: sessionToken
-      }
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return (result as unknown as { data: Supplier }).data;
-      }
-      throw new Error('Invalid response format for create supplier');
+    safeInvoke<Supplier>(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
+      sessionToken,
+      request: { ...data }
     }),
 
   /**
@@ -416,13 +354,8 @@ export const supplierOperations = {
    * @returns Promise resolving to supplier list
    */
   listSuppliers: (sessionToken: string): Promise<Supplier[]> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
+    safeInvoke<Supplier[]>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
       sessionToken
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as unknown as { data: Supplier[] }).data)) {
-        return (result as unknown as { data: Supplier[] }).data;
-      }
-      throw new Error('Invalid response format for list suppliers');
     }),
 };
 
@@ -434,13 +367,8 @@ export const reportingOperations = {
    * @returns Promise resolving to material statistics
    */
   getStats: (sessionToken: string): Promise<MaterialStats> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_STATS, {
+    safeInvoke<MaterialStats>(IPC_COMMANDS.MATERIAL_GET_STATS, {
       sessionToken
-    }).then(result => {
-      if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as unknown as MaterialStats;
-      }
-      throw new Error('Invalid response format for get stats');
     }),
 
   /**
@@ -476,15 +404,9 @@ export const reportingOperations = {
    * @returns Promise resolving to inventory movement summary
    */
   getInventoryMovementSummary: (materialId: string, sessionToken: string): Promise<InventoryMovementSummary> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, {
+    safeInvoke<InventoryMovementSummary>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, {
       sessionToken,
       material_id: materialId,
-    }).then(result => {
-      // Validate the response
-      if (result && typeof result === 'object' && 'data' in result) {
-        return result.data as unknown as InventoryMovementSummary;
-      }
-      throw new Error('Invalid response format for get inventory movement summary');
     }),
 };
 

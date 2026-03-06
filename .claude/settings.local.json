@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run validate:bounded-contexts)",
+      "Bash(cargo clippy -- -D warnings)",
+      "Bash(cargo clippy)",
+      "Bash(cargo check)",
+      "Bash(cargo test --lib)"
+    ]
+  }
+}
