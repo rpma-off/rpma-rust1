@@ -406,7 +406,9 @@ impl super::InterventionWorkflowService {
         &self,
         intervention_id: &str,
         user_id: &str,
-    ) -> crate::db::InterventionResult<crate::domains::interventions::domain::models::intervention::Intervention> {
+    ) -> crate::db::InterventionResult<
+        crate::domains::interventions::domain::models::intervention::Intervention,
+    > {
         let mut intervention = self
             .data
             .get_intervention(intervention_id)?
@@ -449,7 +451,9 @@ impl super::InterventionWorkflowService {
         &self,
         task_id: &str,
         quote_id: &str,
-    ) -> crate::db::InterventionResult<crate::domains::interventions::domain::models::intervention::Intervention> {
+    ) -> crate::db::InterventionResult<
+        crate::domains::interventions::domain::models::intervention::Intervention,
+    > {
         info!(
             task_id = %task_id,
             quote_id = %quote_id,
@@ -467,46 +471,50 @@ impl super::InterventionWorkflowService {
             ));
         }
 
-        let result = self.db.with_transaction(|tx| {
-            let intervention = self
-                .data
-                .create_intervention_with_tx(
-                    tx,
-                    &StartInterventionRequest {
-                        task_id: task_id.to_string(),
-                        technician_id: "system".to_string(),
-                        intervention_number: None,
-                        ppf_zones: vec![],
-                        custom_zones: None,
-                        film_type: "standard".to_string(),
-                        film_brand: None,
-                        film_model: None,
-                        weather_condition: "unknown".to_string(),
-                        lighting_condition: "unknown".to_string(),
-                        work_location: "workshop".to_string(),
-                        temperature: None,
-                        humidity: None,
-                        assistant_ids: None,
-                        scheduled_start: Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string(),
-                        estimated_duration: 60,
-                        gps_coordinates: None,
-                        address: None,
-                        notes: Some(format!("Intervention created from quote {}", quote_id)),
-                        customer_requirements: None,
-                        special_instructions: None,
-                    },
-                    "system",
-                )
-                .map_err(|e| e.to_string())?;
+        let result = self
+            .db
+            .with_transaction(|tx| {
+                let intervention = self
+                    .data
+                    .create_intervention_with_tx(
+                        tx,
+                        &StartInterventionRequest {
+                            task_id: task_id.to_string(),
+                            technician_id: "system".to_string(),
+                            intervention_number: None,
+                            ppf_zones: vec![],
+                            custom_zones: None,
+                            film_type: "standard".to_string(),
+                            film_brand: None,
+                            film_model: None,
+                            weather_condition: "unknown".to_string(),
+                            lighting_condition: "unknown".to_string(),
+                            work_location: "workshop".to_string(),
+                            temperature: None,
+                            humidity: None,
+                            assistant_ids: None,
+                            scheduled_start: Utc::now()
+                                .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+                                .to_string(),
+                            estimated_duration: 60,
+                            gps_coordinates: None,
+                            address: None,
+                            notes: Some(format!("Intervention created from quote {}", quote_id)),
+                            customer_requirements: None,
+                            special_instructions: None,
+                        },
+                        "system",
+                    )
+                    .map_err(|e| e.to_string())?;
 
-            info!(
-                intervention_id = %intervention.id,
-                "Intervention created from quote successfully"
-            );
+                info!(
+                    intervention_id = %intervention.id,
+                    "Intervention created from quote successfully"
+                );
 
-            Ok(intervention)
-        })
-        .map_err(InterventionError::Database)?;
+                Ok(intervention)
+            })
+            .map_err(InterventionError::Database)?;
 
         Ok(result)
     }

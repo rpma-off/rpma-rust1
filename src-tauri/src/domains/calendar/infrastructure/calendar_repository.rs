@@ -99,10 +99,7 @@ impl CalendarRepository {
     }
 
     /// Return the technician assigned to a task, or None if unassigned.
-    pub fn get_technician_for_task(
-        &self,
-        task_id: &str,
-    ) -> Result<Option<String>, AppError> {
+    pub fn get_technician_for_task(&self, task_id: &str) -> Result<Option<String>, AppError> {
         let conn = self
             .db
             .get_connection()

@@ -4,15 +4,14 @@
 //! contracts for external consumers.
 
 mod contracts;
-pub(crate) mod quote_service;
 mod quote_events;
+pub(crate) mod quote_service;
 mod quote_task_creation;
 mod quote_totals;
 
 pub use contracts::{
-    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest,
-    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
-    QuoteDeleteRequest, QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest,
-    QuoteItemUpdateRequest, QuoteListRequest,
+    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
+    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
+    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
     QuoteStatusRequest, QuoteUpdateRequest,
 };

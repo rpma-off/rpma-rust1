@@ -515,9 +515,6 @@ impl TaskCommandService {
     }
 
     fn facade(&self) -> TasksFacade {
-        TasksFacade::new(
-            self.task_service.clone(),
-            self.task_import_service.clone(),
-        )
+        TasksFacade::new(self.task_service.clone(), self.task_import_service.clone())
     }
 }

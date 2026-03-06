@@ -8,7 +8,9 @@ use tracing::{debug, info};
 use uuid::Uuid;
 
 use super::errors::{MaterialError, MaterialResult};
-use super::types::{CreateInventoryTransactionRequest, RecordConsumptionRequest, UpdateStockRequest};
+use super::types::{
+    CreateInventoryTransactionRequest, RecordConsumptionRequest, UpdateStockRequest,
+};
 
 impl super::MaterialService {
     // ── Atomic stock / consumption writes ────────────────────────────────────

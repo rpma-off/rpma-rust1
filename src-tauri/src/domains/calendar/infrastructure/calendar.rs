@@ -21,11 +21,8 @@ impl CalendarService {
         technician_ids: Option<Vec<String>>,
         statuses: Option<Vec<String>>,
     ) -> Result<Vec<CalendarTask>, AppError> {
-        self.repo.get_tasks(
-            &date_range,
-            technician_ids.as_deref(),
-            statuses.as_deref(),
-        )
+        self.repo
+            .get_tasks(&date_range, technician_ids.as_deref(), statuses.as_deref())
     }
 
     pub async fn check_conflicts(

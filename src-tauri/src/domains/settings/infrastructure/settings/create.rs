@@ -163,10 +163,7 @@ impl super::SettingsService {
         debug!("Creating user settings for user {} with ID {}", user_id, id);
 
         let params = Self::build_user_settings_params(&id, user_id, settings);
-        match conn.execute(
-            INSERT_USER_SETTINGS_SQL,
-            rusqlite::params_from_iter(params),
-        ) {
+        match conn.execute(INSERT_USER_SETTINGS_SQL, rusqlite::params_from_iter(params)) {
             Ok(_) => {
                 info!(
                     "Successfully created user settings for user {} with ID {}",
@@ -269,14 +266,11 @@ impl super::SettingsService {
         let id = Uuid::new_v4().to_string();
 
         let params = Self::build_user_settings_params(&id, user_id, settings);
-        tx.execute(
-            INSERT_USER_SETTINGS_SQL,
-            rusqlite::params_from_iter(params),
-        )
-        .map_err(|e| {
-            error!("Failed to create user settings for {}: {}", user_id, e);
-            AppError::Database("Failed to create user settings".to_string())
-        })?;
+        tx.execute(INSERT_USER_SETTINGS_SQL, rusqlite::params_from_iter(params))
+            .map_err(|e| {
+                error!("Failed to create user settings for {}: {}", user_id, e);
+                AppError::Database("Failed to create user settings".to_string())
+            })?;
 
         Ok(())
     }

@@ -18,7 +18,8 @@ impl super::MaterialService {
         request: CreateMaterialCategoryRequest,
         created_by: Option<String>,
     ) -> MaterialResult<MaterialCategory> {
-        self.categories.create_material_category(request, created_by)
+        self.categories
+            .create_material_category(request, created_by)
     }
 
     pub fn get_material_category(&self, id: &str) -> MaterialResult<Option<MaterialCategory>> {
@@ -31,7 +32,8 @@ impl super::MaterialService {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> MaterialResult<Vec<MaterialCategory>> {
-        self.categories.list_material_categories(active_only, limit, offset)
+        self.categories
+            .list_material_categories(active_only, limit, offset)
     }
 
     pub fn update_material_category(
@@ -40,7 +42,8 @@ impl super::MaterialService {
         request: CreateMaterialCategoryRequest,
         updated_by: Option<String>,
     ) -> MaterialResult<MaterialCategory> {
-        self.categories.update_material_category(id, request, updated_by)
+        self.categories
+            .update_material_category(id, request, updated_by)
     }
 
     // -- Supplier --
@@ -64,7 +67,8 @@ impl super::MaterialService {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> MaterialResult<Vec<Supplier>> {
-        self.suppliers.list_suppliers(active_only, preferred_only, limit, offset)
+        self.suppliers
+            .list_suppliers(active_only, preferred_only, limit, offset)
     }
 
     pub fn update_supplier(
@@ -82,7 +86,8 @@ impl super::MaterialService {
         &self,
         intervention_id: &str,
     ) -> MaterialResult<Vec<MaterialConsumption>> {
-        self.consumption.get_intervention_consumption(intervention_id)
+        self.consumption
+            .get_intervention_consumption(intervention_id)
     }
 
     pub fn get_consumption_history(
@@ -91,7 +96,8 @@ impl super::MaterialService {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> MaterialResult<Vec<MaterialConsumption>> {
-        self.consumption.get_consumption_history(material_id, limit, offset)
+        self.consumption
+            .get_consumption_history(material_id, limit, offset)
     }
 
     // -- Transaction reads / stats --
@@ -103,8 +109,12 @@ impl super::MaterialService {
         limit: Option<i32>,
         offset: Option<i32>,
     ) -> MaterialResult<Vec<InventoryTransaction>> {
-        self.transactions
-            .list_inventory_transactions_by_material(material_id, transaction_type, limit, offset)
+        self.transactions.list_inventory_transactions_by_material(
+            material_id,
+            transaction_type,
+            limit,
+            offset,
+        )
     }
 
     pub fn list_recent_inventory_transactions(

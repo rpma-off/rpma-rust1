@@ -149,17 +149,26 @@ async fn low_stock_response_contract_is_strict_and_null_free() {
 
     // Material A: min_stock=10, current_stock=0 → low stock (shortage=10)
     material_service
-        .create_material(make_material("LS-A", "Low Stock A", Some(10.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("LS-A", "Low Stock A", Some(10.0)),
+            Some("tester".to_string()),
+        )
         .expect("create material A");
 
     // Material B: min_stock=5, current_stock=5 → exactly at threshold → low stock
     material_service
-        .create_material(make_material("LS-B", "At Threshold B", Some(5.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("LS-B", "At Threshold B", Some(5.0)),
+            Some("tester".to_string()),
+        )
         .expect("create material B");
 
     // Material C: min_stock=3, current_stock=10 → above threshold → NOT low stock
     let c = material_service
-        .create_material(make_material("LS-C", "Healthy C", Some(3.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("LS-C", "Healthy C", Some(3.0)),
+            Some("tester".to_string()),
+        )
         .expect("create material C");
     material_service
         .update_stock(UpdateStockRequest {
@@ -173,7 +182,10 @@ async fn low_stock_response_contract_is_strict_and_null_free() {
     // Material D: no min_stock set → only flagged when current_stock <= DEFAULT_LOW_STOCK_THRESHOLD (0)
     // current_stock is 0 by default → counts as low stock
     material_service
-        .create_material(make_material("LS-D", "No Min D", None), Some("tester".to_string()))
+        .create_material(
+            make_material("LS-D", "No Min D", None),
+            Some("tester".to_string()),
+        )
         .expect("create material D");
 
     let response = material_service
@@ -181,7 +193,11 @@ async fn low_stock_response_contract_is_strict_and_null_free() {
         .expect("get low stock materials");
 
     // Contract: items and total are always present (no null surprises)
-    assert_eq!(response.total, response.items.len() as i32, "total must match items.len()");
+    assert_eq!(
+        response.total,
+        response.items.len() as i32,
+        "total must match items.len()"
+    );
 
     // Material C (healthy) must NOT appear
     assert!(
@@ -190,27 +206,63 @@ async fn low_stock_response_contract_is_strict_and_null_free() {
     );
 
     // Materials A, B, D must appear
-    assert!(response.items.iter().any(|i| i.sku == "LS-A"), "low-stock A must appear");
-    assert!(response.items.iter().any(|i| i.sku == "LS-B"), "at-threshold B must appear");
-    assert!(response.items.iter().any(|i| i.sku == "LS-D"), "zero-stock D (no min) must appear");
+    assert!(
+        response.items.iter().any(|i| i.sku == "LS-A"),
+        "low-stock A must appear"
+    );
+    assert!(
+        response.items.iter().any(|i| i.sku == "LS-B"),
+        "at-threshold B must appear"
+    );
+    assert!(
+        response.items.iter().any(|i| i.sku == "LS-D"),
+        "zero-stock D (no min) must appear"
+    );
 
     // Every item must have non-negative numeric fields (no NaN / null surprises)
     for item in &response.items {
-        assert!(item.current_stock.is_finite(), "current_stock must be finite");
-        assert!(item.reserved_stock.is_finite(), "reserved_stock must be finite");
-        assert!(item.available_stock.is_finite(), "available_stock must be finite");
-        assert!(item.minimum_stock.is_finite(), "minimum_stock must be finite");
-        assert!(item.effective_threshold.is_finite(), "effective_threshold must be finite");
-        assert!(item.shortage_quantity >= 0.0, "shortage_quantity must be >= 0");
-        assert!(!item.material_id.is_empty(), "material_id must be non-empty");
+        assert!(
+            item.current_stock.is_finite(),
+            "current_stock must be finite"
+        );
+        assert!(
+            item.reserved_stock.is_finite(),
+            "reserved_stock must be finite"
+        );
+        assert!(
+            item.available_stock.is_finite(),
+            "available_stock must be finite"
+        );
+        assert!(
+            item.minimum_stock.is_finite(),
+            "minimum_stock must be finite"
+        );
+        assert!(
+            item.effective_threshold.is_finite(),
+            "effective_threshold must be finite"
+        );
+        assert!(
+            item.shortage_quantity >= 0.0,
+            "shortage_quantity must be >= 0"
+        );
+        assert!(
+            !item.material_id.is_empty(),
+            "material_id must be non-empty"
+        );
         assert!(!item.sku.is_empty(), "sku must be non-empty");
         assert!(!item.name.is_empty(), "name must be non-empty");
     }
 
     // Material A: shortage = min − current = 10 − 0 = 10
     let item_a = response.items.iter().find(|i| i.sku == "LS-A").unwrap();
-    assert_eq!(item_a.shortage_quantity, 10.0, "material A shortage must be 10");
-    assert_eq!(item_a.effective_threshold, 10.0, "material A threshold must be 10");
+    assert_eq!(
+        item_a.shortage_quantity, 10.0,
+        "material A shortage must be 10"
+    );
+    assert_eq!(
+        item_a.effective_threshold, 10.0,
+        "material A threshold must be 10"
+    );
 
     // Material D: effective_threshold falls back to DEFAULT_LOW_STOCK_THRESHOLD
     let item_d = response.items.iter().find(|i| i.sku == "LS-D").unwrap();
@@ -230,13 +282,22 @@ async fn stats_low_stock_count_matches_get_low_stock_materials() {
 
     // Create 2 low-stock materials and 1 healthy
     material_service
-        .create_material(make_material("CS-A", "Low A", Some(5.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("CS-A", "Low A", Some(5.0)),
+            Some("tester".to_string()),
+        )
         .expect("create A");
     material_service
-        .create_material(make_material("CS-B", "Low B", Some(1.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("CS-B", "Low B", Some(1.0)),
+            Some("tester".to_string()),
+        )
         .expect("create B");
     let healthy = material_service
-        .create_material(make_material("CS-H", "Healthy H", Some(2.0)), Some("tester".to_string()))
+        .create_material(
+            make_material("CS-H", "Healthy H", Some(2.0)),
+            Some("tester".to_string()),
+        )
         .expect("create H");
     material_service
         .update_stock(UpdateStockRequest {

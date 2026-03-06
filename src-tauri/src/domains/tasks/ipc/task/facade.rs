@@ -114,8 +114,10 @@ pub async fn export_tasks_csv(
     let session = authenticate!(&request.session_token, &state);
     crate::commands::update_correlation_context_user(&session.user_id);
 
-    let csv_content = cmd_service(&state)
-        .export_csv(request.filter.as_ref(), request.include_client_data.unwrap_or(false))?;
+    let csv_content = cmd_service(&state).export_csv(
+        request.filter.as_ref(),
+        request.include_client_data.unwrap_or(false),
+    )?;
 
     Ok(ApiResponse::success(csv_content).with_correlation_id(Some(correlation_id)))
 }
@@ -134,7 +136,11 @@ pub async fn import_tasks_bulk(
     crate::commands::update_correlation_context_user(&session.user_id);
 
     let response = cmd_service(&state)
-        .import_bulk(&session, &request.csv_data, request.update_existing.unwrap_or(false))
+        .import_bulk(
+            &session,
+            &request.csv_data,
+            request.update_existing.unwrap_or(false),
+        )
         .await?;
 
     Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id)))
@@ -341,10 +347,8 @@ pub async fn task_crud(
                     error!("Task deletion failed: {}", e);
                     AppError::db_sanitized("tasks.delete", e)
                 })?;
-            Ok(
-                ApiResponse::success(crate::commands::TaskResponse::Deleted)
-                    .with_correlation_id(Some(correlation_id)),
-            )
+            Ok(ApiResponse::success(crate::commands::TaskResponse::Deleted)
+                .with_correlation_id(Some(correlation_id)))
         }
         crate::commands::TaskAction::List { filters } => {
             let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
@@ -366,14 +370,14 @@ pub async fn task_crud(
 
             let result = get_tasks_with_clients(request, state).await?;
             match result.data {
-                Some(task_list_response) => Ok(
-                    ApiResponse::success(crate::commands::TaskResponse::List(task_list_response))
+                Some(task_list_response) => Ok(ApiResponse::success(
+                    crate::commands::TaskResponse::List(task_list_response),
+                )
+                .with_correlation_id(Some(correlation_id))),
+                None => Ok(
+                    ApiResponse::error(AppError::NotFound("No tasks found".to_string()))
                         .with_correlation_id(Some(correlation_id)),
                 ),
-                None => Ok(ApiResponse::error(AppError::NotFound(
-                    "No tasks found".to_string(),
-                ))
-                .with_correlation_id(Some(correlation_id))),
             }
         }
         crate::commands::TaskAction::GetStatistics => {

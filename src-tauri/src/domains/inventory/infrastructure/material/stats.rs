@@ -139,7 +139,9 @@ impl super::MaterialService {
         &self,
         intervention_id: &str,
     ) -> MaterialResult<InterventionMaterialSummary> {
-        let consumptions = self.consumption.get_intervention_consumption(intervention_id)?;
+        let consumptions = self
+            .consumption
+            .get_intervention_consumption(intervention_id)?;
 
         // Batch-load all referenced materials in one query.
         let material_ids: Vec<&str> = consumptions
