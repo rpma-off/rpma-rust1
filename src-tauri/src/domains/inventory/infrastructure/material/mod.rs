@@ -31,9 +31,9 @@ pub use types::{
 // ── Submodule implementations ─────────────────────────────────────────────────
 
 mod crud;
-mod stock_ops;
-mod stats;
 mod delegation;
+mod stats;
+mod stock_ops;
 
 #[cfg(test)]
 mod tests;

@@ -62,5 +62,4 @@ impl MaterialConsumptionRepository {
             .db
             .query_as::<MaterialConsumption>(&sql, rusqlite::params_from_iter(params_vec))?)
     }
-
 }

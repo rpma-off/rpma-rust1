@@ -42,10 +42,10 @@ use crate::domains::tasks::infrastructure::task_constants::convert_to_app_error;
 use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
 use crate::domains::tasks::infrastructure::task_crud::TaskCrudService;
 use crate::domains::tasks::infrastructure::task_queries::TaskQueriesService;
-use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsService;
 use crate::domains::tasks::infrastructure::task_rules_repository::{
     validate_status_transition, TaskRulesRepository,
 };
+use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsService;
 
 use std::sync::Arc;
 
@@ -620,18 +620,25 @@ impl TaskService {
 
 // -- Shared contract implementation --
 
-use async_trait::async_trait;
 use crate::shared::contracts::task_assignment::{TaskAssignmentChecker, TaskAssignmentInfo};
+use async_trait::async_trait;
 
 #[async_trait]
 impl TaskAssignmentChecker for TaskService {
-    fn check_task_assignment(&self, task_id: &str, user_id: &str) -> Result<bool, crate::shared::ipc::errors::AppError> {
+    fn check_task_assignment(
+        &self,
+        task_id: &str,
+        user_id: &str,
+    ) -> Result<bool, crate::shared::ipc::errors::AppError> {
         self.validation
             .check_assignment_eligibility(task_id, user_id)
             .map_err(convert_to_app_error)
     }
 
-    async fn get_task_assignment(&self, task_id: &str) -> Result<Option<TaskAssignmentInfo>, crate::shared::ipc::errors::AppError> {
+    async fn get_task_assignment(
+        &self,
+        task_id: &str,
+    ) -> Result<Option<TaskAssignmentInfo>, crate::shared::ipc::errors::AppError> {
         let task = self
             .queries
             .get_task_async(task_id)

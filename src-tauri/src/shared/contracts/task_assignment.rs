@@ -19,5 +19,8 @@ pub trait TaskAssignmentChecker: Send + Sync {
     fn check_task_assignment(&self, task_id: &str, user_id: &str) -> Result<bool, AppError>;
 
     /// Retrieve the assignment info for a task. Returns `None` when the task does not exist.
-    async fn get_task_assignment(&self, task_id: &str) -> Result<Option<TaskAssignmentInfo>, AppError>;
+    async fn get_task_assignment(
+        &self,
+        task_id: &str,
+    ) -> Result<Option<TaskAssignmentInfo>, AppError>;
 }

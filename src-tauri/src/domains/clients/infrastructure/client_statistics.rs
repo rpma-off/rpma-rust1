@@ -214,10 +214,12 @@ impl ClientStatisticsService {
             .map_err(|e| format!("Failed to prepare statement: {}", e))?;
         // Assign to a named variable so the borrow on `stmt` ends at the
         // semicolon and does not leak into the function's tail expression.
-        let rows: Result<Vec<(String, i32)>, _> =
-            stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?)))
-                .map_err(|e| format!("Failed to execute query: {}", e))?
-                .collect();
+        let rows: Result<Vec<(String, i32)>, _> = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+            })
+            .map_err(|e| format!("Failed to execute query: {}", e))?
+            .collect();
         rows.map_err(|e| format!("Failed to collect results: {}", e))
     }
 

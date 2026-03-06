@@ -9,8 +9,8 @@ use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
     SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
 };
-use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::contracts::auth::UserRole;
+use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::CommandContext;
 use chrono::Utc;

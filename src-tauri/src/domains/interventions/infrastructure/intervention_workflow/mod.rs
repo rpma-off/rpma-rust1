@@ -38,8 +38,8 @@ impl InterventionWorkflowService {
 mod tests {
     use super::*;
     use crate::db::InterventionError;
-    use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
     use crate::domains::interventions::domain::models::step::StepType;
+    use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
     use crate::domains::interventions::infrastructure::intervention_types::{
         AdvanceStepRequest, SaveStepProgressRequest,
     };

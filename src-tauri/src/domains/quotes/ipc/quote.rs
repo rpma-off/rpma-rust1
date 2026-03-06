@@ -7,10 +7,9 @@ use tracing::{debug, error, info, instrument, Span};
 
 use crate::authenticate;
 use crate::domains::quotes::application::{
-    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest,
-    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
-    QuoteDeleteRequest, QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest,
-    QuoteItemUpdateRequest, QuoteListRequest,
+    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
+    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
+    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
     QuoteStatusRequest, QuoteUpdateRequest,
 };
 

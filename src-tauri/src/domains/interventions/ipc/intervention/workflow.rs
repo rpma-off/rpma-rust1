@@ -173,7 +173,10 @@ pub async fn intervention_workflow(
         }
     };
 
-    match facade.execute(command, &ctx, state.task_service.as_ref()).await? {
+    match facade
+        .execute(command, &ctx, state.task_service.as_ref())
+        .await?
+    {
         InterventionsResponse::Workflow(response) => {
             Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
         }
