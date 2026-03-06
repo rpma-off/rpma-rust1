@@ -32,6 +32,20 @@ import { ipcClient } from '@/lib/ipc';
 import { UserSession, UserPerformanceSettings } from '@/lib/backend';
 import { UserAccount } from '@/types';
 
+/**
+ * Safely formats a number to a fixed number of decimal places.
+ * Returns a zero-value string (e.g. "0.00") when `v` is null, undefined, or NaN,
+ * preventing `.toFixed()` crashes when the backend returns null metrics.
+ *
+ * @param v      - The numeric value to format (may be null/undefined from the backend)
+ * @param digits - Number of decimal places (default: 2)
+ * @returns      Formatted string, e.g. "3.14" or "0.00" for invalid inputs
+ */
+const formatNumber = (v: number | null | undefined, digits = 2): string => {
+  if (typeof v !== 'number' || Number.isNaN(v)) return (0).toFixed(digits);
+  return v.toFixed(digits);
+};
+
 // Performance settings form schema
 const performanceSchema = z.object({
   cache_enabled: z.boolean(),
@@ -53,18 +67,18 @@ interface PerformanceSettingsTabProps {
 interface CacheStats {
   total_keys: number;
   used_memory_bytes: number;
-  used_memory_mb: number;
-  hit_rate?: number;
-  miss_rate?: number;
-  avg_response_time_ms?: number;
+  used_memory_mb: number | null;
+  hit_rate?: number | null;
+  miss_rate?: number | null;
+  avg_response_time_ms?: number | null;
   cache_types: CacheTypeInfo[];
 }
 
 interface CacheTypeInfo {
   cache_type: string;
   keys_count: number;
-  memory_used_mb: number;
-  hit_rate?: number;
+  memory_used_mb: number | null;
+  hit_rate?: number | null;
 }
 
 interface SyncStats {
@@ -410,9 +424,9 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
                    <div>
                      <p className="text-sm text-muted-foreground">Utilisation mémoire</p>
                      <div className="flex items-center gap-2">
-                       <Progress value={Math.min((cacheStats.used_memory_mb / 512) * 100, 100)} className="flex-1" />
+                       <Progress value={Math.min(((cacheStats.used_memory_mb ?? 0) / 512) * 100, 100)} className="flex-1" />
                        <span className="text-sm font-medium">
-                         {cacheStats.used_memory_mb.toFixed(2)} MB
+                         {formatNumber(cacheStats.used_memory_mb)} MB
                        </span>
                      </div>
                    </div>
@@ -430,7 +444,7 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
                        {cacheStats.cache_types.map((cacheType) => (
                          <div key={cacheType.cache_type} className="flex justify-between text-xs">
                            <span>{cacheType.cache_type}</span>
-                           <span>{cacheType.keys_count} clés ({cacheType.memory_used_mb.toFixed(2)} MB)</span>
+                           <span>{cacheType.keys_count} clés ({formatNumber(cacheType.memory_used_mb)} MB)</span>
                          </div>
                        ))}
                      </div>
@@ -438,18 +452,18 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
                  )}
 
                  {/* Performance Metrics */}
-                 {(cacheStats.hit_rate !== undefined || cacheStats.avg_response_time_ms !== undefined) && (
+                 {(cacheStats.hit_rate != null || cacheStats.avg_response_time_ms != null) && (
                    <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                     {cacheStats.hit_rate !== undefined && (
+                     {cacheStats.hit_rate != null && (
                        <div>
                          <p className="text-sm text-muted-foreground">Taux de succès</p>
-                         <p className="text-sm font-medium">{(cacheStats.hit_rate * 100).toFixed(1)}%</p>
+                         <p className="text-sm font-medium">{formatNumber(cacheStats.hit_rate * 100, 1)}%</p>
                        </div>
                      )}
-                     {cacheStats.avg_response_time_ms !== undefined && (
+                     {cacheStats.avg_response_time_ms != null && (
                        <div>
                          <p className="text-sm text-muted-foreground">Temps de réponse</p>
-                         <p className="text-sm font-medium">{cacheStats.avg_response_time_ms.toFixed(1)} ms</p>
+                         <p className="text-sm font-medium">{formatNumber(cacheStats.avg_response_time_ms, 1)} ms</p>
                        </div>
                      )}
                    </div>
