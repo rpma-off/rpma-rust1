@@ -667,22 +667,7 @@ impl QuoteRepository {
     /// This is an infrastructure helper that inserts into the `tasks` table
     /// on behalf of the quote-acceptance workflow.  All SQL stays in the
     /// infrastructure layer (ADR-002).
-    pub fn create_task_from_quote(
-        &self,
-        task_id: &str,
-        task_number: &str,
-        title: &str,
-        client_id: &str,
-        vehicle_plate: &Option<String>,
-        vehicle_model: &Option<String>,
-        vehicle_make: &Option<String>,
-        vehicle_year: &Option<String>,
-        vehicle_vin: &Option<String>,
-        notes: &Option<String>,
-        created_by: &Option<String>,
-        now: i64,
-        scheduled_date: &str,
-    ) -> RepoResult<()> {
+    pub fn create_task_from_quote(&self, params: &CreateTaskFromQuoteParams) -> RepoResult<()> {
         self.db
             .with_transaction(|tx| {
                 // Fetch client details for denormalization in task
@@ -693,7 +678,7 @@ impl QuoteRepository {
                 ) = tx
                     .query_row(
                         "SELECT name, email, phone FROM clients WHERE id = ?",
-                        params![client_id],
+                        params![params.client_id],
                         |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
                     )
                     .unwrap_or((None, None, None));
@@ -708,24 +693,24 @@ impl QuoteRepository {
                         created_at, updated_at, created_by
                     ) VALUES (?, ?, ?, 'draft', 'medium', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)
                     "#,
-                    params![
-                        task_id,
-                        task_number,
-                        title,
-                        vehicle_plate,
-                        vehicle_model,
-                        vehicle_make,
-                        vehicle_year,
-                        vehicle_vin,
-                        client_id,
+                    rusqlite::params![
+                        params.task_id,
+                        params.task_number,
+                        params.title,
+                        params.vehicle_plate,
+                        params.vehicle_model,
+                        params.vehicle_make,
+                        params.vehicle_year,
+                        params.vehicle_vin,
+                        params.client_id,
                         customer_name,
                         customer_email,
                         customer_phone,
-                        notes,
-                        scheduled_date,
-                        now,
-                        now,
-                        created_by,
+                        params.notes,
+                        params.scheduled_date,
+                        params.now,
+                        params.now,
+                        params.created_by,
                     ],
                 )
                 .map_err(|e| format!("Failed to create task from quote: {}", e))?;
@@ -734,6 +719,23 @@ impl QuoteRepository {
             })
             .map_err(|e| RepoError::Database(format!("Failed to create task from quote: {}", e)))
     }
+}
+
+/// Parameters for creating a task from an accepted quote.
+pub struct CreateTaskFromQuoteParams {
+    pub task_id: String,
+    pub task_number: String,
+    pub title: String,
+    pub client_id: String,
+    pub vehicle_plate: Option<String>,
+    pub vehicle_model: Option<String>,
+    pub vehicle_make: Option<String>,
+    pub vehicle_year: Option<String>,
+    pub vehicle_vin: Option<String>,
+    pub notes: Option<String>,
+    pub created_by: Option<String>,
+    pub now: i64,
+    pub scheduled_date: String,
 }
 
 #[cfg(test)]
