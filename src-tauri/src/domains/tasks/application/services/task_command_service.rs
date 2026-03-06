@@ -434,7 +434,7 @@ impl TaskCommandService {
     }
 
     // ------------------------------------------------------------------
-    // task_crud helpers — notification side-effects
+    // task_crud helpers - notification side-effects
     // ------------------------------------------------------------------
 
     /// Send an in-app notification when a task is assigned to a technician

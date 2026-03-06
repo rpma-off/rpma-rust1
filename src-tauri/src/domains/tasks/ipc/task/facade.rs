@@ -185,7 +185,7 @@ pub async fn edit_task(
     Ok(ApiResponse::success(updated_task).with_correlation_id(Some(correlation_id)))
 }
 
-/// Validate status change — thin delegate to policy service.
+/// Validate status change - thin delegate to policy service.
 pub fn validate_status_change(
     current: &crate::domains::tasks::domain::models::task::TaskStatus,
     new: &crate::domains::tasks::domain::models::task::TaskStatus,
@@ -193,7 +193,7 @@ pub fn validate_status_change(
     task_policy_service::validate_status_change(current, new)
 }
 
-/// Check permissions for task operations — thin delegate to policy service.
+/// Check permissions for task operations - thin delegate to policy service.
 pub fn check_task_permissions(
     session: &crate::shared::contracts::auth::UserSession,
     task: &Task,
