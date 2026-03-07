@@ -1,1 +1,1 @@
-﻿// Reserved for future report persistence/query infrastructure.
+﻿pub mod report_repository;
