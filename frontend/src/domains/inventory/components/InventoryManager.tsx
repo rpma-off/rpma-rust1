@@ -250,7 +250,6 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         </div>
       ),
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [formatCurrency, getStockStatusColor, handleEdit, handleViewDetails]);
 
   return (
