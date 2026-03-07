@@ -26,7 +26,9 @@ impl r2d2::CustomizeConnection<Connection, rusqlite::Error> for ConnectionCustom
 
     fn on_release(&self, conn: Connection) {
         // Let SQLite update query planner statistics on connection return
-        let _ = conn.execute_batch("PRAGMA optimize;");
+        if let Err(e) = conn.execute_batch("PRAGMA optimize;") {
+            tracing::debug!("PRAGMA optimize failed on connection release: {}", e);
+        }
     }
 }
 

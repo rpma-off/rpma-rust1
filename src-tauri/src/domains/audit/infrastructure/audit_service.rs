@@ -449,6 +449,7 @@ impl AuditService {
     ) -> AppResult<Vec<AuditEvent>> {
         let conn = self.db.get_connection()?;
 
+        // Default safety limit prevents unbounded result sets when caller omits limit
         let limit_clause = format!(" LIMIT {}", limit.unwrap_or(10_000));
         let query = format!(
             "SELECT * FROM audit_events WHERE resource_type = ? AND resource_id = ? ORDER BY timestamp DESC{}",
