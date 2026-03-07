@@ -1,5 +1,4 @@
 ﻿import { useState, useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { taskPhotoService } from '../server';
 
 import { PhotoUploadProps as PhotoUploadOptions, UploadItem as PhotoUploadProgress } from '@/types/photo.types';
@@ -137,7 +136,7 @@ export function usePhotoUpload(
         throw new Error(`File type ${file.type} is not allowed`);
       }
 
-      const uploadId = uuidv4();
+      const uploadId = crypto.randomUUID();
       // Add to uploads state
       setUploads((prev) => [
         ...prev,

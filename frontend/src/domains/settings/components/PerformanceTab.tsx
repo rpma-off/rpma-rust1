@@ -136,21 +136,21 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
 
       setIsLoading(true);
       try {
-        // Load performance settings from user settings
-        const userSettings = await ipcClient.settings.getUserSettings(user.token);
+        const [userSettings, cacheStatsResponse] = await Promise.all([
+          ipcClient.settings.getUserSettings(user.token),
+          ipcClient.performance.getCacheStatistics(user.token).catch((error) => {
+            logError('Failed to load cache statistics', { error: error instanceof Error ? error.message : error });
+            return null;
+          }),
+        ]);
 
-        // Apply performance settings if available
         if (userSettings?.performance) {
           form.reset(userSettings.performance as UserPerformanceSettings);
         }
 
-        // Load real cache statistics
-        try {
-          const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as unknown as CacheStats;
-          setCacheStats(cacheStatsResponse);
-        } catch (error) {
-          logError('Failed to load cache statistics', { error: error instanceof Error ? error.message : error });
-          // Fallback to mock data
+        if (cacheStatsResponse) {
+          setCacheStats(cacheStatsResponse as unknown as CacheStats);
+        } else {
           setCacheStats({
             total_keys: 0,
             used_memory_bytes: 0,
@@ -178,7 +178,6 @@ export function PerformanceTab({ user }: PerformanceSettingsTabProps) {
 
     loadPerformanceData();
 
-    // Listen for online/offline events
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 

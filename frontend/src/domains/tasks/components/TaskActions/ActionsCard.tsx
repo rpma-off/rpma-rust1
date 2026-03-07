@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Play,
@@ -26,10 +26,6 @@ import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
 import { toast } from 'sonner';
 import { interventionKeys } from '@/lib/query-keys';
-import EditTaskModal from './EditTaskModal';
-import SendMessageModal from './SendMessageModal';
-import DelayTaskModal from './DelayTaskModal';
-import ReportIssueModal from './ReportIssueModal';
 import { useTaskActions } from './useTaskActions';
 import { PrimaryActionButton } from './PrimaryActionButton';
 import { SecondaryActionsGrid } from './SecondaryActionsGrid';
@@ -38,6 +34,11 @@ import { MoreActionsSection } from './MoreActionsSection';
 import { StatusWarnings } from './StatusWarnings';
 import { PrioritySelector } from './PrioritySelector';
 import { TaskActionPanel } from './TaskActionPanel';
+
+const EditTaskModal = lazy(() => import('./EditTaskModal'));
+const SendMessageModal = lazy(() => import('./SendMessageModal'));
+const DelayTaskModal = lazy(() => import('./DelayTaskModal'));
+const ReportIssueModal = lazy(() => import('./ReportIssueModal'));
 
 interface ActionsCardProps {
   task: TaskWithDetails;
@@ -409,10 +410,18 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           </DialogContent>
         </Dialog>
 
-        <EditTaskModal task={task} open={showEditModal} onOpenChange={setShowEditModal} />
-        <SendMessageModal task={task} open={showSendMessageModal} onOpenChange={setShowSendMessageModal} />
-        <DelayTaskModal task={task} open={showDelayTaskModal} onOpenChange={setShowDelayTaskModal} />
-        <ReportIssueModal task={task} open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
+        <Suspense fallback={null}>
+          <EditTaskModal task={task} open={showEditModal} onOpenChange={setShowEditModal} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SendMessageModal task={task} open={showSendMessageModal} onOpenChange={setShowSendMessageModal} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <DelayTaskModal task={task} open={showDelayTaskModal} onOpenChange={setShowDelayTaskModal} />
+        </Suspense>
+        <Suspense fallback={null}>
+          <ReportIssueModal task={task} open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
+        </Suspense>
       </div>
     </div>
   );

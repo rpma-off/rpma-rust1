@@ -27,13 +27,9 @@ interface CalendarFiltersProps {
 
 export function CalendarFilters({ className }: CalendarFiltersProps) {
   const { user } = useAuth();
-  const {
-    currentView: _currentView,
-    currentDate: _currentDate,
-    filters,
-    setFilters,
-    resetFilters
-  } = useCalendarStore();
+  const filters = useCalendarStore((state) => state.filters);
+  const setFilters = useCalendarStore((state) => state.setFilters);
+  const resetFilters = useCalendarStore((state) => state.resetFilters);
 
   // Local state for search since it's not in the calendar store
   const [searchQuery, setSearchQuery] = useState('');

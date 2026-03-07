@@ -10,15 +10,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000, // 1 minute
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
         retry: (failureCount, error) => {
-          // Never retry authorization/permission failures
           const err = error as Error & { code?: string };
           if (err?.code === 'AUTH_FORBIDDEN' || err?.code === 'AUTHORIZATION' || err?.code === 'AUTHENTICATION') {
             return false;
           }
-          return failureCount < 1;
+          return failureCount < 2;
         },
+      },
+      mutations: {
+        retry: false,
       },
     },
   }));

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { taskApiService } from '@/domains/tasks';
 import { taskPhotoService } from '@/domains/tasks';
 
@@ -82,7 +81,7 @@ export const useOfflineActions = () => {
 
   const addAction = (type: OfflineAction['type'], payload: OfflineActionPayload) => {
     const newAction: OfflineAction = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       type,
       payload,
       createdAt: Date.now(),

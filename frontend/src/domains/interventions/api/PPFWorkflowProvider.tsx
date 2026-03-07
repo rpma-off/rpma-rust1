@@ -319,7 +319,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
        return { success: true, stepId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: interventionKeys.all });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData?.intervention?.id || '') });
@@ -358,8 +357,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       return { success: true, stepId, savedStep };
     },
     onSuccess: () => {
-      // Invalidate all intervention-related queries
-      queryClient.invalidateQueries({ queryKey: interventionKeys.all });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
@@ -399,12 +396,10 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       return { success: true };
     },
     onSuccess: () => {
-      // Invalidate all intervention-related queries
-      queryClient.invalidateQueries({ queryKey: interventionKeys.all });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] }); // Also invalidate task query
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
       toast.success('Intervention finalisée avec succès');
     },
     onError: (error) => {

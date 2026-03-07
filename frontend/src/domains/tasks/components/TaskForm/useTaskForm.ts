@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { TaskFormData, FormStep } from './types';
 // Legacy service imports removed - now using API routes
@@ -187,7 +186,7 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     }
     
     const newZone = zoneText.trim();
-    const customId = `custom_${uuidv4()}`;
+    const customId = `custom_${crypto.randomUUID()}`;
     
     updateFormData({
       custom_ppf_zones: [...(formData.custom_ppf_zones || []), newZone],

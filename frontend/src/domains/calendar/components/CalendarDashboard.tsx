@@ -15,13 +15,11 @@ import { Plus } from 'lucide-react';
 
 export function CalendarDashboard() {
   const router = useRouter();
-  const {
-    currentView,
-    currentDate,
-    setCurrentView,
-    setCurrentDate,
-    goToToday,
-  } = useCalendarStore();
+  const currentView = useCalendarStore((state) => state.currentView);
+  const currentDate = useCalendarStore((state) => state.currentDate);
+  const setCurrentView = useCalendarStore((state) => state.setCurrentView);
+  const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
+  const goToToday = useCalendarStore((state) => state.goToToday);
 
   const { tasks, isLoading } = useCalendar(currentDate, currentView);
 

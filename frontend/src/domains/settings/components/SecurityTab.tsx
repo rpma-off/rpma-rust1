@@ -105,8 +105,11 @@ export function SecurityTab({ user }: SecuritySettingsTabProps) {
 
       setIsLoading(true);
       try {
-        // Load active sessions from backend
-        const sessionsResponse = await ipcClient.settings.getActiveSessions(user.token);
+        const [sessionsResponse, timeoutConfig] = await Promise.all([
+          ipcClient.settings.getActiveSessions(user.token),
+          ipcClient.settings.getSessionTimeoutConfig(user.token),
+        ]);
+
         if (sessionsResponse && Array.isArray(sessionsResponse)) {
           const formattedSessions = (sessionsResponse as unknown as SessionResponse[]).map((session) => ({
             id: session.id,
@@ -115,14 +118,11 @@ export function SecurityTab({ user }: SecuritySettingsTabProps) {
             location: session.location || 'Unknown Location',
             ip_address: session.ip_address || 'Unknown IP',
             last_active: session.last_activity,
-            current_session: false, // Will be determined by backend response
+            current_session: false,
           }));
           setLoginSessions(formattedSessions);
         }
 
-        // Check 2FA status - not implemented, skip
-        // Get session timeout config
-        const timeoutConfig = await ipcClient.settings.getSessionTimeoutConfig(user.token);
         setSessionTimeout((timeoutConfig as { timeout_minutes?: number })?.timeout_minutes || 480);
 
         logInfo('Security data loaded successfully', { userId: user.user_id });
@@ -131,7 +131,6 @@ export function SecurityTab({ user }: SecuritySettingsTabProps) {
           error: error instanceof Error ? error.message : error,
           userId: user.user_id
         });
-        // Fallback to basic session info
         setLoginSessions([
           {
             id: 'current',

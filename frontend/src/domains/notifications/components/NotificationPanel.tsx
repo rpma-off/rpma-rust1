@@ -24,8 +24,13 @@ const entityIcons: Record<string, typeof FileText> = {
 
 export function NotificationPanel() {
   const router = useRouter();
-  const { notifications, unreadCount, isPanelOpen, setPanelOpen, markRead, markAllRead, removeNotification } =
-    useNotificationStore();
+  const notifications = useNotificationStore((state) => state.notifications);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const isPanelOpen = useNotificationStore((state) => state.isPanelOpen);
+  const setPanelOpen = useNotificationStore((state) => state.setPanelOpen);
+  const markRead = useNotificationStore((state) => state.markRead);
+  const markAllRead = useNotificationStore((state) => state.markAllRead);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleClickNotification = (id: string, entityUrl: string, read: boolean) => {
