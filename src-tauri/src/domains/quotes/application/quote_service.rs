@@ -3,8 +3,7 @@
 //! This service handles CRUD operations, status transitions, and
 //! attachment management.  Financial calculations (totals, discounts)
 //! live in [`super::quote_totals`], domain event emission in
-//! [`super::quote_events`], and task creation from accepted quotes in
-//! [`super::quote_task_creation`].
+//! [`super::quote_events`].
 //!
 //! Extracted from `infrastructure/quote.rs` to comply with the layered
 //! architecture (ADR-002): business logic belongs in the **application**
@@ -169,7 +168,7 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found after update".to_string())
     }
 
-    /// Delete a quote (Draft only).
+    /// Soft-delete a quote (Draft only).
     pub fn delete_quote(&self, id: &str) -> Result<bool, String> {
         let quote = self
             .repo
@@ -182,6 +181,87 @@ impl QuoteService {
         }
 
         self.repo.delete(id).map_err(Self::map_repo_error)
+    }
+
+    /// Duplicate a quote: create a new Draft with copies of all items.
+    pub fn duplicate_quote(&self, id: &str, user_id: &str) -> Result<Quote, String> {
+        let source = self
+            .repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Quote not found".to_string())?;
+
+        let now = Utc::now().timestamp_millis();
+        let new_id = Uuid::new_v4().to_string();
+        let new_number = self
+            .repo
+            .next_quote_number()
+            .map_err(|_| "Impossible de générer le numéro de devis.".to_string())?;
+
+        let new_quote = Quote {
+            id: new_id.clone(),
+            quote_number: new_number,
+            client_id: source.client_id.clone(),
+            task_id: None, // Duplicate starts unlinked
+            status: QuoteStatus::Draft,
+            valid_until: source.valid_until,
+            description: source.description.clone(),
+            notes: source.notes.clone(),
+            terms: source.terms.clone(),
+            subtotal: 0,
+            tax_total: 0,
+            total: 0,
+            discount_type: source.discount_type.clone(),
+            discount_value: source.discount_value,
+            discount_amount: None,
+            vehicle_plate: source.vehicle_plate.clone(),
+            vehicle_make: source.vehicle_make.clone(),
+            vehicle_model: source.vehicle_model.clone(),
+            vehicle_year: source.vehicle_year.clone(),
+            vehicle_vin: source.vehicle_vin.clone(),
+            created_at: now,
+            updated_at: now,
+            created_by: Some(user_id.to_string()),
+            items: Vec::new(),
+        };
+
+        self.repo
+            .create(&new_quote)
+            .map_err(Self::map_create_repo_error)?;
+
+        // Copy items
+        for (i, item) in source.items.iter().enumerate() {
+            let new_item = QuoteItem {
+                id: Uuid::new_v4().to_string(),
+                quote_id: new_id.clone(),
+                kind: item.kind.clone(),
+                label: item.label.clone(),
+                description: item.description.clone(),
+                qty: item.qty,
+                unit_price: item.unit_price,
+                tax_rate: item.tax_rate,
+                material_id: item.material_id.clone(),
+                position: item.position,
+                created_at: now,
+                updated_at: now,
+            };
+            let _ = i; // position already set from source
+            self.repo
+                .add_item(&new_item)
+                .map_err(|_| "Impossible de copier les articles du devis.".to_string())?;
+        }
+
+        // Recalculate totals (discount re-applied)
+        self.recalculate_totals(&new_id)?;
+
+        let result = self
+            .repo
+            .find_by_id(&new_id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis dupliqué introuvable.".to_string())?;
+
+        info!(source_id = %id, new_id = %new_id, "Quote duplicated: {}", result.quote_number);
+        Ok(result)
     }
 
     // ------------------------------------------------------------------
@@ -287,6 +367,7 @@ impl QuoteService {
     // ------------------------------------------------------------------
 
     /// Mark a quote as sent (Draft → Sent).
+    /// Requires at least one item and a non-zero total.
     pub fn mark_sent(&self, id: &str) -> Result<Quote, String> {
         let quote = self
             .repo
@@ -299,6 +380,18 @@ impl QuoteService {
                 "Cannot mark as sent: quote is in '{}' status (expected 'draft')",
                 quote.status
             ));
+        }
+
+        // Business rule: cannot send an empty quote
+        if quote.items.is_empty() {
+            return Err("Impossible d'envoyer un devis sans lignes.".to_string());
+        }
+
+        // Business rule: cannot send a zero-value quote
+        if quote.total == 0 {
+            return Err(
+                "Impossible d'envoyer un devis avec un montant total nul.".to_string(),
+            );
         }
 
         self.repo
@@ -314,8 +407,10 @@ impl QuoteService {
     }
 
     /// Mark a quote as accepted (Sent → Accepted).
-    /// Optionally creates a task if task_id is null.
-    pub fn mark_accepted(&self, id: &str) -> Result<QuoteAcceptResponse, String> {
+    ///
+    /// Note: Task creation from accepted quotes is handled via the event bus
+    /// (`QuoteAccepted` event).  This method only updates the quote status.
+    pub fn mark_accepted(&self, id: &str, accepted_by: &str) -> Result<QuoteAcceptResponse, String> {
         let quote = self
             .repo
             .find_by_id(id)
@@ -333,33 +428,9 @@ impl QuoteService {
             .update_status(id, &QuoteStatus::Accepted)
             .map_err(Self::map_repo_error)?;
 
-        let mut task_created = None;
-
-        // Create task if no task linked
-        if quote.task_id.is_none() {
-            match self.create_task_from_quote(&quote) {
-                Ok(task_id) => {
-                    self.repo
-                        .link_task(id, &task_id)
-                        .map_err(Self::map_repo_error)?;
-                    task_created = Some(TaskCreatedInfo {
-                        task_id: task_id.clone(),
-                    });
-                    info!(quote_id = %id, "Task created from accepted quote");
-
-                    // Emit QuoteAccepted and QuoteConverted events
-                    self.emit_quote_accepted(&quote, None)?;
-                    let task_number =
-                        format!("TASK-Q-{:05}", Utc::now().timestamp_millis() % 100000);
-                    self.emit_quote_converted(&quote, &task_id, &task_number)?;
-                }
-                Err(e) => {
-                    warn!(quote_id = %id, error = %e, "Failed to create task from quote, continuing");
-                    self.emit_quote_accepted(&quote, Some(e.to_string()))?;
-                }
-            }
-        } else {
-            self.emit_quote_accepted(&quote, None)?;
+        // Emit QuoteAccepted event with the accepting user's ID (not the creator)
+        if let Err(e) = self.emit_quote_accepted(&quote, accepted_by, None) {
+            warn!(quote_id = %id, error = %e, "Failed to emit QuoteAccepted event");
         }
 
         let updated_quote = self
@@ -368,25 +439,29 @@ impl QuoteService {
             .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found after acceptance".to_string())?;
 
-        info!(quote_id = %id, "Quote accepted");
+        info!(quote_id = %id, accepted_by = %accepted_by, "Quote accepted");
 
         Ok(QuoteAcceptResponse {
             quote: updated_quote,
-            task_created,
+            task_created: None, // Task creation is async via event bus
         })
     }
 
-    /// Mark a quote as rejected (Sent → Rejected, or Draft → Rejected).
-    pub fn mark_rejected(&self, id: &str) -> Result<Quote, String> {
+    /// Mark a quote as rejected (Sent → Rejected only).
+    ///
+    /// Rejection is only allowed from `Sent` status (once the quote has been
+    /// presented to the customer).  Draft quotes can simply be deleted.
+    pub fn mark_rejected(&self, id: &str, rejected_by: &str) -> Result<Quote, String> {
         let quote = self
             .repo
             .find_by_id(id)
             .map_err(Self::map_repo_error)?
             .ok_or_else(|| "Quote not found".to_string())?;
 
-        if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
+        // Only allow rejection from Sent status
+        if quote.status != QuoteStatus::Sent {
             return Err(format!(
-                "Cannot reject: quote is in '{}' status (expected 'draft' or 'sent')",
+                "Un devis ne peut être rejeté que depuis l'état 'envoyé' (statut actuel: '{}')",
                 quote.status
             ));
         }
@@ -395,7 +470,7 @@ impl QuoteService {
             .update_status(id, &QuoteStatus::Rejected)
             .map_err(Self::map_repo_error)?;
 
-        info!(quote_id = %id, "Quote rejected");
+        info!(quote_id = %id, rejected_by = %rejected_by, "Quote rejected");
 
         let updated_quote = self
             .repo
@@ -404,9 +479,41 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found after rejection".to_string())?;
 
         // Emit QuoteRejected event
-        self.emit_quote_rejected(&updated_quote, None)?;
+        if let Err(e) = self.emit_quote_rejected(&updated_quote, None) {
+            warn!(quote_id = %id, error = %e, "Failed to emit QuoteRejected event");
+        }
 
         Ok(updated_quote)
+    }
+
+    /// Mark a quote as expired (Draft | Sent → Expired).
+    ///
+    /// Can be triggered manually (Admin) or automatically when `valid_until`
+    /// is in the past.
+    pub fn mark_expired(&self, id: &str) -> Result<Quote, String> {
+        let quote = self
+            .repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Quote not found".to_string())?;
+
+        if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
+            return Err(format!(
+                "Seuls les devis en état 'draft' ou 'envoyé' peuvent expirer (statut actuel: '{}')",
+                quote.status
+            ));
+        }
+
+        self.repo
+            .update_status(id, &QuoteStatus::Expired)
+            .map_err(Self::map_repo_error)?;
+
+        info!(quote_id = %id, "Quote marked as expired");
+
+        self.repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Quote not found after expiry".to_string())
     }
 
     // ------------------------------------------------------------------

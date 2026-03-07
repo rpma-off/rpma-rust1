@@ -82,6 +82,14 @@ pub struct QuoteStatusRequest {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct QuoteDuplicateRequest {
+    pub session_token: String,
+    pub id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentsGetRequest {
     pub session_token: String,
     pub quote_id: String,

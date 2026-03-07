@@ -11,9 +11,14 @@ use super::quote_service::QuoteService;
 
 impl QuoteService {
     /// Emit QuoteAccepted event.
+    ///
+    /// `accepted_by` is the user ID of the person accepting the quote —
+    /// NOT the creator of the quote (the previous implementation incorrectly
+    /// used `quote.created_by`, which violates the intent of the field).
     pub(super) fn emit_quote_accepted(
         &self,
         quote: &Quote,
+        accepted_by: &str,
         error_message: Option<String>,
     ) -> Result<(), String> {
         use crate::shared::services::event_system::{DomainEvent, EventPublisher};
@@ -23,10 +28,8 @@ impl QuoteService {
             quote_id: quote.id.clone(),
             quote_number: quote.quote_number.clone(),
             client_id: quote.client_id.clone(),
-            accepted_by: quote
-                .created_by
-                .clone()
-                .unwrap_or_else(|| "system".to_string()),
+            // Corrected: use the accepting user, not the quote creator
+            accepted_by: accepted_by.to_string(),
             task_id: quote.task_id.clone(),
             timestamp: Utc::now(),
             metadata: error_message.map(|e| serde_json::json!({ "error": e })),

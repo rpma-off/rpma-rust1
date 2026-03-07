@@ -6,12 +6,12 @@
 mod contracts;
 mod quote_events;
 pub(crate) mod quote_service;
-mod quote_task_creation;
+// quote_task_creation module removed: cross-domain SQL (tasks table) violated ADR-001/ADR-004.
 mod quote_totals;
 
 pub use contracts::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
-    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
-    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
-    QuoteStatusRequest, QuoteUpdateRequest,
+    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest,
+    QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest,
+    QuoteListRequest, QuoteStatusRequest, QuoteUpdateRequest,
 };

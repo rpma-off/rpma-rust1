@@ -7,26 +7,26 @@ use crate::shared::repositories::Cache;
 use crate::shared::services::event_system::InMemoryEventBus;
 use std::sync::Arc;
 
-#[tokio::test]
-async fn map_quote_error_returns_not_found() {
-    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+fn make_facade(db: Arc<Database>) -> QuotesFacade {
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
     let event_bus = Arc::new(InMemoryEventBus::new());
     let service = Arc::new(QuoteService::new(repo, db, event_bus));
-    let facade = QuotesFacade::new(service);
-    let err = facade.map_quote_error("get_quote", "quote not found");
+    QuotesFacade::new(service)
+}
+
+#[tokio::test]
+async fn map_quote_service_error_returns_not_found() {
+    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
+    let facade = make_facade(db);
+    let err = facade.map_quote_service_error("Quote not found".to_string());
     assert!(matches!(err, AppError::NotFound(_)));
 }
 
 #[tokio::test]
-async fn map_quote_error_returns_validation_for_invalid() {
+async fn map_quote_service_error_returns_validation_for_invalid() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
-    let cache = Arc::new(Cache::new(100));
-    let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let event_bus = Arc::new(InMemoryEventBus::new());
-    let service = Arc::new(QuoteService::new(repo, db, event_bus));
-    let facade = QuotesFacade::new(service);
-    let err = facade.map_quote_error("create", "invalid amount");
+    let facade = make_facade(db);
+    let err = facade.map_quote_service_error("invalid amount".to_string());
     assert!(matches!(err, AppError::Validation(_)));
 }

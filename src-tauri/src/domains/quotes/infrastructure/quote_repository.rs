@@ -9,7 +9,7 @@ use crate::domains::quotes::domain::models::quote::{
 };
 use crate::shared::repositories::base::{RepoError, RepoResult};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
-use chrono::Utc;
+
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -31,14 +31,21 @@ impl QuoteRepository {
         }
     }
 
-    /// Generate the next quote number
+    /// Generate the next quote number using MAX to be robust against soft-deleted rows.
+    ///
+    /// This is a non-transactional helper for cases where a transaction boundary
+    /// is managed externally.  For guaranteed uniqueness under concurrent writes,
+    /// the caller must hold a write lock (e.g. WAL-mode exclusive transaction).
     pub fn next_quote_number(&self) -> RepoResult<String> {
-        let count: i64 = self
+        let max_num: Option<i64> = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM quotes", [])
-            .map_err(|e| RepoError::Database(format!("Failed to count quotes: {}", e)))?;
-
-        Ok(format!("DEV-{:05}", count + 1))
+            .query_single_value(
+                "SELECT MAX(CAST(SUBSTR(quote_number, 5) AS INTEGER)) FROM quotes WHERE quote_number LIKE 'DEV-%'",
+                [],
+            )
+            .ok();
+        let next = max_num.unwrap_or(0) + 1;
+        Ok(format!("DEV-{:05}", next))
     }
 
     /// Create a new quote
@@ -105,7 +112,7 @@ impl QuoteRepository {
                 vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
                 created_at, updated_at, created_by
             FROM quotes
-            WHERE id = ?
+            WHERE id = ? AND deleted_at IS NULL
             "#,
             params![id],
         ) {
@@ -167,6 +174,7 @@ impl QuoteRepository {
             "#,
             where_clause, sort_by, sort_order
         );
+        // Note: deleted_at IS NULL is already injected by build_where_clause
 
         let mut all_params = params_vec;
         all_params.push((limit as i64).into());
@@ -258,15 +266,19 @@ impl QuoteRepository {
         Ok(())
     }
 
-    /// Delete a quote (only if Draft)
+    /// Soft-delete a quote (only if Draft).
+    ///
+    /// The row is NOT physically removed — `deleted_at` is set to the current
+    /// timestamp.  This keeps the data for audit trails while hiding the quote
+    /// from all normal queries (which filter `WHERE deleted_at IS NULL`).
     pub fn delete(&self, id: &str) -> RepoResult<bool> {
         let rows = self
             .db
             .execute(
-                "DELETE FROM quotes WHERE id = ? AND status = 'draft'",
+                "UPDATE quotes SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND status = 'draft' AND deleted_at IS NULL",
                 params![id],
             )
-            .map_err(|e| RepoError::Database(format!("Failed to delete quote: {}", e)))?;
+            .map_err(|e| RepoError::Database(format!("Failed to soft-delete quote: {}", e)))?;
 
         if rows > 0 {
             self.invalidate_cache(id);
@@ -619,6 +631,9 @@ impl QuoteRepository {
         let mut conditions = Vec::new();
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
+        // Always exclude soft-deleted rows
+        conditions.push("deleted_at IS NULL".to_string());
+
         if let Some(ref client_id) = query.client_id {
             conditions.push("client_id = ?".to_string());
             params.push(client_id.clone().into());
@@ -630,9 +645,16 @@ impl QuoteRepository {
         }
 
         if let Some(ref search) = query.search {
-            conditions.push("(quote_number LIKE ? OR notes LIKE ?)".to_string());
-            params.push(format!("%{}%", search).into());
-            params.push(format!("%{}%", search).into());
+            // Extended search: quote number, notes, vehicle plate, description
+            conditions.push(
+                "(quote_number LIKE ? OR notes LIKE ? OR vehicle_plate LIKE ? OR description LIKE ?)"
+                    .to_string(),
+            );
+            let pattern = format!("%{}%", search);
+            params.push(pattern.clone().into());
+            params.push(pattern.clone().into());
+            params.push(pattern.clone().into());
+            params.push(pattern.into());
         }
 
         if let Some(ref date_from) = query.date_from {
@@ -649,11 +671,7 @@ impl QuoteRepository {
             }
         }
 
-        let where_clause = if conditions.is_empty() {
-            String::new()
-        } else {
-            format!("WHERE {}", conditions.join(" AND "))
-        };
+        let where_clause = format!("WHERE {}", conditions.join(" AND "));
 
         (where_clause, params)
     }
@@ -662,81 +680,13 @@ impl QuoteRepository {
         self.cache.remove(&self.cache_key_builder.id(id));
     }
 
-    /// Create a task record directly from quote data.
-    ///
-    /// This is an infrastructure helper that inserts into the `tasks` table
-    /// on behalf of the quote-acceptance workflow.  All SQL stays in the
-    /// infrastructure layer (ADR-002).
-    pub fn create_task_from_quote(&self, params: &CreateTaskFromQuoteParams) -> RepoResult<()> {
-        self.db
-            .with_transaction(|tx| {
-                // Fetch client details for denormalization in task
-                let (customer_name, customer_email, customer_phone): (
-                    Option<String>,
-                    Option<String>,
-                    Option<String>,
-                ) = tx
-                    .query_row(
-                        "SELECT name, email, phone FROM clients WHERE id = ?",
-                        params![params.client_id],
-                        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-                    )
-                    .unwrap_or((None, None, None));
-
-                tx.execute(
-                    r#"
-                    INSERT INTO tasks (
-                        id, task_number, title, status, priority,
-                        vehicle_plate, vehicle_model, vehicle_make, vehicle_year, vin,
-                        client_id, customer_name, customer_email, customer_phone, notes,
-                        scheduled_date, ppf_zones,
-                        created_at, updated_at, created_by
-                    ) VALUES (?, ?, ?, 'draft', 'medium', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '[]', ?, ?, ?)
-                    "#,
-                    rusqlite::params![
-                        params.task_id,
-                        params.task_number,
-                        params.title,
-                        params.vehicle_plate,
-                        params.vehicle_model,
-                        params.vehicle_make,
-                        params.vehicle_year,
-                        params.vehicle_vin,
-                        params.client_id,
-                        customer_name,
-                        customer_email,
-                        customer_phone,
-                        params.notes,
-                        params.scheduled_date,
-                        params.now,
-                        params.now,
-                        params.created_by,
-                    ],
-                )
-                .map_err(|e| format!("Failed to create task from quote: {}", e))?;
-
-                Ok(())
-            })
-            .map_err(|e| RepoError::Database(format!("Failed to create task from quote: {}", e)))
-    }
 }
 
-/// Parameters for creating a task from an accepted quote.
-pub struct CreateTaskFromQuoteParams {
-    pub task_id: String,
-    pub task_number: String,
-    pub title: String,
-    pub client_id: String,
-    pub vehicle_plate: Option<String>,
-    pub vehicle_model: Option<String>,
-    pub vehicle_make: Option<String>,
-    pub vehicle_year: Option<String>,
-    pub vehicle_vin: Option<String>,
-    pub notes: Option<String>,
-    pub created_by: Option<String>,
-    pub now: i64,
-    pub scheduled_date: String,
-}
+// CreateTaskFromQuoteParams and create_task_from_quote() have been removed.
+// Cross-domain SQL (inserting into the `tasks` table from the quotes repository)
+// violated ADR-001 / ADR-004 bounded-context rules.
+// Task creation from accepted quotes is handled by the QuoteService directly
+// using the Database handle, then delegated to the tasks domain via events.
 
 #[cfg(test)]
 mod tests {

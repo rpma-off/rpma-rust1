@@ -294,6 +294,8 @@ fn main() {
             domains::quotes::ipc::quote::quote_mark_sent,
             domains::quotes::ipc::quote::quote_mark_accepted,
             domains::quotes::ipc::quote::quote_mark_rejected,
+            domains::quotes::ipc::quote::quote_mark_expired,
+            domains::quotes::ipc::quote::quote_duplicate,
             domains::quotes::ipc::quote::quote_export_pdf,
             domains::quotes::ipc::quote::quote_attachments_get,
             domains::quotes::ipc::quote::quote_attachment_create,

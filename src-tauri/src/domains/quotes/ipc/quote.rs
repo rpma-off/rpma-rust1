@@ -8,9 +8,9 @@ use tracing::{debug, error, info, instrument, Span};
 use crate::authenticate;
 use crate::domains::quotes::application::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
-    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteGetRequest,
-    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
-    QuoteStatusRequest, QuoteUpdateRequest,
+    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest,
+    QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest,
+    QuoteListRequest, QuoteStatusRequest, QuoteUpdateRequest,
 };
 
 // --- Commands ---
@@ -67,8 +67,8 @@ pub async fn quote_get(
             ApiResponse::error(AppError::NotFound("Quote not found".to_string()))
                 .with_correlation_id(Some(correlation_id.clone())),
         ),
-        Err(_e) => {
-            error!("Failed to get quote");
+        Err(e) => {
+            error!(error = %e, quote_id = %request.id, "Failed to get quote");
             Ok(
                 ApiResponse::error(AppError::Database("Failed to retrieve quote".to_string()))
                     .with_correlation_id(Some(correlation_id.clone())),
@@ -93,8 +93,8 @@ pub async fn quote_list(
         Ok(response) => {
             Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
         }
-        Err(_e) => {
-            error!("Failed to list quotes");
+        Err(e) => {
+            error!(error = %e, "Failed to list quotes");
             Ok(
                 ApiResponse::error(AppError::Database("Failed to list quotes".to_string()))
                     .with_correlation_id(Some(correlation_id.clone())),
@@ -263,13 +263,13 @@ pub async fn quote_mark_accepted(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.mark_accepted(&current_user.role, &request.id) {
+    match facade.mark_accepted(&current_user.role, &request.id, &current_user.user_id) {
         Ok(response) => {
             info!(quote_id = %request.id, "Quote accepted");
             Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
-            error!("Failed to accept quote: {}", e);
+            error!(error = %e, quote_id = %request.id, "Failed to accept quote");
             Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
@@ -287,13 +287,61 @@ pub async fn quote_mark_rejected(
     crate::commands::update_correlation_context_user(&current_user.user_id);
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.mark_rejected(&current_user.role, &request.id) {
+    match facade.mark_rejected(&current_user.role, &request.id, &current_user.user_id) {
         Ok(quote) => {
             info!(quote_id = %request.id, "Quote rejected");
             Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
-            error!("Failed to reject quote: {}", e);
+            error!(error = %e, quote_id = %request.id, "Failed to reject quote");
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_mark_expired(
+    request: QuoteStatusRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Quote>, AppError> {
+    debug!(quote_id = %request.id, "quote_mark_expired command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let facade = QuotesFacade::new(state.quote_service.clone());
+
+    match facade.mark_expired(&current_user.role, &request.id) {
+        Ok(quote) => {
+            info!(quote_id = %request.id, "Quote marked as expired");
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, quote_id = %request.id, "Failed to expire quote");
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_duplicate(
+    request: QuoteDuplicateRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Quote>, AppError> {
+    debug!(quote_id = %request.id, "quote_duplicate command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let facade = QuotesFacade::new(state.quote_service.clone());
+
+    match facade.duplicate(&current_user.role, &request.id, &current_user.user_id) {
+        Ok(quote) => {
+            info!(source_id = %request.id, new_id = %quote.id, "Quote duplicated");
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, quote_id = %request.id, "Failed to duplicate quote");
             Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }

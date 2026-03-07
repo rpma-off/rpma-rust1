@@ -14,13 +14,31 @@ impl QuotesFacade {
         Self { quote_service }
     }
 
+    /// Check RBAC permission for the given operation.
+    ///
+    /// # Matrix
+    /// | Operation          | Viewer | Technician | Supervisor | Admin |
+    /// |--------------------|--------|------------|------------|-------|
+    /// | read / export      |   ✅   |    ✅      |    ✅      |  ✅   |
+    /// | create / update    |   ❌   |    ❌      |    ✅      |  ✅   |
+    /// | status / duplicate |   ❌   |    ❌      |    ✅      |  ✅   |
+    /// | delete / expire    |   ❌   |    ❌      |    ❌      |  ✅   |
     pub fn check_permission(&self, role: &UserRole, operation: &str) -> Result<(), AppError> {
         match operation {
             "read" | "export" => Ok(()),
-            "create" | "update" | "delete" | "status" => {
-                if matches!(role, UserRole::Viewer) {
+            "create" | "update" | "status" | "duplicate" => {
+                if matches!(role, UserRole::Viewer | UserRole::Technician) {
                     Err(AppError::Authorization(
-                        "Viewers cannot modify quotes".to_string(),
+                        "Seuls les Superviseurs et Administrateurs peuvent créer ou modifier des devis.".to_string(),
+                    ))
+                } else {
+                    Ok(())
+                }
+            }
+            "delete" | "expire" => {
+                if !matches!(role, UserRole::Admin) {
+                    Err(AppError::Authorization(
+                        "Seuls les Administrateurs peuvent supprimer ou expirer des devis.".to_string(),
                     ))
                 } else {
                     Ok(())
@@ -87,6 +105,18 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    pub fn duplicate(
+        &self,
+        role: &UserRole,
+        id: &str,
+        user_id: &str,
+    ) -> Result<Quote, AppError> {
+        self.check_permission(role, "duplicate")?;
+        self.quote_service
+            .duplicate_quote(id, user_id)
+            .map_err(|e| self.map_quote_service_error(e))
+    }
+
     pub fn add_item(
         &self,
         role: &UserRole,
@@ -118,7 +148,7 @@ impl QuotesFacade {
         quote_id: &str,
         item_id: &str,
     ) -> Result<Quote, AppError> {
-        self.check_permission(role, "delete")?;
+        self.check_permission(role, "update")?;
         self.quote_service
             .delete_item(quote_id, item_id)
             .map_err(|e| self.map_quote_service_error(e))
@@ -135,17 +165,25 @@ impl QuotesFacade {
         &self,
         role: &UserRole,
         id: &str,
+        user_id: &str,
     ) -> Result<QuoteAcceptResponse, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_accepted(id)
+            .mark_accepted(id, user_id)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
-    pub fn mark_rejected(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
+    pub fn mark_rejected(&self, role: &UserRole, id: &str, user_id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_rejected(id)
+            .mark_rejected(id, user_id)
+            .map_err(|e| self.map_quote_service_error(e))
+    }
+
+    pub fn mark_expired(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
+        self.check_permission(role, "expire")?;
+        self.quote_service
+            .mark_expired(id)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -167,7 +205,7 @@ impl QuotesFacade {
         data: CreateQuoteAttachmentRequest,
         user_id: &str,
     ) -> Result<QuoteAttachment, AppError> {
-        self.check_permission(role, "create")?;
+        self.check_permission(role, "update")?;
         self.quote_service
             .create_attachment(quote_id, data, user_id)
             .map_err(|e| self.map_quote_service_error(e))
