@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -16,27 +15,14 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { 
   Globe, 
   Plus, 
-  Edit, 
-  Trash2, 
-  Play, 
-  Pause,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
   Save,
   RefreshCw,
-  Mail,
-  MessageSquare,
-  Calendar,
-  Webhook,
-  Database,
-  Cloud,
-  TestTube
 } from 'lucide-react';
 import { IntegrationConfig, IntegrationType, IntegrationStatus } from '@/shared/types';
 import { useAuth } from '@/domains/auth';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
+import { IntegrationCard } from './IntegrationCard';
 
 export function IntegrationsTab() {
   const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
@@ -267,67 +253,6 @@ export function IntegrationsTab() {
     setShowCreateDialog(true);
   };
 
-  const getIntegrationTypeLabel = (type: IntegrationType) => {
-    const labels = {
-      email: 'Email',
-      sms: 'SMS',
-      calendar: 'Calendrier',
-      webhook: 'Webhook',
-      api: 'API',
-      backup: 'Sauvegarde',
-      sync: 'Synchronisation'
-    };
-    return labels[type] || type;
-  };
-
-  const getIntegrationTypeIcon = (type: IntegrationType) => {
-    switch (type) {
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'sms':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'calendar':
-        return <Calendar className="h-4 w-4" />;
-      case 'webhook':
-        return <Webhook className="h-4 w-4" />;
-      case 'api':
-        return <Globe className="h-4 w-4" />;
-      case 'backup':
-        return <Database className="h-4 w-4" />;
-      case 'sync':
-        return <Cloud className="h-4 w-4" />;
-      default:
-        return <Globe className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: IntegrationStatus) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'error':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'testing':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getHealthStatusIcon = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'unhealthy':
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'unknown':
-      default:
-        return <AlertTriangle className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
   if (loading) {
     return <LoadingState />;
   }
@@ -547,93 +472,15 @@ export function IntegrationsTab() {
       {/* Integrations List */}
       <div className="grid gap-4">
         {integrations.map((integration) => (
-          <Card key={integration.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    {getIntegrationTypeIcon(integration.type)}
-                    <h3 className="text-lg font-semibold">{integration.name}</h3>
-                    <Badge variant="outline">{getIntegrationTypeLabel(integration.type)}</Badge>
-                    <Badge className={getStatusColor(integration.status)}>
-                      {integration.status}
-                    </Badge>
-                    <Badge variant={integration.isActive ? 'default' : 'secondary'}>
-                      {integration.isActive ? 'Actif' : 'Inactif'}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <h4 className="font-medium mb-2">Fournisseur:</h4>
-                      <p className="text-gray-600">{integration.provider}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Dernière synchronisation:</h4>
-                      <p className="text-gray-600">
-                        {integration.lastSync 
-                          ? new Date(integration.lastSync).toLocaleString('fr-FR')
-                          : 'Jamais'
-                        }
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">État de santé:</h4>
-                      <div className="flex items-center space-x-2">
-                        {getHealthStatusIcon(integration.healthCheck?.status || 'unknown')}
-                        <span className="text-gray-600">
-                          {integration.healthCheck?.error || (integration.healthCheck?.status === 'healthy' ? 'Connexion réussie' : 'Non vérifié')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2 ml-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => testIntegration(integration.id)}
-                    disabled={testingIntegration === integration.id}
-                  >
-                    {testingIntegration === integration.id ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <TestTube className="h-4 w-4" />
-                    )}
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleIntegrationStatus(integration)}
-                  >
-                    {integration.isActive ? (
-                      <Pause className="h-4 w-4" />
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEditDialog(integration)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => confirmDeleteIntegration(integration)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <IntegrationCard
+            key={integration.id}
+            integration={integration}
+            testingIntegration={testingIntegration}
+            onTest={testIntegration}
+            onToggleStatus={toggleIntegrationStatus}
+            onEdit={openEditDialog}
+            onDelete={confirmDeleteIntegration}
+          />
         ))}
 
         {integrations.length === 0 && (

@@ -12,9 +12,10 @@ import {
   MapPin,
   Plus,
   Search,
-  X,
 } from "lucide-react";
 import { FormStepProps } from "../types";
+import { ClientSelectorModal } from "./ClientSelectorModal";
+import { CustomerInfoSummary } from "./CustomerInfoSummary";
 
 import { Client } from "@/lib/backend";
 // Legacy service imports removed - now using API routes
@@ -321,82 +322,14 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
           {/* Client Selector Modal */}
           {showClientSelector && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-              <div className="bg-muted rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden border border-[hsl(var(--rpma-border))]">
-                <div className="p-4 border-b border-[hsl(var(--rpma-border))]">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Sélectionner un client
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setShowClientSelector(false)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-4">
-                    {/* Search Input */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <input
-                        type="text"
-                        placeholder="Rechercher un client..."
-                        value={searchQuery}
-                        className="w-full pl-10 pr-4 py-2 bg-white border border-[hsl(var(--rpma-border))] text-foreground placeholder-muted-foreground rounded-lg focus:ring-2 focus:ring-[hsl(var(--rpma-teal))]/20 focus:border-[hsl(var(--rpma-teal))]"
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-
-                    {/* Client List */}
-                    <div className="max-h-60 overflow-y-auto space-y-2">
-                      {filteredClients.length === 0 ? (
-                        <div className="text-center py-4 text-muted-foreground">
-                          {searchQuery
-                            ? "Aucun client trouvé pour cette recherche"
-                            : "Aucun client disponible"}
-                        </div>
-                      ) : (
-                        filteredClients.map((client: Client) => (
-                          <button
-                            key={client.id}
-                            type="button"
-                            onClick={() => handleClientSelect(client)}
-                            className="w-full text-left p-3 border border-[hsl(var(--rpma-border))] bg-white rounded-lg hover:bg-muted hover:border-[hsl(var(--rpma-border))]-light transition-colors"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <User className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium text-foreground">
-                                    {client.name}
-                                  </p>
-                                  <div className="text-sm text-muted-foreground space-y-1">
-                                    {client.email && <p>{client.email}</p>}
-                                    {client.phone && <p>{client.phone}</p>}
-                                    {client.company_name && (
-                                      <p className="text-[hsl(var(--rpma-teal))]">
-                                        {client.company_name}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              {selectedClient?.id === client.id && (
-                                <CheckCircle className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
-                              )}
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ClientSelectorModal
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              filteredClients={filteredClients}
+              selectedClientId={selectedClient?.id}
+              onSelect={handleClientSelect}
+              onClose={() => setShowClientSelector(false)}
+            />
           )}
 
           {/* Manual Entry Form - Only show if not using existing client */}
@@ -627,41 +560,14 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
               {/* Summary of entered information */}
               {!isFormEmpty && (
-                <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-foreground mb-2">
-                    Résumé des informations :
-                  </h4>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    {formData.customer_name && (
-                      <div className="flex items-center">
-                        <User className="w-4 h-4 mr-2 text-muted-foreground" />
-                        <span>{formData.customer_name}</span>
-                      </div>
-                    )}
-                    {formData.customer_email &&
-                      validateEmail(formData.customer_email) && (
-                        <div className="flex items-center">
-                          <Mail className="w-4 h-4 mr-2 text-muted-foreground" />
-                          <span>{formData.customer_email}</span>
-                        </div>
-                      )}
-                    {formData.customer_phone &&
-                      validatePhone(formData.customer_phone) && (
-                        <div className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-                          <span>{formData.customer_phone}</span>
-                        </div>
-                      )}
-                    {formData.customer_address && (
-                      <div className="flex items-start">
-                        <MapPin className="w-4 h-4 mr-2 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <span className="break-words">
-                          {formData.customer_address}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <CustomerInfoSummary
+                  customerName={formData.customer_name}
+                  customerEmail={formData.customer_email}
+                  customerPhone={formData.customer_phone}
+                  customerAddress={formData.customer_address}
+                  validateEmail={validateEmail}
+                  validatePhone={validatePhone}
+                />
               )}
             </div>
           )}
