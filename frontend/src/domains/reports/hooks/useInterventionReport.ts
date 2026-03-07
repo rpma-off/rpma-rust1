@@ -38,8 +38,9 @@ export function useInterventionReport({ interventionId }: UseInterventionReportO
       .then((data) => {
         if (!cancelled) setReport(data ?? null);
       })
-      .catch(() => {
-        // Silently ignore — report may simply not exist yet
+      .catch((err) => {
+        // Log unexpected errors; report may simply not exist yet
+        console.warn('[useInterventionReport] Failed to fetch report:', err);
         if (!cancelled) setReport(null);
       })
       .finally(() => {

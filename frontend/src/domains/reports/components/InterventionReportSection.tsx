@@ -63,7 +63,9 @@ export function InterventionReportSection({ interventionId }: InterventionReport
                 variant="outline"
                 className="flex-1"
                 onClick={() => {
-                  const url = report.file_path?.startsWith('file://') ? report.file_path : `file://${report.file_path}`;
+                  const path = report.file_path;
+                  if (!path) return;
+                  const url = path.startsWith('file://') ? path : `file://${path}`;
                   window.open(url, '_blank');
                 }}
               >
