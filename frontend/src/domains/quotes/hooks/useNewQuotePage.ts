@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCreateQuote } from './useQuotes';
@@ -16,6 +16,7 @@ import type {
 export function useNewQuotePage() {
   const router = useRouter();
   const { createQuote, loading, error } = useCreateQuote();
+  const submittingRef = useRef(false);
   const { user } = useAuth();
   const { clients, refetch: refetchClients } = useClients({ autoFetch: true });
 
@@ -51,6 +52,7 @@ export function useNewQuotePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (submittingRef.current) return;
     if (!user?.token) return;
 
     if (parts.length === 0 && labor.length === 0) {
@@ -58,87 +60,103 @@ export function useNewQuotePage() {
       return;
     }
 
-    // Resolve client ID: use existing selection or create inline
-    let resolvedClientId = customerId.trim();
-    if (!resolvedClientId) {
-      if (!clientName.trim()) {
-        toast.error('Veuillez renseigner le nom du client');
-        return;
+    submittingRef.current = true;
+    try {
+      // Resolve client ID: use existing selection or create inline
+      let resolvedClientId = customerId.trim();
+      if (!resolvedClientId) {
+        if (!clientName.trim()) {
+          toast.error('Veuillez renseigner le nom du client');
+          return;
+        }
+        try {
+          const newClient = await clientIpc.create(
+            {
+              name: clientName.trim(),
+              email: clientEmail.trim() || null,
+              phone: clientPhone.trim() || null,
+              customer_type: clientType,
+              address_street: null,
+              address_city: null,
+              address_state: null,
+              address_zip: null,
+              address_country: null,
+              tax_id: null,
+              company_name: null,
+              contact_person: null,
+              notes: null,
+              tags: null,
+            },
+            user.token,
+          );
+          resolvedClientId = newClient.id;
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          if (errorMsg.toLowerCase().includes('email') || errorMsg.toLowerCase().includes('already exists')) {
+            const existing = clients?.find(c => c.email && clientEmail.trim() && c.email === clientEmail.trim());
+            if (existing) {
+              resolvedClientId = existing.id;
+            } else {
+              toast.error('Un client avec cet email existe déjà. Sélectionnez-le dans la liste.');
+              return;
+            }
+          } else {
+            toast.error('Erreur lors de la création du client');
+            return;
+          }
+        }
       }
-      try {
-        const newClient = await clientIpc.create(
-          {
-            name: clientName.trim(),
-            email: clientEmail.trim() || null,
-            phone: clientPhone.trim() || null,
-            customer_type: clientType,
-            address_street: null,
-            address_city: null,
-            address_state: null,
-            address_zip: null,
-            address_country: null,
-            tax_id: null,
-            company_name: null,
-            contact_person: null,
-            notes: null,
-            tags: null,
-          },
-          user.token,
-        );
-        resolvedClientId = newClient.id;
-      } catch {
-        toast.error('Erreur lors de la création du client');
-        return;
+
+      const items = [
+        ...parts.map((p, index) => ({
+          kind: 'material' as const,
+          label: p.name,
+          description: p.part_number || undefined,
+          qty: p.quantity,
+          unit_price: Math.round(p.unit_price * 100),
+          tax_rate: taxRate,
+          position: index,
+        })),
+        ...labor.map((l, index) => ({
+          kind: 'labor' as const,
+          label: l.description,
+          description: undefined,
+          qty: l.hours,
+          unit_price: Math.round(l.rate * 100),
+          tax_rate: taxRate,
+          position: parts.length + index,
+        })),
+      ];
+
+      // Convert validUntil string to timestamp if provided
+      let validUntilTimestamp: number | null = null;
+      if (validUntil) {
+        const date = new Date(validUntil);
+        if (!isNaN(date.getTime())) {
+          validUntilTimestamp = date.getTime();
+        }
       }
-    }
 
-    const items = [
-      ...parts.map((p, index) => ({
-        kind: 'material' as const,
-        label: p.name,
-        description: p.part_number || undefined,
-        qty: p.quantity,
-        unit_price: Math.round(p.unit_price * 100),
-        tax_rate: taxRate,
-        position: index,
-      })),
-      ...labor.map((l, index) => ({
-        kind: 'labor' as const,
-        label: l.description,
-        description: undefined,
-        qty: l.hours,
-        unit_price: Math.round(l.rate * 100),
-        tax_rate: taxRate,
-        position: parts.length + index,
-      })),
-    ];
+      const data: CreateQuoteRequest = {
+        client_id: resolvedClientId,
+        notes: publicNote || undefined,
+        terms: internalNote || undefined,
+        valid_until: validUntilTimestamp,
+        items,
+        vehicle_make: vehicleMake.trim() || undefined,
+        vehicle_model: vehicleModel.trim() || undefined,
+        vehicle_year: vehicleYear.trim() || undefined,
+        vehicle_plate: vehiclePlate.trim() || undefined,
+        vehicle_vin: vehicleVin.trim() || undefined,
+      };
 
-    // Convert validUntil string to timestamp if provided
-    let validUntilTimestamp: number | null = null;
-    if (validUntil) {
-      const date = new Date(validUntil);
-      if (!isNaN(date.getTime())) {
-        validUntilTimestamp = date.getTime();
+      const result = await createQuote(data);
+      if (result) {
+        toast.success('Devis créé avec succès');
+        router.push(`/quotes/${result.id}`);
       }
-    }
-
-    const data: CreateQuoteRequest = {
-      client_id: resolvedClientId,
-      notes: publicNote || undefined,
-      terms: internalNote || undefined,
-      valid_until: validUntilTimestamp,
-      items,
-      vehicle_make: vehicleMake.trim() || undefined,
-      vehicle_model: vehicleModel.trim() || undefined,
-      vehicle_year: vehicleYear.trim() || undefined,
-      vehicle_plate: vehiclePlate.trim() || undefined,
-      vehicle_vin: vehicleVin.trim() || undefined,
-    };
-
-    const result = await createQuote(data);
-    if (result) {
-      toast.success('Devis créé avec succès');
-      router.push(`/quotes/${result.id}`);
+    } finally {
+      submittingRef.current = false;
     }
   };
 

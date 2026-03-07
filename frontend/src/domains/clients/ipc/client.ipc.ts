@@ -23,7 +23,9 @@ export const clientIpc = {
     });
     invalidatePattern('client:');
     signalMutation('clients');
-    return extractAndValidate(result, validateClient) as Client;
+    // safeInvoke already unwrapped ApiResponse; result = { type: "Created", data: client }
+    const tagged = result as Record<string, unknown>;
+    return (tagged?.data ?? result) as Client;
   },
 
   get: (id: string, sessionToken: string): Promise<Client | null> =>
@@ -71,12 +73,13 @@ export const clientIpc = {
         session_token: sessionToken
       }
     });
-    const payload = extractAndValidate(result) as JsonValue;
-    const listResponse = unwrapTaggedObject(payload, 'List', 'client list');
-    if (!validateClientListResponse(listResponse)) {
+    // safeInvoke already unwrapped ApiResponse; result = { type: "List", data: ClientListResponse }
+    const tagged = result as Record<string, unknown>;
+    const listData = (tagged?.type === 'List' ? tagged?.data : result) as unknown;
+    if (!validateClientListResponse(listData)) {
       throw new Error('Invalid client list response payload');
     }
-    return listResponse;
+    return listData as ClientListResponse;
   },
 
   listWithTasks: async (filters: Partial<ClientQuery>, limitTasks: number, sessionToken: string): Promise<ClientWithTasks[]> => {

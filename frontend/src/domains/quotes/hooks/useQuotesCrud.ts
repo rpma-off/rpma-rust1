@@ -44,12 +44,10 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
       setLoading(true);
       setError(null);
       const result = await quotesIpc.list(filters, user.token);
-      const response = result as unknown as ApiResponse<QuoteListResponse>;
-      if (response?.success && response.data) {
-        setQuotes(response.data.data);
-        setTotal(response.data.total);
-      } else if (response?.error) {
-        throw new Error(response.error.message);
+      const listResult = result as unknown as QuoteListResponse;
+      if (listResult?.data) {
+        setQuotes(listResult.data);
+        setTotal(listResult.total);
       }
     } catch (err: unknown) {
       setError(normalizeError(err));
@@ -140,12 +138,9 @@ export function useCreateQuote() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<Quote>;
-        if (response?.success && response.data) {
-          return response.data;
-        }
-        if (response?.error) {
-          throw new Error(response.error.message);
+        const quote = result as unknown as Quote;
+        if (quote?.id) {
+          return quote;
         }
         return null;
       } catch (err: unknown) {
