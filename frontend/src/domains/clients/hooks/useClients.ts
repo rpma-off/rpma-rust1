@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { clientService, type ClientStats } from '../services';
+import { useMutationCounter } from '@/lib/data-freshness';
 import type { ClientWithTasks, CustomerType } from '@/lib/backend';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
@@ -65,6 +66,7 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
     context: LogDomain.SYSTEM,
     component: 'useClients'
   });
+  const clientsMutations = useMutationCounter('clients');
 
   const { filters: initialFilters = {}, autoFetch = true, limitTasks = 10 } = options;
 
@@ -173,7 +175,7 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
     if (autoFetch) {
       fetchClients();
     }
-  }, [fetchClients, autoFetch]);
+  }, [fetchClients, autoFetch, clientsMutations]);
 
   // Fetch stats on mount
   useEffect(() => {

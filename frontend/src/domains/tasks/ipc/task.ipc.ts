@@ -1,4 +1,5 @@
 import { safeInvoke, extractAndValidate, cachedInvoke, invalidatePattern } from '@/lib/ipc/core';
+import { signalMutation } from '@/lib/data-freshness';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { validateTask, validateTaskListResponse } from '@/lib/validation/backend-type-guards';
 import type { JsonObject, JsonValue } from '@/types/json';
@@ -25,6 +26,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
     return extractAndValidate(result, validateTask) as Task;
   },
 
@@ -44,6 +46,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
     return extractAndValidate(result, validateTask) as Task;
   },
 
@@ -84,6 +87,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
   },
 
   statistics: (sessionToken: string): Promise<TaskStatistics> =>
@@ -128,6 +132,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
     return extractAndValidate(result, validateTask) as Task;
   },
 
@@ -140,6 +145,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
   },
 
   sendTaskMessage: async (
@@ -168,6 +174,7 @@ export const taskIpc = {
       }
     });
     invalidatePattern('task:');
+    signalMutation('tasks');
   },
 
   reportTaskIssue: async (

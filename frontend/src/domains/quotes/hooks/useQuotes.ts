@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
+import { useMutationCounter } from '@/lib/data-freshness';
 import type { JsonObject } from '@/types/json';
 import type {
   Quote,
@@ -29,6 +30,7 @@ export interface UseQuotesListOptions {
 export function useQuotesList(options: UseQuotesListOptions = {}) {
   const { user } = useAuth();
   const { filters: initialFilters = {}, autoFetch = true } = options;
+  const quotesMutations = useMutationCounter('quotes');
 
   const [filters, setFilters] = useState<QuoteFilters>({
     page: 1,
@@ -73,7 +75,7 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
     if (autoFetch) {
       fetchQuotes();
     }
-  }, [fetchQuotes, autoFetch]);
+  }, [fetchQuotes, autoFetch, quotesMutations]);
 
   return {
     quotes,
