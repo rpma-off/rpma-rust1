@@ -244,7 +244,7 @@ impl QuotesFacade {
         quote_id: &str,
         attachment_id: &str,
     ) -> Result<bool, AppError> {
-        self.check_permission(role, "delete")?;
+        self.check_permission(role, "update")?;
         self.quote_service
             .delete_attachment(quote_id, attachment_id)
             .map_err(|e| self.map_quote_service_error(e))

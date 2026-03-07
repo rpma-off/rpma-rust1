@@ -44,6 +44,7 @@ impl QuoteService {
     pub(super) fn emit_quote_rejected(
         &self,
         quote: &Quote,
+        rejected_by: &str,
         reason: Option<String>,
     ) -> Result<(), String> {
         use crate::shared::services::event_system::{DomainEvent, EventPublisher};
@@ -53,10 +54,7 @@ impl QuoteService {
             quote_id: quote.id.clone(),
             quote_number: quote.quote_number.clone(),
             client_id: quote.client_id.clone(),
-            rejected_by: quote
-                .created_by
-                .clone()
-                .unwrap_or_else(|| "system".to_string()),
+            rejected_by: rejected_by.to_string(),
             reason,
             timestamp: Utc::now(),
             metadata: None,

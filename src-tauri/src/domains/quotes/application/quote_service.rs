@@ -479,7 +479,7 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found after rejection".to_string())?;
 
         // Emit QuoteRejected event
-        if let Err(e) = self.emit_quote_rejected(&updated_quote, None) {
+        if let Err(e) = self.emit_quote_rejected(&updated_quote, rejected_by, None) {
             warn!(quote_id = %id, error = %e, "Failed to emit QuoteRejected event");
         }
 
