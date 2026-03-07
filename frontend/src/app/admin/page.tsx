@@ -24,7 +24,7 @@ import {
 } from '@/shared/ui/facade';
 import { useAuth } from '@/domains/auth';
 import { useRouter } from 'next/navigation';
-import { useAdminDashboard, useAdminUserManagement, AdminOverviewTab, AdminUsersTab, AdminSystemTab, AddUserModal } from '@/domains/admin';
+import { useAdminDashboard, useAdminUserManagement, AdminOverviewTab, AdminUsersTab, AdminSystemTab } from '@/domains/admin';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const WorkflowExecutionDashboard = dynamic(
@@ -45,6 +45,11 @@ const PhotoDocumentationDashboard = dynamic(
 const SecurityDashboard = dynamic(
   () => import('@/domains/admin').then((mod) => ({ default: mod.SecurityDashboard })),
   { loading: () => <LoadingState />, ssr: false }
+);
+
+const AddUserModal = dynamic(
+  () => import('@/domains/admin/components/AddUserModal').then((mod) => ({ default: mod.AddUserModal })),
+  { ssr: false }
 );
 
 // Custom hook for AdminPage logic

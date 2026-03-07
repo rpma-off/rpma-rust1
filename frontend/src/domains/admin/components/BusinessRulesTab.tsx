@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,11 @@ import {
   Target,
 } from 'lucide-react';
 import { useBusinessRules } from '../hooks/useBusinessRules';
-import { BusinessRuleFormDialog } from './BusinessRuleFormDialog';
+
+const BusinessRuleFormDialog = dynamic(
+  () => import('./BusinessRuleFormDialog').then((mod) => ({ default: mod.BusinessRuleFormDialog })),
+  { ssr: false }
+);
 
 const STYLE_BY_CATEGORY: Record<string, { badge: string; iconWrap: string; icon: string }> = {
   task_assignment: { badge: 'bg-blue-100 text-blue-700', iconWrap: 'bg-blue-100', icon: 'text-blue-600' },

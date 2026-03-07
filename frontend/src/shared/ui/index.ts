@@ -13,6 +13,6 @@ export { Providers } from './providers';
 export { ThemeProvider } from './theme-provider';
 export { default as AppNavigation } from './AppNavigation';
 
-export { SkipLink } from '@/lib/accessibility';
+export { SkipLink } from './SkipLink';
 
 export * from '@/error-boundaries';

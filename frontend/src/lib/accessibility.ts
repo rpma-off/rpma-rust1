@@ -2,8 +2,6 @@
  * Accessibility utilities for the RPMA application
  */
 
-export { SkipLink } from './accessibility.tsx';
-
 /**
  * Generate a unique ID for accessibility attributes
  */

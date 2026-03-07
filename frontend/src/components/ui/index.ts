@@ -7,7 +7,6 @@ export * from './avatar';
 export * from './badge';
 export { Button, Button as UIButton } from './button';
 export * from './checkbox';
-export * from './collapsible-section';
 export * from './command';
 export * from './dialog';
 export * from './dropdown-menu';
@@ -17,9 +16,7 @@ export * from './input';
 export * from './label';
 export * from './popover';
 export * from './progress';
-export * from './progress-indicator';
 export * from './radio-group';
-export * from './route-loading';
 export * from './scroll-area';
 export * from './select';
 export * from './separator';
@@ -35,18 +32,7 @@ export { useToast } from './use-toast';
 export { toast } from './use-toast';
 
 // Utility Components
-export { 
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-  BreadcrumbEllipsis
-} from './Breadcrumbs';
 export { default as ErrorFallback } from './ErrorFallback';
-export { Motion } from './Motion';
-export { SafeLink } from './SafeLink';
 
 export { DesktopTable, type Column } from './DesktopTable';
 export { DesktopForm } from '../forms/DesktopForm';

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { Droplets, Thermometer } from 'lucide-react';
 import {
   PpfChecklist,
@@ -9,7 +10,6 @@ import {
   PpfPhotoGrid,
   PpfStepHero,
   PpfWorkflowLayout,
-  VehicleDiagram,
   getNextPPFStepId,
   getPPFStepPath,
 } from '@/domains/interventions';
@@ -17,6 +17,18 @@ import { usePpfWorkflow } from '@/domains/interventions/api/client';
 import type { StepType } from '@/lib/backend';
 import type { Defect } from '@/domains/interventions';
 import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
+
+const VehicleDiagram = dynamic(
+  () => import('@/domains/interventions/components/workflow/ppf/VehicleDiagram').then(mod => ({ default: mod.VehicleDiagram })),
+  { 
+    loading: () => (
+      <div className="h-[400px] w-full rounded-lg border border-border bg-card animate-pulse flex items-center justify-center">
+        <div className="text-muted-foreground">Chargement du diagramme...</div>
+      </div>
+    ),
+    ssr: false 
+  }
+);
 
 const CHECKLIST_ITEMS = [
   {
