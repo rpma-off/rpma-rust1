@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { TaskStatus, TaskPriority } from '@/lib/backend';
 import { taskService } from '../services/task.service';
+import { useMutationCounter } from '@/lib/data-freshness';
 import { ApiError } from '@/lib/api-error';
 import { logger } from '@/lib/logger';
 import type { TaskWithDetails } from '@/types/task.types';
@@ -42,6 +43,7 @@ export function useTaskSync({
   onError,
 }: UseTaskSyncProps) {
   const fetchInProgressRef = useRef(false);
+  const tasksMutations = useMutationCounter('tasks');
 
   const fetchTasks = useCallback(async (page = 1, newFilters = filters) => {
     // Prevent duplicate fetches
@@ -202,7 +204,7 @@ export function useTaskSync({
       fetchTasks(1, filters);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoFetch, userToken, filters]); // Only depends on actual trigger values
+  }, [autoFetch, userToken, filters, tasksMutations]); // Only depends on actual trigger values
 
   return {
     fetchTasks,

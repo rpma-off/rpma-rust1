@@ -3,6 +3,7 @@ import { cachedInvoke, invalidatePattern } from '../cache';
 import { extractAndValidate } from '../core';
 import { ResponseHandlers } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
+import { signalMutation } from '@/lib/data-freshness';
 import {
   validateClient,
   validateClientWithTasks,
@@ -24,6 +25,7 @@ export const clientOperations = {
       },
     }, validator);
     invalidatePattern('client:');
+    signalMutation('clients');
     return validator(rawResult);
   },
 
@@ -49,6 +51,7 @@ export const clientOperations = {
       },
     }, validator);
     invalidatePattern('client:');
+    signalMutation('clients');
     return validator(rawResult);
   },
 
@@ -60,6 +63,7 @@ export const clientOperations = {
       },
     });
     invalidatePattern('client:');
+    signalMutation('clients');
     return result;
   },
 

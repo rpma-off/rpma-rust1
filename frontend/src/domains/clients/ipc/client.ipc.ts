@@ -1,4 +1,5 @@
 import { safeInvoke, extractAndValidate, cachedInvoke, invalidatePattern } from '@/lib/ipc/core';
+import { signalMutation } from '@/lib/data-freshness';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { validateClient, validateClientListResponse } from '@/lib/validation/backend-type-guards';
 import type { JsonValue } from '@/types/json';
@@ -21,6 +22,7 @@ export const clientIpc = {
       }
     });
     invalidatePattern('client:');
+    signalMutation('clients');
     return extractAndValidate(result, validateClient) as Client;
   },
 
@@ -115,6 +117,7 @@ export const clientIpc = {
       }
     });
     invalidatePattern('client:');
+    signalMutation('clients');
     return extractAndValidate(result, validateClient) as Client;
   },
 
@@ -126,6 +129,7 @@ export const clientIpc = {
       }
     });
     invalidatePattern('client:');
+    signalMutation('clients');
   },
 };
 
