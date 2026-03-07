@@ -22,6 +22,7 @@ interface VirtualizedTableProps<T> {
   rowHeight?: number;
   className?: string;
   onRowClick?: (item: T, index: number) => void;
+  onRowHover?: (item: T, index: number) => void;
   selectable?: boolean;
   selectedRows?: Set<number>;
   onSelectionChange?: (selectedRows: Set<number>) => void;
@@ -36,6 +37,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
   rowHeight = 48,
   className = '',
   onRowClick,
+  onRowHover,
   selectable = false,
   selectedRows = new Set(),
   onSelectionChange
@@ -100,6 +102,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
         className
       )}
       onClick={() => handleRowClick(item, index)}
+      onMouseEnter={() => onRowHover?.(item, index)}
       style={{ height: rowHeight }}
     >
       {selectable && (

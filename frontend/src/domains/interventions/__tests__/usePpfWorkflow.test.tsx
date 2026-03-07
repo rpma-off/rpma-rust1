@@ -79,6 +79,6 @@ describe('usePpfWorkflow', () => {
     await result.current.saveDraft('inspection', { notes: 'draft' }, { invalidate: true });
 
     expect(mockPpfWorkflowIpc.saveStepDraft).toHaveBeenCalledTimes(1);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['intervention-data', 'task-1'] });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['interventions', 'data', 'task-1'] });
   });
 });

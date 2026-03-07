@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { ipcClient } from '@/lib/ipc';
 import { useAuth } from '@/domains/auth';
 import { resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils';
+import { interventionKeys } from '@/lib/query-keys';
 
 import { Camera, Trash2, Upload, ImageIcon } from 'lucide-react';
 import { Photo } from '@/lib/backend';
@@ -30,7 +31,7 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
 
   // Fetch photos for the intervention
   const { data: photos, isLoading: _isLoading, error: _error } = useQuery<Photo[]>({
-    queryKey: ['interventions', interventionId || taskId, 'photos'],
+    queryKey: interventionId ? interventionKeys.photos(interventionId) : ['interventions', 'photos', taskId],
     queryFn: async () => {
       if (!user?.token) {
         throw new Error('User not authenticated');
@@ -41,7 +42,9 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       }
       return await ipcClient.photos.list(interventionId, user.token);
     },
-    enabled: !!user?.token && !!interventionId
+    enabled: !!user?.token && !!interventionId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Handle file upload
@@ -85,7 +88,9 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       });
 
       // Refresh the photos list
-      queryClient.invalidateQueries({ queryKey: ['interventions', interventionId || taskId, 'photos'] });
+      if (interventionId) {
+        queryClient.invalidateQueries({ queryKey: interventionKeys.photos(interventionId) });
+      }
 
     } catch (error) {
       console.error('Error uploading photo:', error);
@@ -117,20 +122,34 @@ export function TaskPhotos({ taskId, interventionId }: TaskPhotosProps) {
       }
       return await ipcClient.photos.delete(photoId, user.token);
     },
+    onMutate: async (photoId: string) => {
+      const queryKey = interventionId ? interventionKeys.photos(interventionId) : ['interventions', 'photos', taskId];
+      await queryClient.cancelQueries({ queryKey });
+      const previousPhotos = queryClient.getQueryData<Photo[]>(queryKey);
+      queryClient.setQueryData<Photo[]>(queryKey, (old) => old?.filter((p) => p.id !== photoId) ?? []);
+      return { previousPhotos, queryKey };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['interventions', interventionId || taskId, 'photos'] });
       toast({
         title: 'Succès',
         description: 'Photo supprimée avec succès',
       });
     },
-    onError: () => {
+    onError: (_err, _photoId, context) => {
+      if (context?.previousPhotos !== undefined && context.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousPhotos);
+      }
       toast({
         title: 'Erreur',
         description: 'Échec de la suppression de la photo',
         variant: 'destructive',
       });
-    }
+    },
+    onSettled: (_data, _err, _photoId, context) => {
+      if (context?.queryKey) {
+        queryClient.invalidateQueries({ queryKey: context.queryKey });
+      }
+    },
   });
 
   // Add keyboard navigation to photo gallery

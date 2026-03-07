@@ -244,6 +244,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     enabled: !!session?.token && !!interventionData?.intervention?.id,
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Get task data for ppf_zones
@@ -257,6 +259,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     enabled: !!session?.token && !!taskId,
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const isLoading = interventionLoading || stepsLoading || taskLoading;

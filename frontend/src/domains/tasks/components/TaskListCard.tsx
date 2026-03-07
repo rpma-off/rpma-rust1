@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Car, Calendar, User, Shield, Eye, Edit, Trash2 } from 'lucide-react';
 import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
@@ -22,6 +23,9 @@ import {
   CardContent,
 } from '@/shared/ui/facade';
 import { getUserFullName } from '@/shared/utils';
+import { useAuth } from '@/domains/auth';
+import { ipcClient } from '@/lib/ipc';
+import { taskKeys } from '@/lib/query-keys';
 
 interface TaskListCardProps {
   task: TaskWithDetails;
@@ -36,6 +40,9 @@ export const TaskListCard = React.memo(({
   onEdit,
   onDelete
 }: TaskListCardProps) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
   const getStatusLabel = useCallback((status: string) => {
     return getTaskDisplayStatus(status as TaskStatus);
   }, []);
@@ -44,8 +51,17 @@ export const TaskListCard = React.memo(({
     return formatDateShort(dateString);
   }, []);
 
+  const handleMouseEnter = useCallback(() => {
+    if (!user?.token) return;
+    queryClient.prefetchQuery({
+      queryKey: taskKeys.byId(task.id),
+      queryFn: () => ipcClient.tasks.get(task.id, user.token),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient, task.id, user?.token]);
+
   return (
-    <div className="animate-fadeIn">
+    <div className="animate-fadeIn" onMouseEnter={handleMouseEnter}>
       <Card className="hover:shadow-sm transition-all duration-200 border border-[hsl(var(--rpma-border))] hover:border-primary/30 bg-white rounded-[10px]">
         <CardContent className="p-4 md:p-5">
           <div className="flex flex-col gap-4">
