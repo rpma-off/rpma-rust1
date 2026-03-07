@@ -623,5 +623,5 @@ impl QuoteService {
 }
 
 #[cfg(test)]
-#[path = "quote_service_tests.rs"]
+#[path = "../tests/quote_service_tests.rs"]
 mod tests;

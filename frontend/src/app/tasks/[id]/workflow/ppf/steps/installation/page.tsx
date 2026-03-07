@@ -9,8 +9,9 @@ import {
   PpfStepHero,
   PpfWorkflowLayout,
   PpfZoneTracker,
+  useInstallationStep,
+  ZONE_CHECKLIST,
 } from '@/domains/interventions';
-import { useInstallationStep, ZONE_CHECKLIST } from '@/domains/interventions';
 
 export default function InstallationStepPage() {
   const {

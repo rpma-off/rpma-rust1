@@ -22,7 +22,10 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui/facade';
-import { useAdminPage, AdminOverviewTab, AdminUsersTab, AdminSystemTab, AddUserModal } from '@/domains/admin';
+import { useAuth } from '@/domains/auth';
+import { useRouter } from 'next/navigation';
+import { useAdminDashboard, useAdminUserManagement, AdminOverviewTab, AdminUsersTab, AdminSystemTab, AddUserModal } from '@/domains/admin';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const WorkflowExecutionDashboard = dynamic(
   () => import('@/domains/interventions').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),

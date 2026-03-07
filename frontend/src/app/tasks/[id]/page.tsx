@@ -11,8 +11,8 @@ import {
   StatusBadge,
   ActionsCard,
   getTaskDisplayTitle,
+  useTaskDetailPage,
 } from '@/domains/tasks';
-import { useTaskDetailPage } from '@/domains/tasks';
 
 export default function TaskDetailPage() {
   const {

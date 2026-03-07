@@ -59,6 +59,8 @@ export {
 } from '../utils/step-export';
 export type { StepExportPayload } from '../utils/step-export';
 
+export { useInstallationStep, ZONE_CHECKLIST } from '../hooks/useInstallationStep';
+
 export {
   WorkflowService,
   workflowService,
