@@ -345,6 +345,33 @@ mod tests {
     }
 
     #[test]
+    fn test_get_resource_history_default_limit() -> AppResult<()> {
+        let test_db = test_db!();
+        let service = AuditService::new(test_db.db());
+        service.init()?;
+
+        // Log 15 events
+        for i in 1..=15 {
+            service.log_task_event(
+                AuditEventType::TaskUpdated,
+                "user-123",
+                "task-limit-test",
+                &format!("Event {}", i),
+                None,
+                None,
+                ActionResult::Success,
+            )?;
+        }
+
+        // Pass None to limit, should fallback to 10000 limit cleanly without DB error
+        let all_events = service.get_resource_history("task", "task-limit-test", None)?;
+        
+        // Ensure it retrieved everything we just inserted
+        assert_eq!(all_events.len(), 15);
+        Ok(())
+    }
+
+    #[test]
     fn test_get_resource_history_empty() -> AppResult<()> {
         let test_db = test_db!();
         let service = AuditService::new(test_db.db());

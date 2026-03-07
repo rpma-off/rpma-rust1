@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { ArrowLeft, Save, X, UserPlus, Building, User } from 'lucide-react';
 import Link from 'next/link';

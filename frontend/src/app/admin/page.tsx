@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Shield,
@@ -46,6 +46,35 @@ const SecurityDashboard = dynamic(
   () => import('@/domains/admin').then((mod) => ({ default: mod.SecurityDashboard })),
   { loading: () => <LoadingState />, ssr: false }
 );
+
+// Custom hook for AdminPage logic
+function useAdminPage() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth(); // Assuming useAuth provides user object with role
+  const adminDashboard = useAdminDashboard();
+  const adminUserManagement = useAdminUserManagement();
+
+  const [activeTab, setActiveTab] = useState('overview'); // Default tab
+
+  // Example authorization: only 'admin' role can access
+  const isAuthorized = user?.role === 'admin';
+
+  const handleDeleteUser = (userId: string) => {
+    console.log(`Deleting user with ID: ${userId}`);
+    // Implement actual user deletion logic here, e.g., call an API
+  };
+
+  return {
+    t,
+    activeTab,
+    setActiveTab,
+    isAuthorized,
+    adminDashboard,
+    adminUserManagement,
+    handleDeleteUser,
+  };
+}
 
 export default function AdminPage() {
   const {

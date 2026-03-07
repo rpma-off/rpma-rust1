@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { useClientsPage } from '@/domains/clients';
+import { useClientsPage, ClientWithTasks } from '@/domains/clients';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { ClientCard } from '@/domains/clients';
@@ -185,7 +185,7 @@ export default function ClientsPage() {
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {clients.map((client) => (
+              {clients.map((client: ClientWithTasks) => (
                 <div key={client.id}>
                   <MemoizedClientCard
                     client={client}
