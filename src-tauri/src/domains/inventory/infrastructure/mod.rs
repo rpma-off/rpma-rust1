@@ -1,6 +1,6 @@
 pub(crate) mod inventory_transaction_repository;
 pub(crate) mod inventory_transaction_service;
-pub(crate) mod material;
+pub mod material;
 pub(crate) mod material_category_repository;
 pub(crate) mod material_consumption_repository;
 pub(crate) mod material_gateway;
