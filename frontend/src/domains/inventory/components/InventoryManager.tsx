@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -64,22 +64,22 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   });
 
   // Filter materials based on search term
-  const filteredMaterials = materials.filter(material => 
+  const filteredMaterials = useMemo(() => materials.filter(material => 
     material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     material.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
     material.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     material.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ), [materials, searchTerm]);
 
-  const materialTypeOptions = [
+  const materialTypeOptions = useMemo(() => [
     { value: 'ppf_film' as MaterialType, label: 'Film PPF' },
     { value: 'adhesive' as MaterialType, label: 'Adhésif' },
     { value: 'cleaning_solution' as MaterialType, label: 'Solution de nettoyage' },
     { value: 'tool' as MaterialType, label: 'Outil' },
     { value: 'consumable' as MaterialType, label: 'Consommable' },
-  ];
+  ], []);
 
-  const getUniqueCategories = () => {
+  const uniqueCategories = useMemo(() => {
     const categories = new Set<string>();
     materials.forEach(material => {
       if (material.category) {
@@ -87,56 +87,56 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       }
     });
     return Array.from(categories).sort();
-  };
+  }, [materials]);
 
-  const handleEdit = async (material: Material) => {
+  const handleEdit = useCallback(async (material: Material) => {
     setSelectedMaterial(material);
     setIsEditDialogOpen(true);
-  };
+  }, []);
 
-  const handleViewDetails = (material: Material) => {
+  const handleViewDetails = useCallback((material: Material) => {
     setSelectedMaterial(material);
     setIsDetailsDialogOpen(true);
-  };
+  }, []);
 
-  const _handleDelete = (material: Material) => {
+  const _handleDelete = useCallback((material: Material) => {
     setDeletingMaterial(material);
-  };
+  }, []);
 
-  const confirmDelete = async () => {
+  const confirmDelete = useCallback(async () => {
     if (!deletingMaterial) return;
     // Implementation would depend on the actual delete command
     // For now, we'll just close the dialog and refetch
     setDeletingMaterial(null);
     await refetch();
-  };
+  }, [deletingMaterial, refetch]);
 
-  const exportInventory = () => {
+  const exportInventory = useCallback(() => {
     // Export functionality would be implemented here
     console.info('Exporting inventory...');
-  };
+  }, []);
 
-  const importInventory = () => {
+  const importInventory = useCallback(() => {
     // Import functionality would be implemented here
     console.info('Importing inventory...');
-  };
+  }, []);
 
-  const formatCurrency = (amount: number, currency: string) => {
+  const formatCurrency = useCallback((amount: number, currency: string) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: currency,
     }).format(amount);
-  };
+  }, []);
 
-  const getStockStatusColor = (material: Material) => {
+  const getStockStatusColor = useCallback((material: Material) => {
     if (material.current_stock <= 0) return 'text-red-600';
     if (material.is_expired) return 'text-red-600';
     if (material.is_discontinued) return 'text-gray-500';
     if (material.is_low_stock) return 'text-yellow-600';
     return 'text-green-600';
-  };
+  }, []);
 
-  const tableColumns = [
+  const tableColumns = useMemo(() => [
     {
       key: 'sku',
       header: 'SKU',
@@ -250,7 +250,8 @@ export function InventoryManager({ className }: InventoryManagerProps) {
         </div>
       ),
     },
-  ];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [formatCurrency, getStockStatusColor, handleEdit, handleViewDetails]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -417,7 +418,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Toutes les catégories</SelectItem>
-                {getUniqueCategories().map((category) => (
+                {uniqueCategories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>

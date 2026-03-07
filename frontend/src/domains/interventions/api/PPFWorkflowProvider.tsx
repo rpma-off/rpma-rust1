@@ -432,7 +432,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     await finalizeInterventionMutation.mutateAsync({ collectedData, photos });
   };
 
-  const value: PPFWorkflowContextType = {
+  const value = useMemo<PPFWorkflowContextType>(() => ({
     taskId,
     steps: steps,
     currentStep,
@@ -445,7 +445,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     advanceToStep,
     completeStep,
     finalizeIntervention
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [taskId, steps, currentStep, isLoading, error, interventionData, stepsData, taskData]);
 
   return (
     <PPFWorkflowContext.Provider value={value}>
