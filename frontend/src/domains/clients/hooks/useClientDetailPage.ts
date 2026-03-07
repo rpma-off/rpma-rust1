@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '../api';
+import { clientService } from '../server';
 import { ClientWithTasks, Task } from '@/shared/types';
 import { convertTimestamps } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';

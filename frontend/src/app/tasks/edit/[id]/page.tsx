@@ -1,18 +1,14 @@
 ﻿'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { toast } from 'sonner';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/shared/ui';
-import { useAuth } from '@/domains/auth';
-import { taskGateway } from '@/domains/tasks';
-import { useTranslation } from '@/shared/hooks';
-import type { Task, TaskFormData } from '@/domains/tasks';
+import { useEditTaskPage } from '@/domains/tasks';
+import type { TaskFormProps } from '@/domains/tasks';
 
 // Dynamically import TaskForm for better performance
-const TaskForm = dynamic(() => import('@/domains/tasks').then(mod => ({ default: mod.TaskForm })), {
+const TaskForm = dynamic<TaskFormProps>(() => import('@/domains/tasks').then(mod => ({ default: mod.TaskForm })), {
   loading: () => (
     <div className="flex items-center justify-center py-12">
       <div className="flex items-center space-x-3">
@@ -25,48 +21,7 @@ const TaskForm = dynamic(() => import('@/domains/tasks').then(mod => ({ default:
 });
 
 export default function EditTaskPage() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const params = useParams();
-  const { user, session: _session } = useAuth();
-  const [taskData, setTaskData] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const taskId = params.id as string;
-
-  useEffect(() => {
-    const fetchTask = async () => {
-      if (!taskId || !user?.token) return;
-
-      try {
-        setLoading(true);
-        const task = await taskGateway.getTask(taskId, user.token);
-        setTaskData(task);
-      } catch (err) {
-        console.error('Failed to fetch task:', err);
-        setError(t('errors.taskLoadError'));
-        toast.error(t('errors.taskLoadError'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTask();
-  }, [taskId, user?.token, t]);
-
-  const handleSuccess = (updatedTask?: { id: string }) => {
-    if (updatedTask?.id) {
-      toast.success(t('tasks.taskUpdated'));
-      // Redirect to the updated task
-      router.push(`/tasks/${updatedTask.id}`);
-    }
-  };
-
-  const handleCancel = () => {
-    // Return to task list
-    router.push('/tasks');
-  };
+  const { t, taskId, taskData, loading, error, handleSuccess, handleCancel } = useEditTaskPage();
 
   if (loading) {
     return (
@@ -193,7 +148,7 @@ export default function EditTaskPage() {
         {/* Enhanced Form Container */}
         <div className="bg-[hsl(var(--rpma-surface))] rounded-xl border border-[hsl(var(--rpma-border))] p-4 md:p-6 shadow-xl">
           <TaskForm
-            initialData={taskData as unknown as Partial<TaskFormData>}
+            initialData={taskData ?? undefined}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
             isEditing={true}

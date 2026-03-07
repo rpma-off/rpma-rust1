@@ -1,22 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { MessageSquare, Inbox, Settings, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageComposer } from '@/domains/notifications';
 import { MessageInbox } from '@/domains/notifications';
 import { NotificationPreferences } from '@/domains/notifications';
-import { useAuth } from '@/domains/auth';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { PageHeader } from '@/components/ui/page-header';
 import { ErrorState } from '@/shared/ui/layout/ErrorState';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useMessagesPage } from '@/domains/notifications';
 
 export default function MessagesPage() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('inbox');
+  const { t, user, activeTab, setActiveTab } = useMessagesPage();
 
   if (!user) {
     return (

@@ -55,3 +55,4 @@ export { useQuoteDetailPage } from '../hooks/useQuoteDetailPage';
 export type { ActiveTab } from '../hooks/useQuoteDetailPage';
 export { useQuotesPage } from '../hooks/useQuotesPage';
 export type { ActiveTab as QuotesPageActiveTab, QuoteWithClient } from '../hooks/useQuotesPage';
+export { useNewQuotePage } from '../hooks/useNewQuotePage';

@@ -1,25 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/domains/auth';
+import { useHomePage } from '@/domains/auth';
 
 const CalendarDashboard = dynamic(
   () => import('@/domains/calendar').then((module) => module.CalendarDashboard)
 );
 
 export default function Home() {
-  const router = useRouter();
-  const { user, loading } = useAuth();
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      router.push('/login');
-    }
-  }, [router, user, loading]);
+  const { loading } = useHomePage();
 
   if (loading) {
     return (

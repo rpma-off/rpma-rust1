@@ -1,12 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useNewTaskPage } from '@/domains/tasks';
 import type { TaskFormProps } from '@/domains/tasks';
 
 const TaskForm = dynamic<TaskFormProps>(() => import('@/domains/tasks').then(mod => ({ default: mod.TaskForm })), {
@@ -22,19 +20,7 @@ const TaskForm = dynamic<TaskFormProps>(() => import('@/domains/tasks').then(mod
 });
 
 export default function NewTaskPage() {
-  const router = useRouter();
-  const { t } = useTranslation();
-
-  const handleSuccess = (createdTask?: { id: string }) => {
-    if (createdTask?.id) {
-      toast.success(t('success.taskCreated'));
-      router.push(`/tasks/${createdTask.id}`);
-    }
-  };
-
-  const handleCancel = () => {
-    router.push('/tasks');
-  };
+  const { t, handleSuccess, handleCancel } = useNewTaskPage();
 
   return (
     <div className="min-h-screen bg-slate-50">

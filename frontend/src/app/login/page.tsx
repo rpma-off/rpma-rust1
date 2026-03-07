@@ -1,68 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/domains/auth';
+import { useLoginForm } from '@/domains/auth';
 import { ROUTES } from '@/constants';
-import { createLogger } from '@/shared/utils';
 import { Button } from '@/components/ui/button';
 import { FormFeedback } from '@/components/ui/form-feedback';
 import { FadeIn } from '@/shared/ui/animations/FadeIn';
 import { UILoader } from '@/shared/ui/animations/UILoader';
 
-const logger = createLogger('LoginPage');
-
 export default function LoginPage() {
-  const { signIn, loading } = useAuth();
-  const _router = useRouter();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-    
-    try {
-      logger.debug('Tentative de connexion', { email: formData.email });
-      const { error } = await signIn(formData.email, formData.password);
-      
-      if (error) {
-        const errorMessage = typeof error === 'string' ? error : (error as Error).message || 'Erreur lors de la connexion';
-        logger.error('Échec de la connexion', {
-          email: formData.email,
-          error: errorMessage
-        });
-        setError(errorMessage);
-      } else {
-        logger.info('Connexion réussie', { email: formData.email });
-        // RootClientLayout will check admin status and redirect appropriately
-        // No need to redirect here, let the layout handle it
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Une erreur inconnue est survenue';
-      logger.error('Erreur lors de la connexion', { 
-        email: formData.email, 
-        error: errorMessage 
-      });
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { formData, error, loading, isSubmitting, handleChange, handleSubmit } = useLoginForm();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--rpma-surface))] py-8 px-4 sm:px-6 lg:px-8">

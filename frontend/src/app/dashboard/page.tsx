@@ -1,13 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { useAuth } from '@/domains/auth';
+import { useDashboardPage } from '@/domains/auth';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
-import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const CalendarDashboard = dynamic(
   () => import('@/domains/calendar').then((mod) => mod.CalendarDashboard),
@@ -15,15 +13,7 @@ const CalendarDashboard = dynamic(
 );
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-  const { t } = useTranslation();
-
-  React.useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
+  const { authLoading, t } = useDashboardPage();
 
   if (authLoading) {
     return (

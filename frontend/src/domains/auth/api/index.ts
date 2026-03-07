@@ -15,6 +15,10 @@ export { default as TOTPSetup } from '../components/TOTPSetup';
 export { useAuthRedirect } from '../hooks/useAuthRedirect';
 export { useAdminBootstrapCheck } from '../hooks/useAdminBootstrapCheck';
 export { useSignupForm } from '../hooks/useSignupForm';
+export { useLoginForm } from '../hooks/useLoginForm';
+export { useBootstrapAdminPage } from '../hooks/useBootstrapAdminPage';
+export { useDashboardPage } from '../hooks/useDashboardPage';
+export { useHomePage } from '../hooks/useHomePage';
 
 export type {
   AuthContextType,

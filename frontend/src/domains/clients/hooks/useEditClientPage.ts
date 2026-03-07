@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/domains/auth';
-import { clientService } from '@/domains/clients';
+import { clientService } from '../server';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { Client, UpdateClientDTO } from '@/shared/types';
 

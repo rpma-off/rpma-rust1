@@ -1,105 +1,37 @@
 'use client';
 
-import { useState, useCallback, useMemo, memo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/domains/auth';
-import { clientService, useClients, computeClientStats } from '@/domains/clients';
+import { memo } from 'react';
+import { useClientsPage } from '@/domains/clients';
 import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
 import Link from 'next/link';
-import type { Client, ClientWithTasks } from '@/shared/types';
 import { ClientCard } from '@/domains/clients';
 import { ClientCardSkeleton } from '@/components/ui/skeleton';
 import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-components';
 import { EmptyState } from '@/components/ui';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
 import { PageShell } from '@/shared/ui/layout/PageShell';
-import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const MemoizedClientCard = memo(ClientCard);
 
-const INITIAL_SORT_FILTERS = { sort_by: 'name', sort_order: 'asc' as const };
-
 export default function ClientsPage() {
-  const { t } = useTranslation();
-  const router = useRouter();
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [uiFilters, setUiFilters] = useState<{ customer_type: string; sort_by: string; sort_order: string }>({ customer_type: '', ...INITIAL_SORT_FILTERS });
-  const [operationError, setOperationError] = useState<string | null>(null);
-
-  const { clients, loading, error: fetchError, refetch, updateFilters } = useClients({
-    filters: INITIAL_SORT_FILTERS,
-    autoFetch: true,
-  });
-
-  const error = operationError ?? fetchError?.message ?? null;
-
-  // Client filters are handled centrally in AppNavigation component
-
-  const clientStats = useMemo(() => computeClientStats(clients), [clients]);
-
-  // Handle search
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    updateFilters({ search: query || undefined });
-  }, [updateFilters]);
-
-  // Handle filter changes
-  const handleFilterChange = useCallback((newFilters: { customer_type?: string; sort_by?: string; sort_order?: string }) => {
-    setUiFilters(prev => ({ ...prev, ...newFilters }));
-    updateFilters({
-      customer_type: (newFilters.customer_type || undefined) as 'individual' | 'business' | undefined,
-      sort_by: newFilters.sort_by,
-      sort_order: newFilters.sort_order as 'asc' | 'desc' | undefined,
-    });
-  }, [updateFilters]);
-
-  // Handle client actions
-  const handleClientSelect = useCallback((client: Client | ClientWithTasks) => {
-    router.push(`/clients/${client.id}`);
-  }, [router]);
-
-  const handleClientEdit = useCallback((client: Client | ClientWithTasks) => {
-    router.push(`/clients/${client.id}/edit`);
-  }, [router]);
-
-  const handleClientDelete = useCallback(async (client: Client | ClientWithTasks) => {
-    if (!confirm(t('confirm.deleteClient', { name: client.name }))) {
-      return;
-    }
-
-    try {
-      if (!user?.id) {
-        setOperationError(t('errors.authRequired'));
-        return;
-      }
-
-      const response = await clientService.deleteClient(client.id, user.token);
-      if (response.error) {
-        setOperationError(response.error || t('errors.deleteFailed'));
-        return;
-      }
-
-      // Reload clients
-      refetch();
-    } catch (err) {
-      setOperationError(t('errors.unexpected'));
-      console.error('Error deleting client:', err);
-    }
-  }, [refetch, user?.id, user?.token, t]);
-
-  const handleClientCreateTask = useCallback((client: Client | ClientWithTasks) => {
-    router.push(`/tasks/new?clientId=${client.id}`);
-  }, [router]);
-
-  // Handle pull to refresh
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
-
-
-
-  const isInitialLoading = loading && clients.length === 0;
+  const {
+    t,
+    clients,
+    loading,
+    error,
+    clientStats,
+    searchQuery,
+    uiFilters,
+    isInitialLoading,
+    router,
+    handleSearch,
+    handleFilterChange,
+    handleClientSelect,
+    handleClientEdit,
+    handleClientDelete,
+    handleClientCreateTask,
+    handleRefresh,
+  } = useClientsPage();
 
   return (
     <PageShell>

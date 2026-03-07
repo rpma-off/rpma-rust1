@@ -7,6 +7,7 @@ export { useUsers } from './useUsers';
 export { useUserActions } from './useUserActions';
 export { useUserList } from '../hooks/useUserList';
 export type { UseUserListReturn } from '../hooks/useUserList';
+export { useUsersPage } from '../hooks/useUsersPage';
 
 export { UserList } from '../components/UserList';
 export { UserForm } from '../components/UserForm';

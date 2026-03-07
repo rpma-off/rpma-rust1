@@ -1,65 +1,13 @@
 ﻿'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { authBootstrap, useAuth } from '@/domains/auth';
+import { useBootstrapAdminPage } from '@/domains/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useTranslation } from '@/shared/hooks/useTranslation';
-import { structuredLogger as logger, LogDomain } from '@/shared/utils';
-import { useEffect } from 'react';
-import { toast } from 'sonner';
 
 export default function BootstrapAdminPage() {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const router = useRouter();
-
-  // Check if admins already exist
-  const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
-    queryKey: ['hasAdmins'],
-    queryFn: () => authBootstrap.hasAdmins(),
-  });
-
-  useEffect(() => {
-    if (!checkingAdmins) {
-      logger.debug(LogDomain.AUTH, 'Bootstrap admin status loaded', {
-        has_admins: hasAdmins,
-        user_id: user?.user_id
-      });
-    }
-  }, [checkingAdmins, hasAdmins, user?.user_id]);
-
-  const bootstrapMutation = useMutation({
-    mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
-      authBootstrap.bootstrapFirstAdmin(userId, sessionToken),
-    onSuccess: () => {
-      toast.success('Administrateur créé avec succès. Redirection en cours...');
-      logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', {
-        user_id: user?.user_id
-      });
-      setTimeout(() => router.push('/dashboard'), 3000);
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Échec de la création de l\'admin.';
-      toast.error(message);
-      logger.error(LogDomain.AUTH, 'Bootstrap admin failed', error, {
-        user_id: user?.user_id
-      });
-    }
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.user_id || !user?.token) {
-      logger.warn(LogDomain.AUTH, 'Bootstrap admin blocked: missing session', {
-        user_id: user?.user_id
-      });
-      return;
-    }
-    bootstrapMutation.mutate({ userId: user.user_id, sessionToken: user.token });
-  };
+  const { t, user, hasAdmins, checkingAdmins, bootstrapMutation, handleSubmit, handleGoToLogin } =
+    useBootstrapAdminPage();
 
   if (checkingAdmins) {
     return (
@@ -91,7 +39,7 @@ export default function BootstrapAdminPage() {
               </AlertDescription>
             </Alert>
             <Button
-              onClick={() => router.push('/login')}
+              onClick={handleGoToLogin}
               className="w-full mt-4"
             >
               {t('auth.signIn')}

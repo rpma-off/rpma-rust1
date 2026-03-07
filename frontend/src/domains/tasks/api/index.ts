@@ -52,6 +52,8 @@ export { useDashboardTaskFiltering } from '../hooks/useDashboardTaskFiltering';
 export { useWorkflowStepAutoSave } from '../hooks/useWorkflowStepAutoSave';
 export { useCompletedTaskPage } from '../hooks/useCompletedTaskPage';
 export { useTaskDetailPage } from '../hooks/useTaskDetailPage';
+export { useEditTaskPage } from '../hooks/useEditTaskPage';
+export { useNewTaskPage } from '../hooks/useNewTaskPage';
 export { taskGateway } from './taskGateway';
 export { getTaskDisplayTitle, getTaskDisplayStatus } from '../utils/display';
 export {

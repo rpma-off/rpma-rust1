@@ -10,6 +10,7 @@ export { useAdminDashboard } from '../hooks/useAdminDashboard';
 export type { SystemStats, RecentActivity, UseAdminDashboardReturn } from '../hooks/useAdminDashboard';
 export { useAdminUserManagement } from '../hooks/useAdminUserManagement';
 export type { UseAdminUserManagementReturn } from '../hooks/useAdminUserManagement';
+export { useAdminPage } from '../hooks/useAdminPage';
 
 export { SystemSettingsTab } from '../components/SystemSettingsTab';
 export { BusinessRulesTab } from '../components/BusinessRulesTab';

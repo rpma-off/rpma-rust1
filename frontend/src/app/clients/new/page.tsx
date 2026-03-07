@@ -1,79 +1,16 @@
 ﻿'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { useAuth } from '@/domains/auth';
-import { clientService } from '@/domains/clients';
 import { ArrowLeft, Save, X, UserPlus, Building, User } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import type { CreateClientDTO } from '@/shared/types';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useNewClientPage } from '@/domains/clients';
 
 export default function NewClientPage() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<CreateClientDTO>({
-    name: '',
-    email: '',
-    phone: '',
-    address_street: '',
-    company_name: '',
-    customer_type: 'individual',
-    notes: ''
-  });
-  const [errors, setErrors] = useState<Partial<CreateClientDTO & { general?: string }>>({});
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user) {
-      toast.error(t('errors.unauthorized'));
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setErrors({});
-
-      if (!user?.id) {
-        setErrors({ general: t('auth.authRequired') });
-        return;
-      }
-
-      const response = await clientService.createClient(formData, user.token);
-      if (response.error) {
-        setErrors({ general: response.error });
-        return;
-      }
-
-      if (response.data) {
-        router.push(`/clients/${response.data.id}`);
-      }
-    } catch (error) {
-      console.error('Error creating client:', error);
-      setErrors({ general: t('errors.unexpectedError') });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    router.push('/clients');
-  };
-
-  const handleInputChange = (field: keyof CreateClientDTO, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
+  const { t, loading, formData, errors, handleSubmit, handleCancel, handleInputChange } =
+    useNewClientPage();
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6">

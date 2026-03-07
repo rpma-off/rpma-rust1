@@ -15,6 +15,7 @@ export { NotificationInitializer } from '../components/NotificationInitializer';
 
 export { useNotificationStore } from '../stores/notificationStore';
 export { useNotificationUpdates } from '../hooks/useNotificationUpdates';
+export { useMessagesPage } from '../hooks/useMessagesPage';
 
 export { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../services/notificationActions';
 
