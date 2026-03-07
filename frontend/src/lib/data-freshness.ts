@@ -50,6 +50,16 @@ export function useMutationCounter(entity: string): number {
   return useSyncExternalStore(
     subscribe,
     () => getMutationCounter(entity),
-    () => 0, // server snapshot
+    // Server snapshot is always 0 because this is an offline-first Tauri app —
+    // mutations only happen on the client, so no server-side state exists.
+    () => 0,
   );
+}
+
+/** Reset all mutation counters. Useful for tests and development hot-reload cleanup. */
+export function resetMutationCounters(): void {
+  for (const key of Object.keys(counters)) {
+    delete counters[key];
+  }
+  listeners.forEach((cb) => cb());
 }
