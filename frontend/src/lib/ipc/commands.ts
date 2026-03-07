@@ -148,6 +148,10 @@ export const IPC_COMMANDS = {
   DASHBOARD_GET_STATS: 'dashboard_get_stats',
   GET_ENTITY_COUNTS: 'get_entity_counts',
   REPORTS_GET_CAPABILITIES: 'reports_get_capabilities',
+  REPORT_GENERATE: 'report_generate',
+  REPORT_GET: 'report_get',
+  REPORT_GET_BY_INTERVENTION: 'report_get_by_intervention',
+  REPORT_LIST: 'report_list',
 
   // User commands
   USER_CRUD: 'user_crud',

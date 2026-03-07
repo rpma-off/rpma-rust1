@@ -13,6 +13,8 @@ import {
   getTaskDisplayTitle,
   useTaskDetailPage,
 } from '@/domains/tasks';
+import { useInterventionData } from '@/domains/interventions';
+import { InterventionReportSection } from '@/domains/reports';
 
 export default function TaskDetailPage() {
   const {
@@ -36,6 +38,9 @@ export default function TaskDetailPage() {
     router,
     t,
   } = useTaskDetailPage();
+
+  const { data: interventionData } = useInterventionData(taskId);
+  const interventionId = interventionData?.id as string | undefined;
 
   if (loading) {
     return (
@@ -232,6 +237,13 @@ export default function TaskDetailPage() {
                   )}
                 </dl>
               </div>
+
+              {/* Intervention Report */}
+              {interventionId && (
+                <div id="task-admin" className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+                  <InterventionReportSection interventionId={interventionId} />
+                </div>
+              )}
             </aside>
           </div>
         </div>
