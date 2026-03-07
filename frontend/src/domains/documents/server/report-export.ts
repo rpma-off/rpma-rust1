@@ -75,9 +75,9 @@ export const documentReportOperations = {
       }
 
       const result = await safeInvoke<string>(IPC_COMMANDS.SAVE_INTERVENTION_REPORT, {
-        intervention_id: interventionId,
-        file_path: filePath,
-        session_token: session.token
+        interventionId,
+        filePath,
+        sessionToken: session.token
       });
 
       return { success: true, data: result, status: 200 };

@@ -5,6 +5,27 @@ import { Camera, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePhotoUpload } from '@/domains/documents';
 import { toast } from 'sonner';
+import { convertFileSrc } from '@tauri-apps/api/core';
+
+/**
+ * Converts a local filesystem path to a Tauri asset:// URL.
+ * Tauri's webview blocks direct file:// URLs; this maps them to the
+ * permitted asset://localhost/... scheme instead.
+ * Web URLs (http/https/data/blob) are returned unchanged.
+ */
+function toAssetUrl(url: string): string {
+  if (!url) return url;
+  // Already a web/data/blob URL — leave unchanged
+  if (/^(https?|data|blob):/.test(url)) return url;
+  // file:// URI — strip the scheme so convertFileSrc gets a plain path
+  if (url.startsWith('file://')) {
+    const path = decodeURIComponent(url.replace(/^file:\/\/\//, '').replace(/^file:\/\//, ''));
+    return convertFileSrc(path);
+  }
+  // Windows absolute path (e.g. C:\... or C:/...) or Unix absolute path
+  return convertFileSrc(url);
+}
+
 
 type PpfPhotoGridProps = {
   taskId: string;
@@ -106,13 +127,16 @@ export function PpfPhotoGrid({
           const photoUrl = photos[index];
           const label = requiredLabels[index];
           if (photoUrl) {
+            // Convert local filesystem paths to Tauri asset:// URLs so the webview can load them.
+            // Tauri blocks direct file:// URLs; convertFileSrc maps them to asset://localhost/...
+            const displaySrc = toAssetUrl(photoUrl);
             return (
               <div
                 key={`photo-${index}`}
                 className="relative aspect-square overflow-hidden rounded-lg border border-emerald-400/40 bg-emerald-50"
               >
                 <img
-                  src={photoUrl}
+                  src={displaySrc}
                   alt={label ?? `photo-${index + 1}`}
                   className="h-full w-full object-cover"
                 />

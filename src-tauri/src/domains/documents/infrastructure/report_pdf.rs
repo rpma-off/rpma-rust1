@@ -49,24 +49,12 @@ impl InterventionPdfReport {
             self.intervention.id
         );
 
-        // Create a new document with system fonts
-        tracing::info!("Loading system fonts for PDF generation");
-        let font_family = fonts::from_files("./fonts", "LiberationSans", None)
-            .or_else(|_| {
-                tracing::warn!("Custom fonts not found, trying Windows fonts");
-                fonts::from_files("C:\\Windows\\Fonts", "Arial", None)
-            })
-            .or_else(|_| {
-                tracing::warn!("Windows fonts not found, trying Linux fonts");
-                fonts::from_files("/usr/share/fonts", "LiberationSans", None)
-            })
-            .or_else(|_| {
-                tracing::warn!("Linux fonts not found, trying macOS fonts");
-                fonts::from_files("/System/Library/Fonts", "Arial", None)
-            })
-            .map_err(|e| {
-                crate::commands::AppError::Internal(format!("Failed to load any fonts: {}", e))
-            })?;
+        // Create a new document with bundled or system fonts.
+        // We resolve the fonts/ directory relative to the running binary so it works
+        // both during development and in a production install.
+        tracing::info!("Loading fonts for PDF generation");
+
+        let font_family = Self::load_fonts()?;
 
         let mut doc = Document::new(font_family);
         doc.set_title("Rapport d'Intervention PPF");
@@ -592,13 +580,13 @@ impl InterventionPdfReport {
         );
     }
 
-    /// Helper function to convert score to star rating
+    /// Convert score (0-100) to star rating string
     fn score_to_stars(score: i32) -> String {
         let stars = (score as f32 / 20.0).round() as i32; // Convert to 0-5 scale
         "*".repeat(stars as usize)
     }
 
-    /// Helper function to convert step status to text
+    /// Convert step status to French label
     fn step_status_to_text(status: &StepStatus) -> &'static str {
         match status {
             StepStatus::Completed => "Terminé",
@@ -611,17 +599,108 @@ impl InterventionPdfReport {
         }
     }
 
+    /// Load the best available font family for PDF generation.
+    ///
+    /// Search order:
+    ///   1. `fonts/` directory next to the running binary (bundled LiberationSans)
+    ///   2. `fonts/` two levels up from the binary (covers `target/debug/` builds)
+    ///   3. Windows system fonts (`C:\Windows\Fonts`) with the correct Windows TTF filenames
+    ///      copied to a temp dir with genpdf-expected naming.
+    ///   4. Common Linux font directories.
+    ///   5. macOS system fonts.
+    fn load_fonts() -> AppResult<fonts::FontFamily<fonts::FontData>> {
+        // 1 & 2 — bundled fonts next to or near the executable
+        if let Ok(exe_path) = std::env::current_exe() {
+            // Level 1: next to the binary (production install)
+            if let Some(exe_dir) = exe_path.parent() {
+                let candidate = exe_dir.join("fonts");
+                if let Ok(family) = fonts::from_files(&candidate, "LiberationSans", None) {
+                    tracing::info!("Loaded bundled fonts from {:?}", candidate);
+                    return Ok(family);
+                }
+                // Level 2: two levels up — covers `target/debug/` or `target/release/`
+                if let Some(parent2) = exe_dir.parent() {
+                    if let Some(parent3) = parent2.parent() {
+                        let candidate2 = parent3.join("fonts");
+                        if let Ok(family) = fonts::from_files(&candidate2, "LiberationSans", None) {
+                            tracing::info!("Loaded bundled fonts from {:?}", candidate2);
+                            return Ok(family);
+                        }
+                        // Also try src-tauri/fonts (one more level up in workspace layout)
+                        if let Some(parent4) = parent3.parent() {
+                            let candidate3 = parent4.join("src-tauri").join("fonts");
+                            if let Ok(family) = fonts::from_files(&candidate3, "LiberationSans", None) {
+                                tracing::info!("Loaded bundled fonts from {:?}", candidate3);
+                                return Ok(family);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3 — Windows: copy arial* fonts to a temp dir with genpdf-expected names
+        #[cfg(target_os = "windows")]
+        {
+            let windows_fonts = std::path::Path::new("C:\\Windows\\Fonts");
+            if windows_fonts.is_dir() {
+                // Try to create a temp dir with the renamed fonts
+                if let Ok(tmp) = std::env::temp_dir().join("rpma_fonts").try_exists().map(|_| std::env::temp_dir().join("rpma_fonts")) {
+                    let _ = std::fs::create_dir_all(&tmp);
+                    let mapping = [
+                        ("arial.ttf",   "LiberationSans-Regular.ttf"),
+                        ("arialbd.ttf", "LiberationSans-Bold.ttf"),
+                        ("ariali.ttf",  "LiberationSans-Italic.ttf"),
+                        ("arialbi.ttf", "LiberationSans-BoldItalic.ttf"),
+                    ];
+                    let mut all_ok = true;
+                    for (src, dst) in &mapping {
+                        let dst_path = tmp.join(dst);
+                        if !dst_path.exists() {
+                            if std::fs::copy(windows_fonts.join(src), &dst_path).is_err() {
+                                all_ok = false;
+                                break;
+                            }
+                        }
+                    }
+                    if all_ok {
+                        if let Ok(family) = fonts::from_files(&tmp, "LiberationSans", None) {
+                            tracing::info!("Loaded fonts from Windows temp dir {:?}", tmp);
+                            return Ok(family);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4 — Linux system fonts
+        for linux_dir in &["/usr/share/fonts/truetype/liberation", "/usr/share/fonts", "/usr/local/share/fonts"] {
+            if let Ok(family) = fonts::from_files(linux_dir, "LiberationSans", None) {
+                tracing::info!("Loaded fonts from {:?}", linux_dir);
+                return Ok(family);
+            }
+        }
+
+        // 5 — macOS system fonts
+        for mac_dir in &["/Library/Fonts", "/System/Library/Fonts/Supplemental", "/System/Library/Fonts"] {
+            if let Ok(family) = fonts::from_files(mac_dir, "Arial", None) {
+                tracing::info!("Loaded fonts from {:?}", mac_dir);
+                return Ok(family);
+            }
+        }
+
+        Err(crate::commands::AppError::Internal(
+            "Failed to load fonts for PDF generation. \
+             Please ensure the bundled fonts/ directory is present next to the application executable."
+                .to_string(),
+        ))
+    }
+
     /// Test function to create a minimal PDF for debugging
     pub async fn test_generate_minimal(output_path: &Path) -> AppResult<()> {
         tracing::info!("Testing minimal PDF generation");
 
-        let font_family = fonts::from_files("./fonts", "LiberationSans", None)
-            .or_else(|_| fonts::from_files("C:\\Windows\\Fonts", "Arial", None))
-            .or_else(|_| fonts::from_files("/usr/share/fonts", "LiberationSans", None))
-            .or_else(|_| fonts::from_files("/System/Library/Fonts", "Arial", None))
-            .map_err(|e| {
-                crate::commands::AppError::Internal(format!("Failed to load fonts: {}", e))
-            })?;
+        let font_family = Self::load_fonts()?;
 
         let mut doc = Document::new(font_family);
         doc.set_title("Test PDF");
