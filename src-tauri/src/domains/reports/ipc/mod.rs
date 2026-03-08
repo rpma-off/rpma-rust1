@@ -116,11 +116,8 @@ pub async fn report_list(
         AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
 
     let facade = build_facade(&state);
-    let reports = facade.list_reports(
-        limit.unwrap_or(50),
-        offset.unwrap_or(0),
-        &ctx.session.role,
-    )?;
+    let reports =
+        facade.list_reports(limit.unwrap_or(50), offset.unwrap_or(0), &ctx.session.role)?;
 
     Ok(ApiResponse::success(reports).with_correlation_id(Some(ctx.correlation_id)))
 }

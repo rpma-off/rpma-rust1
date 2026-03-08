@@ -393,9 +393,7 @@ impl QuoteService {
 
         // Business rule: cannot send a zero-value quote
         if quote.total == 0 {
-            return Err(
-                "Impossible d'envoyer un devis avec un montant total nul.".to_string(),
-            );
+            return Err("Impossible d'envoyer un devis avec un montant total nul.".to_string());
         }
 
         self.repo
@@ -414,7 +412,11 @@ impl QuoteService {
     ///
     /// Note: Task creation from accepted quotes is handled via the event bus
     /// (`QuoteAccepted` event).  This method only updates the quote status.
-    pub fn mark_accepted(&self, id: &str, accepted_by: &str) -> Result<QuoteAcceptResponse, String> {
+    pub fn mark_accepted(
+        &self,
+        id: &str,
+        accepted_by: &str,
+    ) -> Result<QuoteAcceptResponse, String> {
         let quote = self
             .repo
             .find_by_id(id)

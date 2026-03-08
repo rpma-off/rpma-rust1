@@ -1,6 +1,6 @@
-use crate::commands::AppState;
+use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::notifications::domain::models::message::*;
-use crate::shared::ipc::response::ApiError;
 use tracing;
 
 /// Send a new message
@@ -11,29 +11,18 @@ pub async fn message_send(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<Message, ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+) -> Result<ApiResponse<Message>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
-
-    state
+    let msg = state
         .message_service
         .send_message(&request)
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "SEND_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
+    Ok(ApiResponse::success(msg).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get messages with filtering and pagination
@@ -44,29 +33,18 @@ pub async fn message_get_list(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<MessageListResponse, ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+) -> Result<ApiResponse<MessageListResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
-
-    state
+    let list = state
         .message_service
         .get_messages(&query)
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(ApiResponse::success(list).with_correlation_id(Some(correlation_id)))
 }
 
 /// Mark message as read
@@ -77,29 +55,18 @@ pub async fn message_mark_read(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<(), ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+) -> Result<ApiResponse<()>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
     state
         .message_service
         .mark_read(&message_id)
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "UPDATE_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get message templates
@@ -111,29 +78,18 @@ pub async fn message_get_templates(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<Vec<MessageTemplate>, ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+) -> Result<ApiResponse<Vec<MessageTemplate>>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
-
-    state
+    let templates = state
         .message_service
         .get_templates(category.as_deref(), message_type.as_deref())
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "QUERY_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(ApiResponse::success(templates).with_correlation_id(Some(correlation_id)))
 }
 
 /// Get user notification preferences
@@ -144,29 +100,18 @@ pub async fn message_get_preferences(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<NotificationPreferences, ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+) -> Result<ApiResponse<NotificationPreferences>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
-
-    state
+    let prefs = state
         .message_service
         .get_preferences(&user_id)
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "FETCH_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(ApiResponse::success(prefs).with_correlation_id(Some(correlation_id)))
 }
 
 /// Update user notification preferences
@@ -178,27 +123,16 @@ pub async fn message_update_preferences(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<NotificationPreferences, ApiError> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+) -> Result<ApiResponse<NotificationPreferences>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
 
-    let auth_service = state.auth_service.clone();
-    let _current_user = auth_service
-        .validate_session(&session_token)
-        .map_err(|e| ApiError {
-            message: format!("Authentication failed: {}", e),
-            code: "AUTH_ERROR".to_string(),
-            details: None,
-        })?;
-
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
-
-    state
+    let prefs = state
         .message_service
         .update_preferences(&user_id, &updates)
         .await
-        .map_err(|e| ApiError {
-            message: e.to_string(),
-            code: "UPDATE_ERROR".to_string(),
-            details: None,
-        })
+        .map_err(|e| AppError::Database(e.to_string()))?;
+
+    Ok(ApiResponse::success(prefs).with_correlation_id(Some(correlation_id)))
 }

@@ -120,11 +120,7 @@ impl ReportService {
     }
 
     /// List all reports with pagination.
-    pub fn list_reports(
-        &self,
-        limit: i32,
-        offset: i32,
-    ) -> AppResult<Vec<InterventionReport>> {
+    pub fn list_reports(&self, limit: i32, offset: i32) -> AppResult<Vec<InterventionReport>> {
         self.repository.list(limit, offset)
     }
 

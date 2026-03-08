@@ -1,6 +1,7 @@
 //! In-app notification commands for Tauri
 
-use crate::commands::AppState;
+use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::notifications::application::notification_in_app::NotificationInAppService;
 use crate::domains::notifications::domain::models::notification::Notification;
 use serde::{Deserialize, Serialize};
@@ -36,15 +37,9 @@ pub async fn get_notifications(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<GetNotificationsResponse, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for get_notifications");
-        "Authentication failed".to_string()
-    })?;
-
+) -> Result<ApiResponse<GetNotificationsResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let app_service =
@@ -54,7 +49,7 @@ pub async fn get_notifications(
         .await
         .map_err(|e| {
             error!(error = %e, "Failed to get notifications");
-            "Failed to get notifications".to_string()
+            AppError::Database("Failed to get notifications".to_string())
         })?;
 
     let unread_count = app_service
@@ -69,10 +64,11 @@ pub async fn get_notifications(
         "Retrieved notifications"
     );
 
-    Ok(GetNotificationsResponse {
+    Ok(ApiResponse::success(GetNotificationsResponse {
         notifications,
         unread_count,
     })
+    .with_correlation_id(Some(correlation_id)))
 }
 
 /// Mark a notification as read
@@ -83,25 +79,21 @@ pub async fn mark_notification_read(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<SuccessResponse, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let auth_service = state.auth_service.clone();
-    auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for mark_notification_read");
-        "Authentication failed".to_string()
-    })?;
+) -> Result<ApiResponse<SuccessResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _current_user = authenticate!(&session_token, &state);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
     app_service.mark_read(&id).await.map_err(|e| {
         error!(error = %e, notification_id = %id, "Failed to mark notification as read");
-        "Failed to mark notification as read".to_string()
+        AppError::Database("Failed to mark notification as read".to_string())
     })?;
 
     info!(notification_id = %id, "Notification marked as read");
 
-    Ok(SuccessResponse { success: true })
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(correlation_id)))
 }
 
 /// Mark all notifications as read for the current user
@@ -111,27 +103,22 @@ pub async fn mark_all_notifications_read(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<SuccessResponse, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for mark_all_notifications_read");
-        "Authentication failed".to_string()
-    })?;
-
+) -> Result<ApiResponse<SuccessResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
     app_service.mark_all_read(&current_user.user_id).await.map_err(|e| {
         error!(error = %e, user_id = %current_user.user_id, "Failed to mark all notifications as read");
-        "Failed to mark all notifications as read".to_string()
+        AppError::Database("Failed to mark all notifications as read".to_string())
     })?;
 
     info!(user_id = %current_user.user_id, "All notifications marked as read");
 
-    Ok(SuccessResponse { success: true })
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(correlation_id)))
 }
 
 /// Delete a notification
@@ -142,25 +129,21 @@ pub async fn delete_notification(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<SuccessResponse, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let auth_service = state.auth_service.clone();
-    auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for delete_notification");
-        "Authentication failed".to_string()
-    })?;
+) -> Result<ApiResponse<SuccessResponse>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let _current_user = authenticate!(&session_token, &state);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
     app_service.delete(&id).await.map_err(|e| {
         error!(error = %e, notification_id = %id, "Failed to delete notification");
-        "Failed to delete notification".to_string()
+        AppError::Database("Failed to delete notification".to_string())
     })?;
 
     info!(notification_id = %id, "Notification deleted");
 
-    Ok(SuccessResponse { success: true })
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(correlation_id)))
 }
 
 /// Create a notification (used by other domains)
@@ -169,8 +152,8 @@ pub async fn delete_notification(
 pub async fn create_notification(
     request: CreateNotificationRequest,
     state: AppState<'_>,
-) -> Result<Notification, String> {
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+) -> Result<ApiResponse<Notification>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
 
     let user_id = request.user_id.clone();
     let notification_type = request.r#type.clone();
@@ -189,7 +172,7 @@ pub async fn create_notification(
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
     let created = app_service.save(notification).await.map_err(|e| {
         error!(error = %e, user_id = %user_id, "Failed to create notification");
-        "Failed to create notification".to_string()
+        AppError::Database("Failed to create notification".to_string())
     })?;
 
     info!(
@@ -199,5 +182,5 @@ pub async fn create_notification(
         "Notification created"
     );
 
-    Ok(created)
+    Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
 }

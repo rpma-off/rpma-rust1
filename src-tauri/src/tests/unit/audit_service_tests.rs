@@ -365,7 +365,7 @@ mod tests {
 
         // Pass None to limit, should fallback to 10000 limit cleanly without DB error
         let all_events = service.get_resource_history("task", "task-limit-test", None)?;
-        
+
         // Ensure it retrieved everything we just inserted
         assert_eq!(all_events.len(), 15);
         Ok(())

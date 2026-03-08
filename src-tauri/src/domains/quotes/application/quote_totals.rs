@@ -47,10 +47,9 @@ impl QuoteService {
 
         // Proportionally adjust tax when a discount is applied
         if discount_amount > 0 {
-            discounted_tax_total =
-                (discounted_tax_total as f64 * subtotal_after_discount as f64
-                    / subtotal.max(1) as f64)
-                    .round() as i64;
+            discounted_tax_total = (discounted_tax_total as f64 * subtotal_after_discount as f64
+                / subtotal.max(1) as f64)
+                .round() as i64;
         }
 
         let total = subtotal_after_discount + discounted_tax_total;

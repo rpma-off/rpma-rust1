@@ -142,10 +142,7 @@ fn test_update_forbidden_when_not_draft() {
 
     // Need items to mark as sent
     service
-        .add_item(
-            &quote.id,
-            make_item("PPF", 10000, 1.0, 20.0),
-        )
+        .add_item(&quote.id, make_item("PPF", 10000, 1.0, 20.0))
         .unwrap();
 
     // Mark as sent
@@ -204,7 +201,11 @@ fn test_status_transitions() {
     let result = service.mark_rejected(&quote.id, "test-user");
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert!(err.contains("envoyé"), "Expected 'envoyé' in error, got: {}", err);
+    assert!(
+        err.contains("envoyé"),
+        "Expected 'envoyé' in error, got: {}",
+        err
+    );
 }
 
 #[test]

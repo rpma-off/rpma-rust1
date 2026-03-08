@@ -1,7 +1,7 @@
 use super::*;
-use crate::shared::repositories::cache::Cache;
-use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::domain::models::quote::*;
+use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
+use crate::shared::repositories::cache::Cache;
 use std::sync::Arc;
 
 fn setup_service() -> (QuoteService, Arc<crate::db::Database>) {

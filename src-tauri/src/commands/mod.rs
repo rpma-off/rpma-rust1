@@ -56,14 +56,14 @@ pub mod auth {
 }
 
 pub mod inventory {
-    pub use crate::domains::inventory::ipc::material::{
-        material_create, material_delete, material_get, material_list,
-    };
-    pub use crate::domains::inventory::infrastructure::material::{
-        CreateMaterialRequest, UpdateStockRequest, RecordConsumptionRequest,
-    };
     pub use crate::domains::inventory::domain::models::material::{
         Material, MaterialType, UnitOfMeasure,
+    };
+    pub use crate::domains::inventory::infrastructure::material::{
+        CreateMaterialRequest, RecordConsumptionRequest, UpdateStockRequest,
+    };
+    pub use crate::domains::inventory::ipc::material::{
+        material_create, material_delete, material_get, material_list,
     };
 }
 

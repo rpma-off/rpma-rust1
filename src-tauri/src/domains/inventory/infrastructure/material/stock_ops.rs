@@ -52,8 +52,12 @@ impl super::MaterialService {
 
         self.create_inventory_transaction(transaction_request, &recorded_by)?;
 
-        self.get_material(&request.material_id)?
-            .ok_or_else(|| MaterialError::NotFound(format!("Material {} not found after stock update", request.material_id)))
+        self.get_material(&request.material_id)?.ok_or_else(|| {
+            MaterialError::NotFound(format!(
+                "Material {} not found after stock update",
+                request.material_id
+            ))
+        })
     }
 
     /// Record material consumption for an intervention.

@@ -125,7 +125,10 @@ fn test_soft_deleted_material_not_returned_by_id() {
     let user_id = "user-test".to_string();
 
     let mat = service
-        .create_material(make_test_material_request("REG-001", "Regression Test Material"), Some(user_id.clone()))
+        .create_material(
+            make_test_material_request("REG-001", "Regression Test Material"),
+            Some(user_id.clone()),
+        )
         .expect("create_material failed");
 
     service
@@ -147,7 +150,10 @@ fn test_soft_deleted_material_not_in_list() {
     let user_id = "user-test".to_string();
 
     let mat = service
-        .create_material(make_test_material_request("REG-LIST-001", "List Regression Material"), Some(user_id.clone()))
+        .create_material(
+            make_test_material_request("REG-LIST-001", "List Regression Material"),
+            Some(user_id.clone()),
+        )
         .expect("create_material failed");
 
     service
@@ -173,7 +179,10 @@ fn test_stats_exclude_soft_deleted_material() {
     let user_id = "user-test".to_string();
 
     let mat = service
-        .create_material(make_test_material_request("STATS-001", "Stats Regression Material"), Some(user_id.clone()))
+        .create_material(
+            make_test_material_request("STATS-001", "Stats Regression Material"),
+            Some(user_id.clone()),
+        )
         .expect("create_material failed");
 
     // Before delete: total_materials == 1

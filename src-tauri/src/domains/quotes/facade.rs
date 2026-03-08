@@ -38,7 +38,8 @@ impl QuotesFacade {
             "delete" | "expire" => {
                 if !matches!(role, UserRole::Admin) {
                     Err(AppError::Authorization(
-                        "Seuls les Administrateurs peuvent supprimer ou expirer des devis.".to_string(),
+                        "Seuls les Administrateurs peuvent supprimer ou expirer des devis."
+                            .to_string(),
                     ))
                 } else {
                     Ok(())
@@ -105,12 +106,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
-    pub fn duplicate(
-        &self,
-        role: &UserRole,
-        id: &str,
-        user_id: &str,
-    ) -> Result<Quote, AppError> {
+    pub fn duplicate(&self, role: &UserRole, id: &str, user_id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "duplicate")?;
         self.quote_service
             .duplicate_quote(id, user_id)
@@ -173,7 +169,12 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
-    pub fn mark_rejected(&self, role: &UserRole, id: &str, user_id: &str) -> Result<Quote, AppError> {
+    pub fn mark_rejected(
+        &self,
+        role: &UserRole,
+        id: &str,
+        user_id: &str,
+    ) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
             .mark_rejected(id, user_id)

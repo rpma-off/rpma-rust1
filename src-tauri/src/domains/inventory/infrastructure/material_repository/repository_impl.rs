@@ -28,10 +28,7 @@ impl Repository<Material, String> for super::MaterialRepository {
 
         let material = self
             .db
-            .query_single_as::<Material>(
-                &sql,
-                params![id],
-            )
+            .query_single_as::<Material>(&sql, params![id])
             .map_err(|e| RepoError::Database(format!("Failed to find material by id: {}", e)))?;
 
         if let Some(ref material) = material {
@@ -60,10 +57,7 @@ impl Repository<Material, String> for super::MaterialRepository {
 
         let materials = self
             .db
-            .query_as::<Material>(
-                &sql,
-                [],
-            )
+            .query_as::<Material>(&sql, [])
             .map_err(|e| RepoError::Database(format!("Failed to find all materials: {}", e)))?;
 
         self.cache.set(&cache_key, materials.clone(), ttl::MEDIUM);
@@ -212,7 +206,10 @@ impl Repository<Material, String> for super::MaterialRepository {
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let count: i64 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials WHERE id = ? AND deleted_at IS NULL", params![id])
+            .query_single_value(
+                "SELECT COUNT(*) FROM materials WHERE id = ? AND deleted_at IS NULL",
+                params![id],
+            )
             .map_err(|e| {
                 RepoError::Database(format!("Failed to check material existence: {}", e))
             })?;

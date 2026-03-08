@@ -35,10 +35,8 @@ async fn map_quote_service_error_returns_validation_for_other() {
 async fn check_permission_viewer_denied_create() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let facade = make_facade(db);
-    let result = facade.check_permission(
-        &crate::shared::contracts::auth::UserRole::Viewer,
-        "create",
-    );
+    let result =
+        facade.check_permission(&crate::shared::contracts::auth::UserRole::Viewer, "create");
     assert!(result.is_err());
 }
 
@@ -46,9 +44,7 @@ async fn check_permission_viewer_denied_create() {
 async fn check_permission_admin_allowed_delete() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let facade = make_facade(db);
-    let result = facade.check_permission(
-        &crate::shared::contracts::auth::UserRole::Admin,
-        "delete",
-    );
+    let result =
+        facade.check_permission(&crate::shared::contracts::auth::UserRole::Admin, "delete");
     assert!(result.is_ok());
 }

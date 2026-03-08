@@ -757,21 +757,19 @@ pub async fn quote_convert_to_task(
         }
         Err(e) => {
             error!(error = %e, "Failed to get quote for conversion");
-            return Ok(
-                ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())),
-            );
+            return Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())));
         }
     };
 
     // 2. Create a task via the Tasks domain service.
     let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
-    
+
     // Ensure ppf_zones is not empty to satisfy validation
     let ppf_zones = request.ppf_zones.clone().unwrap_or_else(|| {
         // Fallback: try to find something in the quote items or just use a default
         vec!["Full Body".to_string()]
     });
-    
+
     let create_task_req = crate::domains::tasks::domain::models::task::CreateTaskRequest {
         vehicle_plate: request.vehicle_plate.clone(),
         vehicle_model: request.vehicle_model.clone(),
@@ -817,12 +815,10 @@ pub async fn quote_convert_to_task(
         Ok(t) => t,
         Err(e) => {
             error!(error = %e, "Failed to create task from quote");
-            return Ok(
-                ApiResponse::error(AppError::Internal(
-                    "Impossible de créer la tâche à partir du devis.".to_string(),
-                ))
-                .with_correlation_id(Some(correlation_id.clone())),
-            );
+            return Ok(ApiResponse::error(AppError::Internal(
+                "Impossible de créer la tâche à partir du devis.".to_string(),
+            ))
+            .with_correlation_id(Some(correlation_id.clone())));
         }
     };
 

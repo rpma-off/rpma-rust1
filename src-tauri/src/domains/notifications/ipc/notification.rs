@@ -1,6 +1,7 @@
 //! Notification commands for Tauri
 
-use crate::commands::AppState;
+use crate::authenticate;
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::notifications::application::{
     build_notification_config, SendNotificationRequest, UpdateNotificationConfigRequest,
 };
@@ -26,29 +27,23 @@ pub async fn initialize_notification_service(
     config: UpdateNotificationConfigRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<(), String> {
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&config.correlation_id, None);
-
-    // Validate session
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for initialize_notification_service");
-        "Authentication failed".to_string()
-    })?;
-
-    // Update correlation context with user_id
+) -> Result<ApiResponse<()>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&config.correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     // Build config via application layer
-    let notification_config = build_notification_config(&config)?;
+    let notification_config = build_notification_config(&config).map_err(|e| {
+        error!(error = %e, "Failed to build notification config");
+        AppError::Validation(e)
+    })?;
 
     let service = NotificationService::new(notification_config);
     let mut global_service = NOTIFICATION_SERVICE.lock().await;
     *global_service = Some(service);
 
     info!("Notification service initialized");
-    Ok(())
+    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 
 /// Send a notification
@@ -58,24 +53,15 @@ pub async fn send_notification(
     request: SendNotificationRequest,
     session_token: String,
     state: AppState<'_>,
-) -> Result<(), String> {
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Validate session
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for send_notification");
-        "Authentication failed".to_string()
-    })?;
-
-    // Update correlation context with user_id
+) -> Result<ApiResponse<()>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
-    let service = service_guard
-        .as_ref()
-        .ok_or("Notification service not initialized")?;
+    let service = service_guard.as_ref().ok_or(AppError::Configuration(
+        "Notification service not initialized".to_string(),
+    ))?;
 
     service
         .send_notification(
@@ -85,6 +71,12 @@ pub async fn send_notification(
             request.variables,
         )
         .await
+        .map_err(|e| {
+            error!(error = %e, "Failed to send notification");
+            AppError::Internal(e)
+        })?;
+
+    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 
 /// Test notification configuration
@@ -96,24 +88,15 @@ pub async fn test_notification_config(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<String, String> {
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    // Validate session
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for test_notification_config");
-        "Authentication failed".to_string()
-    })?;
-
-    // Update correlation context with user_id
+) -> Result<ApiResponse<String>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
-    let service = service_guard
-        .as_ref()
-        .ok_or("Notification service not initialized")?;
+    let service = service_guard.as_ref().ok_or(AppError::Configuration(
+        "Notification service not initialized".to_string(),
+    ))?;
 
     let test_variables = TemplateVariables {
         user_name: Some("Test User".to_string()),
@@ -131,7 +114,9 @@ pub async fn test_notification_config(
         NotificationChannel::Email => NotificationType::SystemAlert,
         NotificationChannel::Sms => NotificationType::SystemAlert,
         NotificationChannel::Push => {
-            return Err("Push notifications not implemented yet".to_string())
+            return Err(AppError::NotImplemented(
+                "Push notifications not implemented yet".to_string(),
+            ))
         }
     };
 
@@ -142,9 +127,16 @@ pub async fn test_notification_config(
             recipient,
             test_variables,
         )
-        .await?;
+        .await
+        .map_err(|e| {
+            error!(error = %e, "Failed to send test notification");
+            AppError::Internal(e)
+        })?;
 
-    Ok("Test notification sent successfully".to_string())
+    Ok(
+        ApiResponse::success("Test notification sent successfully".to_string())
+            .with_correlation_id(Some(correlation_id)),
+    )
 }
 
 /// Get notification service status
@@ -154,18 +146,9 @@ pub async fn get_notification_status(
     session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<serde_json::Value, String> {
-    // Initialize correlation context
-    let _correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    // Validate session
-    let auth_service = state.auth_service.clone();
-    let current_user = auth_service.validate_session(&session_token).map_err(|e| {
-        error!(error = %e, "Authentication failed for get_notification_status");
-        "Authentication failed".to_string()
-    })?;
-
-    // Update correlation context with user_id
+) -> Result<ApiResponse<serde_json::Value>, AppError> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state);
     crate::commands::update_correlation_context_user(&current_user.user_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
@@ -188,5 +171,5 @@ pub async fn get_notification_status(
         })
     };
 
-    Ok(config)
+    Ok(ApiResponse::success(config).with_correlation_id(Some(correlation_id)))
 }

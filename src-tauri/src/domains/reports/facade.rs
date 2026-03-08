@@ -1,4 +1,4 @@
-﻿use crate::commands::AppError;
+use crate::commands::AppError;
 use crate::domains::reports::application::report_service::ReportService;
 use crate::domains::reports::domain::models::intervention_report::InterventionReport;
 use crate::domains::reports::domain::models::report_capabilities::ReportCapabilities;
@@ -37,9 +37,7 @@ impl ReportsFacade {
         &self,
         intervention_id: &str,
         current_user: &UserSession,
-        intervention_service: Option<
-            &crate::shared::services::cross_domain::InterventionService,
-        >,
+        intervention_service: Option<&crate::shared::services::cross_domain::InterventionService>,
         client_service: Option<&crate::shared::services::cross_domain::ClientService>,
     ) -> Result<InterventionReport, AppError> {
         Self::check_generate_permission(&current_user.role)?;
@@ -53,7 +51,11 @@ impl ReportsFacade {
             .await
     }
 
-    pub fn get_report(&self, report_id: &str, role: &UserRole) -> Result<Option<InterventionReport>, AppError> {
+    pub fn get_report(
+        &self,
+        report_id: &str,
+        role: &UserRole,
+    ) -> Result<Option<InterventionReport>, AppError> {
         Self::check_read_permission(role)?;
         self.report_service.get_report(report_id)
     }
@@ -64,7 +66,8 @@ impl ReportsFacade {
         role: &UserRole,
     ) -> Result<Option<InterventionReport>, AppError> {
         Self::check_read_permission(role)?;
-        self.report_service.get_report_by_intervention(intervention_id)
+        self.report_service
+            .get_report_by_intervention(intervention_id)
     }
 
     pub fn list_reports(

@@ -11,13 +11,13 @@
 //! - `session_cleanup`      — expired-session housekeeping
 //! - `user_account_manager` — `UserAccountManager` shared-contract impl
 
-mod username;
 mod account;
 mod authentication;
 mod password;
-mod user_ops;
 mod session_cleanup;
 mod user_account_manager;
+mod user_ops;
+mod username;
 
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;

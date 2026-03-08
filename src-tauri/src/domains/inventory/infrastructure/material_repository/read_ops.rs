@@ -30,10 +30,7 @@ impl super::MaterialRepository {
 
         let material = self
             .db
-            .query_single_as::<Material>(
-                &sql,
-                params![sku],
-            )
+            .query_single_as::<Material>(&sql, params![sku])
             .map_err(|e| {
                 crate::shared::repositories::base::RepoError::Database(format!(
                     "Failed to find material by SKU: {}",
@@ -67,18 +64,12 @@ impl super::MaterialRepository {
             MATERIAL_COLUMNS
         );
 
-        let materials = self
-            .db
-            .query_as::<Material>(
-                &sql,
-                [],
-            )
-            .map_err(|e| {
-                crate::shared::repositories::base::RepoError::Database(format!(
-                    "Failed to find low stock materials: {}",
-                    e
-                ))
-            })?;
+        let materials = self.db.query_as::<Material>(&sql, []).map_err(|e| {
+            crate::shared::repositories::base::RepoError::Database(format!(
+                "Failed to find low stock materials: {}",
+                e
+            ))
+        })?;
 
         self.cache.set(&cache_key, materials.clone(), ttl::SHORT);
 
@@ -107,10 +98,7 @@ impl super::MaterialRepository {
 
         let materials = self
             .db
-            .query_as::<Material>(
-                &sql,
-                params![material_type.to_string()],
-            )
+            .query_as::<Material>(&sql, params![material_type.to_string()])
             .map_err(|e| {
                 crate::shared::repositories::base::RepoError::Database(format!(
                     "Failed to find materials by type: {}",

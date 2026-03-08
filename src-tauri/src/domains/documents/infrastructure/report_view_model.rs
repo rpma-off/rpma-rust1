@@ -343,10 +343,7 @@ pub fn build_intervention_report_view_model(
                     .map(|c| format!("{:.2}", c))
                     .unwrap_or_else(|| "-".to_string()),
                 waste_quantity: m.waste_quantity,
-                quality_notes: m
-                    .quality_notes
-                    .clone()
-                    .unwrap_or_else(|| "-".to_string()),
+                quality_notes: m.quality_notes.clone().unwrap_or_else(|| "-".to_string()),
             })
             .collect(),
     };
@@ -407,8 +404,7 @@ fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> ReportStep {
     let step_photos: usize = photos
         .iter()
         .filter(|p| {
-            p.step_id.as_deref() == Some(&step.id)
-                || p.step_number == Some(step.step_number)
+            p.step_id.as_deref() == Some(&step.id) || p.step_number == Some(step.step_number)
         })
         .count();
 
@@ -419,10 +415,7 @@ fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> ReportStep {
     };
 
     // Extract structured data from collected_data / step_data
-    let effective_data = step
-        .collected_data
-        .as_ref()
-        .or(step.step_data.as_ref());
+    let effective_data = step.collected_data.as_ref().or(step.step_data.as_ref());
 
     let checklist = extract_checklist(effective_data);
     let defects = extract_string_array(effective_data, "defects");
@@ -449,10 +442,7 @@ fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> ReportStep {
         .unwrap_or_default();
 
     // Build observations list (merge step.observations + observations from collected_data)
-    let mut observations = step
-        .observations
-        .clone()
-        .unwrap_or_default();
+    let mut observations = step.observations.clone().unwrap_or_default();
     let data_observations = extract_string_array(effective_data, "observations");
     for obs in data_observations {
         if !observations.contains(&obs) {
@@ -504,10 +494,7 @@ fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> ReportStep {
                 .clone()
                 .unwrap_or_else(|| NOT_SPECIFIED.to_string()),
             approved_at: timestamp_string_display(&step.approved_at),
-            rejection_reason: step
-                .rejection_reason
-                .clone()
-                .unwrap_or_default(),
+            rejection_reason: step.rejection_reason.clone().unwrap_or_default(),
         },
     }
 }
@@ -535,10 +522,7 @@ fn build_quality_section(
         })
         .collect();
 
-    let final_observations = intervention
-        .final_observations
-        .clone()
-        .unwrap_or_default();
+    let final_observations = intervention.final_observations.clone().unwrap_or_default();
 
     ReportQuality {
         global_quality_score: global_score,
@@ -551,10 +535,7 @@ fn build_quality_section(
 // Photos section builder
 // ---------------------------------------------------------------------------
 
-fn build_photos_section(
-    photos: &[Photo],
-    steps: &[InterventionStep],
-) -> ReportPhotos {
+fn build_photos_section(photos: &[Photo], steps: &[InterventionStep]) -> ReportPhotos {
     // Group by step
     let mut step_map: HashMap<String, usize> = HashMap::new();
     for step in steps {
@@ -893,7 +874,8 @@ mod tests {
             client_phone: Some("+33612345678".to_string()),
             technician_id: Some("tech-001".to_string()),
             technician_name: Some("Jean Dupont".to_string()),
-            intervention_type: crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
+            intervention_type:
+                crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
             current_step: 4,
             completion_percentage: 100.0,
             estimated_duration: Some(120),
@@ -1096,8 +1078,7 @@ mod tests {
         intervention.estimated_duration = None;
         intervention.actual_duration = None;
 
-        let vm =
-            build_intervention_report_view_model(&intervention, &[], &[], &[], None);
+        let vm = build_intervention_report_view_model(&intervention, &[], &[], &[], None);
 
         assert_eq!(vm.summary.technician_name, "Non assigne");
         assert!(!vm.customer_validation.signature_present);
@@ -1150,13 +1131,7 @@ mod tests {
             synced: false,
             last_synced_at: None,
         };
-        let vm = build_intervention_report_view_model(
-            &intervention,
-            &[],
-            &[],
-            &[],
-            Some(&client),
-        );
+        let vm = build_intervention_report_view_model(&intervention, &[], &[], &[], Some(&client));
 
         assert_eq!(vm.client.name, "Entreprise ABC");
         assert_eq!(vm.client.email, "abc@corp.com");

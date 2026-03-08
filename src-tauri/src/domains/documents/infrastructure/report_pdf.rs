@@ -12,9 +12,7 @@ use crate::shared::services::cross_domain::Client;
 use crate::shared::services::cross_domain::InterventionStep;
 use crate::shared::services::cross_domain::Photo;
 
-use super::report_view_model::{
-    build_intervention_report_view_model, ReportStep, ReportViewModel,
-};
+use super::report_view_model::{build_intervention_report_view_model, ReportStep, ReportViewModel};
 
 use genpdf::{elements, fonts, style, Alignment, Document, Element, SimplePageDecorator};
 use std::path::Path;
@@ -135,8 +133,7 @@ impl InterventionPdfReport {
     fn section_title(doc: &mut Document, title: &str) {
         doc.push(elements::Break::new(0.8));
         doc.push(
-            elements::Paragraph::new(title)
-                .styled(style::Style::new().bold().with_font_size(13)),
+            elements::Paragraph::new(title).styled(style::Style::new().bold().with_font_size(13)),
         );
         doc.push(
             elements::Paragraph::new("________________________________________________")
@@ -150,10 +147,7 @@ impl InterventionPdfReport {
         let mut table = elements::TableLayout::new(vec![3, 7]);
         for (label, value) in pairs {
             let mut row = table.row();
-            row.push_element(
-                elements::Paragraph::new(*label)
-                    .styled(style::Style::new().bold()),
-            );
+            row.push_element(elements::Paragraph::new(*label).styled(style::Style::new().bold()));
             row.push_element(elements::Paragraph::new(*value));
             let _ = row.push();
         }
@@ -189,12 +183,9 @@ impl InterventionPdfReport {
             );
         }
         doc.push(
-            elements::Paragraph::new(&format!(
-                "Date de generation : {}",
-                vm.meta.generated_at
-            ))
-            .aligned(Alignment::Center)
-            .styled(style::Style::new().with_font_size(10)),
+            elements::Paragraph::new(&format!("Date de generation : {}", vm.meta.generated_at))
+                .aligned(Alignment::Center)
+                .styled(style::Style::new().with_font_size(10)),
         );
         doc.push(elements::Break::new(3.0));
     }
@@ -378,9 +369,7 @@ impl InterventionPdfReport {
         // Checklist
         if !step.checklist.is_empty() {
             doc.push(elements::Break::new(0.2));
-            doc.push(
-                elements::Paragraph::new("Checklist :").styled(style::Style::new().bold()),
-            );
+            doc.push(elements::Paragraph::new("Checklist :").styled(style::Style::new().bold()));
             for item in &step.checklist {
                 let mark = if item.checked { "[X]" } else { "[ ]" };
                 doc.push(elements::Paragraph::new(&format!(
@@ -394,8 +383,7 @@ impl InterventionPdfReport {
         if !step.defects.is_empty() {
             doc.push(elements::Break::new(0.2));
             doc.push(
-                elements::Paragraph::new("Defauts detectes :")
-                    .styled(style::Style::new().bold()),
+                elements::Paragraph::new("Defauts detectes :").styled(style::Style::new().bold()),
             );
             for d in &step.defects {
                 doc.push(elements::Paragraph::new(&format!("  - {}", d)));
@@ -405,9 +393,7 @@ impl InterventionPdfReport {
         // Observations
         if !step.observations.is_empty() {
             doc.push(elements::Break::new(0.2));
-            doc.push(
-                elements::Paragraph::new("Observations :").styled(style::Style::new().bold()),
-            );
+            doc.push(elements::Paragraph::new("Observations :").styled(style::Style::new().bold()));
             for obs in &step.observations {
                 doc.push(elements::Paragraph::new(&format!("  - {}", obs)));
             }
@@ -417,8 +403,7 @@ impl InterventionPdfReport {
         if !step.environment.is_empty() {
             doc.push(elements::Break::new(0.2));
             doc.push(
-                elements::Paragraph::new("Environnement :")
-                    .styled(style::Style::new().bold()),
+                elements::Paragraph::new("Environnement :").styled(style::Style::new().bold()),
             );
             for kv in &step.environment {
                 doc.push(elements::Paragraph::new(&format!(
@@ -431,9 +416,7 @@ impl InterventionPdfReport {
         // Measurements
         if !step.measurements.is_empty() {
             doc.push(elements::Break::new(0.2));
-            doc.push(
-                elements::Paragraph::new("Mesures :").styled(style::Style::new().bold()),
-            );
+            doc.push(elements::Paragraph::new("Mesures :").styled(style::Style::new().bold()));
             for kv in &step.measurements {
                 doc.push(elements::Paragraph::new(&format!(
                     "  {}: {}",
@@ -494,8 +477,7 @@ impl InterventionPdfReport {
         if !vm.quality.checkpoints.is_empty() {
             doc.push(elements::Break::new(0.4));
             doc.push(
-                elements::Paragraph::new("Scores par etape :")
-                    .styled(style::Style::new().bold()),
+                elements::Paragraph::new("Scores par etape :").styled(style::Style::new().bold()),
             );
             let mut cp_table = elements::TableLayout::new(vec![5, 3, 2]);
             {
@@ -555,11 +537,8 @@ impl InterventionPdfReport {
 
         Self::section_title(doc, "DOCUMENTATION PHOTOS");
         doc.push(
-            elements::Paragraph::new(&format!(
-                "Total : {} photo(s)",
-                vm.photos.total_count
-            ))
-            .styled(style::Style::new().bold()),
+            elements::Paragraph::new(&format!("Total : {} photo(s)", vm.photos.total_count))
+                .styled(style::Style::new().bold()),
         );
 
         if !vm.photos.grouped_by_step.is_empty() {
@@ -657,7 +636,9 @@ impl InterventionPdfReport {
                         // Also try src-tauri/fonts (one more level up in workspace layout)
                         if let Some(parent4) = parent3.parent() {
                             let candidate3 = parent4.join("src-tauri").join("fonts");
-                            if let Ok(family) = fonts::from_files(&candidate3, "LiberationSans", None) {
+                            if let Ok(family) =
+                                fonts::from_files(&candidate3, "LiberationSans", None)
+                            {
                                 tracing::info!("Loaded bundled fonts from {:?}", candidate3);
                                 return Ok(family);
                             }
@@ -673,12 +654,16 @@ impl InterventionPdfReport {
             let windows_fonts = std::path::Path::new("C:\\Windows\\Fonts");
             if windows_fonts.is_dir() {
                 // Try to create a temp dir with the renamed fonts
-                if let Ok(tmp) = std::env::temp_dir().join("rpma_fonts").try_exists().map(|_| std::env::temp_dir().join("rpma_fonts")) {
+                if let Ok(tmp) = std::env::temp_dir()
+                    .join("rpma_fonts")
+                    .try_exists()
+                    .map(|_| std::env::temp_dir().join("rpma_fonts"))
+                {
                     let _ = std::fs::create_dir_all(&tmp);
                     let mapping = [
-                        ("arial.ttf",   "LiberationSans-Regular.ttf"),
+                        ("arial.ttf", "LiberationSans-Regular.ttf"),
                         ("arialbd.ttf", "LiberationSans-Bold.ttf"),
-                        ("ariali.ttf",  "LiberationSans-Italic.ttf"),
+                        ("ariali.ttf", "LiberationSans-Italic.ttf"),
                         ("arialbi.ttf", "LiberationSans-BoldItalic.ttf"),
                     ];
                     let mut all_ok = true;
@@ -702,7 +687,11 @@ impl InterventionPdfReport {
         }
 
         // 4 — Linux system fonts
-        for linux_dir in &["/usr/share/fonts/truetype/liberation", "/usr/share/fonts", "/usr/local/share/fonts"] {
+        for linux_dir in &[
+            "/usr/share/fonts/truetype/liberation",
+            "/usr/share/fonts",
+            "/usr/local/share/fonts",
+        ] {
             if let Ok(family) = fonts::from_files(linux_dir, "LiberationSans", None) {
                 tracing::info!("Loaded fonts from {:?}", linux_dir);
                 return Ok(family);
@@ -710,7 +699,11 @@ impl InterventionPdfReport {
         }
 
         // 5 — macOS system fonts
-        for mac_dir in &["/Library/Fonts", "/System/Library/Fonts/Supplemental", "/System/Library/Fonts"] {
+        for mac_dir in &[
+            "/Library/Fonts",
+            "/System/Library/Fonts/Supplemental",
+            "/System/Library/Fonts",
+        ] {
             if let Ok(family) = fonts::from_files(mac_dir, "Arial", None) {
                 tracing::info!("Loaded fonts from {:?}", mac_dir);
                 return Ok(family);
@@ -765,10 +758,10 @@ impl InterventionPdfReport {
 
 #[cfg(test)]
 mod tests {
+    use super::super::report_view_model;
     use super::*;
     use crate::shared::contracts::common::*;
     use crate::shared::services::cross_domain::{Intervention, InterventionStatus};
-    use super::super::report_view_model;
     use serde_json::json;
 
     /// Build a minimal Intervention with required fields and all optional fields set to None.
@@ -791,7 +784,8 @@ mod tests {
             client_phone: None,
             technician_id: Some("tech-001".to_string()),
             technician_name: Some("Jean Dupont".to_string()),
-            intervention_type: crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
+            intervention_type:
+                crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
             current_step: 4,
             completion_percentage: 100.0,
             estimated_duration: Some(120),
@@ -900,10 +894,7 @@ mod tests {
     #[test]
     fn test_humanize_key() {
         // Now delegated to report_view_model::humanize_key
-        assert_eq!(
-            report_view_model::humanize_key("checklist"),
-            "Checklist"
-        );
+        assert_eq!(report_view_model::humanize_key("checklist"), "Checklist");
         assert_eq!(
             report_view_model::humanize_key("quality_scores"),
             "Quality Scores"
@@ -964,13 +955,8 @@ mod tests {
         intervention.actual_duration = None;
         intervention.estimated_duration = None;
 
-        let report = InterventionPdfReport::new(
-            intervention,
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-            None,
-        );
+        let report =
+            InterventionPdfReport::new(intervention, Vec::new(), Vec::new(), Vec::new(), None);
 
         // Must not panic — all None fields handled safely
         assert!(report.steps.is_empty());
@@ -984,17 +970,14 @@ mod tests {
         assert_eq!(steps.len(), 4);
         assert_eq!(steps[0].step_name, "Inspection");
         assert_eq!(steps[1].step_name, "Preparation");
-        assert_eq!(steps[1].step_status, crate::shared::services::cross_domain::StepStatus::Pending);
+        assert_eq!(
+            steps[1].step_status,
+            crate::shared::services::cross_domain::StepStatus::Pending
+        );
         assert_eq!(steps[2].step_name, "Installation");
         assert_eq!(steps[3].step_name, "Finalisation");
 
-        let report = InterventionPdfReport::new(
-            intervention,
-            steps,
-            Vec::new(),
-            Vec::new(),
-            None,
-        );
+        let report = InterventionPdfReport::new(intervention, steps, Vec::new(), Vec::new(), None);
 
         assert_eq!(report.steps.len(), 4);
     }
@@ -1030,13 +1013,7 @@ mod tests {
         let intervention = build_test_intervention();
         let steps = build_test_steps();
 
-        let report = InterventionPdfReport::new(
-            intervention,
-            steps,
-            Vec::new(),
-            Vec::new(),
-            None,
-        );
+        let report = InterventionPdfReport::new(intervention, steps, Vec::new(), Vec::new(), None);
 
         let tmp_dir = std::env::temp_dir().join("rpma_test_pdf");
         std::fs::create_dir_all(&tmp_dir).unwrap();
@@ -1068,20 +1045,19 @@ mod tests {
         intervention.final_observations = None;
         intervention.customer_comments = None;
 
-        let report = InterventionPdfReport::new(
-            intervention,
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-            None,
-        );
+        let report =
+            InterventionPdfReport::new(intervention, Vec::new(), Vec::new(), Vec::new(), None);
 
         let tmp_dir = std::env::temp_dir().join("rpma_test_pdf");
         std::fs::create_dir_all(&tmp_dir).unwrap();
         let output_path = tmp_dir.join("test_null_report.pdf");
 
         let result = report.generate(&output_path).await;
-        assert!(result.is_ok(), "PDF generation with nulls failed: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "PDF generation with nulls failed: {:?}",
+            result.err()
+        );
 
         let _ = std::fs::remove_file(&output_path);
     }
@@ -1117,7 +1093,11 @@ mod tests {
         let output_path = tmp_dir.join("test_pending_report.pdf");
 
         let result = report.generate(&output_path).await;
-        assert!(result.is_ok(), "PDF with pending step failed: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "PDF with pending step failed: {:?}",
+            result.err()
+        );
 
         let _ = std::fs::remove_file(&output_path);
     }

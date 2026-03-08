@@ -25,7 +25,14 @@ impl super::MaterialService {
             })?;
 
         if request.sku.trim().is_empty() {
-            request.sku = format!("SKU-{}", Uuid::new_v4().to_string().chars().take(8).collect::<String>());
+            request.sku = format!(
+                "SKU-{}",
+                Uuid::new_v4()
+                    .to_string()
+                    .chars()
+                    .take(8)
+                    .collect::<String>()
+            );
             info!(new_sku = %request.sku, "SKU not provided, generated a new one.");
         }
 
@@ -33,8 +40,12 @@ impl super::MaterialService {
 
         debug!(sku = %request.sku, created_by = %created_by, "Creating material");
         let id = Uuid::new_v4().to_string();
-        let mut material =
-            Material::new(id.clone(), request.sku.clone(), request.name.clone(), request.material_type);
+        let mut material = Material::new(
+            id.clone(),
+            request.sku.clone(),
+            request.name.clone(),
+            request.material_type,
+        );
 
         material.description = request.description;
         material.category = request.category;
@@ -69,12 +80,10 @@ impl super::MaterialService {
 
     /// Get material by ID.
     pub fn get_material(&self, id: &str) -> MaterialResult<Option<Material>> {
-        Ok(self
-            .db
-            .query_single_as::<Material>(
-                "SELECT * FROM materials WHERE id = ? AND deleted_at IS NULL",
-                params![id],
-            )?)
+        Ok(self.db.query_single_as::<Material>(
+            "SELECT * FROM materials WHERE id = ? AND deleted_at IS NULL",
+            params![id],
+        )?)
     }
 
     /// Get material by ID, returning an error if not found.
@@ -110,12 +119,10 @@ impl super::MaterialService {
 
     /// Get material by SKU.
     pub fn get_material_by_sku(&self, sku: &str) -> MaterialResult<Option<Material>> {
-        Ok(self
-            .db
-            .query_single_as::<Material>(
-                "SELECT * FROM materials WHERE sku = ? AND deleted_at IS NULL",
-                params![sku],
-            )?)
+        Ok(self.db.query_single_as::<Material>(
+            "SELECT * FROM materials WHERE sku = ? AND deleted_at IS NULL",
+            params![sku],
+        )?)
     }
 
     /// List materials with optional type/category filters and pagination.

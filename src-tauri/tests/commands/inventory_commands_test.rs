@@ -4,8 +4,8 @@
 //! use the correct request types, and enforce authentication.
 
 use rpma_ppf_intervention::commands::inventory::{
-    material_create, material_delete, material_get, material_list,
-    CreateMaterialRequest, MaterialType, UnitOfMeasure,
+    material_create, material_delete, material_get, material_list, CreateMaterialRequest,
+    MaterialType, UnitOfMeasure,
 };
 
 /// Verify that IPC command function pointers are accessible and have the expected signature.
