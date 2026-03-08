@@ -1,47 +1,171 @@
 # Domain Model
 
-This document outlines the core entities in RPMA v2 and their relationships. 
+Core entities, their relationships, statuses, and storage mapping.
 
 ## Core Entities
 
 ### Task (`tasks` domain)
-- **Purpose**: Represents a high-level job or work order for a client.
-- **Key Fields**: `id`, `client_id`, `status`, `assigned_to`, `created_at`, `scheduled_date`.
-- **Status Enums**: `PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` (TODO: Verify exact Rust enums in `src-tauri/src/domains/tasks/domain/`).
-- **Relations**: Belongs to a Client, contains one or more Interventions.
+**Purpose**: Represents a high-level job or work order for a client.
 
-### Client (`clients` domain)
-- **Purpose**: Customer profile.
-- **Key Fields**: `id`, `first_name`, `last_name`, `email`, `phone`, `vehicle_details` (TODO: verify).
-- **Relations**: Has many Tasks, Quotes.
+**Key Fields**:
+- `id`, `task_number` — identifiers
+- `title`, `description` — basic info
+- `vehicle_plate`, `vehicle_model`, `vehicle_year`, `vehicle_make`, `vin` — vehicle details
+- `status` — see TaskStatus enum below
+- `priority` — `Low`, `Medium`, `High`, `Urgent`
+- `client_id`, `customer_name`, `customer_email`, `customer_phone` — client info
+- `technician_id`, `assigned_at`, `assigned_by` — assignment
+- `scheduled_date`, `date_rdv`, `heure_rdv` — scheduling
+- `ppf_zones`, `custom_ppf_zones` — PPF configuration
+- `created_at`, `updated_at`, `deleted_at`, `synced` — audit fields
+
+**Status Enum** (`TaskStatus` in `src-tauri/src/domains/tasks/domain/models/task.rs`):
+| Status | Description |
+|--------|-------------|
+| `Draft` | Initial state (default) |
+| `Scheduled` | Date assigned |
+| `InProgress` | Work started |
+| `Completed` | Work finished |
+| `Cancelled` | Cancelled |
+| `OnHold` | Paused/holding |
+| `Pending` | Awaiting action |
+| `Assigned` | Technician assigned |
+| `Paused` | Temporarily stopped |
+| `Overdue` | Past due date |
+| `Archived` | Historical record |
+| `Failed` | Unsuccessful completion |
+| `Invalid` | Invalid/corrupted |
+
+**Relations**: Belongs to a Client; contains one or more Interventions.
+
+---
 
 ### Intervention (`interventions` domain)
-- **Purpose**: The actual PPF application process.
-- **Key Fields**: `id`, `task_id`, `status`, `started_at`, `completed_at`.
-- **Status Enums**: `PLANNED`, `IN_PROGRESS`, `PAUSED`, `QA_PENDING`, `DONE` (TODO: verify exactly in model).
-- **Relations**: Belongs to a Task. Contains many InterventionSteps and Photos. Consumes Inventory.
+**Purpose**: The actual PPF application process with step-by-step workflow.
 
-### InterventionStep (`interventions` domain)
-- **Purpose**: A granular step inside an intervention (e.g., "Preparation", "Application", "QA").
-- **Key Fields**: `id`, `intervention_id`, `step_type`, `is_completed`, `completed_by`.
+**Key Fields**:
+- `id`, `task_id`, `task_number` — identifiers
+- `status` — see InterventionStatus enum below
+- `current_step`, `completion_percentage` — progress tracking
+- `intervention_type` — `Ppf`, `Ceramic`, `Detailing`, `Other`
+- `vehicle_plate`, `vehicle_model`, `vehicle_make`, `vehicle_year`, `vehicle_color`, `vehicle_vin` — vehicle
+- `client_id`, `client_name`, `client_email`, `client_phone` — client
+- `technician_id`, `technician_name` — assigned tech
+- `scheduled_at`, `started_at`, `completed_at`, `paused_at` — timing
+- `ppf_zones_config`, `ppf_zones_extended`, `film_type`, `film_brand`, `film_model` — PPF config
+- `weather_condition`, `lighting_condition`, `temperature_celsius`, `humidity_percentage` — environment
+- `customer_satisfaction`, `quality_score`, `customer_signature` — finalization
+- `created_at`, `updated_at`, `synced` — audit fields
 
-### Photo (`documents` / `interventions` domain)
-- **Purpose**: Progress tracking and QA validation.
-- **Key Fields**: `id`, `intervention_id` / `step_id`, `file_path`, `captured_at`.
+**Status Enum** (`InterventionStatus` in `src-tauri/src/domains/interventions/domain/models/intervention.rs`):
+| Status | Description |
+|--------|-------------|
+| `Pending` | Awaiting start (default) |
+| `InProgress` | Currently active |
+| `Paused` | Temporarily stopped |
+| `Completed` | Finished successfully |
+| `Cancelled` | Abandoned |
 
-### User (`users` domain)
-- **Purpose**: System personnel (Technicians, Managers, Admins).
-- **Key Fields**: `id`, `username`, `password_hash`, `role`, `first_name`, `last_name` (added in migration 029).
-- **Roles**: `Admin`, `Supervisor`, `Technician`, `Viewer` (TODO: verify exactly).
-- **Relations**: Performs Interventions, signs off on steps.
+**Relations**: Belongs to a Task; contains Photos; consumes Inventory/Materials.
 
-### Inventory / Material (`inventory` domain)
-- **Purpose**: PPF rolls, tools, and consumables.
-- **Key Fields**: `id`, `sku`, `name`, `quantity_in_stock`, `unit`.
-- **Relations**: Deducted/used by Interventions.
+---
 
-## Storage Mapping & Rules
-- **Table Names**: Typically mirror the pluralized entity names (`tasks`, `interventions`, `users`, etc.). Found in `src-tauri/migrations/`.
-- **Soft Delete**: Entities generally rely on `deleted_at` timestamps for soft deletion rather than hard dropping rows, allowing offline sync reconciliation (TODO: verify soft-delete pattern across all tables in `migrations/`).
-- **Audit/Logging**: Migrations indicate an `025_audit_logging.sql` script, confirming changes to high-value tables are tracked.
-- **Domain Rules**: Cross-domain data fetching must go through public application services, never direct SQL joins across bounded contexts (e.g., `tasks` repository cannot directly query the `users` table).
+### Client (`clients` domain)
+**Purpose**: Customer profile management.
+
+**Key Fields**:
+- `id` — identifier
+- `name`, `email`, `phone` — contact info
+- `customer_type` — `Individual` or `Business`
+- `address_street`, `address_city`, `address_state`, `address_zip`, `address_country` — address
+- `tax_id`, `company_name`, `contact_person` — business info
+- `notes`, `tags` — metadata
+- `total_tasks`, `active_tasks`, `completed_tasks`, `last_task_date` — statistics
+- `created_at`, `updated_at`, `deleted_at`, `synced` — audit fields
+
+**Relations**: Has many Tasks, Quotes.
+
+---
+
+### User (`users` / `auth` domain)
+**Purpose**: System personnel (Technicians, Supervisors, Admins, Viewers).
+
+**Key Fields**:
+- `id`, `email`, `username` — identifiers
+- `full_name`, `phone` — profile
+- `role` — see UserRole enum below
+- `password_hash` — credential
+- `is_active` — account status
+- `last_login_at`, `login_count` — activity tracking
+- `preferences` — settings JSON
+- `created_at`, `updated_at`, `synced` — audit fields
+
+**Role Enum** (`UserRole` in `src-tauri/src/domains/auth/domain/models/auth.rs`):
+| Role | Access Level |
+|------|--------------|
+| `Admin` | Full system access |
+| `Supervisor` | Task management, assignment, quotes |
+| `Technician` | Assigned tasks, interventions, photos |
+| `Viewer` | Read-only access |
+
+**Role Hierarchy**: Admin > Supervisor > Technician > Viewer
+
+**Relations**: Performs Interventions; owns Sessions.
+
+---
+
+### Material (`inventory` domain)
+**Purpose**: PPF materials, tools, and consumables.
+
+**Key Fields**:
+- `id`, `sku`, `name`, `description` — identifiers
+- `material_type` — `PpfFilm`, `Adhesive`, `CleaningSolution`, `Tool`, `Consumable`
+- `category`, `subcategory`, `category_id` — categorization
+- `brand`, `model`, `specifications` — specs
+- `unit_of_measure` — `Piece`, `Meter`, `Liter`, `Gram`, `Roll`
+- `current_stock`, `minimum_stock`, `maximum_stock`, `reorder_point` — inventory levels
+- `unit_cost`, `currency` — pricing
+- `supplier_id`, `supplier_name` — supplier
+- `quality_grade`, `certification`, `expiry_date` — quality
+- `storage_location`, `warehouse_id` — location
+- `is_active`, `is_discontinued`, `is_expired`, `is_low_stock` — status flags
+- `created_at`, `updated_at`, `synced` — audit fields
+
+**Relations**: Consumed by Interventions; tracked via `material_consumption` and `inventory_transactions` tables.
+
+---
+
+### Photo (`documents` domain)
+**Purpose**: Progress tracking and QA validation imagery.
+
+**Key Fields**:
+- `id` — identifier
+- `intervention_id`, `step_id` — relations
+- `file_path` — storage location
+- `captured_at` — timestamp
+- Metadata: dimensions, file size, format
+
+---
+
+## Storage Mapping
+
+| Entity | Primary Table | Key Migration File |
+|--------|---------------|-------------------|
+| Task | `tasks` | Base schema |
+| Intervention | `interventions` | Base schema |
+| Client | `clients` | Base schema / `002_*` (FTS) |
+| User | `users` | Base schema / `041_*` (Sessions) |
+| Session | `sessions` | `041_replace_user_sessions_with_sessions.sql` |
+| Material | `materials` | `012_add_material_tables.sql` |
+| Photo | `photos` | Base schema |
+| Quote | `quotes`, `quote_items` | `037_quotes.sql` |
+| Audit Log | `audit_events` | `025_add_analytics_dashboard.sql` |
+| Sync Queue | `sync_queue` | Sync domain infrastructure |
+
+## Domain Invariants
+
+- **Cross-domain isolation**: Domains cannot directly query other domains' tables. Use public application services.
+- **Soft delete**: Entities use `deleted_at` timestamps rather than hard deletion (where applicable).
+- **Audit trail**: Changes to sensitive entities trigger `audit_events` records.
+- **Offline sync**: All entities have `synced` boolean and `last_synced_at` timestamps.
+- **Status transitions**: Domain layer enforces valid status transitions (e.g., cannot complete a task that hasn't started).

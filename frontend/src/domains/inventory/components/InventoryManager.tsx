@@ -15,7 +15,6 @@ import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../hooks/useInventory';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Material, MaterialType } from '@/shared/types';
-import { inventoryIpc } from '../ipc/inventory.ipc';
 import { useAuth } from '@/domains/auth';
 import { 
   Plus, 
@@ -49,7 +48,6 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(null);
 
   const { user } = useAuth();
-  const sessionToken = user?.token;
 
   const {
     materials,
@@ -119,7 +117,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
       // Expose error via a toast so the user sees it without crashing the dialog.
       import('sonner').then(({ toast }) => toast.error(msg));
     }
-  };
+  }, [deleteMaterial, deletingMaterial]);
 
   const exportInventory = useCallback(() => {
     // Export functionality would be implemented here

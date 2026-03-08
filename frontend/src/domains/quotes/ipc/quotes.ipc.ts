@@ -181,6 +181,7 @@ export const quotesIpc = {
       year: string;
       vin: string;
       scheduledDate?: string;
+      ppfZones?: string[];
     },
     sessionToken: string
   ) => {
@@ -194,6 +195,7 @@ export const quotesIpc = {
         vehicle_year: vehicleInfo.year || null,
         vehicle_vin: vehicleInfo.vin || null,
         scheduled_date: vehicleInfo.scheduledDate || null,
+        ppf_zones: vehicleInfo.ppfZones || null,
       }
     });
     invalidatePattern('quote:');

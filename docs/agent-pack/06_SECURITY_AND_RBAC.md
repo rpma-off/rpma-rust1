@@ -1,37 +1,115 @@
 # Security & RBAC
 
-RPMA v2 handles sensitive client data and crucial business operations. Security is paramount.
+RPMA v2 handles sensitive client data with comprehensive security measures.
 
 ## Authentication Flow
-1. **Login**: User submits credentials via the frontend (`/login` route).
-2. **Validation**: Rust backend compares Argon2 hashes.
-3. **Session Token**: On success, a cryptographically secure `session_token` string is generated, stored in SQLite (`user_sessions` or similar), and returned to the UI.
-4. **Transport**: The frontend stores the token in memory/Zustand (or secure local storage) and attaches it to subsequent IPC calls.
-5. **2FA**: (TODO: check `domains/auth/` for exact multi-factor implementations if active).
+
+### 1. Login Process
+**Entry**: `frontend/src/app/login/page.tsx` → `domains/auth/components/LoginForm.tsx`
+
+**Flow**:
+1. User submits credentials
+2. Frontend calls `auth_login` IPC command
+3. Backend validates password hash
+4. On success, UUID `session_token` generated
+5. Session stored in SQLite `sessions` table
+6. Token returned to frontend
+7. Frontend stores in secure context (`AuthProvider`)
+
+### 2. Session Token
+**Location**: `src-tauri/src/shared/contracts/auth.rs` (UserSession)
+
+**Duration**: 8 hours (28,800 seconds)
+
+### 3. Session Validation
+**Location**: `src-tauri/src/domains/auth/application/auth_service.rs`
+
+- Check token exists in `sessions` table
+- Verify `expires_at` > current time
+- Update `last_activity` timestamp
+
+### 4. Token Storage
+**Table**: `sessions` (updated in migration 041)
+
+---
 
 ## Role-Based Access Control (RBAC)
-Authorizations are enforced inside the **Application Service** layer in Rust, NEVER blindly in IPC endpoints.
 
-Typical Roles:
-- **Admin**: Full system configuration, user management.
-- **Supervisor**: Can create tasks, assign work, manage quotes and inventory.
-- **Technician**: Can view assigned tasks, start/stop interventions, upload photos, consume inventory.
-- **Viewer/Client**: Read-only summaries (if exposed).
+### Roles
+**Definition**: `src-tauri/src/shared/contracts/auth.rs` (UserRole)
 
-### Enforcement in Code
 ```rust
-// In domains/tasks/application/service.rs
-pub fn complete_task(&self, token: &str, task_id: Uuid) -> Result<(), AppError> {
-    let user = self.auth_service.validate_token_and_get_user(token)?;
-    if !user.has_permission(Permission::CompleteTasks) {
-        return Err(AppError::Unauthorized);
-    }
-    // Proceed...
+pub enum UserRole {
+    Admin,       // Full system access
+    Supervisor,  // Task management, assignment, quotes
+    Technician,  // Assigned tasks, interventions, photos
+    Viewer,      // Read-only access
 }
 ```
 
-## Data Protection & Audit
-- **Local DB**: As an offline-first desktop app, data lives locally.
-- **Audit Logging**: Changes to `users`, `tasks`, and `sessions` trigger automatic audit records (`025_audit_logging.sql`).
-- **Secrets**: Use `.env.local` for development environments.
-- **Audit Script**: Run `node scripts/ipc-authorization-audit.js` to automatically verify that all `#\[tauri::command\]` endpoints correctly invoke a token validation step.
+**Hierarchy**: Admin > Supervisor > Technician > Viewer
+
+### Permission Logic
+**Location**: `src-tauri/src/shared/auth_middleware.rs`
+
+```rust
+pub fn has_permission(user_role: &UserRole, required_role: &UserRole) -> bool {
+    match (user_role, required_role) {
+        (Admin, _) => true,
+        (Supervisor, Admin) => false,
+        (Supervisor, _) => true,
+        (Technician, Admin | Supervisor) => false,
+        (Technician, _) => true,
+        (Viewer, Viewer) => true,
+        (Viewer, _) => false,
+    }
+}
+```
+
+### Enforcement Pattern
+**Macro**: `authenticate!` (`src-tauri/src/shared/auth_middleware.rs`)
+
+```rust
+// In IPC Handler
+let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+```
+
+### Operation-Specific Checks
+Functions like `can_perform_task_operation()` provide granular control over CRUD + specialized actions (like `assign`).
+
+---
+
+## Audit Logging
+
+**Location**: `src-tauri/src/domains/audit/infrastructure/audit_service.rs`
+
+**AuditEvent Types** (55 total):
+- **Auth**: `AuthenticationSuccess`, `AuthenticationFailure`, `AuthorizationDenied`, `SessionCreated`, `SessionExpired`, etc.
+- **Data**: `DataCreated`, `DataUpdated`, `DataDeleted`, `DataExported`, `DataImported`
+- **Tasks**: `TaskCreated`, `TaskUpdated`, `TaskAssigned`, `TaskCompleted`, etc.
+- **Interventions**: `InterventionCreated`, `InterventionStarted`, `InterventionCompleted`, etc.
+- **Security**: `SecurityViolation`, `SuspiciousActivity`, `RateLimitExceeded`, `BruteForceAttempt`, etc.
+
+**Table**: `audit_events`
+
+---
+
+## Data Protection
+
+### Local Database
+- Data lives locally in SQLite.
+- Path determined by Tauri API (`app_data_dir`).
+- Windows: `%APPDATA%/rpma-rust1/` (TODO: verify exact name in tauri.conf.json)
+
+### Secrets
+- No secrets committed to repository.
+- Use `.env` or system keychain (where applicable).
+
+### Validation Scripts
+```bash
+# Verify IPC authorization
+node scripts/ipc-authorization-audit.js
+
+# Security audit
+npm run security:audit
+```
