@@ -18,6 +18,7 @@ pub struct CreateMaterialRequest {
     pub model: Option<String>,
     pub specifications: Option<serde_json::Value>,
     pub unit_of_measure: UnitOfMeasure,
+    pub current_stock: Option<f64>,
     pub minimum_stock: Option<f64>,
     pub maximum_stock: Option<f64>,
     pub reorder_point: Option<f64>,

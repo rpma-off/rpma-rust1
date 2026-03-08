@@ -52,6 +52,7 @@ impl super::MaterialService {
         material.batch_number = request.batch_number;
         material.storage_location = request.storage_location;
         material.warehouse_id = request.warehouse_id;
+        material.current_stock = request.current_stock.unwrap_or(0.0);
         material.created_by = Some(created_by.clone());
         material.updated_by = Some(created_by);
 
@@ -278,6 +279,21 @@ impl super::MaterialService {
             request.maximum_stock,
             request.reorder_point,
         )?;
+
+        if let Some(initial_stock) = request.current_stock {
+            if !initial_stock.is_finite() || initial_stock < 0.0 {
+                return Err(MaterialError::Validation(
+                    "Initial stock must be a non-negative number".to_string(),
+                ));
+            }
+            if let Some(max_stock) = request.maximum_stock {
+                if initial_stock > max_stock {
+                    return Err(MaterialError::Validation(
+                        "Initial stock cannot exceed maximum stock".to_string(),
+                    ));
+                }
+            }
+        }
 
         if let Ok(Some(_)) = self.get_material_by_sku(&request.sku) {
             warn!(sku = %request.sku, "Duplicate SKU rejected on create");

@@ -17,7 +17,8 @@
       "Bash(cargo test --lib documents)",
       "Bash(cargo test --lib -- documents)",
       "Bash(cargo test report_pdf)",
-      "Bash(timeout 90 cargo test --lib report_pdf)"
+      "Bash(timeout 90 cargo test --lib report_pdf)",
+      "Bash(npm run backend:check)"
     ]
   }
 }
