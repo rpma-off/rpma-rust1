@@ -88,11 +88,19 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
 export function useQuote(id: string | null) {
   const { user } = useAuth();
   const [quote, setQuote] = useState<Quote | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(Boolean(id));
   const [error, setError] = useState<Error | null>(null);
 
   const fetchQuote = useCallback(async () => {
-    if (!user?.token || !id) return;
+    if (!id) {
+      setQuote(null);
+      setLoading(false);
+      return;
+    }
+    if (!user?.token) {
+      setLoading(true);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);

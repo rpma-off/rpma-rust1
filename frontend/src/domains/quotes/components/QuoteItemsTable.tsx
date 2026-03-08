@@ -12,13 +12,15 @@ const KIND_LABELS: Record<QuoteItemKind, string> = {
 };
 
 export interface QuoteItemsTableProps {
-  items: QuoteItem[];
+  items?: QuoteItem[] | null;
   editable?: boolean;
   onDeleteItem?: (itemId: string) => void;
 }
 
 export function QuoteItemsTable({ items, editable = false, onDeleteItem }: QuoteItemsTableProps) {
-  if (items.length === 0) {
+  const normalizedItems = items ?? [];
+
+  if (normalizedItems.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-gray-500">Aucun article</p>
     );
@@ -39,8 +41,8 @@ export function QuoteItemsTable({ items, editable = false, onDeleteItem }: Quote
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
-          {items.map(item => {
-            const lineTotal = item.qty * item.unit_price;
+          {normalizedItems.map(item => {
+            const lineTotal = Math.round(item.qty * item.unit_price);
             return (
               <tr key={item.id}>
                 <td className="px-4 py-2 text-sm">{item.label}</td>

@@ -45,7 +45,7 @@ export function computeDiscountAmount(
     return Math.round(subtotal * (discountValue / 100));
   }
   if (discountType === 'fixed') {
-    return Math.min(discountValue, subtotal);
+    return Math.max(0, Math.min(discountValue, subtotal));
   }
   return 0;
 }

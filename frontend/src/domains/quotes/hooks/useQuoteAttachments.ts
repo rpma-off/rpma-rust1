@@ -6,7 +6,6 @@ import type {
   QuoteAttachment,
   CreateQuoteAttachmentRequest,
   UpdateQuoteAttachmentRequest,
-  ApiResponse,
 } from '@/types/quote.types';
 import { normalizeError } from '@/types/utility.types';
 
@@ -20,17 +19,14 @@ export function useQuoteAttachments(quoteId: string | null) {
 
   const fetchAttachments = useCallback(async () => {
     if (!user?.token || !quoteId) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const result = await quotesIpc.getAttachments(quoteId, user.token);
-      const response = result as unknown as ApiResponse<QuoteAttachment[]>;
-      if (response?.success && response.data) {
-        setAttachments(response.data);
-      }
-    } catch (err: unknown) {
-      setError(normalizeError(err));
-    } finally {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await quotesIpc.getAttachments(quoteId, user.token);
+        setAttachments(Array.isArray(result) ? (result as QuoteAttachment[]) : []);
+      } catch (err: unknown) {
+        setError(normalizeError(err));
+      } finally {
       setLoading(false);
     }
   }, [user?.token, quoteId]);
@@ -62,14 +58,8 @@ export function useQuoteAttachmentActions() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<QuoteAttachment>;
-        if (response?.success && response.data) {
-          return response.data;
-        }
-        if (response?.error) {
-          throw new Error(response.error.message);
-        }
-        return null;
+        const attachment = result as QuoteAttachment | null;
+        return attachment?.id ? attachment : null;
       } catch (err: unknown) {
         setError(normalizeError(err));
         return null;
@@ -92,14 +82,8 @@ export function useQuoteAttachmentActions() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<QuoteAttachment>;
-        if (response?.success && response.data) {
-          return response.data;
-        }
-        if (response?.error) {
-          throw new Error(response.error.message);
-        }
-        return null;
+        const attachment = result as QuoteAttachment | null;
+        return attachment?.id ? attachment : null;
       } catch (err: unknown) {
         setError(normalizeError(err));
         return null;
@@ -117,8 +101,7 @@ export function useQuoteAttachmentActions() {
         setLoading(true);
         setError(null);
         const result = await quotesIpc.deleteAttachment(quoteId, attachmentId, user.token);
-        const response = result as unknown as ApiResponse<boolean>;
-        return response?.success ?? false;
+        return typeof result === 'boolean' ? result : false;
       } catch (err: unknown) {
         setError(normalizeError(err));
         return false;

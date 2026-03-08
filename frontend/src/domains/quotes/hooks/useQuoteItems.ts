@@ -6,7 +6,6 @@ import type {
   Quote,
   CreateQuoteItemRequest,
   UpdateQuoteItemRequest,
-  ApiResponse,
 } from '@/types/quote.types';
 
 export function useQuoteItems() {
@@ -23,8 +22,8 @@ export function useQuoteItems() {
           item as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -45,8 +44,8 @@ export function useQuoteItems() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -62,8 +61,8 @@ export function useQuoteItems() {
       try {
         setLoading(true);
         const result = await quotesIpc.deleteItem(quoteId, itemId, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {

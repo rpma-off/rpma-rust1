@@ -31,9 +31,9 @@ export interface Quote {
   subtotal: number;
   tax_total: number;
   total: number;
-  discount_type?: string | null;
-  discount_value?: number | null;
-  discount_amount?: number | null;
+  discount_type: string | null;
+  discount_value: number | null;
+  discount_amount: number | null;
   vehicle_plate: string | null;
   vehicle_make: string | null;
   vehicle_model: string | null;
