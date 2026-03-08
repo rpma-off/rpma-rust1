@@ -20,7 +20,7 @@ pub struct MaterialQuery {
 
 impl MaterialQuery {
     pub(super) fn build_where_clause(&self) -> (String, Vec<rusqlite::types::Value>) {
-        let mut conditions = vec!["1=1".to_string()];
+        let mut conditions = vec!["deleted_at IS NULL".to_string()];
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
         if let Some(search) = &self.search {

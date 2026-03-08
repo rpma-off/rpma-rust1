@@ -47,15 +47,15 @@ export interface CreateMaterialRequest {
 }
 
 export interface UpdateStockRequest {
+  /** ID of the material to update. */
   material_id: string;
-  quantity: number;
-  transaction_type: 'stock_in' | 'stock_out' | 'adjustment' | 'waste';
-  notes?: string;
-  batch_number?: string;
-  expiry_date?: string;
-  unit_cost?: number;
-  reference_number?: string;
-  reference_type?: string;
+  /**
+   * Signed quantity change (positive = stock in, negative = stock out).
+   * Maps to `quantity_change` on the Rust backend `UpdateStockRequest` DTO.
+   */
+  quantity_change: number;
+  /** Human-readable reason for the stock change (required by backend). */
+  reason: string;
 }
 
 export interface RecordConsumptionRequest {
@@ -213,9 +213,10 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.material.create(request, sessionToken);
-    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    setMaterials(prev => [...prev, result]);
+    void fetchStats();
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
+  }, [fetchStats, hasInventoryAccess, sessionToken]);
 
   const updateMaterial = useCallback(async (id: string, request: CreateMaterialRequest, _userId?: string) => {
     if (!sessionToken) {
@@ -226,9 +227,10 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.material.update(id, request, sessionToken);
-    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    setMaterials(prev => prev.map(m => m.id === id ? result : m));
+    void fetchStats();
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
+  }, [fetchStats, hasInventoryAccess, sessionToken]);
 
   const updateStock = useCallback(async (request: UpdateStockRequest) => {
     if (!sessionToken) {
@@ -239,9 +241,11 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     const result = await inventoryIpc.stock.updateStock(request, sessionToken);
-    await Promise.allSettled([fetchMaterials(), fetchStats(), fetchLowStock(), fetchExpired()]);
+    setMaterials(prev => prev.map(m => m.id === request.material_id ? result : m));
+    void fetchStats();
+    void fetchLowStock();
     return result;
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
+  }, [fetchLowStock, fetchStats, hasInventoryAccess, sessionToken]);
 
   const recordConsumption = useCallback(async (request: RecordConsumptionRequest) => {
     if (!sessionToken) {
@@ -310,6 +314,19 @@ export function useInventory(query?: InventoryQuery) {
     return inventoryIpc.getMaterialStats(sessionToken);
   }, [hasInventoryAccess, sessionToken]);
 
+  const deleteMaterial = useCallback(async (id: string) => {
+    if (!sessionToken) {
+      throw new Error(AUTH_ERROR_MESSAGE);
+    }
+    if (!hasInventoryAccess) {
+      throw new Error(PERMISSION_ERROR_MESSAGE);
+    }
+
+    await inventoryIpc.material.delete(id, sessionToken);
+    setMaterials(prev => prev.filter(m => m.id !== id));
+    void fetchStats();
+  }, [fetchStats, hasInventoryAccess, sessionToken]);
+
   return {
     materials,
     loading,
@@ -319,6 +336,7 @@ export function useInventory(query?: InventoryQuery) {
     expiredMaterials,
     createMaterial,
     updateMaterial,
+    deleteMaterial,
     updateStock,
     recordConsumption,
     getMaterial,

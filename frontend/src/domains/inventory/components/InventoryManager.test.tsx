@@ -187,7 +187,20 @@ describe('InventoryManager', () => {
       createMaterial: jest.fn(),
       updateMaterial: jest.fn(),
       deleteMaterial: jest.fn(),
-      updateStock: jest.fn(),    });
+      updateStock: jest.fn(),
+      stats: createTestStats(),
+      lowStockMaterials: [],
+      expiredMaterials: [],
+      recordConsumption: jest.fn(),
+      getMaterial: jest.fn(),
+      getMaterialBySku: jest.fn(),
+      getInterventionConsumption: jest.fn(),
+      getInterventionSummary: jest.fn(),
+      getMaterialStats: jest.fn(),
+      refetchStats: jest.fn(),
+      refetchLowStock: jest.fn(),
+      refetchExpired: jest.fn(),
+    });
     
     // Mock the useInventoryStats hook
     (useInventoryStats as jest.Mock).mockReturnValue({

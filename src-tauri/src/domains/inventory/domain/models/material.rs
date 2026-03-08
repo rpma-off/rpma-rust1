@@ -94,7 +94,7 @@ pub struct Material {
     // Specifications
     pub brand: Option<String>,
     pub model: Option<String>,
-    #[ts(type = "JsonValue | null")]
+    #[ts(type = "Record<string, unknown> | null")]
     pub specifications: Option<serde_json::Value>,
 
     // Inventory
@@ -125,6 +125,8 @@ pub struct Material {
     // Status
     pub is_active: bool,
     pub is_discontinued: bool,
+    pub is_expired: bool,
+    pub is_low_stock: bool,
 
     // Location
     pub storage_location: Option<String>,
@@ -139,6 +141,12 @@ pub struct Material {
     pub updated_at: i64,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
+
+    // Soft delete
+    #[serde(serialize_with = "serialize_optional_timestamp")]
+    #[ts(type = "string | null")]
+    pub deleted_at: Option<i64>,
+    pub deleted_by: Option<String>,
 
     // Sync
     pub synced: bool,
@@ -180,12 +188,16 @@ impl Material {
             serial_numbers: None,
             is_active: true,
             is_discontinued: false,
+            is_expired: false,
+            is_low_stock: false,
             storage_location: None,
             warehouse_id: None,
             created_at: now,
             updated_at: now,
             created_by: None,
             updated_by: None,
+            deleted_at: None,
+            deleted_by: None,
             synced: false,
             last_synced_at: None,
         }
@@ -283,7 +295,7 @@ impl FromSqlRow for Material {
         let unit_str: String = row.get("unit_of_measure")?;
         let unit_of_measure = parse_unit_of_measure(&unit_str);
 
-        Ok(Self {
+        let material = Self {
             id: row.get("id")?,
             sku: row.get("sku")?,
             name: row.get("name")?,
@@ -320,14 +332,24 @@ impl FromSqlRow for Material {
                 .and_then(|s| serde_json::from_str(&s).ok()),
             is_active: row.get::<_, i32>("is_active")? != 0,
             is_discontinued: row.get::<_, i32>("is_discontinued")? != 0,
+            is_expired: false, // Placeholder, will be calculated next
+            is_low_stock: false, // Placeholder, will be calculated next
             storage_location: row.get("storage_location")?,
             warehouse_id: row.get("warehouse_id")?,
             created_at: row.get("created_at")?,
             updated_at: row.get("updated_at")?,
             created_by: row.get("created_by")?,
             updated_by: row.get("updated_by")?,
+            deleted_at: row.get("deleted_at")?,
+            deleted_by: row.get("deleted_by")?,
             synced: row.get::<_, i32>("synced")? != 0,
             last_synced_at: row.get("last_synced_at")?,
+        };
+
+        Ok(Self {
+            is_expired: material.is_expired(),
+            is_low_stock: material.is_low_stock(),
+            ..material
         })
     }
 }

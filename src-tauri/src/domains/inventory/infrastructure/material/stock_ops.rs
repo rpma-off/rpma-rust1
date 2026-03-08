@@ -25,41 +25,35 @@ impl super::MaterialService {
                 MaterialError::Authorization("User ID is required to update stock".to_string())
             })?;
         self.validate_stock_update(&request)?;
-        let mut material = self.get_material(&request.material_id)?.ok_or_else(|| {
-            MaterialError::NotFound(format!("Material {} not found", request.material_id))
-        })?;
-        self.ensure_material_active(&material)?;
 
-        let new_stock = material.current_stock + request.quantity_change;
-        debug!(
-            material_id = %request.material_id,
-            quantity_change = request.quantity_change,
-            reason = %request.reason,
-            "Updating material stock"
-        );
-        if new_stock < 0.0 {
-            return Err(MaterialError::InsufficientStock(format!(
-                "Cannot reduce stock below 0. Current: {}, Requested change: {}",
-                material.current_stock, request.quantity_change
-            )));
-        }
+        let transaction_type = if request.quantity_change > 0.0 {
+            InventoryTransactionType::StockIn
+        } else {
+            InventoryTransactionType::StockOut
+        };
 
-        if let Some(max_stock) = material.maximum_stock {
-            if new_stock > max_stock {
-                return Err(MaterialError::Validation(format!(
-                    "New stock {} would exceed maximum stock limit of {}",
-                    new_stock, max_stock
-                )));
-            }
-        }
+        let transaction_request = CreateInventoryTransactionRequest {
+            material_id: request.material_id.clone(),
+            transaction_type,
+            quantity: request.quantity_change.abs(),
+            unit_cost: None,
+            reference_number: None,
+            reference_type: Some("manual_update".to_string()),
+            notes: Some(request.reason.clone()),
+            warehouse_id: None,
+            location_from: None,
+            location_to: None,
+            batch_number: None,
+            expiry_date: None,
+            quality_status: None,
+            intervention_id: None,
+            step_id: None,
+        };
 
-        material.current_stock = new_stock;
-        material.updated_at = crate::shared::contracts::common::now();
-        material.updated_by = Some(recorded_by);
+        self.create_inventory_transaction(transaction_request, &recorded_by)?;
 
-        self.save_material(&material)?;
-        info!(material_id = %request.material_id, new_stock = new_stock, "Stock updated");
-        Ok(material)
+        self.get_material(&request.material_id)?
+            .ok_or_else(|| MaterialError::NotFound(format!("Material {} not found after stock update", request.material_id)))
     }
 
     /// Record material consumption for an intervention.
@@ -274,24 +268,24 @@ impl super::MaterialService {
             ));
         }
 
-        if !matches!(
-            request.transaction_type,
-            InventoryTransactionType::Adjustment
-        ) && request.quantity <= 0.0
-        {
-            return Err(MaterialError::Validation(
-                "Transaction quantity must be greater than 0".to_string(),
-            ));
-        }
-
-        if matches!(
-            request.transaction_type,
-            InventoryTransactionType::Adjustment
-        ) && request.quantity < 0.0
-        {
-            return Err(MaterialError::Validation(
-                "Adjustment quantity cannot be negative".to_string(),
-            ));
+        // Validate quantity against transaction type.
+        // - Adjustment sets stock to an absolute value: qty must be >= 0.
+        // - All other types are movements: qty must be > 0.
+        match request.transaction_type {
+            InventoryTransactionType::Adjustment => {
+                if request.quantity < 0.0 {
+                    return Err(MaterialError::Validation(
+                        "Adjustment quantity cannot be negative".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                if request.quantity <= 0.0 {
+                    return Err(MaterialError::Validation(
+                        "Transaction quantity must be greater than 0".to_string(),
+                    ));
+                }
+            }
         }
 
         let material = self.get_material(&request.material_id)?.ok_or_else(|| {
@@ -369,54 +363,53 @@ impl super::MaterialService {
         let material_id_for_update = request.material_id.clone();
         let updated_by = user_id.to_string();
         let now = crate::shared::contracts::common::now();
-        self.db
-            .with_transaction(|tx| {
-                tx.execute(
-                    r#"
-                    INSERT INTO inventory_transactions (
-                        id, material_id, transaction_type, quantity, previous_stock, new_stock,
-                        reference_number, reference_type, notes, unit_cost, total_cost,
-                        warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
-                        intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    "#,
-                    params![
-                        transaction.id,
-                        transaction.material_id,
-                        transaction.transaction_type.to_string(),
-                        transaction.quantity,
-                        transaction.previous_stock,
-                        transaction.new_stock,
-                        transaction.reference_number,
-                        transaction.reference_type,
-                        transaction.notes,
-                        transaction.unit_cost,
-                        transaction.total_cost,
-                        transaction.warehouse_id,
-                        transaction.location_from,
-                        transaction.location_to,
-                        transaction.batch_number,
-                        transaction.expiry_date,
-                        transaction.quality_status,
-                        transaction.intervention_id,
-                        transaction.step_id,
-                        transaction.performed_by,
-                        transaction.performed_at,
-                        transaction.created_at,
-                        transaction.updated_at,
-                        transaction.synced,
-                        transaction.last_synced_at,
-                    ],
-                )
-                .map_err(|e| e.to_string())?;
-                tx.execute(
-                    "UPDATE materials SET current_stock = ?, updated_at = ?, updated_by = ? WHERE id = ?",
-                    params![new_stock, now, Some(updated_by), material_id_for_update],
-                )
-                .map_err(|e| e.to_string())?;
-                Ok(())
-            })
-            .map_err(MaterialError::Database)?;
+        self.db.with_transaction(|tx| {
+            tx.execute(
+                r#"
+                INSERT INTO inventory_transactions (
+                    id, material_id, transaction_type, quantity, previous_stock, new_stock,
+                    reference_number, reference_type, notes, unit_cost, total_cost,
+                    warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
+                    intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                "#,
+                params![
+                    transaction.id,
+                    transaction.material_id,
+                    transaction.transaction_type.to_string(),
+                    transaction.quantity,
+                    transaction.previous_stock,
+                    transaction.new_stock,
+                    transaction.reference_number,
+                    transaction.reference_type,
+                    transaction.notes,
+                    transaction.unit_cost,
+                    transaction.total_cost,
+                    transaction.warehouse_id,
+                    transaction.location_from,
+                    transaction.location_to,
+                    transaction.batch_number,
+                    transaction.expiry_date,
+                    transaction.quality_status,
+                    transaction.intervention_id,
+                    transaction.step_id,
+                    transaction.performed_by,
+                    transaction.performed_at,
+                    transaction.created_at,
+                    transaction.updated_at,
+                    transaction.synced,
+                    transaction.last_synced_at,
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+            tx.execute(
+                "UPDATE materials SET current_stock = ?, updated_at = ?, updated_by = ? WHERE id = ?",
+                params![new_stock, now, Some(updated_by), material_id_for_update],
+            )
+            .map_err(|e| e.to_string())?;
+            Ok(())
+        })
+        .map_err(MaterialError::Database)?;
 
         info!(
             transaction_id = %transaction.id,

@@ -131,10 +131,29 @@ pub async fn material_list(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
+
+    // Parse Option<String> into Option<MaterialType> (IPC boundary is always String).
+    use crate::domains::inventory::domain::models::material::MaterialType;
+    let parsed_type: Option<MaterialType> = match material_type.as_deref() {
+        Some("ppf_film") => Some(MaterialType::PpfFilm),
+        Some("adhesive") => Some(MaterialType::Adhesive),
+        Some("cleaning_solution") => Some(MaterialType::CleaningSolution),
+        Some("tool") => Some(MaterialType::Tool),
+        Some("consumable") => Some(MaterialType::Consumable),
+        Some(unknown) => {
+            return Err(map_material_err(
+                "list_materials",
+                crate::domains::inventory::infrastructure::material::MaterialError::Validation(
+                    format!("Unknown material_type filter: {}", unknown),
+                ),
+            ));
+        }
+        None => None,
+    };
 
     match service.list_materials(
-        material_type,
+        parsed_type,
         category,
         active_only.unwrap_or(true),
         limit,
@@ -145,7 +164,7 @@ pub async fn material_list(
         }
         Err(e) => {
             error!(error = %e, "Failed to list materials");
-            Err(e)
+            Err(map_material_err("list_materials", e))
         }
     }
 }
@@ -197,7 +216,7 @@ pub async fn material_update_stock(
     let current_user = authenticate!(&session_token, &state, UserRole::Technician);
     tracing::Span::current().record("user_id", &current_user.user_id.as_str());
     crate::commands::update_correlation_context_user(&current_user.user_id);
-    let service = state.inventory_service.clone();
+    let service = state.material_service.clone();
 
     match service.update_stock(request) {
         Ok(material) => {
@@ -206,7 +225,7 @@ pub async fn material_update_stock(
         }
         Err(e) => {
             error!(error = %e, "Failed to update material stock");
-            Err(e)
+            Err(map_material_err("update_stock", e))
         }
     }
 }

@@ -72,7 +72,7 @@ export function MaterialCatalog() {
     search: searchTerm || undefined,
   });
 
-  const { stats, updateStock } = useInventory();
+  const { stats, updateStock, deleteMaterial } = useInventory();
 
   const filteredMaterials = useMemo(() => materials ?? [], [materials]);
   const hasActiveFilters = searchTerm.trim().length > 0 || materialTypeFilter !== 'all' || categoryFilter !== 'all';
@@ -101,9 +101,8 @@ export function MaterialCatalog() {
 
     try {
       setArchiving(materialId);
-      await inventoryIpc.material.delete(materialId, user.token);
+      await deleteMaterial(materialId);
       toast.success(t('inventory.materialArchived'));
-      await refetch();
     } catch (err) {
       toast.error(`${t('errors.generic')}: ${err}`);
     } finally {
@@ -125,9 +124,8 @@ export function MaterialCatalog() {
       setStockSaving(true);
       await updateStock({
         material_id: stockMaterial.id,
-        quantity: stockQuantity,
-        transaction_type: stockQuantity > 0 ? 'stock_in' : 'stock_out',
-        notes: stockReason,
+        quantity_change: stockQuantity,
+        reason: stockReason,
       });
       toast.success(t('inventory.stockUpdated'));
       setShowStockDialog(false);

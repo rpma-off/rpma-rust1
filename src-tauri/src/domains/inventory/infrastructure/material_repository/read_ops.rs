@@ -22,7 +22,7 @@ impl super::MaterialRepository {
             r#"
             SELECT {}
             FROM materials
-            WHERE sku = ? AND is_active = 1
+            WHERE sku = ? AND is_active = 1 AND deleted_at IS NULL
             LIMIT 1
             "#,
             MATERIAL_COLUMNS
@@ -60,7 +60,7 @@ impl super::MaterialRepository {
             r#"
             SELECT {}
             FROM materials
-            WHERE is_active = 1 AND is_discontinued = 0
+            WHERE is_active = 1 AND is_discontinued = 0 AND deleted_at IS NULL
               AND (current_stock < COALESCE(minimum_stock, 0) OR current_stock < COALESCE(reorder_point, 0))
             ORDER BY current_stock ASC
             "#,
@@ -99,7 +99,7 @@ impl super::MaterialRepository {
             r#"
             SELECT {}
             FROM materials
-            WHERE material_type = ? AND is_active = 1 AND is_discontinued = 0
+            WHERE material_type = ? AND is_active = 1 AND is_discontinued = 0 AND deleted_at IS NULL
             ORDER BY name ASC
             "#,
             MATERIAL_COLUMNS

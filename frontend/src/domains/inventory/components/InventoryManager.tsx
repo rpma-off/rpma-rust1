@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../hooks/useInventory';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Material, MaterialType } from '@/shared/types';
+import { inventoryIpc } from '../ipc/inventory.ipc';
+import { useAuth } from '@/domains/auth';
 import { 
   Plus, 
   Search, 
@@ -46,14 +48,18 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(null);
 
-  const { 
-    materials, 
-    loading, 
-    error, 
-    stats, 
-    lowStockMaterials, 
+  const { user } = useAuth();
+  const sessionToken = user?.token;
+
+  const {
+    materials,
+    loading,
+    error,
+    stats,
+    lowStockMaterials,
     expiredMaterials,
     refetch,
+    deleteMaterial,
     getMaterial: _getMaterial,
     getMaterialBySku: _getMaterialBySku
   } = useInventory({
@@ -105,10 +111,14 @@ export function InventoryManager({ className }: InventoryManagerProps) {
 
   const confirmDelete = async () => {
     if (!deletingMaterial) return;
-    // Implementation would depend on the actual delete command
-    // For now, we'll just close the dialog and refetch
-    setDeletingMaterial(null);
-    await refetch();
+    try {
+      await deleteMaterial(deletingMaterial.id);
+      setDeletingMaterial(null);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // Expose error via a toast so the user sees it without crashing the dialog.
+      import('sonner').then(({ toast }) => toast.error(msg));
+    }
   };
 
   const exportInventory = () => {
@@ -253,7 +263,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div data-testid="inventory-manager" className={`space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

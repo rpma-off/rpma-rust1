@@ -62,20 +62,19 @@ export type CreateMaterialRequest = {
 export type UpdateMaterialRequest = Partial<CreateMaterialRequest>;
 
 export type UpdateStockRequest = {
+  /** ID of the material whose stock to update. */
   material_id: string;
-  quantity: number;
-  transaction_type: 'stock_in' | 'stock_out' | 'adjustment' | 'waste';
-  notes?: string;
-  batch_number?: string;
-  expiry_date?: string;
-  unit_cost?: number;
-  reference_number?: string;
-  reference_type?: string;
+  /**
+   * Signed delta — positive adds stock, negative removes stock.
+   * Maps to `quantity_change` on the Rust backend `UpdateStockRequest`.
+   */
+  quantity_change: number;
+  /** Human-readable reason required by the backend (e.g. "Restock from supplier"). */
+  reason: string;
 };
 
-export type AdjustStockRequest = UpdateStockRequest & {
-  reason?: string;
-};
+/** Extended stock-adjustment request (kept for backwards-compat with adjustStock callers). */
+export type AdjustStockRequest = UpdateStockRequest;
 
 export type RecordConsumptionRequest = {
   intervention_id: string;

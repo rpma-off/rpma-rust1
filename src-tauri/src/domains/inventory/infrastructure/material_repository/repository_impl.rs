@@ -21,7 +21,7 @@ impl Repository<Material, String> for super::MaterialRepository {
             r#"
             SELECT {}
             FROM materials
-            WHERE id = ?
+            WHERE id = ? AND deleted_at IS NULL
             "#,
             MATERIAL_COLUMNS
         );
@@ -52,7 +52,7 @@ impl Repository<Material, String> for super::MaterialRepository {
             r#"
             SELECT {}
             FROM materials
-            WHERE is_active = 1 AND is_discontinued = 0
+            WHERE is_active = 1 AND is_discontinued = 0 AND deleted_at IS NULL
             ORDER BY name ASC
             "#,
             MATERIAL_COLUMNS
@@ -206,26 +206,13 @@ impl Repository<Material, String> for super::MaterialRepository {
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
         // Soft delete by marking as discontinued
-        let rows_affected = self
-            .db
-            .execute(
-                "UPDATE materials SET is_discontinued = 1, updated_at = (unixepoch() * 1000) WHERE id = ?",
-                params![id],
-            )
-            .map_err(|e| RepoError::Database(format!("Failed to delete material: {}", e)))?;
-
-        if rows_affected > 0 {
-            // Invalidate cache
-            self.invalidate_material_cache(&id);
-        }
-
-        Ok(rows_affected > 0)
+        self.soft_delete_by_id(&id, "system").await
     }
 
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
         let count: i64 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials WHERE id = ?", params![id])
+            .query_single_value("SELECT COUNT(*) FROM materials WHERE id = ? AND deleted_at IS NULL", params![id])
             .map_err(|e| {
                 RepoError::Database(format!("Failed to check material existence: {}", e))
             })?;

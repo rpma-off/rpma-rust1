@@ -59,6 +59,8 @@ pub struct MaterialTS {
     // Status
     pub is_active: bool,
     pub is_discontinued: bool,
+    pub is_expired: bool,
+    pub is_low_stock: bool,
 
     // Location
     pub storage_location: Option<String>,
@@ -69,6 +71,10 @@ pub struct MaterialTS {
     pub updated_at: i64,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
+
+    // Soft delete
+    pub deleted_at: Option<i64>,
+    pub deleted_by: Option<String>,
 
     // Sync
     pub synced: bool,
@@ -106,12 +112,16 @@ impl From<&Material> for MaterialTS {
             serial_numbers: material.serial_numbers.clone(),
             is_active: material.is_active,
             is_discontinued: material.is_discontinued,
+            is_expired: material.is_expired,
+            is_low_stock: material.is_low_stock,
             storage_location: material.storage_location.clone(),
             warehouse_id: material.warehouse_id.clone(),
             created_at: material.created_at,
             updated_at: material.updated_at,
             created_by: material.created_by.clone(),
             updated_by: material.updated_by.clone(),
+            deleted_at: material.deleted_at,
+            deleted_by: material.deleted_by.clone(),
             synced: material.synced,
             last_synced_at: material.last_synced_at,
         }
@@ -187,7 +197,7 @@ pub struct InventoryTransactionTS {
     // Identifiers
     pub id: String,
     pub material_id: String,
-    pub transaction_type: String, // String enum instead of enum
+    pub transaction_type: super::material::InventoryTransactionType,
 
     // Quantities
     pub quantity: f64,

@@ -63,6 +63,10 @@ export interface Material {
   created_by?: string;
   updated_by?: string;
 
+  // Soft delete
+  deleted_at?: string;
+  deleted_by?: string;
+
   // Sync
   synced: boolean;
   last_synced_at?: string;

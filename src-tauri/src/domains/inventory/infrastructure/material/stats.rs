@@ -21,16 +21,23 @@ impl super::MaterialService {
         debug!("Fetching material statistics");
         let total_materials: i32 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials", [])?;
+            .query_single_value(
+                "SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL",
+                [],
+            )?;
 
         let active_materials: i32 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials WHERE is_active = 1", [])?;
+            .query_single_value(
+                "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
+                [],
+            )?;
 
         let low_stock_materials: i32 = self.db.query_single_value(
             r#"
             SELECT COUNT(*) FROM materials
             WHERE is_active = 1
+              AND deleted_at IS NULL
               AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
             "#,
             params![DEFAULT_LOW_STOCK_THRESHOLD],
@@ -40,6 +47,7 @@ impl super::MaterialService {
             r#"
             SELECT COUNT(*) FROM materials
             WHERE is_active = 1
+              AND deleted_at IS NULL
               AND expiry_date IS NOT NULL
               AND expiry_date <= ?
             "#,
@@ -50,14 +58,14 @@ impl super::MaterialService {
             r#"
             SELECT COALESCE(SUM(current_stock * unit_cost), 0)
             FROM materials
-            WHERE unit_cost IS NOT NULL AND is_active = 1
+            WHERE unit_cost IS NOT NULL AND is_active = 1 AND deleted_at IS NULL
             "#,
             [],
         )?;
 
         // ADR-011 fix: use query_multiple instead of get_connection()+prepare()+query_map()
         let type_rows: Vec<(String, i32)> = self.db.query_multiple(
-            "SELECT material_type, COUNT(*) AS count FROM materials WHERE is_active = 1 GROUP BY material_type",
+            "SELECT material_type, COUNT(*) AS count FROM materials WHERE is_active = 1 AND deleted_at IS NULL GROUP BY material_type",
             [],
             |row| Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?)),
         )?;
@@ -95,6 +103,7 @@ impl super::MaterialService {
               END                                   AS shortage_quantity
             FROM materials
             WHERE is_active = 1
+              AND deleted_at IS NULL
               AND current_stock <= COALESCE(minimum_stock, ?)
             ORDER BY shortage_quantity DESC, available_stock ASC, name ASC
         "#;
@@ -121,6 +130,7 @@ impl super::MaterialService {
         let sql = r#"
             SELECT * FROM materials
             WHERE is_active = 1
+              AND deleted_at IS NULL
               AND expiry_date IS NOT NULL
               AND expiry_date <= ?
             ORDER BY expiry_date ASC
