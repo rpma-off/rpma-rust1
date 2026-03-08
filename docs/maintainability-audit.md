@@ -12,7 +12,7 @@
 |------|-----------|-------|----------|
 | **Frontend** | 6.0 | ⚠️ Declining | God-object IPC client (1,680 LOC), 73 files > 300 lines |
 | **IPC** | 5.5 | ⚠️ Mixed | Inconsistent return types, 3 auth patterns, fat handlers |
-| **Application** | 7.0 | ✅ Stable | `quote_service.rs` (754 LOC, 22 functions) |
+| **Application** | 7.0 | ⚠️ At Risk | `quote_service.rs` (754 LOC, 22 functions) |
 | **Domain** | 6.5 | ⚠️ Declining | rusqlite in 7+ domain models violates no-I/O rule |
 | **Infrastructure** | 6.0 | ⚠️ Declining | 10+ repository files > 700 LOC, monolithic SQL |
 | **Migrations** | 8.0 | ✅ Good | Minimal issues, well-organized |
@@ -327,7 +327,7 @@
 
 ### CC-03: Test Coverage Asymmetry
 - **Backend:** All domains have tests ✅ (2,994 LOC domain tests + 2,683 LOC integration tests)
-- **Frontend:** 20 of 97 test suites failing (pre-existing) — **120 failing tests**
+- **Frontend:** 20 of 97 frontend test suites failing (pre-existing, not caused by recent changes) — **120 failing tests out of 461 total frontend tests**
 - **Fix:** Triage and fix the 20 failing suites; establish test health baseline
 
 ---
