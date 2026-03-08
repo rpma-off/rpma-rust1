@@ -17,6 +17,7 @@ import type {
   MaterialConsumption,
   MaterialStats,
   LowStockMaterialsResponse,
+  InventoryDashboardData,
 } from '../api/types';
 
 export const inventoryIpc = {
@@ -53,5 +54,9 @@ export const inventoryIpc = {
 
   getMovementSummaries: (sessionToken: string): Promise<InventoryMovementSummary[]> =>
     safeInvoke<InventoryMovementSummary[]>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, { sessionToken } as JsonObject),
+
+  /** S-1 perf: replaces 4 IPC calls (materials + stats + lowStock + expired) with 1. */
+  getDashboardData: (sessionToken: string): Promise<InventoryDashboardData> =>
+    safeInvoke<InventoryDashboardData>(IPC_COMMANDS.INVENTORY_GET_DASHBOARD_DATA, { sessionToken } as JsonObject),
 };
 

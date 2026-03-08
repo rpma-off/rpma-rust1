@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use rusqlite::params;
@@ -30,6 +31,39 @@ impl InventoryTransactionRepository {
             )
             .map_err(|e| e.to_string())?;
         Ok(count > 0)
+    }
+
+    /// QW-4 perf: batch existence check via WHERE IN — replaces N individual queries with 1.
+    pub fn references_exist_batch(
+        &self,
+        tx: &rusqlite::Transaction<'_>,
+        reference_type: &str,
+        refs: &[String],
+    ) -> Result<HashSet<String>, String> {
+        if refs.is_empty() {
+            return Ok(HashSet::new());
+        }
+        let placeholders = refs.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+        let sql = format!(
+            "SELECT reference_number FROM inventory_transactions \
+             WHERE reference_type = ? AND reference_number IN ({})",
+            placeholders
+        );
+        let mut param_values: Vec<Box<dyn rusqlite::types::ToSql>> =
+            vec![Box::new(reference_type.to_string())];
+        for r in refs {
+            param_values.push(Box::new(r.clone()));
+        }
+        let mut stmt = tx.prepare_cached(&sql).map_err(|e| e.to_string())?;
+        let existing: HashSet<String> = stmt
+            .query_map(
+                rusqlite::params_from_iter(param_values.iter()),
+                |row| row.get::<_, String>(0),
+            )
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
+        Ok(existing)
     }
 
     pub fn insert(

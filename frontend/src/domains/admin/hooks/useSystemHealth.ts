@@ -108,8 +108,9 @@ export function useSystemHealth(
 
     run();
 
+    // S-2 perf: skip poll when tab is hidden.
     const interval = setInterval(() => {
-      if (!cancelled) checkHealth();
+      if (!cancelled && document.visibilityState === 'visible') checkHealth();
     }, pollInterval);
 
     return () => {

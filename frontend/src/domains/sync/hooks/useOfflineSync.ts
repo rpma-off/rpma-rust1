@@ -68,8 +68,10 @@ export function useOfflineSync(): OfflineSyncStatus {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Check for network status periodically
-    const interval = setInterval(updateQueueStatus, 30000);
+    // S-2 perf: 30s→120s + skip when tab is hidden (offline-first, network events handle real updates).
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') updateQueueStatus();
+    }, 120000);
 
     // Clean up
     return () => {

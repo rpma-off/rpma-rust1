@@ -137,6 +137,7 @@ fn main() {
             domains::inventory::ipc::material::material_get_expired_materials,
             domains::inventory::ipc::material::material_get_inventory_movement_summary,
             domains::inventory::ipc::material::inventory_get_stats,
+            domains::inventory::ipc::material::inventory_get_dashboard_data,
             domains::audit::ipc::security::get_security_metrics,
             domains::audit::ipc::security::get_security_events,
             domains::audit::ipc::security::get_security_alerts,

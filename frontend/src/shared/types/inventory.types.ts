@@ -90,6 +90,14 @@ export interface LowStockMaterialsResponse {
   total: number;
 }
 
+// S-1 perf: aggregated dashboard payload — avoids 4 separate IPC round-trips.
+export interface InventoryDashboardData {
+  materials: Material[];
+  stats: InventoryStats;
+  low_stock: LowStockMaterialsResponse;
+  expired: Material[];
+}
+
 // Material consumption record
 export interface MaterialConsumption {
   // Identifiers

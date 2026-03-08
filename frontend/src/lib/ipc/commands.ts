@@ -71,6 +71,8 @@ export const IPC_COMMANDS = {
   MATERIAL_GET_EXPIRED: 'material_get_expired',
   MATERIAL_GET_EXPIRED_MATERIALS: 'material_get_expired_materials',
   MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY: 'material_get_inventory_movement_summary',
+  // S-1 perf: batch endpoint — replaces 4 individual IPC calls on dashboard mount.
+  INVENTORY_GET_DASHBOARD_DATA: 'inventory_get_dashboard_data',
 
   // Document report commands
   EXPORT_INTERVENTION_REPORT: 'export_intervention_report',

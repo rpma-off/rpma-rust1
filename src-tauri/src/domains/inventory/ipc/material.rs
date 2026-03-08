@@ -797,3 +797,31 @@ pub async fn material_get_inventory_movement_summary(
         }
     }
 }
+
+/// S-1 perf: aggregated dashboard — replaces 4 IPC calls (materials + stats + low_stock + expired) with 1.
+#[tauri::command]
+#[instrument(skip(state, session_token), fields(user_id))]
+pub async fn inventory_get_dashboard_data(
+    state: AppState<'_>,
+    session_token: String,
+    correlation_id: Option<String>,
+) -> Result<
+    ApiResponse<crate::domains::inventory::domain::models::material::InventoryDashboardData>,
+    crate::commands::AppError,
+> {
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
+    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let service = state.inventory_service.clone();
+
+    match service.get_dashboard_data() {
+        Ok(data) => {
+            Ok(ApiResponse::success(data).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get inventory dashboard data");
+            Err(e)
+        }
+    }
+}

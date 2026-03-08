@@ -14,5 +14,6 @@ export type {
   InventoryMovementSummary,
   LowStockMaterial,
   LowStockMaterialsResponse,
+  InventoryDashboardData,
 } from '@/shared/types/inventory.types';
 

@@ -5,7 +5,6 @@ import type {
   Quote,
   QuoteExportResponse,
   ConvertQuoteToTaskResponse,
-  ApiResponse,
 } from '@/types/quote.types';
 
 // --- useDuplicateQuote ---
@@ -92,7 +91,7 @@ export function useConvertQuoteToTask() {
 
       try {
         const result = await quotesIpc.convertToTask(quoteId, vehicleInfo, user.token);
-        const response = result as unknown as ApiResponse<ConvertQuoteToTaskResponse>;
+        const response = result as ConvertQuoteToTaskResponse | null;
 
         if (response?.task_id) {
           return response;

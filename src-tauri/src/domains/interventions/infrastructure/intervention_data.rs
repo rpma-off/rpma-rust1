@@ -361,6 +361,15 @@ impl InterventionDataService {
         self.repository.save_step_with_tx(tx, step)
     }
 
+    /// QW-3: batch variant — prepare once, execute N times within the provided transaction.
+    pub fn save_steps_batch_with_tx(
+        &self,
+        tx: &Transaction,
+        steps: &[InterventionStep],
+    ) -> InterventionResult<()> {
+        self.repository.save_steps_batch_with_tx(tx, steps)
+    }
+
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         self.repository.save_step(step)
     }

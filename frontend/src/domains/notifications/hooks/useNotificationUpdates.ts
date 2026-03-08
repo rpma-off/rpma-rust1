@@ -30,8 +30,10 @@ export function useNotificationUpdates() {
     function startPolling() {
       if (!mountedRef.current || !user?.token) return;
 
+      // S-2 perf: interval raised 30s→120s; skip when tab is hidden (visibilityState guard).
       pollTimerRef.current = setInterval(async () => {
         if (!mountedRef.current) return;
+        if (document.visibilityState !== 'visible') return;
 
         const result = await getNotifications();
         if (result.success && result.data) {
@@ -58,7 +60,7 @@ export function useNotificationUpdates() {
             result.data.unread_count,
           );
         }
-      }, 30000); // Poll every 30 seconds
+      }, 120000); // S-2: raised from 30s to 120s (offline-first, tab guard above)
     }
 
     startPolling();

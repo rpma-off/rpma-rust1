@@ -26,8 +26,8 @@ impl Database {
             "Database query executed"
         );
 
-        // Log slow queries (>100ms) as warnings
-        if metrics.duration_ms > 100 {
+        // Log slow queries (>50ms) as warnings — QW-6: threshold lowered from 100ms for earlier detection
+        if metrics.duration_ms > 50 {
             warn!(
                 query = %metrics.query,
                 duration_ms = metrics.duration_ms,

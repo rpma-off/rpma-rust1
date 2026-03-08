@@ -54,12 +54,15 @@ export function useInterventionData(taskId: string) {
       if (!session?.token || !taskId) return null;
 
       try {
-        // First try to get active intervention
-        const activeResult = await interventionsIpc.getActiveByTask(taskId, session.token);
+        // S-3 perf: fetch active and latest in parallel instead of sequentially.
+        const [activeResult, latestResult] = await Promise.all([
+          interventionsIpc.getActiveByTask(taskId, session.token),
+          interventionsIpc.getLatestByTask(taskId, session.token),
+        ]);
 
         let intervention = null;
 
-        // Check if we got an active intervention
+        // Prefer active intervention over latest.
         if (activeResult && typeof activeResult === 'object') {
           const directResult = activeResult as { intervention?: Record<string, unknown> };
           if (directResult.intervention) {
@@ -75,10 +78,8 @@ export function useInterventionData(taskId: string) {
           }
         }
 
-        // If no active intervention, try to get the latest (including completed)
+        // Fall back to latest if no active.
         if (!intervention) {
-          const latestResult = await interventionsIpc.getLatestByTask(taskId, session.token);
-
           if (latestResult && typeof latestResult === 'object' && 'intervention' in latestResult) {
             const typedResult = latestResult as { intervention?: Record<string, unknown> };
             if (typedResult.intervention) {

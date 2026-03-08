@@ -520,6 +520,46 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// QW-3 perf: prepare the INSERT statement once, then execute for each step.
+    /// Replaces N `tx.execute()` calls (each re-parses the SQL) with 1 prepare + N binds.
+    pub fn save_steps_batch_with_tx(
+        &self,
+        tx: &Transaction,
+        steps: &[InterventionStep],
+    ) -> InterventionResult<()> {
+        if steps.is_empty() {
+            return Ok(());
+        }
+        const SQL: &str = "INSERT OR REPLACE INTO intervention_steps (
+            id, intervention_id, step_number, step_name, step_type, step_status,
+            description, instructions, quality_checkpoints, is_mandatory, requires_photos,
+            min_photos_required, max_photos_allowed, started_at, completed_at, paused_at,
+            duration_seconds, estimated_duration_seconds, step_data, collected_data, measurements,
+            observations, photo_count, required_photos_completed, photo_urls, validation_data,
+            validation_errors, validation_score, requires_supervisor_approval, approved_by,
+            approved_at, rejection_reason, location_lat, location_lon, location_accuracy,
+            device_timestamp, server_timestamp, title, notes, synced, last_synced_at,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        let mut stmt = tx.prepare_cached(SQL)?;
+        for step in steps {
+            let f = StepDbFields::from_step(step);
+            stmt.execute(params![
+                step.id, step.intervention_id, step.step_number, step.step_name, f.step_type, f.step_status,
+                step.description, f.instructions_json, f.quality_checkpoints_json, step.is_mandatory, step.requires_photos,
+                step.min_photos_required, step.max_photos_allowed, step.started_at.inner(), step.completed_at.inner(), step.paused_at.inner(),
+                step.duration_seconds, step.estimated_duration_seconds, f.step_data_json, f.collected_data_json, f.measurements_json,
+                f.observations_json, step.photo_count, step.required_photos_completed, f.photo_urls_json, f.validation_data_json,
+                f.validation_errors_json, step.validation_score, step.requires_supervisor_approval, step.approved_by,
+                step.approved_at.inner(), step.rejection_reason, step.location_lat, step.location_lon, step.location_accuracy,
+                step.device_timestamp.inner(), step.server_timestamp.inner(), step.title, step.notes, step.synced, step.last_synced_at.inner(),
+                step.created_at, step.updated_at
+            ])?;
+        }
+        debug!(count = steps.len(), "Saved intervention steps batch (transaction)");
+        Ok(())
+    }
+
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
         let f = StepDbFields::from_step(step);

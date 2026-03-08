@@ -4,8 +4,8 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use crate::domains::inventory::domain::models::material::{
-    InventoryStats, InventoryTransaction, InventoryTransactionType, Material, MaterialConsumption,
-    MaterialStats, MaterialType,
+    InventoryDashboardData, InventoryStats, InventoryTransaction, InventoryTransactionType,
+    Material, MaterialConsumption, MaterialStats, MaterialType,
 };
 use crate::domains::inventory::infrastructure::MaterialService;
 use crate::shared::db::Database;
@@ -54,6 +54,28 @@ impl InventoryService {
         self.gateway
             .get_material_stats()
             .map_err(InventoryError::from)
+    }
+
+    /// S-1 perf: single call that aggregates materials + stats + low_stock + expired.
+    /// Replaces 4 IPC round-trips with 1. Uses InventoryStats (matches frontend hook type).
+    #[instrument(skip(self))]
+    pub fn get_dashboard_data(&self) -> InventoryResult<InventoryDashboardData> {
+        let materials = self.list_materials(None, None, true, None, None)?;
+        let stats = self.get_inventory_stats()?;
+        let low_stock = self
+            .gateway
+            .get_low_stock_materials()
+            .map_err(InventoryError::from)?;
+        let expired = self
+            .gateway
+            .get_expired_materials()
+            .map_err(InventoryError::from)?;
+        Ok(InventoryDashboardData {
+            materials,
+            stats,
+            low_stock,
+            expired,
+        })
     }
 
     #[instrument(skip(self))]
@@ -159,18 +181,24 @@ impl InventoryService {
 
         self.db
             .with_transaction(|tx| {
+                // QW-4 perf: batch existence check — 1 WHERE IN query instead of N individual queries.
+                let refs_to_check: Vec<String> = transactions
+                    .iter()
+                    .filter_map(|t| t.reference_number.clone())
+                    .collect();
+                let existing_refs = self.transaction_repository.references_exist_batch(
+                    tx,
+                    "intervention_finalized",
+                    &refs_to_check,
+                )?;
+
                 let mut inserted = 0usize;
                 for transaction in &transactions {
-                    if let Some(reference_number) = &transaction.reference_number {
-                        if self.transaction_repository.reference_exists(
-                            tx,
-                            "intervention_finalized",
-                            reference_number,
-                        )? {
+                    if let Some(ref_num) = &transaction.reference_number {
+                        if existing_refs.contains(ref_num) {
                             continue;
                         }
                     }
-
                     self.transaction_repository.insert(tx, transaction)?;
                     inserted += 1;
                 }

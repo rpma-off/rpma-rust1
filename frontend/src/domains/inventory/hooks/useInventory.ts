@@ -188,21 +188,61 @@ export function useInventory(query?: InventoryQuery) {
     }
   }, [hasInventoryAccess, sessionToken]);
 
-  const fetchingRef = useRef(false);
+  // S-1 perf: single IPC call that aggregates materials + stats + lowStock + expired.
+  const fetchDashboard = useCallback(async () => {
+    if (!sessionToken) {
+      setMaterials([]);
+      setStats(null);
+      setLowStockMaterials([]);
+      setExpiredMaterials([]);
+      setError(AUTH_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+    if (!hasInventoryAccess) {
+      setMaterials([]);
+      setError(PERMISSION_ERROR_MESSAGE);
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const t0 = performance.now();
+      const data = await inventoryIpc.getDashboardData(sessionToken);
+      const elapsed = performance.now() - t0;
+      if (elapsed > 200) console.warn(`[Perf] fetchDashboard slow: ${elapsed.toFixed(1)}ms`);
+      setMaterials(data.materials);
+      setStats(data.stats);
+      setLowStockMaterials(data.low_stock.items);
+      setExpiredMaterials(data.expired);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [hasInventoryAccess, sessionToken]);
 
+  const fetchingRef = useRef(false);
+  const initializedRef = useRef(false);
+
+  // Initial load: 1 dashboard call instead of 4 individual calls.
   useEffect(() => {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
+    initializedRef.current = false;
 
-    Promise.allSettled([
-      fetchMaterials(),
-      fetchStats(),
-      fetchLowStock(),
-      fetchExpired(),
-    ]).finally(() => {
+    void fetchDashboard().finally(() => {
       fetchingRef.current = false;
+      initializedRef.current = true;
     });
-  }, [fetchExpired, fetchLowStock, fetchMaterials, fetchStats]);
+  }, [fetchDashboard]);
+
+  // When query filters change after initial load, only refetch materials.
+  useEffect(() => {
+    if (!initializedRef.current) return;
+    void fetchMaterials();
+  }, [fetchMaterials]);
 
   const createMaterial = useCallback(async (request: CreateMaterialRequest, _userId?: string) => {
     if (!sessionToken) {

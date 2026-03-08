@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::domains::inventory::domain::models::material::{
-    InventoryStats, Material, MaterialConsumption, MaterialStats, MaterialType,
+    InventoryStats, LowStockMaterialsResponse, Material, MaterialConsumption, MaterialStats,
+    MaterialType,
 };
 pub use crate::domains::inventory::infrastructure::material::{MaterialResult, MaterialService};
 use crate::domains::inventory::infrastructure::material::{
@@ -56,6 +57,14 @@ impl MaterialGateway {
 
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
         self.service.get_inventory_stats()
+    }
+
+    pub fn get_low_stock_materials(&self) -> MaterialResult<LowStockMaterialsResponse> {
+        self.service.get_low_stock_materials()
+    }
+
+    pub fn get_expired_materials(&self) -> MaterialResult<Vec<Material>> {
+        self.service.get_expired_materials()
     }
 
     pub fn get_intervention_consumption(

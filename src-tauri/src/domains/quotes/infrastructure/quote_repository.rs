@@ -409,6 +409,46 @@ impl QuoteRepository {
         Ok(())
     }
 
+    /// QW-2 perf: insert multiple items in a single transaction, invalidate cache once.
+    pub fn add_items_batch(&self, items: &[QuoteItem]) -> RepoResult<()> {
+        if items.is_empty() {
+            return Ok(());
+        }
+        let quote_id = items[0].quote_id.clone();
+        self.db
+            .with_transaction(|tx| {
+                for item in items {
+                    tx.execute(
+                        r#"
+                        INSERT INTO quote_items (
+                            id, quote_id, kind, label, description, qty, unit_price,
+                            tax_rate, material_id, position, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        "#,
+                        params![
+                            item.id,
+                            item.quote_id,
+                            item.kind.to_string(),
+                            item.label,
+                            item.description,
+                            item.qty,
+                            item.unit_price,
+                            item.tax_rate,
+                            item.material_id,
+                            item.position,
+                            item.created_at,
+                            item.updated_at,
+                        ],
+                    )
+                    .map_err(|e| format!("Failed to batch-insert quote item: {}", e))?;
+                }
+                Ok(())
+            })
+            .map_err(RepoError::Database)?;
+        self.invalidate_cache(&quote_id);
+        Ok(())
+    }
+
     /// Update a quote item
     pub fn update_item(
         &self,

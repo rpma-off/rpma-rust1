@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::domains::inventory::domain::models::material::{
-    InventoryStats, Material, MaterialConsumption, MaterialStats,
+    InventoryDashboardData, InventoryStats, Material, MaterialConsumption, MaterialStats,
 };
 use crate::shared::db::Database;
 use crate::shared::error::AppError;
@@ -64,6 +64,13 @@ impl InventoryFacade {
         self.service
             .get_inventory_stats()
             .map_err(|err| map_inventory_error("get_inventory_stats", err))
+    }
+
+    /// S-1: aggregated dashboard — 4 IPC calls → 1.
+    pub fn get_dashboard_data(&self) -> Result<InventoryDashboardData, AppError> {
+        self.service
+            .get_dashboard_data()
+            .map_err(|err| map_inventory_error("get_dashboard_data", err))
     }
 
     pub fn intervention_finalized_handler(&self) -> Arc<dyn DomainEventHandler> {

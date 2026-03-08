@@ -19,51 +19,40 @@ impl super::MaterialService {
     /// Get material statistics.
     pub fn get_material_stats(&self) -> MaterialResult<MaterialStats> {
         debug!("Fetching material statistics");
-        let total_materials: i32 = self
-            .db
-            .query_single_value(
-                "SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL",
-                [],
+
+        // QW-1 perf: 5 COUNT(*)/SUM queries collapsed into 1 aggregated query.
+        let now = crate::shared::contracts::common::now();
+        let (total_materials, active_materials, low_stock_materials, expired_materials, total_value) =
+            self.db.query_row_tuple(
+                r#"
+                SELECT
+                  COUNT(*)                                                                                    AS total_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END), 0)                               AS active_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                        AND deleted_at IS NULL
+                        AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?) THEN 1 ELSE 0 END), 0)      AS low_stock,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                        AND deleted_at IS NULL
+                        AND expiry_date IS NOT NULL
+                        AND expiry_date <= ?                                     THEN 1 ELSE 0 END), 0)      AS expired,
+                  COALESCE(SUM(CASE WHEN is_active = 1 AND unit_cost IS NOT NULL
+                                    THEN current_stock * unit_cost END), 0.0)                                AS total_value
+                FROM materials
+                WHERE deleted_at IS NULL
+                "#,
+                params![DEFAULT_LOW_STOCK_THRESHOLD, now],
+                |row| {
+                    Ok((
+                        row.get::<_, i32>(0)?,
+                        row.get::<_, i32>(1)?,
+                        row.get::<_, i32>(2)?,
+                        row.get::<_, i32>(3)?,
+                        row.get::<_, f64>(4)?,
+                    ))
+                },
             )?;
 
-        let active_materials: i32 = self
-            .db
-            .query_single_value(
-                "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
-                [],
-            )?;
-
-        let low_stock_materials: i32 = self.db.query_single_value(
-            r#"
-            SELECT COUNT(*) FROM materials
-            WHERE is_active = 1
-              AND deleted_at IS NULL
-              AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
-            "#,
-            params![DEFAULT_LOW_STOCK_THRESHOLD],
-        )?;
-
-        let expired_materials: i32 = self.db.query_single_value(
-            r#"
-            SELECT COUNT(*) FROM materials
-            WHERE is_active = 1
-              AND deleted_at IS NULL
-              AND expiry_date IS NOT NULL
-              AND expiry_date <= ?
-            "#,
-            params![crate::shared::contracts::common::now()],
-        )?;
-
-        let total_value: f64 = self.db.query_single_value(
-            r#"
-            SELECT COALESCE(SUM(current_stock * unit_cost), 0)
-            FROM materials
-            WHERE unit_cost IS NOT NULL AND is_active = 1 AND deleted_at IS NULL
-            "#,
-            [],
-        )?;
-
-        // ADR-011 fix: use query_multiple instead of get_connection()+prepare()+query_map()
+        // materials_by_type uses GROUP BY — kept as separate query (incompatible with above aggregation).
         let type_rows: Vec<(String, i32)> = self.db.query_multiple(
             "SELECT material_type, COUNT(*) AS count FROM materials WHERE is_active = 1 AND deleted_at IS NULL GROUP BY material_type",
             [],

@@ -18,7 +18,8 @@
       "Bash(cargo test --lib -- documents)",
       "Bash(cargo test report_pdf)",
       "Bash(timeout 90 cargo test --lib report_pdf)",
-      "Bash(npm run backend:check)"
+      "Bash(npm run backend:check)",
+      "Bash(grep -r \"deleted_at\" d:/rpma-rust/src-tauri/migrations/*.sql)"
     ]
   }
 }

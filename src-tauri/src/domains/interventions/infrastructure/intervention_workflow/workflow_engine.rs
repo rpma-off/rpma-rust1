@@ -141,11 +141,10 @@ impl super::InterventionWorkflowService {
 
                 let steps = workflow_result.steps;
 
-                for step in &steps {
-                    self.data
-                        .save_step_with_tx(tx, step)
-                        .map_err(|e| e.to_string())?;
-                }
+                // QW-3 perf: prepare statement once, execute N times instead of N prepare+execute.
+                self.data
+                    .save_steps_batch_with_tx(tx, &steps)
+                    .map_err(|e| e.to_string())?;
 
                 let mut steps_context = std::collections::HashMap::new();
                 steps_context.insert("step_count".to_string(), serde_json::json!(steps.len()));
@@ -217,38 +216,52 @@ impl super::InterventionWorkflowService {
 
         let mut cleanup_errors = Vec::new();
 
-        if let Err(e) = self.db.get_connection().and_then(|conn| {
-            conn.execute(
-                "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft', started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
-                rusqlite::params![task_id]
-            ).map_err(|db_err| db_err.to_string())
-        }) {
-            let mut ctx = std::collections::HashMap::new();
-            ctx.insert("task_id".to_string(), serde_json::json!(task_id));
-            ctx.insert("error".to_string(), serde_json::json!(e));
-            logger.error("Failed to cleanup task workflow state", None, Some(ctx));
-            cleanup_errors.push(format!("Failed to reset task: {}", e));
-        }
+        // QW-5 perf: acquire one connection for both cleanup statements instead of two.
+        match self.db.get_connection() {
+            Err(e) => {
+                cleanup_errors.push(format!("Failed to get cleanup connection: {}", e));
+            }
+            Ok(conn) => {
+                if let Err(e) = conn
+                    .execute(
+                        "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft', started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
+                        rusqlite::params![task_id],
+                    )
+                    .map_err(|db_err| db_err.to_string())
+                {
+                    let mut ctx = std::collections::HashMap::new();
+                    ctx.insert("task_id".to_string(), serde_json::json!(task_id));
+                    ctx.insert("error".to_string(), serde_json::json!(e));
+                    logger.error("Failed to cleanup task workflow state", None, Some(ctx));
+                    cleanup_errors.push(format!("Failed to reset task: {}", e));
+                }
 
-        if let Err(e) = self.db.get_connection().and_then(|conn| {
-            conn.execute(
-                "DELETE FROM intervention_steps WHERE intervention_id IN (SELECT id FROM interventions WHERE task_id = ?)",
-                rusqlite::params![task_id]
-            ).map_err(|db_err| db_err.to_string())?;
-            conn.execute(
-                "DELETE FROM interventions WHERE task_id = ?",
-                rusqlite::params![task_id]
-            ).map_err(|db_err| db_err.to_string())
-        }) {
-            let mut ctx = std::collections::HashMap::new();
-            ctx.insert("task_id".to_string(), serde_json::json!(task_id));
-            ctx.insert("error".to_string(), serde_json::json!(e));
-            logger.error("Failed to cleanup orphaned intervention", None, Some(ctx));
-            cleanup_errors.push(format!("Failed to delete orphaned intervention: {}", e));
-        } else {
-            let mut ctx = std::collections::HashMap::new();
-            ctx.insert("task_id".to_string(), serde_json::json!(task_id));
-            logger.info("Successfully cleaned up orphaned intervention", Some(ctx));
+                let del_result: Result<(), String> = (|| {
+                    conn.execute(
+                        "DELETE FROM intervention_steps WHERE intervention_id IN (SELECT id FROM interventions WHERE task_id = ?)",
+                        rusqlite::params![task_id],
+                    )
+                    .map_err(|db_err| db_err.to_string())?;
+                    conn.execute(
+                        "DELETE FROM interventions WHERE task_id = ?",
+                        rusqlite::params![task_id],
+                    )
+                    .map_err(|db_err| db_err.to_string())?;
+                    Ok(())
+                })();
+
+                if let Err(e) = del_result {
+                    let mut ctx = std::collections::HashMap::new();
+                    ctx.insert("task_id".to_string(), serde_json::json!(task_id));
+                    ctx.insert("error".to_string(), serde_json::json!(e));
+                    logger.error("Failed to cleanup orphaned intervention", None, Some(ctx));
+                    cleanup_errors.push(format!("Failed to delete orphaned intervention: {}", e));
+                } else {
+                    let mut ctx = std::collections::HashMap::new();
+                    ctx.insert("task_id".to_string(), serde_json::json!(task_id));
+                    logger.info("Successfully cleaned up orphaned intervention", Some(ctx));
+                }
+            }
         }
 
         if !cleanup_errors.is_empty() {

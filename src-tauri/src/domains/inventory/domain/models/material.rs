@@ -911,6 +911,16 @@ pub struct InventoryStats {
     pub average_inventory_age: f64,
 }
 
+/// Aggregated dashboard payload — S-1 perf: replaces 4 IPC calls with 1.
+#[derive(Debug, Serialize, ts_rs::TS)]
+#[ts(export)]
+pub struct InventoryDashboardData {
+    pub materials: Vec<Material>,
+    pub stats: InventoryStats,
+    pub low_stock: LowStockMaterialsResponse,
+    pub expired: Vec<Material>,
+}
+
 /// Inventory movement summary
 #[derive(Debug, Serialize, ts_rs::TS)]
 #[ts(export)]

@@ -81,8 +81,9 @@ export const useClientStats = (options: UseClientStatsOptions = {}): UseClientSt
   useEffect(() => {
     if (!refreshInterval || !autoFetch) return;
 
+    // S-2 perf: skip poll when tab is hidden.
     const interval = setInterval(() => {
-      fetchStats();
+      if (document.visibilityState === 'visible') fetchStats();
     }, refreshInterval);
 
     return () => clearInterval(interval);

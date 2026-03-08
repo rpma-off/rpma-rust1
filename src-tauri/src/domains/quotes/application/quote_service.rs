@@ -84,9 +84,12 @@ impl QuoteService {
             .create(&quote)
             .map_err(Self::map_create_repo_error)?;
 
-        // Add items if provided
-        for (i, item_req) in req.items.iter().enumerate() {
-            let item = QuoteItem {
+        // Add items if provided — QW-2: batch insert replaces N individual inserts + N cache invalidations.
+        let items: Vec<QuoteItem> = req
+            .items
+            .iter()
+            .enumerate()
+            .map(|(i, item_req)| QuoteItem {
                 id: Uuid::new_v4().to_string(),
                 quote_id: id.clone(),
                 kind: item_req.kind.clone(),
@@ -99,12 +102,12 @@ impl QuoteService {
                 position: item_req.position.unwrap_or(i as i32),
                 created_at: now,
                 updated_at: now,
-            };
-            self.repo
-                .add_item(&item)
-                .map_err(|_| "Impossible d'ajouter un article au devis.".to_string())?;
-            quote.items.push(item);
-        }
+            })
+            .collect();
+        self.repo
+            .add_items_batch(&items)
+            .map_err(|_| "Impossible d'ajouter les articles au devis.".to_string())?;
+        quote.items = items;
 
         // Recalculate totals
         self.recalculate_totals(&id)?;
@@ -229,9 +232,11 @@ impl QuoteService {
             .create(&new_quote)
             .map_err(Self::map_create_repo_error)?;
 
-        // Copy items
-        for (i, item) in source.items.iter().enumerate() {
-            let new_item = QuoteItem {
+        // Copy items — QW-2: batch insert (1 transaction + 1 cache invalidation instead of N).
+        let new_items: Vec<QuoteItem> = source
+            .items
+            .iter()
+            .map(|item| QuoteItem {
                 id: Uuid::new_v4().to_string(),
                 quote_id: new_id.clone(),
                 kind: item.kind.clone(),
@@ -244,12 +249,11 @@ impl QuoteService {
                 position: item.position,
                 created_at: now,
                 updated_at: now,
-            };
-            let _ = i; // position already set from source
-            self.repo
-                .add_item(&new_item)
-                .map_err(|_| "Impossible de copier les articles du devis.".to_string())?;
-        }
+            })
+            .collect();
+        self.repo
+            .add_items_batch(&new_items)
+            .map_err(|_| "Impossible de copier les articles du devis.".to_string())?;
 
         // Recalculate totals (discount re-applied)
         self.recalculate_totals(&new_id)?;
