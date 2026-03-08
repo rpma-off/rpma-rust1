@@ -2,18 +2,19 @@
 
 RPMA v2 follows strict 4-Layer Domain-Driven Design (DDD) architecture.
 
-## 4-Layer Backend Architecture
+## 5-Layer Backend Architecture (DDD + Facade)
 
 Located under `src-tauri/src/domains/[domain]/`:
 
 | Layer | Responsibility | Example Files |
 |-------|----------------|---------------|
-| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for serialization, routing, session validation | `domains/tasks/ipc/task.rs` |
+| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for auth, correlation context, and mapping | `domains/tasks/ipc/task/facade.rs` |
+| **Facade** (`mod.rs`) | Unified entry point; simplifies domain interaction for external callers (main.rs) | `domains/tasks/mod.rs` |
 | **Application** (`application/`) | Use cases, transaction boundaries, authorization enforcement, orchestration | `domains/tasks/application/task_service.rs` |
 | **Domain** (`domain/`) | Pure Rust structs, business rules, validation, entities, value objects — no I/O | `domains/tasks/domain/models/task.rs` |
 | **Infrastructure** (`infrastructure/`) | SQLite repositories, raw SQL, external adapters | `domains/tasks/infrastructure/task_repository.rs` |
 
-Data flow direction: **IPC → Application → Domain → Infrastructure**
+Data flow direction: **IPC → Facade → Application → Domain → Infrastructure**
 
 ---
 

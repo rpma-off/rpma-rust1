@@ -9,12 +9,38 @@ The database system uses SQLite customized for native app performance with WAL m
 | **Driver** | `rusqlite` |
 | **Pool** | `r2d2` connection pooling |
 | **Mode** | WAL (Write-Ahead Logging) enabled |
-| **Location** | AppData via `tauri::path::app_data_dir()` |
+| **Synchronous** | `NORMAL` |
+| **Busy Timeout** | 5000ms |
+| **WAL Checkpoint** | Every 1000 pages (~1MB) |
+| **Foreign Keys** | `ON` (enforced) |
+| **Temp Store** | `MEMORY` |
 
-**WAL Benefits**:
-- Readers don't block writers.
-- High read/write concurrency.
-- Manual or automatic checkpoints.
+---
+
+## Query Performance Monitoring (ADR-013)
+
+The application includes a built-in `QueryPerformanceMonitor` (`src-tauri/src/db/connection.rs`) to track all query executions.
+
+### Key Metrics
+- **Slow Query Threshold**: 100ms. Queries exceeding this are logged with full text and duration.
+- **Prepared Statement Cache**: Reduces parsing overhead for frequently executed queries.
+- **Async Query Support**: Uses `tokio::task::spawn_blocking` to avoid blocking the async runtime.
+- **Pool Stats**: utilization metrics available via `get_database_pool_stats` command.
+
+---
+
+## SQLite Pragma Configuration (ADR-014)
+
+All connections are initialized with optimized pragmas in `connection.rs`:
+```sql
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA busy_timeout = 5000;
+PRAGMA wal_autocheckpoint = 1000;
+PRAGMA foreign_keys = ON;
+PRAGMA temp_store = MEMORY;
+```
+This configuration balances durability and performance, enabling concurrent read access without blocking during writes.
 
 **Key Files**:
 - Connection: `src-tauri/src/db/connection.rs`

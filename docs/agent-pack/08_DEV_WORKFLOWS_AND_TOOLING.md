@@ -83,13 +83,29 @@ npm run frontend:dev
 
 ---
 
-## Frontend Testing
+## Golden Path: Backend Domain Implementation
 
-```bash
-cd frontend
-npm run test           # Jest tests
-npm run test:e2e       # Playwright E2E tests
-```
+When adding a new domain or major feature, follow this "Golden Path" as seen in `interventions` and `tasks`:
+
+1. **Strict Layering**: `IPC (facade.rs)` → `Domain Facade (facade.rs)` → `Application Service` → `Infrastructure Repository`.
+2. **Unified Requests**: Use single `Request` structs for IPC commands instead of multiple arguments.
+3. **Domain Events**: Use the `EventBus` for cross-domain side effects (e.g., updating inventory when an intervention is completed).
+4. **Thin IPC**: Keep IPC handlers under 10 lines; delegate all logic to the domain facade.
+5. **Type Safety**: Use `ts-rs` for ALL shared models. Run `npm run types:sync` immediately after changing Rust models.
+
+---
+
+## Architecture Review Checklist
+
+Use this checklist during PR reviews to prevent structural regressions:
+
+- [ ] **No Cross-Domain Imports**: Does `domain A` import `domain B`? (Check `npm run validate:bounded-contexts`)
+- [ ] **No SQL in Services**: Is there raw SQL outside of `infrastructure/` or migration files?
+- [ ] **Thin Handlers**: Do IPC handlers contain business logic or database calls?
+- [ ] **Auth Enforcement**: Are all new protected commands using `authenticate_command!` or equivalent?
+- [ ] **Type Sync**: Are TypeScript bindings up to date? (Check `npm run types:drift-check`)
+- [ ] **Audit Logging**: Do sensitive state changes trigger an audit event?
+- [ ] **Offline Ready**: Does the new entity have `synced` and `last_synced_at` fields?
 
 ---
 

@@ -24,7 +24,9 @@ Each domain contains:
 - `ipc/` — IPC wrapper functions for Tauri calls
 - `stores/` — Zustand stores (where needed)
 
-**Domains** (18 total): `admin`, `audit`, `auth`, `bootstrap`, `calendar`, `clients`, `dashboard`, `documents`, `interventions`, `inventory`, `notifications`, `performance`, `quotes`, `reports`, `settings`, `sync`, `tasks`, `users`
+**Frontend Feature Domains** (18 total):
+- **Core Entities**: `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `sync`, `documents`, `settings`, `notifications` (direct backend parity)
+- **High-Level Features**: `admin`, `bootstrap`, `dashboard`, `performance`, `audit` (aggregate or specialized modules)
 
 ---
 

@@ -23,31 +23,31 @@ The Tauri IPC is the strict boundary between Next.js frontend and Rust backend.
 | `auth_validate_session` | Check token validity | `session_token` | Protected |
 | `auth_create_account` | Create new account | `CreateAccountPayload` | Public |
 | `user_crud` | User CRUD operations | `action`, `session_token`, `data` | Protected |
-| `bootstrap_first_admin` | Setup first admin | `session_token`, `data` | Protected |
 | `client_crud` | Client CRUD operations | `action`, `session_token`, `data` | Protected |
-| `task_crud` | Task CRUD operations | `action`, `session_token`, `data` | Protected |
-| `edit_task` | Update task details | `session_token`, `id`, `changes` | Protected |
-| `task_transition_status` | Change task status | `session_token`, `id`, `new_status` | Protected |
-| `intervention_start` | Begin intervention | `session_token`, `intervention_id` | Protected |
-| `intervention_update` | Update intervention | `session_token`, `id`, `changes` | Protected |
-| `intervention_finalize` | Complete intervention | `session_token`, `id`, `data` | Protected |
-| `intervention_advance_step` | Move to next step | `session_token`, `intervention_id`, `step_data` | Protected |
-| `intervention_save_step_progress` | Save step progress | `session_token`, `id`, `step_id`, `progress` | Protected |
+| `task_crud` | Task CRUD (unified) | `action`, `session_token`, `data` | Protected |
+| `edit_task` | Update task details | `request` (EditTaskRequest) | Protected |
+| `add_task_note` | Add note to task | `request` (AddTaskNoteRequest) | Protected |
+| `send_task_message` | Send task-scoped message| `request` (SendTaskMessageRequest) | Protected |
+| `report_task_issue` | Log task issue | `request` (ReportTaskIssueRequest) | Protected |
+| `task_transition_status` | Change task status | `id`, `new_status`, `session_token` | Protected |
+| `intervention_start` | Begin intervention | `request` (StartInterventionRequest) | Protected |
+| `intervention_advance_step` | Move to next step | `request` (AdvanceStepRequest) | Protected |
+| `intervention_save_step_progress` | Save progress | `request` (SaveStepProgressRequest) | Protected |
+| `intervention_finalize` | Complete intervention | `request` (FinalizeInterventionRequest) | Protected |
+| `intervention_get` | Get intervention | `id`, `session_token` | Protected |
 | `material_create` | Create material | `session_token`, `data` | Protected |
 | `material_list` | List materials | `session_token`, `filters` | Protected |
 | `material_update_stock` | Adjust stock level | `session_token`, `id`, `quantity` | Protected |
-| `material_record_consumption` | Log material use | `session_token`, `intervention_id`, `material_id`, `quantity` | Protected |
 | `quote_create` | Create quote | `session_token`, `data` | Protected |
 | `quote_list` | List quotes | `session_token`, `filters` | Protected |
 | `quote_mark_accepted` | Accept quote | `session_token`, `quote_id` | Protected |
 | `quote_convert_to_task` | Convert to task | `session_token`, `quote_id` | Protected |
 | `sync_now` | Trigger sync | `session_token` | Protected |
 | `sync_get_status` | Check sync status | `session_token` | Protected |
-| `sync_enqueue` | Add to sync queue | `session_token`, `operation` | Protected |
 | `report_generate` | Generate report | `session_token`, `report_type`, `params` | Protected |
-| `report_list` | List reports | `session_token`, `filters` | Protected |
 | `health_check` | System health | — | Public |
 | `dashboard_get_stats` | Dashboard stats | `session_token` | Protected |
+| `get_performance_stats` | Performance metrics | `session_token` | Protected |
 
 ---
 

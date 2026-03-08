@@ -37,7 +37,9 @@ domains/[domain]/
 └── infrastructure/   # Repositories, SQL, adapters
 ```
 
-**Domains** (18): `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `settings`, `audit`, `sync`, `documents`, `notifications`, `performance`, `navigation`, `status`, `message`
+**Backend DDD Domains** (14): `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `settings`, `audit`, `sync`, `documents`, `notifications`
+
+**Command Modules** (in `commands/`): `system`, `ui`, `performance`, `navigation`, `ipc_optimization`, `websocket`
 
 ---
 
@@ -62,36 +64,40 @@ Commands registered via `tauri::generate_handler![]`:
 
 ### Step 1: Domain Model
 **Location**: `src-tauri/src/domains/[domain]/domain/models/[entity].rs`
-
-Add `#[derive(TS)]` and `#[ts(export)]` for type generation.
+- Add `#[derive(TS)]` and `#[ts(export)]` for type generation.
+- Ensure validation logic resides in `impl` blocks here.
 
 ### Step 2: Repository (Infrastructure)
 **Location**: `src-tauri/src/domains/[domain]/infrastructure/[entity]_repository.rs`
-
-Handle raw SQL and SQLite interactions using `rusqlite`.
+- Handle raw SQL and SQLite interactions using `rusqlite`.
+- Use the shared connection pool.
 
 ### Step 3: Application Service
 **Location**: `src-tauri/src/domains/[domain]/application/[entity]_service.rs`
+- Orchestrate domain logic, handle transaction boundaries, and enforce authorization.
 
-Orchestrate domain logic, transactions, and audit logging.
+### Step 4: Domain Facade
+**Location**: `src-tauri/src/domains/[domain]/facade.rs`
+- Create a `[Domain]Facade` struct.
+- Define `[Domain]Command` and `[Domain]Response` enums.
+- Implement `execute()` to delegate to application services.
+- Re-export via `mod.rs`.
 
-### Step 4: IPC Handler
-**Location**: `src-tauri/src/domains/[domain]/ipc/[entity].rs`
+### Step 5: IPC Handler
+**Location**: `src-tauri/src/domains/[domain]/ipc/[entity]/facade.rs` (or similar)
+- Use `authenticate_command!` (or `workflow_ctx` pattern) to validate sessions.
+- Delegate all execution to the domain `Facade`.
+- Map results to `ApiResponse`.
 
-Use `authenticate!` macro to validate session and roles. Delegate to application services.
-
-### Step 5: Register Command
+### Step 6: Register Command
 **Location**: `src-tauri/src/main.rs`
+- Add the handler to `tauri::generate_handler![]`.
 
-Add to `tauri::generate_handler![]`.
-
-### Step 6: Generate Types
+### Step 7: Generate Types & Frontend Wrapper
 ```bash
 npm run types:sync
 ```
-
-### Step 7: Frontend IPC Wrapper
-**Location**: `frontend/src/domains/[domain]/ipc/[entity].ipc.ts`
+- Update `frontend/src/domains/[domain]/ipc/[entity].ipc.ts` using `safeInvoke`.
 
 ---
 

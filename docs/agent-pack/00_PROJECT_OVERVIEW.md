@@ -15,20 +15,28 @@ RPMA v2 is an **offline-first desktop application** for managing Paint Protectio
 ## Core Bounded Contexts (Domains)
 The repository enforces Domain-Driven Design (DDD). Cross-domain access is strictly forbidden except through public interfaces.
 
-| Domain | Purpose | Key Path |
-|--------|---------|----------|
-| **tasks** | Work order creation, assignment, status tracking | `src-tauri/src/domains/tasks/`, `frontend/src/domains/tasks/` |
-| **interventions** | PPF execution lifecycle, step-by-step workflows, photo logging | `src-tauri/src/domains/interventions/`, `frontend/src/domains/interventions/` |
-| **inventory** | Material tracking, stock management, consumption logging | `src-tauri/src/domains/inventory/`, `frontend/src/domains/inventory/` |
-| **auth/users** | Authentication, session management, RBAC | `src-tauri/src/domains/auth/`, `src-tauri/src/domains/users/` |
-| **quotes** | Quote creation, pricing, conversion to tasks | `src-tauri/src/domains/quotes/`, `frontend/src/domains/quotes/` |
-| **calendar** | Scheduling and timeline views | `src-tauri/src/domains/calendar/`, `frontend/src/domains/calendar/` |
-| **clients** | Customer profiles and histories | `src-tauri/src/domains/clients/`, `frontend/src/domains/clients/` |
-| **reports/audit** | Business intelligence and audit trails | `src-tauri/src/domains/reports/`, `src-tauri/src/domains/audit/` |
-| **documents** | Photo storage, file attachments | `src-tauri/src/domains/documents/`, `frontend/src/domains/documents/` |
-| **sync** | Offline queue, background sync operations | `src-tauri/src/domains/sync/`, `frontend/src/domains/sync/` |
-| **notifications** | In-app notifications and messaging | `src-tauri/src/domains/notifications/` |
-| **settings** | User preferences and app configuration | `src-tauri/src/domains/settings/`, `frontend/src/domains/settings/` |
+### Backend DDD Domains (14)
+Located in `src-tauri/src/domains/`:
+- **auth/users**: Authentication, sessions, RBAC, profiles
+- **tasks**: Work order lifecycle, assignment, status (includes `status` subdomain)
+- **interventions**: PPF execution workflow, steps, progress
+- **inventory**: Material tracking, stock, consumption
+- **quotes**: Quote lifecycle, pricing, conversion to tasks
+- **calendar**: Scheduling, timeline views
+- **clients**: Customer profiles, history
+- **reports**: Business intelligence, analytics, exports
+- **documents**: Photo storage, file attachments
+- **sync**: Offline queue, background sync
+- **audit**: Security logging, activity monitoring
+- **settings**: System and user configuration
+- **notifications**: In-app notifications and messaging (includes `message` subdomain)
+- **navigation**: Backend-driven navigation and shortcuts
+
+### Frontend Feature Domains (18)
+Located in `frontend/src/domains/`:
+`admin`, `audit`, `auth`, `bootstrap`, `calendar`, `clients`, `dashboard`, `documents`, `interventions`, `inventory`, `notifications`, `performance`, `quotes`, `reports`, `settings`, `sync`, `tasks`, `users`.
+
+*Note: Some frontend domains (like `dashboard`, `admin`, `performance`) aggregate multiple backend domains or interact with specialized backend command modules.*
 
 ## Golden Paths
 
