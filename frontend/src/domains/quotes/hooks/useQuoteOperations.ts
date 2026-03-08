@@ -69,6 +69,7 @@ interface VehicleInfo {
   year: string;
   vin: string;
   scheduledDate?: string;
+  ppfZones?: string[];
 }
 
 export function useConvertQuoteToTask() {

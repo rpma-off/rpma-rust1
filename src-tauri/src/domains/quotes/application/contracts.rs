@@ -148,6 +148,7 @@ pub struct QuoteConvertToTaskRequest {
     pub vehicle_year: Option<String>,
     pub vehicle_vin: Option<String>,
     pub scheduled_date: Option<String>,
+    pub ppf_zones: Option<Vec<String>>,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }

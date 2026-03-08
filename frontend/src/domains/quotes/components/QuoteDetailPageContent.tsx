@@ -590,6 +590,7 @@ export function QuoteDetailPageContent() {
           model: quote.vehicle_model || '',
           year: quote.vehicle_year || '',
           vin: quote.vehicle_vin || '',
+          ppfZones: [],
         }}
         open={showConvertDialog}
         onOpenChange={setShowConvertDialog}
