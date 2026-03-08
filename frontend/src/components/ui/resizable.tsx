@@ -9,7 +9,7 @@ const ResizableGroup = ResizablePrimitive.Group
 const ResizablePanel = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.Panel>,
   React.ComponentPropsWithoutRef<typeof ResizablePrimitive.Panel>
->(({ className, id, style, ...props }, ref) => (
+>(({ className, id, style, ...props }, _ref) => (
   <ResizablePrimitive.Panel
     id={id}
     style={style}
@@ -28,7 +28,7 @@ interface ResizableHandleProps {
 const ResizableHandle = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.Separator>,
   ResizableHandleProps
->(({ className, withHandle, disabled }, ref) => (
+>(({ className, withHandle, disabled }, _ref) => (
   <ResizablePrimitive.Separator
     disabled={disabled}
     className={cn(

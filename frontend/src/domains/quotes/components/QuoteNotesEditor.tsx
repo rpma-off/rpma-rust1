@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { FileText, MessageSquare, Lock } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,

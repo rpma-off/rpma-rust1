@@ -48,7 +48,6 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     validateStep,
     canProceedToNextStep,
     isDirty,
-    lastSaved,
     autoSave,
     clearDraft,
   } = useTaskForm(user?.user_id, mergedInitialData);

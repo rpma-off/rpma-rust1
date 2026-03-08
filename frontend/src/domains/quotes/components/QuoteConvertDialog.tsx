@@ -53,7 +53,7 @@ export function QuoteConvertDialog({
   });
   const [errors, setErrors] = useState<Partial<Record<keyof VehicleInfo, string>>>({});
 
-  const handleFieldChange = useCallback((field: keyof VehicleInfo, value: any) => {
+  const handleFieldChange = useCallback((field: keyof VehicleInfo, value: unknown) => {
     setVehicleInfo(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: undefined }));
   }, []);
@@ -95,7 +95,7 @@ export function QuoteConvertDialog({
         onSuccess?.(result.task_id);
         onOpenChange(false);
       }
-    } catch (err) {
+    } catch {
       // Error is handled by the hook
     }
   }, [quoteId, vehicleInfo, validate, convertQuoteToTask, onSuccess, onOpenChange]);

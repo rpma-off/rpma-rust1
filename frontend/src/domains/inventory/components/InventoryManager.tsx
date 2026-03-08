@@ -15,8 +15,7 @@ import { MaterialForm } from './MaterialForm';
 import { useInventory } from '../hooks/useInventory';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Material, MaterialType } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
-import { 
+import {
   Plus, 
   Search, 
   Filter, 
@@ -46,8 +45,6 @@ export function InventoryManager({ className }: InventoryManagerProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(null);
-
-  const { user } = useAuth();
 
   const {
     materials,

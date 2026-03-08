@@ -11,7 +11,7 @@ describe('compressImage', () => {
   });
 
   afterEach(() => {
-    delete (global as any).Image;
+    delete (global as unknown as Record<string, unknown>).Image;
   });
 
   it('should compress image to target dimensions', async () => {

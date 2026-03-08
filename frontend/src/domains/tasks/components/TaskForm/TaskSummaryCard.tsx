@@ -1,6 +1,5 @@
 import React from 'react';
-import { Car, User, Shield, Calendar, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Clock, CheckCircle2 } from 'lucide-react';
 import type { TaskFormData } from './types';
 
 interface TaskSummaryCardProps {
@@ -10,7 +9,7 @@ interface TaskSummaryCardProps {
 
 export const TaskSummaryCard: React.FC<TaskSummaryCardProps> = React.memo(({
   formData,
-  isEditing = false
+  isEditing: _isEditing = false
 }) => {
   const calculateSurfaceEstimate = () => {
     const zoneCount = formData.ppf_zones?.length || 0;

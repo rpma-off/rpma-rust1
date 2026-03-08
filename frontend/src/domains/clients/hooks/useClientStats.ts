@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/domains/auth';
 import { clientService, type ClientStats } from '../services';
-import type { ClientStatistics } from '@/lib/backend/clients';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/lib/logging/types';
 import { normalizeError } from '@/types/utility.types';

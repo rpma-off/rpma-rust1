@@ -4,10 +4,9 @@ import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, Image as ImageIcon, Loader2, X, Upload } from 'lucide-react';
-import { compressImage, formatFileSize } from '@/domains/quotes/utils/image-compression';
+import { Camera, Image as ImageIcon, Loader2, X } from 'lucide-react';
+import { compressImage } from '@/domains/quotes/utils/image-compression';
 import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes/hooks/useQuotes';
 
 import type { QuoteAttachment } from '@/types/quote.types';
@@ -23,7 +22,7 @@ export function QuoteImagesManager({
   initialImages,
   maxImages,
 }: QuoteImagesManagerProps) {
-  const { attachments, loading, refetch } = useQuoteAttachments(quoteId);
+  const { refetch } = useQuoteAttachments(quoteId);
   const { createAttachment, updateAttachment, deleteAttachment } = useQuoteAttachmentActions();
 
   const [images, setImages] = useState<QuoteAttachment[]>(
@@ -117,10 +116,6 @@ export function QuoteImagesManager({
 
     await updateAttachment(quoteId, attachmentId, { description });
   }, [quoteId, updateAttachment]);
-
-  const handleToggleInvoice = useCallback(async (_attachmentId: string, _checked: boolean) => {
-    // include_in_invoice is not supported by the backend
-  }, []);
 
   return (
     <Card className="border-0 shadow-sm">

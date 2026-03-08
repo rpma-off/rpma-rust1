@@ -43,13 +43,13 @@ jest.mock('@/shared/hooks/useTranslation', () => ({
 
 jest.mock('next/dynamic', () => {
   const ReactModule = require('react');
-  return (loader: () => Promise<{ default: React.ComponentType<any> }>) => {
+  return (loader: () => Promise<{ default: React.ComponentType<unknown> }>) => {
     const DynamicComponent = (props: Record<string, unknown>) => {
-      const [Loaded, setLoaded] = ReactModule.useState<React.ComponentType<any> | null>(null);
+      const [Loaded, setLoaded] = ReactModule.useState<React.ComponentType<unknown> | null>(null);
       ReactModule.useEffect(() => {
         let mounted = true;
         Promise.resolve(loader()).then((mod) => {
-          const Resolved = mod.default || (mod as unknown as React.ComponentType<any>);
+          const Resolved = mod.default || (mod as unknown as React.ComponentType<unknown>);
           if (mounted) {
             setLoaded(() => Resolved);
           }

@@ -1,8 +1,6 @@
 import React, { memo, useState, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Play,
-  CheckCircle,
   MoreVertical,
   Edit,
   FileText,
@@ -10,7 +8,6 @@ import {
   MessageSquare,
   Clock,
   AlertCircle,
-  ArrowRight,
   User,
   Settings,
 } from 'lucide-react';
@@ -19,10 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { TaskStatus, TaskPriority } from '@/lib/backend';
+import { TaskStatus } from '@/lib/backend';
 import { TaskWithDetails } from '@/types/task.types';
-import { toast } from 'sonner';
-import { interventionKeys } from '@/lib/query-keys';
 import { useTaskActions } from './useTaskActions';
 import { PrimaryActionButton } from './PrimaryActionButton';
 import { SecondaryActionsGrid } from './SecondaryActionsGrid';
@@ -59,6 +54,7 @@ type ActionItem = {
   disabled?: boolean;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const ActionsCard: React.FC<ActionsCardProps> = ({
   task,
   isAssignedToCurrentUser,
@@ -83,7 +79,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const isInProgress = task.status === 'in_progress';
   const isCompleted = task.status === 'completed';
-  const hasChecklist = task.checklist_items && task.checklist_items.length > 0;
   const shouldShowDisabledReason = !canStartTask && !isInProgress && !isCompleted;
 
   const handleViewCompleted = () => {

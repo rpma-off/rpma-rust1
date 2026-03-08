@@ -240,7 +240,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
         allStepPhotoUrls.length > 0
       ),
     };
-  }, [safeTask, currentUserId, checklistItems]);
+  }, [safeTask, currentUserId, checklistItems, allStepPhotoUrls]);
 
   // Event handlers with stable references
   const _handleStartTask = useCallback(async () => {

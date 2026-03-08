@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useNotificationStore } from '../stores/notificationStore';
-import { getNotifications, markNotificationRead } from '../services/notificationActions';
+import { getNotifications } from '../services/notificationActions';
 import { useAuth } from '@/domains/auth';
 
 export function useNotificationUpdates() {

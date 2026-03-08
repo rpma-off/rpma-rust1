@@ -77,7 +77,7 @@ export const enhancedToast = {
       success: string | ((data: T) => string);
       error: string | ((error: Error) => string);
     },
-    options?: {
+    _options?: {
       success?: { duration?: number };
       error?: { duration?: number };
     }

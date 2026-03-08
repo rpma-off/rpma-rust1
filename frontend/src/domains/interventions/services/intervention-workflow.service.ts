@@ -5,7 +5,7 @@ import { interventionsIpc } from '../ipc/interventions.ipc';
 import type { AdvanceStepRequest, FinalizeInterventionRequest, JsonValue, StartInterventionRequest } from '@/lib/backend';
 import type { PPFIntervention } from './ppf';
 import type { ListResponse } from '@/types/api';
-import type { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
+import type { PPFInterventionStep } from '@/types/ppf-intervention';
 
 export interface AdvanceStepDTO {
   interventionId: string;

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Zap, Calendar, Target } from 'lucide-react';
 
 interface TaskFormHeaderProps {
   isEditing: boolean;
@@ -15,8 +14,8 @@ export const TaskFormHeader: React.FC<TaskFormHeaderProps> = React.memo(({
   taskNumber,
   showHeader,
   currentStepLabel = 'Étape 1',
-  stepsCount = 4,
-  currentStepIndex = 0
+  stepsCount: _stepsCount = 4,
+  currentStepIndex: _currentStepIndex = 0
 }) => {
   if (!showHeader) return null;
 

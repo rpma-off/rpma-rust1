@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

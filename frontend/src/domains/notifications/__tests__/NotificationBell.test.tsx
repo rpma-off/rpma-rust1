@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationBell } from '../components/NotificationBell';
 import { useNotificationStore } from '../stores/notificationStore';
-import type { Notification } from '@/lib/backend/notifications';
 
 jest.mock('@/lib/ipc/notification', () => ({
   notificationApi: {

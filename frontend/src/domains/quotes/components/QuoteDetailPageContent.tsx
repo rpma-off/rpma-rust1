@@ -260,7 +260,7 @@ export function QuoteDetailPageContent() {
             <span className="hidden sm:inline">Articles</span>
           </TabsTrigger>
           <TabsTrigger value="images" className="gap-2">
-            <Image className="h-4 w-4" />
+            <Image className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Images</span>
           </TabsTrigger>
           <TabsTrigger value="documents" className="gap-2">

@@ -7,7 +7,7 @@ import AppNavigation from '@/app/AppNavigation';
 import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
 import { useAuth } from '@/domains/auth';
 import { usePathname } from 'next/navigation';
-import { Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
 import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { useAuthRedirect, useAdminBootstrapCheck } from '@/domains/auth';

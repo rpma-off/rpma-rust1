@@ -8,7 +8,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { interventionWorkflowService } from '@/domains/interventions/server';
 import { validateApiAuth } from '@/lib/api-auth';
-import { InterventionWorkflowService } from '@/domains/interventions/server';
 import { PPFInterventionData, PPFInterventionStep } from '@/types/ppf-intervention';
 
 interface ProgressData {
@@ -367,35 +366,6 @@ async function calculateProgressData(intervention: PPFInterventionData, steps: P
     blockers,
     recommendations
   };
-}
-
-/**
- * Met Ã  jour le progrï¿½s de l'intervention
- */
-async function updateInterventionProgress(
-  workflowService: InterventionWorkflowService,
-  interventionId: string,
-  updateData: ProgressUpdateRequest
-) {
-  try {
-    // Pour l'instant, on simule la mise Ã  jour
-    // NOTE: Implï¿½menter la vraie logique de mise Ã  jour dans le service
-    console.info('Updating progress for intervention:', interventionId, updateData);
-
-    return {
-      success: true,
-      data: {
-        intervention_id: interventionId,
-        updated: true
-      }
-    };
-  } catch (error) {
-    console.error('Error updating intervention progress:', error);
-    return {
-      success: false,
-      error: 'Failed to update progress'
-    };
-  }
 }
 
 /**

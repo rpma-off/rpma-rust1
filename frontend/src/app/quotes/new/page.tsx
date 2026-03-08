@@ -60,7 +60,6 @@ export default function NewQuotePage() {
     setVehicleYear,
     setVehiclePlate,
     setVehicleVin,
-    refetchClients,
     handleSubmit,
   } = useNewQuotePage();
 

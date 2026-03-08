@@ -32,7 +32,6 @@ import { MaterialForm } from './MaterialForm';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/domains/auth';
-import { inventoryIpc } from '../ipc/inventory.ipc';
 
 function getMaterialTypeLabel(materialType: string, t: (key: string) => string): string {
   switch (materialType) {

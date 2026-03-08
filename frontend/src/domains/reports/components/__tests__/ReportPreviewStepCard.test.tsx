@@ -42,7 +42,6 @@ describe('ReportPreviewStepCard', () => {
   });
 
   it('shows defects after expanding the card', async () => {
-    const user = userEvent.setup();
     const step = makeStep({ defects: ['Rayure légère'], notes: 'RAS' });
 
     render(<ReportPreviewStepCard step={step} />);

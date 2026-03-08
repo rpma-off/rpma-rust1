@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCents, getCurrencySymbol } from '@/lib/format';
+import { formatCents } from '@/lib/format';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -33,13 +33,11 @@ export function QuoteTotalsCard({
   taxRate,
   discountType,
   discountValue,
-  currencyCode = 'EUR',
+  currencyCode: _currencyCode = 'EUR',
   onTaxRateChange,
   onDiscountTypeChange,
   onDiscountValueChange,
 }: QuoteTotalsCardProps) {
-  const cs = getCurrencySymbol(currencyCode);
-
   const rawSubtotal = partsSubtotal + laborSubtotal;
 
   const { subtotal, taxTotal, total, discountAmount } = computeTotalsFromSubtotals(

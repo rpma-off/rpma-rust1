@@ -23,7 +23,6 @@ import {
   TabsTrigger,
 } from '@/shared/ui/facade';
 import { useAuth } from '@/domains/auth';
-import { useRouter } from 'next/navigation';
 import { useAdminDashboard, useAdminUserManagement, AdminOverviewTab, AdminUsersTab, AdminSystemTab } from '@/domains/admin';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
@@ -55,7 +54,6 @@ const AddUserModal = dynamic(
 // Custom hook for AdminPage logic
 function useAdminPage() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { user } = useAuth(); // Assuming useAuth provides user object with role
   const adminDashboard = useAdminDashboard();
   const adminUserManagement = useAdminUserManagement();

@@ -10,7 +10,7 @@ export interface QuoteTotalsProps {
   currencyCode?: string;
 }
 
-export function QuoteTotals({ subtotal, taxTotal, total, discountAmount, currencyCode = 'EUR' }: QuoteTotalsProps) {
+export function QuoteTotals({ subtotal, taxTotal, total, discountAmount, currencyCode: _currencyCode = 'EUR' }: QuoteTotalsProps) {
   const subtotalBeforeDiscount = discountAmount ? subtotal + discountAmount : subtotal;
 
   return (

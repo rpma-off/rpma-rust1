@@ -5,7 +5,7 @@
  */
 
 import { safeInvoke, NOT_IMPLEMENTED_COMMANDS, PUBLIC_COMMANDS } from './utils';
-import type { IpcAdapter, IpcInvokeOptions, IpcError } from './adapter';
+import type { IpcAdapter, IpcInvokeOptions } from './adapter';
 import type { JsonObject } from '@/types/json';
 
 /**

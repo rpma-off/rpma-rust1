@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { render, screen } from '@testing-library/react';
 import { useNotificationStore } from '../stores/notificationStore';
 import type { Notification } from '@/lib/backend/notifications';
 

@@ -1,4 +1,4 @@
-import type { Intervention, InterventionStep } from '@/lib/backend';
+import type { InterventionStep } from '@/lib/backend';
 
 export type StepExportPayload = {
   exported_at: string;

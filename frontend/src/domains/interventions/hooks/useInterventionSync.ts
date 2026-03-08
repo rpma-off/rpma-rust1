@@ -2,14 +2,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { AuthSecureStorage } from '@/lib/secureStorage';
-import { safeInvoke } from '@/lib/ipc';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { interventionWorkflowService } from '../services';
 import { interventionKeys } from '@/lib/query-keys';
 import type {
   PPFInterventionData,
   PPFInterventionStep,
-  QualityCheckpointData,
 } from '@/types/ppf-intervention';
 
 interface UseInterventionSyncProps {

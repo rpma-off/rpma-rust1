@@ -10,7 +10,6 @@
  */
 
 import type { JsonObject, JsonValue } from '@/types/json';
-import type { ApiError } from '@/lib/backend';
 
 /**
  * Options for IPC invocations

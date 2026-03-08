@@ -3,8 +3,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   FileText,
@@ -29,8 +27,8 @@ export function QuoteDocumentsManager({
   initialDocuments,
   maxDocuments,
 }: QuoteDocumentsManagerProps) {
-  const { attachments, loading, refetch } = useQuoteAttachments(quoteId);
-  const { createAttachment, updateAttachment, deleteAttachment } = useQuoteAttachmentActions();
+  const { refetch } = useQuoteAttachments(quoteId);
+  const { createAttachment, deleteAttachment } = useQuoteAttachmentActions();
 
   const [files, setFiles] = useState<QuoteAttachment[]>(
     initialDocuments.filter(f => !f.mime_type?.startsWith('image/'))
@@ -99,20 +97,6 @@ export function QuoteDocumentsManager({
       toast.error('Échec de la suppression');
     }
   }, [quoteId, deleteAttachment, refetch]);
-
-  const handleDescriptionChange = useCallback(async (attachmentId: string, description: string) => {
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === attachmentId ? { ...f, description } : f
-      )
-    );
-
-    await updateAttachment(quoteId, attachmentId, { description });
-  }, [quoteId, updateAttachment]);
-
-  const handleToggleInvoice = useCallback(async (_attachmentId: string, _checked: boolean) => {
-    // include_in_invoice is not supported by the backend
-  }, []);
 
   function getFileIcon(mimeType: string) {
     if (mimeType === 'application/pdf') {

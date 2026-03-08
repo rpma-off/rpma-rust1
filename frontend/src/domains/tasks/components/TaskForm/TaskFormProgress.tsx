@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FormStep, ENHANCED_STEPS as STEPS_CONFIG } from './types';
@@ -18,7 +18,7 @@ export const TaskFormProgress: React.FC<TaskFormProgressProps> = React.memo(({
 }) => {
   const stepItems = useMemo(
     () =>
-      STEPS_CONFIG.map((step, index) => ({
+      STEPS_CONFIG.map((step, _index) => ({
         id: step.id,
         label: step.label,
         description: step.description,

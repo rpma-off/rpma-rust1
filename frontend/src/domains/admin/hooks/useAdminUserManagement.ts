@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/domains/auth';
 import { ipcClient, convertTimestamps } from '@/shared/utils';
 import type { CreateUserRequest, UserAccount } from '@/shared/types';
