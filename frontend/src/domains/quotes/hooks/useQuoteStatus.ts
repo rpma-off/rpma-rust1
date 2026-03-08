@@ -4,7 +4,6 @@ import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import type {
   Quote,
   QuoteAcceptResponse,
-  ApiResponse,
 } from '@/types/quote.types';
 
 export function useQuoteStatus() {
@@ -17,8 +16,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.markSent(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -34,8 +33,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.markAccepted(id, user.token);
-        const response = result as unknown as ApiResponse<QuoteAcceptResponse>;
-        return response?.success ? (response.data ?? null) : null;
+        const response = result as QuoteAcceptResponse | null;
+        return response?.quote?.id ? response : null;
       } catch {
         return null;
       } finally {
@@ -51,8 +50,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.markRejected(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -68,8 +67,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.markExpired(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -85,8 +84,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.markChangesRequested(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -102,8 +101,8 @@ export function useQuoteStatus() {
       try {
         setLoading(true);
         const result = await quotesIpc.reopen(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {

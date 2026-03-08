@@ -247,7 +247,7 @@ impl QuoteRepository {
         params_vec.push(id.to_string().into());
 
         let sql = format!(
-            "UPDATE quotes SET {} WHERE id = ? AND status = 'draft'",
+            "UPDATE quotes SET {} WHERE id = ? AND status = 'draft' AND deleted_at IS NULL",
             sets.join(", ")
         );
 
@@ -291,7 +291,7 @@ impl QuoteRepository {
         let rows = self
             .db
             .execute(
-                "UPDATE quotes SET status = ?, updated_at = (unixepoch() * 1000) WHERE id = ?",
+                "UPDATE quotes SET status = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![status.to_string(), id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update quote status: {}", e)))?;
@@ -308,7 +308,7 @@ impl QuoteRepository {
     pub fn link_task(&self, quote_id: &str, task_id: &str) -> RepoResult<()> {
         self.db
             .execute(
-                "UPDATE quotes SET task_id = ?, updated_at = (unixepoch() * 1000) WHERE id = ?",
+                "UPDATE quotes SET task_id = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![task_id, quote_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to link task to quote: {}", e)))?;
@@ -327,7 +327,7 @@ impl QuoteRepository {
     ) -> RepoResult<()> {
         self.db
             .execute(
-                "UPDATE quotes SET subtotal = ?, tax_total = ?, total = ?, updated_at = (unixepoch() * 1000) WHERE id = ?",
+                "UPDATE quotes SET subtotal = ?, tax_total = ?, total = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![subtotal, tax_total, total, id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update quote totals: {}", e)))?;
@@ -347,7 +347,7 @@ impl QuoteRepository {
     ) -> RepoResult<()> {
         self.db
             .execute(
-                "UPDATE quotes SET subtotal = ?, discount_amount = ?, tax_total = ?, total = ?, updated_at = (unixepoch() * 1000) WHERE id = ?",
+                "UPDATE quotes SET subtotal = ?, discount_amount = ?, tax_total = ?, total = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![subtotal, discount_amount, tax_total, total, id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update quote totals with discount: {}", e)))?;
@@ -858,5 +858,33 @@ mod tests {
         assert_eq!(found.subtotal, 10000);
         assert_eq!(found.tax_total, 2000);
         assert_eq!(found.total, 12000);
+    }
+
+    #[tokio::test]
+    async fn test_soft_deleted_quote_cannot_be_updated() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = QuoteRepository::new(db.clone(), cache);
+
+        insert_test_client(&db, "client-7");
+
+        let quote = make_test_quote("q7", "client-7");
+        repo.create(&quote).unwrap();
+        assert!(repo.delete("q7").unwrap());
+
+        let update_result = repo.update_totals("q7", 10000, 2000, 12000);
+        assert!(update_result.is_err());
+
+        let subtotal: i64 = db
+            .query_single_value("SELECT subtotal FROM quotes WHERE id = ?", params!["q7"])
+            .expect("read subtotal");
+        let tax_total: i64 = db
+            .query_single_value("SELECT tax_total FROM quotes WHERE id = ?", params!["q7"])
+            .expect("read tax total");
+        let total: i64 = db
+            .query_single_value("SELECT total FROM quotes WHERE id = ?", params!["q7"])
+            .expect("read total");
+
+        assert_eq!((subtotal, tax_total, total), (0, 0, 0));
     }
 }

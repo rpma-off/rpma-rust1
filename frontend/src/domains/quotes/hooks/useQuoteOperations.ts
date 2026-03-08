@@ -4,7 +4,6 @@ import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import type {
   Quote,
   QuoteExportResponse,
-  ApiResponse,
 } from '@/types/quote.types';
 
 // --- useDuplicateQuote ---
@@ -19,8 +18,8 @@ export function useDuplicateQuote() {
       try {
         setLoading(true);
         const result = await quotesIpc.duplicate(id, user.token);
-        const response = result as unknown as ApiResponse<Quote>;
-        return response?.success ? (response.data ?? null) : null;
+        const quote = result as Quote | null;
+        return quote?.id ? quote : null;
       } catch {
         return null;
       } finally {
@@ -45,8 +44,8 @@ export function useQuoteExportPdf() {
       try {
         setLoading(true);
         const result = await quotesIpc.exportPdf(id, user.token);
-        const response = result as unknown as ApiResponse<QuoteExportResponse>;
-        return response?.success ? (response.data ?? null) : null;
+        const response = result as QuoteExportResponse | null;
+        return response?.file_path ? response : null;
       } catch {
         return null;
       } finally {
@@ -96,14 +95,13 @@ export function useConvertQuoteToTask() {
 
       try {
         const result = await quotesIpc.convertToTask(quoteId, vehicleInfo, user.token);
-        const response = result as unknown as ApiResponse<QuoteConvertResponse>;
+        const response = result as QuoteConvertResponse | null;
 
-        if (response?.success && response.data) {
-          return response.data;
+        if (response?.task_id) {
+          return response;
         }
 
-        const errorMsg = response?.error?.message || 'Conversion failed';
-        setError(new Error(errorMsg));
+        setError(new Error('Conversion failed'));
         return null;
       } catch (err: unknown) {
         const errorObj = err instanceof Error ? err : new Error('Unknown error');

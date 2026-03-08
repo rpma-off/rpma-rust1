@@ -15,7 +15,7 @@ export interface QuoteAttachmentsManagerProps {
 
 export function QuoteAttachmentsManager({
   quoteId,
-  attachments,
+  attachments = [],
   onRefresh,
   onCreateAttachment,
   onUpdateAttachment,
