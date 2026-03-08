@@ -9,7 +9,6 @@ RPMA v2 is an **offline-first desktop application** designed for managing Paint 
 - **Backend**: Rust 1.85+, Tauri 2.1 framework.
 - **Database**: SQLite with WAL mode (via `rusqlite` and `r2d2` pooling) for high-concurrency local storage.
 - **State Management & Caching**: Zustand, React Query, Context API.
-- **Auth**: JWT tokens (with optional 2FA support), hashed with Argon2.
 - **Type Safety**: Automatic generation of TypeScript types from Rust models using `ts-rs`.
 
 ## Core Bounded Contexts (Domains)

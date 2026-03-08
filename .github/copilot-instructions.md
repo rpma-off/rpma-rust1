@@ -1,10 +1,8 @@
 # Copilot Coding Agent Instructions for RPMA v2
 
-
 ## Project Overview
 
-RPMA v2 is an **offline-first desktop application for managing Paint Protection Film (PPF) interventions. The application handles tasks, interventions, workflow steps, photo management, inventory tracking, reporting, and user management with role-based access control.
-
+RPMA v2 is an **offline-first desktop application for managing Paint Protection Film (PPF) interventions.
 
 ## 📁 Project Structure
 
@@ -75,150 +73,206 @@ rpma-rust1/
 - **Backend**: Rust with Tauri framework
 - **Database**: SQLite with WAL mode
 - **State Management**: React hooks, Context API, Zustand
-- **Authentication**: JWT tokens with 2FA support
 - **Type Safety**: Automatic TypeScript generation from Rust models using `ts-rs`
 - **Testing**: Vitest (frontend), Rust built-in tests (backend)
 
-### Bounded Contexts (DDD)
 
-Each domain under `src-tauri/src/domains/` is a **self-contained bounded context**:
+## ARCHITECTURE RULES
 
-| Domain | Responsibility |
-|---|---|
-| `documents` | Document storage and retrieval |
-| `interventions` | PPF intervention lifecycle |
-| `inventory` | Materials, stock, tracking |
-| `quotes` | Quote creation and management |
-| `tasks` | Task and work order management |
-| `users` | Auth, sessions, RBAC |
+### Backend layering
 
-Cross-domain access is **forbidden** except via the public `api/index.ts` (frontend) or a dedicated application service (backend).
+Every backend change inside a domain must respect this order:  
+`ipc -> application -> domain -> infrastructure`. 
 
----
+Layer responsibilities:
+- `ipc/`: serialization, auth entry checks, routing, error mapping, command boundary concerns only. 
+- `application/`: use cases, orchestration, transaction boundaries, authorization enforcement. 
+- `domain/`: core business rules, entities, value objects, validation, no I/O. 
+- `infrastructure/`: repositories, SQL, adapters, persistence details. 
 
-## ⚡ Essential Commands
+Hard constraints:
+- Do not put business logic in IPC handlers. 
+- Do not access the database from application services except through infrastructure/repository abstractions implied by the domain structure. 
+- Do not place SQL outside infrastructure or migration files. 
+- Do not introduce I/O into the domain layer. 
 
-### Development
+### Bounded contexts
 
-```bash
-npm run dev                    # Start full app (frontend + backend)
-npm run frontend:dev           # Frontend only (Next.js on localhost:3000)
-```
+Each domain is isolated under `src-tauri/src/domains/<domain>`. 
 
-### Build
+Hard constraints:
+- Do not import another domain’s internals. 
+- Cross-domain communication must happen only through approved public interfaces or orchestration paths, not internal module access. 
+- New backend features must be added to the owning bounded context, not to unrelated shared folders unless the concern is truly shared. 
 
-```bash
-npm run build                  # Full production build
-npm run frontend:build         # Build Next.js frontend
-npm run backend:build          # cargo build (debug)
-npm run backend:build:release  # cargo build --release
-```
+### Frontend structure
 
-### Quality Gate 
+Frontend code should follow domain-local organization under `frontend/src/domains/<domain>/` and use shared utilities for common patterns. 
 
-Individual checks:
-
-```bash
-# Frontend
-npm run frontend:lint          # ESLint
-npm run frontend:type-check    # tsc --noEmit
-
-# Backend
-npm run backend:check          # cargo check
-npm run backend:clippy         # cargo clippy -- -D warnings
-npm run backend:fmt            # cargo fmt --check
-
-# Architecture
-npm run validate:bounded-contexts   # Validate DDD boundaries
-npm run architecture:check          # Architecture rules check
-
-# Types (Rust → TypeScript)
-npm run types:sync             # Regenerate TS types from Rust models
-npm run types:validate         # Validate generated types
-npm run types:drift-check      # Detect type drift
-
-# Security
-npm run security:audit         # cargo-deny + npm audit
-```
-
-### Tests
-
-# Backend (Rust)
-cd src-tauri && cargo test --lib           # Unit tests
-cd src-tauri && cargo test migration       # Migration tests
-cd src-tauri && cargo test performance     # Perf tests
-
-# By domain (via Makefile)
-make test-auth-commands
-make test-client-commands
-make test-user-commands
-make test-intervention-cmds
-make test-task-commands
-
-# Frontend
-cd frontend && npm test                  # Unit + component tests
-cd frontend && npm run test:e2e          # Playwright E2E tests
-cd frontend && npm run test:coverage     # With coverage report
-
-# Migration validation
-node scripts/validate-migration-system.js
-```
-
-### Benchmarks
-
-```bash
-cd src-tauri && cargo bench              # Run Criterion benchmarks
-```
+Hard constraints:
+- Do not manually redefine shared IPC payload shapes when generated types already exist. 
+- Prefer existing UI primitives and established UX patterns over custom one-off components. 
+- Route backend calls through the project’s IPC wrapper layer, not ad hoc invocation paths. 
 
 ---
 
-## 🔴 Strict Rules — Never Violate
+## IPC RULES
 
-### Architecture
+The Tauri IPC boundary is strict and must remain thin. 
 
-- ✅ Always follow the 4-layer architecture
-- ❌ Never skip layers (e.g., no direct DB from application layer)
-- ❌ Never put business logic in IPC command handlers (commands = thin wrappers)
-- ❌ Never import across domain boundaries — use the domain's public API only
-- ❌ Never write SQL outside `infrastructure/` files
-- ✅ Always place new backend features inside the correct bounded context under `src-tauri/src/domains/`
-- ✅ Always run `npm run validate:bounded-contexts` after any structural change
+For protected commands:
+- Require and validate `session_token`. 
+- Pass or generate `correlation_id` for traceability.
+- Delegate business logic to application services. 
+- Return mapped `AppError`/response envelopes consistent with existing patterns. 
 
+Hard constraints:
+- Do not add SQL to command handlers. 
+- Do not add business rules to command handlers. 
+- Do not create alternate auth paths outside the standard middleware/wrapper flow. 
 
-### Security
-
-- ✅ Always validate `session_token` in every protected IPC command
-- ✅ Always enforce RBAC before executing protected operations
-- ❌ Never commit secrets, tokens, or credentials — use `.env.local` (gitignored)
-- ❌ Never bypass auth or authorization checks
-- ✅ Always run `npm run security:audit` before submitting
-
-### Database
-
-- ✅ Always use numbered migration files (e.g., `0007_add_column.sql`)
-- ✅ Always make migrations idempotent: use `IF NOT EXISTS`, `IF EXISTS`
-- ❌ Never modify schema outside of migration files
-- ✅ Always validate: `node scripts/validate-migration-system.js`
-- **Migration order**: add migration → run `types:sync` → run all tests
-
-### Code Quality
-
-- ✅ Use UTF-8 encoding for all source files
-- ✅ Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`, `perf:`, `security:`
-- ❌ Never push directly to `main` (enforced by Husky `git:guard-main` hook)
-- ❌ Never disable linting, type-checking, or architecture validation
-
-### Testing
-
-- ✅ Always write a regression test for every bug fix
-- ✅ Always test new features: success path + validation failure + permission failure
-- ❌ Never write flaky or time-dependent tests
-- ❌ Never delete or weaken existing tests to make a build pass
+When adding or changing a command:
+- Verify whether it is public or protected. 
+- Ensure frontend wrapper compatibility with `safeInvoke` conventions, including token handling, correlation handling, and timeout behavior. 
+- Preserve stable command naming unless a breaking change is explicitly required. 
 
 ---
 
-## 📚 Documentation
 
+## CHANGE STRATEGY
+
+For every task, follow this sequence:
+
+1. Identify the owning domain.
+2. Identify the correct layer(s) to change.
+3. Make the smallest safe implementation.
+4. Reuse existing patterns before introducing new abstractions.
+5. Update tests for the impacted behavior.
+6. Run the smallest relevant validation set.
+7. Report what changed, what was validated, and any unresolved risks.
+
+Preferred approach:
+- Favor narrow, local edits.
+- Preserve public contracts unless change is required.
+- Avoid unrelated refactors in the same task.
+- Avoid moving files unless necessary.
+
+If the request conflicts with architecture or security rules, do not implement the shortcut.  
+Implement the compliant version or explicitly report why the request is unsafe.
+
+---
+
+## REQUIRED TASK PLAYBOOKS
+
+### If changing Rust models
+Run:
+- `npm run types:sync`
+- `npm run types:validate`
+- `npm run types:drift-check`
+
+### If changing domain boundaries or backend structure
+Run:
+- `npm run validate:bounded-contexts`
+- `npm run architecture:check`
+
+### If adding or modifying IPC commands
+Do all of the following:
+- preserve thin-handler design, 
+- verify auth and RBAC behavior, 
+- verify wrapper compatibility and public/protected command handling, 
+- run `node scripts/ipc-authorization-audit.js` if available in the repo docs. 
+
+### If changing database schema or migrations
+Run:
+- `node scripts/validate-migration-system.js`
+- impacted backend tests
+- type regeneration if shared contracts are affected
+
+### If fixing a bug
+Add or update at least one regression test.
+
+### If adding a feature
+Cover:
+- success path,
+- validation failure,
+- permission failure for protected behavior.
+
+---
+
+## TESTING RULES
+
+Testing is mandatory for behavior changes.
+
+Required behavior:
+- Add regression coverage for bug fixes.
+- Add positive and negative coverage for new features.
+- Prefer deterministic tests.
+- Keep tests aligned with owning domain boundaries.
+
+Hard constraints:
+- Do not delete or weaken tests to make a build pass.
+- Do not rely on flaky timing behavior.
+- Do not leave permission-sensitive behavior untested when access control is part of the feature.
+
+---
+
+## FORBIDDEN ACTIONS
+
+Never do any of the following:
+- manually edit generated type files, 
+- place business logic in IPC handlers, 
+- place SQL outside infrastructure or migrations, 
+- import another domain’s internals,
+- bypass session validation on protected commands, 
+- bypass RBAC for convenience, 
+- disable linting, type checks, architecture checks, or security checks to get a green result,
+- weaken tests or remove failing coverage without explicit justification,
+- introduce unrelated refactors into a targeted task,
+- claim a feature, command, or auth behavior exists without verifying it in the repository.
+
+---
+
+## MINIMUM VALIDATION MATRIX
+
+Run the smallest relevant subset based on touched files.
+
+Frontend:
+- `npm run frontend:lint`
+- `npm run frontend:type-check`
+
+Backend:
+- `npm run backend:check`
+- `npm run backend:clippy`
+- `npm run backend:fmt`
+
+Architecture:
+- `npm run validate:bounded-contexts`
+- `npm run architecture:check`
+
+Types:
+- `npm run types:sync`
+- `npm run types:validate`
+- `npm run types:drift-check`
+
+Security:
+- `npm run security:audit`
+
+Migrations:
+- `node scripts/validate-migration-system.js`
+
+Tests:
+- relevant unit tests,
+- relevant domain tests,
+- relevant integration tests,
+- migration/performance tests when impacted.
+
+## WHEN IN DOUBT
+If a requirement conflicts with an architecture rule, or if the correct 
+pattern is ambiguous, implement the most conservative compliant option 
+and explicitly document the ambiguity in your response. Do not silently 
+pick an approach. OR check :
 - **Full docs**: `docs/agent-pack/README.md`
 - **Architecture decisions**: `docs/adr/`
-- **Migration validation**: `node scripts/validate-migration-system.js`
+---
+
+
