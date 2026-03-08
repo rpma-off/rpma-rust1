@@ -44,7 +44,7 @@ export function useQuoteDetailPage(quoteId: string) {
     const item: CreateQuoteItemRequest = {
       kind: newKind,
       label: newLabel,
-      description: newDescription || undefined,
+      description: newDescription || null,
       qty: newQty,
       unit_price: Math.round(newUnitPrice * 100),
       tax_rate: newTaxRate,

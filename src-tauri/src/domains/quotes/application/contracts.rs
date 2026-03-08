@@ -132,3 +132,22 @@ pub struct QuoteAttachmentOpenRequest {
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
+
+/// Request to convert an accepted quote into a task.
+///
+/// The `vehicle_*` and `scheduled_date` fields provide the data
+/// needed to create the corresponding task at the IPC orchestration
+/// layer.
+#[derive(Deserialize, Debug)]
+pub struct QuoteConvertToTaskRequest {
+    pub session_token: String,
+    pub quote_id: String,
+    pub vehicle_plate: String,
+    pub vehicle_model: String,
+    pub vehicle_make: Option<String>,
+    pub vehicle_year: Option<String>,
+    pub vehicle_vin: Option<String>,
+    pub scheduled_date: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}

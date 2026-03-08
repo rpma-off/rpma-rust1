@@ -11,8 +11,8 @@ mod quote_totals;
 
 pub use contracts::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentOpenRequest,
-    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
-    QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest, QuoteItemAddRequest,
-    QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest, QuoteStatusRequest,
-    QuoteUpdateRequest,
+    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteConvertToTaskRequest,
+    QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest,
+    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
+    QuoteStatusRequest, QuoteUpdateRequest,
 };

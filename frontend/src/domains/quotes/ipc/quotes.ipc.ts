@@ -184,9 +184,22 @@ export const quotesIpc = {
     },
     sessionToken: string
   ) => {
-    void quoteId;
-    void vehicleInfo;
-    void sessionToken;
-    throw new Error('Quote-to-task conversion is not implemented by backend IPC');
+    const result = await safeInvoke('quote_convert_to_task', {
+      request: {
+        session_token: sessionToken,
+        quote_id: quoteId,
+        vehicle_plate: vehicleInfo.plate,
+        vehicle_model: vehicleInfo.model,
+        vehicle_make: vehicleInfo.make || null,
+        vehicle_year: vehicleInfo.year || null,
+        vehicle_vin: vehicleInfo.vin || null,
+        scheduled_date: vehicleInfo.scheduledDate || null,
+      }
+    });
+    invalidatePattern('quote:');
+    invalidatePattern('task:');
+    signalMutation('quotes');
+    signalMutation('tasks');
+    return result;
   },
 };

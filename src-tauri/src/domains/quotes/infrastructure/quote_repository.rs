@@ -202,6 +202,10 @@ impl QuoteRepository {
             sets.push("valid_until = ?");
             params_vec.push((*v).into());
         }
+        if let Some(ref v) = req.description {
+            sets.push("description = ?");
+            params_vec.push(v.clone().into());
+        }
         if let Some(ref v) = req.notes {
             sets.push("notes = ?");
             params_vec.push(v.clone().into());

@@ -578,6 +578,65 @@ impl QuoteService {
     }
 
     // ------------------------------------------------------------------
+    // Convert to Task
+    // ------------------------------------------------------------------
+
+    /// Convert an accepted quote to a task (Accepted → Converted).
+    ///
+    /// Links the given `task_id` to the quote, updates the status to
+    /// `Converted`, and emits a `QuoteConverted` domain event so that
+    /// downstream handlers (e.g. intervention creation) can react.
+    ///
+    /// The actual *task creation* is orchestrated at the IPC layer where
+    /// cross-domain service access is permitted.
+    pub fn convert_to_task(
+        &self,
+        quote_id: &str,
+        task_id: &str,
+        task_number: &str,
+    ) -> Result<ConvertQuoteToTaskResponse, String> {
+        let quote = self
+            .repo
+            .find_by_id(quote_id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable".to_string())?;
+
+        if quote.status != QuoteStatus::Accepted {
+            return Err(format!(
+                "Seuls les devis acceptés peuvent être convertis en tâche (statut actuel: '{}')",
+                quote.status
+            ));
+        }
+
+        // Link the task and update status
+        self.repo
+            .link_task(quote_id, task_id)
+            .map_err(Self::map_repo_error)?;
+        self.repo
+            .update_status(quote_id, &QuoteStatus::Converted)
+            .map_err(Self::map_repo_error)?;
+
+        // Emit QuoteConverted event so intervention can be created
+        if let Err(e) = self.emit_quote_converted(&quote, task_id, task_number) {
+            warn!(quote_id = %quote_id, error = %e, "Failed to emit QuoteConverted event");
+        }
+
+        let updated_quote = self
+            .repo
+            .find_by_id(quote_id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable après conversion".to_string())?;
+
+        info!(quote_id = %quote_id, task_id = %task_id, "Quote converted to task");
+
+        Ok(ConvertQuoteToTaskResponse {
+            quote: updated_quote,
+            task_id: task_id.to_string(),
+            task_number: task_number.to_string(),
+        })
+    }
+
+    // ------------------------------------------------------------------
     // Attachments
     // ------------------------------------------------------------------
 

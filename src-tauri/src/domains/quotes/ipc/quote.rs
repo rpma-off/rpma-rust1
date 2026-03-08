@@ -8,10 +8,10 @@ use tracing::{debug, error, info, instrument, Span};
 use crate::authenticate;
 use crate::domains::quotes::application::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentOpenRequest,
-    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
-    QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest, QuoteItemAddRequest,
-    QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest, QuoteStatusRequest,
-    QuoteUpdateRequest,
+    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteConvertToTaskRequest,
+    QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest,
+    QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest,
+    QuoteStatusRequest, QuoteUpdateRequest,
 };
 
 // --- Commands ---
@@ -715,4 +715,132 @@ pub async fn quote_attachment_open(
 
     info!(attachment_id = %request.attachment_id, "Attachment opened");
     Ok(ApiResponse::success(true).with_correlation_id(Some(correlation_id.clone())))
+}
+
+/// Convert an accepted quote to a task.
+///
+/// This IPC command orchestrates across two domains:
+///   1. **Tasks** – creates a new task from the quote data.
+///   2. **Quotes** – updates the quote status to `Converted` and links
+///      the newly created task.
+///
+/// Cross-domain orchestration at the IPC layer is permitted; the
+/// individual domain services never reference each other directly.
+#[tauri::command]
+#[instrument(skip(state, request), fields(correlation_id = tracing::field::Empty, user_id = tracing::field::Empty))]
+pub async fn quote_convert_to_task(
+    request: QuoteConvertToTaskRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<ConvertQuoteToTaskResponse>, AppError> {
+    debug!(quote_id = %request.quote_id, "quote_convert_to_task command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    Span::current().record(
+        "correlation_id",
+        tracing::field::display(correlation_id.as_str()),
+    );
+    let current_user = authenticate!(&request.session_token, &state);
+    Span::current().record(
+        "user_id",
+        tracing::field::display(current_user.user_id.as_str()),
+    );
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+
+    // 1. Retrieve the quote to pull client and description data
+    let facade = QuotesFacade::new(state.quote_service.clone());
+    let quote = match facade.get(&current_user.role, &request.quote_id) {
+        Ok(Some(q)) => q,
+        Ok(None) => {
+            return Ok(
+                ApiResponse::error(AppError::NotFound("Quote not found".to_string()))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            );
+        }
+        Err(e) => {
+            error!(error = %e, "Failed to get quote for conversion");
+            return Ok(
+                ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())),
+            );
+        }
+    };
+
+    // 2. Create a task via the Tasks domain service.
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let create_task_req = crate::domains::tasks::domain::models::task::CreateTaskRequest {
+        vehicle_plate: request.vehicle_plate.clone(),
+        vehicle_model: request.vehicle_model.clone(),
+        ppf_zones: Vec::new(), // PPF zones are task-specific, not on quotes
+        scheduled_date: request.scheduled_date.clone().unwrap_or(today),
+        title: Some(format!("Tâche issue du devis {}", quote.quote_number)),
+        description: quote.description.clone(),
+        vehicle_make: request.vehicle_make.clone(),
+        vehicle_year: request.vehicle_year.clone(),
+        vin: request.vehicle_vin.clone(),
+        client_id: Some(quote.client_id.clone()),
+        notes: quote.notes.clone(),
+        creator_id: Some(current_user.user_id.clone()),
+        created_by: Some(current_user.user_id.clone()),
+        // Defaults for remaining optional fields
+        external_id: None,
+        status: None,
+        technician_id: None,
+        start_time: None,
+        end_time: None,
+        checklist_completed: None,
+        date_rdv: None,
+        heure_rdv: None,
+        lot_film: None,
+        customer_name: None,
+        customer_email: None,
+        customer_phone: None,
+        customer_address: None,
+        custom_ppf_zones: None,
+        template_id: None,
+        workflow_id: None,
+        task_number: None,
+        priority: None,
+        estimated_duration: None,
+        tags: None,
+    };
+
+    let task = match state
+        .task_service
+        .create_task_async(create_task_req, &current_user.user_id)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            error!(error = %e, "Failed to create task from quote");
+            return Ok(
+                ApiResponse::error(AppError::Internal(
+                    "Impossible de créer la tâche à partir du devis.".to_string(),
+                ))
+                .with_correlation_id(Some(correlation_id.clone())),
+            );
+        }
+    };
+
+    // 3. Update the quote (link task + set status to Converted)
+    match facade.convert_to_task(
+        &current_user.role,
+        &request.quote_id,
+        &task.id,
+        &task.task_number,
+    ) {
+        Ok(response) => {
+            info!(
+                quote_id = %request.quote_id,
+                task_id = %task.id,
+                "Quote converted to task successfully"
+            );
+            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(
+                error = %e,
+                quote_id = %request.quote_id,
+                "Failed to convert quote to task"
+            );
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
 }

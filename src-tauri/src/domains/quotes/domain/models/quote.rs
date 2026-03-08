@@ -214,6 +214,7 @@ impl CreateQuoteRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UpdateQuoteRequest {
     pub valid_until: Option<i64>,
+    pub description: Option<String>,
     pub notes: Option<String>,
     pub terms: Option<String>,
     pub discount_type: Option<String>,
@@ -274,6 +275,14 @@ pub struct QuoteAcceptResponse {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskCreatedInfo {
     pub task_id: String,
+}
+
+/// Response for convert-to-task action
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct ConvertQuoteToTaskResponse {
+    pub quote: Quote,
+    pub task_id: String,
+    pub task_number: String,
 }
 
 /// Response for PDF export

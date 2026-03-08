@@ -42,6 +42,7 @@ export interface QuoteWorkflowPanelProps {
   onDuplicate: () => void;
   onDelete: () => void;
   onExportPdf: () => void;
+  onConvertToTask?: () => void;
 }
 
 export function QuoteWorkflowPanel({
@@ -58,6 +59,7 @@ export function QuoteWorkflowPanel({
   onDuplicate,
   onDelete,
   onExportPdf,
+  onConvertToTask,
 }: QuoteWorkflowPanelProps) {
   const status = quote.status;
 
@@ -190,6 +192,17 @@ export function QuoteWorkflowPanel({
 
         {(status === 'accepted' || status === 'converted') && (
           <>
+            {status === 'accepted' && !quote.task_id && onConvertToTask && (
+              <Button
+                onClick={onConvertToTask}
+                disabled={statusLoading}
+                className="w-full justify-start"
+                size="sm"
+              >
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Convertir en tâche
+              </Button>
+            )}
             {quote.task_id && (
               <Link href={`/tasks/${quote.task_id}`}>
                 <Button

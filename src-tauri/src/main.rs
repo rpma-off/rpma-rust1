@@ -307,7 +307,8 @@ fn main() {
             domains::quotes::ipc::quote::quote_attachment_delete,
             domains::quotes::ipc::quote::quote_mark_changes_requested,
             domains::quotes::ipc::quote::quote_reopen,
-            domains::quotes::ipc::quote::quote_attachment_open
+            domains::quotes::ipc::quote::quote_attachment_open,
+            domains::quotes::ipc::quote::quote_convert_to_task
         ])
         .setup(|app| {
             info!("Initializing application setup");

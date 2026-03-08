@@ -201,6 +201,19 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    pub fn convert_to_task(
+        &self,
+        role: &UserRole,
+        quote_id: &str,
+        task_id: &str,
+        task_number: &str,
+    ) -> Result<ConvertQuoteToTaskResponse, AppError> {
+        self.check_permission(role, "status")?;
+        self.quote_service
+            .convert_to_task(quote_id, task_id, task_number)
+            .map_err(|e| self.map_quote_service_error(e))
+    }
+
     pub fn get_attachments(
         &self,
         role: &UserRole,

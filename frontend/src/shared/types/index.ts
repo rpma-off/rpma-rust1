@@ -34,6 +34,7 @@ export type {
   CreateQuoteAttachmentRequest,
   UpdateQuoteAttachmentRequest,
   QuoteAcceptResponse,
+  ConvertQuoteToTaskResponse,
   QuoteExportResponse,
   QuoteFilters,
   QuotePageStats,

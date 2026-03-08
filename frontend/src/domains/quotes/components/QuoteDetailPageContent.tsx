@@ -438,6 +438,7 @@ export function QuoteDetailPageContent() {
                   onDuplicate={handleDuplicate}
                   onDelete={handleDelete}
                   onExportPdf={handleExportPdf}
+                  onConvertToTask={() => setShowConvertDialog(true)}
                 />
               </div>
             </div>
@@ -525,7 +526,7 @@ export function QuoteDetailPageContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {quoteItems.map((item) => {
+                        {quote.items.map((item) => {
                           const lineTotal = Math.round(item.qty * item.unit_price);
                           return (
                             <tr key={item.id} className="hover:bg-muted/50">
