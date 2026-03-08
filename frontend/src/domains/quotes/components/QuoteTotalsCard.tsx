@@ -1,8 +1,8 @@
 'use client';
 
 import { formatCents, getCurrencySymbol } from '@/lib/format';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { computeTotalsFromSubtotals } from '@/domains/quotes/utils/quote-calculations';
+import { Calculator, Percent, Tag, Receipt } from 'lucide-react';
 
 type DiscountType = 'none' | 'percentage' | 'fixed';
 
@@ -49,10 +50,13 @@ export function QuoteTotalsCard({
   );
 
   return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <h3 className="text-sm font-semibold">Récapitulatif</h3>
+    <div className="space-y-4 pt-4 border-t border-border">
+      <h3 className="flex items-center gap-2 text-sm font-semibold">
+        <Calculator className="h-4 w-4 text-muted-foreground" />
+        Récapitulatif
+      </h3>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {/* Parts Subtotal */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Pièces</span>
@@ -72,62 +76,79 @@ export function QuoteTotalsCard({
         </div>
 
         {/* Discount */}
-        <div className="flex items-center justify-between text-sm">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">Remise</span>
+            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs text-muted-foreground">Remise</Label>
+          </div>
+          <div className="flex items-center gap-2">
             <Select
               value={discountType}
               onValueChange={(v) => onDiscountTypeChange(v as DiscountType)}
             >
-              <SelectTrigger className="h-7 w-28 text-xs">
+              <SelectTrigger className="h-8 text-xs flex-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Aucune</SelectItem>
                 <SelectItem value="percentage">Pourcentage</SelectItem>
-                <SelectItem value="fixed">Fixe</SelectItem>
+                <SelectItem value="fixed">Montant fixe</SelectItem>
               </SelectContent>
             </Select>
             {discountType !== 'none' && (
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={discountValue}
-                onChange={(e) => onDiscountValueChange(parseFloat(e.target.value) || 0)}
-                className="h-7 w-20 text-right text-xs"
-              />
-            )}
-            {discountType === 'percentage' && (
-              <span className="text-muted-foreground">%</span>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={discountValue}
+                  onChange={(e) => onDiscountValueChange(parseFloat(e.target.value) || 0)}
+                  className="h-8 w-20 text-right text-xs"
+                />
+                {discountType === 'percentage' && (
+                  <span className="text-muted-foreground text-sm">%</span>
+                )}
+              </div>
             )}
           </div>
           {discountAmount > 0 && (
-            <span className="text-destructive">-{formatCents(discountAmount)}</span>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-destructive text-xs">Remise appliquée</span>
+              <span className="text-destructive">-{formatCents(discountAmount)}</span>
+            </div>
           )}
         </div>
 
         {/* Tax */}
-        <div className="flex items-center justify-between text-sm">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground">TVA</span>
+            <Percent className="h-3.5 w-3.5 text-muted-foreground" />
+            <Label className="text-xs text-muted-foreground">TVA</Label>
+          </div>
+          <div className="flex items-center gap-2">
             <Input
               type="number"
               min="0"
               step="0.1"
               value={taxRate}
               onChange={(e) => onTaxRateChange(parseFloat(e.target.value) || 0)}
-              className="h-7 w-20 text-right text-xs"
+              className="h-8 w-24 text-xs"
             />
-            <span className="text-muted-foreground">%</span>
+            <span className="text-muted-foreground text-sm">%</span>
           </div>
-          <span>{formatCents(taxTotal)}</span>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground text-xs">Montant TVA</span>
+            <span>{formatCents(taxTotal)}</span>
+          </div>
         </div>
 
         {/* Total */}
-        <div className="flex items-center justify-between border-t pt-2 text-lg font-bold">
-          <span>Total TTC</span>
-          <span>{formatCents(total)}</span>
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-green-500" />
+            <span className="text-lg font-bold">Total TTC</span>
+          </div>
+          <span className="text-lg font-bold text-green-600">{formatCents(total)}</span>
         </div>
       </div>
     </div>

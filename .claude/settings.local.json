@@ -9,7 +9,15 @@
       "Bash(npm run frontend:type-check)",
       "Bash(npm run frontend:lint)",
       "Bash(node -e \"const d=require\\(''d:/rpma-rust/src-tauri/gen/schemas/acl-manifests.json''\\); console.log\\(Object.keys\\(d\\).filter\\(k=>k.toLowerCase\\(\\).includes\\(''asset''\\)\\)\\)\")",
-      "Bash(node -e \"const d=JSON.stringify\\(require\\(''d:/rpma-rust/src-tauri/gen/schemas/acl-manifests.json''\\)\\); const m=d.match\\(/\"\"[^\"\"]*asset[^\"\"]*\"\"/gi\\); console.log\\([...new Set\\(m\\)].join\\(''\\\\n''\\)\\)\")"
+      "Bash(node -e \"const d=JSON.stringify\\(require\\(''d:/rpma-rust/src-tauri/gen/schemas/acl-manifests.json''\\)\\); const m=d.match\\(/\"\"[^\"\"]*asset[^\"\"]*\"\"/gi\\); console.log\\([...new Set\\(m\\)].join\\(''\\\\n''\\)\\)\")",
+      "Bash(npm run type-check)",
+      "Bash(npm test -- --testPathPattern=\"reports\" --passWithNoTests)",
+      "Bash(npx jest --testPathPatterns=\"reports\" --passWithNoTests)",
+      "Bash(cargo check --lib)",
+      "Bash(cargo test --lib documents)",
+      "Bash(cargo test --lib -- documents)",
+      "Bash(cargo test report_pdf)",
+      "Bash(timeout 90 cargo test --lib report_pdf)"
     ]
   }
 }

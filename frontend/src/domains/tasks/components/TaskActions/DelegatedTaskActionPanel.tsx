@@ -9,10 +9,7 @@ import {
   AlertCircle,
   ArrowRight,
   Settings,
-  Wrench,
   Shield,
-  Camera,
-  ClipboardCheck,
   Ruler,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -51,36 +48,6 @@ export function DelegatedTaskActionPanel({
   const [showMoreActions, setShowMoreActions] = useState(false);
   const isInProgress = task.status === 'in_progress';
   const isCompleted = task.status === 'completed';
-  const totalPhotos = (task.photos_before?.length || 0) + (task.photos_after?.length || 0);
-  const hasChecklist = task.checklist_items && task.checklist_items.length > 0;
-  const completedChecklistItems = task.checklist_items?.filter((item) => item.is_completed).length || 0;
-
-  const executionActions: DelegatedActionItem[] = [
-    {
-      id: 'workflow',
-      label: 'Workflow',
-      icon: Wrench,
-      count: isInProgress ? 1 : undefined,
-      disabled: !isInProgress && !isCompleted,
-      variant: 'primary',
-    },
-    {
-      id: 'photos',
-      label: 'Photos',
-      icon: Camera,
-      count: totalPhotos,
-      disabled: totalPhotos === 0,
-      variant: 'secondary',
-    },
-    {
-      id: 'checklist',
-      label: 'Checklist',
-      icon: ClipboardCheck,
-      count: hasChecklist ? completedChecklistItems : undefined,
-      disabled: !hasChecklist,
-      variant: 'primary',
-    },
-  ];
 
   const communicationActions: DelegatedActionItem[] = [
     {
@@ -171,7 +138,7 @@ export function DelegatedTaskActionPanel({
           )}
         </Button>
         <div className="flex gap-2">
-          {executionActions.slice(0, 2).map((action) => (
+          {communicationActions.slice(0, 2).map((action) => (
             <button
               key={action.id}
               type="button"
@@ -250,25 +217,6 @@ export function DelegatedTaskActionPanel({
               </span>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-        <div className="mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Exécution</h3>
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {executionActions.map((action) => (
-            <DelegatedActionCard
-              key={action.id}
-              icon={action.icon}
-              label={action.label}
-              count={action.count}
-              onClick={() => onSecondaryAction?.(action.id)}
-              disabled={action.disabled}
-              variant={action.variant}
-            />
-          ))}
         </div>
       </div>
 

@@ -1,15 +1,9 @@
 'use client';
 
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, FileText } from 'lucide-react';
 import Link from 'next/link';
-import { PageShell } from '@/shared/ui/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { useNewQuotePage } from '@/domains/quotes';
-import {
-  ResizableGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from '@/components/ui/resizable';
 import {
   QuotePartsSection,
   QuoteLaborSection,
@@ -18,15 +12,13 @@ import {
   QuoteDetailsCard,
   QuoteTotalsCard,
 } from '@/domains/quotes';
-import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FadeIn } from '@/shared/ui/animations/FadeIn';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function NewQuotePage() {
   const {
     loading,
-    title,
-    status,
     validUntil,
     parts,
     labor,
@@ -36,14 +28,20 @@ export default function NewQuotePage() {
     publicNote,
     internalNote,
     customerId,
-    vehicleId,
+    clientName,
+    clientEmail,
+    clientPhone,
+    clientType,
+    vehicleMake,
+    vehicleModel,
+    vehicleYear,
+    vehiclePlate,
+    vehicleVin,
     partsSubtotal,
     laborSubtotal,
     isFormValid,
     customerOptions,
     clientsLoading,
-    setTitle,
-    setStatus,
     setValidUntil,
     setParts,
     setLabor,
@@ -53,19 +51,44 @@ export default function NewQuotePage() {
     setPublicNote,
     setInternalNote,
     setCustomerId,
-    setVehicleId,
+    setClientName,
+    setClientEmail,
+    setClientPhone,
+    setClientType,
+    setVehicleMake,
+    setVehicleModel,
+    setVehicleYear,
+    setVehiclePlate,
+    setVehicleVin,
     refetchClients,
     handleSubmit,
   } = useNewQuotePage();
 
   return (
-    <PageShell>
+    <div className="max-w-7xl mx-auto space-y-8 p-6">
       <FadeIn>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <PageHeader
-            title="Nouveau devis"
-            subtitle="Créez un nouveau devis pour un client"
-            actions={
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Header - rpma-shell pattern */}
+          <div className="rpma-shell p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-6">
+                <Link
+                  href="/quotes"
+                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-sm">Retour aux devis</span>
+                </Link>
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-green-600/20 rounded-full">
+                    <FileText className="h-8 w-8 text-green-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-foreground">Nouveau devis</h1>
+                    <p className="text-muted-foreground mt-1">Créez un nouveau devis pour un client</p>
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
                 <Link href="/quotes">
                   <Button variant="outline">
@@ -75,90 +98,109 @@ export default function NewQuotePage() {
                 <Button
                   type="submit"
                   disabled={loading || !isFormValid}
+                  className="bg-green-600 hover:bg-green-700"
                 >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   <Save className="mr-2 h-4 w-4" />
                   Créer le devis
                 </Button>
               </div>
-            }
-          >
-            <Link href="/quotes" className="text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour aux devis
-            </Link>
-          </PageHeader>
+            </div>
+          </div>
 
-          <ResizableGroup className="min-h-[600px] border rounded-lg">
-            <ResizablePanel defaultSize={75} minSize={50} className="p-6">
-              <div className="space-y-6">
-                <QuotePartsSection parts={parts} onChange={setParts} />
-                <QuoteLaborSection laborItems={labor} onChange={setLabor} />
-                <QuoteNotesEditor
-                  publicNote={publicNote}
-                  internalNote={internalNote}
-                  onPublicNoteChange={setPublicNote}
-                  onInternalNoteChange={setInternalNote}
-                />
-              </div>
-            </ResizablePanel>
+          {/* Main Content - Responsive Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Main Content (2/3) */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+                <CardHeader>
+                  <CardTitle>Contenu du devis</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <QuotePartsSection parts={parts} onChange={setParts} />
+                  <QuoteLaborSection laborItems={labor} onChange={setLabor} />
+                  <QuoteNotesEditor
+                    publicNote={publicNote}
+                    internalNote={internalNote}
+                    onPublicNoteChange={setPublicNote}
+                    onInternalNoteChange={setInternalNote}
+                  />
+                </CardContent>
+              </Card>
+            </div>
 
-            <ResizableHandle />
+            {/* Right Column - Sidebar (1/3) */}
+            <div className="space-y-6">
+              {clientsLoading ? (
+                <Card className="rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+                  <CardContent className="p-6 space-y-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <Card className="rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+                    <CardHeader>
+                      <CardTitle>Client & Véhicule</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <QuoteVehicleCustomerCard
+                        customerId={customerId}
+                        customers={customerOptions}
+                        onCustomerIdChange={setCustomerId}
+                        clientName={clientName}
+                        clientEmail={clientEmail}
+                        clientPhone={clientPhone}
+                        clientType={clientType}
+                        onClientNameChange={setClientName}
+                        onClientEmailChange={setClientEmail}
+                        onClientPhoneChange={setClientPhone}
+                        onClientTypeChange={setClientType}
+                        vehicleMake={vehicleMake}
+                        vehicleModel={vehicleModel}
+                        vehicleYear={vehicleYear}
+                        vehiclePlate={vehiclePlate}
+                        vehicleVin={vehicleVin}
+                        onVehicleMakeChange={setVehicleMake}
+                        onVehicleModelChange={setVehicleModel}
+                        onVehicleYearChange={setVehicleYear}
+                        onVehiclePlateChange={setVehiclePlate}
+                        onVehicleVinChange={setVehicleVin}
+                      />
+                    </CardContent>
+                  </Card>
 
-            <ResizablePanel defaultSize={25} minSize={20} className="p-6 bg-muted/30">
-              <div className="space-y-6">
-                {clientsLoading ? (
-                  <>
-                    <div className="rounded-lg border p-3 space-y-3">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-10 w-full" />
-                    </div>
-                    <div className="rounded-lg border p-3 space-y-3">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-10 w-full" />
-                    </div>
-                    <div className="rounded-lg border p-3 space-y-3">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-20 w-full" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <QuoteVehicleCustomerCard
-                      customerId={customerId}
-                      vehicleId={vehicleId}
-                      customers={customerOptions}
-                      vehicles={[]}
-                      onCustomerIdChange={setCustomerId}
-                      onVehicleIdChange={setVehicleId}
-                      refreshCustomers={refetchClients}
-                    />
-                    <QuoteDetailsCard
-                      title={title}
-                      status={status}
-                      validUntil={validUntil}
-                      onTitleChange={setTitle}
-                      onStatusChange={setStatus}
-                      onValidUntilChange={setValidUntil}
-                    />
-                    <QuoteTotalsCard
-                      partsSubtotal={partsSubtotal}
-                      laborSubtotal={laborSubtotal}
-                      taxRate={taxRate}
-                      discountType={discountType}
-                      discountValue={discountValue}
-                      onTaxRateChange={setTaxRate}
-                      onDiscountTypeChange={setDiscountType}
-                      onDiscountValueChange={setDiscountValue}
-                    />
-                  </>
-                )}
-              </div>
-            </ResizablePanel>
-          </ResizableGroup>
+                  <Card className="rounded-[10px] shadow-[var(--rpma-shadow-soft)]">
+                    <CardHeader>
+                      <CardTitle>Détails & Récapitulatif</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <QuoteDetailsCard
+                        validUntil={validUntil}
+                        onValidUntilChange={setValidUntil}
+                      />
+                      <QuoteTotalsCard
+                        partsSubtotal={partsSubtotal}
+                        laborSubtotal={laborSubtotal}
+                        taxRate={taxRate}
+                        discountType={discountType}
+                        discountValue={discountValue}
+                        onTaxRateChange={setTaxRate}
+                        onDiscountTypeChange={setDiscountType}
+                        onDiscountValueChange={setDiscountValue}
+                      />
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </div>
+          </div>
         </form>
       </FadeIn>
-    </PageShell>
+    </div>
   );
 }

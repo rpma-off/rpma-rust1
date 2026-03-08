@@ -3,8 +3,6 @@ import { useRouter } from 'next/navigation';
 import {
   Play,
   CheckCircle,
-  Image as ImageIcon,
-  ListChecks,
   MoreVertical,
   Edit,
   FileText,
@@ -15,7 +13,6 @@ import {
   ArrowRight,
   User,
   Settings,
-  Wrench,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -86,8 +83,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const isInProgress = task.status === 'in_progress';
   const isCompleted = task.status === 'completed';
-  const hasBeforePhotos = task.photos_before && task.photos_before.length > 0;
-  const hasAfterPhotos = task.photos_after && task.photos_after.length > 0;
   const hasChecklist = task.checklist_items && task.checklist_items.length > 0;
   const shouldShowDisabledReason = !canStartTask && !isInProgress && !isCompleted;
 
@@ -118,31 +113,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
   const handleActionClick = (action: () => void) => {
     action();
   };
-
-  const executionActions: ActionItem[] = [
-    {
-      id: 'workflow',
-      label: 'Voir le workflow',
-      icon: Wrench,
-      onClick: handleViewWorkflow,
-      disabled: !isInProgress,
-    },
-    {
-      id: 'before-photos',
-      label: 'Photos avant',
-      icon: ImageIcon,
-      count: task.photos_before?.length || 0,
-      onClick: () => router.push(`/tasks/${task.id}/photos/before`),
-    },
-    {
-      id: 'after-photos',
-      label: 'Photos après',
-      icon: ImageIcon,
-      count: task.photos_after?.length || 0,
-      onClick: () => router.push(`/tasks/${task.id}/photos/after`),
-      disabled: !isCompleted,
-    },
-  ];
 
   const communicationActions: ActionItem[] = [
     {
@@ -206,7 +176,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
       ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
       : null;
 
-  const dockedQuickActions = [...executionActions.filter((action) => action.id !== 'workflow').slice(0, 2), communicationActions[1]];
+  const dockedQuickActions = communicationActions.slice(0, 2);
 
   return (
     <div
@@ -259,11 +229,6 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
             </div>
           ) : (
             <>
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Exécution</p>
-                <SecondaryActionsGrid actions={executionActions} onActionClick={handleActionClick} columns={3} />
-              </div>
-
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Communication</p>
                 <SecondaryActionsGrid actions={communicationActions} onActionClick={handleActionClick} columns={2} />

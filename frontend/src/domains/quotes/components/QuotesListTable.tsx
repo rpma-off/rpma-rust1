@@ -119,7 +119,7 @@ export function QuotesListTable({
                 <TableCell className="font-mono text-xs text-muted-foreground">
                   {quote.quote_number || '-'}
                 </TableCell>
-                <TableCell className="font-medium">{quote.title || '-'}</TableCell>
+                <TableCell className="font-medium">{quote.description || '-'}</TableCell>
                 <TableCell className="hidden md:table-cell text-muted-foreground">
                   {clientName}
                 </TableCell>

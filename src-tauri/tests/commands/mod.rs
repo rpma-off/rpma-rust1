@@ -19,3 +19,5 @@ pub mod intervention_commands_test;
 pub mod task_commands_test;
 #[cfg(feature = "legacy-tests")]
 pub mod test_utils;
+
+pub mod inventory_commands_test;

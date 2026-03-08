@@ -59,8 +59,8 @@ export function computeQuoteTotals(
   discountType?: string | null,
   discountValue?: number | null
 ): QuoteTotals {
-  // 1. Compute per-item line totals (truncate like the backend: (qty * unit_price) as i64)
-  const lineTotals = items.map(item => Math.trunc(item.qty * item.unit_price));
+  // 1. Compute per-item line totals (ROUND_HALF_UP like the backend: (qty * unit_price).round())
+  const lineTotals = items.map(item => Math.round(item.qty * item.unit_price));
 
   // 2. Raw subtotal
   const rawSubtotal = lineTotals.reduce((sum, lt) => sum + lt, 0);
@@ -74,13 +74,13 @@ export function computeQuoteTotals(
   for (let i = 0; i < items.length; i++) {
     const rate = items[i].tax_rate;
     if (rate) {
-      rawTax += Math.trunc(lineTotals[i] * (rate / 100));
+      rawTax += Math.round(lineTotals[i] * (rate / 100));
     }
   }
 
   const taxTotal =
     discountAmount > 0
-      ? Math.trunc((rawTax * subtotal) / Math.max(1, rawSubtotal))
+      ? Math.round((rawTax * subtotal) / Math.max(1, rawSubtotal))
       : rawTax;
 
   const total = subtotal + taxTotal;
@@ -115,7 +115,7 @@ export function computeTotalsFromSubtotals(
     discountValue
   );
   const subtotal = Math.max(0, rawSubtotal - discountAmount);
-  const taxTotal = Math.trunc(subtotal * (taxRate / 100));
+  const taxTotal = Math.round(subtotal * (taxRate / 100));
   const total = subtotal + taxTotal;
 
   return {

@@ -66,7 +66,6 @@ export function QuoteDocumentsManager({
           mime_type: file.type,
           file_size: file.size,
           attachment_type: 'document',
-          include_in_invoice: true,
         });
 
         if (result) {
@@ -111,15 +110,9 @@ export function QuoteDocumentsManager({
     await updateAttachment(quoteId, attachmentId, { description });
   }, [quoteId, updateAttachment]);
 
-  const handleToggleInvoice = useCallback(async (attachmentId: string, checked: boolean) => {
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === attachmentId ? { ...f, include_in_invoice: checked } : f
-      )
-    );
-
-    await updateAttachment(quoteId, attachmentId, { include_in_invoice: checked });
-  }, [quoteId, updateAttachment]);
+  const handleToggleInvoice = useCallback(async (_attachmentId: string, _checked: boolean) => {
+    // include_in_invoice is not supported by the backend
+  }, []);
 
   function getFileIcon(mimeType: string) {
     if (mimeType === 'application/pdf') {
@@ -205,14 +198,6 @@ export function QuoteDocumentsManager({
                     {formatFileSize(file.file_size)}
                   </p>
                 </div>
-                <label className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                  <Switch
-                    checked={file.include_in_invoice ?? true}
-                    onCheckedChange={(checked) => handleToggleInvoice(file.id, checked ?? true)}
-                    className="scale-75"
-                  />
-                  PDF
-                </label>
                 <Button
                   type="button"
                   variant="ghost"

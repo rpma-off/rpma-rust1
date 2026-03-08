@@ -22,14 +22,8 @@ export const quoteKeys = {
   byId: (quoteId: string) => [...quoteKeys.all, quoteId],
 };
 
-export const clientKeys = {
-  all: ['clients'],
-  lists: () => [...clientKeys.all, 'list'],
-  byId: (clientId: string) => [...clientKeys.all, clientId],
-};
-
-export const inventoryKeys = {
-  all: ['inventory'],
-  materials: () => [...inventoryKeys.all, 'materials'],
-  byId: (materialId: string) => [...inventoryKeys.all, materialId],
+export const reportKeys = {
+  all: ['reports'],
+  byIntervention: (interventionId: string) => ['report', 'byIntervention', interventionId],
+  preview: (interventionId: string) => ['report-preview', interventionId],
 };

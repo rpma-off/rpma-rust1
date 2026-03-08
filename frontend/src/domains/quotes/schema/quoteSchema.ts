@@ -39,7 +39,6 @@ export const CreateQuoteSchema = z.object({
 });
 
 export const UpdateQuoteSchema = z.object({
-  client_id: z.string().min(1, 'Client requis').optional(),
   vehicle_plate: z.string().optional(),
   vehicle_make: z.string().optional(),
   vehicle_model: z.string().optional(),
@@ -47,8 +46,17 @@ export const UpdateQuoteSchema = z.object({
   notes: z.string().optional(),
   terms: z.string().optional(),
   valid_until: z.string().optional(),
-  status: QuoteStatusEnum.optional(),
-});
+  discount_type: z.enum(['percentage', 'fixed']).optional(),
+  discount_value: z.number().min(0, 'La remise ne peut pas être négative').optional(),
+}).refine(
+  (data) => {
+    if (data.discount_type === 'percentage' && data.discount_value != null) {
+      return data.discount_value <= 100;
+    }
+    return true;
+  },
+  { message: 'La remise en pourcentage ne peut pas dépasser 100%', path: ['discount_value'] }
+);
 
 export const QuoteFiltersSchema = z.object({
   search: z.string().optional(),

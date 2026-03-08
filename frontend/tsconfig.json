@@ -44,6 +44,7 @@
       "@/domains/performance": ["./src/domains/performance/api"],
       "@/domains/photos": ["./src/domains/photos/api"],
       "@/domains/quotes": ["./src/domains/quotes/api"],
+      "@/domains/reports": ["./src/domains/reports/api"],
       "@/domains/security": ["./src/domains/security/api"],
       "@/domains/settings": ["./src/domains/settings/api"],
       "@/domains/sync": ["./src/domains/sync/api"],

@@ -136,7 +136,7 @@ export const quotesIpc = {
     }),
 
   getAttachments: (quoteId: string, sessionToken: string) =>
-    safeInvoke('quote_attachment_list', {
+    safeInvoke('quote_attachments_get', {
       request: { session_token: sessionToken, quote_id: quoteId }
     }),
 

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { reportsIpc } from '../ipc/reports.ipc';
+import { reportKeys } from '@/lib/query-keys';
 import type { InterventionReport } from '@/lib/backend/reports';
 
 interface UseInterventionReportOptions {
@@ -15,58 +16,38 @@ interface UseInterventionReportReturn {
   /** True while generating a new report. */
   generating: boolean;
   /** Generate (or regenerate) a report for the intervention. */
-  generateReport: () => Promise<void>;
+  generateReport: () => void;
 }
 
 export function useInterventionReport({ interventionId }: UseInterventionReportOptions): UseInterventionReportReturn {
-  const [report, setReport] = useState<InterventionReport | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Fetch existing report on mount / when interventionId changes
-  useEffect(() => {
-    if (!interventionId) {
-      setReport(null);
-      return;
-    }
+  const query = useQuery({
+    queryKey: reportKeys.byIntervention(interventionId ?? ''),
+    queryFn: () => reportsIpc.getByIntervention(interventionId!),
+    enabled: !!interventionId,
+    select: (data) => data ?? null,
+  });
 
-    let cancelled = false;
-    setLoading(true);
-
-    reportsIpc
-      .getByIntervention(interventionId)
-      .then((data) => {
-        if (!cancelled) setReport(data ?? null);
-      })
-      .catch((err) => {
-        // Log unexpected errors; report may simply not exist yet
-        console.warn('[useInterventionReport] Failed to fetch report:', err);
-        if (!cancelled) setReport(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [interventionId]);
-
-  const generateReport = useCallback(async () => {
-    if (!interventionId) return;
-
-    setGenerating(true);
-    try {
-      const newReport = await reportsIpc.generate(interventionId);
-      setReport(newReport);
+  const mutation = useMutation({
+    mutationFn: () => reportsIpc.generate(interventionId!),
+    onSuccess: (newReport) => {
+      queryClient.setQueryData(reportKeys.byIntervention(interventionId ?? ''), newReport);
+      void queryClient.invalidateQueries({ queryKey: reportKeys.preview(interventionId ?? '') });
       toast.success(`Rapport ${newReport.report_number} généré avec succès`);
-    } catch (err) {
+    },
+    onError: (err) => {
       const message = err instanceof Error ? err.message : 'Erreur de génération du rapport';
       toast.error(message);
-    } finally {
-      setGenerating(false);
-    }
-  }, [interventionId]);
+    },
+  });
 
-  return { report, loading, generating, generateReport };
+  return {
+    report: query.data ?? null,
+    loading: query.isLoading,
+    generating: mutation.isPending,
+    generateReport: () => {
+      if (interventionId) mutation.mutate();
+    },
+  };
 }

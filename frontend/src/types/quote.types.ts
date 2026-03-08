@@ -20,12 +20,12 @@ export type AttachmentType = 'image' | 'document' | 'other';
  */
 export interface Quote {
   id: string;
-  title: string;
   quote_number: string;
   client_id: string;
   task_id: string | null;
   status: QuoteStatus;
   valid_until: string | null;
+  description: string | null;
   notes: string | null;
   terms: string | null;
   subtotal: number;
@@ -75,7 +75,6 @@ export interface QuoteAttachment {
   mime_type: string;
   attachment_type: AttachmentType;
   description: string | null;
-  include_in_invoice: boolean;
   created_at: string;
   created_by: string | null;
 }
@@ -114,9 +113,6 @@ export interface CreateQuoteRequest {
   valid_until?: number | null;
   notes?: string | null;
   terms?: string | null;
-  discount_amount?: number | null;
-  discount_type?: string | null;
-  discount_value?: number | null;
   vehicle_plate?: string | null;
   vehicle_make?: string | null;
   vehicle_model?: string | null;
@@ -179,7 +175,6 @@ export interface CreateQuoteAttachmentRequest {
   mime_type: string;
   attachment_type?: AttachmentType | null;
   description?: string | null;
-  include_in_invoice?: boolean;
 }
 
 /**
@@ -188,7 +183,6 @@ export interface CreateQuoteAttachmentRequest {
 export interface UpdateQuoteAttachmentRequest {
   description?: string | null;
   attachment_type?: AttachmentType | null;
-  include_in_invoice?: boolean;
 }
 
 /**

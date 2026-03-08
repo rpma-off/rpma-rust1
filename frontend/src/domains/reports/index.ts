@@ -1,3 +1,2 @@
-export { reportsIpc } from './ipc';
-export { useInterventionReport } from './hooks';
-export { InterventionReportSection } from './components';
+// Re-export from the public API surface.
+export * from './api';

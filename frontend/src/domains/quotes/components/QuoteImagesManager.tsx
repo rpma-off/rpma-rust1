@@ -74,7 +74,6 @@ export function QuoteImagesManager({
           mime_type: compressedFile.type,
           file_size: compressedFile.size,
           attachment_type: 'image',
-          include_in_invoice: true,
         });
 
         if (result) {
@@ -119,15 +118,9 @@ export function QuoteImagesManager({
     await updateAttachment(quoteId, attachmentId, { description });
   }, [quoteId, updateAttachment]);
 
-  const handleToggleInvoice = useCallback(async (attachmentId: string, checked: boolean) => {
-    setImages((prev) =>
-      prev.map((img) =>
-        img.id === attachmentId ? { ...img, include_in_invoice: checked } : img
-      )
-    );
-
-    await updateAttachment(quoteId, attachmentId, { include_in_invoice: checked });
-  }, [quoteId, updateAttachment]);
+  const handleToggleInvoice = useCallback(async (_attachmentId: string, _checked: boolean) => {
+    // include_in_invoice is not supported by the backend
+  }, []);
 
   return (
     <Card className="border-0 shadow-sm">
@@ -217,14 +210,6 @@ export function QuoteImagesManager({
                     onBlur={(e) => handleDescriptionChange(file.id, e.target.value)}
                     className="h-6 text-xs"
                   />
-                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Switch
-                      checked={file.include_in_invoice ?? true}
-                      onCheckedChange={(checked) => handleToggleInvoice(file.id, checked ?? true)}
-                      className="scale-75"
-                    />
-                    PDF
-                  </label>
                 </div>
               </div>
             ))}

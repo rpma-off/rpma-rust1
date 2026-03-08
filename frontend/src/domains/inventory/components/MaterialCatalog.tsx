@@ -27,7 +27,7 @@ import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } from 'lucide-react';
 import { useMaterials } from '../hooks/useMaterials';
 import type { Material, MaterialType } from '../api/types';
-import { useInventory } from '../api';
+import { useInventory } from '../hooks/useInventory';
 import { MaterialForm } from './MaterialForm';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks/useTranslation';

@@ -1,7 +1,7 @@
 'use client';
 
-import { SettingsPageContent } from '@/domains/settings';
+import { redirect } from 'next/navigation';
 
-export default function SettingsPage() {
-  return <SettingsPageContent />;
+export default function SettingsRootPage() {
+  redirect('/settings/profile');
 }

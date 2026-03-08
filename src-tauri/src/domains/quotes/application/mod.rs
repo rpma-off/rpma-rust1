@@ -10,8 +10,9 @@ pub(crate) mod quote_service;
 mod quote_totals;
 
 pub use contracts::{
-    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
-    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest,
-    QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest,
-    QuoteListRequest, QuoteStatusRequest, QuoteUpdateRequest,
+    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentOpenRequest,
+    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
+    QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest, QuoteItemAddRequest,
+    QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest, QuoteStatusRequest,
+    QuoteUpdateRequest,
 };

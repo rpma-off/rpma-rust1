@@ -4,11 +4,8 @@ mod facade;
 pub(crate) use facade::InventoryFacade;
 
 pub(crate) mod application;
-#[cfg(feature = "export-types")]
 pub mod domain;
-#[cfg(not(feature = "export-types"))]
-pub(crate) mod domain;
-pub(crate) mod infrastructure;
+pub mod infrastructure;
 pub(crate) mod ipc;
 
 #[cfg(test)]

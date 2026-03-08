@@ -479,7 +479,7 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found after rejection".to_string())?;
 
         // Emit QuoteRejected event
-        if let Err(e) = self.emit_quote_rejected(&updated_quote, None) {
+        if let Err(e) = self.emit_quote_rejected(&updated_quote, rejected_by, None) {
             warn!(quote_id = %id, error = %e, "Failed to emit QuoteRejected event");
         }
 
@@ -516,6 +516,67 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found after expiry".to_string())
     }
 
+    /// Mark a quote as changes_requested (Sent → ChangesRequested).
+    ///
+    /// Signals that the customer has reviewed the quote and requested changes.
+    pub fn mark_changes_requested(&self, id: &str) -> Result<Quote, String> {
+        let quote = self
+            .repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable".to_string())?;
+
+        if quote.status != QuoteStatus::Sent {
+            return Err(format!(
+                "Des modifications ne peuvent être demandées que depuis l'état 'envoyé' (statut actuel: '{}')",
+                quote.status
+            ));
+        }
+
+        self.repo
+            .update_status(id, &QuoteStatus::ChangesRequested)
+            .map_err(Self::map_repo_error)?;
+
+        info!(quote_id = %id, "Quote marked as changes_requested");
+
+        self.repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable après mise à jour du statut".to_string())
+    }
+
+    /// Reopen a quote (ChangesRequested | Rejected → Draft).
+    ///
+    /// Allows revising a quote that was rejected or needs changes.
+    pub fn reopen(&self, id: &str) -> Result<Quote, String> {
+        let quote = self
+            .repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable".to_string())?;
+
+        if !matches!(
+            quote.status,
+            QuoteStatus::ChangesRequested | QuoteStatus::Rejected
+        ) {
+            return Err(format!(
+                "Seuls les devis 'rejeté' ou 'modifications demandées' peuvent être rouverts (statut actuel: '{}')",
+                quote.status
+            ));
+        }
+
+        self.repo
+            .update_status(id, &QuoteStatus::Draft)
+            .map_err(Self::map_repo_error)?;
+
+        info!(quote_id = %id, "Quote reopened as draft");
+
+        self.repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Devis introuvable après réouverture".to_string())
+    }
+
     // ------------------------------------------------------------------
     // Attachments
     // ------------------------------------------------------------------
@@ -524,6 +585,13 @@ impl QuoteService {
     pub fn get_attachments(&self, quote_id: &str) -> Result<Vec<QuoteAttachment>, String> {
         self.repo
             .find_attachments_by_quote_id(quote_id)
+            .map_err(|e| e.to_string())
+    }
+
+    /// Get a single attachment by its ID.
+    pub fn get_attachment(&self, attachment_id: &str) -> Result<Option<QuoteAttachment>, String> {
+        self.repo
+            .find_attachment_by_id(attachment_id)
             .map_err(|e| e.to_string())
     }
 

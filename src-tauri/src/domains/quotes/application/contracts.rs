@@ -124,3 +124,11 @@ pub struct QuoteAttachmentDeleteRequest {
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct QuoteAttachmentOpenRequest {
+    pub session_token: String,
+    pub attachment_id: String,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}

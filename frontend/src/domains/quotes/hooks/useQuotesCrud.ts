@@ -9,7 +9,6 @@ import type {
   QuoteFilters,
   CreateQuoteRequest,
   UpdateQuoteRequest,
-  ApiResponse,
 } from '@/types/quote.types';
 import { normalizeError } from '@/types/utility.types';
 
@@ -44,10 +43,10 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
       setLoading(true);
       setError(null);
       const result = await quotesIpc.list(filters, user.token);
-      const response = result as unknown as ApiResponse<QuoteListResponse>;
-      if (response?.success && response.data) {
-        setQuotes(response.data.data);
-        setTotal(response.data.total);
+      const listResult = result as unknown as QuoteListResponse;
+      if (listResult?.data) {
+        setQuotes(listResult.data);
+        setTotal(listResult.total);
       }
     } catch (err: unknown) {
       setError(normalizeError(err));
@@ -98,9 +97,9 @@ export function useQuote(id: string | null) {
       setLoading(true);
       setError(null);
       const result = await quotesIpc.get(id, user.token);
-      const response = result as unknown as ApiResponse<Quote>;
-      if (response?.success && response.data) {
-        setQuote(response.data);
+      const quote = result as unknown as Quote;
+      if (quote?.id) {
+        setQuote(quote);
       }
     } catch (err: unknown) {
       setError(normalizeError(err));
@@ -138,12 +137,9 @@ export function useCreateQuote() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<Quote>;
-        if (response?.success && response.data) {
-          return response.data;
-        }
-        if (response?.error) {
-          throw new Error(response.error.message);
+        const quote = result as unknown as Quote;
+        if (quote?.id) {
+          return quote;
         }
         return null;
       } catch (err: unknown) {
@@ -177,12 +173,9 @@ export function useUpdateQuote() {
           data as unknown as JsonObject,
           user.token,
         );
-        const response = result as unknown as ApiResponse<Quote>;
-        if (response?.success && response.data) {
-          return response.data;
-        }
-        if (response?.error) {
-          throw new Error(response.error.message);
+        const quote = result as unknown as Quote;
+        if (quote?.id) {
+          return quote;
         }
         return null;
       } catch (err: unknown) {
@@ -203,16 +196,18 @@ export function useUpdateQuote() {
 export function useDeleteQuote() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const deleteQuote = useCallback(
     async (id: string): Promise<boolean> => {
       if (!user?.token) return false;
       try {
         setLoading(true);
+        setError(null);
         const result = await quotesIpc.delete(id, user.token);
-        const response = result as unknown as ApiResponse<boolean>;
-        return response?.success ?? false;
-      } catch {
+        return (result as unknown as boolean) ?? false;
+      } catch (err: unknown) {
+        setError(normalizeError(err));
         return false;
       } finally {
         setLoading(false);
@@ -221,5 +216,5 @@ export function useDeleteQuote() {
     [user?.token],
   );
 
-  return { deleteQuote, loading };
+  return { deleteQuote, loading, error };
 }

@@ -2,16 +2,20 @@
 //!
 //! This module provides professional PDF report generation for PPF interventions
 //! using genpdf library for automatic pagination and better layout management.
+//!
+//! The template consumes a [`ReportViewModel`] built by
+//! [`build_intervention_report_view_model`] — **no** business logic or data
+//! merging happens here.
 
 use crate::commands::AppResult;
-use crate::shared::contracts::common::*;
 use crate::shared::services::cross_domain::Client;
-use crate::shared::services::cross_domain::InterventionStatus;
 use crate::shared::services::cross_domain::InterventionStep;
 use crate::shared::services::cross_domain::Photo;
-use crate::shared::services::cross_domain::StepStatus;
 
-use chrono::Utc;
+use super::report_view_model::{
+    build_intervention_report_view_model, ReportStep, ReportViewModel,
+};
+
 use genpdf::{elements, fonts, style, Alignment, Document, Element, SimplePageDecorator};
 use std::path::Path;
 
@@ -49,17 +53,22 @@ impl InterventionPdfReport {
             self.intervention.id
         );
 
-        // Create a new document with bundled or system fonts.
-        // We resolve the fonts/ directory relative to the running binary so it works
-        // both during development and in a production install.
-        tracing::info!("Loading fonts for PDF generation");
+        // ---- 1. Build the view model (data layer) ----
+        let vm = build_intervention_report_view_model(
+            &self.intervention,
+            &self.steps,
+            &self.photos,
+            &self.materials,
+            self.client.as_ref(),
+        );
 
+        // ---- 2. Render the PDF (template layer) ----
+        tracing::info!("Loading fonts for PDF generation");
         let font_family = Self::load_fonts()?;
 
         let mut doc = Document::new(font_family);
         doc.set_title("Rapport d'Intervention PPF");
 
-        // Set up page decorator
         let mut decorator = SimplePageDecorator::new();
         decorator.set_margins(20);
         doc.set_page_decorator(decorator);
@@ -69,18 +78,16 @@ impl InterventionPdfReport {
             self.intervention.id
         );
 
-        // Add all report sections
-        self.add_title_page(&mut doc);
-        self.add_intervention_summary(&mut doc);
-        self.add_client_section(&mut doc);
-        self.add_vehicle_section(&mut doc);
-        self.add_work_conditions(&mut doc);
-        self.add_materials_section(&mut doc);
-        self.add_workflow_steps(&mut doc);
-        self.add_quality_control(&mut doc);
-        self.add_photo_documentation(&mut doc);
-        self.add_customer_validation(&mut doc);
-        self.add_footer(&mut doc);
+        // Render all report sections from the view model
+        Self::render_header(&mut doc, &vm);
+        Self::render_summary(&mut doc, &vm);
+        Self::render_client_and_vehicle(&mut doc, &vm);
+        Self::render_work_conditions(&mut doc, &vm);
+        Self::render_materials(&mut doc, &vm);
+        Self::render_workflow_steps(&mut doc, &vm);
+        Self::render_quality_and_validation(&mut doc, &vm);
+        Self::render_photos(&mut doc, &vm);
+        Self::render_footer(&mut doc, &vm);
 
         // Ensure output directory exists
         if let Some(parent) = output_path.parent() {
@@ -94,7 +101,6 @@ impl InterventionPdfReport {
 
         tracing::info!("Rendering PDF to file: {:?}", output_path);
 
-        // Render the document
         match doc.render_to_file(output_path) {
             Ok(_) => {
                 tracing::info!(
@@ -118,485 +124,507 @@ impl InterventionPdfReport {
     }
 }
 
-impl InterventionPdfReport {
-    /// Add title page
-    fn add_title_page(&self, doc: &mut Document) {
-        doc.push(elements::Break::new(2.0));
+// ---------------------------------------------------------------------------
+// Pure rendering methods — no data logic, only layout
+// ---------------------------------------------------------------------------
 
+impl InterventionPdfReport {
+    // -- Layout helpers --
+
+    /// Bold section title with a thin horizontal rule.
+    fn section_title(doc: &mut Document, title: &str) {
+        doc.push(elements::Break::new(0.8));
+        doc.push(
+            elements::Paragraph::new(title)
+                .styled(style::Style::new().bold().with_font_size(13)),
+        );
+        doc.push(
+            elements::Paragraph::new("________________________________________________")
+                .styled(style::Style::new().with_font_size(4)),
+        );
+        doc.push(elements::Break::new(0.3));
+    }
+
+    /// Build a 2-column key–value `TableLayout` (label bold / value normal).
+    fn kv_table(pairs: &[(&str, &str)]) -> elements::TableLayout {
+        let mut table = elements::TableLayout::new(vec![3, 7]);
+        for (label, value) in pairs {
+            let mut row = table.row();
+            row.push_element(
+                elements::Paragraph::new(*label)
+                    .styled(style::Style::new().bold()),
+            );
+            row.push_element(elements::Paragraph::new(*value));
+            let _ = row.push();
+        }
+        table
+    }
+
+    // -- 1. Header / title page --
+
+    fn render_header(doc: &mut Document, vm: &ReportViewModel) {
+        doc.push(elements::Break::new(2.0));
         doc.push(
             elements::Paragraph::new("RAPPORT D'INTERVENTION PPF")
                 .aligned(Alignment::Center)
-                .styled(style::Style::new().bold().with_font_size(20)),
+                .styled(style::Style::new().bold().with_font_size(24)),
         );
-
-        doc.push(elements::Break::new(2.0));
-
+        doc.push(elements::Break::new(0.6));
         doc.push(
-            elements::Paragraph::new(&format!("Intervention ID: {}", self.intervention.id))
-                .aligned(Alignment::Center),
+            elements::Paragraph::new(&vm.meta.report_title)
+                .aligned(Alignment::Center)
+                .styled(style::Style::new().with_font_size(14)),
         );
-
+        doc.push(elements::Break::new(0.8));
+        doc.push(
+            elements::Paragraph::new(&format!("Intervention : {}", vm.meta.intervention_id))
+                .aligned(Alignment::Center)
+                .styled(style::Style::new().with_font_size(10)),
+        );
+        if vm.meta.task_number != vm.display.placeholder_not_specified {
+            doc.push(
+                elements::Paragraph::new(&format!("Tache : {}", vm.meta.task_number))
+                    .aligned(Alignment::Center)
+                    .styled(style::Style::new().with_font_size(10)),
+            );
+        }
         doc.push(
             elements::Paragraph::new(&format!(
-                "Généré le: {}",
-                Utc::now().format("%d/%m/%Y %H:%M")
+                "Date de generation : {}",
+                vm.meta.generated_at
             ))
-            .aligned(Alignment::Center),
+            .aligned(Alignment::Center)
+            .styled(style::Style::new().with_font_size(10)),
         );
-
         doc.push(elements::Break::new(3.0));
     }
 
-    /// Add intervention summary section
-    fn add_intervention_summary(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("RÉSUMÉ DE L'INTERVENTION")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
+    // -- 2. Summary --
 
-        doc.push(elements::Break::new(0.5));
-
-        // Status with emoji
-        let status_text = match self.intervention.status {
-            InterventionStatus::Completed => "✅ Terminée",
-            InterventionStatus::InProgress => "[..] En cours",
-            InterventionStatus::Pending => "[..] En attente",
-            InterventionStatus::Paused => "[||] En pause",
-            InterventionStatus::Cancelled => "[X] Annulee",
-        };
-
-        doc.push(elements::Paragraph::new(&format!(
-            "Statut: {}",
-            status_text
-        )));
-
-        // Technician
-        let technician_text = self
-            .intervention
-            .technician_name
-            .as_ref()
-            .map(|name| name.as_str())
-            .unwrap_or("Non assigné");
-        doc.push(elements::Paragraph::new(&format!(
-            "Technicien: {}",
-            technician_text
-        )));
-
-        // Duration information
-        if let Some(actual) = self.intervention.actual_duration {
-            doc.push(elements::Paragraph::new(&format!(
-                "Durée réelle: {} minutes",
-                actual
-            )));
-        }
-        if let Some(estimated) = self.intervention.estimated_duration {
-            doc.push(elements::Paragraph::new(&format!(
-                "Durée estimée: {} minutes",
-                estimated
-            )));
-        }
-
-        // Quality score with stars
-        if let Some(score) = self.intervention.quality_score {
-            let stars = Self::score_to_stars(score);
-            doc.push(elements::Paragraph::new(&format!(
-                "Score qualité: {} ({}/100)",
-                stars, score
-            )));
-        }
-
-        // Completion percentage
-        doc.push(elements::Paragraph::new(&format!(
-            "Progression: {:.1}%",
-            self.intervention.completion_percentage
-        )));
-
-        doc.push(elements::Break::new(1.0));
+    fn render_summary(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "RESUME DE L'INTERVENTION");
+        let status_display = format!("{} {}", vm.summary.status_badge, vm.summary.status);
+        let completion = format!("{:.1}%", vm.summary.completion_percentage);
+        doc.push(Self::kv_table(&[
+            ("Statut", &status_display),
+            ("Technicien", &vm.summary.technician_name),
+            ("Type d'intervention", &vm.summary.intervention_type),
+            ("Duree estimee", &vm.summary.estimated_duration),
+            ("Duree reelle", &vm.summary.actual_duration),
+            ("Progression", &completion),
+        ]));
     }
 
-    /// Add client information section (only if client data exists)
-    fn add_client_section(&self, doc: &mut Document) {
-        if let Some(client) = &self.client {
+    // -- 3. Client & Vehicle --
+
+    fn render_client_and_vehicle(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "CLIENT");
+        doc.push(Self::kv_table(&[
+            ("Nom", &vm.client.name),
+            ("Email", &vm.client.email),
+            ("Telephone", &vm.client.phone),
+        ]));
+
+        Self::section_title(doc, "VEHICULE");
+        let make_model = format!("{} {}", vm.vehicle.make, vm.vehicle.model);
+        doc.push(Self::kv_table(&[
+            ("Plaque", &vm.vehicle.plate),
+            ("Marque / Modele", &make_model),
+            ("Annee", &vm.vehicle.year),
+            ("Couleur", &vm.vehicle.color),
+            ("VIN", &vm.vehicle.vin),
+        ]));
+        doc.push(elements::Break::new(0.5));
+    }
+
+    // -- 4. Work conditions --
+
+    fn render_work_conditions(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "CONDITIONS DE TRAVAIL");
+        doc.push(Self::kv_table(&[
+            ("Meteo", &vm.work_conditions.weather),
+            ("Eclairage", &vm.work_conditions.lighting),
+            ("Lieu de travail", &vm.work_conditions.location),
+            ("Temperature", &vm.work_conditions.temperature),
+            ("Humidite", &vm.work_conditions.humidity),
+        ]));
+        doc.push(elements::Break::new(0.5));
+    }
+
+    // -- 5. Materials --
+
+    fn render_materials(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "MATERIAUX UTILISES");
+        doc.push(Self::kv_table(&[
+            ("Type de film", &vm.materials.film_type),
+            ("Marque", &vm.materials.film_brand),
+            ("Modele", &vm.materials.film_model),
+        ]));
+
+        if !vm.materials.consumptions.is_empty() {
+            doc.push(elements::Break::new(0.4));
             doc.push(
-                elements::Paragraph::new("INFORMATIONS CLIENT")
-                    .styled(style::Style::new().bold().with_font_size(16)),
+                elements::Paragraph::new(&format!(
+                    "Consommations ({} enregistree(s)) :",
+                    vm.materials.consumptions.len()
+                ))
+                .styled(style::Style::new().bold()),
             );
-
-            doc.push(elements::Break::new(0.5));
-
-            doc.push(elements::Paragraph::new(&format!("Nom: {}", client.name)));
-
-            if let Some(email) = &client.email {
-                doc.push(elements::Paragraph::new(&format!("Email: {}", email)));
-            }
-
-            if let Some(phone) = &client.phone {
-                doc.push(elements::Paragraph::new(&format!("Téléphone: {}", phone)));
-            }
-
-            doc.push(elements::Break::new(1.0));
-        }
-    }
-
-    /// Add vehicle information section
-    fn add_vehicle_section(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("INFORMATIONS VÉHICULE")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
-
-        doc.push(elements::Break::new(0.5));
-
-        doc.push(elements::Paragraph::new(&format!(
-            "Plaque: {}",
-            self.intervention.vehicle_plate
-        )));
-
-        if let Some(make) = &self.intervention.vehicle_make {
-            if let Some(model) = &self.intervention.vehicle_model {
-                doc.push(elements::Paragraph::new(&format!(
-                    "Modèle: {} {}",
-                    make, model
-                )));
-            } else {
-                doc.push(elements::Paragraph::new(&format!("Marque: {}", make)));
-            }
-        }
-
-        if let Some(year) = self.intervention.vehicle_year {
-            doc.push(elements::Paragraph::new(&format!("Année: {}", year)));
-        }
-
-        if let Some(vin) = &self.intervention.vehicle_vin {
-            doc.push(elements::Paragraph::new(&format!("VIN: {}", vin)));
-        }
-
-        if let Some(color) = &self.intervention.vehicle_color {
-            doc.push(elements::Paragraph::new(&format!("Couleur: {}", color)));
-        }
-
-        doc.push(elements::Break::new(1.0));
-    }
-
-    /// Add work conditions section
-    fn add_work_conditions(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("CONDITIONS DE TRAVAIL")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
-
-        doc.push(elements::Break::new(0.5));
-
-        if let Some(weather) = &self.intervention.weather_condition {
-            let weather_text = match weather {
-                WeatherCondition::Sunny => "Ensoleille",
-                WeatherCondition::Cloudy => "Nuageux",
-                WeatherCondition::Rainy => "Pluvieux",
-                WeatherCondition::Windy => "💨 Venteux",
-                WeatherCondition::Foggy => "Brumeux",
-                WeatherCondition::Other => "Autre",
-            };
-            doc.push(elements::Paragraph::new(&format!(
-                "Météo: {}",
-                weather_text
-            )));
-        }
-
-        if let Some(lighting) = &self.intervention.lighting_condition {
-            let lighting_text = match lighting {
-                LightingCondition::Natural => "Naturel",
-                LightingCondition::Artificial => "Artificiel",
-                LightingCondition::Mixed => "Mixte",
-            };
-            doc.push(elements::Paragraph::new(&format!(
-                "Éclairage: {}",
-                lighting_text
-            )));
-        }
-
-        if let Some(location) = &self.intervention.work_location {
-            let location_text = match location {
-                WorkLocation::Indoor => "Interieur",
-                WorkLocation::Outdoor => "Exterieur",
-                WorkLocation::SemiCovered => "⛺ Semi-couvert",
-            };
-            doc.push(elements::Paragraph::new(&format!(
-                "Lieu: {}",
-                location_text
-            )));
-        }
-
-        if let Some(temp) = self.intervention.temperature_celsius {
-            doc.push(elements::Paragraph::new(&format!(
-                "Température: {:.1}°C",
-                temp
-            )));
-        }
-
-        if let Some(humidity) = self.intervention.humidity_percentage {
-            doc.push(elements::Paragraph::new(&format!(
-                "Humidité: {:.1}%",
-                humidity
-            )));
-        }
-
-        doc.push(elements::Break::new(1.0));
-    }
-
-    /// Add materials section
-    fn add_materials_section(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("MATÉRIAUX UTILISÉS")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
-
-        doc.push(elements::Break::new(0.5));
-
-        if let Some(film_type) = &self.intervention.film_type {
-            let film_text = match film_type {
-                FilmType::Standard => "Standard",
-                FilmType::Premium => "Premium",
-                FilmType::Matte => "Mat",
-                FilmType::Colored => "Coloré",
-            };
-            doc.push(elements::Paragraph::new(&format!(
-                "Type de film: {}",
-                film_text
-            )));
-        }
-
-        if let Some(brand) = &self.intervention.film_brand {
-            doc.push(elements::Paragraph::new(&format!("Marque: {}", brand)));
-        }
-
-        if let Some(model) = &self.intervention.film_model {
-            doc.push(elements::Paragraph::new(&format!("Modèle: {}", model)));
-        }
-
-        if let Some(zones) = &self.intervention.ppf_zones_config {
-            if !zones.is_empty() {
-                doc.push(elements::Paragraph::new(&format!(
-                    "Zones traitées: {}",
-                    zones.join(", ")
-                )));
-            }
-        }
-
-        // Materials consumption table would go here
-        // For now, just show total count
-        doc.push(elements::Paragraph::new(&format!(
-            "Consommations enregistrées: {}",
-            self.materials.len()
-        )));
-
-        doc.push(elements::Break::new(1.0));
-    }
-
-    /// Add workflow steps section (ALL steps, no truncation)
-    fn add_workflow_steps(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("ÉTAPES DU WORKFLOW")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
-
-        doc.push(elements::Break::new(0.5));
-
-        for step in &self.steps {
-            let status_icon = match step.step_status {
-                StepStatus::Completed => "✅",
-                StepStatus::InProgress => "[..]",
-                StepStatus::Pending => "[..]",
-                StepStatus::Paused => "[||]",
-                StepStatus::Failed => "[X]",
-                StepStatus::Skipped => "[>>]",
-                StepStatus::Rework => "[..]",
-            };
-
-            let step_header = format!(
-                "Étape {}: {} - {} {}",
-                step.step_number,
-                step.step_name,
-                status_icon,
-                Self::step_status_to_text(&step.step_status)
-            );
-
-            doc.push(elements::Paragraph::new(&step_header).styled(style::Style::new().bold()));
-
-            // Duration
-            if let Some(duration) = step.duration_seconds {
-                doc.push(elements::Paragraph::new(&format!(
-                    "Durée: {} secondes",
-                    duration
-                )));
-            }
-
-            // Photo count
-            if step.photo_count > 0 {
-                doc.push(elements::Paragraph::new(&format!(
-                    "Photos: {}",
-                    step.photo_count
-                )));
-            }
-
-            // Quality score with stars
-            if let Some(score) = step.validation_score {
-                let stars = Self::score_to_stars(score);
-                doc.push(elements::Paragraph::new(&format!(
-                    "Validation: {} ({}/100)",
-                    stars, score
-                )));
-            }
-
-            doc.push(elements::Break::new(0.3));
-        }
-
-        doc.push(elements::Break::new(1.0));
-    }
-
-    /// Add quality control section
-    fn add_quality_control(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("CONTROLE QUALITE")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
-
-        doc.push(elements::Break::new(0.5));
-
-        if let Some(score) = self.intervention.quality_score {
-            let stars = Self::score_to_stars(score);
-            doc.push(elements::Paragraph::new(&format!(
-                "Score qualité global: {} ({}/100)",
-                stars, score
-            )));
-        }
-
-        if let Some(satisfaction) = self.intervention.customer_satisfaction {
-            let stars = Self::score_to_stars(satisfaction * 10); // Convert to 0-100 scale
-            doc.push(elements::Paragraph::new(&format!(
-                "Satisfaction client: {} ({}/10)",
-                stars, satisfaction
-            )));
-        }
-
-        if let Some(observations) = &self.intervention.final_observations {
-            if !observations.is_empty() {
-                doc.push(
-                    elements::Paragraph::new("Observations finales:")
-                        .styled(style::Style::new().bold()),
+            let mut con_table = elements::TableLayout::new(vec![4, 2, 2, 2]);
+            {
+                let mut row = con_table.row();
+                row.push_element(
+                    elements::Paragraph::new("Materiau").styled(style::Style::new().bold()),
                 );
-                for obs in observations {
-                    doc.push(elements::Paragraph::new(obs));
-                }
+                row.push_element(
+                    elements::Paragraph::new("Qte").styled(style::Style::new().bold()),
+                );
+                row.push_element(
+                    elements::Paragraph::new("Cout").styled(style::Style::new().bold()),
+                );
+                row.push_element(
+                    elements::Paragraph::new("Dechets").styled(style::Style::new().bold()),
+                );
+                let _ = row.push();
             }
+            for c in &vm.materials.consumptions {
+                let qty = format!("{:.2}", c.quantity_used);
+                let waste = format!("{:.2}", c.waste_quantity);
+                let mut row = con_table.row();
+                row.push_element(elements::Paragraph::new(&c.material_id));
+                row.push_element(elements::Paragraph::new(&qty));
+                row.push_element(elements::Paragraph::new(&c.total_cost));
+                row.push_element(elements::Paragraph::new(&waste));
+                let _ = row.push();
+            }
+            doc.push(con_table);
         }
-
-        doc.push(elements::Break::new(1.0));
-    }
-
-    /// Add photo documentation section
-    fn add_photo_documentation(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("DOCUMENTATION PHOTOS")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
 
         doc.push(elements::Break::new(0.5));
-
-        doc.push(elements::Paragraph::new(&format!(
-            "Nombre total de photos: {}",
-            self.photos.len()
-        )));
-
-        // Count by category
-        let mut category_counts = std::collections::HashMap::new();
-        for photo in &self.photos {
-            let category = photo
-                .photo_category
-                .as_ref()
-                .map(|c| format!("{:?}", c))
-                .unwrap_or_else(|| "Non catégorisé".to_string());
-            *category_counts.entry(category).or_insert(0) += 1;
-        }
-
-        for (category, count) in category_counts {
-            doc.push(elements::Paragraph::new(&format!(
-                "{}: {}",
-                category, count
-            )));
-        }
-
-        // GPS data summary
-        let with_gps = self
-            .photos
-            .iter()
-            .filter(|p| p.gps_location_lat.is_some())
-            .count();
-        if with_gps > 0 {
-            doc.push(elements::Paragraph::new(&format!(
-                "Photos avec géolocalisation: {}",
-                with_gps
-            )));
-        }
-
-        doc.push(elements::Break::new(1.0));
     }
 
-    /// Add customer validation section
-    fn add_customer_validation(&self, doc: &mut Document) {
-        doc.push(
-            elements::Paragraph::new("VALIDATION CLIENT")
-                .styled(style::Style::new().bold().with_font_size(16)),
-        );
+    // -- 6. Workflow steps --
+
+    fn render_workflow_steps(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "ETAPES DU WORKFLOW");
+
+        if vm.steps.is_empty() {
+            doc.push(elements::Paragraph::new(
+                "Aucune etape enregistree pour cette intervention.",
+            ));
+            doc.push(elements::Break::new(1.0));
+            return;
+        }
+
+        for step in &vm.steps {
+            Self::render_single_step(doc, step);
+        }
 
         doc.push(elements::Break::new(0.5));
-
-        if let Some(comments) = &self.intervention.customer_comments {
-            doc.push(elements::Paragraph::new("Commentaires:").styled(style::Style::new().bold()));
-            doc.push(elements::Paragraph::new(comments));
-        }
-
-        if self.intervention.customer_signature.is_some() {
-            doc.push(elements::Paragraph::new("✅ Signée électroniquement"));
-        }
-
-        doc.push(elements::Break::new(1.0));
     }
 
-    /// Add footer
-    fn add_footer(&self, doc: &mut Document) {
-        doc.push(elements::Break::new(2.0));
-
+    fn render_single_step(doc: &mut Document, step: &ReportStep) {
+        // Step header
         doc.push(
             elements::Paragraph::new(&format!(
-                "Rapport généré le: {}",
-                Utc::now().format("%d/%m/%Y %H:%M:%S")
+                "Etape {} - {} | {} {}",
+                step.number, step.title, step.status_badge, step.status
             ))
-            .aligned(Alignment::Center),
+            .styled(style::Style::new().bold().with_font_size(12)),
         );
+        doc.push(elements::Break::new(0.15));
 
-        doc.push(
-            elements::Paragraph::new("Application RPMA PPF Intervention")
-                .aligned(Alignment::Center),
-        );
-    }
-
-    /// Convert score (0-100) to star rating string
-    fn score_to_stars(score: i32) -> String {
-        let stars = (score as f32 / 20.0).round() as i32; // Convert to 0-5 scale
-        "*".repeat(stars as usize)
-    }
-
-    /// Convert step status to French label
-    fn step_status_to_text(status: &StepStatus) -> &'static str {
-        match status {
-            StepStatus::Completed => "Terminé",
-            StepStatus::InProgress => "En cours",
-            StepStatus::Pending => "En attente",
-            StepStatus::Paused => "En pause",
-            StepStatus::Failed => "Échec",
-            StepStatus::Skipped => "Ignoré",
-            StepStatus::Rework => "Retravail",
+        // Timing & counters (as a kv table)
+        let mut timing: Vec<(String, String)> = Vec::new();
+        if step.started_at != "Non renseigne" {
+            timing.push(("Debut".to_string(), step.started_at.clone()));
         }
+        if step.completed_at != "Non renseigne" {
+            timing.push(("Fin".to_string(), step.completed_at.clone()));
+        }
+        if step.duration != "Non renseigne" {
+            timing.push(("Duree".to_string(), step.duration.clone()));
+        }
+        if step.photo_count > 0 {
+            timing.push(("Photos".to_string(), step.photo_count.to_string()));
+        }
+        if step.quality_score != "Non evalue" {
+            timing.push(("Score qualite".to_string(), step.quality_score.clone()));
+        }
+        if !timing.is_empty() {
+            let refs: Vec<(&str, &str)> = timing
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str()))
+                .collect();
+            doc.push(Self::kv_table(&refs));
+        }
+
+        // Notes
+        if step.notes != "Aucune observation" {
+            doc.push(elements::Break::new(0.2));
+            doc.push(elements::Paragraph::new("Notes :").styled(style::Style::new().bold()));
+            doc.push(elements::Paragraph::new(&format!("  {}", step.notes)));
+        }
+
+        // Zones
+        if !step.zones.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new(&format!("Zones : {}", step.zones.join(", ")))
+                    .styled(style::Style::new().italic()),
+            );
+        }
+
+        // Checklist
+        if !step.checklist.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Checklist :").styled(style::Style::new().bold()),
+            );
+            for item in &step.checklist {
+                let mark = if item.checked { "[X]" } else { "[ ]" };
+                doc.push(elements::Paragraph::new(&format!(
+                    "  {} {}",
+                    mark, item.label
+                )));
+            }
+        }
+
+        // Defects
+        if !step.defects.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Defauts detectes :")
+                    .styled(style::Style::new().bold()),
+            );
+            for d in &step.defects {
+                doc.push(elements::Paragraph::new(&format!("  - {}", d)));
+            }
+        }
+
+        // Observations
+        if !step.observations.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Observations :").styled(style::Style::new().bold()),
+            );
+            for obs in &step.observations {
+                doc.push(elements::Paragraph::new(&format!("  - {}", obs)));
+            }
+        }
+
+        // Environment
+        if !step.environment.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Environnement :")
+                    .styled(style::Style::new().bold()),
+            );
+            for kv in &step.environment {
+                doc.push(elements::Paragraph::new(&format!(
+                    "  {}: {}",
+                    kv.key, kv.value
+                )));
+            }
+        }
+
+        // Measurements
+        if !step.measurements.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Mesures :").styled(style::Style::new().bold()),
+            );
+            for kv in &step.measurements {
+                doc.push(elements::Paragraph::new(&format!(
+                    "  {}: {}",
+                    kv.key, kv.value
+                )));
+            }
+        }
+
+        // Validation data
+        if !step.validation_data.is_empty() {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new("Donnees de validation :")
+                    .styled(style::Style::new().bold()),
+            );
+            for kv in &step.validation_data {
+                doc.push(elements::Paragraph::new(&format!(
+                    "  {}: {}",
+                    kv.key, kv.value
+                )));
+            }
+        }
+
+        // Approval
+        if step.approval_data.approved_by != "Non renseigne" {
+            doc.push(elements::Break::new(0.2));
+            doc.push(elements::Paragraph::new(&format!(
+                "Valide par : {} le {}",
+                step.approval_data.approved_by, step.approval_data.approved_at
+            )));
+        }
+        if step.approval_data.rejection_reason != "Aucune" {
+            doc.push(elements::Break::new(0.2));
+            doc.push(
+                elements::Paragraph::new(&format!(
+                    "Motif de rejet : {}",
+                    step.approval_data.rejection_reason
+                ))
+                .styled(style::Style::new().italic()),
+            );
+        }
+
+        doc.push(elements::Break::new(0.6));
+    }
+
+    // -- 7. Quality & customer validation --
+
+    fn render_quality_and_validation(doc: &mut Document, vm: &ReportViewModel) {
+        Self::section_title(doc, "CONTROLE QUALITE");
+        doc.push(
+            elements::Paragraph::new(&format!(
+                "Score global : {}",
+                vm.quality.global_quality_score
+            ))
+            .styled(style::Style::new().bold().with_font_size(12)),
+        );
+
+        if !vm.quality.checkpoints.is_empty() {
+            doc.push(elements::Break::new(0.4));
+            doc.push(
+                elements::Paragraph::new("Scores par etape :")
+                    .styled(style::Style::new().bold()),
+            );
+            let mut cp_table = elements::TableLayout::new(vec![5, 3, 2]);
+            {
+                let mut row = cp_table.row();
+                row.push_element(
+                    elements::Paragraph::new("Etape").styled(style::Style::new().bold()),
+                );
+                row.push_element(
+                    elements::Paragraph::new("Statut").styled(style::Style::new().bold()),
+                );
+                row.push_element(
+                    elements::Paragraph::new("Score").styled(style::Style::new().bold()),
+                );
+                let _ = row.push();
+            }
+            for cp in &vm.quality.checkpoints {
+                let mut row = cp_table.row();
+                row.push_element(elements::Paragraph::new(&cp.step_name));
+                row.push_element(elements::Paragraph::new(&cp.step_status));
+                row.push_element(elements::Paragraph::new(&cp.score));
+                let _ = row.push();
+            }
+            doc.push(cp_table);
+        }
+
+        if !vm.quality.final_observations.is_empty() {
+            doc.push(elements::Break::new(0.4));
+            doc.push(
+                elements::Paragraph::new("Observations finales :")
+                    .styled(style::Style::new().bold()),
+            );
+            for obs in &vm.quality.final_observations {
+                doc.push(elements::Paragraph::new(&format!("  - {}", obs)));
+            }
+        }
+
+        Self::section_title(doc, "VALIDATION CLIENT");
+        let sig_status = if vm.customer_validation.signature_present {
+            "Signee electroniquement"
+        } else {
+            "Non signee"
+        };
+        doc.push(Self::kv_table(&[
+            ("Satisfaction", &vm.customer_validation.satisfaction),
+            ("Signature", sig_status),
+            ("Commentaires", &vm.customer_validation.comments),
+        ]));
+        doc.push(elements::Break::new(0.5));
+    }
+
+    // -- 8. Photos --
+
+    fn render_photos(doc: &mut Document, vm: &ReportViewModel) {
+        if vm.photos.total_count == 0 {
+            return;
+        }
+
+        Self::section_title(doc, "DOCUMENTATION PHOTOS");
+        doc.push(
+            elements::Paragraph::new(&format!(
+                "Total : {} photo(s)",
+                vm.photos.total_count
+            ))
+            .styled(style::Style::new().bold()),
+        );
+
+        if !vm.photos.grouped_by_step.is_empty() {
+            doc.push(elements::Break::new(0.4));
+            doc.push(
+                elements::Paragraph::new("Repartition par etape :")
+                    .styled(style::Style::new().bold()),
+            );
+            let by_step: Vec<(String, String)> = vm
+                .photos
+                .grouped_by_step
+                .iter()
+                .map(|g| (g.label.clone(), g.count.to_string()))
+                .collect();
+            let by_step_refs: Vec<(&str, &str)> = by_step
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str()))
+                .collect();
+            doc.push(Self::kv_table(&by_step_refs));
+        }
+
+        if !vm.photos.grouped_by_category.is_empty() {
+            doc.push(elements::Break::new(0.4));
+            doc.push(
+                elements::Paragraph::new("Repartition par categorie :")
+                    .styled(style::Style::new().bold()),
+            );
+            let by_cat: Vec<(String, String)> = vm
+                .photos
+                .grouped_by_category
+                .iter()
+                .map(|g| (g.label.clone(), g.count.to_string()))
+                .collect();
+            let by_cat_refs: Vec<(&str, &str)> = by_cat
+                .iter()
+                .map(|(k, v)| (k.as_str(), v.as_str()))
+                .collect();
+            doc.push(Self::kv_table(&by_cat_refs));
+        }
+
+        doc.push(elements::Break::new(0.5));
+    }
+
+    // -- 9. Footer --
+
+    fn render_footer(doc: &mut Document, vm: &ReportViewModel) {
+        doc.push(elements::Break::new(2.0));
+        doc.push(
+            elements::Paragraph::new("________________________________________________")
+                .aligned(Alignment::Center)
+                .styled(style::Style::new().with_font_size(6)),
+        );
+        doc.push(
+            elements::Paragraph::new(&format!(
+                "Rapport genere le : {} | Intervention : {}",
+                vm.meta.generated_at, vm.meta.intervention_id
+            ))
+            .aligned(Alignment::Center)
+            .styled(style::Style::new().with_font_size(8)),
+        );
+        doc.push(
+            elements::Paragraph::new("RPMA - Application PPF Intervention")
+                .aligned(Alignment::Center)
+                .styled(style::Style::new().with_font_size(8)),
+        );
     }
 
     /// Load the best available font family for PDF generation.
@@ -732,5 +760,365 @@ impl InterventionPdfReport {
 
         tracing::info!("Successfully generated test PDF");
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::shared::contracts::common::*;
+    use crate::shared::services::cross_domain::{Intervention, InterventionStatus};
+    use super::super::report_view_model;
+    use serde_json::json;
+
+    /// Build a minimal Intervention with required fields and all optional fields set to None.
+    fn build_test_intervention() -> Intervention {
+        let now = now();
+        Intervention {
+            id: "test-intervention-001".to_string(),
+            task_id: "task-001".to_string(),
+            task_number: Some("T-001".to_string()),
+            status: InterventionStatus::Completed,
+            vehicle_plate: "AB-123-CD".to_string(),
+            vehicle_model: Some("Model S".to_string()),
+            vehicle_make: Some("Tesla".to_string()),
+            vehicle_year: Some(2024),
+            vehicle_color: Some("Noir".to_string()),
+            vehicle_vin: Some("VIN123456".to_string()),
+            client_id: None,
+            client_name: None,
+            client_email: None,
+            client_phone: None,
+            technician_id: Some("tech-001".to_string()),
+            technician_name: Some("Jean Dupont".to_string()),
+            intervention_type: crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
+            current_step: 4,
+            completion_percentage: 100.0,
+            estimated_duration: Some(120),
+            actual_duration: Some(95),
+            film_type: Some(FilmType::Premium),
+            film_brand: Some("XPEL".to_string()),
+            film_model: Some("Ultimate Plus".to_string()),
+            ppf_zones_config: Some(vec!["Capot".to_string(), "Pare-chocs".to_string()]),
+            ppf_zones_extended: None,
+            weather_condition: Some(WeatherCondition::Sunny),
+            lighting_condition: Some(LightingCondition::Natural),
+            work_location: Some(WorkLocation::Indoor),
+            temperature_celsius: Some(22.5),
+            humidity_percentage: Some(45.0),
+            start_location_lat: None,
+            start_location_lon: None,
+            start_location_accuracy: None,
+            end_location_lat: None,
+            end_location_lon: None,
+            end_location_accuracy: None,
+            customer_satisfaction: Some(9),
+            quality_score: Some(88),
+            final_observations: Some(vec!["Travail soigne".to_string()]),
+            customer_signature: Some("base64sig".to_string()),
+            customer_comments: Some("Tres satisfait".to_string()),
+            metadata: None,
+            notes: None,
+            special_instructions: None,
+            device_info: None,
+            app_version: None,
+            synced: false,
+            last_synced_at: None,
+            sync_error: None,
+            created_at: now,
+            updated_at: now,
+            created_by: None,
+            updated_by: None,
+            started_at: TimestampString::new(Some(now)),
+            completed_at: TimestampString::new(Some(now)),
+            scheduled_at: TimestampString::new(None),
+            paused_at: TimestampString::new(None),
+        }
+    }
+
+    /// Build a set of 4 workflow steps (Inspection, Preparation, Installation, Finalisation).
+    fn build_test_steps() -> Vec<InterventionStep> {
+        use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
+
+        let mut inspection = InterventionStep::new(
+            "test-intervention-001".to_string(),
+            1,
+            "Inspection".to_string(),
+            StepType::Inspection,
+        );
+        inspection.step_status = StepStatus::Completed;
+        inspection.duration_seconds = Some(600);
+        inspection.photo_count = 3;
+        inspection.notes = Some("Surface propre, quelques micro-rayures".to_string());
+        inspection.observations = Some(vec![
+            "Micro-rayures sur le capot".to_string(),
+            "Peinture en bon etat general".to_string(),
+        ]);
+        inspection.collected_data = Some(json!({
+            "checklist": {"wash": true, "clay_bar": true, "ipa_wipe": true},
+            "defects": ["micro-rayures capot"],
+            "environment": {"temperature": 22.5, "humidity": 45}
+        }));
+        inspection.validation_score = Some(90);
+
+        let preparation = InterventionStep::new(
+            "test-intervention-001".to_string(),
+            2,
+            "Preparation".to_string(),
+            StepType::Preparation,
+        );
+        // Pending status — must still appear in the report
+
+        let mut installation = InterventionStep::new(
+            "test-intervention-001".to_string(),
+            3,
+            "Installation".to_string(),
+            StepType::Installation,
+        );
+        installation.step_status = StepStatus::Completed;
+        installation.duration_seconds = Some(3600);
+        installation.photo_count = 8;
+        installation.collected_data = Some(json!({
+            "zones": ["Capot", "Pare-chocs avant", "Ailes avant"],
+            "quality_scores": {"capot": 95, "pare_chocs": 90, "ailes": 92}
+        }));
+        installation.validation_score = Some(92);
+
+        let mut finalization = InterventionStep::new(
+            "test-intervention-001".to_string(),
+            4,
+            "Finalisation".to_string(),
+            StepType::Finalization,
+        );
+        finalization.step_status = StepStatus::Completed;
+        finalization.duration_seconds = Some(300);
+        finalization.validation_score = Some(88);
+
+        vec![inspection, preparation, installation, finalization]
+    }
+
+    #[test]
+    fn test_humanize_key() {
+        // Now delegated to report_view_model::humanize_key
+        assert_eq!(
+            report_view_model::humanize_key("checklist"),
+            "Checklist"
+        );
+        assert_eq!(
+            report_view_model::humanize_key("quality_scores"),
+            "Quality Scores"
+        );
+        assert_eq!(
+            report_view_model::humanize_key("installation_zones"),
+            "Installation Zones"
+        );
+        assert_eq!(report_view_model::humanize_key(""), "");
+    }
+
+    #[test]
+    fn test_score_to_stars() {
+        assert_eq!(report_view_model::score_to_stars(100), "*****");
+        assert_eq!(report_view_model::score_to_stars(80), "****");
+        assert_eq!(report_view_model::score_to_stars(0), "");
+    }
+
+    #[test]
+    fn test_step_status_to_text_all_variants() {
+        use crate::shared::services::cross_domain::StepStatus;
+        assert_eq!(
+            report_view_model::step_status_label(&StepStatus::Completed),
+            "Termine"
+        );
+        assert_eq!(
+            report_view_model::step_status_label(&StepStatus::Pending),
+            "En attente"
+        );
+        assert_eq!(
+            report_view_model::step_status_label(&StepStatus::InProgress),
+            "En cours"
+        );
+        assert_eq!(
+            report_view_model::step_status_label(&StepStatus::Failed),
+            "Echec"
+        );
+    }
+
+    #[test]
+    fn test_report_new_with_all_null_optional_fields() {
+        let mut intervention = build_test_intervention();
+        intervention.technician_name = None;
+        intervention.customer_signature = None;
+        intervention.customer_satisfaction = None;
+        intervention.quality_score = None;
+        intervention.final_observations = None;
+        intervention.customer_comments = None;
+        intervention.weather_condition = None;
+        intervention.lighting_condition = None;
+        intervention.work_location = None;
+        intervention.temperature_celsius = None;
+        intervention.humidity_percentage = None;
+        intervention.film_type = None;
+        intervention.film_brand = None;
+        intervention.film_model = None;
+        intervention.ppf_zones_config = None;
+        intervention.actual_duration = None;
+        intervention.estimated_duration = None;
+
+        let report = InterventionPdfReport::new(
+            intervention,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+
+        // Must not panic — all None fields handled safely
+        assert!(report.steps.is_empty());
+    }
+
+    #[test]
+    fn test_report_includes_all_four_steps() {
+        let intervention = build_test_intervention();
+        let steps = build_test_steps();
+
+        assert_eq!(steps.len(), 4);
+        assert_eq!(steps[0].step_name, "Inspection");
+        assert_eq!(steps[1].step_name, "Preparation");
+        assert_eq!(steps[1].step_status, crate::shared::services::cross_domain::StepStatus::Pending);
+        assert_eq!(steps[2].step_name, "Installation");
+        assert_eq!(steps[3].step_name, "Finalisation");
+
+        let report = InterventionPdfReport::new(
+            intervention,
+            steps,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+
+        assert_eq!(report.steps.len(), 4);
+    }
+
+    #[test]
+    fn test_step_detail_data_present() {
+        let steps = build_test_steps();
+
+        // Inspection step has collected_data with checklist, defects, environment
+        let inspection = &steps[0];
+        assert!(inspection.collected_data.is_some());
+        let data = inspection.collected_data.as_ref().unwrap();
+        assert!(data.get("checklist").is_some());
+        assert!(data.get("defects").is_some());
+        assert!(data.get("environment").is_some());
+
+        // Installation step has zones and quality_scores
+        let installation = &steps[2];
+        assert!(installation.collected_data.is_some());
+        let data = installation.collected_data.as_ref().unwrap();
+        assert!(data.get("zones").is_some());
+        assert!(data.get("quality_scores").is_some());
+    }
+
+    #[tokio::test]
+    async fn test_generate_full_report_no_crash() {
+        // Skip if fonts are not available (CI environments)
+        if InterventionPdfReport::load_fonts().is_err() {
+            eprintln!("Skipping PDF generation test: fonts not available");
+            return;
+        }
+
+        let intervention = build_test_intervention();
+        let steps = build_test_steps();
+
+        let report = InterventionPdfReport::new(
+            intervention,
+            steps,
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+
+        let tmp_dir = std::env::temp_dir().join("rpma_test_pdf");
+        std::fs::create_dir_all(&tmp_dir).unwrap();
+        let output_path = tmp_dir.join("test_full_report.pdf");
+
+        let result = report.generate(&output_path).await;
+        assert!(result.is_ok(), "PDF generation failed: {:?}", result.err());
+
+        // Verify file was created and has content
+        let metadata = std::fs::metadata(&output_path).unwrap();
+        assert!(metadata.len() > 0, "Generated PDF is empty");
+
+        // Clean up
+        let _ = std::fs::remove_file(&output_path);
+    }
+
+    #[tokio::test]
+    async fn test_generate_report_with_all_nulls_no_crash() {
+        if InterventionPdfReport::load_fonts().is_err() {
+            eprintln!("Skipping PDF generation test: fonts not available");
+            return;
+        }
+
+        let mut intervention = build_test_intervention();
+        intervention.technician_name = None;
+        intervention.customer_signature = None;
+        intervention.customer_satisfaction = None;
+        intervention.quality_score = None;
+        intervention.final_observations = None;
+        intervention.customer_comments = None;
+
+        let report = InterventionPdfReport::new(
+            intervention,
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+
+        let tmp_dir = std::env::temp_dir().join("rpma_test_pdf");
+        std::fs::create_dir_all(&tmp_dir).unwrap();
+        let output_path = tmp_dir.join("test_null_report.pdf");
+
+        let result = report.generate(&output_path).await;
+        assert!(result.is_ok(), "PDF generation with nulls failed: {:?}", result.err());
+
+        let _ = std::fs::remove_file(&output_path);
+    }
+
+    #[tokio::test]
+    async fn test_generate_report_with_pending_step() {
+        if InterventionPdfReport::load_fonts().is_err() {
+            eprintln!("Skipping PDF generation test: fonts not available");
+            return;
+        }
+
+        let mut intervention = build_test_intervention();
+        intervention.status = InterventionStatus::InProgress;
+
+        // Only a single pending step
+        let pending_step = InterventionStep::new(
+            "test-intervention-001".to_string(),
+            1,
+            "Preparation".to_string(),
+            crate::domains::interventions::domain::models::step::StepType::Preparation,
+        );
+
+        let report = InterventionPdfReport::new(
+            intervention,
+            vec![pending_step],
+            Vec::new(),
+            Vec::new(),
+            None,
+        );
+
+        let tmp_dir = std::env::temp_dir().join("rpma_test_pdf");
+        std::fs::create_dir_all(&tmp_dir).unwrap();
+        let output_path = tmp_dir.join("test_pending_report.pdf");
+
+        let result = report.generate(&output_path).await;
+        assert!(result.is_ok(), "PDF with pending step failed: {:?}", result.err());
+
+        let _ = std::fs::remove_file(&output_path);
     }
 }

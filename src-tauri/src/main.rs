@@ -304,7 +304,10 @@ fn main() {
             domains::quotes::ipc::quote::quote_attachments_get,
             domains::quotes::ipc::quote::quote_attachment_create,
             domains::quotes::ipc::quote::quote_attachment_update,
-            domains::quotes::ipc::quote::quote_attachment_delete
+            domains::quotes::ipc::quote::quote_attachment_delete,
+            domains::quotes::ipc::quote::quote_mark_changes_requested,
+            domains::quotes::ipc::quote::quote_reopen,
+            domains::quotes::ipc::quote::quote_attachment_open
         ])
         .setup(|app| {
             info!("Initializing application setup");

@@ -30,6 +30,7 @@
       "@/domains/performance": ["./frontend/src/domains/performance/api"],
       "@/domains/photos": ["./frontend/src/domains/photos/api"],
       "@/domains/quotes": ["./frontend/src/domains/quotes/api"],
+      "@/domains/reports": ["./frontend/src/domains/reports/api"],
       "@/domains/security": ["./frontend/src/domains/security/api"],
       "@/domains/settings": ["./frontend/src/domains/settings/api"],
       "@/domains/sync": ["./frontend/src/domains/sync/api"],

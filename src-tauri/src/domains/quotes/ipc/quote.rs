@@ -7,10 +7,11 @@ use tracing::{debug, error, info, instrument, Span};
 
 use crate::authenticate;
 use crate::domains::quotes::application::{
-    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentUpdateRequest,
-    QuoteAttachmentsGetRequest, QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest,
-    QuoteGetRequest, QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest,
-    QuoteListRequest, QuoteStatusRequest, QuoteUpdateRequest,
+    QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentOpenRequest,
+    QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest, QuoteCreateRequest,
+    QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest, QuoteItemAddRequest,
+    QuoteItemDeleteRequest, QuoteItemUpdateRequest, QuoteListRequest, QuoteStatusRequest,
+    QuoteUpdateRequest,
 };
 
 // --- Commands ---
@@ -631,4 +632,87 @@ pub async fn quote_attachment_delete(
             Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
         }
     }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_mark_changes_requested(
+    request: QuoteStatusRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Quote>, AppError> {
+    debug!(quote_id = %request.id, "quote_mark_changes_requested command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let facade = QuotesFacade::new(state.quote_service.clone());
+
+    match facade.mark_changes_requested(&current_user.role, &request.id) {
+        Ok(quote) => {
+            info!(quote_id = %request.id, "Quote marked as changes_requested");
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, quote_id = %request.id, "Failed to mark quote as changes_requested");
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_reopen(
+    request: QuoteStatusRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Quote>, AppError> {
+    debug!(quote_id = %request.id, "quote_reopen command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let facade = QuotesFacade::new(state.quote_service.clone());
+
+    match facade.reopen(&current_user.role, &request.id) {
+        Ok(quote) => {
+            info!(quote_id = %request.id, "Quote reopened");
+            Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
+        }
+        Err(e) => {
+            error!(error = %e, quote_id = %request.id, "Failed to reopen quote");
+            Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())))
+        }
+    }
+}
+
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn quote_attachment_open(
+    request: QuoteAttachmentOpenRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<bool>, AppError> {
+    debug!(attachment_id = %request.attachment_id, "quote_attachment_open command received");
+    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let current_user = authenticate!(&request.session_token, &state);
+    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let facade = QuotesFacade::new(state.quote_service.clone());
+
+    let attachment = match facade.get_attachment(&current_user.role, &request.attachment_id) {
+        Ok(Some(a)) => a,
+        Ok(None) => {
+            return Ok(
+                ApiResponse::error(AppError::NotFound("Attachment not found".to_string()))
+                    .with_correlation_id(Some(correlation_id.clone())),
+            )
+        }
+        Err(e) => {
+            error!("Failed to retrieve attachment for open: {}", e);
+            return Ok(ApiResponse::error(e).with_correlation_id(Some(correlation_id.clone())));
+        }
+    };
+
+    open::that(&attachment.file_path).map_err(|e| {
+        error!(attachment_id = %request.attachment_id, "Failed to open attachment file: {}", e);
+        AppError::Internal(format!("Failed to open file: {e}"))
+    })?;
+
+    info!(attachment_id = %request.attachment_id, "Attachment opened");
+    Ok(ApiResponse::success(true).with_correlation_id(Some(correlation_id.clone())))
 }

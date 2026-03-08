@@ -14,7 +14,7 @@ import {
   useTaskDetailPage,
 } from '@/domains/tasks';
 import { useInterventionData } from '@/domains/interventions';
-import { InterventionReportSection } from '@/domains/reports';
+import { InterventionReportSection, ReportPreviewPanel, useInterventionReport, useInterventionReportPreview } from '@/domains/reports';
 
 export default function TaskDetailPage() {
   const {
@@ -41,6 +41,14 @@ export default function TaskDetailPage() {
 
   const { data: interventionData } = useInterventionData(taskId);
   const interventionId = interventionData?.id as string | undefined;
+
+  const { viewModel: reportViewModel, isLoading: reportPreviewLoading } = useInterventionReportPreview({ interventionId });
+  // React Query cache hit — same query key as InterventionReportSection in the sidebar
+  const { report } = useInterventionReport({ interventionId });
+
+  const visibleQuickNavSections = quickNavSections.filter(
+    section => section.id !== 'task-attachments' || interventionId
+  );
 
   if (loading) {
     return (
@@ -137,7 +145,7 @@ export default function TaskDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {quickNavSections.map(section => (
+                {visibleQuickNavSections.map(section => (
                   <button
                     key={section.id}
                     type="button"
@@ -184,10 +192,25 @@ export default function TaskDetailPage() {
                 <TaskOverview task={task} defaultExpandedSections={['notes-operationnelles']} />
               </section>
 
-              {/* Task Attachments */}
-              <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <TaskAttachments taskId={taskId} />
-              </section>
+              {/* Task Attachments - Only shown when intervention exists */}
+              {interventionId && (
+                <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <TaskAttachments taskId={taskId} />
+                </section>
+              )}
+
+              {/* Report Preview - shown when intervention exists */}
+              {interventionId && (
+                <section id="task-report-preview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <h2 className="text-base font-semibold text-foreground mb-4">Prévisualisation du rapport</h2>
+                  <ReportPreviewPanel
+                    viewModel={reportViewModel}
+                    isLoading={reportPreviewLoading}
+                    interventionId={interventionId}
+                    reportFilePath={report?.file_path}
+                  />
+                </section>
+              )}
 
               {/* Task Timeline */}
               <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">

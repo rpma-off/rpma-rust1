@@ -187,6 +187,20 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    pub fn mark_changes_requested(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
+        self.check_permission(role, "status")?;
+        self.quote_service
+            .mark_changes_requested(id)
+            .map_err(|e| self.map_quote_service_error(e))
+    }
+
+    pub fn reopen(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
+        self.check_permission(role, "status")?;
+        self.quote_service
+            .reopen(id)
+            .map_err(|e| self.map_quote_service_error(e))
+    }
+
     pub fn get_attachments(
         &self,
         role: &UserRole,
@@ -230,9 +244,20 @@ impl QuotesFacade {
         quote_id: &str,
         attachment_id: &str,
     ) -> Result<bool, AppError> {
-        self.check_permission(role, "delete")?;
+        self.check_permission(role, "update")?;
         self.quote_service
             .delete_attachment(quote_id, attachment_id)
             .map_err(|e| self.map_quote_service_error(e))
+    }
+
+    pub fn get_attachment(
+        &self,
+        role: &UserRole,
+        attachment_id: &str,
+    ) -> Result<Option<QuoteAttachment>, AppError> {
+        self.check_permission(role, "read")?;
+        self.quote_service
+            .get_attachment(attachment_id)
+            .map_err(|_| AppError::Database("Failed to retrieve attachment".to_string()))
     }
 }

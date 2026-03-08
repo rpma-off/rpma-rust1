@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Image as ImageIcon,
   MoreVertical,
   Edit,
   FileText,
@@ -11,7 +10,6 @@ import {
   AlertCircle,
   User,
   Settings,
-  Wrench,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -98,31 +96,6 @@ export function ManagedTaskActionPanel({
     action();
   };
 
-  const executionActions: TaskActionItem[] = [
-    {
-      id: 'workflow',
-      label: 'Voir le workflow',
-      icon: Wrench,
-      onClick: handleViewWorkflow,
-      disabled: !isInProgress,
-    },
-    {
-      id: 'before-photos',
-      label: 'Photos avant',
-      icon: ImageIcon,
-      count: task.photos_before?.length || 0,
-      onClick: () => router.push(`/tasks/${task.id}/photos/before`),
-    },
-    {
-      id: 'after-photos',
-      label: 'Photos après',
-      icon: ImageIcon,
-      count: task.photos_after?.length || 0,
-      onClick: () => router.push(`/tasks/${task.id}/photos/after`),
-      disabled: !isCompleted,
-    },
-  ];
-
   const communicationActions: TaskActionItem[] = [
     {
       id: 'call',
@@ -185,7 +158,7 @@ export function ManagedTaskActionPanel({
       ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
       : null;
 
-  const dockedQuickActions = [...executionActions.filter((action) => action.id !== 'workflow').slice(0, 2), communicationActions[1]];
+  const dockedQuickActions = communicationActions.slice(0, 2);
 
   return (
     <div
@@ -238,11 +211,6 @@ export function ManagedTaskActionPanel({
             </div>
           ) : (
             <>
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Exécution</p>
-                <SecondaryActionsGrid actions={executionActions} onActionClick={handleActionClick} columns={3} />
-              </div>
-
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Communication</p>
                 <SecondaryActionsGrid actions={communicationActions} onActionClick={handleActionClick} columns={2} />
