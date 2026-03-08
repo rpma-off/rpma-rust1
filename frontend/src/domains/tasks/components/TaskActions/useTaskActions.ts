@@ -20,13 +20,27 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createStatusUpdate(newStatus));
     },
+    onMutate: async (newStatus: TaskStatus) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
+      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
+      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return { ...(old as Record<string, unknown>), status: newStatus };
+      });
+      return { previousTask };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
       toast.success('Statut mis a jour avec succes');
     },
-    onError: (error) => {
+    onError: (error, _newStatus, context) => {
+      if (context?.previousTask !== undefined) {
+        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
+      }
       toast.error('Erreur lors de la mise a jour du statut');
       console.error('Status update error:', error);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
     },
   });
 
@@ -35,13 +49,27 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createPriorityUpdate(newPriority));
     },
+    onMutate: async (newPriority: TaskPriority) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
+      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
+      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return { ...(old as Record<string, unknown>), priority: newPriority };
+      });
+      return { previousTask };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
       toast.success('Priorite mise a jour avec succes');
     },
-    onError: (error) => {
+    onError: (error, _newPriority, context) => {
+      if (context?.previousTask !== undefined) {
+        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
+      }
       toast.error('Erreur lors de la mise a jour de la priorite');
       console.error('Priority update error:', error);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
     },
   });
 
@@ -50,13 +78,30 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.assignTask(task.id, user.id);
     },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
+      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
+      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return {
+          ...(old as Record<string, unknown>),
+          technician_id: user?.id,
+        };
+      });
+      return { previousTask };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
       toast.success('Tache assignee avec succes');
     },
-    onError: (error) => {
+    onError: (error, _vars, context) => {
+      if (context?.previousTask !== undefined) {
+        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
+      }
       toast.error('Erreur lors de l\'assignation');
       console.error('Assignment error:', error);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
     },
   });
 
@@ -65,13 +110,27 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createNotesUpdate(notes));
     },
+    onMutate: async (notes: string) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
+      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
+      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        return { ...(old as Record<string, unknown>), notes };
+      });
+      return { previousTask };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
       toast.success('Notes mises a jour avec succes');
     },
-    onError: (error) => {
+    onError: (error, _notes, context) => {
+      if (context?.previousTask !== undefined) {
+        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
+      }
       toast.error('Erreur lors de la mise a jour des notes');
       console.error('Notes update error:', error);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
     },
   });
 

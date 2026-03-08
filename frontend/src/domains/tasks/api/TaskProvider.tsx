@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useMemo } from 'react';
 import { TaskStatus, TaskPriority, UpdateTaskRequest } from '@/lib/backend';
 import type { TaskWithDetails } from './types';
 import { useTasks } from '../hooks/useTasks';
@@ -85,13 +85,13 @@ export const TaskProvider: React.FC<TaskProviderProps> = ({
     }
   }, [refetch]);
 
-  const value = {
+  const value = useMemo(() => ({
     ...tasksData,
     getTaskById,
     fetchTaskById,
     updateTaskProgress,
     bulkUpdateTasks,
-  };
+  }), [tasksData, getTaskById, fetchTaskById, updateTaskProgress, bulkUpdateTasks]);
 
   return (
     <TaskContext.Provider value={value}>

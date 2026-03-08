@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useCallback, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ipcClient } from '@/lib/ipc';
@@ -244,6 +244,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     enabled: !!session?.token && !!interventionData?.intervention?.id,
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Get task data for ppf_zones
@@ -257,6 +259,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     enabled: !!session?.token && !!taskId,
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const isLoading = interventionLoading || stepsLoading || taskLoading;
@@ -275,7 +279,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     ? steps.find(step => step.id === currentStepId) || steps[0] || null
     : null;
 
-  const canAdvanceToStep = (stepId: PPFStepId): boolean => {
+  const canAdvanceToStep = useCallback((stepId: PPFStepId): boolean => {
     const step = steps.find(s => s.id === stepId);
     if (!step) return false;
 
@@ -285,7 +289,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     // Can access step if previous step is completed
     const previousStep = steps.find(s => s.order === step.order - 1);
     return previousStep?.status === 'completed';
-  };
+  }, [steps]);
 
   const advanceToStepMutation = useMutation<
     { success: boolean; stepId: PPFStepId },
@@ -408,7 +412,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     }
   });
 
-  const advanceToStep = async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
+  const advanceToStep = useCallback(async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
     if (!canAdvanceToStep(stepId)) {
       toast.error('Impossible d\'accéder à cette étape');
       return;
@@ -422,17 +426,20 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     }
 
     await advanceToStepMutation.mutateAsync({ stepId, collectedData, photos });
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canAdvanceToStep, steps, advanceToStepMutation.mutateAsync]);
 
-  const completeStep = async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
+  const completeStep = useCallback(async <TStep extends PPFStepId>(stepId: TStep, collectedData?: PPFCollectedDataByStep[TStep], photos?: string[]) => {
     await completeStepMutation.mutateAsync({ stepId, collectedData, photos });
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completeStepMutation.mutateAsync]);
 
-  const finalizeIntervention = async (collectedData?: FinalizationCollectedData, photos?: string[]) => {
+  const finalizeIntervention = useCallback(async (collectedData?: FinalizationCollectedData, photos?: string[]) => {
     await finalizeInterventionMutation.mutateAsync({ collectedData, photos });
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finalizeInterventionMutation.mutateAsync]);
 
-  const value: PPFWorkflowContextType = {
+  const value = useMemo<PPFWorkflowContextType>(() => ({
     taskId,
     steps: steps,
     currentStep,
@@ -445,7 +452,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     advanceToStep,
     completeStep,
     finalizeIntervention
-  };
+  }), [taskId, steps, currentStep, isLoading, error, interventionData, stepsData, taskData, canAdvanceToStep, advanceToStep, completeStep, finalizeIntervention]);
 
   return (
     <PPFWorkflowContext.Provider value={value}>

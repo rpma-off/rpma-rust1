@@ -41,6 +41,8 @@ export function useEntitySyncStatus(entityId: string, entityType: EntityType) {
       }
     },
     enabled: !!globalStatus?.pendingOperations,
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
   });
 
   return entityStatus;

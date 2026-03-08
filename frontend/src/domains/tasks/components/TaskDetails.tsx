@@ -8,6 +8,7 @@ import type { UpdateTaskRequest } from '@/lib/backend';
 import { getUserFullName } from '@/shared/utils';
 import { TaskChecklist } from './TaskChecklist';
 import { TaskPhotos } from './TaskPhotos';
+import { taskKeys } from '@/lib/query-keys';
 import { TaskHistory } from './TaskHistory';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '@/domains/auth';
@@ -105,9 +106,9 @@ export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDet
       return await taskService.updateTask(task.id, createStatusUpdate(status));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
       onTaskUpdated();
-    }
+    },
   });
 
   // Assign task to current user
@@ -118,9 +119,9 @@ export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDet
       return await taskService.updateTask(task.id, createTechnicianUpdate(user.id));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
       onTaskUpdated();
-    }
+    },
   });
 
   // Delete task
@@ -130,10 +131,10 @@ export function TaskDetails({ task, open, onOpenChange, onTaskUpdated }: TaskDet
       await deleteTask(task.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
       onTaskUpdated();
       onOpenChange(false); // Close the dialog after successful deletion
-    }
+    },
   });
 
   if (!task) return null;

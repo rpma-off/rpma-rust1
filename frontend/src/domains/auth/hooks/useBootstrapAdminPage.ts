@@ -17,6 +17,8 @@ export function useBootstrapAdminPage() {
   const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
     queryKey: ['hasAdmins'],
     queryFn: () => authBootstrap.hasAdmins(),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   useEffect(() => {

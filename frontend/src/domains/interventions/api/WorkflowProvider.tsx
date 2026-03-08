@@ -615,7 +615,7 @@ export function WorkflowProvider({
 
 
   // Context value
-  const value: WorkflowContextType = {
+  const value = useMemo<WorkflowContextType>(() => ({
     // State
     workflow,
     steps,
@@ -662,7 +662,17 @@ export function WorkflowProvider({
     getCurrentStepIndex,
     canProceedToNextStep,
     resetWorkflow
-  };
+  }), [
+    workflow, steps, currentStep, progress, isLoading, error,
+    isFirstStep, isLastStep,
+    loadWorkflow, startWorkflow, startStep, completeStep, skipStep,
+    goToStep, goToNextStep, goToPreviousStep, updateStepData, updateStepStatus,
+    startTiming, pauseTiming, resumeTiming,
+    addSignature,
+    uploadPhotos,
+    isStepComplete, isStepInProgress, isStepSkipped, getStepProgress,
+    getProgressPercentage, getCurrentStepIndex, canProceedToNextStep, resetWorkflow
+  ]);
 
   return (
     <WorkflowContext.Provider value={value}>

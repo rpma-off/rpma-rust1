@@ -130,9 +130,18 @@ export function DesktopTable<T extends Record<string, unknown>>({
     }
   }, [focusedRowIndex]);
 
-  const isRowSelected = useCallback((item: T) => {
-    return selectedRows.some(selected => JSON.stringify(selected) === JSON.stringify(item));
+  // Build a Set of selected keys for O(1) lookup. Rows with an `id` property
+  // (all domain entities in this app) use that as the key; other objects fall
+  // back to JSON.stringify which is still O(k) per-item but only paid once
+  // when `selectedRows` changes rather than on every row render.
+  const selectedSet = useMemo(() => {
+    return new Set(selectedRows.map(r => (r as { id?: unknown }).id ?? JSON.stringify(r)));
   }, [selectedRows]);
+
+  const isRowSelected = useCallback((item: T) => {
+    const key = (item as { id?: unknown }).id ?? JSON.stringify(item);
+    return selectedSet.has(key);
+  }, [selectedSet]);
 
   return (
     <div className={`space-y-4 ${className}`}>

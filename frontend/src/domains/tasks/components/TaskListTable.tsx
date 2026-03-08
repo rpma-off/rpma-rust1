@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
@@ -21,6 +22,9 @@ import {
   VirtualizedTable,
 } from '@/shared/ui/facade';
 import { getUserFullName } from '@/shared/utils';
+import { useAuth } from '@/domains/auth';
+import { ipcClient } from '@/lib/ipc';
+import { taskKeys } from '@/lib/query-keys';
 
 interface TaskListTableProps {
   tasks: TaskWithDetails[];
@@ -35,6 +39,9 @@ export const TaskListTable = React.memo(({
   onEdit,
   onDelete
 }: TaskListTableProps) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
   const getStatusLabel = useCallback((status: string) => {
     return getTaskDisplayStatus(status as TaskStatus);
   }, []);
@@ -43,6 +50,15 @@ export const TaskListTable = React.memo(({
     if (!dateString) return '-';
     return formatDateShort(dateString);
   }, []);
+
+  const handleRowHover = useCallback((task: TaskWithDetails) => {
+    if (!user?.token) return;
+    queryClient.prefetchQuery({
+      queryKey: taskKeys.byId(task.id),
+      queryFn: () => ipcClient.tasks.get(task.id, user.token),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient, user?.token]);
 
   const columns = [
     {
@@ -214,6 +230,7 @@ export const TaskListTable = React.memo(({
       height={600}
       rowHeight={60}
       onRowClick={(task) => onView(task)}
+      onRowHover={(task) => handleRowHover(task)}
       className="bg-background"
     />
   );

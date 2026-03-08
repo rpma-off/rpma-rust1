@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { AuthSecureStorage, SecureStorage } from '@/lib/secureStorage';
 import { clearCache } from '@/lib/ipc/cache';
 import { convertTimestamps } from '@/lib/types';
@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user, loadProfile]);
 
-  const value: AuthContextType = {
+  const value = useMemo<AuthContextType>(() => ({
     user: state.user,
     profile: state.profile,
     session: state.user,
@@ -245,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshProfile,
-  };
+  }), [state.user, state.profile, state.loading, state.isAuthenticating, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>
