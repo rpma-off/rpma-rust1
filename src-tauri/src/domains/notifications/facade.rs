@@ -4,6 +4,11 @@ use std::sync::Arc;
 use crate::domains::notifications::infrastructure::message::MessageService;
 use crate::shared::ipc::errors::AppError;
 
+#[cfg(feature = "export-types")]
+pub use crate::domains::notifications::application::{
+    SendNotificationRequest, UpdateNotificationConfigRequest,
+};
+
 /// Facade for the Notifications bounded context.
 ///
 /// Provides message sending, notification management, and preference
