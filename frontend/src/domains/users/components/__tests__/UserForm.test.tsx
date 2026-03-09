@@ -414,7 +414,7 @@ describe('UserForm', () => {
     });
 
     it('shows error toast when not authenticated', async () => {
-      const authContextWithoutToken = {
+      const _authContextWithoutToken = {
         ...mockAuthContext,
         user: { ...mockSession, token: null },
         session: { ...mockSession, token: null },

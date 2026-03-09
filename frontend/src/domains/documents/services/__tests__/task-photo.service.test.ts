@@ -1,4 +1,4 @@
-import { taskPhotoService } from '@/domains/documents/services/task-photo.service';
+import { taskPhotoService } from '@/domains/documents';
 
 describe('TaskPhotoService mapPhotoResponse', () => {
   it('prefers raw url over file_path for display url', () => {

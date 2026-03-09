@@ -19,11 +19,11 @@ describe('compressImage', () => {
     
     HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
       drawImage: jest.fn(),
-    })) as any;
+    })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
     
-    HTMLCanvasElement.prototype.toBlob = jest.fn(function(this: any, callback: any) {
+    HTMLCanvasElement.prototype.toBlob = jest.fn(function(this: HTMLCanvasElement, callback: BlobCallback) {
       callback(new Blob(['compressed'], { type: 'image/webp' }));
-    }) as any;
+    }) as unknown as typeof HTMLCanvasElement.prototype.toBlob;
   });
 
   afterEach(() => {

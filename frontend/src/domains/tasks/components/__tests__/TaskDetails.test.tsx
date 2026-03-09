@@ -75,7 +75,7 @@ const mockSession = {
   session_timeout_minutes: null,
 };
 
-const mockAuthContext = {
+const _mockAuthContext = {
   user: mockSession,
   profile: null,
   session: mockSession,

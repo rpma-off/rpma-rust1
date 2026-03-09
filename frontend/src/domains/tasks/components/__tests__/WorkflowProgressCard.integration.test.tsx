@@ -30,7 +30,7 @@ const createStartedResponse = (): Awaited<ReturnType<typeof ipcClient.interventi
     steps: [],
   } as unknown as Awaited<ReturnType<typeof ipcClient.interventions.start>>);
 
-const mockSession = {
+const _mockSession = {
   id: 'user-123',
   user_id: 'user-123',
   username: 'testuser',

@@ -21,7 +21,7 @@ describe('rbac frontend enforcement', () => {
 
   it('allows authorized actions', async () => {
     const result = await withPermissionCheck(
-      { role: 'admin', id: '1', username: 'admin', email: 'admin@test.com' } as any,
+      { role: 'admin', id: '1', username: 'admin', email: 'admin@test.com' } as { role: string; id: string; username: string; email: string },
       'user:delete',
       async () => 'ok'
     );
