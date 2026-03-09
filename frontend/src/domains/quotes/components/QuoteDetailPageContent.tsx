@@ -260,6 +260,7 @@ export function QuoteDetailPageContent() {
             <span className="hidden sm:inline">Articles</span>
           </TabsTrigger>
           <TabsTrigger value="images" className="gap-2">
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- Lucide Image icon is an SVG, not an img element */}
             <Image className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Images</span>
           </TabsTrigger>

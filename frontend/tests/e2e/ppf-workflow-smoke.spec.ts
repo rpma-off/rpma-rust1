@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { resetMockDb } from './utils/mock';
 import { loginAsTestUser } from './utils/auth';
 
 const PNG_BASE64 =

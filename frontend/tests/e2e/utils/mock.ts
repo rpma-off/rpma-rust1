@@ -12,7 +12,7 @@ export async function resetMockDb(page: Page): Promise<void> {
   // Wait for mock to be ready with a shorter timeout and better error message
   try {
     await page.waitForFunction(() => (window as E2EWindow).__E2E_MOCKS__ !== undefined, { timeout: 5000 });
-  } catch (error) {
+  } catch (_error) {
     console.warn('Mock controls not found on window.__E2E_MOCKS__, checking window.__TAURI_INTERNALS__...');
     // Check if at least the Tauri internals are available
     const hasTauriInternals = await page.evaluate(() => typeof (window as Window & { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ !== 'undefined');

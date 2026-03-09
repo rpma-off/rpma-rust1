@@ -9,6 +9,9 @@
     "dev:strict": "npm run types:sync && npm run types:drift-check && npm run tauri dev",
     "build": "npm run types:sync && npm run tauri build",
     "tauri": "tauri",
+    "lint": "npm run frontend:lint",
+    "type-check": "npm run frontend:type-check",
+    "test:ci": "npm run frontend:test:ci",
     "types:sync": "cd src-tauri && cargo run --features export-types --bin export-types | node ../scripts/write-types.js",
     "types:watch": "node scripts/watch-types.js",
     "frontend:dev": "cd frontend && npm run dev",
@@ -67,8 +70,7 @@
     "git:finish-feature": "node scripts/git-workflow.js finish-feature",
     "git:cleanup-feature": "node scripts/git-workflow.js cleanup-feature",
     "git:guard-main": "node scripts/git-workflow.js guard-main",
-    "prepare": "husky",
-    "db:repair-signup-trigger": "node scripts/repair_user_signup_trigger.js"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0",
