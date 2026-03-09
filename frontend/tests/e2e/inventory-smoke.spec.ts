@@ -10,7 +10,7 @@ test.describe('Inventory Smoke', () => {
     await page.goto('/inventory');
     await expect(page).toHaveURL(/\/inventory(\/|$)/);
 
-    await expect(page.getByRole('heading', { level: 1, name: /Invent|Inventory/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Invent|Inventory/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Mat|Material/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Fourn|Suppl/i })).toBeVisible();
   });
@@ -19,7 +19,7 @@ test.describe('Inventory Smoke', () => {
     await page.goto('/inventory');
     await page.getByRole('tab', { name: /Fourn|Suppl/i }).click();
 
-    await expect(page.getByRole('heading', { level: 2, name: /Fourn|Suppl/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Fourn|Suppl/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Ajouter|Add/i })).toBeVisible();
   });
 

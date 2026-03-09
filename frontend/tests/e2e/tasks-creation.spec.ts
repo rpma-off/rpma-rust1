@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 import { loginAsTestUser } from './utils/auth';
 
 async function fillVehicleFields(page: import('@playwright/test').Page) {
-  await page.goto('/tasks/new');
+  await page.goto('/tasks/new', { waitUntil: 'domcontentloaded' });
+  
+  // Wait for the form to load (it's dynamically imported)
+  await page.waitForSelector('input[name="vehicle_plate"]', { state: 'visible', timeout: 10000 });
 
   await page.locator('input[name="vehicle_plate"]').fill('AB123CD');
   await page.locator('input[name="vehicle_make"]').fill('Tesla');
@@ -17,13 +20,16 @@ test.describe('Task Creation Smoke', () => {
 
   test('opens task creation flow and enables next after vehicle inputs', async ({ page }) => {
     await fillVehicleFields(page);
-    await expect(page.getByRole('button', { name: /Suivant|Next/i })).toBeEnabled();
+    await expect(page.getByRole('button', { name: /Valider.*étape|Suivant|Next/i })).toBeEnabled();
   });
 
   test('keeps next disabled until required vehicle fields are completed', async ({ page }) => {
-    await page.goto('/tasks/new');
+    await page.goto('/tasks/new', { waitUntil: 'domcontentloaded' });
+    
+    // Wait for the form to load
+    await page.waitForSelector('input[name="vehicle_plate"]', { state: 'visible', timeout: 10000 });
 
-    const nextButton = page.getByRole('button', { name: /Suivant|Next/i });
+    const nextButton = page.getByRole('button', { name: /Valider.*étape|Suivant|Next/i });
     await expect(nextButton).toBeDisabled();
 
     await fillVehicleFields(page);

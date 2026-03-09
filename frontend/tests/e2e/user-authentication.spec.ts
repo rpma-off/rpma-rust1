@@ -12,15 +12,19 @@ test.describe('User Authentication Smoke', () => {
   });
 
   test('shows error for invalid credentials', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/login', { waitUntil: 'domcontentloaded' });
     await resetMockDb(page);
+    
+    // Wait for form to be ready
+    await page.waitForSelector('input[name="email"]', { state: 'visible' });
 
     await page.locator('input[name="email"]').fill('invalid@example.com');
     await page.locator('input[name="password"]').fill('wrong-password');
     await page.getByRole('button', { name: /Se connecter|Connexion/i }).click();
 
     await expect(page).toHaveURL(/\/login(\/|$)/);
-    await expect(page.getByRole('status').getByText(/incorrect/i)).toBeVisible();
+    // Check for error message - it's displayed in a paragraph near the form
+    await expect(page.getByText('Email ou mot de passe incorrect').first()).toBeVisible();
   });
 
   test('logs in and keeps authenticated session on protected route', async ({ page }) => {

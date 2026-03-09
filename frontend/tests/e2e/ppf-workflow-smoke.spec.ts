@@ -15,10 +15,15 @@ test('ppf workflow smoke: draft + validate unlocks next step', async ({ page }) 
   await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 120000 });
   await resetMockDb(page);
 
+  // Wait for form to be ready
+  await page.waitForSelector('input[name="email"]', { state: 'visible' });
+  
   await page.fill('input[name="email"]', 'test@example.com');
   await page.fill('input[name="password"]', 'testpassword');
+  
+  // Click and wait for navigation
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 10000 });
+  await page.waitForURL(/\/(dashboard|tasks)(\/|$)/, { timeout: 10000 });
 
   await page.goto('/tasks/task-1/workflow/ppf');
   await expect(page.getByText('Workflow PPF')).toBeVisible();

@@ -189,4 +189,10 @@ export function installMockControls(): void {
       removeListenerById(eventId, event);
     }
   };
+
+  // Also set window.__TAURI__ for compatibility with @tauri-apps/api v1 style
+  // and to ensure invoke() can be found by various Tauri API versions
+  (window as Window & { __TAURI__?: { invoke: typeof invokeWithMockEventSupport } }).__TAURI__ = {
+    invoke: invokeWithMockEventSupport
+  };
 }
