@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Shield,
@@ -22,9 +21,12 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui/facade';
-import { useAuth } from '@/domains/auth';
-import { useAdminDashboard, useAdminUserManagement, AdminOverviewTab, AdminUsersTab, AdminSystemTab } from '@/domains/admin';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import {
+  useAdminPage,
+  AdminOverviewTab,
+  AdminUsersTab,
+  AdminSystemTab,
+} from '@/domains/admin';
 
 const WorkflowExecutionDashboard = dynamic(
   () => import('@/domains/interventions').then((mod) => ({ default: mod.WorkflowExecutionDashboard })),
@@ -50,34 +52,6 @@ const AddUserModal = dynamic(
   () => import('@/domains/admin').then((mod) => ({ default: mod.AddUserModal })),
   { ssr: false }
 );
-
-// Custom hook for AdminPage logic
-function useAdminPage() {
-  const { t } = useTranslation();
-  const { user } = useAuth(); // Assuming useAuth provides user object with role
-  const adminDashboard = useAdminDashboard();
-  const adminUserManagement = useAdminUserManagement();
-
-  const [activeTab, setActiveTab] = useState('overview'); // Default tab
-
-  // Example authorization: only 'admin' role can access
-  const isAuthorized = user?.role === 'admin';
-
-  const handleDeleteUser = (userId: string) => {
-    console.log(`Deleting user with ID: ${userId}`);
-    // Implement actual user deletion logic here, e.g., call an API
-  };
-
-  return {
-    t,
-    activeTab,
-    setActiveTab,
-    isAuthorized,
-    adminDashboard,
-    adminUserManagement,
-    handleDeleteUser,
-  };
-}
 
 export default function AdminPage() {
   const {
