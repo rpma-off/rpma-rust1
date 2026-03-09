@@ -29,7 +29,7 @@ export async function clearAuthState(page: Page): Promise<void> {
   try {
     await page.waitForFunction(() => (window as Window & { __E2E_MOCKS__?: unknown }).__E2E_MOCKS__ !== undefined, { timeout: 15000 });
     await resetMockDb(page);
-  } catch (error) {
+  } catch (_error) {
     // Mock might already be reset or not available, continue anyway
     console.warn('Mock not available, continuing without reset');
   }
@@ -49,7 +49,7 @@ export async function loginAsTestUser(page: Page): Promise<void> {
   // Ensure mock is ready before attempting login with extended timeout
   try {
     await page.waitForFunction(() => (window as Window & { __E2E_MOCKS__?: unknown }).__E2E_MOCKS__ !== undefined, { timeout: 20000 });
-  } catch (error) {
+  } catch (_error) {
     console.warn('Mock initialization timeout - page may need reload');
     // Try reloading the page to trigger mock initialization
     await page.reload({ waitUntil: 'domcontentloaded' });

@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test'
 const runAllBrowsers = process.env.PLAYWRIGHT_ALL_BROWSERS === 'true' || process.env.PLAYWRIGHT_ALL_BROWSERS === '1'
 const WEB_SERVER_TIMEOUT_MS = 180000
 const WEB_SERVER_PORT = Number(process.env.PLAYWRIGHT_PORT ?? 43199)
-const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === 'true'
+const _reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === 'true'
 const defaultProjects = [
   {
     name: 'chromium',
