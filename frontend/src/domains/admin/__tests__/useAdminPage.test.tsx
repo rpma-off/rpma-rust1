@@ -6,7 +6,7 @@ const mockPush = jest.fn();
 const mockUseAuth = jest.fn();
 const mockUseAdminDashboard = jest.fn();
 const mockUseAdminUserManagement = jest.fn();
-const mockT = jest.fn((key: string) => key);
+const mockT = jest.fn((key: string) => `translated:${key}`);
 const mockLoadUsers = jest.fn();
 const mockDeleteUser = jest.fn();
 
@@ -64,7 +64,7 @@ describe('useAdminPage', () => {
     mockUseAdminUserManagement.mockReturnValue(createAdminUserManagement());
   });
 
-  it('allows supervisor access and loads users when the users tab opens', async () => {
+  it('allows supervisor access and loads users when switching to the users tab', async () => {
     mockUseAuth.mockReturnValue({
       profile: { role: 'supervisor' },
     });
@@ -105,6 +105,6 @@ describe('useAdminPage', () => {
     });
 
     expect(mockT).toHaveBeenCalledWith('users.confirmDelete');
-    expect(mockDeleteUser).toHaveBeenCalledWith('user-42', 'users.confirmDelete');
+    expect(mockDeleteUser).toHaveBeenCalledWith('user-42', 'translated:users.confirmDelete');
   });
 });
