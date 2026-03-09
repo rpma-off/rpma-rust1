@@ -6,6 +6,7 @@
 use crate::authenticate;
 use crate::commands::{websocket::*, AppResult, AppState, UserRole};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
 /// Request to initialize WebSocket server
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,6 +37,7 @@ pub struct SendWSMessageRequest {
 
 /// Initialize WebSocket server
 #[tauri::command]
+#[instrument(skip(state, session_token), fields(port = ?request.port))]
 pub async fn init_websocket_server(
     session_token: String,
     state: AppState<'_>,
@@ -64,6 +66,7 @@ pub async fn init_websocket_server(
 
 /// Broadcast message to all connected clients
 #[tauri::command]
+#[instrument(skip(state, session_token, request))]
 pub async fn broadcast_websocket_message(
     session_token: String,
     state: AppState<'_>,
@@ -79,6 +82,7 @@ pub async fn broadcast_websocket_message(
 
 /// Send message to specific client
 #[tauri::command]
+#[instrument(skip(state, session_token, request), fields(client_id = %request.client_id))]
 pub async fn send_websocket_message_to_client(
     session_token: String,
     state: AppState<'_>,
@@ -94,6 +98,7 @@ pub async fn send_websocket_message_to_client(
 
 /// Get WebSocket server statistics
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn get_websocket_stats(
     session_token: String,
     state: AppState<'_>,
@@ -108,6 +113,7 @@ pub async fn get_websocket_stats(
 
 /// Shutdown WebSocket server
 #[tauri::command]
+#[instrument(skip(state, session_token))]
 pub async fn shutdown_websocket_server(
     session_token: String,
     state: AppState<'_>,
@@ -122,6 +128,7 @@ pub async fn shutdown_websocket_server(
 
 /// Broadcast task-related real-time updates
 #[tauri::command]
+#[instrument(skip(state, session_token, data), fields(task_id = %task_id, update_type = %update_type))]
 pub async fn broadcast_task_update(
     session_token: String,
     state: AppState<'_>,
@@ -169,6 +176,7 @@ pub async fn broadcast_task_update(
 
 /// Broadcast intervention-related real-time updates
 #[tauri::command]
+#[instrument(skip(state, session_token, data), fields(intervention_id = %intervention_id, update_type = %update_type))]
 pub async fn broadcast_intervention_update(
     session_token: String,
     state: AppState<'_>,
@@ -224,6 +232,7 @@ pub async fn broadcast_intervention_update(
 
 /// Broadcast client-related real-time updates
 #[tauri::command]
+#[instrument(skip(state, session_token, data), fields(client_id = %client_id, update_type = %update_type))]
 pub async fn broadcast_client_update(
     session_token: String,
     state: AppState<'_>,
@@ -256,6 +265,7 @@ pub async fn broadcast_client_update(
 
 /// Broadcast system notification
 #[tauri::command]
+#[instrument(skip(state, session_token), fields(level = %level))]
 pub async fn broadcast_system_notification(
     session_token: String,
     state: AppState<'_>,

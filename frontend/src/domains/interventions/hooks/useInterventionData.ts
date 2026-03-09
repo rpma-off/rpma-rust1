@@ -1,6 +1,8 @@
 ﻿import { useQuery } from '@tanstack/react-query';
 import { interventionKeys } from '@/lib/query-keys';
 import { useAuth } from '@/domains/auth';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 import { interventionsIpc } from '../ipc/interventions.ipc';
 
 interface InterventionStep {
@@ -109,7 +111,7 @@ export function useInterventionData(taskId: string) {
           steps: ((stepsResult?.steps || []) as unknown as InterventionStep[]).map(normalizeStep)
         } as InterventionData;
       } catch (error) {
-        console.error('Failed to fetch intervention data:', error);
+        logger.error(LogDomain.TASK, 'Failed to fetch intervention data', error instanceof Error ? error : new Error(String(error)), { task_id: taskId });
         return null;
       }
     },

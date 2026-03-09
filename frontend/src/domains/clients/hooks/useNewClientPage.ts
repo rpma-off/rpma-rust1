@@ -7,6 +7,8 @@ import { useAuth } from '@/domains/auth';
 import { clientService } from '../server';
 import type { CreateClientDTO } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 
 export function useNewClientPage() {
   const router = useRouter();
@@ -51,7 +53,7 @@ export function useNewClientPage() {
         router.push(`/clients/${response.data.id}`);
       }
     } catch (err) {
-      console.error('Error creating client:', err);
+      logger.error(LogDomain.CLIENT, 'Error creating client', err instanceof Error ? err : new Error(String(err)));
       setErrors({ general: t('errors.unexpectedError') });
     } finally {
       setLoading(false);

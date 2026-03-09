@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use tracing::{error, info, warn};
+use tracing::{error, info, instrument, warn};
 
 use crate::commands::AppError;
 use crate::db::Database;
@@ -54,6 +54,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, and persist a timestamped note on a task.
+    #[instrument(skip(self, current_user, raw_note), fields(user_id = %current_user.user_id, task_id = %task_id))]
     pub async fn add_note(
         &self,
         current_user: &UserSession,
@@ -83,6 +84,7 @@ impl TaskCommandService {
             .await
             .map_err(|e| AppError::db_sanitized("tasks.add_note", e))?;
 
+        info!(task_id = %task_id, "Note added to task");
         Ok(format!("Note added to task {}", task_id))
     }
 
@@ -92,6 +94,7 @@ impl TaskCommandService {
 
     /// Validate a task-scoped message and route it through the notification
     /// service.
+    #[instrument(skip(self, current_user, raw_body), fields(user_id = %current_user.user_id, task_id = %task_id))]
     pub async fn send_message(
         &self,
         current_user: &UserSession,
@@ -149,6 +152,7 @@ impl TaskCommandService {
             )
             .await?;
 
+        info!(task_id = %task_id, message_id = %sent_message.id, "Task message queued");
         Ok(format!("Message queued: {}", sent_message.id))
     }
 
@@ -157,6 +161,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, persist a task issue, and optionally escalate.
+    #[instrument(skip(self, current_user, raw_description), fields(user_id = %current_user.user_id, task_id = %task_id, issue_type = %raw_issue_type))]
     pub async fn report_issue(
         &self,
         current_user: &UserSession,
@@ -216,6 +221,7 @@ impl TaskCommandService {
             }
         }
 
+        info!(task_id = %task_id, severity = %severity, "Issue reported for task");
         Ok(format!("Issue reported for task {}", task_id))
     }
 
@@ -224,6 +230,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Build the export query from optional filters and produce CSV content.
+    #[instrument(skip(self, filter))]
     pub fn export_csv(
         &self,
         filter: Option<&TaskFilter>,
@@ -278,6 +285,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate role and delegate CSV import to the task service.
+    #[instrument(skip(self, current_user, csv_data), fields(user_id = %current_user.user_id, update_existing = %update_existing))]
     pub async fn import_bulk(
         &self,
         current_user: &UserSession,
@@ -316,6 +324,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Reschedule a task via the calendar service and optionally update notes.
+    #[instrument(skip(self, current_user, additional_notes), fields(user_id = %current_user.user_id, task_id = %task_id, new_date = %new_scheduled_date))]
     pub async fn delay_task(
         &self,
         current_user: &UserSession,
@@ -377,6 +386,7 @@ impl TaskCommandService {
 
     /// Apply field-level restrictions, validate status transitions, and persist
     /// an edit.
+    #[instrument(skip(self, current_user, data), fields(user_id = %current_user.user_id, task_id = %task_id))]
     pub async fn edit_task(
         &self,
         current_user: &UserSession,
@@ -439,6 +449,7 @@ impl TaskCommandService {
 
     /// Send an in-app notification when a task is assigned to a technician
     /// other than the current user.
+    #[instrument(skip(self), fields(task_id = %task.id, user_id = %current_user_id))]
     pub async fn notify_assignment(
         &self,
         task: &Task,
@@ -471,6 +482,7 @@ impl TaskCommandService {
     }
 
     /// Send an in-app notification when a task's status changes.
+    #[instrument(skip(self), fields(task_id = %task.id, user_id = %current_user_id))]
     pub async fn notify_status_change(
         &self,
         task: &Task,

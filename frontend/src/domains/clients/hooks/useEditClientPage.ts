@@ -5,6 +5,8 @@ import { useAuth } from '@/domains/auth';
 import { clientService } from '../server';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { Client, UpdateClientDTO } from '@/shared/types';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 
 interface UseEditClientPageOptions {
   params: { id: string };
@@ -66,7 +68,7 @@ export function useEditClientPage({ params }: UseEditClientPageOptions) {
       }
     } catch (err) {
       setError('An unexpected error occurred');
-      console.error('Error loading client:', err);
+      logger.error(LogDomain.CLIENT, 'Error loading client', err instanceof Error ? err : new Error(String(err)), { client_id: params?.id });
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ export function useEditClientPage({ params }: UseEditClientPageOptions) {
 
       router.push(`/clients/${params.id}`);
     } catch (submitError) {
-      console.error('Error updating client:', submitError);
+      logger.error(LogDomain.CLIENT, 'Error updating client', submitError instanceof Error ? submitError : new Error(String(submitError)), { client_id: params?.id });
       setFormErrors({ general: 'An unexpected error occurred' });
     } finally {
       setSubmitting(false);

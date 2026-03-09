@@ -5,6 +5,8 @@ import { clientService } from '../server';
 import { ClientWithTasks, Task } from '@/shared/types';
 import { convertTimestamps } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 
 interface UseClientDetailPageOptions {
   params: { id: string };
@@ -41,7 +43,7 @@ export function useClientDetailPage({ params }: UseClientDetailPageOptions) {
       setClient(convertedClient);
     } catch (err) {
       setError(t('errors.unexpected'));
-      console.error('Error loading client:', err);
+      logger.error(LogDomain.CLIENT, 'Error loading client', err instanceof Error ? err : new Error(String(err)), { client_id: params?.id });
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export function useClientDetailPage({ params }: UseClientDetailPageOptions) {
       router.push('/clients');
     } catch (err) {
       setError(t('errors.unexpected'));
-      console.error('Error deleting client:', err);
+      logger.error(LogDomain.CLIENT, 'Error deleting client', err instanceof Error ? err : new Error(String(err)), { client_id: params?.id });
     }
   };
 

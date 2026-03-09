@@ -8,6 +8,8 @@ import {
 } from '../services/intervention-mappers';
 import type { BackendStep, BackendIntervention } from '../services/intervention-mappers';
 import { interventionKeys } from '@/lib/query-keys';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 import type {
   PPFInterventionData,
   PPFInterventionStep,
@@ -74,7 +76,7 @@ export function useInterventionActions({
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
     },
     onError: (err: Error) => {
-      console.error('PPF Workflow: Failed to create intervention', { taskId, error: err.message });
+      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to create intervention', err, { task_id: taskId });
       onError?.('Failed to create intervention', err);
     },
   });
@@ -144,10 +146,9 @@ export function useInterventionActions({
       queryClient.invalidateQueries({ queryKey: ['intervention', taskId] });
     },
     onError: (err: Error, variables) => {
-      console.error('PPF Workflow: Failed to advance step', {
-        interventionId: variables.intervention_id || variables.interventionId,
-        currentStep: variables.stepNumber,
-        error: err.message
+      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to advance step', err, {
+        intervention_id: variables.intervention_id || variables.interventionId,
+        step_number: variables.stepNumber,
       });
       onError?.('Failed to advance step', err);
     },
@@ -188,9 +189,8 @@ export function useInterventionActions({
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
     },
     onError: (err: Error, variables) => {
-      console.error('PPF Workflow: Failed to finalize intervention', {
-        interventionId: variables.interventionId || variables.intervention_id,
-        error: err.message
+      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to finalize intervention', err, {
+        intervention_id: variables.interventionId || variables.intervention_id,
       });
       onError?.('Failed to finalize intervention', err);
     },

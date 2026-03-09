@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import { interventionWorkflowService } from '../services';
 import { interventionKeys } from '@/lib/query-keys';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 import type {
   PPFInterventionData,
   PPFInterventionStep,
@@ -36,7 +38,7 @@ export function useInterventionSync({
         const session = await AuthSecureStorage.getSession();
         const sessionToken = session.token;
         if (!sessionToken) {
-          console.warn('No session token available for getActiveByTask', { taskId: currentTaskId });
+          logger.warn(LogDomain.TASK, 'No session token available for getActiveByTask', { task_id: currentTaskId });
           return null;
         }
 
@@ -99,12 +101,7 @@ export function useInterventionSync({
         console.info('No active intervention found for task:', currentTaskId);
         return null;
       } catch (error) {
-        console.error('Error in loadActiveInterventionQuery:', {
-          taskId: currentTaskId,
-          error: error,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorStack: error instanceof Error ? error.stack : undefined
-        });
+        logger.error(LogDomain.TASK, 'Error in loadActiveInterventionQuery', error instanceof Error ? error : new Error(String(error)), { task_id: currentTaskId });
         throw error;
       }
     },
@@ -135,12 +132,7 @@ export function useInterventionSync({
         console.info('No steps found in result for intervention:', interventionId);
         return [];
       } catch (error) {
-        console.error('Failed to load intervention steps:', {
-          interventionId,
-          error: error,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorStack: error instanceof Error ? error.stack : undefined
-        });
+        logger.error(LogDomain.TASK, 'Failed to load intervention steps', error instanceof Error ? error : new Error(String(error)), { intervention_id: interventionId });
         return [];
       }
     },

@@ -8,6 +8,8 @@ import { useClients } from './useClients';
 import { computeClientStats } from '../utils/client-stats';
 import type { Client, ClientWithTasks } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 
 const INITIAL_SORT_FILTERS = { sort_by: 'name', sort_order: 'asc' as const };
 
@@ -87,7 +89,7 @@ export function useClientsPage() {
         refetch();
       } catch (err) {
         setOperationError(t('errors.unexpected'));
-        console.error('Error deleting client:', err);
+        logger.error(LogDomain.CLIENT, 'Error deleting client', err instanceof Error ? err : new Error(String(err)));
       }
     },
     [refetch, user?.id, user?.token, t],

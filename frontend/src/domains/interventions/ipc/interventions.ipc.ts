@@ -17,6 +17,8 @@ import type {
   SaveStepProgressRequest,
   FinalizeInterventionRequest
 } from '@/lib/backend';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 
 /** Assert result is a non-null object, or throw. */
 function ensureObject(result: JsonValue, context: string): asserts result is JsonObject {
@@ -75,7 +77,7 @@ export const interventionsIpc = {
       }
     }
 
-    console.warn('[IPC] getActiveByTask unexpected structure');
+    logger.warn(LogDomain.TASK, '[IPC] getActiveByTask unexpected structure');
     return { intervention: null };
   },
 
