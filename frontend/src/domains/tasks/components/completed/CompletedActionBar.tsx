@@ -111,7 +111,7 @@ export function CompletedActionBar({
               size="sm"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Details
+              Détails
             </Button>
           )}
 

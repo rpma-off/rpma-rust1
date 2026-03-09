@@ -21,6 +21,7 @@ jest.mock('@/lib/validation/backend-type-guards', () => ({
 jest.mock('../core', () => ({
   extractAndValidate: jest.fn(),
   safeInvoke: jest.fn(),
+  invalidatePattern: jest.fn(),
 }));
 
 const { safeInvoke } = jest.requireMock('../core') as {

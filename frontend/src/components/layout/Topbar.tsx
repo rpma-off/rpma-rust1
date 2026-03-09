@@ -78,7 +78,7 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
         <div className="flex items-center gap-2">
           <button
             className="p-2 rounded-full hover:bg-white/15 transition-colors"
-            aria-label="Search"
+            aria-label="Rechercher"
           >
             <Search className="h-5 w-5" />
           </button>

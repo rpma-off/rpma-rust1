@@ -262,7 +262,7 @@ export const fr = {
 
   // Clients
   clients: {
-    title: "Clients",
+    title: 'Clients',
     createClient: "Créer un client",
     editClient: "Modifier le client",
     deleteClient: "Supprimer le client",
@@ -336,7 +336,7 @@ export const fr = {
 
   // Interventions
   interventions: {
-    title: "Interventions",
+    title: 'Interventions',
     startIntervention: "Démarrer l'intervention",
     pauseIntervention: "Mettre en pause",
     resumeIntervention: "Reprendre",

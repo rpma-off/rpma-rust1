@@ -103,7 +103,7 @@ jest.mock('@/components/ui/confirm-dialog', () => ({
         Confirm
       </button>
       <button data-testid="confirm-dialog-cancel" onClick={onCancel}>
-        Cancel
+        Annuler
       </button>
     </div>
   ),

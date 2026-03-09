@@ -183,7 +183,7 @@ class PoseDetailErrorBoundary extends Component<Props, State> {
                 )}
               >
                 <ArrowLeft className="w-4 h-4" />
-                Go Back
+                Go Retour
               </button>
 
               <button
@@ -195,7 +195,7 @@ class PoseDetailErrorBoundary extends Component<Props, State> {
                 )}
               >
                 <Home className="w-4 h-4" />
-                Go to Dashboard
+                Go to Tableau de bord
               </button>
             </div>
 

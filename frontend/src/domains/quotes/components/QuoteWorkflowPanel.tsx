@@ -211,7 +211,7 @@ export function QuoteWorkflowPanel({
                   size="sm"
                 >
                   <ArrowRight className="mr-2 h-4 w-4" />
-                  Voir la Task
+                  Voir la Tâche
                 </Button>
               </Link>
             )}
