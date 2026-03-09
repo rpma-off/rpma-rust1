@@ -21,15 +21,22 @@ describe('media utils', () => {
 
   it('returns a safe fallback instead of file:// when Tauri is unavailable or window is undefined', () => {
     const originalWindow = global.window;
-    // @ts-ignore
-    delete global.window;
+    Object.defineProperty(global, 'window', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
     
     const result = resolveLocalImageUrl('file:///C:/Users/test/photo.png');
 
     expect(result.startsWith('data:image/')).toBe(true);
     expect(result.startsWith('file://')).toBe(false);
     
-    global.window = originalWindow;
+    Object.defineProperty(global, 'window', {
+      value: originalWindow,
+      configurable: true,
+      writable: true,
+    });
   });
 
   it('marks asset and data URLs as unoptimized', () => {
@@ -38,4 +45,3 @@ describe('media utils', () => {
     expect(shouldUseUnoptimizedImage('https://example.com/photo.png')).toBe(false);
   });
 });
-

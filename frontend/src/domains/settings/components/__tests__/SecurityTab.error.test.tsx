@@ -12,39 +12,23 @@ jest.mock('@/shared/hooks/useLogger', () => ({
   useLogger: () => loggerMock,
 }));
 
-jest.mock('@/lib/ipc', () => ({
-  ipcClient: {
-    settings: {
-      getActiveSessions: jest.fn(),
-      getSessionTimeoutConfig: jest.fn(),
-      changeUserPassword: jest.fn(),
-      revokeSession: jest.fn(),
-      updateSessionTimeout: jest.fn(),
-    },
-    auth: {
-      is2FAEnabled: jest.fn(),
-      enable2FA: jest.fn(),
-      verify2FASetup: jest.fn(),
-      disable2FA: jest.fn(),
-    },
+jest.mock('../../ipc/settings.ipc', () => ({
+  settingsIpc: {
+    getActiveSessions: jest.fn(),
+    getSessionTimeoutConfig: jest.fn(),
+    changeUserPassword: jest.fn(),
+    revokeSession: jest.fn(),
+    updateSessionTimeout: jest.fn(),
   },
 }));
 
-const { ipcClient: mockIpcClient } = jest.requireMock('@/lib/ipc') as {
-  ipcClient: {
-    settings: {
-      getActiveSessions: jest.Mock;
-      getSessionTimeoutConfig: jest.Mock;
-      changeUserPassword: jest.Mock;
-      revokeSession: jest.Mock;
-      updateSessionTimeout: jest.Mock;
-    };
-    auth: {
-      is2FAEnabled: jest.Mock;
-      enable2FA: jest.Mock;
-      verify2FASetup: jest.Mock;
-      disable2FA: jest.Mock;
-    };
+const { settingsIpc: mockSettingsIpc } = jest.requireMock('../../ipc/settings.ipc') as {
+  settingsIpc: {
+    getActiveSessions: jest.Mock;
+    getSessionTimeoutConfig: jest.Mock;
+    changeUserPassword: jest.Mock;
+    revokeSession: jest.Mock;
+    updateSessionTimeout: jest.Mock;
   };
 };
 
@@ -70,13 +54,12 @@ describe('SecurityTab error handling', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIpcClient.auth.is2FAEnabled.mockResolvedValue(false);
-    mockIpcClient.settings.getSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 480 });
-    mockIpcClient.settings.getActiveSessions.mockResolvedValue([]);
+    mockSettingsIpc.getSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 480 });
+    mockSettingsIpc.getActiveSessions.mockResolvedValue([]);
   });
 
   test('falls back to current session when session load fails', async () => {
-    mockIpcClient.settings.getActiveSessions.mockRejectedValue(new Error('Failed to load sessions'));
+    mockSettingsIpc.getActiveSessions.mockRejectedValue(new Error('Failed to load sessions'));
 
     render(<SecurityTab user={user} />);
 
@@ -86,7 +69,7 @@ describe('SecurityTab error handling', () => {
   });
 
   test('shows error when password change fails', async () => {
-    mockIpcClient.settings.changeUserPassword.mockRejectedValue(new Error('Mot de passe invalide'));
+    mockSettingsIpc.changeUserPassword.mockRejectedValue(new Error('Mot de passe invalide'));
 
     render(<SecurityTab user={user} />);
 

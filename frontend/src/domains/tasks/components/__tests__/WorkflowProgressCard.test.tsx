@@ -1,15 +1,22 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WorkflowProgressCard } from '../WorkflowProgressCard';
-import { AuthContext } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc/client';
 
 // Mock dependencies
 const mockPush = jest.fn();
+const mockUseAuth = jest.fn(() => ({
+  session: { id: 'user-123', token: 'mock-token' },
+}));
+
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+}));
+
+jest.mock('@/domains/auth', () => ({
+  useAuth: () => mockUseAuth(),
 }));
 
 jest.mock('@/lib/ipc/client', () => ({
@@ -28,40 +35,6 @@ const createStartedResponse = (): Awaited<ReturnType<typeof ipcClient.interventi
     intervention: { id: 'intervention-123' },
     steps: [],
   } as unknown as Awaited<ReturnType<typeof ipcClient.interventions.start>>);
-
-
-
-const mockSession = {
-  id: 'user-123',
-  user_id: 'user-123',
-  username: 'testuser',
-  email: 'test@example.com',
-  role: 'technician' as const,
-  token: 'mock-token',
-  refresh_token: null,
-  expires_at: new Date(Date.now() + 3600000).toISOString(),
-  last_activity: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  device_info: null,
-  ip_address: null,
-  user_agent: null,
-  location: null,
-  two_factor_verified: false,
-  session_timeout_minutes: null,
-};
-
-const mockAuthContext = {
-  user: mockSession,
-  profile: null,
-  session: mockSession,
-  loading: false,
-  isAuthenticating: false,
-  signIn: jest.fn(),
-  signUp: jest.fn(),
-  signOut: jest.fn(),
-  refreshProfile: jest.fn(),
-};
-
 const defaultProps = {
   taskId: 'task-123',
   workflowStatus: 'not_started' as const,
@@ -77,16 +50,13 @@ const defaultProps = {
 type WorkflowStatus = NonNullable<React.ComponentProps<typeof WorkflowProgressCard>['workflowStatus']>;
 
 const renderWithAuth = (component: React.ReactElement) => {
-  return render(
-    <AuthContext.Provider value={mockAuthContext}>
-      {component}
-    </AuthContext.Provider>
-  );
+  return render(component);
 };
 
 describe('WorkflowProgressCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ session: { id: 'user-123', token: 'mock-token' } });
   });
 
   describe('Rendering', () => {
@@ -238,19 +208,11 @@ describe('WorkflowProgressCard', () => {
 
   describe('Button States', () => {
     it('disables button when not authenticated', () => {
-      const authContextWithoutSession = {
-        ...mockAuthContext,
-        session: null,
-      };
+      mockUseAuth.mockReturnValue({ session: null });
 
-      render(
-        <AuthContext.Provider value={authContextWithoutSession}>
-          <WorkflowProgressCard {...defaultProps} />
-        </AuthContext.Provider>
-      );
+      render(<WorkflowProgressCard {...defaultProps} />);
 
-      const button = screen.getByText('Commencer le workflow');
-      expect(button).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Commencer le workflow' })).toBeDisabled();
     });
 
     it('shows correct button text for different workflow states', () => {
@@ -267,11 +229,7 @@ describe('WorkflowProgressCard', () => {
 
         expect(screen.getByText(expectedText)).toBeInTheDocument();
 
-        rerender(
-          <AuthContext.Provider value={mockAuthContext}>
-            <WorkflowProgressCard {...defaultProps} />
-          </AuthContext.Provider>
-        );
+        rerender(<WorkflowProgressCard {...defaultProps} />);
       });
     });
   });

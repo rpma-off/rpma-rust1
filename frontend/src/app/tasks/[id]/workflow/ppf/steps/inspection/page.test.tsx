@@ -21,6 +21,7 @@ jest.mock('@/domains/interventions', () => ({
   PpfStepHero: () => <div data-testid="hero" />,
   PpfWorkflowLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   VehicleDiagram: () => <div data-testid="diagram" />,
+  getEffectiveStepData: (step: { collected_data?: Record<string, unknown> | null }) => step.collected_data ?? {},
   getNextPPFStepId: () => null,
   getPPFStepPath: () => 'steps/inspection',
 }));

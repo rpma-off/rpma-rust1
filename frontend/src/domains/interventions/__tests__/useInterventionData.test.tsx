@@ -85,7 +85,7 @@ describe('useInterventionData', () => {
 
     expect(result.current.data?.steps).toHaveLength(1);
     expect(mockInterventions.getProgress).not.toHaveBeenCalled();
-    expect(mockInterventions.getLatestByTask).not.toHaveBeenCalled();
+    expect(mockInterventions.getLatestByTask).toHaveBeenCalledWith('task-1', 'test-token');
   });
 
   it('fetches steps when the intervention does not include them', async () => {

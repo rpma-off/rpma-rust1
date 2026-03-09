@@ -12,12 +12,15 @@ jest.mock('@/shared/hooks/useLogger', () => ({
   useLogger: () => loggerMock,
 }));
 
+jest.mock('../../ipc/settings.ipc', () => ({
+  settingsIpc: {
+    getUserSettings: jest.fn(),
+    updateUserPerformance: jest.fn(),
+  },
+}));
+
 jest.mock('@/lib/ipc', () => ({
   ipcClient: {
-    settings: {
-      getUserSettings: jest.fn(),
-      updateUserPerformance: jest.fn(),
-    },
     performance: {
       getCacheStatistics: jest.fn(),
       clearApplicationCache: jest.fn(),
@@ -30,12 +33,15 @@ jest.mock('@/lib/ipc', () => ({
   },
 }));
 
+const { settingsIpc: mockSettingsIpc } = jest.requireMock('../../ipc/settings.ipc') as {
+  settingsIpc: {
+    getUserSettings: jest.Mock;
+    updateUserPerformance: jest.Mock;
+  };
+};
+
 const { ipcClient: mockIpcClient } = jest.requireMock('@/lib/ipc') as {
   ipcClient: {
-    settings: {
-      getUserSettings: jest.Mock;
-      updateUserPerformance: jest.Mock;
-    };
     performance: {
       getCacheStatistics: jest.Mock;
       clearApplicationCache: jest.Mock;
@@ -56,7 +62,7 @@ describe('PerformanceTab payload shape', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIpcClient.settings.getUserSettings.mockResolvedValue({
+    mockSettingsIpc.getUserSettings.mockResolvedValue({
       performance: {
         cache_enabled: true,
         cache_size: 100,
@@ -75,7 +81,7 @@ describe('PerformanceTab payload shape', () => {
     });
     mockIpcClient.sync.getStatus.mockResolvedValue({ status: 'idle' });
     mockIpcClient.sync.getOperationsForEntity.mockResolvedValue([]);
-    mockIpcClient.settings.updateUserPerformance.mockResolvedValue({});
+    mockSettingsIpc.updateUserPerformance.mockResolvedValue({});
   });
 
   it('submits backend-compatible snake_case performance keys', async () => {
@@ -86,10 +92,10 @@ describe('PerformanceTab payload shape', () => {
     fireEvent.click(screen.getByRole('button', { name: /sauvegarder/i }));
 
     await waitFor(() => {
-      expect(mockIpcClient.settings.updateUserPerformance).toHaveBeenCalled();
+      expect(mockSettingsIpc.updateUserPerformance).toHaveBeenCalled();
     });
 
-    const payload = mockIpcClient.settings.updateUserPerformance.mock.calls[0][0];
+    const payload = mockSettingsIpc.updateUserPerformance.mock.calls[0][0];
     expect(payload).toMatchObject({
       cache_enabled: true,
       cache_size: 120,

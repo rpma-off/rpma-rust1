@@ -36,7 +36,7 @@ describe('compressImage', () => {
     canvas.width = 2000;
     canvas.height = 1000;
 
-    const blob = new Blob(['test'], { type: 'image/jpeg' });
+    const blob = new Blob(['x'.repeat(1024)], { type: 'image/jpeg' });
     const file = new File([blob], 'test.jpg', { type: 'image/jpeg' });
 
     const compressed = await compressImage(file, { maxWidth: 1000 });
@@ -49,7 +49,7 @@ describe('compressImage', () => {
     canvas.width = 2000;
     canvas.height = 2000;
 
-    const blob = new Blob(['test'], { type: 'image/jpeg' });
+    const blob = new Blob(['x'.repeat(1024)], { type: 'image/jpeg' });
     const file = new File([blob], 'test.jpg', { type: 'image/jpeg' });
 
     const compressed = await compressImage(file, { quality: 0.5 });

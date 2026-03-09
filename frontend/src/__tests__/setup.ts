@@ -20,6 +20,11 @@ jest.mock('@tauri-apps/api', () => ({
   emit: jest.fn(),
 }));
 
+Object.defineProperty(window, '__TAURI__', {
+  value: { invoke: jest.fn().mockResolvedValue(null) },
+  writable: true,
+});
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -29,8 +34,9 @@ jest.mock('next/navigation', () => ({
     forward: jest.fn(),
     refresh: jest.fn(),
   }),
-  useSearchParams: () => [new URLSearchParams()],
+  useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/',
+  useParams: () => ({}),
 }));
 
 // Global test utilities

@@ -1,7 +1,14 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { WorkflowProgressCard } from '../WorkflowProgressCard';
-import { AuthContext } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc/client';
+
+const mockUseAuth = jest.fn(() => ({
+  session: { id: 'user-123', token: 'mock-token' },
+}));
+
+jest.mock('@/domains/auth', () => ({
+  useAuth: () => mockUseAuth(),
+}));
 
 // Mock the entire module
 jest.mock('@/lib/ipc/client', () => ({
@@ -42,31 +49,16 @@ const mockSession = {
   session_timeout_minutes: null,
 };
 
-const mockAuthContext = {
-  user: mockSession,
-  profile: null,
-  session: mockSession,
-  loading: false,
-  isAuthenticating: false,
-  signIn: jest.fn(),
-  signUp: jest.fn(),
-  signOut: jest.fn(),
-  refreshProfile: jest.fn(),
-};
-
 type WorkflowStatus = NonNullable<React.ComponentProps<typeof WorkflowProgressCard>['workflowStatus']>;
 
 const renderWithAuth = (component: React.ReactElement) => {
-  return render(
-    <AuthContext.Provider value={mockAuthContext}>
-      {component}
-    </AuthContext.Provider>
-  );
+  return render(component);
 };
 
 describe('WorkflowProgressCard Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ session: { id: 'user-123', token: 'mock-token' } });
   });
 
   describe('Workflow Start Integration', () => {
@@ -136,27 +128,22 @@ describe('WorkflowProgressCard Integration', () => {
     });
 
     it('validates required session token', async () => {
-      const authContextWithoutSession = {
-        ...mockAuthContext,
-        session: null,
-      };
+      mockUseAuth.mockReturnValue({ session: null });
 
       render(
-        <AuthContext.Provider value={authContextWithoutSession}>
-          <WorkflowProgressCard
-            taskId="task-123"
-            workflowStatus="not_started"
-            workflowProgress={{
-              percentage: 0,
-              currentStep: 0,
-              totalSteps: 5,
-              completedSteps: 0,
-            }}
-          />
-        </AuthContext.Provider>
+        <WorkflowProgressCard
+          taskId="task-123"
+          workflowStatus="not_started"
+          workflowProgress={{
+            percentage: 0,
+            currentStep: 0,
+            totalSteps: 5,
+            completedSteps: 0,
+          }}
+        />
       );
 
-      const button = screen.getByText('Commencer le workflow');
+      const button = screen.getByRole('button', { name: 'Commencer le workflow' });
       expect(button).toBeDisabled();
 
       // Clicking disabled button should not call IPC
@@ -202,18 +189,16 @@ describe('WorkflowProgressCard Integration', () => {
       expect(screen.getByText('Not Started')).toBeInTheDocument();
 
       rerender(
-        <AuthContext.Provider value={mockAuthContext}>
-          <WorkflowProgressCard
-            taskId="task-123"
-            workflowStatus="in_progress"
-            workflowProgress={{
-              percentage: 40,
-              currentStep: 2,
-              totalSteps: 5,
-              completedSteps: 2,
-            }}
-          />
-        </AuthContext.Provider>
+        <WorkflowProgressCard
+          taskId="task-123"
+          workflowStatus="in_progress"
+          workflowProgress={{
+            percentage: 40,
+            currentStep: 2,
+            totalSteps: 5,
+            completedSteps: 2,
+          }}
+        />
       );
 
       expect(screen.getByText('In Progress')).toBeInTheDocument();
@@ -246,18 +231,16 @@ describe('WorkflowProgressCard Integration', () => {
         expect(screen.getByText(buttonText)).toBeInTheDocument();
 
         rerender(
-          <AuthContext.Provider value={mockAuthContext}>
-            <WorkflowProgressCard
-              taskId="task-123"
-              workflowStatus="not_started"
-              workflowProgress={{
-                percentage: 0,
-                currentStep: 0,
-                totalSteps: 5,
-                completedSteps: 0,
-              }}
-            />
-          </AuthContext.Provider>
+          <WorkflowProgressCard
+            taskId="task-123"
+            workflowStatus="not_started"
+            workflowProgress={{
+              percentage: 0,
+              currentStep: 0,
+              totalSteps: 5,
+              completedSteps: 0,
+            }}
+          />
         );
       });
     });

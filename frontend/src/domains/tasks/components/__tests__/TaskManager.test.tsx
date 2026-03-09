@@ -26,27 +26,36 @@ jest.mock('@/lib/utils/error-handler', () => ({
   handleError: jest.fn(),
 }));
 
-jest.mock('@/components/sync/EntitySyncIndicator', () => ({
-  EntitySyncIndicator: ({ entityType, entityId }: { entityType: string, entityId: string }) => (
-    <div data-testid="entity-sync-indicator" data-entity-type={entityType} data-entity-id={entityId} />
-  ),
-}));
+jest.mock('@/shared/ui', () => {
+  const actual = jest.requireActual('@/shared/ui');
 
-jest.mock('@/components/ui/DesktopTable', () => ({
-  DesktopTable: ({ data, columns }: { data: Record<string, unknown>[], columns: { key: string; render?: (value: unknown, item: Record<string, unknown>) => React.ReactNode }[] }) => (
-    <div data-testid="desktop-table">
-      {data.map((item, index) => (
-        <div key={index} data-testid="table-row">
-          {columns.map((col, colIndex) => (
-            <div key={colIndex} data-testid={`table-cell-${col.key}`}>
-              {col.render ? col.render(item[col.key], item) : item[col.key]}
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  ),
-}));
+  return {
+    ...actual,
+    EntitySyncIndicator: ({ entityType, entityId }: { entityType: string; entityId: string }) => (
+      <div data-testid="entity-sync-indicator" data-entity-type={entityType} data-entity-id={entityId} />
+    ),
+    DesktopTable: ({
+      data,
+      columns,
+    }: {
+      data: Record<string, unknown>[];
+      columns: { key: string; render?: (value: unknown, item: Record<string, unknown>) => React.ReactNode }[];
+    }) => (
+      <div data-testid="desktop-table">
+        {data.map((item, index) => (
+          <div key={index} data-testid="table-row">
+            {columns.map((col, colIndex) => (
+              <div key={colIndex} data-testid={`table-cell-${col.key}`}>
+                {col.render ? col.render(item[col.key], item) : item[col.key]}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
+    DesktopForm: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  };
+});
 
 const mockTasksList = ipcClient.tasks.list as jest.MockedFunction<typeof ipcClient.tasks.list>;
 const mockTasksCreate = ipcClient.tasks.create as jest.MockedFunction<typeof ipcClient.tasks.create>;
@@ -721,7 +730,6 @@ describe('TaskManager', () => {
     });
   });
 });
-
 
 
 

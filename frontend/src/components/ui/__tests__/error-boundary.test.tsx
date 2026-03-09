@@ -11,7 +11,7 @@ jest.mock('framer-motion', () => ({
   },
 }));
 
-// Mock window.location.href
+// Mock window.location navigation helpers
 const mockLocation = { href: '', assign: jest.fn(), replace: jest.fn() };
 // @ts-ignore
 delete window.location;
@@ -114,7 +114,7 @@ describe('ErrorBoundary', () => {
       );
 
       fireEvent.click(screen.getByText('Retour au tableau de bord'));
-      expect(mockLocation.href).toBe('/dashboard');
+      expect(mockLocation.assign).toHaveBeenCalledWith('/dashboard');
     });
   });
 

@@ -17,6 +17,8 @@ jest.mock("@/shared/hooks/useTranslation", () => ({
         "common.confirm": "Confirm",
         "common.start": "Start",
         "common.complete": "Complete",
+        "common.create": "Create",
+        "common.update": "Update",
         "common.loading": "Loading...",
 
         // Task-related
@@ -42,6 +44,29 @@ jest.mock("@/shared/hooks/useTranslation", () => ({
         "error.title": "Error",
         "error.retry": "Retry",
         "error.dismiss": "Dismiss",
+
+        // Users
+        "users.createNewUser": "Create New User",
+        "users.editUser": "Edit User",
+        "users.email": "Email",
+        "users.emailRequired": "Email is required",
+        "users.invalidEmail": "Invalid email format",
+        "users.firstName": "First Name",
+        "users.firstNameRequired": "First name is required",
+        "users.lastName": "Last Name",
+        "users.lastNameRequired": "Last name is required",
+        "users.role": "Role",
+        "users.active": "Active",
+        "users.saving": "Saving...",
+        "users.passwordRequired": "Password is required",
+        "users.passwordMinLength": "Password must be at least 6 characters",
+        "users.userCreated": "User created successfully",
+        "users.userUpdated": "User updated successfully",
+        "users.notAuthenticated": "Not authenticated",
+        "users.saveFailed": "Save failed",
+
+        // Auth
+        "auth.password": "Password",
       };
 
       let value = translations[key] || key;
@@ -67,8 +92,11 @@ jest.mock("@/domains/auth", () => ({
   useAuth: () => ({
     user: {
       id: "test-user-1",
+      user_id: "test-user-1",
+      username: "test-user",
       email: "test@example.com",
       role: "technician",
+      token: "test-session-token",
       first_name: "Test",
       last_name: "User",
       created_at: new Date().toISOString(),
@@ -86,8 +114,11 @@ jest.mock("@/domains/auth", () => ({
     },
     session: {
       id: "test-user-1",
+      user_id: "test-user-1",
+      username: "test-user",
       email: "test@example.com",
       role: "technician",
+      token: "test-session-token",
       first_name: "Test",
       last_name: "User",
       created_at: new Date().toISOString(),

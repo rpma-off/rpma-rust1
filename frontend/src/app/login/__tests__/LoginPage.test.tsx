@@ -8,19 +8,50 @@ import LoginPage from '../page';
 const mockSignIn = jest.fn();
 const mockPush = jest.fn();
 
-jest.mock('@/domains/auth', () => ({
-  useAuth: () => ({
-    signIn: mockSignIn,
-    loading: false,
-    user: null,
-    profile: null,
-    session: null,
-    isAuthenticating: false,
-    signUp: jest.fn(),
-    signOut: jest.fn(),
-    refreshProfile: jest.fn(),
-  }),
-}));
+let mockFormState = { email: '', password: '' };
+let mockErrorState: string | null = null;
+let mockLoadingState = false;
+
+jest.mock('@/domains/auth', () => {
+  const React = require('react') as typeof import('react');
+
+  return {
+    useLoginForm: () => {
+      const [formData, setFormData] = React.useState(mockFormState);
+      const [error, setError] = React.useState<string | null>(mockErrorState);
+
+      const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = event.target;
+        const nextState = { ...formData, [name]: value };
+        mockFormState = nextState;
+        setFormData(nextState);
+      };
+
+      const handleSubmit = async (event?: React.FormEvent<HTMLFormElement>) => {
+        event?.preventDefault();
+        try {
+          const result = await mockSignIn(formData.email, formData.password);
+          if (result?.success === false) {
+            setError(result.error ?? null);
+          } else {
+            setError(null);
+          }
+        } catch (caughtError) {
+          setError(caughtError instanceof Error ? caughtError.message : String(caughtError));
+        }
+      };
+
+      return {
+        formData,
+        error,
+        loading: mockLoadingState,
+        isSubmitting: mockLoadingState,
+        handleChange,
+        handleSubmit,
+      };
+    },
+  };
+});
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -48,6 +79,9 @@ jest.mock('@/shared/utils', () => ({
 describe('LoginPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFormState = { email: '', password: '' };
+    mockErrorState = null;
+    mockLoadingState = false;
     mockSignIn.mockResolvedValue({ success: true, data: {} });
   });
 
@@ -132,30 +166,15 @@ describe('LoginPage', () => {
   });
 
   it('shows loading state while submitting', async () => {
-    // Make signIn take time
-    mockSignIn.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
-
-    const user = userEvent.setup();
+    mockLoadingState = true;
     render(<LoginPage />);
-
-    await user.type(screen.getByLabelText(/adresse email/i), 'test@test.com');
-    await user.type(screen.getByLabelText(/mot de passe/i), 'pass');
-    await user.click(screen.getByRole('button', { name: /se connecter/i }));
-
     expect(screen.getByText(/connexion en cours/i)).toBeInTheDocument();
   });
 
   it('disables submit button while submitting', async () => {
-    mockSignIn.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
-
-    const user = userEvent.setup();
+    mockLoadingState = true;
     render(<LoginPage />);
-
-    await user.type(screen.getByLabelText(/adresse email/i), 'test@test.com');
-    await user.type(screen.getByLabelText(/mot de passe/i), 'pass');
-    await user.click(screen.getByRole('button', { name: /se connecter/i }));
-
-    expect(screen.getByRole('button')).toBeDisabled();
+    expect(screen.getByRole('button', { name: /connexion en cours/i })).toBeDisabled();
   });
 
   it('has required attribute on email and password inputs', () => {

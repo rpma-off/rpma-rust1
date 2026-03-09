@@ -12,41 +12,23 @@ jest.mock('@/shared/hooks/useLogger', () => ({
   useLogger: () => loggerMock,
 }));
 
-jest.mock('@/lib/ipc', () => ({
-  ipcClient: {
-    settings: {
-      getUserSettings: jest.fn(),
-      getActiveSessions: jest.fn(),
-      getSessionTimeoutConfig: jest.fn(),
-      changeUserPassword: jest.fn(),
-      revokeSession: jest.fn(),
-      updateSessionTimeout: jest.fn(),
-    },
-    auth: {
-      is2FAEnabled: jest.fn(),
-      enable2FA: jest.fn(),
-      verify2FASetup: jest.fn(),
-      disable2FA: jest.fn(),
-    },
+jest.mock('../../ipc/settings.ipc', () => ({
+  settingsIpc: {
+    getActiveSessions: jest.fn(),
+    getSessionTimeoutConfig: jest.fn(),
+    changeUserPassword: jest.fn(),
+    revokeSession: jest.fn(),
+    updateSessionTimeout: jest.fn(),
   },
 }));
 
-const { ipcClient: mockIpcClient } = jest.requireMock('@/lib/ipc') as {
-  ipcClient: {
-    settings: {
-      getUserSettings: jest.Mock;
-      getActiveSessions: jest.Mock;
-      getSessionTimeoutConfig: jest.Mock;
-      changeUserPassword: jest.Mock;
-      revokeSession: jest.Mock;
-      updateSessionTimeout: jest.Mock;
-    };
-    auth: {
-      is2FAEnabled: jest.Mock;
-      enable2FA: jest.Mock;
-      verify2FASetup: jest.Mock;
-      disable2FA: jest.Mock;
-    };
+const { settingsIpc: mockSettingsIpc } = jest.requireMock('../../ipc/settings.ipc') as {
+  settingsIpc: {
+    getActiveSessions: jest.Mock;
+    getSessionTimeoutConfig: jest.Mock;
+    changeUserPassword: jest.Mock;
+    revokeSession: jest.Mock;
+    updateSessionTimeout: jest.Mock;
   };
 };
 
@@ -72,44 +54,40 @@ describe('SecurityTab contracts', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIpcClient.settings.getUserSettings.mockResolvedValue({});
-    mockIpcClient.settings.getActiveSessions.mockResolvedValue([]);
-    mockIpcClient.settings.getSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 480 });
+    mockSettingsIpc.getActiveSessions.mockResolvedValue([]);
+    mockSettingsIpc.getSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 480 });
   });
 
-  it('calls disable2FA with password and session token', async () => {
-    mockIpcClient.auth.is2FAEnabled.mockResolvedValue(true);
-    const promptSpy = jest.spyOn(window, 'prompt').mockReturnValue('CurrentPass1!');
+  it('calls updateSessionTimeout with selected timeout and session token', async () => {
+    render(<SecurityTab user={user} />);
+
+    const timeoutSelect = await screen.findByDisplayValue('8 heures');
+    fireEvent.change(timeoutSelect, { target: { value: '240' } });
+
+    await waitFor(() => {
+      expect(mockSettingsIpc.updateSessionTimeout).toHaveBeenCalledWith(240, 'session-token');
+    });
+  });
+
+  it('calls revokeSession with the selected session id and session token', async () => {
+    mockSettingsIpc.getActiveSessions.mockResolvedValue([
+      {
+        id: 'session-2',
+        device_info: { device_name: 'MacBook Pro' },
+        user_agent: 'Chrome',
+        location: 'Paris',
+        ip_address: '127.0.0.1',
+        last_activity: '2026-03-09T00:00:00.000Z',
+      },
+    ]);
 
     render(<SecurityTab user={user} />);
 
-    const twoFaSwitch = await screen.findByRole('switch');
-    fireEvent.click(twoFaSwitch);
+    const revokeButton = await screen.findByRole('button', { name: /révoquer/i });
+    fireEvent.click(revokeButton);
 
     await waitFor(() => {
-      expect(mockIpcClient.auth.disable2FA).toHaveBeenCalledWith('CurrentPass1!', 'session-token');
+      expect(mockSettingsIpc.revokeSession).toHaveBeenCalledWith('session-2', 'session-token');
     });
-    expect(mockIpcClient.auth.is2FAEnabled).toHaveBeenCalledWith('session-token');
-    promptSpy.mockRestore();
-  });
-
-  it('calls verify2FASetup with verification code, backup codes, and session token', async () => {
-    mockIpcClient.auth.is2FAEnabled.mockResolvedValue(false);
-    mockIpcClient.auth.enable2FA.mockResolvedValue({ backup_codes: ['b1', 'b2'] });
-    const promptSpy = jest.spyOn(window, 'prompt').mockReturnValue('123456');
-
-    render(<SecurityTab user={user} />);
-
-    const twoFaSwitch = await screen.findByRole('switch');
-    fireEvent.click(twoFaSwitch);
-
-    await waitFor(() => {
-      expect(mockIpcClient.auth.verify2FASetup).toHaveBeenCalledWith(
-        '123456',
-        ['b1', 'b2'],
-        'session-token'
-      );
-    });
-    promptSpy.mockRestore();
   });
 });

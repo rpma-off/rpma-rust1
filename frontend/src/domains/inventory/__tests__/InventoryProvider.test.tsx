@@ -18,6 +18,7 @@ jest.mock('../ipc/inventory.ipc', () => ({
       getExpiredMaterials: jest.fn(),
     },
     getInventoryStats: jest.fn(),
+    getDashboardData: jest.fn(),
   },
 }));
 
@@ -87,6 +88,12 @@ describe('InventoryProvider', () => {
     mockInventoryIpc.getInventoryStats.mockResolvedValue(createStats() as never);
     mockInventoryIpc.reporting.getLowStockMaterials.mockResolvedValue({ items: [], total: 0 } as never);
     mockInventoryIpc.reporting.getExpiredMaterials.mockResolvedValue([] as never);
+    mockInventoryIpc.getDashboardData.mockResolvedValue({
+      materials: [createMaterial()],
+      stats: createStats(),
+      low_stock: { items: [], total: 0 },
+      expired: [],
+    } as never);
 
     render(
       <InventoryProvider>

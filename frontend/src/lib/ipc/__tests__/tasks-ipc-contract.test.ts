@@ -1,18 +1,6 @@
 import { taskIpc as taskOperations } from '../domains/tasks';
 
 // Mock the modules and dependencies
-jest.mock('../utils', () => ({
-  safeInvoke: jest.fn(),
-}));
-
-jest.mock('../cache', () => ({
-  cachedInvoke: jest.fn(),
-  invalidatePattern: jest.fn(),
-  getCacheStats: jest.fn(),
-  invalidateKey: jest.fn(),
-  clearCache: jest.fn(),
-}));
-
 jest.mock('@/lib/validation/backend-type-guards', () => ({
   validateTask: jest.fn((data) => data),
   validateTaskListResponse: jest.fn((data) => data),
@@ -37,15 +25,15 @@ jest.mock('../utils/crud-helpers', () => ({
 }));
 
 jest.mock('../core', () => ({
+  safeInvoke: jest.fn(),
+  cachedInvoke: jest.fn(),
   extractAndValidate: jest.fn(),
+  invalidatePattern: jest.fn(),
 }));
 
 // Get mock references
-const { safeInvoke } = jest.requireMock('../utils') as {
+const { safeInvoke, cachedInvoke, invalidatePattern } = jest.requireMock('../core') as {
   safeInvoke: jest.Mock;
-};
-
-const { cachedInvoke, invalidatePattern } = jest.requireMock('../cache') as {
   cachedInvoke: jest.Mock;
   invalidatePattern: jest.Mock;
 };
@@ -101,7 +89,7 @@ describe('taskOperations IPC contract tests', () => {
     ResponseHandlers.list.mockImplementation((_processor) => (result) => result);
     ResponseHandlers.statistics.mockImplementation(() => (result) => result);
     
-    extractAndValidate.mockImplementation((result, _validator) => result);
+    extractAndValidate.mockImplementation((result, validator) => (validator ? validator(result) : result));
     
     // Setup crud operations mock returns
     mockTaskCrud.create.mockResolvedValue({ id: 'task-123' });
@@ -125,12 +113,12 @@ describe('taskOperations IPC contract tests', () => {
       
       await taskOperations.create(createData, 'session-token');
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
-        request: {
-          action: { action: 'Create', data: createData },
-          session_token: 'session-token'
-        }
-      }, expect.any(Function));
+       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
+         request: {
+           action: { action: 'Create', data: createData },
+           session_token: 'session-token'
+         }
+       });
       expect(invalidatePattern).toHaveBeenCalledWith('task:');
     });
 
@@ -163,7 +151,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Update', id: 'task-123', data: updateData },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
       expect(invalidatePattern).toHaveBeenCalledWith('task:');
     });
 
@@ -191,10 +179,25 @@ describe('taskOperations IPC contract tests', () => {
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'List', filters },
+          action: {
+            action: 'List',
+            filters: {
+              page: 1,
+              limit: 20,
+              status: 'pending',
+              technician_id: 'tech-123',
+              client_id: null,
+              priority: null,
+              search: null,
+              from_date: null,
+              to_date: null,
+              sort_by: 'created_at',
+              sort_order: 'desc'
+            }
+          },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
   });
 
@@ -207,7 +210,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'GetStatistics' },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
 
     it('calls safeInvoke with correct parameters for checkTaskAssignment', async () => {
@@ -372,7 +375,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Create', data: invalidData },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
 
     it('validates task ID format for get operation', async () => {
@@ -403,29 +406,25 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Update', id: 'task-123', data: invalidUpdateData },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
   });
 
   describe('Response Shape Validation', () => {
     it('validates response structure for create operation', async () => {
       const mockResponse = {
-        type: 'Created',
-        data: {
-          id: 'task-123',
-          title: 'New Task',
-          status: 'pending',
-          created_at: '2025-02-09T10:00:00Z',
-        }
+        id: 'task-123',
+        title: 'New Task',
+        status: 'pending',
+        created_at: '2025-02-09T10:00:00Z',
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      ResponseHandlers.discriminatedUnion.mockReturnValue((result) => validateTask(result.data));
 
       const result = await taskOperations.create({ title: 'New Task' }, 'session-token');
 
-      expect(validateTask).toHaveBeenCalledWith(mockResponse.data);
-      expect(result).toEqual(validateTask(mockResponse.data));
+      expect(validateTask).toHaveBeenCalledWith(mockResponse);
+      expect(result).toEqual(mockResponse);
     });
 
     it('validates response structure for list operation', async () => {
@@ -461,12 +460,7 @@ describe('taskOperations IPC contract tests', () => {
     });
 
     it('handles null response for get operation', async () => {
-      const mockResponse = {
-        type: 'NotFound',
-      };
-
-      safeInvoke.mockResolvedValue(mockResponse);
-      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
+      cachedInvoke.mockResolvedValue(null);
 
       const result = await taskOperations.get('nonexistent-task', 'session-token');
 
@@ -537,12 +531,7 @@ describe('taskOperations IPC contract tests', () => {
     });
 
     it('handles not found errors for get operation', async () => {
-      const notFoundResponse = {
-        type: 'NotFound',
-      };
-
-      safeInvoke.mockResolvedValue(notFoundResponse);
-      ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
+      cachedInvoke.mockResolvedValue(null);
 
       const result = await taskOperations.get('nonexistent-task', 'session-token');
 
@@ -583,7 +572,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Create', data: taskData },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
 
     it('handles special characters in task titles', async () => {
@@ -596,7 +585,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Create', data: { title: specialTitle } },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
 
     it('handles empty list filters', async () => {
@@ -604,10 +593,25 @@ describe('taskOperations IPC contract tests', () => {
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'List', filters: {} },
+          action: {
+            action: 'List',
+            filters: {
+              page: 1,
+              limit: 20,
+              status: null,
+              technician_id: null,
+              client_id: null,
+              priority: null,
+              search: null,
+              from_date: null,
+              to_date: null,
+              sort_by: 'created_at',
+              sort_order: 'desc'
+            }
+          },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
 
     it('handles null values in optional fields', async () => {
@@ -625,7 +629,7 @@ describe('taskOperations IPC contract tests', () => {
           action: { action: 'Create', data: taskWithNulls },
           session_token: 'session-token'
         }
-      }, expect.any(Function));
+      });
     });
   });
 });

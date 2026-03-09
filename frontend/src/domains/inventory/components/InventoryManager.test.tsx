@@ -32,7 +32,7 @@ jest.mock('@/domains/inventory/server', () => ({
 }));
 
 // Mock the useInventory hook
-jest.mock('../api', () => ({
+jest.mock('../hooks/useInventory', () => ({
   useInventory: jest.fn(),
 }));
 
@@ -40,7 +40,7 @@ jest.mock('../hooks/useInventoryStats', () => ({
   useInventoryStats: jest.fn(),
 }));
 
-import { useInventory } from '../api';
+import { useInventory } from '../hooks/useInventory';
 import { useInventoryStats } from '../hooks/useInventoryStats';
 
 // Mock child components
@@ -181,7 +181,7 @@ describe('InventoryManager', () => {
     // Mock the useInventory hook
     (useInventory as jest.Mock).mockReturnValue({
       materials: createTestMaterials(5),
-      isLoading: false,
+      loading: false,
       error: null,
       refetch: jest.fn(),
       createMaterial: jest.fn(),
@@ -596,7 +596,6 @@ describe('InventoryManager', () => {
     expect(bulkActionButton).toBeInTheDocument();
   });
 });
-
 
 
 
