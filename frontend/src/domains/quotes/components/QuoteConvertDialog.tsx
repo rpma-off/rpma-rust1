@@ -94,9 +94,12 @@ export function QuoteConvertDialog({
         toast.success(`Tâche créée: ${result.task_number}`);
         onSuccess?.(result.task_id);
         onOpenChange(false);
+      } else {
+        toast.error('Erreur lors de la conversion du devis en tâche');
       }
-    } catch {
-      // Error is handled by the hook
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Erreur lors de la conversion';
+      toast.error(errorMsg);
     }
   }, [quoteId, vehicleInfo, validate, convertQuoteToTask, onSuccess, onOpenChange]);
 

@@ -3,6 +3,7 @@
 import React, { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DragDropContext } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import { CalendarHeader } from './CalendarHeader';
 import { MonthView } from './MonthView';
 import { WeekView } from './WeekView';
@@ -12,6 +13,7 @@ import { useCalendarStore } from '../stores/calendarStore';
 import { useCalendar } from '../hooks/useCalendar';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function CalendarDashboard() {
   const router = useRouter();
@@ -21,11 +23,43 @@ export function CalendarDashboard() {
   const setCurrentDate = useCalendarStore((state) => state.setCurrentDate);
   const goToToday = useCalendarStore((state) => state.goToToday);
 
-  const { tasks, isLoading } = useCalendar(currentDate, currentView);
+  const { tasks, isLoading, rescheduleTaskWithConflictCheck } = useCalendar(currentDate, currentView);
 
-  const handleDragEnd = () => {
-    // Drag-and-drop rescheduling is not yet implemented
-  };
+  const handleDragEnd = useCallback(async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const taskId = result.draggableId;
+    const destinationId = result.destination.droppableId;
+
+    // droppableId format: "day-{dateString}-slot-{timeSlot}" or "day-{dateString}-unscheduled"
+    const daySlotMatch = destinationId.match(/^day-(\d{4}-\d{2}-\d{2})-slot-(\d{2}:\d{2})$/);
+    const dayUnscheduledMatch = destinationId.match(/^day-(\d{4}-\d{2}-\d{2})-unscheduled$/);
+
+    let newDate: string | undefined;
+    let newStartTime: string | undefined;
+
+    if (daySlotMatch) {
+      newDate = daySlotMatch[1];
+      newStartTime = daySlotMatch[2];
+    } else if (dayUnscheduledMatch) {
+      newDate = dayUnscheduledMatch[1];
+    }
+
+    if (!newDate) return;
+
+    const task = tasks.find(t => t.id === taskId);
+    const isSameDate = task?.scheduled_date === newDate;
+    const isSameTime = task?.start_time === (newStartTime ?? null);
+    if (isSameDate && isSameTime) return;
+
+    const rescheduleResult = await rescheduleTaskWithConflictCheck(taskId, newDate, newStartTime);
+
+    if (rescheduleResult.success) {
+      toast.success('Tâche replanifiée avec succès');
+    } else {
+      toast.error(rescheduleResult.error ?? 'Impossible de replanifier la tâche');
+    }
+  }, [tasks, rescheduleTaskWithConflictCheck]);
 
   const handleTaskClick = useCallback((task: { id: string }) => {
     router.push(`/tasks/${task.id}`);
