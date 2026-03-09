@@ -7,6 +7,8 @@ import { useInterventionSync } from './useInterventionSync';
 import { useInterventionNavigation } from './useInterventionNavigation';
 import { useInterventionValidation } from './useInterventionValidation';
 import { useInterventionUtils } from './useInterventionUtils';
+import { logger } from '@/lib/logging';
+import { LogDomain } from '@/lib/logging/types';
 import type {
   PPFInterventionData,
   PPFInterventionStep,
@@ -49,11 +51,10 @@ export function useInterventionWorkflow({
     const normalizedError = originalError instanceof Error ? originalError : new Error(errorMessage);
     const appError = handleApiError(normalizedError, errorContext);
 
-    console.error(
-      `${errorContext.component}[Task: ${errorContext.taskId || 'unknown'}, Intervention: ${errorContext.interventionId || 'none'}]:`,
-      errorMessage,
-      originalError
-    );
+    logger.error(LogDomain.TASK, `${errorContext.component} error`, normalizedError, {
+      task_id: errorContext.taskId,
+      intervention_id: errorContext.interventionId,
+    });
 
     onError?.(getUserFriendlyMessage(appError));
   }, [onError, taskId, state.intervention?.id]);
