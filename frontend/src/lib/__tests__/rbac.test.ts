@@ -1,13 +1,27 @@
 import { hasPermission, withPermissionCheck } from '@/lib/rbac';
 
-describe('rbac backend-authoritative mode', () => {
-  it('does not block permission checks on frontend', () => {
-    expect(hasPermission('viewer', 'task:delete')).toBe(true);
+describe('rbac frontend enforcement', () => {
+  it('enforces permission checks on frontend for viewer', () => {
+    expect(hasPermission('viewer', 'task:delete')).toBe(false);
+    expect(hasPermission('viewer', 'task:read')).toBe(true);
   });
 
-  it('delegates authorization failures to backend responses', async () => {
+  it('blocks unauthorized actions before backend call', async () => {
     const result = await withPermissionCheck(
-      null,
+      null, // defaults to viewer
+      'user:delete',
+      async () => 'ok'
+    );
+
+    expect(result).toEqual({ 
+      success: false, 
+      error: 'Insufficient permissions. Required: user:delete, Role: viewer' 
+    });
+  });
+
+  it('allows authorized actions', async () => {
+    const result = await withPermissionCheck(
+      { role: 'admin', id: '1', username: 'admin', email: 'admin@test.com' } as any,
       'user:delete',
       async () => 'ok'
     );

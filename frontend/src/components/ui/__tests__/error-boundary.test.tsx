@@ -12,11 +12,10 @@ jest.mock('framer-motion', () => ({
 }));
 
 // Mock window.location.href
-const mockLocation = { href: '' };
-Object.defineProperty(window, 'location', {
-  value: mockLocation,
-  writable: true,
-});
+const mockLocation = { href: '', assign: jest.fn(), replace: jest.fn() };
+// @ts-ignore
+delete window.location;
+window.location = mockLocation as any;
 
 // Test components
 const ThrowErrorComponent: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = true }) => {

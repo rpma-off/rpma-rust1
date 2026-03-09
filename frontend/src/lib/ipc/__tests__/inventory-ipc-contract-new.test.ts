@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+﻿import { describe, it, expect, beforeEach } from '@jest/globals';
 import { 
   materialOperations, 
   materialCategoryOperations,
@@ -12,7 +12,7 @@ import { Material, MaterialType, UnitOfMeasure } from '@/shared/types';
 jest.mock('@/lib/ipc/core', () => ({
   safeInvoke: jest.fn(),
 }));
-const mockSafeInvoke = safeInvoke as jest.MockedFunction<typeof safeInvoke>;
+const mockSafeInvoke = safeInvoke as jest.Mock;
 
 describe('Inventory IPC Contract Tests', () => {
   beforeEach(() => {

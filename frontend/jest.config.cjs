@@ -12,6 +12,7 @@ const config = {
   
   // Setup files
   setupFilesAfterEnv: [
+    '<rootDir>/tests/jest.setup.ts',
     '<rootDir>/src/__tests__/setup.ts',
     '<rootDir>/src/__tests__/mocks/tauri.mock.ts',
     '<rootDir>/src/__tests__/mocks/ipcClient.mock.ts',

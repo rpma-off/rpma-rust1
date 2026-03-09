@@ -1,4 +1,4 @@
-import { taskOperations } from '../domains/tasks';
+import { taskIpc as taskOperations } from '../domains/tasks';
 
 // Mock the modules and dependencies
 jest.mock('../utils', () => ({
@@ -77,11 +77,6 @@ const mockTaskCrud = {
   list: jest.fn(),
   statistics: jest.fn(),
 };
-
-jest.mock('../utils/crud-helpers', () => ({
-  createCrudOperations: jest.fn().mockImplementation(() => mockTaskCrud),
-  ResponseHandlers,
-}));
 
 describe('taskOperations IPC contract tests', () => {
   beforeEach(() => {

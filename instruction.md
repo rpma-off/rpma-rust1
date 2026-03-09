@@ -1,66 +1,88 @@
-﻿﻿# PATCH MODE — Jest Test Suite Recovery
+﻿﻿# PATCH MODE — Fix Jest tests failing with AuthProvider error
 
 You are a senior TypeScript + Next.js test engineer.
 
-Your mission is to analyze the failing Jest tests and fix them using PATCH MODE.
+The project has failing tests with the error:
+
+Error: useAuth must be used within an AuthProvider
+
+This happens because components use the `useAuth()` hook without being wrapped by `AuthProvider` in tests.
+
+Your mission is to fix the test environment globally.
 
 CONTEXT
 
-The project follows a domain architecture:
+Stack:
+- Next.js
+- TypeScript
+- Jest
+- React Testing Library
+- Domain architecture
+- Auth context using `useAuth()`
 
-src/domains/<domain>/
-  services/
-  hooks/
-  types/
-  index.ts (public API)
+There are many failing tests because the Auth context is missing.
 
-Rules:
-- Domains may only import other domains through public APIs.
-- Tests must not call Tauri directly.
-- IPC calls must be mocked.
-- Zustand stores must reset between tests.
+GOALS
 
-TEST FAILURE
+1. Create a global Jest setup file.
+2. Mock the `useAuth` hook globally.
+3. Ensure Jest loads the setup automatically.
+4. Do NOT change application logic.
+5. Apply minimal patches.
 
-106 test suites
-130 failing tests
+TASKS
 
-TASK
+1. Create the file:
 
-1. Run tests in analysis mode
-2. Identify the FIRST failing test
-3. Detect systemic failures:
-   - broken imports
-   - IPC not mocked
-   - Zustand store leaks
-   - React Query cache issues
-   - missing test environment
-4. Apply minimal patches.
+tests/jest.setup.ts
 
-PATCH RULES
+with the following behavior:
 
-- Only small patches
-- Never rewrite whole files
-- Prefer mocks over implementation changes
-- Respect domain public API rules
+- import "@testing-library/jest-dom"
+- mock the auth hook
+- provide a default authenticated user
+- mock login/logout functions
 
-ALLOWED FIXES
+Example implementation:
 
-- add jest mocks
-- fix imports
-- reset stores
-- mock ipcClient
-- adjust test utilities
+jest.mock("@/domains/auth", () => ({
+  useAuth: () => ({
+    user: { id: "test-user", name: "Test User" },
+    isAuthenticated: true,
+    login: jest.fn(),
+    logout: jest.fn(),
+  }),
+}));
 
-OUTPUT
+2. Ensure the project has Jest configured to load this file.
 
-For each fix:
+Update or create `jest.config.ts` and ensure it includes:
+
+setupFilesAfterEnv: ["<rootDir>/tests/jest.setup.ts"]
+
+3. Ensure alias support exists:
+
+moduleNameMapper: {
+  "^@/(.*)$": "<rootDir>/src/$1"
+}
+
+4. Do not modify existing tests unless absolutely required.
+
+5. Output patches in this format:
 
 PATCH
-<file>
+<file path>
 
 CHANGE
 <diff>
 
 REASON
-why the fix resolves multiple tests
+Explain why this fix resolves multiple failing tests.
+
+EXPECTED RESULT
+
+Tests using `useAuth()` should no longer crash with:
+
+useAuth must be used within an AuthProvider
+
+Many failing tests should now pass automatically.

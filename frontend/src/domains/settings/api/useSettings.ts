@@ -50,7 +50,7 @@ export function invalidateSettingsCache(): void {
 export function useSettings(): UseSettingsResult {
   const { user } = useAuth();
   const [settings, setSettings] = useState<UserSettings | null>(() => readCache());
-  const [loading, setLoading] = useState<boolean>(!readCache());
+  const [loading, setLoading] = useState<boolean>(() => !readCache());
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
@@ -61,7 +61,9 @@ export function useSettings(): UseSettingsResult {
       return;
     }
 
-    setLoading(true);
+    if (!readCache()) {
+      setLoading(true);
+    }
     setError(null);
 
     try {

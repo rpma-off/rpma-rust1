@@ -6,12 +6,29 @@ describe('compressImage', () => {
     global.Image = class {
       onload: (() => void) | null = null;
       onerror: (() => void) | null = null;
-      src = '';
+      _src = '';
+      get src() { return this._src; }
+      set src(value) {
+        this._src = value;
+        if (this.onload) setTimeout(() => this.onload!(), 0);
+      }
     } as unknown as typeof Image;
+    
+    global.URL.createObjectURL = jest.fn(() => 'blob:test');
+    global.URL.revokeObjectURL = jest.fn();
+    
+    HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+      drawImage: jest.fn(),
+    })) as any;
+    
+    HTMLCanvasElement.prototype.toBlob = jest.fn(function(this: any, callback: any) {
+      callback(new Blob(['compressed'], { type: 'image/webp' }));
+    }) as any;
   });
 
   afterEach(() => {
     delete (global as unknown as Record<string, unknown>).Image;
+    jest.restoreAllMocks();
   });
 
   it('should compress image to target dimensions', async () => {

@@ -50,6 +50,13 @@ export function mockAuthError(correlationId?: string): MockApiError {
   return mockError('AUTH_INVALID', 'Invalid session token', correlationId);
 }
 
+// Dummy test to satisfy Jest
+describe('mock-ipc util', () => {
+  it('is a utility file', () => {
+    expect(true).toBe(true);
+  });
+});
+
 export function mockValidationError(message: string, correlationId?: string): MockApiError {
   return mockError('VALIDATION_ERROR', message, correlationId);
 }

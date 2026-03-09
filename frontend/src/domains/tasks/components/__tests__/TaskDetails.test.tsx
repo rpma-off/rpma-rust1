@@ -9,11 +9,18 @@ import { TaskWithDetails } from '@/shared/types';
 import { format } from 'date-fns';
 
 // Mock dependencies
-jest.mock('../../services/task.service', () => ({
-  taskService: {
+jest.mock('../../services/task.service', () => {
+  const mockTaskServiceInstance = {
     updateTask: jest.fn(),
-  },
-}));
+    getTaskById: jest.fn(),
+  };
+  return {
+    taskService: mockTaskServiceInstance,
+    TaskService: {
+      getInstance: () => mockTaskServiceInstance,
+    },
+  };
+});
 
 jest.mock('../../hooks/useTasks', () => ({
   useTasks: () => ({

@@ -526,7 +526,7 @@ describe('TaskManager', () => {
       await userEvent.selectOptions(clientSelect, 'client-1');
       
       // Submit form with userEvent for proper form submission
-      const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
+      const submitButton = screen.getByRole('button', { name: /mettre .* jour/i });
       
       await userEvent.click(submitButton);
       
@@ -637,7 +637,7 @@ describe('TaskManager', () => {
       await userEvent.selectOptions(clientSelect, 'client-1');
 
       // Submit form without changes using submit button
-      const submitButton = screen.getByRole('button', { name: /mettre à jour/i });
+      const submitButton = screen.getByRole('button', { name: /mettre .* jour/i });
       await userEvent.click(submitButton);
       
       await waitFor(() => {
@@ -710,7 +710,7 @@ describe('TaskManager', () => {
       });
       
       // Click close button (mojibake/close glyph)
-      const closeButton = screen.getByRole('button', { name: /â|?|×/ });
+      const closeButton = screen.getByRole('button', { name: /close|fermer|×/i });
       fireEvent.click(closeButton);
       
       // Modal should close but button should remain

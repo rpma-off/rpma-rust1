@@ -18,6 +18,7 @@ jest.mock('../ipc/inventory.ipc', () => ({
       getExpiredMaterials: jest.fn(),
     },
     getInventoryStats: jest.fn(),
+    getDashboardData: jest.fn(),
   },
 }));
 
@@ -75,10 +76,13 @@ describe('useInventory', () => {
 
   it('loads inventory data when authenticated', async () => {
     mockUseAuth.mockReturnValue({ user: { token: 'session-token', role: 'technician' } } as never);
-    mockInventoryIpc.material.list.mockResolvedValue({ data: [createMaterial()] } as never);
-    mockInventoryIpc.getInventoryStats.mockResolvedValue(createStats() as never);
-    mockInventoryIpc.reporting.getLowStockMaterials.mockResolvedValue({ items: [], total: 0 } as never);
-    mockInventoryIpc.reporting.getExpiredMaterials.mockResolvedValue([] as never);
+    
+    mockInventoryIpc.getDashboardData.mockResolvedValue({
+      materials: [createMaterial()],
+      stats: createStats(),
+      low_stock: { items: [], total: 0 },
+      expired: [],
+    } as never);
 
     const { result } = renderHook(() => useInventory());
 
@@ -87,10 +91,7 @@ describe('useInventory', () => {
     });
 
     expect(result.current.materials).toHaveLength(1);
-    expect(mockInventoryIpc.material.list).toHaveBeenCalledWith(
-      'session-token',
-      expect.objectContaining({})
-    );
+    expect(mockInventoryIpc.getDashboardData).toHaveBeenCalledWith('session-token');
   });
 
   it('returns auth error when no token is available', async () => {

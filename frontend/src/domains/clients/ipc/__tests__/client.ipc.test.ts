@@ -54,7 +54,7 @@ describe('domains/clients/clientIpc tagged payload unwrapping', () => {
       pagination: { page: 1, limit: 20, total: 1, total_pages: 1 },
       statistics: null,
     };
-    extractAndValidate.mockReturnValue({
+    safeInvoke.mockResolvedValue({
       type: 'List',
       data: listResponse,
     });
@@ -68,7 +68,7 @@ describe('domains/clients/clientIpc tagged payload unwrapping', () => {
 
   it('unwraps tagged ListWithTasks payload to raw ClientWithTasks[]', async () => {
     const clientsWithTasks = [{ id: 'c1', name: 'Acme', tasks: [] }];
-    extractAndValidate.mockReturnValue({
+    safeInvoke.mockResolvedValue({
       type: 'ListWithTasks',
       data: clientsWithTasks,
     });

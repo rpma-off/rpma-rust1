@@ -32,7 +32,7 @@ jest.mock('@/domains/inventory/server', () => ({
 }));
 
 // Mock the useInventory hook
-jest.mock('../hooks/useInventory', () => ({
+jest.mock('../api', () => ({
   useInventory: jest.fn(),
 }));
 
@@ -52,7 +52,7 @@ jest.mock('./StockLevelIndicator', () => ({
   ),
 }));
 
-jest.mock('./inventory/MaterialForm', () => ({
+jest.mock('./MaterialForm', () => ({
   MaterialForm: ({ material, onClose }: { material?: { name?: string }; onClose: () => void }) => (
     <div data-testid="material-form">
       <input
