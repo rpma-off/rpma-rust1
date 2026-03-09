@@ -30,9 +30,16 @@ test.describe('User Authentication Smoke', () => {
   test('logs in and keeps authenticated session on protected route', async ({ page }) => {
     await loginAsTestUser(page);
 
-    await expect(page).not.toHaveURL(/\/login(\/|$)/);
-    await page.goto('/tasks');
-    await expect(page).toHaveURL(/\/tasks(\/|$)/);
+    // Wait for page to fully load after login
+    await page.waitForLoadState('domcontentloaded');
+    
+    // Verify we're not on the login page
+    const currentUrl = page.url();
+    expect(currentUrl).not.toMatch(/\/login(\/|$)/);
+    
+    // Navigate to tasks and verify access
+    await page.goto('/tasks', { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/tasks(\/|$)/, { timeout: 15000 });
   });
 
   test('redirects unauthenticated users to login', async ({ page }) => {

@@ -7,8 +7,29 @@ const useMock =
   process.env.NEXT_PUBLIC_IPC_MOCK === '1' ||
   process.env.NODE_ENV === 'test';
 
-if (useMock && typeof window !== 'undefined') {
-  initMockIpc();
+// Initialize mock when window is available (client-side only)
+// Use setTimeout to ensure this runs after the module is fully loaded
+if (useMock) {
+  if (typeof window !== 'undefined') {
+    // Window is already available, initialize immediately
+    initMockIpc();
+  } else {
+    // Window not available yet, wait for it
+    const initWhenReady = () => {
+      if (typeof window !== 'undefined') {
+        initMockIpc();
+      }
+    };
+    
+    // Try multiple approaches to ensure initialization
+    if (typeof setImmediate !== 'undefined') {
+      setImmediate(initWhenReady);
+    }
+    setTimeout(initWhenReady, 0);
+    
+    // Also try on next tick
+    Promise.resolve().then(initWhenReady);
+  }
 }
 
 type IpcClient = typeof realIpcClient;

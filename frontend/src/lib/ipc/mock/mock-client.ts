@@ -9,8 +9,9 @@ import type {
 } from '@/lib/backend';
 import type { Material, MaterialStats } from '@/shared/types';
 import type { JsonObject } from '@/types/json';
-import { handleInvoke } from './mock-db';
+import { handleInvoke, resetDb } from './mock-db';
 import { installMockControls } from './mock-controls';
+import { defaultFixtures } from './fixtures';
 
 const mockSafeInvoke = <T>(command: string, args?: JsonObject) =>
   handleInvoke(command, args) as Promise<T>;
@@ -326,7 +327,11 @@ export function useIpcClient() {
 }
 
 export function initMockIpc(): void {
+  console.log('[E2E Mock] Initializing IPC mock...');
   installMockControls();
+  // Initialize the mock database with default fixtures
+  resetDb(defaultFixtures);
+  console.log('[E2E Mock] IPC mock initialized successfully');
 }
 
 

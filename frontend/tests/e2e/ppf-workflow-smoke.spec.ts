@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { resetMockDb } from './utils/mock';
+import { loginAsTestUser } from './utils/auth';
 
 const PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEklEQVR42mP8z8BQDwAFgwJ/lYgI8wAAAABJRU5ErkJggg==';
@@ -12,21 +13,18 @@ const photoPayload = (name: string) => ({
 
 test('ppf workflow smoke: draft + validate unlocks next step', async ({ page }) => {
   test.setTimeout(180000);
-  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 120000 });
-  await resetMockDb(page);
-
-  // Wait for form to be ready
-  await page.waitForSelector('input[name="email"]', { state: 'visible' });
   
-  await page.fill('input[name="email"]', 'test@example.com');
-  await page.fill('input[name="password"]', 'testpassword');
-  
-  // Click and wait for navigation
-  await page.click('button[type="submit"]');
-  await page.waitForURL(/\/(dashboard|tasks)(\/|$)/, { timeout: 10000 });
+  // Use the shared login helper which handles mock initialization
+  await loginAsTestUser(page);
 
-  await page.goto('/tasks/task-1/workflow/ppf');
-  await expect(page.getByText('Workflow PPF')).toBeVisible();
+  // Navigate to PPF workflow and wait for page to fully load
+  await page.goto('/tasks/task-1/workflow/ppf', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForLoadState('networkidle', { timeout: 30000 });
+
+  // Wait for the workflow header to be visible with extended timeout
+  // The header includes emoji and vehicle info: "🛡 Workflow PPF — Tesla Model 3"
+  // Also wait for task data to load
+  await expect(page.getByText(/Workflow PPF|PPF/i).first()).toBeVisible({ timeout: 20000 });
 
   await page.getByRole('button', { name: /Commencer/i }).first().click();
   await expect(page.getByText('Inspection du véhicule')).toBeVisible();

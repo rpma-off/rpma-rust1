@@ -1,4 +1,4 @@
-# CLAUDE.md
+# GEMINI.md
 
 Stack:
 - Frontend: Next.js 14, React 18, TypeScript, Tailwind, shadcn/ui
@@ -70,6 +70,23 @@ Core architecture:
 - Backend domains follow strict layering: `ipc -> application -> domain -> infrastructure`
 - Frontend code should stay organized by domain under `frontend/src/domains/<domain>/`
 - Cross-domain backend internals are private; use only approved public interfaces
+
+## Commands
+
+Use the real command surfaces below; do not invent a root `npm run test` shortcut.
+
+- **App / dev:** `npm run dev`, `npm run dev:types`, `npm run frontend:dev`
+
+- **Frontend checks:** `npm run frontend:lint`, `npm run frontend:type-check`, `cd frontend && npm run test:ci`, `cd frontend && npm run test:e2e`
+
+- **Backend checks:** `npm run backend:check`, `npm run backend:clippy`, `npm run backend:fmt`, `make test`, `cd src-tauri && cargo test --test <target>`
+
+- **Types:** `npm run types:sync`, `npm run types:validate`, `npm run types:drift-check`, `npm run types:watch`
+
+- **Architecture / security:** `npm run validate:bounded-contexts`, `npm run architecture:check`, `npm run backend:boundaries:check`, `node scripts/ipc-authorization-audit.js`, `npm run ipc:consistency-check`, `npm run security:audit`
+
+- **Database / migrations:** `node scripts/validate-migration-system.js`, `node scripts/detect-schema-drift.js`, `npm run backend:migration:fresh-db-test`
+
 
 ## Non-negotiable rules
 
@@ -167,34 +184,6 @@ Minimum expectations:
 Never:
 - Delete or weaken tests to make a build pass
 - Leave permission-sensitive behavior untested when access control is part of the change
-
-## Validation matrix
-
-Run the smallest relevant subset based on touched files.
-
-Frontend:
-- `npm run frontend:lint`
-- `npm run frontend:type-check`
-
-Backend:
-- `npm run backend:check`
-- `npm run backend:clippy`
-- `npm run backend:fmt`
-
-Architecture:
-- `npm run validate:bounded-contexts`
-- `npm run architecture:check`
-
-Types:
-- `npm run types:sync`
-- `npm run types:validate`
-- `npm run types:drift-check`
-
-Security:
-- `npm run security:audit`
-
-Migrations:
-- `node scripts/validate-migration-system.js`
 
 Tests:
 - relevant unit tests
