@@ -28,9 +28,10 @@ use rpma_ppf_intervention::domains::interventions::domain::models::step::{
     InterventionStep, StepStatus, StepType,
 };
 use rpma_ppf_intervention::domains::inventory::domain::models::material::{
-    InterventionMaterialSummary, InventoryMovementSummary, InventoryStats, InventoryTransaction,
-    InventoryTransactionType, Material, MaterialCategory, MaterialConsumption,
-    MaterialConsumptionSummary, MaterialStats, MaterialType, Supplier, UnitOfMeasure,
+    InterventionMaterialSummary, InventoryDashboardData, InventoryMovementSummary, InventoryStats,
+    InventoryTransaction, InventoryTransactionType, LowStockMaterial, LowStockMaterialsResponse,
+    Material, MaterialCategory, MaterialConsumption, MaterialConsumptionSummary, MaterialStats,
+    MaterialType, Supplier, UnitOfMeasure,
 };
 use rpma_ppf_intervention::domains::inventory::domain::models::material_ts::{
     InventoryTransactionTS, MaterialConsumptionTS, MaterialTS,
@@ -46,12 +47,12 @@ use rpma_ppf_intervention::domains::notifications::domain::models::notification:
     NotificationType, SmsConfig, SmsProvider, TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
-    AttachmentType, CreateQuoteAttachmentRequest, CreateQuoteItemRequest, CreateQuoteRequest,
-    CustomerQuoteResponse, CustomerResponseAction, Quote, QuoteAcceptResponse, QuoteAttachment,
-    QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuotePublicViewResponse,
-    QuoteQuery, QuoteShareResponse, QuoteStatus, TaskCreatedInfo, UpdateQuoteAttachmentRequest,
-    UpdateQuoteItemRequest, UpdateQuoteRequest,
+    AttachmentType, ConvertQuoteToTaskResponse, CreateQuoteAttachmentRequest,
+    CreateQuoteItemRequest, CreateQuoteRequest, Quote, QuoteAcceptResponse, QuoteAttachment,
+    QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
+    TaskCreatedInfo, UpdateQuoteAttachmentRequest, UpdateQuoteItemRequest, UpdateQuoteRequest,
 };
+use rpma_ppf_intervention::domains::reports::domain::models::intervention_report::InterventionReport;
 use rpma_ppf_intervention::domains::reports::domain::models::report_capabilities::ReportCapabilities;
 use rpma_ppf_intervention::domains::settings::domain::models::settings::{
     AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
@@ -312,6 +313,21 @@ fn main() {
         &InventoryMovementSummary::export_to_string()
             .expect("Failed to export InventoryMovementSummary type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &LowStockMaterial::export_to_string()
+            .expect("Failed to export LowStockMaterial type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &LowStockMaterialsResponse::export_to_string()
+            .expect("Failed to export LowStockMaterialsResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InventoryDashboardData::export_to_string()
+            .expect("Failed to export InventoryDashboardData type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: tasks
@@ -466,15 +482,6 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &QuoteShareResponse::export_to_string().expect("Failed to export QuoteShareResponse type"),
-    );
-    type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &QuotePublicViewResponse::export_to_string()
-            .expect("Failed to export QuotePublicViewResponse type"),
-    );
-    type_definitions.push_str("\n");
-    type_definitions.push_str(
         &AttachmentType::export_to_string().expect("Failed to export AttachmentType type"),
     );
     type_definitions.push_str("\n");
@@ -493,13 +500,8 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &CustomerResponseAction::export_to_string()
-            .expect("Failed to export CustomerResponseAction type"),
-    );
-    type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &CustomerQuoteResponse::export_to_string()
-            .expect("Failed to export CustomerQuoteResponse type"),
+        &ConvertQuoteToTaskResponse::export_to_string()
+            .expect("Failed to export ConvertQuoteToTaskResponse type"),
     );
     type_definitions.push_str("\n\n");
 
@@ -797,6 +799,11 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &InterventionReport::export_to_string()
+            .expect("Failed to export InterventionReport type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &InterventionReportResult::export_to_string()
             .expect("Failed to export InterventionReportResult type"),
     );
@@ -947,14 +954,11 @@ fn main() {
         "Photo",
         "PhotoType",
         "PhotoCategory",
-        "QuoteShareResponse",
-        "QuotePublicViewResponse",
         "AttachmentType",
         "QuoteAttachment",
         "CreateQuoteAttachmentRequest",
         "UpdateQuoteAttachmentRequest",
-        "CustomerResponseAction",
-        "CustomerQuoteResponse",
+        "ConvertQuoteToTaskResponse",
         "Intervention",
         "InterventionStatus",
         "InterventionType",
@@ -1041,9 +1045,13 @@ fn main() {
         "GpsCoordinates",
         // Reports types
         "ReportCapabilities",
+        "InterventionReport",
         "InterventionReportResult",
         "CompletionTimePrediction",
         "InventoryTransactionTS",
+        "LowStockMaterial",
+        "LowStockMaterialsResponse",
+        "InventoryDashboardData",
     ];
 
     // Post-process: remove import statements for types that are defined in this file
