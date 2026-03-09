@@ -1,5 +1,4 @@
 mod facade;
-#[cfg(test)]
 pub(crate) use facade::NotificationsFacade;
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
@@ -12,4 +11,4 @@ pub(crate) mod ipc;
 pub(crate) mod tests;
 
 #[cfg(feature = "export-types")]
-pub use application::{SendNotificationRequest, UpdateNotificationConfigRequest};
+pub use facade::{SendNotificationRequest, UpdateNotificationConfigRequest};

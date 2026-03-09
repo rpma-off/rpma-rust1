@@ -15,11 +15,16 @@
 #[test]
 fn all_domain_facades_accessible_within_crate() {
     // These will fail to compile if facade re-exports are removed or broken.
+    let _ = std::any::type_name::<crate::domains::audit::AuditFacade>();
     let _ = std::any::type_name::<crate::domains::auth::AuthFacade>();
+    let _ = std::any::type_name::<crate::domains::clients::ClientsFacade>();
     let _ = std::any::type_name::<crate::domains::users::UsersFacade>();
     let _ = std::any::type_name::<crate::domains::tasks::TasksFacade>();
     let _ = std::any::type_name::<crate::domains::interventions::InterventionsFacade>();
     let _ = std::any::type_name::<crate::domains::inventory::InventoryFacade>();
+    let _ = std::any::type_name::<crate::domains::notifications::NotificationsFacade>();
+    let _ = std::any::type_name::<crate::domains::settings::SettingsFacade>();
+    let _ = std::any::type_name::<crate::domains::sync::SyncFacade>();
 }
 
 /// Verify domain model types are accessible within the crate (pub(crate)).

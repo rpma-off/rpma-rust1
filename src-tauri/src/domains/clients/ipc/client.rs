@@ -5,7 +5,7 @@ use crate::domains::clients::application::{
     required_permission, sanitize_client_action, ClientCrudRequest,
 };
 use crate::domains::clients::domain::models::client::ClientWithTasks;
-use crate::domains::clients::facade::ClientsFacade;
+use crate::domains::clients::ClientsFacade;
 use crate::shared::services::cross_domain::Task;
 use tracing::{debug, error, info, instrument, warn};
 
