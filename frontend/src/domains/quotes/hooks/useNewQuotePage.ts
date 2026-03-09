@@ -4,9 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useCreateQuote } from './useQuotes';
-import { useClients } from '@/domains/clients/api';
+import { clientIpc, useClients } from '@/domains/clients';
 import { useAuth } from '@/domains/auth';
-import { clientIpc } from '@/domains/clients';
 import type {
   CreateQuoteRequest,
   QuotePartInput,
