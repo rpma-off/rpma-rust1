@@ -28,10 +28,13 @@ type-drift-ci-report.json
 test-results/
 docs/duplication-report.json
 migration-tests/results/
+migration-tests 
 maintainability-report.json
 
 # Local photo uploads (legacy repo-root path during dev)
 /photos/
+
+
 
 start_dev.bat
 stop_dev.bat
