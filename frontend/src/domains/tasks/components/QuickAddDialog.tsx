@@ -12,6 +12,7 @@ import { useAuth } from '@/domains/auth';
 import { taskService } from '../server';
 import type { CreateTaskRequest } from '@/lib/backend';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface QuickAddDialogProps {
   isOpen: boolean;
@@ -74,6 +75,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
         updated_at: new Date().toISOString(),
       } as unknown as CreateTaskRequest);
 
+      toast.success('Tâche créée avec succès');
       onClose();
       setTitle('');
       setVehicle('');
@@ -82,6 +84,7 @@ export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
       setNotes('');
     } catch (error) {
       console.error('Failed to create task:', error);
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la création de la tâche');
     } finally {
       setIsSubmitting(false);
     }

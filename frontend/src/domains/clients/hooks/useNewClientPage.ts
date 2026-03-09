@@ -50,6 +50,7 @@ export function useNewClientPage() {
       }
 
       if (response.data) {
+        toast.success(t('clients.clientCreated'));
         router.push(`/clients/${response.data.id}`);
       }
     } catch (err) {
