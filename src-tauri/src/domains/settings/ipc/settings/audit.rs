@@ -6,13 +6,11 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::infrastructure::consent::ConsentService;
 use crate::domains::settings::ipc::settings::core::settings_user_id;
+use crate::resolve_context;
 
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::info;
-
-// Import authentication macros
-use crate::authenticate;
 
 // Re-export DataConsent from models for backward compatibility
 pub use crate::domains::settings::domain::models::settings::DataConsent;
@@ -38,18 +36,16 @@ pub async fn get_data_consent(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     info!("Getting data consent information");
 
-    let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
-        .get_consent(&settings_user_id(&user))
+        .get_consent(settings_user_id(&ctx.auth))
         .map_err(|e| AppError::Database(format!("Failed to get consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Update data consent preferences
@@ -60,16 +56,14 @@ pub async fn update_data_consent(
     request: UpdateDataConsentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     info!("Updating data consent preferences");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
 
     let consent = consent_service
         .update_consent(
-            &settings_user_id(&user),
+            settings_user_id(&ctx.auth),
             request.analytics_consent,
             request.marketing_consent,
             request.third_party_sharing,
@@ -77,7 +71,7 @@ pub async fn update_data_consent(
         )
         .map_err(|e| AppError::Database(format!("Failed to update consent data: {}", e)))?;
 
-    Ok(ApiResponse::success(consent).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(consent).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 #[cfg(test)]

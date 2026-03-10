@@ -6,12 +6,10 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::UserAccessibilitySettings;
 use crate::domains::settings::ipc::settings::core::{handle_settings_error, settings_user_id};
+use crate::resolve_context;
 
 use serde::Deserialize;
 use tracing::info;
-
-// Import authentication macros
-use crate::authenticate;
 
 /// TODO: document
 #[derive(Deserialize)]
@@ -39,16 +37,12 @@ pub async fn update_user_accessibility(
     request: UpdateUserAccessibilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     info!("Updating user accessibility settings");
-
-    let correlation_id_clone = request.correlation_id.clone();
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     let mut accessibility_settings: UserAccessibilitySettings = state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
+        .get_user_settings(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load user accessibility settings"))?
         .accessibility;
 
@@ -85,10 +79,10 @@ pub async fn update_user_accessibility(
 
     state
         .settings_service
-        .update_user_accessibility(&settings_user_id(&user), &accessibility_settings)
+        .update_user_accessibility(settings_user_id(&ctx.auth), &accessibility_settings)
         .map(|_| {
             ApiResponse::success("Accessibility settings updated successfully".to_string())
-                .with_correlation_id(correlation_id_clone.clone())
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user accessibility"))
 }
