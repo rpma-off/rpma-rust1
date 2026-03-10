@@ -9,7 +9,6 @@ use tracing::{debug, info};
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetTaskHistoryRequest {
-    pub session_token: String,
     pub task_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -22,7 +21,7 @@ pub async fn get_task_history(
     request: GetTaskHistoryRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<TaskHistory>>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task history");
 
     let task = state

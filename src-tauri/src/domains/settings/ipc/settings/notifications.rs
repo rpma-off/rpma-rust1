@@ -14,7 +14,6 @@ use tracing::info;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateNotificationSettingsRequest {
-    pub session_token: String,
     pub push_notifications: Option<bool>,
     pub email_notifications: Option<bool>,
     pub sms_notifications: Option<bool>,
@@ -29,7 +28,6 @@ pub struct UpdateNotificationSettingsRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserNotificationsRequest {
-    pub session_token: String,
     pub email_enabled: Option<bool>,
     pub push_enabled: Option<bool>,
     pub in_app_enabled: Option<bool>,
@@ -59,15 +57,12 @@ pub async fn update_notification_settings(
     request: UpdateNotificationSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating notification settings");
-
-    // Only admins can update system notification settings
-    if !matches!(ctx.auth.role, crate::shared::contracts::auth::UserRole::Admin) {
-        return Err(AppError::Authorization(
-            "Only administrators can update notification settings".to_string(),
-        ));
-    }
 
     let mut app_settings = state
         .settings_service
@@ -114,7 +109,7 @@ pub async fn update_user_notifications(
     request: UpdateUserNotificationsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user notification settings");
 
     let mut notification_settings: UserNotificationSettings = state

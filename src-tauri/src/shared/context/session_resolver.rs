@@ -7,41 +7,35 @@
 //!
 //! **No service or repository may ever see a session token.**
 
-use crate::shared::app_state::AppStateType;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::ipc::correlation::{init_correlation_context, update_correlation_context_user};
 use crate::shared::ipc::{AppError, AppResult};
-use sha2::{Digest, Sha256};
 use tracing::{debug, instrument, warn};
 
+use super::AppContext;
 use super::auth_context::AuthContext;
 use super::request_context::RequestContext;
 
-/// Validate `session_token`, enforce an optional role requirement, set up
+/// Resolve a [`RequestContext`] from the active in-memory session.
+#[instrument(skip(app))]
+pub fn resolve_context(app: &AppContext) -> AppResult<RequestContext> {
+    resolve_request_context(app, None, &None)
+}
+
+/// Resolve the active session, enforce an optional role requirement, set up
 /// correlation context, and return a fully-populated [`RequestContext`].
-///
-/// This is the **only** entry point for session validation in the
-/// application.  The `authenticate!` macro delegates here.
-#[instrument(skip(app), fields(token_hash = %format!("{:x}", Sha256::digest(session_token.as_bytes()))))]
+#[instrument(skip(app))]
 pub fn resolve_request_context(
-    app: &AppStateType,
-    session_token: &str,
+    app: &AppContext,
     required_role: Option<UserRole>,
     correlation_id: &Option<String>,
 ) -> AppResult<RequestContext> {
     // ── 1. Validate token ────────────────────────────────────────────
-    if session_token.is_empty() {
-        return Err(AppError::Authentication(
-            "Session token is required".to_string(),
-        ));
-    }
+    debug!("Resolving request context from session store");
 
-    debug!("Resolving request context");
-
-    let auth_service = app.auth_service.clone();
-    let session: UserSession = auth_service.validate_session(session_token).map_err(|e| {
-        warn!("Session validation failed: {}", e);
-        AppError::Authentication(format!("Session validation failed: {}", e))
+    let session: UserSession = app.session_store.get().map_err(|e| {
+        warn!("Session resolution failed: {}", e);
+        e
     })?;
 
     // ── 2. RBAC gate ─────────────────────────────────────────────────
@@ -79,11 +73,10 @@ pub fn resolve_request_context(
 
 /// Convenience: resolve without a role requirement.
 pub fn resolve_request_context_any_role(
-    app: &AppStateType,
-    session_token: &str,
+    app: &AppContext,
     correlation_id: &Option<String>,
 ) -> AppResult<RequestContext> {
-    resolve_request_context(app, session_token, None, correlation_id)
+    resolve_request_context(app, None, correlation_id)
 }
 
 /// Macro for resolving a [`RequestContext`] inside `#[tauri::command]` handlers.
@@ -92,25 +85,23 @@ pub fn resolve_request_context_any_role(
 ///
 /// ```ignore
 /// // authenticate any logged-in user
-/// let ctx = resolve_context!(session_token, state, correlation_id);
+/// let ctx = resolve_context!(state, correlation_id);
 ///
 /// // authenticate with a minimum role
-/// let ctx = resolve_context!(session_token, state, correlation_id, UserRole::Admin);
+/// let ctx = resolve_context!(state, correlation_id, UserRole::Admin);
 /// ```
 #[macro_export]
 macro_rules! resolve_context {
-    ($session_token:expr, $state:expr, $correlation_id:expr) => {
+    ($state:expr, $correlation_id:expr) => {
         $crate::shared::context::session_resolver::resolve_request_context(
             $state,
-            $session_token,
             None,
             $correlation_id,
         )?
     };
-    ($session_token:expr, $state:expr, $correlation_id:expr, $required_role:expr) => {
+    ($state:expr, $correlation_id:expr, $required_role:expr) => {
         $crate::shared::context::session_resolver::resolve_request_context(
             $state,
-            $session_token,
             Some($required_role),
             $correlation_id,
         )?
@@ -121,21 +112,20 @@ macro_rules! resolve_context {
 mod tests {
     use super::*;
 
-    #[test]
-    fn empty_token_is_rejected() {
-        // We cannot construct a real AppStateType in a unit test, but we
-        // can verify the guard fires before any service call.
-        let result = resolve_request_context(
-            // SAFETY: we expect an early return before the pointer is dereferenced.
-            // This test only verifies the empty-token guard.
-            unsafe { &*(std::ptr::null::<AppStateType>()) },
-            "",
-            None,
-            &None,
-        );
+    #[tokio::test]
+    async fn missing_session_is_rejected() {
+        let db = std::sync::Arc::new(crate::db::Database::new_in_memory().await.expect("db"));
+        let repositories =
+            std::sync::Arc::new(crate::shared::repositories::Repositories::new(db.clone(), 1000).await);
+        let app_data_dir = std::path::PathBuf::from("/tmp/test");
+        let app_state = crate::service_builder::ServiceBuilder::new(db, repositories, app_data_dir)
+            .build()
+            .expect("build app state");
+
+        let result = resolve_request_context(&app_state, None, &None);
         assert!(result.is_err());
         match result.unwrap_err() {
-            AppError::Authentication(msg) => assert!(msg.contains("required")),
+            AppError::Authentication(msg) => assert!(msg.to_lowercase().contains("not")),
             other => panic!("Expected Authentication error, got {:?}", other),
         }
     }

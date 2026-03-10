@@ -68,13 +68,18 @@ pub mod inventory {
     };
 }
 
+pub mod quote {
+    pub use crate::domains::quotes::application::QuoteCreateRequest;
+    pub use crate::domains::quotes::ipc::quote::quote_create;
+}
+
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::contracts::auth::UserRole;
 pub use crate::shared::ipc::response::{ApiResponse, CompressedApiResponse};
 pub use correlation_helpers::*;
 pub use errors::{AppError, AppResult};
 
-use crate::authenticate;
+use crate::shared::ipc::AuthGuard;
 
 // Re-export performance commands
 #[allow(unused_imports)]
@@ -186,23 +191,7 @@ pub enum ClientResponse {
 macro_rules! tracked_command {
     ($command_name:expr, $handler:expr) => {
         |state: AppState, request: serde_json::Value| async move {
-            // Extract user ID from session token if available
-            let user_id = if let Ok(session_token) = serde_json::from_value::<String>(
-                request
-                    .get("session_token")
-                    .cloned()
-                    .unwrap_or(serde_json::Value::Null),
-            ) {
-                // Try to get user from auth service
-                state
-                    .auth_service
-                    .validate_session(&session_token)
-                    .await
-                    .ok()
-                    .and_then(|session| session.map(|s| s.user_id))
-            } else {
-                None
-            };
+            let user_id = state.session_store.get().ok().map(|s| s.user_id);
 
             // Start performance tracking
             let _timer = state
@@ -218,12 +207,10 @@ macro_rules! tracked_command {
 /// Internal user CRUD handler
 pub async fn user_crud(
     action: UserAction,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<UserResponse, AppError> {
     let request = crate::domains::users::ipc::user::UserCrudRequest {
         action,
-        session_token,
         correlation_id: None,
     };
 
@@ -237,12 +224,10 @@ pub async fn user_crud(
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_database_status(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
-    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id)?;
     debug!("Database status requested");
 
     let status = crate::shared::services::system::SystemService::get_database_status(&state.db)
@@ -252,19 +237,17 @@ pub async fn get_database_status(
         })?;
 
     debug!("Database status retrieved successfully");
-    Ok(ApiResponse::success(status).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(status).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get database connection pool statistics
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_database_pool_stats(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
-    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id)?;
     debug!("Database pool statistics requested");
 
     let db = &state.db;
@@ -275,19 +258,17 @@ pub async fn get_database_pool_stats(
     db.log_pool_stats();
 
     debug!("Database pool statistics retrieved successfully");
-    Ok(ApiResponse::success(pool_stats).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(pool_stats).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get database connection pool health metrics
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_database_pool_health(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::db::PoolHealth>, AppError> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
-    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id)?;
     debug!("Database pool health requested");
 
     let health = state.db.get_pool_health();
@@ -301,19 +282,17 @@ pub async fn get_database_pool_health(
     }
 
     debug!("Database pool health retrieved successfully");
-    Ok(ApiResponse::success(health).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(health).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Test command for compressed responses (returns large dataset)
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_large_test_data(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<CompressedApiResponse, AppError> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Viewer);
-    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id)?;
     debug!("Large test data requested");
 
     // Generate a large dataset to test compression
@@ -324,7 +303,7 @@ pub async fn get_large_test_data(
         data: vec![i as u8; 100], // 100 bytes per item
     }).collect();
 
-    let response = ApiResponse::success(large_data).with_correlation_id(Some(correlation_id));
+    let response = ApiResponse::success(large_data).with_correlation_id(Some(ctx.correlation_id));
     response.to_compressed_if_large()
 }
 
@@ -341,12 +320,10 @@ pub struct TestItem {
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn vacuum_database(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let current_user = authenticate!(&session_token, &state, UserRole::Admin);
-    let correlation_id = init_correlation_context(&correlation_id, Some(&current_user.user_id));
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &correlation_id)?;
     info!("Database vacuum operation requested");
 
     let db = &state.db;
@@ -356,7 +333,7 @@ pub async fn vacuum_database(
     })?;
 
     info!("Database vacuum completed successfully");
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[cfg(test)]

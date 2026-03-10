@@ -1,6 +1,5 @@
 //! Security monitoring commands for admin interface
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::audit::application::{
     AcknowledgeSecurityAlertRequest, CleanupSecurityEventsRequest, GetSecurityAlertsRequest,
@@ -8,6 +7,7 @@ use crate::domains::audit::application::{
     SecurityAlertResponse, SecurityEventResponse, SecurityMetricsResponse,
 };
 use crate::shared::contracts::auth::UserRole;
+use crate::resolve_context;
 use tracing::{error, info, instrument};
 
 /// Get security metrics
@@ -17,15 +17,7 @@ pub async fn get_security_metrics(
     request: GetSecurityMetricsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SecurityMetricsResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     // Get real security metrics from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -40,7 +32,7 @@ pub async fn get_security_metrics(
         suspicious_activities_detected: metrics.suspicious_activities_detected,
     };
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get recent security events
@@ -50,15 +42,7 @@ pub async fn get_security_events(
     request: GetSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityEventResponse>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     let limit = request.limit.unwrap_or(50).min(200); // Max 200 events
 
@@ -81,7 +65,7 @@ pub async fn get_security_events(
         })
         .collect();
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get active security alerts
@@ -91,15 +75,7 @@ pub async fn get_security_alerts(
     request: GetSecurityAlertsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SecurityAlertResponse>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     // Get real security alerts from the security monitor service
     let auth_service = state.auth_service.clone();
@@ -123,7 +99,7 @@ pub async fn get_security_alerts(
         })
         .collect();
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Acknowledge a security alert
@@ -133,30 +109,22 @@ pub async fn acknowledge_security_alert(
     request: AcknowledgeSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     // Acknowledge the alert using the security monitor service
     let auth_service = state.auth_service.clone();
     auth_service
         .security_monitor()
-        .acknowledge_alert(&request.alert_id, &current_user.user_id)
+        .acknowledge_alert(&request.alert_id, ctx.user_id())
         .map_err(|e| {
             error!(error = %e, alert_id = %request.alert_id, "Failed to acknowledge security alert");
             AppError::Internal("Failed to acknowledge alert".to_string())
         })?;
 
-    info!(alert_id = %request.alert_id, user_id = %current_user.user_id, "Security alert acknowledged");
+    info!(alert_id = %request.alert_id, user_id = %ctx.auth.user_id, "Security alert acknowledged");
     Ok(
         ApiResponse::success("Alert acknowledged successfully".to_string())
-            .with_correlation_id(Some(correlation_id.clone())),
+            .with_correlation_id(Some(ctx.correlation_id)),
     )
 }
 
@@ -167,15 +135,7 @@ pub async fn resolve_security_alert(
     request: ResolveSecurityAlertRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     // Resolve the alert using the security monitor service
     let auth_service = state.auth_service.clone();
@@ -190,7 +150,7 @@ pub async fn resolve_security_alert(
     info!(alert_id = %request.alert_id, "Security alert resolved");
     Ok(
         ApiResponse::success("Alert resolved successfully".to_string())
-            .with_correlation_id(Some(correlation_id.clone())),
+            .with_correlation_id(Some(ctx.correlation_id)),
     )
 }
 
@@ -201,15 +161,7 @@ pub async fn cleanup_security_events(
     request: CleanupSecurityEventsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-
-    // Check if user is admin
-    let _current_user = authenticate!(
-        &request.session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
 
     // Clean up old events using the security monitor service
     let auth_service = state.auth_service.clone();
@@ -224,64 +176,46 @@ pub async fn cleanup_security_events(
     info!("Security events cleaned up");
     Ok(
         ApiResponse::success("Security events cleaned up successfully".to_string())
-            .with_correlation_id(Some(correlation_id.clone())),
+            .with_correlation_id(Some(ctx.correlation_id)),
     )
 }
 
 /// Get active sessions for the current user
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_active_sessions(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::shared::contracts::auth::UserSession>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Authenticate the user
-    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None, // Any authenticated user can view their own sessions
-    )
-    .await?;
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     // Get active sessions for the current user
     let sessions = state
         .session_service
-        .get_user_active_sessions(&current_user.user_id)
+        .get_user_active_sessions(ctx.user_id())
         .await
         .map_err(|e| {
-            error!(error = %e, user_id = %current_user.user_id, "Failed to get active sessions");
+            error!(error = %e, user_id = %ctx.auth.user_id, "Failed to get active sessions");
             AppError::Internal("Failed to get active sessions".to_string())
         })?;
 
-    Ok(ApiResponse::success(sessions).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(sessions).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Revoke a specific session
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn revoke_session(
     session_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Authenticate the user
-    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None, // Any authenticated user can revoke their own sessions
-    )
-    .await?;
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     // Get the session to verify ownership
     if let Some(session) = state.session_service.validate_session(&session_id).await? {
         // Check if the session belongs to the current user or if user is admin
-        if session.user_id != current_user.user_id && current_user.role != UserRole::Admin {
+        if session.user_id != ctx.auth.user_id && ctx.auth.role != UserRole::Admin {
             return Err(AppError::Authorization(
                 "You can only revoke your own sessions".to_string(),
             ));
@@ -297,10 +231,14 @@ pub async fn revoke_session(
                 AppError::Internal("Failed to revoke session".to_string())
             })?;
 
-        info!(session_id = %session_id, user_id = %current_user.user_id, "Session revoked");
+        if session_id == ctx.auth.session_id {
+            state.session_store.clear();
+        }
+
+        info!(session_id = %session_id, user_id = %ctx.auth.user_id, "Session revoked");
         Ok(
             ApiResponse::success("Session revoked successfully".to_string())
-                .with_correlation_id(Some(correlation_id.clone())),
+                .with_correlation_id(Some(ctx.correlation_id)),
         )
     } else {
         Err(AppError::NotFound("Session not found".to_string()))
@@ -309,64 +247,36 @@ pub async fn revoke_session(
 
 /// Revoke all sessions except the current one
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn revoke_all_sessions_except_current(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<u32>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Authenticate the user
-    let current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        None, // Any authenticated user can revoke their own sessions
-    )
-    .await?;
-    crate::commands::update_correlation_context_user(&current_user.user_id);
-
-    // Get current session ID from token
-    let current_session = state
-        .session_service
-        .validate_session(&session_token)
-        .await?
-        .ok_or_else(|| AppError::Authentication("Invalid session".to_string()))?;
+    let ctx = resolve_context!(&state, &correlation_id);
 
     // Revoke all other sessions
     let revoked_count = state
         .session_service
-        .revoke_all_sessions_except_current(&current_user.user_id, &current_session.id)
+        .revoke_all_sessions_except_current(&ctx.auth.user_id, &ctx.auth.session_id)
         .await
         .map_err(|e| {
-            error!(error = %e, user_id = %current_user.user_id, "Failed to revoke other sessions");
+            error!(error = %e, user_id = %ctx.auth.user_id, "Failed to revoke other sessions");
             AppError::Internal("Failed to revoke sessions".to_string())
         })?;
 
-    info!(user_id = %current_user.user_id, revoked_count = revoked_count, "Revoked all other sessions");
-    Ok(ApiResponse::success(revoked_count).with_correlation_id(Some(correlation_id.clone())))
+    info!(user_id = %ctx.auth.user_id, revoked_count = revoked_count, "Revoked all other sessions");
+    Ok(ApiResponse::success(revoked_count).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Update session timeout configuration (admin only)
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn update_session_timeout(
     timeout_minutes: u32,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Check if user is admin
-    let _current_user = crate::shared::auth_middleware::AuthMiddleware::authenticate(
-        &session_token,
-        &state,
-        Some(UserRole::Admin),
-    )
-    .await
-    .map_err(|_| {
-        AppError::Authorization("Admin access required to update session timeout".to_string())
-    })?;
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
 
     // Validate timeout range
     if timeout_minutes == 0 {
@@ -390,24 +300,18 @@ pub async fn update_session_timeout(
         "Session timeout updated to {} minutes",
         timeout_minutes
     ))
-    .with_correlation_id(Some(correlation_id.clone())))
+    .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get session timeout configuration
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_session_timeout_config(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::shared::contracts::auth::SessionTimeoutConfig>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    // Authenticate the user (any authenticated user can view config)
-    let _current_user =
-        crate::shared::auth_middleware::AuthMiddleware::authenticate(&session_token, &state, None)
-            .await?;
-    crate::commands::update_correlation_context_user(&_current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let config = state.session_service.get_session_timeout_config().await;
-    Ok(ApiResponse::success(config).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(config).with_correlation_id(Some(ctx.correlation_id)))
 }

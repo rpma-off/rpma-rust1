@@ -40,6 +40,7 @@ fn update_stock_validates_invariants() {
         model: None,
         specifications: None,
         unit_of_measure: UnitOfMeasure::Meter,
+        current_stock: None,
         minimum_stock: Some(0.0),
         maximum_stock: Some(100.0),
         reorder_point: Some(10.0),

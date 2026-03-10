@@ -14,7 +14,6 @@ use tracing::info;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserAccessibilityRequest {
-    pub session_token: String,
     pub high_contrast: Option<bool>,
     pub large_text: Option<bool>,
     pub reduce_motion: Option<bool>,
@@ -37,7 +36,7 @@ pub async fn update_user_accessibility(
     request: UpdateUserAccessibilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user accessibility settings");
 
     let mut accessibility_settings: UserAccessibilitySettings = state

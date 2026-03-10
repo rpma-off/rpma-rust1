@@ -14,7 +14,6 @@ use tracing::{debug, info};
 /// Request for getting tasks with detailed client information
 #[derive(Deserialize, Debug)]
 pub struct TasksWithClientsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     pub include_client_details: Option<bool>,
     pub page: Option<u32>,
@@ -40,7 +39,7 @@ pub async fn get_tasks_with_client_details(
     request: TasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<TaskWithClientDetails>>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting tasks with detailed client information");
 
     // Apply role-based access control
@@ -187,14 +186,13 @@ pub async fn validate_task_client_relationship(
 }
 
 /// Get client task summary
-#[tracing::instrument(skip(state, session_token))]
+#[tracing::instrument(skip(state))]
 pub async fn get_client_task_summary(
-    session_token: &str,
     client_id: &str,
     state: &AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::shared::services::cross_domain::ClientStat>, AppError> {
-    let ctx = resolve_context!(session_token, &state, &correlation_id);
+    let ctx = resolve_context!(state, &correlation_id);
     debug!("Getting task summary for client {}", client_id);
 
     // Check permissions - only Admin and Supervisor can view client data

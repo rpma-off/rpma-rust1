@@ -8,11 +8,10 @@ use tracing;
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Message>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let msg = state
         .message_service
@@ -28,11 +27,10 @@ pub async fn message_send(
 #[tauri::command]
 pub async fn message_get_list(
     query: MessageQuery,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<MessageListResponse>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let list = state
         .message_service
@@ -48,11 +46,10 @@ pub async fn message_get_list(
 #[tauri::command]
 pub async fn message_mark_read(
     message_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     state
         .message_service
@@ -69,11 +66,10 @@ pub async fn message_mark_read(
 pub async fn message_get_templates(
     category: Option<String>,
     message_type: Option<String>,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<MessageTemplate>>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let templates = state
         .message_service
@@ -89,11 +85,10 @@ pub async fn message_get_templates(
 #[tauri::command]
 pub async fn message_get_preferences(
     user_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let prefs = state
         .message_service
@@ -110,11 +105,10 @@ pub async fn message_get_preferences(
 pub async fn message_update_preferences(
     user_id: String,
     updates: UpdateNotificationPreferencesRequest,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let prefs = state
         .message_service

@@ -19,11 +19,10 @@ static SYSTEM_CONFIG: Mutex<Option<SystemConfiguration>> = Mutex::new(None);
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn get_app_settings(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Admin);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
 
     let settings = state
         .settings_service

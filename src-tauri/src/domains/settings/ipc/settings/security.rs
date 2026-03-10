@@ -23,7 +23,7 @@ pub async fn update_security_settings(
     request: UpdateSecuritySettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id, UserRole::Admin);
+    let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
     info!("Updating security settings");
 
     let mut app_settings = state
@@ -68,7 +68,7 @@ pub async fn update_user_security(
     request: UpdateUserSecurityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user security settings");
 
     let mut security_settings: UserSecuritySettings = state

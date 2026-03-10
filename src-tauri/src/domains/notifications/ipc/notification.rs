@@ -22,13 +22,12 @@ lazy_static! {
 
 /// Initialize the notification service with configuration
 #[tauri::command]
-#[instrument(skip(config, state, session_token))]
+#[instrument(skip(config, state))]
 pub async fn initialize_notification_service(
     config: UpdateNotificationConfigRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &config.correlation_id);
+    let ctx = resolve_context!(&state, &config.correlation_id);
 
     // Build config via application layer
     let notification_config = build_notification_config(&config).map_err(|e| {
@@ -46,13 +45,12 @@ pub async fn initialize_notification_service(
 
 /// Send a notification
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id = %request.user_id))]
+#[instrument(skip(state, request), fields(user_id = %request.user_id))]
 pub async fn send_notification(
     request: SendNotificationRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard.as_ref().ok_or(AppError::Configuration(
@@ -77,15 +75,14 @@ pub async fn send_notification(
 
 /// Test notification configuration
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn test_notification_config(
     recipient: String,
     channel: NotificationChannel,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard.as_ref().ok_or(AppError::Configuration(
@@ -135,13 +132,12 @@ pub async fn test_notification_config(
 
 /// Get notification service status
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_notification_status(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let _is_initialized = service_guard.is_some();

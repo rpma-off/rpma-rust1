@@ -14,7 +14,6 @@ use tracing::{debug, info};
 /// Request for checking task assignment eligibility
 #[derive(serde::Deserialize, Debug)]
 pub struct CheckTaskAssignmentRequest {
-    pub session_token: String,
     pub task_id: String,
     pub user_id: String,
     #[serde(default)]
@@ -24,7 +23,6 @@ pub struct CheckTaskAssignmentRequest {
 /// Request for checking task availability
 #[derive(serde::Deserialize, Debug)]
 pub struct CheckTaskAvailabilityRequest {
-    pub session_token: String,
     pub task_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -33,7 +31,6 @@ pub struct CheckTaskAvailabilityRequest {
 /// Request for validating task assignment changes
 #[derive(serde::Deserialize, Debug)]
 pub struct ValidateTaskAssignmentChangeRequest {
-    pub session_token: String,
     pub task_id: String,
     pub old_user_id: Option<String>,
     pub new_user_id: String,
@@ -48,7 +45,7 @@ pub async fn check_task_assignment(
     request: CheckTaskAssignmentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AssignmentCheckResponse>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Checking task assignment eligibility");
 
     task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
@@ -89,7 +86,7 @@ pub async fn check_task_availability(
     request: CheckTaskAvailabilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AvailabilityCheckResponse>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Checking task availability");
 
     let task = state
@@ -120,7 +117,7 @@ pub async fn validate_task_assignment_change(
     request: ValidateTaskAssignmentChangeRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<ValidationResult>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Validating task assignment change");
 
     task_policy_service::ensure_assignment_management_role(&ctx.auth)?;

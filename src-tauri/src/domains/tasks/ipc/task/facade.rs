@@ -42,7 +42,7 @@ pub async fn add_task_note(
     request: AddTaskNoteRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let result = cmd_service(&state)
         .add_note(&ctx, &request.task_id, &request.note)
@@ -58,7 +58,7 @@ pub async fn send_task_message(
     request: SendTaskMessageRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let result = cmd_service(&state)
         .send_message(
@@ -80,7 +80,7 @@ pub async fn report_task_issue(
     request: ReportTaskIssueRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let result = cmd_service(&state)
         .report_issue(
@@ -105,7 +105,7 @@ pub async fn export_tasks_csv(
 ) -> Result<ApiResponse<String>, AppError> {
     debug!("Exporting tasks to CSV");
 
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let csv_content = cmd_service(&state).export_csv(
         request.filter.as_ref(),
@@ -124,7 +124,7 @@ pub async fn import_tasks_bulk(
 ) -> Result<ApiResponse<BulkImportResponse>, AppError> {
     debug!("Bulk importing tasks from CSV");
 
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let response = cmd_service(&state)
         .import_bulk(
@@ -146,7 +146,7 @@ pub async fn delay_task(
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Delaying task {}", request.task_id);
 
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let updated_task = cmd_service(&state)
         .delay_task(
@@ -169,7 +169,7 @@ pub async fn edit_task(
 ) -> Result<ApiResponse<Task>, AppError> {
     debug!("Editing task {}", request.task_id);
 
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let updated_task = cmd_service(&state)
         .edit_task(&ctx, &request.task_id, &request.data)
@@ -210,14 +210,14 @@ pub async fn task_crud(
     state: AppState<'_>,
 ) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
     let action = request.action;
-    let session_token = request.session_token;
-    let ctx = resolve_context!(&session_token, &state, &request.correlation_id);
+    let correlation_id = request.correlation_id.clone();
     info!("task_crud command received - action: {:?}", action);
 
     let svc = cmd_service(&state);
 
     match action {
         crate::commands::TaskAction::Create { data } => {
+            let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "create");
 
             let validator = ValidationService::new();
@@ -256,6 +256,7 @@ pub async fn task_crud(
             }
         }
         crate::commands::TaskAction::Get { id } => {
+            let ctx = resolve_context!(&state, &correlation_id);
             let task = state.task_service.get_task_async(&id).await.map_err(|e| {
                 error!("Task retrieval failed: {}", e);
                 AppError::db_sanitized("tasks.get", e)
@@ -272,6 +273,7 @@ pub async fn task_crud(
             }
         }
         crate::commands::TaskAction::Update { id, data } => {
+            let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "update");
 
             let status_updated = data.status.is_some();
@@ -321,6 +323,7 @@ pub async fn task_crud(
             }
         }
         crate::commands::TaskAction::Delete { id } => {
+            let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "delete");
 
             state
@@ -336,7 +339,6 @@ pub async fn task_crud(
         }
         crate::commands::TaskAction::List { filters } => {
             let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
-                session_token: session_token.clone(),
                 page: None,
                 limit: None,
                 filter: Some(crate::domains::tasks::ipc::task_types::TaskFilter {
@@ -349,30 +351,31 @@ pub async fn task_crud(
                     date_from: None,
                     date_to: None,
                 }),
-                correlation_id: Some(ctx.correlation_id.clone()),
+                correlation_id: correlation_id.clone(),
             };
 
             let result = get_tasks_with_clients(request, state).await?;
+            let response_correlation_id = result.correlation_id.clone();
             match result.data {
                 Some(task_list_response) => Ok(ApiResponse::success(
                     crate::commands::TaskResponse::List(task_list_response),
                 )
-                .with_correlation_id(Some(ctx.correlation_id.clone()))),
+                .with_correlation_id(response_correlation_id)),
                 None => Ok(
                     ApiResponse::error(AppError::NotFound("No tasks found".to_string()))
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
+                        .with_correlation_id(response_correlation_id),
                 ),
             }
         }
         crate::commands::TaskAction::GetStatistics => {
             let stats_request =
                 crate::domains::tasks::ipc::task::queries::GetTaskStatisticsRequest {
-                    session_token: session_token.clone(),
                     filter: None,
-                    correlation_id: Some(ctx.correlation_id.clone()),
+                    correlation_id: correlation_id.clone(),
                 };
 
             let stats_response = get_task_statistics(stats_request, state).await?;
+            let response_correlation_id = stats_response.correlation_id.clone();
             match stats_response.data {
                 Some(stats) => {
                     let response_stats = crate::domains::tasks::ipc::task_types::TaskStatistics {
@@ -386,13 +389,13 @@ pub async fn task_crud(
                         ApiResponse::success(crate::commands::TaskResponse::Statistics(
                             response_stats,
                         ))
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
+                        .with_correlation_id(response_correlation_id),
                     )
                 }
                 None => Ok(ApiResponse::error(AppError::NotFound(
                     "Statistics not available".to_string(),
                 ))
-                .with_correlation_id(Some(ctx.correlation_id.clone()))),
+                .with_correlation_id(response_correlation_id)),
             }
         }
     }

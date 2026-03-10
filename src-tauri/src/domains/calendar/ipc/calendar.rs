@@ -9,20 +9,18 @@ use crate::domains::calendar::application::{
 use crate::domains::calendar::domain::models::calendar::*;
 use crate::domains::calendar::domain::models::calendar_event::*;
 use crate::domains::calendar::{CalendarCommand, CalendarFacade, CalendarResponse};
-use crate::shared::auth_middleware::AuthMiddleware;
-use crate::shared::ipc::CommandContext;
+use crate::resolve_context;
+use crate::shared::context::RequestContext;
 use tracing::{info, instrument};
 
-async fn calendar_context(
-    session_token: &str,
+fn calendar_context(
     state: &AppState<'_>,
     correlation_id: &Option<String>,
-) -> Result<CommandContext, AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
+) -> Result<RequestContext, AppError> {
+    let ctx = resolve_context!(state, correlation_id);
 
     let rate_limiter = state.auth_service.rate_limiter();
-    let rate_limit_key = format!("calendar_ops:{}", ctx.session.user_id);
+    let rate_limit_key = format!("calendar_ops:{}", ctx.auth.user_id);
     if !rate_limiter
         .check_and_record(&rate_limit_key, 200, 60)
         .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
@@ -48,7 +46,7 @@ pub async fn calendar_get_tasks(
     request: GetCalendarTasksRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<CalendarTask>>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_get_tasks command received");
 
     match facade(&state)
@@ -78,7 +76,7 @@ pub async fn get_event_by_id(
     request: GetEventByIdRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Option<CalendarEvent>>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_event_by_id command received");
 
     match facade(&state)
@@ -101,7 +99,7 @@ pub async fn create_event(
     request: CreateEventRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CalendarEvent>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("create_event command received");
 
     match facade(&state)
@@ -129,7 +127,7 @@ pub async fn update_event(
     request: UpdateEventRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Option<CalendarEvent>>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("update_event command received");
 
     match facade(&state)
@@ -158,7 +156,7 @@ pub async fn delete_event(
     request: DeleteEventRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<bool>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("delete_event command received");
 
     match facade(&state)
@@ -181,7 +179,7 @@ pub async fn get_events_for_technician(
     request: GetEventsForTechnicianRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<CalendarEvent>>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_events_for_technician command received");
 
     match facade(&state)
@@ -209,7 +207,7 @@ pub async fn get_events_for_task(
     request: GetEventsForTaskRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<CalendarEvent>>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_events_for_task command received");
 
     match facade(&state)
@@ -237,11 +235,10 @@ pub async fn get_events(
     start_date: String,
     end_date: String,
     technician_id: Option<String>,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<CalendarEvent>>, AppError> {
-    let ctx = calendar_context(&session_token, &state, &correlation_id).await?;
+    let ctx = calendar_context(&state, &correlation_id)?;
     info!("get_events command received");
 
     match facade(&state)
@@ -271,7 +268,7 @@ pub async fn calendar_check_conflicts(
     request: CheckConflictsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<ConflictDetection>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_check_conflicts command received");
 
     match facade(&state)
@@ -302,7 +299,7 @@ pub async fn calendar_schedule_task(
     request: ScheduleTaskRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<ConflictDetection>, AppError> {
-    let ctx = calendar_context(&request.session_token, &state, &request.correlation_id).await?;
+    let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_schedule_task command received");
 
     match facade(&state)

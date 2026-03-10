@@ -5,7 +5,6 @@ use serde::Deserialize;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserSecurityRequest {
-    pub session_token: String,
     pub two_factor_enabled: Option<bool>,
     pub session_timeout: Option<u32>,
     #[serde(default)]
@@ -15,7 +14,6 @@ pub struct UpdateUserSecurityRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateSecuritySettingsRequest {
-    pub session_token: String,
     pub two_factor_enabled: Option<bool>,
     pub session_timeout: Option<u32>,
     pub password_min_length: Option<u8>,

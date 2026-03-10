@@ -7,13 +7,12 @@ use tracing::{error, info, instrument};
 
 /// Start the background sync service
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_start_background_service(
     correlation_id: Option<String>,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -35,13 +34,12 @@ pub async fn sync_start_background_service(
 
 /// Stop the background sync service
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_stop_background_service(
     correlation_id: Option<String>,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -63,13 +61,12 @@ pub async fn sync_stop_background_service(
 
 /// Trigger immediate sync
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_now(
     correlation_id: Option<String>,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SyncResult>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -98,13 +95,12 @@ pub async fn sync_now(
 
 /// Get current sync status
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_get_status(
     correlation_id: Option<String>,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -137,15 +133,14 @@ pub async fn sync_get_status(
 
 /// Get operations for a specific entity
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_get_operations_for_entity(
     correlation_id: Option<String>,
     entity_id: String,
     entity_type: String,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::domains::sync::domain::models::sync::SyncOperation>>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     let queue = std::sync::Arc::clone(&state.sync_queue);
     let ops = queue
         .get_operations_for_entity(&entity_id, &entity_type)

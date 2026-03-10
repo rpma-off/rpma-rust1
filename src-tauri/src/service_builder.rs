@@ -33,6 +33,7 @@ use crate::db::Database;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
 use crate::domains::audit::infrastructure::audit_service::AuditService;
 use crate::domains::users::infrastructure::user::UserService;
+use crate::infrastructure::auth::session_store::SessionStore;
 use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::shared::repositories::Repositories;
@@ -125,6 +126,8 @@ impl ServiceBuilder {
         let session_service = Arc::new(
             crate::domains::auth::infrastructure::session::SessionService::new(self.db.clone()),
         );
+
+        let session_store = Arc::new(SessionStore::default());
 
         // Initialize Two Factor Service (depends on DB)
         // REMOVED — 2FA has been replaced by plain UUID sessions
@@ -261,6 +264,7 @@ impl ServiceBuilder {
             quote_service,
             auth_service,
             session_service,
+            session_store,
             settings_service,
             user_service,
             cache_service,

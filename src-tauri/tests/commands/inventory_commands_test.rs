@@ -34,6 +34,7 @@ fn test_create_material_request_structure() {
         model: None,
         specifications: None,
         unit_of_measure: UnitOfMeasure::Roll,
+        current_stock: None,
         minimum_stock: Some(1.0),
         maximum_stock: Some(100.0),
         reorder_point: Some(5.0),

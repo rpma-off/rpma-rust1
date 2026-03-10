@@ -18,7 +18,6 @@ pub use crate::domains::settings::domain::models::settings::DataConsent;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateDataConsentRequest {
-    pub session_token: String,
     pub analytics_consent: Option<bool>,
     pub marketing_consent: Option<bool>,
     pub third_party_sharing: Option<bool>,
@@ -32,11 +31,10 @@ pub struct UpdateDataConsentRequest {
 #[tauri::command]
 
 pub async fn get_data_consent(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     info!("Getting data consent information");
 
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));
@@ -56,7 +54,7 @@ pub async fn update_data_consent(
     request: UpdateDataConsentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<DataConsent>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating data consent preferences");
 
     let consent_service = ConsentService::new(Arc::new((*state.db).clone()));

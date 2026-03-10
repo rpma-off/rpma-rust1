@@ -92,18 +92,11 @@ pub struct GetStreamDataResponse {
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn compress_data_for_ipc(
-    session_token: String,
     state: AppState<'_>,
     request: CompressDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<CompressDataResponse> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     let config = CompressionConfig {
         min_size: request.min_size.unwrap_or(1024),
         ..Default::default()
@@ -137,18 +130,11 @@ pub async fn compress_data_for_ipc(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn decompress_data_from_ipc(
-    session_token: String,
     state: AppState<'_>,
     request: DecompressDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<serde_json::Value> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     let data: serde_json::Value = decompress_json(&request.compressed)
         .map_err(|e| crate::commands::AppError::Internal(format!("Decompression failed: {}", e)))?;
 
@@ -159,18 +145,11 @@ pub async fn decompress_data_from_ipc(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn start_stream_transfer(
-    session_token: String,
     state: AppState<'_>,
     request: StartStreamRequest,
     correlation_id: Option<String>,
 ) -> AppResult<StartStreamResponse> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     let mut manager = STREAM_MANAGER.lock().await;
 
     let chunk_size = request
@@ -204,18 +183,11 @@ pub async fn start_stream_transfer(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn send_stream_chunk(
-    session_token: String,
     state: AppState<'_>,
     request: SendStreamChunkRequest,
     correlation_id: Option<String>,
 ) -> AppResult<SendStreamChunkResponse> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     let manager = STREAM_MANAGER.lock().await;
 
     let completed = manager
@@ -236,18 +208,11 @@ pub async fn send_stream_chunk(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_stream_data(
-    session_token: String,
     state: AppState<'_>,
     request: GetStreamDataRequest,
     correlation_id: Option<String>,
 ) -> AppResult<GetStreamDataResponse> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     let mut manager = STREAM_MANAGER.lock().await;
 
     let is_complete = manager
@@ -281,17 +246,10 @@ pub async fn get_stream_data(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_ipc_stats(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> AppResult<serde_json::Value> {
-    let _ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Technician,
-        &correlation_id,
-    )
-    .await?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &correlation_id)?;
     // Return mock stats for now - in production you'd track real metrics
     let stats = serde_json::json!({
         "compression": {

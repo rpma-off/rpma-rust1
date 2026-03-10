@@ -5,8 +5,8 @@ use crate::domains::users::domain::UserAccessPolicy;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::contracts::user_account::UserAccountManager;
+use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
-use crate::shared::ipc::CommandContext;
 
 #[cfg(feature = "export-types")]
 pub use crate::domains::users::application::{
@@ -27,7 +27,6 @@ pub enum UsersCommand {
     Crud(UserAction),
     BootstrapFirstAdmin {
         user_id: String,
-        session_token: String,
     },
     HasAdmins,
 }
@@ -114,17 +113,11 @@ impl UsersFacade {
     pub fn validate_bootstrap_request(
         &self,
         user_id: &str,
-        session_token: &str,
         authenticated_user_id: &str,
     ) -> Result<(), AppError> {
         if user_id.trim().is_empty() {
             return Err(AppError::Validation(
                 "user_id is required for bootstrap".to_string(),
-            ));
-        }
-        if session_token.trim().is_empty() {
-            return Err(AppError::Authentication(
-                "Session token is required".to_string(),
             ));
         }
         if authenticated_user_id != user_id {
@@ -139,12 +132,13 @@ impl UsersFacade {
     pub async fn execute(
         &self,
         command: UsersCommand,
-        ctx: &CommandContext,
+        ctx: &RequestContext,
         services: &UsersServices,
     ) -> Result<UsersDomainResponse, AppError> {
         match command {
             UsersCommand::Crud(action) => {
-                self.enforce_action_permissions(&ctx.session, &action)?;
+                let current_user = ctx.auth.to_user_session();
+                self.enforce_action_permissions(&current_user, &action)?;
                 let response = match action {
                     UserAction::Create { data } => {
                         let role = self.parse_role(&data.role)?;
@@ -195,7 +189,7 @@ impl UsersFacade {
                     }
                     UserAction::Delete { id } => {
                         self.ensure_not_self_action(
-                            &ctx.session.user_id,
+                            &ctx.auth.user_id,
                             &id,
                             "delete your own account",
                         )?;
@@ -224,28 +218,28 @@ impl UsersFacade {
                     }
                     UserAction::ChangeRole { id, new_role } => {
                         self.ensure_not_self_action(
-                            &ctx.session.user_id,
+                            &ctx.auth.user_id,
                             &id,
                             "change your own role",
                         )?;
                         services
                             .user_service
-                            .change_role(&id, new_role, &ctx.session.user_id)
+                            .change_role(&id, new_role, &ctx.auth.user_id)
                             .await?;
                         UserResponse::RoleChanged
                     }
                     UserAction::Ban { id } => {
-                        self.ensure_not_self_action(&ctx.session.user_id, &id, "ban yourself")?;
+                        self.ensure_not_self_action(&ctx.auth.user_id, &id, "ban yourself")?;
                         services
                             .user_service
-                            .ban_user(&id, &ctx.session.user_id)
+                            .ban_user(&id, &ctx.auth.user_id)
                             .await?;
                         UserResponse::UserBanned
                     }
                     UserAction::Unban { id } => {
                         services
                             .user_service
-                            .unban_user(&id, &ctx.session.user_id)
+                            .unban_user(&id, &ctx.auth.user_id)
                             .await?;
                         UserResponse::UserUnbanned
                     }
@@ -253,11 +247,8 @@ impl UsersFacade {
 
                 Ok(UsersDomainResponse::Crud(response))
             }
-            UsersCommand::BootstrapFirstAdmin {
-                user_id,
-                session_token,
-            } => {
-                self.validate_bootstrap_request(&user_id, &session_token, &ctx.session.user_id)?;
+            UsersCommand::BootstrapFirstAdmin { user_id } => {
+                self.validate_bootstrap_request(&user_id, &ctx.auth.user_id)?;
                 let message = services
                     .user_service
                     .bootstrap_first_admin(&user_id)

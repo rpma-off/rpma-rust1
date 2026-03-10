@@ -10,32 +10,29 @@ use crate::domains::interventions::application::{
 use crate::domains::interventions::{
     InterventionsCommand, InterventionsFacade, InterventionsResponse,
 };
-use crate::shared::auth_middleware::AuthMiddleware;
+use crate::resolve_context;
 use tracing::instrument;
 
-async fn workflow_ctx(
+fn workflow_ctx(
     state: &AppState<'_>,
-    session_token: &str,
     correlation_id: &Option<String>,
-) -> Result<crate::shared::ipc::CommandContext, AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
-    tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
+) -> Result<crate::shared::context::RequestContext, AppError> {
+    let ctx = resolve_context!(state, correlation_id);
+    tracing::Span::current().record("user_id", ctx.user_id());
     Ok(ctx)
 }
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(task_id = %request.task_id, user_id))]
+#[instrument(skip(state, request), fields(task_id = %request.task_id, user_id))]
 pub async fn intervention_start(
     request: StartInterventionRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<
     ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
     AppError,
 > {
-    let ctx = workflow_ctx(&state, &session_token, &request.correlation_id).await?;
+    let ctx = workflow_ctx(&state, &request.correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -57,18 +54,17 @@ pub async fn intervention_start(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token, data), fields(user_id))]
+#[instrument(skip(state, data), fields(user_id))]
 pub async fn intervention_update(
     id: String,
     data: serde_json::Value,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<
     ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
     AppError,
 > {
-    let ctx = workflow_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -90,14 +86,13 @@ pub async fn intervention_update(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn intervention_delete(
     id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = workflow_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -120,16 +115,15 @@ pub async fn intervention_delete(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(intervention_id = %request.intervention_id, user_id, correlation_id))]
+#[instrument(skip(state, request), fields(intervention_id = %request.intervention_id, user_id, correlation_id))]
 pub async fn intervention_finalize(
     request: FinalizeInterventionRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<
     ApiResponse<crate::domains::interventions::infrastructure::intervention_types::FinalizeInterventionResponse>,
     AppError,
 >{
-    let ctx = workflow_ctx(&state, &session_token, &request.correlation_id).await?;
+    let ctx = workflow_ctx(&state, &request.correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -151,14 +145,13 @@ pub async fn intervention_finalize(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token, action), fields(user_id, correlation_id))]
+#[instrument(skip(state, action), fields(user_id, correlation_id))]
 pub async fn intervention_workflow(
     action: InterventionWorkflowAction,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
-    let ctx = workflow_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     let command = match action {

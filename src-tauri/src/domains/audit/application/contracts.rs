@@ -47,7 +47,6 @@ pub struct SecurityAlertResponse {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityMetricsRequest {
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -55,7 +54,6 @@ pub struct GetSecurityMetricsRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityEventsRequest {
-    pub session_token: String,
     pub limit: Option<usize>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -64,7 +62,6 @@ pub struct GetSecurityEventsRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityAlertsRequest {
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -72,7 +69,6 @@ pub struct GetSecurityAlertsRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct AcknowledgeSecurityAlertRequest {
-    pub session_token: String,
     pub alert_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -81,7 +77,6 @@ pub struct AcknowledgeSecurityAlertRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct ResolveSecurityAlertRequest {
-    pub session_token: String,
     pub alert_id: String,
     pub actions_taken: Vec<String>,
     #[serde(default)]
@@ -91,7 +86,6 @@ pub struct ResolveSecurityAlertRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct CleanupSecurityEventsRequest {
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }

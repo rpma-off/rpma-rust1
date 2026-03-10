@@ -4,7 +4,6 @@ use crate::domains::auth::AuthFacade;
 use crate::shared::app_state::AppState;
 use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use tracing::{debug, error, info, instrument, warn};
 
 pub use crate::domains::auth::application::SignupRequest;
@@ -54,6 +53,7 @@ pub async fn auth_login(
         }
     };
 
+    state.session_store.set(session.clone());
     Ok(ApiResponse::success(session).with_correlation_id(Some(correlation_id)))
 }
 
@@ -116,17 +116,17 @@ pub async fn auth_create_account(
     );
 
     crate::commands::update_correlation_context_user(&session.user_id);
+    state.session_store.set(session.clone());
     Ok(ApiResponse::success(session).with_correlation_id(Some(correlation_id)))
 }
 
 /// Logout command
 #[tauri::command]
-#[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(token.as_bytes()))))]
+#[instrument(skip(state))]
 pub async fn auth_logout(
-    token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<String>, AppError> {
+) -> Result<ApiResponse<()>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
     info!(
@@ -136,40 +136,31 @@ pub async fn auth_logout(
 
     let auth_service = state.auth_service.clone();
 
-    auth_service.logout(&token).map_err(|e| {
-        warn!(
-            correlation_id = %correlation_id,
-            error = %e,
-            "Logout failed"
-        );
-        AppError::Authentication("Logout failed. Please try again.".to_string())
-    })?;
+    if let Ok(session) = state.session_store.get() {
+        if let Err(e) = auth_service.logout(&session.token) {
+            warn!(correlation_id = %correlation_id, error = %e, "Logout failed");
+        }
+    }
+    state.session_store.clear();
 
     info!(
         correlation_id = %correlation_id,
         "User logged out successfully"
     );
-    Ok(ApiResponse::success("Logged out successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 
 /// Validate session command
 #[tauri::command]
-#[instrument(skip(state), fields(token_hash = %format!("{:x}", Sha256::digest(session_token.as_bytes()))))]
+#[instrument(skip(state))]
 pub async fn auth_validate_session(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     debug!("Session validation request");
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
 
-    let auth_service = state.auth_service.clone();
-
-    let session = auth_service.validate_session(&session_token).map_err(|e| {
-        warn!("Session validation failed: {}", e);
-        AppError::Authentication("Session validation failed. Please log in again.".to_string())
-    })?;
+    let session = state.session_store.get()?;
 
     crate::commands::update_correlation_context_user(&session.user_id);
     debug!("Session validation successful");

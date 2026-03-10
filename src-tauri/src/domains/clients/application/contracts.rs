@@ -7,7 +7,6 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct ClientCrudRequest {
     pub action: ClientAction,
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }

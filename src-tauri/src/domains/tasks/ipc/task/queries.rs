@@ -15,7 +15,6 @@ use tracing::{debug, info};
 /// Request for getting tasks with clients
 #[derive(Deserialize, Debug)]
 pub struct GetTasksWithClientsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     pub page: Option<u32>,
     pub limit: Option<u32>,
@@ -26,7 +25,6 @@ pub struct GetTasksWithClientsRequest {
 /// Request for getting task statistics
 #[derive(Deserialize, Debug)]
 pub struct GetTaskStatisticsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -35,7 +33,6 @@ pub struct GetTaskStatisticsRequest {
 /// Request for getting completion rate
 #[derive(Deserialize, Debug)]
 pub struct GetCompletionRateRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -44,7 +41,6 @@ pub struct GetCompletionRateRequest {
 /// Request for getting average duration by status
 #[derive(Deserialize, Debug)]
 pub struct GetAverageDurationByStatusRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -53,7 +49,6 @@ pub struct GetAverageDurationByStatusRequest {
 /// Request for getting priority distribution
 #[derive(Deserialize, Debug)]
 pub struct GetPriorityDistributionRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -62,7 +57,6 @@ pub struct GetPriorityDistributionRequest {
 /// Request for getting user assigned tasks
 #[derive(Deserialize, Debug)]
 pub struct GetUserAssignedTasksRequest {
-    pub session_token: String,
     pub user_id: Option<String>, // If None, uses the authenticated user
     pub filter: Option<TaskFilter>,
     pub include_completed: Option<bool>,
@@ -75,7 +69,7 @@ pub async fn get_tasks_with_clients(
     request: GetTasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskListResponse>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     debug!("Getting tasks with client information");
 
@@ -138,7 +132,7 @@ pub async fn get_user_assigned_tasks(
     request: GetUserAssignedTasksRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<Task>>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting user assigned tasks");
 
     // Determine which user's tasks to get
@@ -193,7 +187,7 @@ pub async fn get_task_statistics(
     request: GetTaskStatisticsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskStatistics>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task statistics");
 
     // Apply role-based filtering to statistics
@@ -217,7 +211,7 @@ pub async fn get_completion_rate(
     request: GetCompletionRateRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<f64>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task completion rate");
 
     // Apply role-based filtering
@@ -244,7 +238,7 @@ pub async fn get_average_duration_by_status(
     request: GetAverageDurationByStatusRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<std::collections::HashMap<String, f64>>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting average duration by status");
 
     // Apply role-based filtering
@@ -278,7 +272,7 @@ pub async fn get_priority_distribution(
     request: GetPriorityDistributionRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<std::collections::HashMap<String, u64>>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task priority distribution");
 
     // Apply role-based filtering

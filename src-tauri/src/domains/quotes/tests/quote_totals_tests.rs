@@ -89,6 +89,7 @@ fn test_percentage_discount_rounds_correctly() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: Some("percentage".to_string()),
@@ -128,6 +129,7 @@ fn test_fixed_discount_capped_at_subtotal() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: Some("fixed".to_string()),

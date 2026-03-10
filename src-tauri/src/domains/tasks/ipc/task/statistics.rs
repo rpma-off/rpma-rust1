@@ -12,7 +12,6 @@ use tracing::{debug, info};
 /// Request for getting task statistics summary
 #[derive(Deserialize, Debug)]
 pub struct TaskStatisticsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -24,7 +23,7 @@ pub async fn get_task_statistics(
     request: TaskStatisticsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskStatistics>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting comprehensive task statistics");
 
     // Apply role-based filtering

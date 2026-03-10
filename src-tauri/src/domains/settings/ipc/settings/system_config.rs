@@ -21,7 +21,6 @@ fn make_service(state: &AppState<'_>) -> SystemConfigService {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessRulesRequest {
-    pub session_token: String,
     pub rules: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -34,7 +33,11 @@ pub async fn update_business_rules(
     request: UpdateBusinessRulesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating business_rules");
 
     make_service(&state).update_business_rules(&ctx, request.rules)?;
@@ -48,7 +51,6 @@ pub async fn update_business_rules(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateSecurityPoliciesRequest {
-    pub session_token: String,
     pub policies: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -61,7 +63,11 @@ pub async fn update_security_policies(
     request: UpdateSecurityPoliciesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating security_policies");
 
     make_service(&state).update_security_policies(&ctx, request.policies)?;
@@ -75,7 +81,6 @@ pub async fn update_security_policies(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateIntegrationsRequest {
-    pub session_token: String,
     pub integrations: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -88,7 +93,11 @@ pub async fn update_integrations(
     request: UpdateIntegrationsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating integrations");
 
     make_service(&state).update_integrations(&ctx, request.integrations)?;
@@ -102,7 +111,6 @@ pub async fn update_integrations(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdatePerformanceConfigsRequest {
-    pub session_token: String,
     pub configs: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -115,7 +123,11 @@ pub async fn update_performance_configs(
     request: UpdatePerformanceConfigsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating performance_configs");
 
     make_service(&state).update_performance_configs(&ctx, request.configs)?;
@@ -129,7 +141,6 @@ pub async fn update_performance_configs(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessHoursRequest {
-    pub session_token: String,
     pub hours: serde_json::Value,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -142,7 +153,11 @@ pub async fn update_business_hours(
     request: UpdateBusinessHoursRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating business_hours");
 
     make_service(&state).update_business_hours(&ctx, request.hours)?;

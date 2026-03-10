@@ -7,14 +7,13 @@ use tracing::{error, info, instrument};
 
 /// Enqueue a sync operation
 #[tauri::command]
-#[instrument(skip(state, session_token, operation))]
+#[instrument(skip(state, operation))]
 pub async fn sync_enqueue(
     operation: SyncOperation,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<i64>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let result = state.sync_queue.enqueue(operation).map_err(|e| {
         error!(error = %e, "Failed to enqueue sync operation");
@@ -26,14 +25,13 @@ pub async fn sync_enqueue(
 
 /// Dequeue a batch of pending operations
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_dequeue_batch(
     limit: usize,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<SyncOperation>>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let ops = state.sync_queue.dequeue_batch(limit).map_err(|e| {
         error!(error = %e, "Failed to dequeue sync operations");
@@ -44,13 +42,12 @@ pub async fn sync_dequeue_batch(
 
 /// Get sync queue metrics
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_get_metrics(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SyncQueueMetrics>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let metrics = state.sync_queue.get_metrics().map_err(|e| {
         error!(error = %e, "Failed to get sync queue metrics");
@@ -61,14 +58,13 @@ pub async fn sync_get_metrics(
 
 /// Mark an operation as completed
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_mark_completed(
     operation_id: i64,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     state.sync_queue.mark_completed(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to mark operation completed");
@@ -83,15 +79,14 @@ pub async fn sync_mark_completed(
 
 /// Mark an operation as failed
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_mark_failed(
     operation_id: i64,
     error: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     state
         .sync_queue
@@ -106,14 +101,13 @@ pub async fn sync_mark_failed(
 
 /// Get a specific operation by ID
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_get_operation(
     operation_id: i64,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SyncOperation>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let op = state.sync_queue.get_operation(operation_id).map_err(|e| {
         error!(error = %e, operation_id = operation_id, "Failed to get sync operation");
@@ -124,14 +118,13 @@ pub async fn sync_get_operation(
 
 /// Clean up old completed operations
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn sync_cleanup_old_operations(
     days_old: i64,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<i64>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let cleaned = state
         .sync_queue

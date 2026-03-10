@@ -4,6 +4,7 @@
 mod commands;
 mod db;
 mod domains;
+mod infrastructure;
 mod logging;
 mod memory_management;
 mod memory_management_helpers;

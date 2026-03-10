@@ -12,11 +12,10 @@ use crate::resolve_context;
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_transition_status(
-    session_token: String,
     request: StatusTransitionRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Task>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     // Viewers cannot change task status (status transitions are "update" operations).
     check_task_permission!(&ctx.auth.role, "update");
@@ -48,11 +47,10 @@ pub async fn task_transition_status(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_get_status_distribution(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<StatusDistribution>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let distribution = state.task_service.get_status_distribution()?;
 

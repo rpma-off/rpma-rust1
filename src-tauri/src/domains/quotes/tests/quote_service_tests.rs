@@ -153,6 +153,7 @@ fn test_update_forbidden_when_not_draft() {
         &quote.id,
         UpdateQuoteRequest {
             valid_until: None,
+            description: None,
             notes: Some("new notes".to_string()),
             terms: None,
             discount_type: None,
@@ -416,6 +417,7 @@ fn test_discount_calculation_percentage() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: Some("percentage".to_string()),
@@ -476,6 +478,7 @@ fn test_discount_calculation_fixed() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: Some("fixed".to_string()),
@@ -511,6 +514,7 @@ fn test_discount_validation_percentage_over_100() {
         &quote.id,
         UpdateQuoteRequest {
             valid_until: None,
+            description: None,
             notes: None,
             terms: None,
             discount_type: Some("percentage".to_string()),
@@ -562,6 +566,7 @@ fn test_remove_discount() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: Some("percentage".to_string()),
@@ -584,6 +589,7 @@ fn test_remove_discount() {
             &quote.id,
             UpdateQuoteRequest {
                 valid_until: None,
+                description: None,
                 notes: None,
                 terms: None,
                 discount_type: None,

@@ -11,7 +11,6 @@ use std::fmt::Debug;
 #[derive(Deserialize, Debug)]
 pub struct TaskCrudRequest {
     pub action: crate::commands::TaskAction,
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -19,7 +18,6 @@ pub struct TaskCrudRequest {
 /// Request for editing a task
 #[derive(Deserialize, Debug)]
 pub struct EditTaskRequest {
-    pub session_token: String,
     pub task_id: String,
     pub data: crate::domains::tasks::domain::models::task::UpdateTaskRequest,
     #[serde(default)]
@@ -29,7 +27,6 @@ pub struct EditTaskRequest {
 /// Request for adding a note to a task
 #[derive(Deserialize, Debug)]
 pub struct AddTaskNoteRequest {
-    pub session_token: String,
     pub task_id: String,
     pub note: String,
     #[serde(default)]
@@ -39,7 +36,6 @@ pub struct AddTaskNoteRequest {
 /// Request for sending a message related to a task
 #[derive(Deserialize, Debug)]
 pub struct SendTaskMessageRequest {
-    pub session_token: String,
     pub task_id: String,
     pub message: String,
     pub message_type: Option<String>, // "info", "warning", "urgent", etc.
@@ -50,7 +46,6 @@ pub struct SendTaskMessageRequest {
 /// Request for delaying/rescheduling a task
 #[derive(Deserialize, Debug)]
 pub struct DelayTaskRequest {
-    pub session_token: String,
     pub task_id: String,
     pub new_scheduled_date: String, // New scheduled date
     pub reason: String,             // Reason for delay
@@ -63,7 +58,6 @@ pub struct DelayTaskRequest {
 /// Request for reporting an issue with a task
 #[derive(Deserialize, Debug)]
 pub struct ReportTaskIssueRequest {
-    pub session_token: String,
     pub task_id: String,
     pub issue_type: String,
     pub description: String,
@@ -75,7 +69,6 @@ pub struct ReportTaskIssueRequest {
 /// Request for exporting tasks to CSV
 #[derive(Deserialize, Debug)]
 pub struct ExportTasksCsvRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     pub include_client_data: Option<bool>,
     #[serde(default)]
@@ -85,7 +78,6 @@ pub struct ExportTasksCsvRequest {
 /// Request for bulk importing tasks
 #[derive(Deserialize, Debug)]
 pub struct ImportTasksBulkRequest {
-    pub session_token: String,
     pub csv_data: String,
     pub update_existing: Option<bool>,
     #[serde(default)]

@@ -11,8 +11,8 @@ use crate::domains::interventions::infrastructure::intervention_types::{
 };
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
+use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
-use crate::shared::ipc::CommandContext;
 use chrono::Utc;
 
 /// TODO: document
@@ -192,9 +192,9 @@ impl InterventionsFacade {
         Ok(())
     }
 
-    fn ensure_intervention_permission(&self, ctx: &CommandContext) -> Result<(), AppError> {
+    fn ensure_intervention_permission(&self, ctx: &RequestContext) -> Result<(), AppError> {
         if !matches!(
-            ctx.session.role,
+            ctx.auth.role,
             UserRole::Technician | UserRole::Supervisor | UserRole::Admin
         ) {
             return Err(AppError::Authorization(
@@ -206,12 +206,12 @@ impl InterventionsFacade {
 
     fn ensure_technician_assignment(
         &self,
-        session: &crate::shared::contracts::auth::UserSession,
+        auth: &crate::shared::context::AuthContext,
         assigned_technician_id: Option<&str>,
         action: &str,
     ) -> Result<(), AppError> {
-        if session.role == UserRole::Technician
-            && assigned_technician_id != Some(session.user_id.as_str())
+        if auth.role == UserRole::Technician
+            && assigned_technician_id != Some(auth.user_id.as_str())
         {
             return Err(AppError::Authorization(format!(
                 "Technician can only {} for assigned tasks",
@@ -223,12 +223,12 @@ impl InterventionsFacade {
 
     async fn ensure_task_assignment(
         &self,
-        ctx: &CommandContext,
+        ctx: &RequestContext,
         task_checker: &dyn TaskAssignmentChecker,
         task_id: &str,
         action: &str,
     ) -> Result<(), AppError> {
-        if !matches!(ctx.session.role, UserRole::Technician) {
+        if !matches!(ctx.auth.role, UserRole::Technician) {
             return Ok(());
         }
 
@@ -238,7 +238,7 @@ impl InterventionsFacade {
             .map_err(|_| AppError::Database("Failed to get task".to_string()))?
             .ok_or_else(|| AppError::NotFound(format!("Task {} not found", task_id)))?;
 
-        self.ensure_technician_assignment(&ctx.session, assignment.technician_id.as_deref(), action)
+        self.ensure_technician_assignment(&ctx.auth, assignment.technician_id.as_deref(), action)
     }
 
     fn to_service_start_request(
@@ -291,7 +291,7 @@ impl InterventionsFacade {
     pub async fn execute(
         &self,
         command: InterventionsCommand,
-        ctx: &CommandContext,
+        ctx: &RequestContext,
         task_checker: &dyn TaskAssignmentChecker,
     ) -> Result<InterventionsResponse, AppError> {
         match command {
@@ -306,8 +306,8 @@ impl InterventionsFacade {
                     })?;
 
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
                 Ok(InterventionsResponse::Intervention(intervention))
@@ -315,9 +315,9 @@ impl InterventionsFacade {
             InterventionsCommand::GetActiveByTask { task_id } => {
                 self.validate_task_id(&task_id)?;
                 let task_access = task_checker
-                    .check_task_assignment(&task_id, &ctx.session.user_id)
+                    .check_task_assignment(&task_id, ctx.user_id())
                     .unwrap_or(false);
-                self.check_task_intervention_access(&ctx.session.role, task_access)?;
+                self.check_task_intervention_access(&ctx.auth.role, task_access)?;
 
                 let payload = match self
                     .intervention_service
@@ -336,9 +336,9 @@ impl InterventionsFacade {
             InterventionsCommand::GetLatestByTask { task_id } => {
                 self.validate_task_id(&task_id)?;
                 let task_access = task_checker
-                    .check_task_assignment(&task_id, &ctx.session.user_id)
+                    .check_task_assignment(&task_id, ctx.user_id())
                     .unwrap_or(false);
-                self.check_task_intervention_access(&ctx.session.role, task_access)?;
+                self.check_task_intervention_access(&ctx.auth.role, task_access)?;
                 let intervention = self
                     .intervention_service
                     .get_latest_intervention_by_task(&task_id)
@@ -360,8 +360,8 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
                 let step = self
@@ -382,8 +382,8 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
                 let progress = self
@@ -405,8 +405,8 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
                 let progress = self
@@ -442,8 +442,8 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
                 let response = self
@@ -459,7 +459,7 @@ impl InterventionsFacade {
                             issues,
                         },
                         &ctx.correlation_id,
-                        Some(&ctx.session.user_id),
+                        Some(ctx.user_id()),
                     )
                     .await
                     .map_err(AppError::from)?;
@@ -500,8 +500,8 @@ impl InterventionsFacade {
                         ))
                     })?;
                 self.check_intervention_access(
-                    &ctx.session.user_id,
-                    &ctx.session.role,
+                    ctx.user_id(),
+                    &ctx.auth.role,
                     &intervention,
                 )?;
 
@@ -515,7 +515,7 @@ impl InterventionsFacade {
                             photos,
                         },
                         &ctx.correlation_id,
-                        Some(&ctx.session.user_id),
+                        Some(ctx.user_id()),
                     )
                     .await
                     .map_err(AppError::from)?;
@@ -550,8 +550,8 @@ impl InterventionsFacade {
                 let response = self
                     .intervention_service
                     .start_intervention(
-                        self.to_service_start_request(&request, &ctx.session.user_id),
-                        &ctx.session.user_id,
+                        self.to_service_start_request(&request, ctx.user_id()),
+                        ctx.user_id(),
                         &ctx.correlation_id,
                     )
                     .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
@@ -565,7 +565,7 @@ impl InterventionsFacade {
                     .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
                     .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
                 self.ensure_technician_assignment(
-                    &ctx.session,
+                    &ctx.auth,
                     intervention.technician_id.as_deref(),
                     "update interventions",
                 )?;
@@ -582,8 +582,8 @@ impl InterventionsFacade {
                     .get_intervention(&id)
                     .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
                     .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
-                if intervention.technician_id.as_deref() != Some(ctx.session.user_id.as_str())
-                    && !matches!(ctx.session.role, UserRole::Admin | UserRole::Supervisor)
+                if intervention.technician_id.as_deref() != Some(ctx.user_id())
+                    && !matches!(ctx.auth.role, UserRole::Admin | UserRole::Supervisor)
                 {
                     return Err(AppError::Authorization(
                         "Not authorized to delete this intervention".to_string(),
@@ -601,7 +601,7 @@ impl InterventionsFacade {
                     .finalize_intervention(
                         self.to_service_finalize_request(request),
                         &ctx.correlation_id,
-                        Some(&ctx.session.user_id),
+                        Some(ctx.user_id()),
                     )
                     .map_err(|e| {
                         AppError::Database(format!("Failed to finalize intervention: {e}"))
@@ -637,8 +637,8 @@ impl InterventionsFacade {
                 let response = self
                     .intervention_service
                     .start_intervention(
-                        self.to_service_start_request(&request, &ctx.session.user_id),
-                        &ctx.session.user_id,
+                        self.to_service_start_request(&request, ctx.user_id()),
+                        ctx.user_id(),
                         &ctx.correlation_id,
                     )
                     .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
@@ -709,7 +709,7 @@ impl InterventionsFacade {
                         ))
                     })?;
                 self.ensure_technician_assignment(
-                    &ctx.session,
+                    &ctx.auth,
                     intervention.technician_id.as_deref(),
                     "finalize interventions",
                 )?;
@@ -718,7 +718,7 @@ impl InterventionsFacade {
                     .finalize_intervention(
                         self.to_service_finalize_request(request),
                         &ctx.correlation_id,
-                        Some(&ctx.session.user_id),
+                        Some(ctx.user_id()),
                     )
                     .map_err(|e| {
                         AppError::Database(format!("Failed to finalize intervention: {e}"))

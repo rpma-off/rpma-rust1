@@ -25,17 +25,16 @@ fn map_material_err(operation: &str, e: MaterialError) -> crate::commands::AppEr
 
 /// Create a new material
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create(
     state: AppState<'_>,
-    session_token: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -53,17 +52,16 @@ pub async fn material_create(
 
 /// Get material by ID
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -80,17 +78,16 @@ pub async fn material_get(
 
 /// Get material by SKU
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_by_sku(
     state: AppState<'_>,
-    session_token: String,
     sku: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -107,10 +104,9 @@ pub async fn material_get_by_sku(
 
 /// List materials with filtering
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list(
     state: AppState<'_>,
-    session_token: String,
     material_type: Option<String>,
     category: Option<String>,
     active_only: Option<bool>,
@@ -121,7 +117,7 @@ pub async fn material_list(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -163,10 +159,9 @@ pub async fn material_list(
 
 /// Update material
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_update(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
@@ -174,7 +169,7 @@ pub async fn material_update(
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -192,17 +187,16 @@ pub async fn material_update(
 
 /// Update material stock
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_update_stock(
     state: AppState<'_>,
-    session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -220,17 +214,16 @@ pub async fn material_update_stock(
 
 /// Record material consumption
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_record_consumption(
     state: AppState<'_>,
-    session_token: String,
     request: RecordConsumptionRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialConsumption>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
@@ -248,17 +241,16 @@ pub async fn material_record_consumption(
 
 /// Get material consumption for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_intervention_consumption(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -275,17 +267,16 @@ pub async fn material_get_intervention_consumption(
 
 /// Get material consumption summary for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_intervention_summary(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InterventionMaterialSummary>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -302,16 +293,15 @@ pub async fn material_get_intervention_summary(
 
 /// Get material statistics
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_stats(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialStats>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
@@ -328,16 +318,15 @@ pub async fn material_get_stats(
 
 /// Get low stock materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_low_stock(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -354,16 +343,15 @@ pub async fn material_get_low_stock(
 
 /// Get expired materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_expired(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -380,16 +368,15 @@ pub async fn material_get_expired(
 
 /// Get inventory statistics
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn inventory_get_stats(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryStats>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
@@ -406,14 +393,13 @@ pub async fn inventory_get_stats(
 
 /// Delete (soft-delete/archive) a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_delete(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Supervisor);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -431,17 +417,16 @@ pub async fn material_delete(
 
 /// Adjust material stock with reason
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_adjust_stock(
     state: AppState<'_>,
-    session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -464,10 +449,9 @@ pub async fn material_adjust_stock(
 
 /// Get consumption history for a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_consumption_history(
     state: AppState<'_>,
-    session_token: String,
     material_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -476,7 +460,7 @@ pub async fn material_get_consumption_history(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -493,17 +477,16 @@ pub async fn material_get_consumption_history(
 
 /// Create inventory transaction
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_inventory_transaction(
     state: AppState<'_>,
-    session_token: String,
     request: CreateInventoryTransactionRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryTransaction>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -521,10 +504,9 @@ pub async fn material_create_inventory_transaction(
 
 /// Get transaction history for a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_transaction_history(
     state: AppState<'_>,
-    session_token: String,
     material_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -533,7 +515,7 @@ pub async fn material_get_transaction_history(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::InventoryTransaction>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -550,17 +532,16 @@ pub async fn material_get_transaction_history(
 
 /// Create material category
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_category(
     state: AppState<'_>,
-    session_token: String,
     request: CreateMaterialCategoryRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialCategory>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Supervisor);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -578,10 +559,9 @@ pub async fn material_create_category(
 
 /// List material categories
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list_categories(
     state: AppState<'_>,
-    session_token: String,
     active_only: Option<bool>,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -590,7 +570,7 @@ pub async fn material_list_categories(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialCategory>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -607,17 +587,16 @@ pub async fn material_list_categories(
 
 /// Create supplier
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_supplier(
     state: AppState<'_>,
-    session_token: String,
     request: CreateSupplierRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Supplier>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Supervisor);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -635,10 +614,9 @@ pub async fn material_create_supplier(
 
 /// List suppliers
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list_suppliers(
     state: AppState<'_>,
-    session_token: String,
     active_only: Option<bool>,
     preferred_only: Option<bool>,
     limit: Option<i32>,
@@ -648,7 +626,7 @@ pub async fn material_list_suppliers(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Supplier>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -665,16 +643,15 @@ pub async fn material_list_suppliers(
 
 /// Get low stock materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_low_stock_materials(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -691,16 +668,15 @@ pub async fn material_get_low_stock_materials(
 
 /// Get expired materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_expired_materials(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -717,10 +693,9 @@ pub async fn material_get_expired_materials(
 
 /// Get inventory movement summary
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_inventory_movement_summary(
     state: AppState<'_>,
-    session_token: String,
     material_id: Option<String>,
     date_from: Option<String>,
     date_to: Option<String>,
@@ -729,7 +704,7 @@ pub async fn material_get_inventory_movement_summary(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::InventoryMovementSummary>>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
@@ -750,16 +725,15 @@ pub async fn material_get_inventory_movement_summary(
 
 /// S-1 perf: aggregated dashboard — replaces 4 IPC calls (materials + stats + low_stock + expired) with 1.
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn inventory_get_dashboard_data(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryDashboardData>,
     crate::commands::AppError,
 > {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Technician);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 

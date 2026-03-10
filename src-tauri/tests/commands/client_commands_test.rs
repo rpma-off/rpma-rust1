@@ -35,7 +35,6 @@ async fn test_client_crud_request_structure() {
                 tags: None,
             },
         },
-        session_token: "test-session-token".to_string(),
         correlation_id: Some("test-correlation-id".to_string()),
     };
 
@@ -50,6 +49,5 @@ async fn test_client_crud_request_structure() {
         }
         _ => panic!("Expected ClientAction::Create"),
     }
-    assert_eq!(req.session_token, "test-session-token");
     assert_eq!(req.correlation_id.as_deref(), Some("test-correlation-id"));
 }

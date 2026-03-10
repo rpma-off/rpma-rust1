@@ -35,13 +35,12 @@ pub struct CreateNotificationRequest {
 
 /// Get notifications for the current user
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_notifications(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<GetNotificationsResponse>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
@@ -74,14 +73,13 @@ pub async fn get_notifications(
 
 /// Mark a notification as read
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(notification_id = %id))]
+#[instrument(skip(state), fields(notification_id = %id))]
 pub async fn mark_notification_read(
     id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
@@ -98,13 +96,12 @@ pub async fn mark_notification_read(
 
 /// Mark all notifications as read for the current user
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn mark_all_notifications_read(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());
@@ -121,14 +118,13 @@ pub async fn mark_all_notifications_read(
 
 /// Delete a notification
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(notification_id = %id))]
+#[instrument(skip(state), fields(notification_id = %id))]
 pub async fn delete_notification(
     id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let app_service =
         NotificationInAppService::new(state.db.clone(), state.repositories.cache.clone());

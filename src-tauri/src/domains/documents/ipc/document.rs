@@ -11,8 +11,8 @@ use crate::domains::documents::infrastructure::photo::{
 use crate::domains::documents::{
     DocumentsCommand, DocumentsFacade, DocumentsResponse, DocumentsServices,
 };
-use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
+use crate::resolve_context;
 use tracing::{info, instrument};
 
 fn services(state: &AppState<'_>) -> DocumentsServices {
@@ -26,21 +26,15 @@ fn services(state: &AppState<'_>) -> DocumentsServices {
 
 /// Store a new photo for an intervention step.
 #[tauri::command]
-#[instrument(skip(state, session_token, image_data))]
+#[instrument(skip(state, image_data))]
 pub async fn document_store_photo(
     state: AppState<'_>,
-    session_token: String,
     request: StorePhotoRequest,
     image_data: Vec<u8>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<StorePhotoResponse>, crate::commands::AppError> {
-    let ctx = AuthMiddleware::authenticate_command(
-        &session_token,
-        &state,
-        Some(UserRole::Technician),
-        &correlation_id,
-    )
-    .await?;
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
@@ -49,7 +43,7 @@ pub async fn document_store_photo(
                 request,
                 image_data,
             },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -66,21 +60,20 @@ pub async fn document_store_photo(
 
 /// Retrieve a list of photos with optional filters.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn document_get_photos(
     state: AppState<'_>,
-    session_token: String,
     request: GetPhotosRequest,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<GetPhotosResponse>, crate::commands::AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
+    let ctx = resolve_context!(&state, &correlation_id);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::GetPhotos { request },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -96,21 +89,20 @@ pub async fn document_get_photos(
 
 /// Get a single photo by its ID.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn document_get_photo(
     state: AppState<'_>,
-    session_token: String,
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Option<Photo>>, crate::commands::AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
+    let ctx = resolve_context!(&state, &correlation_id);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::GetPhoto { photo_id },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -126,26 +118,20 @@ pub async fn document_get_photo(
 
 /// Delete a photo by its ID.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn document_delete_photo(
     state: AppState<'_>,
-    session_token: String,
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
-    let ctx = AuthMiddleware::authenticate_command(
-        &session_token,
-        &state,
-        Some(UserRole::Technician),
-        &correlation_id,
-    )
-    .await?;
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::DeletePhoto { photo_id },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -161,21 +147,20 @@ pub async fn document_delete_photo(
 
 /// Read binary photo data by photo ID.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn document_get_photo_data(
     state: AppState<'_>,
-    session_token: String,
     photo_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Vec<u8>>, crate::commands::AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
+    let ctx = resolve_context!(&state, &correlation_id);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::GetPhotoData { photo_id },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -191,27 +176,21 @@ pub async fn document_get_photo_data(
 
 /// Update photo metadata.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn document_update_photo_metadata(
     state: AppState<'_>,
-    session_token: String,
     photo_id: String,
     updates: PhotoMetadataUpdate,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Photo>, crate::commands::AppError> {
-    let ctx = AuthMiddleware::authenticate_command(
-        &session_token,
-        &state,
-        Some(UserRole::Technician),
-        &correlation_id,
-    )
-    .await?;
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::UpdatePhotoMetadata { photo_id, updates },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -227,21 +206,20 @@ pub async fn document_update_photo_metadata(
 
 /// Export an intervention report to a generated PDF in app-managed storage.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn export_intervention_report(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<InterventionReportResult>, crate::commands::AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
+    let ctx = resolve_context!(&state, &correlation_id);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
         .execute(
             DocumentsCommand::ExportInterventionReport { intervention_id },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?
@@ -257,16 +235,15 @@ pub async fn export_intervention_report(
 
 /// Save an intervention report directly to a user-selected path.
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn save_intervention_report(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     file_path: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, crate::commands::AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(&session_token, &state, None, &correlation_id).await?;
+    let ctx = resolve_context!(&state, &correlation_id);
+    let user = ctx.auth.to_user_session();
 
     let facade = DocumentsFacade::new(state.photo_service.clone());
     match facade
@@ -275,7 +252,7 @@ pub async fn save_intervention_report(
                 intervention_id,
                 file_path,
             },
-            &ctx.session,
+            &user,
             &services(&state),
         )
         .await?

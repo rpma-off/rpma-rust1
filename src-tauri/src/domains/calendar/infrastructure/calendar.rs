@@ -196,6 +196,7 @@ impl CalendarService {
 mod tests {
     use super::*;
     use crate::test_utils::TestDatabase;
+    use rusqlite::params;
 
     fn setup_test_db() -> (Arc<Database>, TestDatabase) {
         let test_db = TestDatabase::new().expect("Failed to create test database");

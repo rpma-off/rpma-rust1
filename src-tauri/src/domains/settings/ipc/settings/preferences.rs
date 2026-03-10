@@ -14,7 +14,6 @@ use tracing::info;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateGeneralSettingsRequest {
-    pub session_token: String,
     pub auto_save: Option<bool>,
     pub language: Option<String>,
     pub timezone: Option<String>,
@@ -27,7 +26,6 @@ pub struct UpdateGeneralSettingsRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserPreferencesRequest {
-    pub session_token: String,
     pub email_notifications: Option<bool>,
     pub push_notifications: Option<bool>,
     pub task_assignments: Option<bool>,
@@ -56,15 +54,12 @@ pub async fn update_general_settings(
     request: UpdateGeneralSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating general settings");
-
-    // Only admins can update system-wide settings
-    if !matches!(ctx.auth.role, crate::shared::contracts::auth::UserRole::Admin) {
-        return Err(AppError::Authorization(
-            "Only administrators can update general settings".to_string(),
-        ));
-    }
 
     let mut app_settings = state
         .settings_service
@@ -105,7 +100,7 @@ pub async fn update_user_preferences(
     request: UpdateUserPreferencesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user preferences");
 
     let mut preferences: UserPreferences = state
@@ -179,14 +174,12 @@ pub async fn update_user_preferences(
 
 pub async fn update_user_performance(
     request: crate::domains::settings::domain::models::settings::UserPerformanceSettings,
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let _correlation_id_init = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Updating user performance settings");
 
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     state
         .settings_service

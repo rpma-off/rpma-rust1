@@ -16,7 +16,6 @@ use tracing::info;
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserProfileRequest {
-    pub session_token: String,
     #[serde(default)]
     pub full_name: Option<String>,
     #[serde(default)]
@@ -44,7 +43,6 @@ pub struct UpdateUserProfileRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct ChangeUserPasswordRequest {
-    pub session_token: String,
     pub current_password: String,
     pub new_password: String,
     #[serde(default)]
@@ -54,7 +52,6 @@ pub struct ChangeUserPasswordRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct DeleteUserAccountRequest {
-    pub session_token: String,
     pub confirmation: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -63,7 +60,6 @@ pub struct DeleteUserAccountRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UploadUserAvatarRequest {
-    pub session_token: String,
     pub avatar_data: String, // Base64 encoded image
     pub mime_type: String,
     #[serde(default)]
@@ -75,12 +71,11 @@ pub struct UploadUserAvatarRequest {
 #[tauri::command]
 
 pub async fn get_user_settings(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::domains::settings::domain::models::settings::UserSettings>, AppError>
 {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     info!("Getting user settings");
 
     state
@@ -101,7 +96,7 @@ pub async fn update_user_profile(
     ApiResponse<crate::domains::settings::domain::models::settings::UserProfileSettings>,
     AppError,
 > {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user profile");
 
     let existing_profile = state
@@ -138,7 +133,7 @@ pub async fn change_user_password(
     request: ChangeUserPasswordRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Changing user password");
 
     state
@@ -147,7 +142,7 @@ pub async fn change_user_password(
             settings_user_id(&ctx.auth),
             &request.current_password,
             &request.new_password,
-            &request.session_token,
+            &ctx.auth.session_id,
             state.auth_service.as_ref(),
         )
         .map(|_| {
@@ -162,11 +157,10 @@ pub async fn change_user_password(
 #[tauri::command]
 
 pub async fn export_user_data(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let ctx = resolve_context!(&session_token, &state, &correlation_id);
+    let ctx = resolve_context!(&state, &correlation_id);
     info!("Exporting user data");
 
     let settings = state
@@ -221,7 +215,7 @@ pub async fn delete_user_account(
     request: DeleteUserAccountRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Deleting user account");
 
     // Validate confirmation
@@ -249,7 +243,7 @@ pub async fn upload_user_avatar(
     request: UploadUserAvatarRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Uploading user avatar");
 
     state

@@ -9,8 +9,8 @@ use crate::domains::calendar::domain::models::calendar_event::{
 };
 use crate::domains::calendar::infrastructure::calendar::CalendarService;
 use crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService;
+use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
-use crate::shared::ipc::CommandContext;
 
 /// TODO: document
 pub enum CalendarCommand {
@@ -121,7 +121,7 @@ impl CalendarFacade {
     pub async fn execute(
         &self,
         command: CalendarCommand,
-        ctx: &CommandContext,
+        ctx: &RequestContext,
     ) -> Result<CalendarResponse, AppError> {
         match command {
             CalendarCommand::GetTasks {
@@ -147,14 +147,14 @@ impl CalendarFacade {
             CalendarCommand::CreateEvent { event_data } => {
                 let service = CalendarEventService::new(self.db.clone());
                 let event = service
-                    .create_event(event_data, Some(ctx.session.user_id.clone()))
+                    .create_event(event_data, Some(ctx.auth.user_id.clone()))
                     .await?;
                 Ok(CalendarResponse::Event(event))
             }
             CalendarCommand::UpdateEvent { id, event_data } => {
                 let service = CalendarEventService::new(self.db.clone());
                 let event = service
-                    .update_event(id, event_data, Some(ctx.session.user_id.clone()))
+                    .update_event(id, event_data, Some(ctx.auth.user_id.clone()))
                     .await?;
                 Ok(CalendarResponse::OptionalEvent(event))
             }
@@ -222,7 +222,7 @@ impl CalendarFacade {
                         new_date,
                         new_start,
                         new_end,
-                        &ctx.session.user_id,
+                        &ctx.auth.user_id,
                         force,
                     )
                     .await
