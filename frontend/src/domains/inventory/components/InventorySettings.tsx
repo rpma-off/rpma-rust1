@@ -45,7 +45,7 @@ export function InventorySettings() {
     try {
       setLoading(true);
       setError(null);
-      const result = await inventoryIpc.category.listCategories(user.token);
+      const result = await inventoryIpc.category.listCategories();
       setCategories(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -79,7 +79,7 @@ export function InventorySettings() {
           code: formData.code || undefined,
           description: formData.description || undefined,
           color: formData.color || undefined,
-        }, user.token);
+        });
       toast.success(t('inventory.categoryCreated'));
       setShowForm(false);
       setFormData({ name: '', code: '', description: '', color: '' });

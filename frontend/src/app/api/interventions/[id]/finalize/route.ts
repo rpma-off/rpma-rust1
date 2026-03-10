@@ -98,7 +98,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     // 4. Validation de l'existence et du statut de l'intervention
     const workflowService = interventionWorkflowService;
-    const interventionCheck = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionCheck = await workflowService.getInterventionById(interventionId);
     
     if (!interventionCheck.success) {
       return NextResponse.json(
@@ -164,7 +164,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       customer_comments: validationResult.data.customer_comments ?? null,
     };
 
-    const result = await workflowService.finalizeIntervention(interventionId, finalizePayload, sessionToken);
+    const result = await workflowService.finalizeIntervention(interventionId, finalizePayload);
 
     if (!result.success) {
       return NextResponse.json(
@@ -230,7 +230,7 @@ async function validateFinalizationRequirements(
     const workflowService = interventionWorkflowService;
     
       // Vï¿½rifier que toutes les ï¿½tapes sont complï¿½tï¿½es
-      const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+      const stepsResult = await workflowService.getInterventionSteps(interventionId);
       if (stepsResult.success && stepsResult.data) {
         const steps: StepSummary[] = (stepsResult.data.data ?? []).map((rawStep) => {
           const step = rawStep as {

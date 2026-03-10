@@ -66,10 +66,10 @@ export function useTaskDetailPage() {
 
         if (result.data && user?.token) {
           try {
-            const assignmentCheck = await taskGateway.checkTaskAssignment(result.data.id, user.user_id, user.token);
+            const assignmentCheck = await taskGateway.checkTaskAssignment(result.data.id, user.user_id);
             setIsAssignedToCurrentUser(assignmentCheck.status === 'assigned');
 
-            const availabilityCheck = await taskGateway.checkTaskAvailability(result.data.id, user.token);
+            const availabilityCheck = await taskGateway.checkTaskAvailability(result.data.id);
             setIsTaskAvailable(availabilityCheck.status === 'available');
           } catch (validationErr) {
             const validationError = validationErr as Error;
@@ -265,7 +265,7 @@ export function useTaskDetailPage() {
           special_instructions: null,
         };
 
-        const response = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+        const response = await InterventionWorkflowService.startIntervention(task.id, interventionData);
         if (!response.success) {
           throw new Error(response.error?.message || "Impossible de démarrer l'intervention");
         }

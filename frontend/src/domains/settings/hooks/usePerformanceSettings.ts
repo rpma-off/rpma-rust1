@@ -109,8 +109,8 @@ export function usePerformanceSettings(user?: UserSession) {
       setIsLoading(true);
       try {
         const [userSettings, cacheStatsResponse] = await Promise.all([
-          settingsIpc.getUserSettings(user.token),
-          ipcClient.performance.getCacheStatistics(user.token).catch((error) => {
+          settingsIpc.getUserSettings(),
+          ipcClient.performance.getCacheStatistics().catch((error) => {
             logError('Failed to load cache statistics', { error: error instanceof Error ? error.message : error });
             return null;
           }),
@@ -173,7 +173,7 @@ export function usePerformanceSettings(user?: UserSession) {
     });
 
     try {
-      await settingsIpc.updateUserPerformance(data, user.token);
+      await settingsIpc.updateUserPerformance(data);
 
       setSaveSuccess(true);
       logInfo('Performance settings updated successfully', { userId: user.user_id });
@@ -194,9 +194,9 @@ export function usePerformanceSettings(user?: UserSession) {
     logUserAction('Cache clear initiated');
 
     try {
-      await ipcClient.performance.clearApplicationCache({}, user.token);
+      await ipcClient.performance.clearApplicationCache({});
 
-      const cacheStatsResponse = await ipcClient.performance.getCacheStatistics(user.token) as unknown as CacheStats;
+      const cacheStatsResponse = await ipcClient.performance.getCacheStatistics() as unknown as CacheStats;
       setCacheStats(cacheStatsResponse);
 
       logInfo('Cache cleared successfully');

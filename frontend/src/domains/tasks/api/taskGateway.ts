@@ -14,47 +14,44 @@ const taskService = TaskService.getInstance();
 export const taskGateway = {
   getTaskById: (taskId: string) => taskService.getTaskById(taskId),
 
-  getTask: (taskId: string, sessionToken: string) => taskIpc.get(taskId, sessionToken),
+  getTask: (taskId: string) => taskIpc.get(taskId),
 
-  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<TaskAssignmentCheckResponse> =>
-    taskIpc.checkTaskAssignment(taskId, userId, sessionToken),
+  checkTaskAssignment: (taskId: string, userId: string): Promise<TaskAssignmentCheckResponse> =>
+    taskIpc.checkTaskAssignment(taskId, userId),
 
-  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<TaskAvailabilityCheckResponse> =>
-    taskIpc.checkTaskAvailability(taskId, sessionToken),
+  checkTaskAvailability: (taskId: string): Promise<TaskAvailabilityCheckResponse> =>
+    taskIpc.checkTaskAvailability(taskId),
 
-  getTaskHistory: (taskId: string, sessionToken: string): Promise<TaskHistoryEntry[]> =>
-    taskIpc.getTaskHistory(taskId, sessionToken),
+  getTaskHistory: (taskId: string): Promise<TaskHistoryEntry[]> =>
+    taskIpc.getTaskHistory(taskId),
 
-  editTask: (taskId: string, updates: JsonObject, sessionToken: string) =>
-    taskIpc.editTask(taskId, updates, sessionToken),
+  editTask: (taskId: string, updates: JsonObject) =>
+    taskIpc.editTask(taskId, updates),
 
-  addTaskNote: (taskId: string, note: string, sessionToken: string) =>
-    taskIpc.addTaskNote(taskId, note, sessionToken),
+  addTaskNote: (taskId: string, note: string) =>
+    taskIpc.addTaskNote(taskId, note),
 
-  sendTaskMessage: (taskId: string, message: string, messageType: string, sessionToken: string) =>
-    taskIpc.sendTaskMessage(taskId, message, messageType, sessionToken),
+  sendTaskMessage: (taskId: string, message: string, messageType: string) =>
+    taskIpc.sendTaskMessage(taskId, message, messageType),
 
-  delayTask: (taskId: string, newDate: string, reason: string, sessionToken: string) =>
-    taskIpc.delayTask(taskId, newDate, reason, sessionToken),
+  delayTask: (taskId: string, newDate: string, reason: string) =>
+    taskIpc.delayTask(taskId, newDate, reason),
 
   reportTaskIssue: (
     taskId: string,
     issueType: string,
     severity: string,
     description: string,
-    sessionToken: string
-  ) => taskIpc.reportTaskIssue(taskId, issueType, severity, description, sessionToken),
+  ) => taskIpc.reportTaskIssue(taskId, issueType, severity, description),
 
-  transitionStatus: (request: StatusTransitionRequest, sessionToken: string) =>
-    statusApi.transitionStatus(request, sessionToken),
+  transitionStatus: (request: StatusTransitionRequest) =>
+    statusApi.transitionStatus(request),
 
   exportTasksCsv: (
     options: Parameters<typeof taskIpc.exportTasksCsv>[0],
-    sessionToken: string
-  ) => taskIpc.exportTasksCsv(options, sessionToken),
+  ) => taskIpc.exportTasksCsv(options),
 
   importTasksBulk: (
     options: Parameters<typeof taskIpc.importTasksBulk>[0],
-    sessionToken: string
-  ) => taskIpc.importTasksBulk(options, sessionToken),
+  ) => taskIpc.importTasksBulk(options),
 };

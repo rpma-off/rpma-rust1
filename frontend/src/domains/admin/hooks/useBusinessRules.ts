@@ -51,7 +51,7 @@ export function useBusinessRules() {
     try {
       setLoading(true);
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const rules = (appSettings?.business_rules || []) as unknown as BusinessRule[];
       setBusinessRules(Array.isArray(rules) ? rules : []);
@@ -120,9 +120,7 @@ export function useBusinessRules() {
         : [...businessRules, newRule];
 
       await settingsOperations.updateBusinessRules(
-        updatedRules as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedRules as unknown as JsonValue[]);
       toast.success(editingRule ? 'Règle mise à jour avec succès' : 'Règle créée avec succès');
       setShowCreateDialog(false);
       setEditingRule(null);
@@ -147,9 +145,7 @@ export function useBusinessRules() {
       const sessionToken = session?.token || '';
       const updatedRules = businessRules.filter((rule) => rule.id !== ruleToDelete.id);
       await settingsOperations.updateBusinessRules(
-        updatedRules as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedRules as unknown as JsonValue[]);
       toast.success('Règle supprimée avec succès');
       await loadBusinessRules();
     } catch (error) {
@@ -168,9 +164,7 @@ export function useBusinessRules() {
         rule.id === id ? { ...rule, is_active: !isActive, isActive: !isActive } : rule
       );
       await settingsOperations.updateBusinessRules(
-        updatedRules as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedRules as unknown as JsonValue[]);
       toast.success(`Règle ${!isActive ? 'activée' : 'désactivée'} avec succès`);
       await loadBusinessRules();
     } catch (error) {

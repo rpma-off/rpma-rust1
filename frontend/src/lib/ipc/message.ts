@@ -14,22 +14,22 @@ export const messageApi = {
   /**
    * Send a new message
    */
-  send: async (request: SendMessageRequest, sessionToken: string): Promise<Message> => {
-    return safeInvoke('message_send', { request: request as unknown as JsonObject, session_token: sessionToken });
+  send: async (request: SendMessageRequest): Promise<Message> => {
+    return safeInvoke('message_send', { request: request as unknown as JsonObject });
   },
 
   /**
    * Get messages with filtering
    */
-  getList: async (query: MessageQuery, sessionToken: string): Promise<MessageListResponse> => {
-    return safeInvoke('message_get_list', { query: query as unknown as JsonObject, session_token: sessionToken });
+  getList: async (query: MessageQuery): Promise<MessageListResponse> => {
+    return safeInvoke('message_get_list', { query: query as unknown as JsonObject });
   },
 
   /**
    * Mark message as read
    */
-  markRead: async (messageId: string, sessionToken: string): Promise<void> => {
-    return safeInvoke('message_mark_read', { messageId, session_token: sessionToken });
+  markRead: async (messageId: string): Promise<void> => {
+    return safeInvoke('message_mark_read', { messageId });
   },
 
   /**
@@ -38,16 +38,15 @@ export const messageApi = {
   getTemplates: async (
     category: string | undefined,
     messageType: string | undefined,
-    sessionToken: string
   ): Promise<MessageTemplate[]> => {
-    return safeInvoke('message_get_templates', { category, messageType, session_token: sessionToken });
+    return safeInvoke('message_get_templates', { category, messageType });
   },
 
   /**
    * Get user notification preferences
    */
-  getPreferences: async (userId: string, sessionToken: string): Promise<NotificationPreferences> => {
-    return safeInvoke('message_get_preferences', { userId, session_token: sessionToken });
+  getPreferences: async (userId: string): Promise<NotificationPreferences> => {
+    return safeInvoke('message_get_preferences', { userId });
   },
 
   /**
@@ -56,12 +55,10 @@ export const messageApi = {
   updatePreferences: async (
     userId: string,
     updates: UpdateNotificationPreferencesRequest,
-    sessionToken: string
   ): Promise<NotificationPreferences> => {
     return safeInvoke('message_update_preferences', {
       userId,
       updates: updates as unknown as JsonObject,
-      session_token: sessionToken
     });
   },
 };

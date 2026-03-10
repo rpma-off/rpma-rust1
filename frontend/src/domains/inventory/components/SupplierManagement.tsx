@@ -47,7 +47,7 @@ export function SupplierManagement() {
     try {
       setLoading(true);
       setError(null);
-      const result = await inventoryIpc.supplier.listSuppliers(user.token);
+      const result = await inventoryIpc.supplier.listSuppliers();
       setSuppliers(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -69,7 +69,7 @@ export function SupplierManagement() {
 
     try {
       setSaving(true);
-      await inventoryIpc.supplier.createSupplier(formData, user.token);
+      await inventoryIpc.supplier.createSupplier(formData);
       toast.success(t('inventory.supplierCreated'));
       setShowForm(false);
       setFormData({ name: '', email: '', phone: '', website: '', lead_time_days: 0, is_preferred: false });

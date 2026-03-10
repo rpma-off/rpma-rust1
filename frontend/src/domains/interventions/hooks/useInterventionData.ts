@@ -58,8 +58,8 @@ export function useInterventionData(taskId: string) {
       try {
         // S-3 perf: fetch active and latest in parallel instead of sequentially.
         const [activeResult, latestResult] = await Promise.all([
-          interventionsIpc.getActiveByTask(taskId, session.token),
-          interventionsIpc.getLatestByTask(taskId, session.token),
+          interventionsIpc.getActiveByTask(taskId),
+          interventionsIpc.getLatestByTask(taskId),
         ]);
 
         let intervention = null;
@@ -104,7 +104,7 @@ export function useInterventionData(taskId: string) {
         }
 
         // Get steps data for this intervention
-        const stepsResult = await interventionsIpc.getProgress(intervention.id as string, session.token);
+        const stepsResult = await interventionsIpc.getProgress(intervention.id as string);
 
         return {
           ...intervention,

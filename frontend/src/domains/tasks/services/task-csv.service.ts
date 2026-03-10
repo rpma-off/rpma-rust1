@@ -11,7 +11,6 @@ export interface ExportCsvOptions {
  */
 export async function downloadTasksCsv(
   options: ExportCsvOptions,
-  sessionToken: string,
 ): Promise<void> {
   const csvData = await taskGateway.exportTasksCsv(
     {
@@ -23,7 +22,6 @@ export async function downloadTasksCsv(
           }
         : undefined,
     },
-    sessionToken,
   );
 
   const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
@@ -44,7 +42,6 @@ export async function downloadTasksCsv(
  * Import tasks from a CSV file via a browser file-picker.
  */
 export async function importTasksFromCsv(
-  sessionToken: string,
   onSuccess: () => void,
 ): Promise<void> {
   const input = document.createElement('input');
@@ -64,7 +61,6 @@ export async function importTasksFromCsv(
 
     const result = await taskGateway.importTasksBulk(
       { csv_lines: lines, skip_duplicates: true, update_existing: false },
-      sessionToken,
     );
 
     enhancedToast.success(`${result.successful} tâches importées avec succès`);

@@ -39,7 +39,7 @@ export function useInventoryStats() {
     try {
       setLoading(true);
       setError(null);
-      const result = await inventoryIpc.getInventoryStats(sessionToken);
+      const result = await inventoryIpc.getInventoryStats();
       setStats(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

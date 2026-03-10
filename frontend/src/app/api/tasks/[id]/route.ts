@@ -26,7 +26,7 @@ async function handleGet(request: NextRequest, context?: unknown) {
     }
 
     // Use IPC to get task
-    const result = await taskIpc.get(id, sessionToken);
+    const result = await taskIpc.get(id);
 
     if (result === null) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ async function handlePut(request: NextRequest, context?: unknown) {
     }
 
     // Use IPC to update task
-    const result = await taskIpc.update(id, updateData as UpdateTaskRequest, sessionToken);
+    const result = await taskIpc.update(id, updateData as UpdateTaskRequest);
 
     return NextResponse.json(
       { success: true, data: result },

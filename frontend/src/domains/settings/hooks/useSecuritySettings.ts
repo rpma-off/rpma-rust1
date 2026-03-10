@@ -79,8 +79,8 @@ export function useSecuritySettings(user?: UserSession) {
       setIsLoading(true);
       try {
         const [sessionsResponse, timeoutConfig] = await Promise.all([
-          settingsIpc.getActiveSessions(user.token),
-          settingsIpc.getSessionTimeoutConfig(user.token),
+          settingsIpc.getActiveSessions(),
+          settingsIpc.getSessionTimeoutConfig(),
         ]);
 
         if (sessionsResponse && Array.isArray(sessionsResponse)) {
@@ -139,7 +139,7 @@ export function useSecuritySettings(user?: UserSession) {
       await settingsIpc.changeUserPassword({
         current_password: data.current_password,
         new_password: data.new_password,
-      }, user.token);
+      });
 
       setPasswordChangeSuccess(true);
       passwordForm.reset();
@@ -161,7 +161,7 @@ export function useSecuritySettings(user?: UserSession) {
     logUserAction('Session revocation initiated', { sessionId });
 
     try {
-      await settingsIpc.revokeSession(sessionId, user.token);
+      await settingsIpc.revokeSession(sessionId);
 
       setLoginSessions(prev => prev.filter(session => session.id !== sessionId));
       logInfo('Session revoked successfully', { sessionId });
@@ -179,7 +179,7 @@ export function useSecuritySettings(user?: UserSession) {
     logUserAction('Session timeout update initiated', { minutes });
 
     try {
-      await settingsIpc.updateSessionTimeout(minutes, user.token);
+      await settingsIpc.updateSessionTimeout(minutes);
 
       setSessionTimeout(minutes);
       logInfo('Session timeout updated', { minutes });

@@ -1,8 +1,8 @@
 ﻿import type { UpdateTaskRequest, TaskQuery, CreateTaskRequest, PaginationInfo, JsonValue } from '@/lib/backend';
 import type { TaskWithDetails } from '@/types/task.types';
 import type { ServiceResponse } from '@/types/unified.types';
-import { ipcClient } from '@/lib/ipc';
 import { taskIpc } from '../ipc/task.ipc';
+import { interventionsIpc } from '@/domains/interventions';
 import { AuthSecureStorage } from '@/lib/secureStorage';
 import {
   CreateTaskSchema,
@@ -146,8 +146,7 @@ export class TaskService {
    */
   async getTasks(query?: Partial<TaskQuery>): Promise<ServiceResponse<{ data: TaskWithDetails[], pagination: PaginationInfo }>> {
     try {
-      const sessionToken = await this.getSessionToken();
-      const result = await taskIpc.list(query || {}, sessionToken);
+      const result = await taskIpc.list(query || {});
       return { success: true, data: { data: result.data as TaskWithDetails[], pagination: result.pagination }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -184,8 +183,7 @@ export class TaskService {
    */
   async createTask(data: CreateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
     try {
-      const sessionToken = await this.getSessionToken();
-      const result = await taskIpc.create(data, sessionToken);
+      const result = await taskIpc.create(data);
       return { success: true, data: { id: result.id }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -223,8 +221,7 @@ export class TaskService {
    */
   async updateTask(id: string, data: UpdateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
     try {
-      const sessionToken = await this.getSessionToken();
-      await taskIpc.update(id, data, sessionToken);
+      await taskIpc.update(id, data);
       return { success: true, data: { id }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -241,9 +238,8 @@ export class TaskService {
    */
   async assignTask(taskId: string, technicianId: string): Promise<ServiceResponse<TaskWithDetails>> {
     try {
-      const sessionToken = await this.getSessionToken();
       const updateData = this.buildUpdateRequest({ technician_id: technicianId });
-      const result = await taskIpc.update(taskId, updateData, sessionToken);
+      const result = await taskIpc.update(taskId, updateData);
       return { success: true, data: result as TaskWithDetails, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -260,8 +256,7 @@ export class TaskService {
    */
   async markTaskInvalid(taskId: string, reason?: string): Promise<ServiceResponse<unknown>> {
     try {
-      const sessionToken = await this.getSessionToken();
-      const task = await taskIpc.get(taskId, sessionToken);
+      const task = await taskIpc.get(taskId);
       if (!task) {
         return { success: false, error: 'Task not found', status: 404 };
       }
@@ -276,7 +271,7 @@ export class TaskService {
         notes: appendedNotes,
       });
 
-      await taskIpc.update(taskId, updateData, sessionToken);
+      await taskIpc.update(taskId, updateData);
       return { success: true, data: { id: taskId }, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -301,8 +296,7 @@ export class TaskService {
    * ```
    */
   async deleteTask(id: string): Promise<void> {
-    const sessionToken = await this.getSessionToken();
-    await taskIpc.delete(id, sessionToken);
+    await taskIpc.delete(id);
   }
 
   /**
@@ -316,10 +310,8 @@ export class TaskService {
    */
   async updateTaskStepData(taskId: string, stepId: string, data: unknown, _userId?: string, _updatedAt?: string): Promise<ServiceResponse<unknown>> {
     try {
-      const sessionToken = await this.getSessionToken();
-
       // First, get the active intervention for this task
-      const interventionResponse = await ipcClient.interventions.getActiveByTask(taskId, sessionToken);
+      const interventionResponse = await interventionsIpc.getActiveByTask(taskId);
       let interventionId: string | null = null;
 
       if (interventionResponse && typeof interventionResponse === 'object') {
@@ -369,12 +361,12 @@ export class TaskService {
       };
 
       // Save step progress using intervention service
-      const savedStep = await ipcClient.interventions.saveStepProgress({
+      const savedStep = await interventionsIpc.saveStepProgress({
         step_id: stepId,
         collected_data: this.toJsonValue(stepProgressData),
         notes: typeof stepProgressData.notes === 'string' ? stepProgressData.notes : null,
         photos: null,
-      }, sessionToken);
+      });
 
       return {
         success: true,
@@ -401,10 +393,8 @@ export class TaskService {
     _userId?: string
   ): Promise<ServiceResponse<{ stepData: unknown; lastUpdated: string | null; taskStatus: string | null }>> {
     try {
-      const sessionToken = await this.getSessionToken();
-
       // Get step data directly using intervention service
-      const stepData = await ipcClient.interventions.getStep(stepId, sessionToken);
+      const stepData = await interventionsIpc.getStep(stepId);
 
       // Step exists, return success
       return {
@@ -441,8 +431,7 @@ export class TaskService {
    */
   async getTaskById(id: string): Promise<ServiceResponse<TaskWithDetails>> {
     try {
-      const sessionToken = await this.getSessionToken();
-      const result = await taskIpc.get(id, sessionToken);
+      const result = await taskIpc.get(id);
 
       if (result === null) {
         return { success: false, error: 'Task not found', status: 404 };
@@ -489,7 +478,6 @@ export class TaskService {
    */
   async getValidatedTasks(query: Partial<TaskQueryInput> = {}): Promise<ServiceResponse<unknown>> {
     try {
-      const sessionToken = await this.getSessionToken();
       const validated = validateAndSanitizeInput(TaskQuerySchema, query);
       const limit = validated.limit ?? 20;
       const offset = validated.offset ?? 0;
@@ -502,7 +490,7 @@ export class TaskService {
         technician_id: validated.technician_id ?? null,
         client_id: validated.client_id ?? null,
         search: validated.search ?? null,
-      }, sessionToken);
+      });
 
       return { success: true, data: result, status: 200 };
     } catch (error) {
@@ -516,9 +504,8 @@ export class TaskService {
    */
   async createValidatedTask(data: CreateTaskInput): Promise<ServiceResponse<unknown>> {
     try {
-      const sessionToken = await this.getSessionToken();
       const validated = validateAndSanitizeInput(CreateTaskSchema, data);
-      const result = await taskIpc.create(validated as CreateTaskRequest, sessionToken);
+      const result = await taskIpc.create(validated as CreateTaskRequest);
       return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -531,7 +518,6 @@ export class TaskService {
    */
   async updateValidatedTask(taskId: string, data: UpdateTaskInput): Promise<ServiceResponse<unknown>> {
     try {
-      const sessionToken = await this.getSessionToken();
       const validated = validateAndSanitizeInput(UpdateTaskSchema, data);
       const updateData = this.buildUpdateRequest({
         title: validated.title ?? null,
@@ -540,7 +526,7 @@ export class TaskService {
         priority: validated.priority ?? null,
         technician_id: validated.assigned_to ?? null,
       });
-      const result = await taskIpc.update(taskId, updateData, sessionToken);
+      const result = await taskIpc.update(taskId, updateData);
       return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));

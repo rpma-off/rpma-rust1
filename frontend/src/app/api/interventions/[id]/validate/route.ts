@@ -82,7 +82,7 @@ export async function POST(
 
     // 4. Rï¿½cupï¿½ration de l'intervention
     const workflowService = interventionWorkflowService;
-    const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionResult = await workflowService.getInterventionById(interventionId);
 
     if (!interventionResult.success) {
       return NextResponse.json(
@@ -125,7 +125,7 @@ export async function POST(
 
       // Validation des ï¿½tapes si demandï¿½e
      if (validationOptions.validateSteps) {
-       const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+       const stepsResult = await workflowService.getInterventionSteps(interventionId);
        if (stepsResult.success) {
           const steps = (stepsResult.data?.data || []) as unknown as Record<string, unknown>[];
          const stepValidation = await validateInterventionSteps(steps);

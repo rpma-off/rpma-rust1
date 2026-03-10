@@ -1268,18 +1268,18 @@ export const ipcClient = {
     getMetrics: (limit: number, sessionToken: string) =>
       safeInvoke<JsonValue>('get_performance_metrics', { limit, session_token: sessionToken }),
 
-    cleanupMetrics: (sessionToken: string) =>
-      safeInvoke<JsonValue>('cleanup_performance_metrics', { session_token: sessionToken }),
+    cleanupMetrics: () =>
+      safeInvoke<JsonValue>('cleanup_performance_metrics', {}),
 
     // Cache management
-    getCacheStatistics: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_cache_statistics', { session_token: sessionToken }),
+    getCacheStatistics: () =>
+      safeInvoke<JsonValue>('get_cache_statistics', {}),
 
-    clearApplicationCache: (request: { cache_types?: string[] }, sessionToken: string) =>
-      safeInvoke<JsonValue>('clear_application_cache', { request, session_token: sessionToken }),
+    clearApplicationCache: (request: { cache_types?: string[] }) =>
+      safeInvoke<JsonValue>('clear_application_cache', { request }),
 
-    configureCacheSettings: (request: { max_memory_mb?: number; default_ttl_seconds?: number; enable_disk_cache?: boolean }, sessionToken: string) =>
-      safeInvoke<JsonValue>('configure_cache_settings', { request, session_token: sessionToken }),
+    configureCacheSettings: (request: { max_memory_mb?: number; default_ttl_seconds?: number; enable_disk_cache?: boolean }) =>
+      safeInvoke<JsonValue>('configure_cache_settings', { request }),
   },
 
   // Admin operations

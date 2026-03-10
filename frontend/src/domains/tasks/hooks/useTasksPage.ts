@@ -118,7 +118,7 @@ export function useTasksPage() {
         enhancedToast.error('Authentification requise');
         return;
       }
-      await taskGateway.editTask(taskId, { status: newStatus }, user.token);
+      await taskGateway.editTask(taskId, { status: newStatus });
       enhancedToast.success('Statut mis à jour avec succès');
       await refetch();
     } catch (err) {
@@ -188,7 +188,7 @@ export function useTasksPage() {
         return;
       }
 
-      await downloadTasksCsv({ includeNotes: true, dateRange: selectedDateRange }, user.token);
+      await downloadTasksCsv({ includeNotes: true, dateRange: selectedDateRange });
       enhancedToast.success('Export terminé avec succès');
     } catch (error) {
       console.error('Export failed:', error);
@@ -203,7 +203,7 @@ export function useTasksPage() {
         return;
       }
 
-      await importTasksFromCsv(user.token, () => refetch());
+      await importTasksFromCsv(() => refetch());
     } catch (error) {
       console.error('Import failed:', error);
       enhancedToast.error('Erreur lors de l\'import');

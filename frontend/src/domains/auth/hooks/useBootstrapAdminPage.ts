@@ -31,8 +31,8 @@ export function useBootstrapAdminPage() {
   }, [checkingAdmins, hasAdmins, user?.user_id]);
 
   const bootstrapMutation = useMutation({
-    mutationFn: ({ userId, sessionToken }: { userId: string; sessionToken: string }) =>
-      authBootstrap.bootstrapFirstAdmin(userId, sessionToken),
+    mutationFn: ({ userId }: { userId: string }) =>
+      authBootstrap.bootstrapFirstAdmin(userId),
     onSuccess: () => {
       toast.success('Administrateur créé avec succès. Redirection en cours...');
       logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', { user_id: user?.user_id });
@@ -54,7 +54,7 @@ export function useBootstrapAdminPage() {
       });
       return;
     }
-    bootstrapMutation.mutate({ userId: user.user_id, sessionToken: user.token });
+    bootstrapMutation.mutate({ userId: user.user_id });
   };
 
   const handleGoToLogin = () => router.push('/login');

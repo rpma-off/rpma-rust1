@@ -20,7 +20,6 @@ export function useQuoteItems() {
         const result = await quotesIpc.addItem(
           quoteId,
           item as unknown as JsonObject,
-          user.token,
         );
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
@@ -42,7 +41,6 @@ export function useQuoteItems() {
           quoteId,
           itemId,
           data as unknown as JsonObject,
-          user.token,
         );
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
@@ -60,7 +58,7 @@ export function useQuoteItems() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.deleteItem(quoteId, itemId, user.token);
+        const result = await quotesIpc.deleteItem(quoteId, itemId);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {

@@ -320,7 +320,6 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
           await InterventionWorkflowService.saveStepProgress(
             currentStep.id,
             updatedCollectedData as unknown as JsonValue,
-            user.token,
             currentStep.notes ?? undefined,
             currentStep.photo_urls ?? undefined
           );
@@ -371,7 +370,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
         tags: null,
         technician_id: null
       };
-      await taskIpc.update(safeTask.id, updateData, user.token);
+      await taskIpc.update(safeTask.id, updateData);
 
       saveChecklistOverrides(safeTask.id, updatedItems);
       toast.success('Statut de checklist mis à jour');

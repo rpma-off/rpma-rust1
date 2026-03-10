@@ -22,7 +22,7 @@ export function useQuoteAttachments(quoteId: string | null) {
       try {
         setLoading(true);
         setError(null);
-        const result = await quotesIpc.getAttachments(quoteId, user.token);
+        const result = await quotesIpc.getAttachments(quoteId);
         setAttachments(Array.isArray(result) ? (result as QuoteAttachment[]) : []);
       } catch (err: unknown) {
         setError(normalizeError(err));
@@ -56,7 +56,6 @@ export function useQuoteAttachmentActions() {
         const result = await quotesIpc.createAttachment(
           quoteId,
           data as unknown as JsonObject,
-          user.token,
         );
         const attachment = result as QuoteAttachment | null;
         return attachment?.id ? attachment : null;
@@ -80,7 +79,6 @@ export function useQuoteAttachmentActions() {
           quoteId,
           attachmentId,
           data as unknown as JsonObject,
-          user.token,
         );
         const attachment = result as QuoteAttachment | null;
         return attachment?.id ? attachment : null;
@@ -100,7 +98,7 @@ export function useQuoteAttachmentActions() {
       try {
         setLoading(true);
         setError(null);
-        const result = await quotesIpc.deleteAttachment(quoteId, attachmentId, user.token);
+        const result = await quotesIpc.deleteAttachment(quoteId, attachmentId);
         return typeof result === 'boolean' ? result : false;
       } catch (err: unknown) {
         setError(normalizeError(err));

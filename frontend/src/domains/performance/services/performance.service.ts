@@ -17,24 +17,18 @@ export class PerformanceService {
     return PerformanceService.instance;
   }
 
-  async getMetrics(limit: number = 100, sessionToken?: string): Promise<PerformanceMetrics[]> {
+  async getMetrics(limit: number = 100): Promise<PerformanceMetrics[]> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      const result = await performanceIpc.getMetrics(limit, token);
+      const result = await performanceIpc.getMetrics(limit);
       return (result as unknown as PerformanceMetrics[]) || [];
     } catch (error) {
       throw new Error(`Failed to get metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async getStats(sessionToken?: string): Promise<PerformanceStats> {
+  async getStats(): Promise<PerformanceStats> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      const result = await performanceIpc.getStats(token);
+      const result = await performanceIpc.getStats();
       return (result as unknown as PerformanceStats) || {
         total_operations: 0,
         avg_duration_ms: 0,
@@ -48,12 +42,9 @@ export class PerformanceService {
     }
   }
 
-  async getCacheStatistics(sessionToken?: string): Promise<CacheStatistics> {
+  async getCacheStatistics(): Promise<CacheStatistics> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      const result = await performanceIpc.getCacheStatistics(token);
+      const result = await performanceIpc.getCacheStatistics();
       return (result as unknown as CacheStatistics) || {
         total_entries: 0,
         total_size_bytes: 0,
@@ -68,34 +59,25 @@ export class PerformanceService {
     }
   }
 
-  async clearCache(cacheTypes?: string[], sessionToken?: string): Promise<void> {
+  async clearCache(cacheTypes?: string[]): Promise<void> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      await performanceIpc.clearApplicationCache({ cache_types: cacheTypes }, token);
+      await performanceIpc.clearApplicationCache({ cache_types: cacheTypes });
     } catch (error) {
       throw new Error(`Failed to clear cache: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async configureCacheSettings(settings: Partial<CacheSettings>, sessionToken?: string): Promise<void> {
+  async configureCacheSettings(settings: Partial<CacheSettings>): Promise<void> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      await performanceIpc.configureCacheSettings(settings, token);
+      await performanceIpc.configureCacheSettings(settings);
     } catch (error) {
       throw new Error(`Failed to configure cache settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
-  async getSystemHealth(sessionToken?: string): Promise<SystemHealth> {
+  async getSystemHealth(): Promise<SystemHealth> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      const result = await performanceIpc.getStats(token);
+      const result = await performanceIpc.getStats();
       return (result as unknown as SystemHealth) || {
         status: 'degraded',
         uptime_seconds: 0,
@@ -112,26 +94,11 @@ export class PerformanceService {
     }
   }
 
-  async cleanupMetrics(sessionToken?: string): Promise<void> {
+  async cleanupMetrics(): Promise<void> {
     try {
-      const token = sessionToken || this.getSessionToken();
-      if (!token) throw new Error('No session token available');
-
-      await performanceIpc.cleanupMetrics(token);
+      await performanceIpc.cleanupMetrics();
     } catch (error) {
       throw new Error(`Failed to cleanup metrics: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  private getSessionToken(): string | undefined {
-    try {
-      if (typeof window === 'undefined') return undefined;
-      const rawAuthState = window.localStorage.getItem('auth-store');
-      if (!rawAuthState) return undefined;
-      const parsedAuthState = JSON.parse(rawAuthState) as { state?: { user?: { token?: string } } };
-      return parsedAuthState.state?.user?.token;
-    } catch {
-      return undefined;
     }
   }
 }

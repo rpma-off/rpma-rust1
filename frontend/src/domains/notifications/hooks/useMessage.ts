@@ -22,7 +22,7 @@ export function useMessage() {
 
   const sendMessage = useCallback(async (request: SendMessageRequest) => {
     try {
-      const message = await messageApi.send(request, user?.token ?? '');
+      const message = await messageApi.send(request);
       toast.success('Message envoyé avec succès');
       return { success: true, data: message };
     } catch (err) {
@@ -49,7 +49,7 @@ export function useMessage() {
     try {
       setLoading(true);
       setError(null);
-      const response: MessageListResponse = await messageApi.getList(query, user?.token ?? '');
+      const response: MessageListResponse = await messageApi.getList(query);
       setMessages(response.messages);
       setTotal(response.total);
       setHasMore(response.has_more);
@@ -64,7 +64,7 @@ export function useMessage() {
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
-      await messageApi.markRead(messageId, user?.token ?? '');
+      await messageApi.markRead(messageId);
       setMessages(prev =>
         prev.map(msg =>
           msg.id === messageId
@@ -103,7 +103,7 @@ export function useMessageTemplates() {
     try {
       setLoading(true);
       setError(null);
-      const data = await messageApi.getTemplates(category, messageType, user?.token ?? '');
+      const data = await messageApi.getTemplates(category, messageType);
       setTemplates(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load templates';
@@ -136,7 +136,7 @@ export function useNotificationPreferences(userId?: string) {
     try {
       setLoading(true);
       setError(null);
-      const data = await messageApi.getPreferences(uid, user?.token ?? '');
+      const data = await messageApi.getPreferences(uid);
       setPreferences(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load preferences';
@@ -152,7 +152,7 @@ export function useNotificationPreferences(userId?: string) {
     updates: UpdateNotificationPreferencesRequest
   ) => {
     try {
-      const data = await messageApi.updatePreferences(uid, updates, user?.token ?? '');
+      const data = await messageApi.updatePreferences(uid, updates);
       setPreferences(data);
       toast.success('Préférences mises à jour avec succès');
       return { success: true, data };

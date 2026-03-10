@@ -169,9 +169,9 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
           return false;
         }
 
-        await inventoryIpc.material.update(materialId, requestData, user.token);
+        await inventoryIpc.material.update(materialId, requestData);
       } else {
-        await inventoryIpc.material.create(requestData as CreateMaterialRequest, user.token);
+        await inventoryIpc.material.create(requestData as CreateMaterialRequest);
       }
 
       return true;
