@@ -620,3 +620,103 @@ fn test_quote_number_uses_max_not_count() {
     let q2 = service.create_quote(req2, "test-user").unwrap();
     assert_eq!(q2.quote_number, "DEV-00002");
 }
+
+// ── Transaction boundary regression tests ───────────────────────────────────
+
+/// Regression: `create_quote` must persist quote row AND items in a single
+/// atomic transaction.  After a successful call the quote and all its items
+/// must be readable from the database.
+#[test]
+fn test_create_quote_and_items_are_atomic() {
+    let (service, db) = setup_service();
+
+    let req = CreateQuoteRequest {
+        client_id: "test-client".to_string(),
+        task_id: None,
+        valid_until: None,
+        notes: None,
+        terms: None,
+        vehicle_plate: None,
+        vehicle_make: None,
+        vehicle_model: None,
+        vehicle_year: None,
+        vehicle_vin: None,
+        items: vec![
+            make_item("Service A", 5000, 1.0, 20.0),
+            make_item("Service B", 3000, 2.0, 20.0),
+        ],
+    };
+
+    let quote = service.create_quote(req, "test-user").unwrap();
+
+    // Both the quote row and its items must exist in the DB.
+    let item_count: i64 = db
+        .query_single_value(
+            "SELECT COUNT(*) FROM quote_items WHERE quote_id = ?",
+            rusqlite::params![quote.id],
+        )
+        .expect("query item count");
+    assert_eq!(item_count, 2, "both items must be persisted atomically with the quote");
+
+    let quote_row_count: i64 = db
+        .query_single_value(
+            "SELECT COUNT(*) FROM quotes WHERE id = ?",
+            rusqlite::params![quote.id],
+        )
+        .expect("query quote count");
+    assert_eq!(quote_row_count, 1, "quote row must be persisted");
+}
+
+/// Regression: `convert_to_task` must update both `task_id` and `status` in a
+/// single atomic transaction.  After a successful call both fields must reflect
+/// the new values.
+#[test]
+fn test_convert_to_task_is_atomic() {
+    let (service, db) = setup_service();
+
+    // Create a quote and advance it to Accepted.
+    let req = make_quote_req("test-client");
+    let quote = service.create_quote(req, "test-user").unwrap();
+    service
+        .add_item(&quote.id, make_item("PPF Hood", 50000, 1.0, 20.0))
+        .unwrap();
+    service.mark_sent(&quote.id).unwrap();
+    service.mark_accepted(&quote.id, "test-user").unwrap();
+
+    let task_id = "task-uuid-001";
+    let task_number = "T-00001";
+    let result = service
+        .convert_to_task(&quote.id, task_id, task_number)
+        .unwrap();
+
+    // Both status and task_id must be updated together.
+    assert_eq!(
+        result.quote.status,
+        QuoteStatus::Converted,
+        "status must be Converted"
+    );
+    assert_eq!(
+        result.quote.task_id.as_deref(),
+        Some(task_id),
+        "task_id must be linked"
+    );
+
+    // Verify directly from the database so there is no dependency on the
+    // returned DTO being accurate.
+    let (db_status, db_task_id): (String, Option<String>) = db
+        .get_connection()
+        .expect("connection")
+        .query_row(
+            "SELECT status, task_id FROM quotes WHERE id = ?",
+            rusqlite::params![quote.id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .expect("query quote row");
+
+    assert_eq!(db_status, "converted", "DB status must be 'converted'");
+    assert_eq!(
+        db_task_id.as_deref(),
+        Some(task_id),
+        "DB task_id must be set"
+    );
+}

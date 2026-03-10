@@ -409,6 +409,123 @@ impl QuoteRepository {
         Ok(())
     }
 
+    /// Atomically create a quote and all its initial items in a single transaction.
+    ///
+    /// Replaces the separate `create` + `add_items_batch` pair so that a partial
+    /// failure never leaves an orphaned quote row with no items.
+    pub fn create_with_items(&self, quote: &Quote, items: &[QuoteItem]) -> RepoResult<()> {
+        let quote_id = quote.id.clone();
+        self.db
+            .with_transaction(|tx| {
+                tx.execute(
+                    r#"
+                    INSERT INTO quotes (
+                        id, quote_number, client_id, task_id, status,
+                        valid_until, description, notes, terms,
+                        subtotal, tax_total, total,
+                        discount_type, discount_value, discount_amount,
+                        vehicle_plate, vehicle_make, vehicle_model, vehicle_year, vehicle_vin,
+                        created_at, updated_at, created_by
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    "#,
+                    params![
+                        quote.id,
+                        quote.quote_number,
+                        quote.client_id,
+                        quote.task_id,
+                        quote.status.to_string(),
+                        quote.valid_until,
+                        quote.description,
+                        quote.notes,
+                        quote.terms,
+                        quote.subtotal,
+                        quote.tax_total,
+                        quote.total,
+                        quote.discount_type,
+                        quote.discount_value,
+                        quote.discount_amount,
+                        quote.vehicle_plate,
+                        quote.vehicle_make,
+                        quote.vehicle_model,
+                        quote.vehicle_year,
+                        quote.vehicle_vin,
+                        quote.created_at,
+                        quote.updated_at,
+                        quote.created_by,
+                    ],
+                )
+                .map_err(|e| format!("Failed to create quote: {}", e))?;
+
+                for item in items {
+                    tx.execute(
+                        r#"
+                        INSERT INTO quote_items (
+                            id, quote_id, kind, label, description, qty, unit_price,
+                            tax_rate, material_id, position, created_at, updated_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        "#,
+                        params![
+                            item.id,
+                            item.quote_id,
+                            item.kind.to_string(),
+                            item.label,
+                            item.description,
+                            item.qty,
+                            item.unit_price,
+                            item.tax_rate,
+                            item.material_id,
+                            item.position,
+                            item.created_at,
+                            item.updated_at,
+                        ],
+                    )
+                    .map_err(|e| format!("Failed to insert quote item: {}", e))?;
+                }
+                Ok(())
+            })
+            .map_err(RepoError::Database)?;
+        self.invalidate_cache(&quote_id);
+        Ok(())
+    }
+
+    /// Atomically link a task to a quote and update the quote status in a
+    /// single transaction.
+    ///
+    /// Replaces the separate `link_task` + `update_status` pair in
+    /// `convert_to_task` so that a partial failure never leaves a task linked
+    /// to a quote whose status was not updated.
+    pub fn link_task_and_update_status(
+        &self,
+        quote_id: &str,
+        task_id: &str,
+        status: &QuoteStatus,
+    ) -> RepoResult<()> {
+        let status_str = status.to_string();
+        let qid = quote_id.to_string();
+        let tid = task_id.to_string();
+        self.db
+            .with_transaction(|tx| {
+                tx.execute(
+                    "UPDATE quotes SET task_id = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                    params![tid, qid],
+                )
+                .map_err(|e| format!("Failed to link task to quote: {}", e))?;
+                let rows = tx
+                    .execute(
+                        "UPDATE quotes SET status = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                        params![status_str, qid],
+                    )
+                    .map_err(|e| format!("Failed to update quote status: {}", e))?;
+                if rows == 0 {
+                    return Err(format!("Quote {} not found", qid));
+                }
+                Ok(())
+            })
+            .map_err(RepoError::Database)?;
+        self.invalidate_cache(quote_id);
+        Ok(())
+    }
+
     /// QW-2 perf: insert multiple items in a single transaction, invalidate cache once.
     pub fn add_items_batch(&self, items: &[QuoteItem]) -> RepoResult<()> {
         if items.is_empty() {
