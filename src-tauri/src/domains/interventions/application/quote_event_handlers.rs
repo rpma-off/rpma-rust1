@@ -13,6 +13,7 @@ pub struct QuoteAcceptedHandler {
 }
 
 impl QuoteAcceptedHandler {
+    /// TODO: document
     pub fn new(service: Arc<InterventionWorkflowService>) -> Self {
         Self { service }
     }
@@ -59,6 +60,7 @@ pub struct QuoteConvertedHandler {
 }
 
 impl QuoteConvertedHandler {
+    /// TODO: document
     pub fn new(service: Arc<InterventionWorkflowService>) -> Self {
         Self { service }
     }

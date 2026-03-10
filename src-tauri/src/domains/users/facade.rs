@@ -15,11 +15,13 @@ pub use crate::domains::users::application::{
 #[cfg(not(feature = "export-types"))]
 use crate::domains::users::application::{UserAction, UserListResponse};
 
+/// TODO: document
 pub struct UsersServices {
     pub account_manager: Arc<dyn UserAccountManager>,
     pub user_service: Arc<UserService>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub enum UsersCommand {
     Crud(UserAction),
@@ -30,28 +32,34 @@ pub enum UsersCommand {
     HasAdmins,
 }
 
+/// TODO: document
 pub enum UsersDomainResponse {
     Crud(UserResponse),
     BootstrapMessage(String),
     HasAdmins(bool),
 }
 
+/// TODO: document
 #[derive(Debug, Default, Clone)]
 pub struct UsersFacade;
 
 impl UsersFacade {
+    /// TODO: document
     pub fn new() -> Self {
         Self
     }
 
+    /// TODO: document
     pub fn required_permission(&self, action: &UserAction) -> &'static str {
         UserAccessPolicy::required_permission(action)
     }
 
+    /// TODO: document
     pub fn target_user_id<'a>(&self, action: &'a UserAction) -> Option<&'a str> {
         UserAccessPolicy::target_user_id(action)
     }
 
+    /// TODO: document
     pub fn enforce_action_permissions(
         &self,
         current_user: &UserSession,
@@ -77,6 +85,7 @@ impl UsersFacade {
         UserAccessPolicy::ensure_role_specific_rules(current_user, action)
     }
 
+    /// TODO: document
     pub fn parse_role(&self, role: &str) -> Result<UserRole, AppError> {
         match role {
             "admin" => Ok(UserRole::Admin),
@@ -87,6 +96,7 @@ impl UsersFacade {
         }
     }
 
+    /// TODO: document
     pub fn ensure_not_self_action(
         &self,
         current_user_id: &str,
@@ -100,6 +110,7 @@ impl UsersFacade {
         }
     }
 
+    /// TODO: document
     pub fn validate_bootstrap_request(
         &self,
         user_id: &str,
@@ -124,6 +135,7 @@ impl UsersFacade {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn execute(
         &self,
         command: UsersCommand,

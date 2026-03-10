@@ -166,6 +166,7 @@ pub struct GpsLocation {
 }
 
 impl GpsLocation {
+    /// TODO: document
     pub fn new(lat: f64, lon: f64) -> Self {
         Self {
             latitude: lat,
@@ -174,6 +175,7 @@ impl GpsLocation {
         }
     }
 
+    /// TODO: document
     pub fn with_accuracy(lat: f64, lon: f64, accuracy: f64) -> Self {
         Self {
             latitude: lat,
@@ -202,14 +204,17 @@ pub type Timestamp = i64;
 pub struct TimestampString(pub Option<i64>);
 
 impl TimestampString {
+    /// TODO: document
     pub fn new(timestamp: Option<i64>) -> Self {
         Self(timestamp)
     }
 
+    /// TODO: document
     pub fn inner(&self) -> Option<i64> {
         self.0
     }
 
+    /// TODO: document
     pub fn now() -> Self {
         Self(Some(now()))
     }

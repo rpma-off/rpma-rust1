@@ -9,6 +9,7 @@ use tracing::{debug, error, info, instrument, warn};
 
 pub use crate::domains::auth::application::SignupRequest;
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct LoginRequest {
     pub email: String,

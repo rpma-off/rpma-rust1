@@ -54,6 +54,7 @@ pub struct MaterialService {
 }
 
 impl MaterialService {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self {
             categories: MaterialCategoryRepository::new(db.clone()),

@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
+/// TODO: document
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityMetricsResponse {
     pub total_events_today: u64,
@@ -12,6 +13,7 @@ pub struct SecurityMetricsResponse {
     pub suspicious_activities_detected: u64,
 }
 
+/// TODO: document
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityEventResponse {
     pub id: String,
@@ -25,6 +27,7 @@ pub struct SecurityEventResponse {
     pub mitigated: bool,
 }
 
+/// TODO: document
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SecurityAlertResponse {
     pub id: String,
@@ -41,6 +44,7 @@ pub struct SecurityAlertResponse {
     pub actions_taken: Vec<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityMetricsRequest {
     pub session_token: String,
@@ -48,6 +52,7 @@ pub struct GetSecurityMetricsRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityEventsRequest {
     pub session_token: String,
@@ -56,6 +61,7 @@ pub struct GetSecurityEventsRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetSecurityAlertsRequest {
     pub session_token: String,
@@ -63,6 +69,7 @@ pub struct GetSecurityAlertsRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct AcknowledgeSecurityAlertRequest {
     pub session_token: String,
@@ -71,6 +78,7 @@ pub struct AcknowledgeSecurityAlertRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct ResolveSecurityAlertRequest {
     pub session_token: String,
@@ -80,6 +88,7 @@ pub struct ResolveSecurityAlertRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct CleanupSecurityEventsRequest {
     pub session_token: String,

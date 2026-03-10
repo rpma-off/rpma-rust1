@@ -6,16 +6,19 @@ use rusqlite::params;
 use crate::domains::inventory::domain::models::material::InventoryTransaction;
 use crate::shared::db::Database;
 
+/// TODO: document
 #[derive(Debug)]
 pub struct InventoryTransactionRepository {
     db: Arc<Database>,
 }
 
 impl InventoryTransactionRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
 
+    /// TODO: document
     pub fn reference_exists(
         &self,
         tx: &rusqlite::Transaction<'_>,
@@ -64,6 +67,7 @@ impl InventoryTransactionRepository {
         Ok(existing)
     }
 
+    /// TODO: document
     pub fn insert(
         &self,
         tx: &rusqlite::Transaction<'_>,

@@ -19,10 +19,12 @@ impl fmt::Debug for AuditFacade {
 }
 
 impl AuditFacade {
+    /// TODO: document
     pub fn new(audit_service: Arc<AuditService>) -> Self {
         Self { audit_service }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

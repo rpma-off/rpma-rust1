@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;
 
+/// TODO: document
 pub struct NotificationRepository {
     db: Arc<Database>,
     cache: Arc<Cache>,
@@ -15,6 +16,7 @@ pub struct NotificationRepository {
 }
 
 impl NotificationRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self {
             db,
@@ -23,6 +25,7 @@ impl NotificationRepository {
         }
     }
 
+    /// TODO: document
     pub async fn find_by_user(&self, user_id: &str, limit: i32) -> RepoResult<Vec<Notification>> {
         let cache_key = self
             .cache_key_builder
@@ -48,6 +51,7 @@ impl NotificationRepository {
         Ok(notifications)
     }
 
+    /// TODO: document
     pub async fn count_unread(&self, user_id: &str) -> RepoResult<i32> {
         let count = self
             .db
@@ -62,6 +66,7 @@ impl NotificationRepository {
         Ok(count as i32)
     }
 
+    /// TODO: document
     pub async fn mark_read(&self, id: &str) -> RepoResult<()> {
         self.db
             .execute(
@@ -77,6 +82,7 @@ impl NotificationRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn mark_all_read(&self, user_id: &str) -> RepoResult<()> {
         self.db
             .execute(
@@ -92,6 +98,7 @@ impl NotificationRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn delete(&self, id: &str) -> RepoResult<bool> {
         let result = self
             .db

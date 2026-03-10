@@ -13,6 +13,7 @@ use tracing::info;
 // Import authentication macros
 use crate::authenticate;
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateGeneralSettingsRequest {
     pub session_token: String,
@@ -25,6 +26,7 @@ pub struct UpdateGeneralSettingsRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserPreferencesRequest {
     pub session_token: String,

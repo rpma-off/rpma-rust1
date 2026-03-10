@@ -16,6 +16,7 @@ pub(crate) struct MaterialConsumptionRepository {
 }
 
 impl MaterialConsumptionRepository {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }

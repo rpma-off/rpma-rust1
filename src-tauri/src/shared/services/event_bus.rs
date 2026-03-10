@@ -133,6 +133,7 @@ pub mod event_factory {
     use super::*;
     use uuid::Uuid;
 
+    /// TODO: document
     pub fn task_created(
         task_id: String,
         title: String,
@@ -149,6 +150,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn task_updated(task_id: String, changes: Vec<String>) -> DomainEvent {
         DomainEvent::TaskUpdated {
             id: Uuid::new_v4().to_string(),
@@ -162,6 +164,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn task_status_changed(
         task_id: String,
         old_status: String,
@@ -178,6 +181,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn task_assigned(task_id: String, assigned_to: String) -> DomainEvent {
         DomainEvent::TaskAssigned {
             id: Uuid::new_v4().to_string(),
@@ -190,6 +194,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn authentication_failed(user_id: Option<String>, reason: String) -> DomainEvent {
         DomainEvent::AuthenticationFailed {
             id: Uuid::new_v4().to_string(),
@@ -200,6 +205,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn authentication_success(user_id: String) -> DomainEvent {
         DomainEvent::AuthenticationSuccess {
             id: Uuid::new_v4().to_string(),
@@ -209,6 +215,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn intervention_started(intervention_id: String, task_id: String) -> DomainEvent {
         DomainEvent::InterventionStarted {
             id: Uuid::new_v4().to_string(),
@@ -221,6 +228,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn intervention_completed(intervention_id: String) -> DomainEvent {
         DomainEvent::InterventionCompleted {
             id: Uuid::new_v4().to_string(),
@@ -235,6 +243,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn intervention_finalized(
         intervention_id: String,
         task_id: String,
@@ -252,6 +261,7 @@ pub mod event_factory {
         }
     }
 
+    /// TODO: document
     pub fn material_consumed(
         material_id: String,
         intervention_id: String,

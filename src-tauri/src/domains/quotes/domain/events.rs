@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 pub use crate::shared::services::event_system::DomainEvent;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteShared {
     pub quote_id: String,
@@ -14,6 +15,7 @@ pub struct QuoteShared {
     pub shared_at_ms: i64,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteCustomerResponded {
     pub quote_id: String,
@@ -23,6 +25,7 @@ pub struct QuoteCustomerResponded {
     pub responded_at_ms: i64,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteConvertedToTask {
     pub quote_id: String,

@@ -2,6 +2,7 @@
 
 use serde::Deserialize;
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserSecurityRequest {
     pub session_token: String,
@@ -11,6 +12,7 @@ pub struct UpdateUserSecurityRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateSecuritySettingsRequest {
     pub session_token: String,

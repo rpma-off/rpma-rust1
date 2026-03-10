@@ -16,6 +16,7 @@ use crate::domains::interventions::infrastructure::intervention_types::{
 /// Service for calculating intervention metrics and requirements
 pub struct InterventionCalculationService;
 
+/// TODO: document
 #[derive(Debug, Clone)]
 pub struct StepCompletionSummary {
     pub total_steps: usize,

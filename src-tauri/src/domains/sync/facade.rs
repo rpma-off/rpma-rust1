@@ -15,6 +15,7 @@ pub struct SyncFacade {
 }
 
 impl SyncFacade {
+    /// TODO: document
     pub fn new(
         sync_queue: Arc<SyncQueue>,
         background_sync: Arc<Mutex<BackgroundSyncService>>,
@@ -25,6 +26,7 @@ impl SyncFacade {
         }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

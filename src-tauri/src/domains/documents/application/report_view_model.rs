@@ -34,6 +34,7 @@ pub struct ReportViewModel {
     pub display: ReportDisplay,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportMeta {
     pub report_title: String,
@@ -42,6 +43,7 @@ pub struct ReportMeta {
     pub task_number: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportSummary {
     pub status: String,
@@ -53,6 +55,7 @@ pub struct ReportSummary {
     pub intervention_type: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportClient {
     pub name: String,
@@ -60,6 +63,7 @@ pub struct ReportClient {
     pub phone: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportVehicle {
     pub plate: String,
@@ -70,6 +74,7 @@ pub struct ReportVehicle {
     pub vin: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportWorkConditions {
     pub weather: String,
@@ -79,6 +84,7 @@ pub struct ReportWorkConditions {
     pub humidity: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportMaterials {
     pub film_type: String,
@@ -87,6 +93,7 @@ pub struct ReportMaterials {
     pub consumptions: Vec<ReportMaterialConsumption>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportMaterialConsumption {
     pub material_id: String,
@@ -97,6 +104,7 @@ pub struct ReportMaterialConsumption {
     pub quality_notes: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportStep {
     pub id: String,
@@ -120,18 +128,21 @@ pub struct ReportStep {
     pub approval_data: ReportApproval,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportChecklistItem {
     pub label: String,
     pub checked: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportKeyValue {
     pub key: String,
     pub value: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportApproval {
     pub approved_by: String,
@@ -139,6 +150,7 @@ pub struct ReportApproval {
     pub rejection_reason: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportQuality {
     pub global_quality_score: String,
@@ -146,6 +158,7 @@ pub struct ReportQuality {
     pub final_observations: Vec<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportQualityCheckpoint {
     pub step_name: String,
@@ -153,6 +166,7 @@ pub struct ReportQualityCheckpoint {
     pub score: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportCustomerValidation {
     pub satisfaction: String,
@@ -160,6 +174,7 @@ pub struct ReportCustomerValidation {
     pub comments: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportPhotos {
     pub total_count: usize,
@@ -167,12 +182,14 @@ pub struct ReportPhotos {
     pub grouped_by_category: Vec<ReportPhotoGroup>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportPhotoGroup {
     pub label: String,
     pub count: usize,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportDisplay {
     pub placeholder_not_specified: String,
@@ -698,6 +715,7 @@ fn json_value_display(value: &serde_json::Value) -> String {
 // Label / formatting helpers
 // ---------------------------------------------------------------------------
 
+/// TODO: document
 pub fn humanize_key(key: &str) -> String {
     key.replace('_', " ")
         .replace('-', " ")
@@ -748,6 +766,7 @@ fn intervention_type_label(
     }
 }
 
+/// TODO: document
 pub fn step_status_label(status: &StepStatus) -> String {
     match status {
         StepStatus::Completed => "Termine".to_string(),
@@ -760,6 +779,7 @@ pub fn step_status_label(status: &StepStatus) -> String {
     }
 }
 
+/// TODO: document
 pub fn step_status_badge(status: &StepStatus) -> String {
     match status {
         StepStatus::Completed => "[OK]".to_string(),

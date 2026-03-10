@@ -12,6 +12,7 @@ pub struct ReportRepository {
 }
 
 impl ReportRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }

@@ -1,5 +1,6 @@
 use serde::Deserialize;
 
+/// TODO: document
 #[derive(Clone, Debug, Deserialize)]
 pub struct SignupRequest {
     pub email: String,

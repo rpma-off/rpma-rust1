@@ -5,15 +5,18 @@ pub use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::tasks::domain::services::task_state_machine::validate_status_transition;
 
 impl TaskStatus {
+    /// TODO: document
     pub fn can_transition_to(&self, new_status: &TaskStatus) -> bool {
         validate_status_transition(self, new_status).is_ok()
     }
 
+    /// TODO: document
     pub fn from_str(s: &str) -> Option<Self> {
         // Delegate parsing to TaskStatus's FromStr implementation.
         s.parse().ok()
     }
 
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             TaskStatus::Draft => "draft",
@@ -33,6 +36,7 @@ impl TaskStatus {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct StatusTransitionRequest {
@@ -43,6 +47,7 @@ pub struct StatusTransitionRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct StatusDistribution {

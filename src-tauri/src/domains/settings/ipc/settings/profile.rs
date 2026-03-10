@@ -15,6 +15,7 @@ use tracing::info;
 // Import authentication macros
 use crate::authenticate;
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserProfileRequest {
     pub session_token: String,
@@ -42,6 +43,7 @@ pub struct UpdateUserProfileRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct ChangeUserPasswordRequest {
     pub session_token: String,
@@ -51,6 +53,7 @@ pub struct ChangeUserPasswordRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct DeleteUserAccountRequest {
     pub session_token: String,
@@ -59,6 +62,7 @@ pub struct DeleteUserAccountRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UploadUserAvatarRequest {
     pub session_token: String,

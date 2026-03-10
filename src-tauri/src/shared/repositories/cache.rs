@@ -139,20 +139,24 @@ pub struct CacheKeyBuilder {
 }
 
 impl CacheKeyBuilder {
+    /// TODO: document
     pub fn new(prefix: &str) -> Self {
         Self {
             prefix: prefix.to_string(),
         }
     }
 
+    /// TODO: document
     pub fn id(&self, id: &str) -> String {
         format!("{}:{}", self.prefix, id)
     }
 
+    /// TODO: document
     pub fn query(&self, parts: &[&str]) -> String {
         format!("{}:query:{}", self.prefix, parts.join(":"))
     }
 
+    /// TODO: document
     pub fn list(&self, filters: &[&str]) -> String {
         format!("{}:list:{}", self.prefix, filters.join(":"))
     }

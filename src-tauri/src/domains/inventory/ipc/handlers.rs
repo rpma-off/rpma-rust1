@@ -6,6 +6,7 @@ use crate::shared::error::AppError;
 use crate::domains::inventory::application::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::InventoryFacade;
 
+/// TODO: document
 pub fn list_materials(
     service: &InventoryFacade,
     material_type: Option<String>,
@@ -17,6 +18,7 @@ pub fn list_materials(
     service.list_materials(material_type, category, active_only, limit, offset)
 }
 
+/// TODO: document
 pub fn update_stock(
     service: &InventoryFacade,
     request: UpdateStockRequest,
@@ -24,6 +26,7 @@ pub fn update_stock(
     service.update_stock(request)
 }
 
+/// TODO: document
 pub fn record_consumption(
     service: &InventoryFacade,
     request: RecordConsumptionRequest,
@@ -31,10 +34,12 @@ pub fn record_consumption(
     service.record_consumption(request)
 }
 
+/// TODO: document
 pub fn get_material_stats(service: &InventoryFacade) -> Result<MaterialStats, AppError> {
     service.get_material_stats()
 }
 
+/// TODO: document
 pub fn get_inventory_stats(service: &InventoryFacade) -> Result<InventoryStats, AppError> {
     service.get_inventory_stats()
 }

@@ -370,6 +370,7 @@ impl InterventionDataService {
         self.repository.save_steps_batch_with_tx(tx, steps)
     }
 
+    /// TODO: document
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         self.repository.save_step(step)
     }

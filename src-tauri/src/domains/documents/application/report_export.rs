@@ -8,6 +8,7 @@ use crate::shared::services::document_storage::DocumentStorageService;
 use chrono::Utc;
 use std::path::Path;
 
+/// TODO: document
 #[tracing::instrument(skip(db))]
 pub async fn get_intervention_with_details(
     intervention_id: &str,
@@ -78,6 +79,7 @@ pub async fn get_intervention_with_details(
     })
 }
 
+/// TODO: document
 pub fn check_intervention_export_permissions(
     intervention_technician_id: Option<String>,
     current_user: &UserSession,
@@ -92,6 +94,7 @@ pub fn check_intervention_export_permissions(
     Ok(())
 }
 
+/// TODO: document
 #[tracing::instrument(skip(intervention_data, app_data_dir))]
 pub async fn export_intervention_report(
     intervention_data: &CompleteInterventionData,
@@ -134,6 +137,7 @@ pub async fn export_intervention_report(
     })
 }
 
+/// TODO: document
 pub async fn save_intervention_report(
     intervention_data: &CompleteInterventionData,
     destination_path: &str,

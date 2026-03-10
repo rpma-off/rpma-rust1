@@ -15,6 +15,7 @@ use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::CommandContext;
 use chrono::Utc;
 
+/// TODO: document
 #[derive(Debug)]
 pub enum InterventionsCommand {
     Get {
@@ -86,6 +87,7 @@ pub enum InterventionsCommand {
     },
 }
 
+/// TODO: document
 pub enum InterventionsResponse {
     Intervention(Intervention),
     InterventionList(Vec<Intervention>),
@@ -117,12 +119,14 @@ pub struct InterventionsFacade {
 }
 
 impl InterventionsFacade {
+    /// TODO: document
     pub fn new(intervention_service: Arc<InterventionService>) -> Self {
         Self {
             intervention_service,
         }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }
@@ -283,6 +287,7 @@ impl InterventionsFacade {
         }
     }
 
+    /// TODO: document
     pub async fn execute(
         &self,
         command: InterventionsCommand,

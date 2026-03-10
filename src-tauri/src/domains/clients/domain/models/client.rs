@@ -202,6 +202,7 @@ pub struct CreateClientRequest {
 }
 
 impl CreateClientRequest {
+    /// TODO: document
     pub fn validate(&self) -> Result<(), String> {
         if self.name.trim().is_empty() {
             return Err("Name is required and cannot be empty".to_string());

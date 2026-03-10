@@ -4,6 +4,7 @@ use crate::domains::auth::domain::AuthErrorPolicy;
 use crate::shared::ipc::errors::AppError;
 use regex::Regex;
 
+/// TODO: document
 #[derive(Debug, Clone)]
 pub struct AuthFacade;
 
@@ -14,10 +15,12 @@ impl Default for AuthFacade {
 }
 
 impl AuthFacade {
+    /// TODO: document
     pub fn new() -> Self {
         Self
     }
 
+    /// TODO: document
     pub fn validate_login_input(
         &self,
         email: &str,
@@ -29,6 +32,7 @@ impl AuthFacade {
         Ok((validated_email, validated_password))
     }
 
+    /// TODO: document
     pub fn validate_signup_input(
         &self,
         request: &SignupRequest,
@@ -48,6 +52,7 @@ impl AuthFacade {
         })
     }
 
+    /// TODO: document
     pub fn map_authentication_result(
         &self,
         result: Result<UserSession, String>,
@@ -55,10 +60,12 @@ impl AuthFacade {
         result.map_err(|e| AuthErrorPolicy::authentication_error(&e))
     }
 
+    /// TODO: document
     pub fn map_signup_error(&self, raw_error: &str) -> AppError {
         AuthErrorPolicy::signup_error(raw_error)
     }
 
+    /// TODO: document
     pub fn ensure_session_token(&self, token: &str) -> Result<(), AppError> {
         if token.trim().is_empty() {
             return Err(AppError::Authentication(

@@ -13,6 +13,7 @@ pub(crate) struct SupplierRepository {
 }
 
 impl SupplierRepository {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }

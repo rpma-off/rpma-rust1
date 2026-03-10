@@ -10,6 +10,7 @@ use crate::commands::{ApiResponse, AppError, AppState};
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum InterventionManagementAction {
@@ -31,6 +32,7 @@ pub enum InterventionManagementAction {
     },
 }
 
+/// TODO: document
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum InterventionManagementResponse {
@@ -54,6 +56,7 @@ pub enum InterventionManagementResponse {
     },
 }
 
+/// TODO: document
 #[derive(Serialize)]
 pub struct InterventionStats {
     pub total_interventions: u64,
@@ -63,6 +66,7 @@ pub struct InterventionStats {
     pub technician_stats: Vec<TechnicianInterventionStats>,
 }
 
+/// TODO: document
 #[derive(Serialize)]
 pub struct TechnicianInterventionStats {
     pub technician_id: String,
@@ -72,6 +76,7 @@ pub struct TechnicianInterventionStats {
     pub average_rating: Option<f32>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct InterventionQueryRequest {
     pub page: Option<u32>,

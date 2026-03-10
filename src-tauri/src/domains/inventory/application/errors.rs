@@ -4,6 +4,7 @@ use crate::domains::inventory::infrastructure::MaterialError;
 
 use crate::domains::inventory::domain::InventoryDomainError;
 
+/// TODO: document
 #[derive(Debug, Error)]
 pub enum InventoryError {
     #[error("Validation error: {0}")]

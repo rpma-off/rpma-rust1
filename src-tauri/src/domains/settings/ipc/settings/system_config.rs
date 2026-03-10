@@ -20,6 +20,7 @@ fn make_service(state: &AppState<'_>) -> SystemConfigService {
 
 // ── commands ─────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessRulesRequest {
     pub session_token: String,
@@ -49,6 +50,7 @@ pub async fn update_business_rules(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateSecurityPoliciesRequest {
     pub session_token: String,
@@ -78,6 +80,7 @@ pub async fn update_security_policies(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateIntegrationsRequest {
     pub session_token: String,
@@ -107,6 +110,7 @@ pub async fn update_integrations(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdatePerformanceConfigsRequest {
     pub session_token: String,
@@ -136,6 +140,7 @@ pub async fn update_performance_configs(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessHoursRequest {
     pub session_token: String,
