@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { QuoteAttachment, AttachmentType } from '@/types/quote.types';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export interface QuoteAttachmentsManagerProps {
   quoteId: string | null;
@@ -32,6 +33,7 @@ export function QuoteAttachmentsManager({
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -134,18 +136,23 @@ export function QuoteAttachmentsManager({
     }
   };
 
-  const handleDelete = async (attachmentId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette pièce jointe ?')) return;
+  const handleDelete = (attachmentId: string) => {
     if (!quoteId) return;
+    setAttachmentToDelete(attachmentId);
+  };
+
+  const confirmDelete = async () => {
+    if (!attachmentToDelete || !quoteId) return;
 
     setIsDeleting(true);
     try {
-      const deleted = await onDeleteAttachment(attachmentId);
+      const deleted = await onDeleteAttachment(attachmentToDelete);
       if (deleted) {
         onRefresh();
       }
     } finally {
       setIsDeleting(false);
+      setAttachmentToDelete(null);
     }
   };
 
@@ -375,6 +382,17 @@ export function QuoteAttachmentsManager({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={attachmentToDelete !== null}
+        onOpenChange={(open) => { if (!open) setAttachmentToDelete(null); }}
+        title="Supprimer la pièce jointe"
+        description="Êtes-vous sûr de vouloir supprimer cette pièce jointe ? Cette action est irréversible."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

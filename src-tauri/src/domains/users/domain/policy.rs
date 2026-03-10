@@ -2,10 +2,12 @@ use crate::domains::users::application::UserAction;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::ipc::errors::AppError;
 
+/// TODO: document
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UserAccessPolicy;
 
 impl UserAccessPolicy {
+    /// TODO: document
     pub fn required_permission(action: &UserAction) -> &'static str {
         match action {
             UserAction::Create { .. } => "create",
@@ -19,6 +21,7 @@ impl UserAccessPolicy {
         }
     }
 
+    /// TODO: document
     pub fn target_user_id<'a>(action: &'a UserAction) -> Option<&'a str> {
         match action {
             UserAction::Get { id }
@@ -32,6 +35,7 @@ impl UserAccessPolicy {
         }
     }
 
+    /// TODO: document
     pub fn ensure_role_specific_rules(
         current_user: &UserSession,
         action: &UserAction,

@@ -14,6 +14,7 @@ use std::sync::Mutex;
 static SYSTEM_CONFIG: Mutex<Option<SystemConfiguration>> = Mutex::new(None);
 
 /// Get app settings (command) — reads from the `app_settings` table.
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn get_app_settings(
     session_token: String,

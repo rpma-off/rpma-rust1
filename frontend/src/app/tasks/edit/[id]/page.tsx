@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { ArrowLeft, Loader2, Edit } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { useEditTaskPage } from '@/domains/tasks';
@@ -100,11 +101,11 @@ export default function EditTaskPage() {
 
                 {/* Breadcrumbs */}
                 <nav className="hidden sm:flex items-center text-sm text-muted-foreground">
-                  <a href="/dashboard" className="hover:text-foreground transition-colors">{t('nav.dashboard')}</a>
+                  <Link href="/dashboard" className="hover:text-foreground transition-colors">{t('nav.dashboard')}</Link>
                   <span className="mx-2">/</span>
-                  <a href="/tasks" className="hover:text-foreground transition-colors">{t('nav.tasks')}</a>
+                  <Link href="/tasks" className="hover:text-foreground transition-colors">{t('nav.tasks')}</Link>
                   <span className="mx-2">/</span>
-                  <a href={`/tasks/${taskId}`} className="hover:text-foreground transition-colors">{taskData.task_number}</a>
+                  <Link href={`/tasks/${taskId}`} className="hover:text-foreground transition-colors">{taskData.task_number}</Link>
                   <span className="mx-2">/</span>
                   <span className="text-foreground font-medium">{t('common.edit')}</span>
                 </nav>

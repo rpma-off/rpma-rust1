@@ -9,6 +9,7 @@ use tracing::{debug, error, info, instrument, warn};
 
 pub use crate::domains::auth::application::SignupRequest;
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct LoginRequest {
     pub email: String,
@@ -81,7 +82,7 @@ pub async fn auth_create_account(
     let account = auth_service
         .create_account_from_signup(&validated_request)
         .map_err(|e| {
-            error!("Account creation failed for {}: {}", validated_email, e);
+            warn!("Account creation failed for {}: {}", validated_email, e);
             auth_facade.map_signup_error(&e)
         })?;
 

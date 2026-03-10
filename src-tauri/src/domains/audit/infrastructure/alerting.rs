@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{error, info, warn};
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlertChannel {
     Log,
@@ -14,6 +15,7 @@ pub enum AlertChannel {
     Email, // For future email notifications
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlertPriority {
     Low,
@@ -22,6 +24,7 @@ pub enum AlertPriority {
     Critical,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRule {
     pub id: String,
@@ -35,6 +38,7 @@ pub struct AlertRule {
     pub last_triggered: Option<DateTime<Utc>>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     pub id: String,
@@ -52,6 +56,7 @@ pub struct Alert {
     pub metadata: HashMap<String, serde_json::Value>,
 }
 
+/// TODO: document
 pub struct AlertingService {
     db: Database,
     rules: Vec<AlertRule>,
@@ -59,6 +64,7 @@ pub struct AlertingService {
 }
 
 impl AlertingService {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self {
             db,
@@ -334,7 +340,7 @@ impl AlertingService {
     /// Trigger an alert
     fn trigger_alert(&mut self, rule: &AlertRule) -> Result<(), String> {
         let alert = Alert {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             rule_id: rule.id.clone(),
             title: rule.name.clone(),
             message: rule.description.clone(),

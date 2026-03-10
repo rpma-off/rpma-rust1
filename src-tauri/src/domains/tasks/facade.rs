@@ -21,6 +21,7 @@ pub struct TasksFacade {
 }
 
 impl TasksFacade {
+    /// TODO: document
     pub fn new(task_service: Arc<TaskService>, import_service: Arc<TaskImportService>) -> Self {
         Self {
             task_service,
@@ -28,6 +29,7 @@ impl TasksFacade {
         }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

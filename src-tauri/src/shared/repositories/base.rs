@@ -171,6 +171,7 @@ pub struct PaginationInfo {
 }
 
 impl PaginationInfo {
+    /// TODO: document
     pub fn new(page: i32, limit: i32, total: i64) -> Self {
         let total_pages = ((total as f64) / (limit as f64)).ceil() as i32;
         Self {
@@ -181,10 +182,12 @@ impl PaginationInfo {
         }
     }
 
+    /// TODO: document
     pub fn has_next(&self) -> bool {
         self.page < self.total_pages
     }
 
+    /// TODO: document
     pub fn has_prev(&self) -> bool {
         self.page > 1
     }
@@ -198,6 +201,7 @@ pub struct PaginatedResult<T> {
 }
 
 impl<T> PaginatedResult<T> {
+    /// TODO: document
     pub fn new(data: Vec<T>, pagination: PaginationInfo) -> Self {
         Self { data, pagination }
     }

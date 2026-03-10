@@ -118,6 +118,7 @@ pub struct RepositoryBuilder {
 }
 
 impl RepositoryBuilder {
+    /// TODO: document
     pub fn new() -> Self {
         Self {
             db: None,
@@ -125,16 +126,19 @@ impl RepositoryBuilder {
         }
     }
 
+    /// TODO: document
     pub fn with_database(mut self, db: Arc<Database>) -> Self {
         self.db = Some(db);
         self
     }
 
+    /// TODO: document
     pub fn with_cache_size(mut self, size: usize) -> Self {
         self.cache_size = size;
         self
     }
 
+    /// TODO: document
     pub async fn build(self) -> Result<Repositories, String> {
         let db = self.db.ok_or_else(|| "Database not provided".to_string())?;
 

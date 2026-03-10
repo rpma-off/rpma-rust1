@@ -524,6 +524,7 @@ pub struct TaskStatistics {
 
 /// Validation implementation for CreateTaskRequest
 impl CreateTaskRequest {
+    /// TODO: document
     pub fn validate(&self) -> Result<(), String> {
         // Validate required fields
         if self.vehicle_plate.trim().is_empty() {
@@ -667,6 +668,7 @@ pub struct TaskHistory {
 }
 
 impl TaskHistory {
+    /// TODO: document
     pub fn new(
         task_id: String,
         old_status: Option<String>,
@@ -675,7 +677,7 @@ impl TaskHistory {
         changed_by: Option<String>,
     ) -> Self {
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             task_id,
             old_status,
             new_status,
@@ -685,6 +687,7 @@ impl TaskHistory {
         }
     }
 
+    /// TODO: document
     pub fn from_row(row: &Row) -> rusqlite::Result<Self> {
         Ok(Self {
             id: row.get("id")?,

@@ -192,6 +192,7 @@ impl InterventionService {
         })
     }
 
+    /// TODO: document
     pub fn list_interventions(
         &self,
         status: Option<&str>,

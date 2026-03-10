@@ -11,11 +11,13 @@ const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
     "actual_duration",
 ];
 
+/// TODO: document
 pub fn validate_status_change(current: &TaskStatus, new: &TaskStatus) -> Result<(), AppError> {
     task_state_machine::validate_status_transition(current, new)
         .map_err(AppError::TaskInvalidTransition)
 }
 
+/// TODO: document
 pub fn check_task_permissions(
     session: &UserSession,
     task: &Task,
@@ -42,6 +44,7 @@ pub fn check_task_permissions(
     }
 }
 
+/// TODO: document
 pub fn ensure_assignment_management_role(session: &UserSession) -> Result<(), AppError> {
     if matches!(session.role, UserRole::Admin | UserRole::Supervisor) {
         Ok(())
@@ -52,6 +55,7 @@ pub fn ensure_assignment_management_role(session: &UserSession) -> Result<(), Ap
     }
 }
 
+/// TODO: document
 pub fn enforce_technician_field_restrictions(req: &UpdateTaskRequest) -> Result<(), AppError> {
     let mut forbidden: Vec<&str> = Vec::new();
 
@@ -127,6 +131,7 @@ pub fn enforce_technician_field_restrictions(req: &UpdateTaskRequest) -> Result<
     }
 }
 
+/// TODO: document
 pub fn relationship_status_from_task_status(status: &TaskStatus) -> String {
     match status {
         TaskStatus::Completed => "completed".to_string(),

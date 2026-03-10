@@ -90,8 +90,6 @@ impl super::AuthService {
             match e {
                 rusqlite::Error::QueryReturnedNoRows => {
                     warn!("User not found or inactive: {}", validated_email);
-                    // Log security event for invalid email attempt
-                    //                     // let _ = self.security_monitor.log_auth_failure(None, None, "user_not_found");
                     "Invalid email or password".to_string()
                 },
                 _ => {
@@ -138,7 +136,7 @@ impl super::AuthService {
         })?;
 
         // Create session with a UUID token
-        let token = uuid::Uuid::new_v4().to_string();
+        let token = crate::shared::utils::uuid::generate_uuid_string();
         let session = UserSession::new(
             account.id,
             account.username,

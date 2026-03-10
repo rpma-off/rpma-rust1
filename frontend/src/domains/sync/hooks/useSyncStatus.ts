@@ -36,7 +36,7 @@ export function useSyncStatus(pollInterval = 5000) {
       }
     },
     refetchInterval: pollInterval,
-    staleTime: 1000,
+    staleTime: 2000,
   });
 
   // Force refresh when operations are performed

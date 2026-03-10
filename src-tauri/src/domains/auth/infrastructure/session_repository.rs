@@ -9,12 +9,14 @@ use rusqlite::{params, OptionalExtension};
 use std::sync::Arc;
 use tracing::{info, instrument};
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct SessionRepository {
     db: Arc<Database>,
 }
 
 impl SessionRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }

@@ -49,20 +49,24 @@ impl DomainEventBus for InMemoryEventBus {
 
 static GLOBAL_EVENT_BUS: OnceLock<Arc<InMemoryEventBus>> = OnceLock::new();
 
+/// TODO: document
 pub fn set_global_event_bus(bus: Arc<InMemoryEventBus>) {
     let _ = GLOBAL_EVENT_BUS.set(bus);
 }
 
+/// TODO: document
 pub fn global_event_bus() -> Option<Arc<InMemoryEventBus>> {
     GLOBAL_EVENT_BUS.get().cloned()
 }
 
+/// TODO: document
 pub fn publish_event(event: DomainEvent) {
     if let Some(bus) = GLOBAL_EVENT_BUS.get() {
         DomainEventBus::publish(bus.as_ref(), event);
     }
 }
 
+/// TODO: document
 pub fn register_handler(handler: Arc<dyn DomainEventHandler>) {
     if let Some(bus) = GLOBAL_EVENT_BUS.get() {
         DomainEventBus::subscribe(bus.as_ref(), handler);

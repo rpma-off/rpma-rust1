@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(TS, Deserialize, Debug)]
 pub struct CreateUserRequest {
     pub email: String,
@@ -10,6 +11,7 @@ pub struct CreateUserRequest {
     pub password: String,
 }
 
+/// TODO: document
 #[derive(TS, Deserialize, Debug)]
 pub struct UpdateUserRequest {
     pub email: Option<String>,
@@ -19,6 +21,7 @@ pub struct UpdateUserRequest {
     pub is_active: Option<bool>,
 }
 
+/// TODO: document
 #[derive(TS, Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum UserAction {
@@ -55,11 +58,13 @@ pub enum UserAction {
     },
 }
 
+/// TODO: document
 #[derive(Serialize, TS)]
 pub struct UserListResponse {
     pub data: Vec<crate::shared::contracts::auth::UserAccount>,
 }
 
+/// TODO: document
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum UserResponse {

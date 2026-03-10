@@ -164,7 +164,6 @@ pub async fn get_recent_activities(
 }
 
 /// Get sync status (simplified synchronous version)
-#[allow(dead_code)]
 fn get_sync_status_simple(
     state: &super::AppState<'_>,
 ) -> Result<serde_json::Value, super::AppError> {

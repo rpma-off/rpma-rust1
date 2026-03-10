@@ -15,7 +15,6 @@ use crate::domains::quotes::infrastructure::quote_validation;
 use chrono::Utc;
 use std::sync::Arc;
 use tracing::{info, warn};
-use uuid::Uuid;
 
 /// Service for quote-related business operations.
 pub struct QuoteService {
@@ -47,7 +46,7 @@ impl QuoteService {
         req.validate()?;
 
         let now = Utc::now().timestamp_millis();
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let quote_number = self
             .repo
             .next_quote_number()
@@ -80,17 +79,13 @@ impl QuoteService {
             items: Vec::new(),
         };
 
-        self.repo
-            .create(&quote)
-            .map_err(Self::map_create_repo_error)?;
-
-        // Add items if provided — QW-2: batch insert replaces N individual inserts + N cache invalidations.
+        // Build items before persisting so we can insert quote + items atomically.
         let items: Vec<QuoteItem> = req
             .items
             .iter()
             .enumerate()
             .map(|(i, item_req)| QuoteItem {
-                id: Uuid::new_v4().to_string(),
+                id: crate::shared::utils::uuid::generate_uuid_string(),
                 quote_id: id.clone(),
                 kind: item_req.kind.clone(),
                 label: item_req.label.clone(),
@@ -104,9 +99,12 @@ impl QuoteService {
                 updated_at: now,
             })
             .collect();
+
+        // Atomic: quote row + all item rows in a single transaction so a
+        // partial failure never leaves an orphaned quote without items.
         self.repo
-            .add_items_batch(&items)
-            .map_err(|_| "Impossible d'ajouter les articles au devis.".to_string())?;
+            .create_with_items(&quote, &items)
+            .map_err(Self::map_create_repo_error)?;
         quote.items = items;
 
         // Recalculate totals
@@ -195,7 +193,7 @@ impl QuoteService {
             .ok_or_else(|| "Quote not found".to_string())?;
 
         let now = Utc::now().timestamp_millis();
-        let new_id = Uuid::new_v4().to_string();
+        let new_id = crate::shared::utils::uuid::generate_uuid_string();
         let new_number = self
             .repo
             .next_quote_number()
@@ -237,7 +235,7 @@ impl QuoteService {
             .items
             .iter()
             .map(|item| QuoteItem {
-                id: Uuid::new_v4().to_string(),
+                id: crate::shared::utils::uuid::generate_uuid_string(),
                 quote_id: new_id.clone(),
                 kind: item.kind.clone(),
                 label: item.label.clone(),
@@ -290,7 +288,7 @@ impl QuoteService {
         let position = req.position.unwrap_or(quote.items.len() as i32);
 
         let item = QuoteItem {
-            id: Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             quote_id: quote_id.to_string(),
             kind: req.kind,
             label: req.label,
@@ -614,12 +612,11 @@ impl QuoteService {
             ));
         }
 
-        // Link the task and update status
+        // Atomic: link the task and flip the status in a single transaction so a
+        // partial failure never leaves a task linked to a quote whose status was
+        // not yet updated to Converted.
         self.repo
-            .link_task(quote_id, task_id)
-            .map_err(Self::map_repo_error)?;
-        self.repo
-            .update_status(quote_id, &QuoteStatus::Converted)
+            .link_task_and_update_status(quote_id, task_id, &QuoteStatus::Converted)
             .map_err(Self::map_repo_error)?;
 
         // Emit QuoteConverted event so intervention can be created

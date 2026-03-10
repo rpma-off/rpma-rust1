@@ -9,9 +9,10 @@
 //! - `write_ops`       — Write operations (login updates, admin bootstrap)
 //! - `repository_impl` — `Repository<User, String>` trait implementation
 
+use std::sync::Arc;
+
 use crate::db::Database;
 use crate::shared::repositories::cache::{Cache, CacheKeyBuilder};
-use std::sync::Arc;
 
 // ── Submodules ────────────────────────────────────────────────────────────────
 

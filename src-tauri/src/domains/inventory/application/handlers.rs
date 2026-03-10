@@ -6,11 +6,13 @@ use crate::shared::event_bus::{DomainEvent, DomainEventHandler, InterventionFina
 
 use super::service::InventoryService;
 
+/// TODO: document
 pub struct InterventionFinalizedHandler {
     service: Arc<InventoryService>,
 }
 
 impl InterventionFinalizedHandler {
+    /// TODO: document
     pub fn new(service: Arc<InventoryService>) -> Self {
         Self { service }
     }

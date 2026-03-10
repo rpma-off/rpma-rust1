@@ -24,7 +24,7 @@ impl QuoteService {
         use crate::shared::services::event_system::{DomainEvent, EventPublisher};
 
         let event = DomainEvent::QuoteAccepted {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             quote_id: quote.id.clone(),
             quote_number: quote.quote_number.clone(),
             client_id: quote.client_id.clone(),
@@ -50,7 +50,7 @@ impl QuoteService {
         use crate::shared::services::event_system::{DomainEvent, EventPublisher};
 
         let event = DomainEvent::QuoteRejected {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             quote_id: quote.id.clone(),
             quote_number: quote.quote_number.clone(),
             client_id: quote.client_id.clone(),
@@ -75,7 +75,7 @@ impl QuoteService {
         use crate::shared::services::event_system::{DomainEvent, EventPublisher};
 
         let event = DomainEvent::QuoteConverted {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             quote_id: quote.id.clone(),
             quote_number: quote.quote_number.clone(),
             client_id: quote.client_id.clone(),

@@ -39,7 +39,7 @@ impl super::MaterialService {
         self.validate_create_request(&request)?;
 
         debug!(sku = %request.sku, created_by = %created_by, "Creating material");
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let mut material = Material::new(
             id.clone(),
             request.sku.clone(),
@@ -98,10 +98,9 @@ impl super::MaterialService {
             return Ok(HashMap::new());
         }
 
-        let placeholders: Vec<&str> = ids.iter().map(|_| "?").collect();
         let sql = format!(
             "SELECT * FROM materials WHERE id IN ({}) AND deleted_at IS NULL",
-            placeholders.join(", ")
+            crate::shared::utils::sql::in_clause_placeholders(ids)
         );
 
         let params: Vec<Box<dyn rusqlite::types::ToSql>> = ids

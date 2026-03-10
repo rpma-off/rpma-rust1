@@ -114,7 +114,7 @@ impl TaskCreationService {
         let now = Utc::now();
         let now_millis = now.timestamp_millis();
         Task {
-            id: Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             task_number: task_number.clone(),
             title: req
                 .title

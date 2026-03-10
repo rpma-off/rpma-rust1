@@ -14,7 +14,6 @@ use crate::shared::services::cross_domain::Client;
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use uuid::Uuid;
 
 /// Service for client-related business operations
 #[derive(Debug)]
@@ -83,7 +82,7 @@ impl ClientService {
         // Create client instance
         let now = Utc::now().timestamp_millis();
         let client = Client {
-            id: Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             name: req.name.clone(),
             email: req.email.clone(),
             phone: req.phone.clone(),

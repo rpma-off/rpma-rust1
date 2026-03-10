@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { useNotificationStore } from '../stores/notificationStore';
-import type { Notification } from '@/lib/backend/notifications';
+import type { Notification } from '../api/notificationTypes';
 
 describe('notificationStore', () => {
   beforeEach(() => {

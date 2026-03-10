@@ -280,16 +280,19 @@ fn update_intervention_params(
     ]
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct InterventionRepository {
     db: Arc<Database>,
 }
 
 impl InterventionRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
 
+    /// TODO: document
     pub fn create_intervention_with_tx(
         &self,
         tx: &Transaction,
@@ -301,6 +304,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn create_intervention(&self, intervention: &Intervention) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
         let fields = InterventionDbFields::from_intervention(intervention);
@@ -334,6 +338,7 @@ impl InterventionRepository {
         }
     }
 
+    /// TODO: document
     pub fn get_intervention(&self, id: &str) -> InterventionResult<Option<Intervention>> {
         let conn = self.db.get_connection()?;
 
@@ -346,6 +351,7 @@ impl InterventionRepository {
         Ok(intervention)
     }
 
+    /// TODO: document
     pub fn get_active_intervention_by_task(
         &self,
         task_id: &str,
@@ -354,6 +360,7 @@ impl InterventionRepository {
         self._get_active_intervention_by_task_with_conn(&conn, task_id)
     }
 
+    /// TODO: document
     pub fn get_latest_intervention_by_task(
         &self,
         task_id: &str,
@@ -387,6 +394,7 @@ impl InterventionRepository {
         Ok(intervention)
     }
 
+    /// TODO: document
     pub fn get_step(&self, id: &str) -> InterventionResult<Option<InterventionStep>> {
         let conn = self.db.get_connection()?;
 
@@ -411,6 +419,7 @@ impl InterventionRepository {
         }
     }
 
+    /// TODO: document
     pub fn get_step_by_number(
         &self,
         intervention_id: &str,
@@ -442,6 +451,7 @@ impl InterventionRepository {
         }
     }
 
+    /// TODO: document
     pub fn get_intervention_steps(
         &self,
         intervention_id: &str,
@@ -459,6 +469,7 @@ impl InterventionRepository {
         Ok(steps)
     }
 
+    /// TODO: document
     pub fn update_intervention(&self, intervention: &Intervention) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
         let fields = InterventionDbFields::from_intervention(intervention);
@@ -467,6 +478,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn update_intervention_with_tx(
         &self,
         tx: &Transaction,
@@ -478,6 +490,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn save_step_with_tx(
         &self,
         tx: &Transaction,
@@ -597,6 +610,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
         let f = StepDbFields::from_step(step);
@@ -637,6 +651,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn delete_intervention(&self, id: &str) -> InterventionResult<()> {
         let conn = self.db.get_connection()?;
 
@@ -652,6 +667,7 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// TODO: document
     pub fn list_interventions(
         &self,
         status: Option<&str>,

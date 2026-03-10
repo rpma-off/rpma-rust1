@@ -60,7 +60,6 @@ const mockClientsList = ipcClient.clients.list as jest.MockedFunction<typeof ipc
 describe('TaskManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
     mockTasksList.mockResolvedValue({
       data: [
         {
@@ -139,6 +138,10 @@ describe('TaskManager', () => {
     await screen.findByText('Test Task');
     const deleteButton = await screen.findByRole('button', { name: /supprimer/i });
     await user.click(deleteButton);
+
+    // The ConfirmDialog should now be open — click the confirm button inside it
+    const confirmButton = await screen.findByRole('button', { name: /supprimer/i });
+    await user.click(confirmButton);
 
     await waitFor(() => {
       expect(mockTasksDelete).toHaveBeenCalledWith('task-1', 'mock-token');

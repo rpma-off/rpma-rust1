@@ -178,7 +178,7 @@ impl CalendarEventRepository {
         input: CreateEventInput,
         created_by: Option<String>,
     ) -> RepoResult<CalendarEvent> {
-        let id = uuid::Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let now = chrono::Utc::now().timestamp_millis();
 
         let participants_json = serde_json::to_string(&input.participants.unwrap_or_default())

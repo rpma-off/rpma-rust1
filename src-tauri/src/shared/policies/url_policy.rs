@@ -1,5 +1,6 @@
 //! URL safety validation policy.
 
+/// TODO: document
 pub fn validate_https_url(url: &str) -> Result<(), String> {
     if url.is_empty() {
         return Err("URL cannot be empty".to_string());

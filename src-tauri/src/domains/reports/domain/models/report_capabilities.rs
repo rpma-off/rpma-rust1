@@ -1,6 +1,7 @@
 ﻿use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ReportCapabilities {
     pub version: String,

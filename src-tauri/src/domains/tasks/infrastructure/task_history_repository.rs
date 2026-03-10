@@ -84,6 +84,7 @@ pub struct TaskHistoryRepository {
 }
 
 impl TaskHistoryRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self {
             db,
@@ -244,6 +245,7 @@ impl TaskHistoryRepository {
         self.cache.remove(&self.cache_key_builder.id(id));
     }
 
+    /// TODO: document
     pub fn invalidate_all_cache(&self) {
         self.cache.clear();
     }
@@ -391,7 +393,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(
             task_id,
@@ -424,7 +426,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let history1 = TaskHistory::new(
             task_id.clone(),
@@ -454,7 +456,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(
             task_id,
@@ -475,7 +477,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let mut history = TaskHistory::new(
             task_id,
@@ -498,7 +500,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let history = TaskHistory::new(
             task_id,
@@ -520,7 +522,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         let history1 = TaskHistory::new(
             task_id.clone(),
@@ -550,7 +552,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_task(repo.db.as_ref(), &task_id);
         repo.save(TaskHistory::new(
             task_id.clone(),
@@ -591,7 +593,7 @@ mod tests {
         let repo = TaskHistoryRepository::new(Arc::new(db), Arc::clone(&cache));
 
         for i in 0..10 {
-            let task_id = uuid::Uuid::new_v4().to_string();
+            let task_id = crate::shared::utils::uuid::generate_uuid_string();
             seed_task(repo.db.as_ref(), &task_id);
             let history = TaskHistory::new(
                 task_id,

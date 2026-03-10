@@ -92,10 +92,8 @@ struct WSClient {
 }
 
 /// Global WebSocket server state
-#[allow(dead_code)]
 struct WSServerState {
     clients: HashMap<String, WSClient>,
-    #[allow(dead_code)]
     broadcast_tx: mpsc::UnboundedSender<WSMessage>,
 }
 

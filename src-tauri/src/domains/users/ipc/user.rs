@@ -10,6 +10,7 @@ use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
 use tracing::{debug, info, instrument};
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct BootstrapFirstAdminRequest {
     pub user_id: String,
@@ -155,6 +156,8 @@ pub async fn has_admins(
     }
 }
 
+/// TODO: document
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn get_users(
     page: i32,
@@ -179,6 +182,8 @@ pub async fn get_users(
     }
 }
 
+/// TODO: document
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn create_user(
     user_data: CreateUserRequest,
@@ -192,6 +197,8 @@ pub async fn create_user(
     }
 }
 
+/// TODO: document
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn update_user(
     user_id: String,
@@ -216,6 +223,8 @@ pub async fn update_user(
     }
 }
 
+/// TODO: document
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn update_user_status(
     user_id: String,
@@ -250,6 +259,8 @@ pub async fn update_user_status(
     }
 }
 
+/// TODO: document
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn delete_user(
     user_id: String,

@@ -208,7 +208,7 @@ impl super::AuthService {
             }
         }
 
-        let settings_id = uuid::Uuid::new_v4().to_string();
+        let settings_id = crate::shared::utils::uuid::generate_uuid_string();
         let now = chrono::Utc::now().timestamp_millis();
 
         // Insert default settings with user's name and email

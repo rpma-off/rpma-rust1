@@ -370,7 +370,6 @@ pub struct LeakDetector {
 struct AllocationInfo {
     size: usize,
     allocated_at: SystemTime,
-    #[allow(dead_code)]
     stack_trace: Option<String>,
 }
 
@@ -492,7 +491,6 @@ pub struct LeakStats {
 
 /// Memory manager that coordinates all memory-related functionality
 pub struct MemoryManager {
-    #[allow(dead_code)]
     config: MemoryConfig,
     cache: Arc<TtlLruCache<String, Vec<u8>>>,
     monitor: Arc<MemoryMonitor>,

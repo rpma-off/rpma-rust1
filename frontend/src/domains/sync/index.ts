@@ -1,1 +1,9 @@
-export * from './api';
+export { SyncProvider, useSyncDomainContext } from './api/SyncProvider';
+export { useSyncStatus } from './hooks/useSyncStatus';
+export { useEntitySyncStatus } from './hooks/useEntitySyncStatus';
+export { useOfflineActions } from './hooks/useOfflineActions';
+export { useOfflineQueue } from './hooks/useOfflineQueue';
+export { useOfflineSync } from './hooks/useOfflineSync';
+export type { SyncDomainContextValue } from './api/types';
+export type { ExtendedSyncStatus } from './hooks/useSyncStatus';
+export type { EntitySyncStatus } from './hooks/useEntitySyncStatus';

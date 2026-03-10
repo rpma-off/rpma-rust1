@@ -14,6 +14,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::warn;
 
+/// TODO: document
 #[derive(Clone)]
 pub struct NotificationService {
     config: Arc<Mutex<NotificationConfig>>,
@@ -22,6 +23,7 @@ pub struct NotificationService {
 }
 
 impl NotificationService {
+    /// TODO: document
     pub fn new(config: NotificationConfig) -> Self {
         let mut templates = HashMap::new();
 
@@ -35,11 +37,13 @@ impl NotificationService {
         }
     }
 
+    /// TODO: document
     pub async fn update_config(&self, config: NotificationConfig) {
         let mut current_config = self.config.lock().await;
         *current_config = config;
     }
 
+    /// TODO: document
     pub async fn send_notification(
         &self,
         user_id: String,
@@ -370,6 +374,7 @@ impl NotificationService {
         map
     }
 
+    /// TODO: document
     pub async fn get_config(&self) -> NotificationConfig {
         self.config.lock().await.clone()
     }

@@ -7,7 +7,7 @@ jest.mock('@/domains/auth', () => ({
   useAuth: () => ({ session: { token: 'test-token' } }),
 }));
 
-jest.mock('@/domains/interventions/api', () => ({
+jest.mock('@/domains/interventions', () => ({
   interventionsIpc: {
     get: jest.fn(),
     getProgress: jest.fn(),
@@ -98,7 +98,7 @@ const mockIntervention = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { interventionsIpc } = require('@/domains/interventions/api') as {
+const { interventionsIpc } = require('@/domains/interventions') as {
   interventionsIpc: {
     get: jest.Mock;
     getProgress: jest.Mock;

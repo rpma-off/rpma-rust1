@@ -20,6 +20,10 @@ import type {
 import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
 
+// Re-export so domain-internal files (services, reports) can import these
+// backend types through this IPC layer instead of referencing @/lib/backend directly.
+export type { Intervention, InterventionStep };
+
 /** Assert result is a non-null object, or throw. */
 function ensureObject(result: JsonValue, context: string): asserts result is JsonObject {
   if (result === null || typeof result !== 'object') {

@@ -3,6 +3,10 @@ import { signalMutation } from '@/lib/data-freshness';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { InterventionReport } from '@/lib/backend/reports';
 
+// Re-export so domain-internal files (hooks, services) can import the backend
+// type through this IPC layer instead of referencing @/lib/backend directly.
+export type { InterventionReport };
+
 export const reportsIpc = {
   generate: async (interventionId: string) => {
     const result = await safeInvoke<InterventionReport>(IPC_COMMANDS.REPORT_GENERATE, {

@@ -4,6 +4,7 @@ pub use crate::domains::inventory::infrastructure::material::{
     RecordConsumptionRequest, UpdateStockRequest,
 };
 
+/// TODO: document
 pub fn parse_material_type(material_type: Option<&str>) -> Option<MaterialType> {
     material_type.and_then(|value| match value {
         "ppf_film" => Some(MaterialType::PpfFilm),

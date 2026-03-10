@@ -7,17 +7,20 @@ use crate::domains::notifications::domain::models::notification::Notification;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info, instrument};
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetNotificationsResponse {
     pub notifications: Vec<Notification>,
     pub unread_count: i32,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SuccessResponse {
     pub success: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateNotificationRequest {
     pub user_id: String,

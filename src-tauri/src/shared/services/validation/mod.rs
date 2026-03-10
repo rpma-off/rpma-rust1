@@ -22,6 +22,7 @@ mod tests;
 
 // ── Error type ────────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Error, Debug)]
 pub enum ValidationError {
     #[error("Invalid email format: {0}")]
@@ -48,6 +49,7 @@ pub enum ValidationError {
 
 // ── Service struct ────────────────────────────────────────────────────────────
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct ValidationService;
 
@@ -58,6 +60,7 @@ impl Default for ValidationService {
 }
 
 impl ValidationService {
+    /// TODO: document
     pub fn new() -> Self {
         Self
     }

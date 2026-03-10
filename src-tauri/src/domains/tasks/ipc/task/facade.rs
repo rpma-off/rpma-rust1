@@ -15,7 +15,7 @@ use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
 use crate::shared::services::validation::ValidationService;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 // Re-export all request/response types so callers see no change.
 pub use super::types::{
@@ -242,7 +242,7 @@ pub async fn task_crud(
                 .validate_task_action(crate::commands::TaskAction::Create { data })
                 .await
                 .map_err(|e| {
-                    error!("Task validation failed: {}", e);
+                    warn!("Task validation failed: {}", e);
                     AppError::Validation(format!("Task validation failed: {}", e))
                 })?;
 
@@ -301,7 +301,7 @@ pub async fn task_crud(
                 })
                 .await
                 .map_err(|e| {
-                    error!("Task validation failed: {}", e);
+                    warn!("Task validation failed: {}", e);
                     AppError::Validation(format!("Task validation failed: {}", e))
                 })?;
 

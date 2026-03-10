@@ -10,8 +10,8 @@ import {
   PPF_STEP_CONFIG,
   PpfWorkflowLayout,
   getPPFStepPath,
+  usePpfWorkflow,
 } from '@/domains/interventions';
-import { usePpfWorkflow } from '@/domains/interventions/api/client';
 
 export default function PPFWorkflowPage() {
   const router = useRouter();

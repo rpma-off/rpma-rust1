@@ -104,6 +104,7 @@ pub struct NotificationPreferencesRepository {
 }
 
 impl NotificationPreferencesRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self {
             db,
@@ -335,6 +336,7 @@ impl NotificationPreferencesRepository {
         self.cache.remove(&self.cache_key_builder.id(user_id));
     }
 
+    /// TODO: document
     pub fn invalidate_all_cache(&self) {
         self.cache.clear();
     }
@@ -557,7 +559,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
 
@@ -584,8 +586,8 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user1_id = uuid::Uuid::new_v4().to_string();
-        let user2_id = uuid::Uuid::new_v4().to_string();
+        let user1_id = crate::shared::utils::uuid::generate_uuid_string();
+        let user2_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user1_id);
         seed_user(repo.db.as_ref(), &user2_id);
         let prefs1 = NotificationPreferences::new(user1_id);
@@ -604,7 +606,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id);
 
@@ -619,7 +621,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let mut prefs = NotificationPreferences::new(user_id);
         repo.save(prefs.clone()).await.unwrap();
@@ -637,7 +639,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id);
         repo.save(prefs.clone()).await.unwrap();
@@ -653,7 +655,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
         repo.save(prefs).await.unwrap();
@@ -668,7 +670,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
 
         let prefs1 = repo.get_or_create(user_id.clone()).await.unwrap();
@@ -684,7 +686,7 @@ mod tests {
         let cache = Arc::new(Cache::new(100));
         let repo = NotificationPreferencesRepository::new(Arc::new(db), Arc::clone(&cache));
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = crate::shared::utils::uuid::generate_uuid_string();
         seed_user(repo.db.as_ref(), &user_id);
         let prefs = NotificationPreferences::new(user_id.clone());
         repo.save(prefs).await.unwrap();

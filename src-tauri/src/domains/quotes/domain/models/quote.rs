@@ -199,6 +199,7 @@ pub struct CreateQuoteRequest {
 }
 
 impl CreateQuoteRequest {
+    /// TODO: document
     pub fn validate(&self) -> Result<(), String> {
         if self.client_id.trim().is_empty() {
             return Err("Client ID is required".to_string());
@@ -240,6 +241,7 @@ pub struct CreateQuoteItemRequest {
 }
 
 impl CreateQuoteItemRequest {
+    /// TODO: document
     pub fn validate(&self) -> Result<(), String> {
         if self.label.trim().is_empty() {
             return Err("Item label is required".to_string());
@@ -355,6 +357,7 @@ pub struct CreateQuoteAttachmentRequest {
 }
 
 impl CreateQuoteAttachmentRequest {
+    /// TODO: document
     pub fn validate(&self) -> Result<(), String> {
         if self.file_name.trim().is_empty() {
             return Err("File name is required".to_string());

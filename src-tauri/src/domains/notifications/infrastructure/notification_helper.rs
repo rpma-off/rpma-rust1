@@ -22,7 +22,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "TaskAssignment".to_string(),
             title: "Nouvelle tâche assignée".to_string(),
@@ -51,7 +51,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "TaskUpdate".to_string(),
             title: "Mise à jour de tâche".to_string(),
@@ -79,7 +79,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "InterventionCreated".to_string(),
             title: "Nouvelle intervention".to_string(),
@@ -107,7 +107,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "QuoteCreated".to_string(),
             title: "Nouveau devis créé".to_string(),
@@ -138,7 +138,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "QuoteApproved".to_string(),
             title: "Devis approuvé".to_string(),
@@ -166,7 +166,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "ClientCreated".to_string(),
             title: "Nouveau client ajouté".to_string(),
@@ -194,7 +194,7 @@ impl NotificationHelper {
     ) -> Result<(), String> {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         let notification = Notification {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             created_at: chrono::Utc::now(),
             r#type: "SystemAlert".to_string(),
             title: title.to_string(),

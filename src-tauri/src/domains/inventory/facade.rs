@@ -13,18 +13,21 @@ use super::application::{
 };
 use super::infrastructure::MaterialService;
 
+/// TODO: document
 #[derive(Debug)]
 pub struct InventoryFacade {
     service: Arc<InventoryService>,
 }
 
 impl InventoryFacade {
+    /// TODO: document
     pub fn new(db: Arc<Database>, material_service: Arc<MaterialService>) -> Self {
         Self {
             service: Arc::new(InventoryService::new(db, material_service)),
         }
     }
 
+    /// TODO: document
     pub fn list_materials(
         &self,
         material_type: Option<String>,
@@ -39,12 +42,14 @@ impl InventoryFacade {
             .map_err(|err| map_inventory_error("list_materials", err))
     }
 
+    /// TODO: document
     pub fn update_stock(&self, request: UpdateStockRequest) -> Result<Material, AppError> {
         self.service
             .update_stock(request)
             .map_err(|err| map_inventory_error("update_stock", err))
     }
 
+    /// TODO: document
     pub fn record_consumption(
         &self,
         request: RecordConsumptionRequest,
@@ -54,12 +59,14 @@ impl InventoryFacade {
             .map_err(|err| map_inventory_error("record_consumption", err))
     }
 
+    /// TODO: document
     pub fn get_material_stats(&self) -> Result<MaterialStats, AppError> {
         self.service
             .get_material_stats()
             .map_err(|err| map_inventory_error("get_material_stats", err))
     }
 
+    /// TODO: document
     pub fn get_inventory_stats(&self) -> Result<InventoryStats, AppError> {
         self.service
             .get_inventory_stats()
@@ -73,10 +80,12 @@ impl InventoryFacade {
             .map_err(|err| map_inventory_error("get_dashboard_data", err))
     }
 
+    /// TODO: document
     pub fn intervention_finalized_handler(&self) -> Arc<dyn DomainEventHandler> {
         Arc::new(InterventionFinalizedHandler::new(self.service.clone()))
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

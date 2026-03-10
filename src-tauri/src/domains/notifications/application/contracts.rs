@@ -6,6 +6,7 @@ use crate::domains::notifications::domain::models::notification::{
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct SendNotificationRequest {
     pub user_id: String,
@@ -16,6 +17,7 @@ pub struct SendNotificationRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UpdateNotificationConfigRequest {
     pub email_provider: Option<String>,

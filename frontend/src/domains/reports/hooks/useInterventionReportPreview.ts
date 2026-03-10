@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/domains/auth';
-import { interventionsIpc } from '@/domains/interventions/api';
+import { interventionsIpc } from '@/domains/interventions';
 import { reportsIpc } from '../ipc/reports.ipc';
 import { buildInterventionReportViewModel } from '../services/buildInterventionReportViewModel';
 import { reportKeys } from '@/lib/query-keys';
@@ -40,6 +40,7 @@ export function useInterventionReportPreview(
       );
     },
     select: (data) => data,
+    staleTime: 5 * 60 * 1000,
   });
 
   return {

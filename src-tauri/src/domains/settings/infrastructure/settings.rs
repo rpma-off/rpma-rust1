@@ -8,7 +8,6 @@ use crate::commands::AppError;
 use rusqlite::params;
 use std::sync::Arc;
 use tracing::{error, warn};
-use uuid::Uuid;
 
 // --- Sub-module declarations ------------------------------------------------
 // Each sub-module extends `SettingsService` via `impl super::SettingsService`.
@@ -28,12 +27,14 @@ mod update_security;
 
 // ---------------------------------------------------------------------------
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct SettingsService {
     db: Arc<crate::db::Database>,
 }
 
 impl SettingsService {
+    /// TODO: document
     pub fn new(db: Arc<crate::db::Database>) -> Self {
         Self { db }
     }
@@ -80,7 +81,7 @@ impl SettingsService {
         setting_type: &str,
         details: &str,
     ) {
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let timestamp = chrono::Utc::now().timestamp_millis();
 
         if let Err(e) = tx.execute(
@@ -103,7 +104,6 @@ mod tests {
     use std::sync::Arc;
     use tempfile::TempDir;
     use tracing::{debug, info};
-    use uuid::Uuid;
 
     struct LocalTestDb {
         _temp_dir: TempDir,
@@ -234,7 +234,10 @@ mod tests {
 
         conn.execute(
             "INSERT INTO user_settings (id, user_id) VALUES (?, ?)",
-            params![Uuid::new_v4().to_string(), legacy_user_id],
+            params![
+                crate::shared::utils::uuid::generate_uuid_string(),
+                legacy_user_id
+            ],
         )
         .expect("failed to seed legacy user_settings row");
 
@@ -284,7 +287,7 @@ mod tests {
         conn.execute(
             "INSERT INTO user_settings (id, user_id, notifications_quiet_hours_start, notifications_quiet_hours_end)
              VALUES (?, ?, NULL, NULL)",
-            params![Uuid::new_v4().to_string(), legacy_user_id],
+            params![crate::shared::utils::uuid::generate_uuid_string(), legacy_user_id],
         )
         .expect("failed to seed legacy nullable user_settings row");
 

@@ -3,7 +3,6 @@
 use crate::db::Database;
 use crate::domains::inventory::domain::models::material::Supplier;
 use rusqlite::params;
-use uuid::Uuid;
 
 use super::material::{CreateSupplierRequest, MaterialError, MaterialResult};
 
@@ -13,6 +12,7 @@ pub(crate) struct SupplierRepository {
 }
 
 impl SupplierRepository {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }
@@ -25,7 +25,7 @@ impl SupplierRepository {
     ) -> MaterialResult<Supplier> {
         self.validate_create_supplier_request(&request)?;
 
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
 
         let supplier = Supplier {
             id: id.clone(),

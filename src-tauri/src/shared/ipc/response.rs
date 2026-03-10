@@ -48,6 +48,7 @@ pub struct ApiResponse<T> {
 }
 
 impl<T> ApiResponse<T> {
+    /// TODO: document
     pub fn success(data: T) -> Self {
         Self {
             success: true,
@@ -59,6 +60,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// TODO: document
     pub fn error(error: AppError) -> Self {
         let error_code = error.code().to_string();
         let sanitized = error.sanitize_for_frontend();
@@ -77,6 +79,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// TODO: document
     pub fn error_message(message: &str) -> Self {
         Self {
             success: false,
@@ -92,11 +95,13 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// TODO: document
     pub fn with_correlation_id(mut self, correlation_id: Option<String>) -> Self {
         self.correlation_id = correlation_id.or_else(|| Some(generate_correlation_id()));
         self
     }
 
+    /// TODO: document
     pub fn to_compressed_if_large(self) -> Result<CompressedApiResponse, AppError>
     where
         T: Serialize,
@@ -147,6 +152,7 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// TODO: document
     pub fn to_msgpack(&self) -> Result<Vec<u8>, AppError>
     where
         T: Serialize,
@@ -157,6 +163,7 @@ impl<T> ApiResponse<T> {
 }
 
 impl CompressedApiResponse {
+    /// TODO: document
     pub fn decompress_data<T>(&self) -> Result<Option<T>, AppError>
     where
         T: for<'de> Deserialize<'de>,

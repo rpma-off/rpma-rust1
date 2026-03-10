@@ -1,1 +1,15 @@
-export * from './api';
+export { SettingsProvider, useSettingsContext } from './api/SettingsProvider';
+export { useSettings } from './api/useSettings';
+export { useSettingsActions } from './api/useSettingsActions';
+export { ProfileSettingsTab } from './components/ProfileSettingsTab';
+export { PreferencesTab } from './components/PreferencesTab';
+export { SecurityTab } from './components/SecurityTab';
+export { PerformanceTab } from './components/PerformanceTab';
+export { AccessibilityTab } from './components/AccessibilityTab';
+export { NotificationsTab } from './components/NotificationsTab';
+export { default as SettingsPageContent } from './components/SettingsPageContent';
+export { settingsService, configurationService } from './server';
+export { settingsIpc } from './ipc/settings.ipc';
+export { DEFAULT_PROFILE, DEFAULT_PREFERENCES, DEFAULT_SECURITY, DEFAULT_PERFORMANCE, DEFAULT_ACCESSIBILITY, DEFAULT_NOTIFICATIONS, DEFAULT_USER_SETTINGS, isAdminOnlyCategory } from './services';
+export type { UserSettings, UpdatePreferencesRequest, UpdateNotificationsRequest, UpdateAccessibilityRequest, UpdatePerformanceRequest, UpdateProfileRequest, ChangePasswordRequest, UseSettingsResult, UseSettingsActionsResult } from './api/types';
+export type { Configuration, BusinessRule, SettingsCategory } from './services';

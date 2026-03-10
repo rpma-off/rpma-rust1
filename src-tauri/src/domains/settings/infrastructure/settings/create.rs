@@ -4,7 +4,6 @@ use crate::commands::AppError;
 use crate::domains::settings::domain::models::settings::UserSettings;
 use rusqlite::{params, types::Value};
 use tracing::{debug, error, info, warn};
-use uuid::Uuid;
 
 pub(super) const INSERT_USER_SETTINGS_SQL: &str = r#"
     INSERT INTO user_settings (
@@ -158,7 +157,7 @@ impl super::SettingsService {
             }
         }
 
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
 
         debug!("Creating user settings for user {} with ID {}", user_id, id);
 
@@ -263,7 +262,7 @@ impl super::SettingsService {
         user_id: &str,
         settings: &UserSettings,
     ) -> Result<(), AppError> {
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
 
         let params = Self::build_user_settings_params(&id, user_id, settings);
         tx.execute(INSERT_USER_SETTINGS_SQL, rusqlite::params_from_iter(params))

@@ -1,5 +1,6 @@
 "use client";
-export * from '../hooks/useInterventionState';
-export * from '../hooks/useInterventionSync';
-export * from '../hooks/usePpfWorkflow';
+export { useInterventionState } from '../hooks/useInterventionState';
+export { useInterventionSync } from '../hooks/useInterventionSync';
+export type { PpfDefect } from '../hooks/usePpfWorkflow';
+export { usePpfWorkflow } from '../hooks/usePpfWorkflow';
 export { DesktopGPS } from '../components/GPS/DesktopGPS';

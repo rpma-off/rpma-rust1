@@ -2,10 +2,10 @@
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 pub use crate::shared::services::event_system::DomainEvent;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InterventionFinalized {
     pub intervention_id: String,
@@ -17,7 +17,7 @@ pub struct InterventionFinalized {
 impl From<InterventionFinalized> for DomainEvent {
     fn from(event: InterventionFinalized) -> Self {
         DomainEvent::InterventionFinalized {
-            id: Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             intervention_id: event.intervention_id,
             task_id: event.task_id,
             technician_id: event.technician_id,

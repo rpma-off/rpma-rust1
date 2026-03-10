@@ -16,4 +16,5 @@ export { PPFStep } from './steps/PPFStep';
 export { ScheduleStep } from './steps/ScheduleStep';
 
 // Types and Constants
-export * from './types';
+export type { FormStep, TaskFormData, TaskFormProps, FormStepProps, PPFZone } from './types';
+export { ENHANCED_STEPS, DEFAULT_FORM_DATA, ENHANCED_VALIDATION_RULES, PPF_ZONES, VEHICLE_MAKES, TIME_SLOTS } from './types';

@@ -18,6 +18,7 @@ pub struct ReportService {
 }
 
 impl ReportService {
+    /// TODO: document
     pub fn new(db: Arc<Database>, app_data_dir: std::path::PathBuf) -> Self {
         let repository = Box::new(ReportRepository::new(db.clone()));
         Self {
@@ -28,6 +29,7 @@ impl ReportService {
     }
 
     /// Generate a report for an intervention: create PDF, persist metadata, return report.
+    #[tracing::instrument(skip(self))]
     pub async fn generate_report(
         &self,
         intervention_id: &str,
@@ -80,7 +82,7 @@ impl ReportService {
         let now = Utc::now();
         let now_millis = now.timestamp_millis();
         let report = InterventionReport {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             intervention_id: intervention_id.to_string(),
             report_number,
             generated_at: now,

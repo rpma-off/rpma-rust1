@@ -3,7 +3,6 @@
 use crate::commands::AppError;
 use rusqlite::params;
 use tracing::error;
-use uuid::Uuid;
 
 impl super::SettingsService {
     /// Soft-delete user account and purge settings/consent/session data.
@@ -61,7 +60,7 @@ impl super::SettingsService {
         let _ = tx.execute(
             "INSERT INTO settings_audit_log (id, user_id, setting_type, details, timestamp) VALUES (?, ?, ?, ?, ?)",
             params![
-                Uuid::new_v4().to_string(),
+                crate::shared::utils::uuid::generate_uuid_string(),
                 user_id,
                 "account",
                 "Account soft-deleted and user settings/consent purged",

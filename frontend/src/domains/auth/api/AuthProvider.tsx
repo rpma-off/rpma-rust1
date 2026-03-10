@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile: null,
     loading: true,
     isAuthenticating: false,
+    isHydrating: true,
   });
 
   const loadProfile = useCallback(async (user: UserSession) => {
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profile: null,
           loading: false,
           isAuthenticating: false,
+          isHydrating: false,
         });
         toast.error('Votre compte a ete supprime. Veuillez vous reconnecter.');
       }
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profile: null,
           loading: false,
           isAuthenticating: false,
+          isHydrating: false,
         });
         toast.error('Session expiree. Veuillez vous reconnecter.');
       }
@@ -71,13 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (!SecureStorage.isAvailable()) {
           console.warn('Secure storage not available, skipping session load');
-          setState({
-            user: null,
-            profile: null,
-            loading: false,
-            isAuthenticating: false,
-          });
-          return;
+            setState({
+              user: null,
+              profile: null,
+              loading: false,
+              isAuthenticating: false,
+              isHydrating: false,
+            });
+            return;
         }
 
         let session;
@@ -104,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               profile: null,
               loading: false,
               isAuthenticating: false,
+              isHydrating: false,
             });
             loadProfile(validatedSession);
           } else {
@@ -115,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               profile: null,
               loading: false,
               isAuthenticating: false,
+              isHydrating: false,
             });
           }
         } else {
@@ -123,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             profile: null,
             loading: false,
             isAuthenticating: false,
+            isHydrating: false,
           });
         }
       } catch (error) {
@@ -132,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profile: null,
           loading: false,
           isAuthenticating: false,
+          isHydrating: false,
         });
       }
     };
@@ -155,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile: null,
         loading: false,
         isAuthenticating: false,
+        isHydrating: false,
       });
 
       loadProfile(userSession);
@@ -194,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile: null,
         loading: false,
         isAuthenticating: false,
+        isHydrating: false,
       });
 
       loadProfile(userSession);
@@ -225,6 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile: null,
         loading: false,
         isAuthenticating: false,
+        isHydrating: false,
       });
     }
   }, [state.user?.token]);
@@ -241,11 +252,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session: state.user,
     loading: state.loading,
     isAuthenticating: state.isAuthenticating,
+    isHydrating: state.isHydrating,
     signIn,
     signUp,
     signOut,
     refreshProfile,
-  }), [state.user, state.profile, state.loading, state.isAuthenticating, signIn, signUp, signOut, refreshProfile]);
+  }), [state.user, state.profile, state.loading, state.isAuthenticating, state.isHydrating, signIn, signUp, signOut, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>

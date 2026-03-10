@@ -10,12 +10,14 @@ use tracing::{info, instrument};
 
 const SESSION_DURATION_SECONDS: i64 = 8 * 3600; // 8 hours
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct SessionService {
     repository: SessionRepository,
 }
 
 impl SessionService {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self {
             repository: SessionRepository::new(db),
@@ -38,7 +40,7 @@ impl SessionService {
         email: String,
         role: UserRole,
     ) -> Result<UserSession, AppError> {
-        let token = uuid::Uuid::new_v4().to_string();
+        let token = crate::shared::utils::uuid::generate_uuid_string();
         let session = UserSession::new(
             user_id,
             username.clone(),

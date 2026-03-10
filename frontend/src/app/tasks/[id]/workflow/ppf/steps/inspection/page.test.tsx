@@ -24,9 +24,6 @@ jest.mock('@/domains/interventions', () => ({
   getEffectiveStepData: (step: { collected_data?: Record<string, unknown> | null }) => step.collected_data ?? {},
   getNextPPFStepId: () => null,
   getPPFStepPath: () => 'steps/inspection',
-}));
-
-jest.mock('@/domains/interventions/api/client', () => ({
   usePpfWorkflow: () => ({
     taskId: 'task-1',
     task: null,

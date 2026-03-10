@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { DesktopForm, DesktopTable, type Column, EntitySyncIndicator } from '@/shared/ui';
 import { z } from 'zod';
 import { Plus, Calendar, User } from 'lucide-react';
+import { toast } from 'sonner';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DesktopForm, DesktopTable, type Column, EntitySyncIndicator } from '@/shared/ui';
 import { Task, Client } from '@/types';
 import { convertTimestamps } from '@/lib/types';
 import { UpdateTaskRequest } from '@/lib/backend';
-import { useAuth } from '@/domains/auth';
 import { ipcClient } from '@/lib/ipc';
 import { handleError } from '@/lib/utils/error-handler';
 import { LogDomain } from '@/lib/logging/types';
+import { useAuth } from '@/domains/auth';
 
 // Validation schema for task creation/editing
 const taskSchema = z.object({
@@ -32,6 +34,7 @@ export default function TaskManager() {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user?.token) return;
@@ -118,6 +121,7 @@ export default function TaskManager() {
       };
 
       await ipcClient.tasks.create(taskData, user.token);
+      toast.success('Tâche créée avec succès');
       setShowCreateForm(false);
       loadData();
     } catch (error) {
@@ -170,6 +174,7 @@ export default function TaskManager() {
       };
 
       await ipcClient.tasks.update(editingTask.id, updateData, user.token);
+      toast.success('Tâche mise à jour avec succès');
       setEditingTask(null);
       loadData();
     } catch (error) {
@@ -185,11 +190,15 @@ export default function TaskManager() {
 
   const handleDeleteTask = useCallback(async (taskId: string) => {
     if (!user?.token) return;
+    setTaskToDelete(taskId);
+  }, [user?.token]);
 
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
+  const confirmDeleteTask = useCallback(async () => {
+    if (!user?.token || !taskToDelete) return;
 
     try {
-      await ipcClient.tasks.delete(taskId, user.token);
+      await ipcClient.tasks.delete(taskToDelete, user.token);
+      toast.success('Tâche supprimée avec succès');
       loadData();
     } catch (error) {
       handleError(error, 'Task deletion failed', {
@@ -198,8 +207,10 @@ export default function TaskManager() {
         component: 'TaskManager',
         toastMessage: 'Erreur lors de la suppression de la tâche'
       });
+    } finally {
+      setTaskToDelete(null);
     }
-  }, [loadData, user?.token, user?.user_id]);
+  }, [loadData, taskToDelete, user?.token]);
 
   const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task);
@@ -449,6 +460,17 @@ export default function TaskManager() {
           emptyMessage="Aucune tâche trouvée"
         />
       </div>
+
+      <ConfirmDialog
+        open={taskToDelete !== null}
+        onOpenChange={(open) => { if (!open) setTaskToDelete(null); }}
+        title="Supprimer la tâche"
+        description="Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible."
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        variant="destructive"
+        onConfirm={confirmDeleteTask}
+      />
     </div>
   );
 }

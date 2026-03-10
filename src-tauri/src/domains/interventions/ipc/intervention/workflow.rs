@@ -24,6 +24,7 @@ async fn workflow_ctx(
     Ok(ctx)
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token, request), fields(task_id = %request.task_id, user_id))]
 pub async fn intervention_start(
@@ -54,6 +55,7 @@ pub async fn intervention_start(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token, data), fields(user_id))]
 pub async fn intervention_update(
@@ -86,6 +88,7 @@ pub async fn intervention_update(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token), fields(user_id))]
 pub async fn intervention_delete(
@@ -115,6 +118,7 @@ pub async fn intervention_delete(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token, request), fields(intervention_id = %request.intervention_id, user_id, correlation_id))]
 pub async fn intervention_finalize(
@@ -145,6 +149,7 @@ pub async fn intervention_finalize(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token, action), fields(user_id, correlation_id))]
 pub async fn intervention_workflow(

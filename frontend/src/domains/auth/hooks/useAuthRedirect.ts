@@ -8,16 +8,17 @@ const PUBLIC_ROUTES = ['/login', '/signup', '/unauthorized', '/bootstrap-admin']
 export function useAuthRedirect(
   user: { user_id: string } | null | undefined,
   authLoading: boolean,
-  isAuthenticating: boolean
+  isAuthenticating: boolean,
+  isHydrating: boolean
 ) {
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticating && !user && !PUBLIC_ROUTES.includes(pathname)) {
+    if (!isHydrating && !authLoading && !isAuthenticating && !user && !PUBLIC_ROUTES.includes(pathname)) {
       router.push('/login');
     }
-  }, [user, authLoading, isAuthenticating, pathname, router]);
+  }, [user, authLoading, isAuthenticating, isHydrating, pathname, router]);
 
   return { shouldShowNavigation: !!user && !PUBLIC_ROUTES.includes(pathname) };
 }

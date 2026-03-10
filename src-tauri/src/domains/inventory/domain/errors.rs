@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// TODO: document
 #[derive(Debug, Error)]
 pub enum InventoryDomainError {
     #[error("Invalid stock change: {0}")]

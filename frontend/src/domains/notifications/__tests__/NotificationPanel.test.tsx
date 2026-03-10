@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationPanel } from '../components/NotificationPanel';
 import { useNotificationStore } from '../stores/notificationStore';
-import type { Notification } from '@/lib/backend/notifications';
+import type { Notification } from '../api/notificationTypes';
 
 jest.mock('@/lib/ipc/notification', () => ({
   notificationApi: {

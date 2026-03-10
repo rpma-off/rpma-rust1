@@ -1,8 +1,10 @@
 pub mod report_service;
 
+/// TODO: document
 pub struct ReportsApplicationService;
 
 impl ReportsApplicationService {
+    /// TODO: document
     pub fn capabilities(
     ) -> crate::domains::reports::domain::models::report_capabilities::ReportCapabilities {
         crate::domains::reports::domain::models::report_capabilities::ReportCapabilities {

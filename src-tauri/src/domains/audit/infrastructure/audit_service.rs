@@ -280,7 +280,7 @@ impl AuditService {
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
@@ -322,7 +322,7 @@ impl AuditService {
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
@@ -361,7 +361,7 @@ impl AuditService {
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {
@@ -406,7 +406,7 @@ impl AuditService {
         result: ActionResult,
     ) -> AppResult<()> {
         let event = AuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             event_type: event_type.clone(),
             user_id: user_id.to_string(),
             action: match event_type {

@@ -3,7 +3,6 @@
 use crate::db::Database;
 use crate::domains::inventory::domain::models::material::MaterialCategory;
 use rusqlite::params;
-use uuid::Uuid;
 
 use super::material::{CreateMaterialCategoryRequest, MaterialError, MaterialResult};
 
@@ -13,6 +12,7 @@ pub(crate) struct MaterialCategoryRepository {
 }
 
 impl MaterialCategoryRepository {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }
@@ -25,7 +25,7 @@ impl MaterialCategoryRepository {
     ) -> MaterialResult<MaterialCategory> {
         self.validate_create_category_request(&request)?;
 
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let level = request.level.unwrap_or(1);
 
         let category = MaterialCategory {

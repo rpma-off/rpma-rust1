@@ -3,6 +3,7 @@
  */
 
 export { QuotesProvider, useQuotesDomainContext } from './QuotesProvider';
+/** TODO: document */
 export {
   useQuotesList,
   useQuote,
@@ -18,8 +19,10 @@ export {
   useConvertQuoteToTask,
 } from '../hooks/useQuotes';
 
+/** TODO: document */
 export type { QuotesDomainContextValue } from './types';
 
+/** TODO: document */
 export {
   QuoteStatusBadge,
   QuoteItemsTable,
@@ -41,6 +44,7 @@ export {
   QuoteCharts,
   STATUS_LABELS,
 } from '../components';
+/** TODO: document */
 export type {
   QuoteStatusBadgeProps,
   QuoteItemsTableProps,
@@ -51,12 +55,20 @@ export type {
   QuoteWorkflowPanelProps,
 } from '../components';
 
+/** TODO: document */
 export { computeQuoteStats } from '../utils/quote-stats';
+/** TODO: document */
 export type { QuotePageStats } from '../utils/quote-stats';
 
+/** TODO: document */
 export { formatCents } from '../utils/formatting';
+/** TODO: document */
 export { useQuoteDetailPage } from '../hooks/useQuoteDetailPage';
+/** TODO: document */
 export type { ActiveTab } from '../hooks/useQuoteDetailPage';
+/** TODO: document */
 export { useQuotesPage } from '../hooks/useQuotesPage';
+/** TODO: document */
 export type { ActiveTab as QuotesPageActiveTab, QuoteWithClient } from '../hooks/useQuotesPage';
+/** TODO: document */
 export { useNewQuotePage } from '../hooks/useNewQuotePage';

@@ -92,11 +92,11 @@ Core entities, their relationships, statuses, and storage mapping.
 
 **Key Fields**:
 - `id`, `email`, `username` — identifiers
-- `full_name`, `phone` — profile
+- `first_name`, `last_name`, `phone` — profile
 - `role` — see UserRole enum below
-- `password_hash` — credential
+- `password_hash`, `salt` — credential
 - `is_active` — account status
-- `last_login_at`, `login_count` — activity tracking
+- `last_login`, `login_count` — activity tracking
 - `preferences` — settings JSON
 - `created_at`, `updated_at`, `synced` — audit fields
 
@@ -147,6 +147,22 @@ Core entities, their relationships, statuses, and storage mapping.
 
 ---
 
+### SyncOperation (`sync` domain)
+**Purpose**: Offline-first queue for background synchronization.
+
+**Key Fields**:
+- `id` — identifier
+- `operation_type` — `Create`, `Update`, `Delete`
+- `entity_type` — `Task`, `Client`, `Intervention`, `Step`, `Photo`, `User`
+- `entity_id` — target entity
+- `data` — JSON payload
+- `dependencies` — ordered list of prerequisite entity IDs
+- `status` — `Pending`, `Processing`, `Completed`, `Failed`, `Abandoned`
+- `retry_count`, `max_retries`, `last_error` — retry logic
+- `timestamp_utc`, `created_at`, `updated_at` — timing
+
+---
+
 ## Storage Mapping
 
 | Entity | Primary Table | Key Migration File |
@@ -161,6 +177,8 @@ Core entities, their relationships, statuses, and storage mapping.
 | Quote | `quotes`, `quote_items` | `037_quotes.sql` |
 | Audit Log | `audit_events` | `025_add_analytics_dashboard.sql` |
 | Sync Queue | `sync_queue` | Sync domain infrastructure |
+| Notification | `notifications` | `044_add_notifications_table.sql` |
+| App Settings | `app_settings` | `054_app_settings_table.sql` |
 
 ## Domain Invariants
 

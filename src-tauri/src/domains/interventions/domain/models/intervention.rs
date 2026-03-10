@@ -196,7 +196,7 @@ impl Intervention {
     pub fn new(task_id: String, task_number: String, vehicle_plate: String) -> Self {
         let now = now();
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             task_id,
             task_number: Some(task_number),
             status: InterventionStatus::default(),
@@ -342,7 +342,7 @@ impl Intervention {
         Ok(Self {
             id: row
                 .get::<_, Option<String>>("id")?
-                .unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
+                .unwrap_or_else(|| crate::shared::utils::uuid::generate_uuid_string()),
             task_id: row
                 .get::<_, Option<String>>("task_id")?
                 .unwrap_or_else(|| "UNKNOWN".to_string()),
@@ -448,7 +448,7 @@ mod tests {
 
     #[test]
     fn test_create_intervention() {
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         let intervention = Intervention::new(
             task_id.clone(),
             "ABC-123".to_string(),
@@ -464,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_validate_intervention() {
-        let task_id = uuid::Uuid::new_v4().to_string();
+        let task_id = crate::shared::utils::uuid::generate_uuid_string();
         let mut intervention =
             Intervention::new(task_id, "ABC-123".to_string(), "ABC-123".to_string());
 
@@ -474,7 +474,7 @@ mod tests {
         intervention.task_id = "INVALID".to_string();
         assert!(intervention.validate().is_err());
 
-        intervention.task_id = uuid::Uuid::new_v4().to_string();
+        intervention.task_id = crate::shared::utils::uuid::generate_uuid_string();
 
         // Invalid vehicle year
         intervention.vehicle_year = Some(1800);

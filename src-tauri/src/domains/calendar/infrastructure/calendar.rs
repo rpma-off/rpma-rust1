@@ -4,17 +4,20 @@ use crate::domains::calendar::domain::models::calendar::*;
 use crate::domains::calendar::infrastructure::calendar_repository::CalendarRepository;
 use std::sync::Arc;
 
+/// TODO: document
 pub struct CalendarService {
     repo: CalendarRepository,
 }
 
 impl CalendarService {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self {
             repo: CalendarRepository::new(db),
         }
     }
 
+    /// TODO: document
     pub async fn get_tasks(
         &self,
         date_range: CalendarDateRange,
@@ -25,6 +28,7 @@ impl CalendarService {
             .get_tasks(&date_range, technician_ids.as_deref(), statuses.as_deref())
     }
 
+    /// TODO: document
     pub async fn check_conflicts(
         &self,
         task_id: String,

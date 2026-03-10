@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNewTaskPage } from '@/domains/tasks';
@@ -38,9 +39,9 @@ export default function NewTaskPage() {
             </Button>
 
             <nav className="hidden sm:flex items-center text-sm text-slate-600">
-              <a href="/dashboard" className="hover:text-slate-900 transition-colors">Tableau de bord</a>
+              <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Tableau de bord</Link>
               <span className="mx-2">/</span>
-              <a href="/tasks" className="hover:text-slate-900 transition-colors">Tâches</a>
+              <Link href="/tasks" className="hover:text-slate-900 transition-colors">Tâches</Link>
               <span className="mx-2">/</span>
               <span className="text-slate-900 font-medium">Nouvelle tâche</span>
             </nav>

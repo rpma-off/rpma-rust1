@@ -67,6 +67,7 @@ lazy_static! {
 }
 
 /// Update current navigation path
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_update(
     session_token: String,
@@ -85,6 +86,7 @@ pub async fn navigation_update(
 }
 
 /// Add path to navigation history
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_add_to_history(
     session_token: String,
@@ -102,6 +104,7 @@ pub async fn navigation_add_to_history(
 }
 
 /// Go back in navigation history
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_go_back(
     session_token: String,
@@ -117,6 +120,7 @@ pub async fn navigation_go_back(
 }
 
 /// Go forward in navigation history
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_go_forward(
     session_token: String,
@@ -132,6 +136,7 @@ pub async fn navigation_go_forward(
 }
 
 /// Get current navigation path
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_get_current(
     session_token: String,
@@ -147,6 +152,7 @@ pub async fn navigation_get_current(
 }
 
 /// Refresh current view
+#[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_refresh(
     session_token: String,

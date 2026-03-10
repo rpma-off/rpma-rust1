@@ -14,6 +14,7 @@ pub struct CalendarRepository {
 }
 
 impl CalendarRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
@@ -40,7 +41,7 @@ impl CalendarRepository {
 
         if let Some(tech_ids) = technician_ids {
             if !tech_ids.is_empty() {
-                let placeholders = tech_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+                let placeholders = crate::shared::utils::sql::in_clause_placeholders(tech_ids);
                 sql.push_str(&format!(" AND technician_id IN ({})", placeholders));
                 for id in tech_ids {
                     dyn_params.push(Box::new(id.clone()));
@@ -50,7 +51,7 @@ impl CalendarRepository {
 
         if let Some(statuses) = statuses {
             if !statuses.is_empty() {
-                let placeholders = statuses.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+                let placeholders = crate::shared::utils::sql::in_clause_placeholders(statuses);
                 sql.push_str(&format!(" AND status IN ({})", placeholders));
                 for status in statuses {
                     dyn_params.push(Box::new(status.clone()));
@@ -216,7 +217,7 @@ impl CalendarRepository {
                     )
                     .map_err(|e| format!("Failed to update calendar event: {}", e))?;
                 } else {
-                    let event_id = uuid::Uuid::new_v4().to_string();
+                    let event_id = crate::shared::utils::uuid::generate_uuid_string();
                     let (task_title, technician_id): (String, Option<String>) = tx
                         .query_row(
                             "SELECT COALESCE(title, task_number), technician_id FROM tasks WHERE id = ?1",

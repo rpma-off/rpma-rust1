@@ -12,7 +12,6 @@ use crate::domains::settings::domain::models::settings::{
 use crate::domains::settings::domain::models::settings::AppSettings;
 use rusqlite::params;
 use tracing::{error, info};
-use uuid::Uuid;
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -287,7 +286,7 @@ impl super::SettingsService {
             return self.update_app_settings_column(col_name, json_value, user_id);
         }
 
-        let audit_id = Uuid::new_v4().to_string();
+        let audit_id = crate::shared::utils::uuid::generate_uuid_string();
         let timestamp = chrono::Utc::now().timestamp_millis();
         if let Err(e) = tx.execute(
             "INSERT INTO settings_audit_log (id, user_id, setting_type, details, timestamp) VALUES (?, ?, ?, ?, ?)",

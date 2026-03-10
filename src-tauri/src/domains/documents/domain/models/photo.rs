@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum PhotoType {
@@ -32,6 +33,7 @@ impl ToSql for PhotoType {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "snake_case")]
 pub enum PhotoCategory {
@@ -63,6 +65,7 @@ impl ToSql for PhotoCategory {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Photo {
     pub id: String,
@@ -124,10 +127,11 @@ pub struct Photo {
 }
 
 impl Photo {
+    /// TODO: document
     pub fn new(intervention_id: String, file_path: String) -> Self {
         let now = now();
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             intervention_id,
             step_id: None,
             step_number: None,
@@ -169,6 +173,7 @@ impl Photo {
         }
     }
 
+    /// TODO: document
     pub fn from_row(row: &Row) -> SqliteResult<Self> {
         let gps_location_lat: Option<f64> = row.get("gps_location_lat")?;
         let gps_location_lon: Option<f64> = row.get("gps_location_lon")?;

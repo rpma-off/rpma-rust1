@@ -1,9 +1,11 @@
 use crate::shared::ipc::errors::AppError;
 
+/// TODO: document
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AuthErrorPolicy;
 
 impl AuthErrorPolicy {
+    /// TODO: document
     pub fn authentication_error(raw_error: &str) -> AppError {
         if raw_error.contains("Invalid email or password") {
             AppError::Authentication("Email ou mot de passe incorrect".to_string())
@@ -16,6 +18,7 @@ impl AuthErrorPolicy {
         }
     }
 
+    /// TODO: document
     pub fn signup_error(raw_error: &str) -> AppError {
         match raw_error {
             "Email is required"

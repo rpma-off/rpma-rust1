@@ -21,6 +21,7 @@ pub enum ActionResult {
 }
 
 impl ActionResult {
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             ActionResult::Success => "Success",
@@ -92,6 +93,7 @@ pub enum AuditEventType {
 }
 
 impl AuditEventType {
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             AuditEventType::AuthenticationSuccess => "AuthenticationSuccess",

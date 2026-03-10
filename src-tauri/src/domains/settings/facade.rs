@@ -15,10 +15,12 @@ pub struct SettingsFacade {
 }
 
 impl SettingsFacade {
+    /// TODO: document
     pub fn new(settings_service: Arc<SettingsService>) -> Self {
         Self { settings_service }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

@@ -5,15 +5,18 @@ use crate::domains::reports::domain::models::report_capabilities::ReportCapabili
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use std::sync::Arc;
 
+/// TODO: document
 pub struct ReportsFacade {
     report_service: Arc<ReportService>,
 }
 
 impl ReportsFacade {
+    /// TODO: document
     pub fn new(report_service: Arc<ReportService>) -> Self {
         Self { report_service }
     }
 
+    /// TODO: document
     pub fn get_capabilities() -> ReportCapabilities {
         crate::domains::reports::application::ReportsApplicationService::capabilities()
     }
@@ -33,6 +36,7 @@ impl ReportsFacade {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn generate_report(
         &self,
         intervention_id: &str,
@@ -51,6 +55,7 @@ impl ReportsFacade {
             .await
     }
 
+    /// TODO: document
     pub fn get_report(
         &self,
         report_id: &str,
@@ -60,6 +65,7 @@ impl ReportsFacade {
         self.report_service.get_report(report_id)
     }
 
+    /// TODO: document
     pub fn get_report_by_intervention(
         &self,
         intervention_id: &str,
@@ -70,6 +76,7 @@ impl ReportsFacade {
             .get_report_by_intervention(intervention_id)
     }
 
+    /// TODO: document
     pub fn list_reports(
         &self,
         limit: i32,

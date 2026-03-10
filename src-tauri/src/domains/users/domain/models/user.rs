@@ -3,6 +3,7 @@
 use crate::shared::contracts::common::*;
 use serde::{Deserialize, Serialize};
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
@@ -38,6 +39,7 @@ impl std::fmt::Display for UserRole {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: String,

@@ -5,7 +5,6 @@ use crate::domains::inventory::domain::models::material::{
 };
 use rusqlite::params;
 use tracing::{debug, info};
-use uuid::Uuid;
 
 use super::errors::{MaterialError, MaterialResult};
 use super::types::{
@@ -109,7 +108,7 @@ impl super::MaterialService {
         let material_id = request.material_id.clone();
         let recorded_by = recorded_by.clone();
 
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let mut consumption = MaterialConsumption::new(
             id,
             intervention_id.clone(),
@@ -133,7 +132,7 @@ impl super::MaterialService {
         let now = crate::shared::contracts::common::now();
         let total_used = total_needed;
         let transaction = InventoryTransaction {
-            id: Uuid::new_v4().to_string(),
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             material_id: material_id.clone(),
             transaction_type: InventoryTransactionType::StockOut,
             quantity: total_used,
@@ -333,7 +332,7 @@ impl super::MaterialService {
             }
         }
 
-        let id = Uuid::new_v4().to_string();
+        let id = crate::shared::utils::uuid::generate_uuid_string();
         let total_cost = request.unit_cost.map(|uc| uc * request.quantity);
 
         let transaction = InventoryTransaction {

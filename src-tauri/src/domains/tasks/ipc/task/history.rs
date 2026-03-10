@@ -6,6 +6,7 @@ use crate::domains::tasks::domain::models::task::TaskHistory;
 use serde::Deserialize;
 use tracing::{debug, info};
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetTaskHistoryRequest {
     pub session_token: String,
@@ -14,6 +15,7 @@ pub struct GetTaskHistoryRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn get_task_history(

@@ -19,14 +19,16 @@ mod user_account_manager;
 mod user_ops;
 mod username;
 
+use std::sync::Arc;
+
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::shared::services::security_monitor::SecurityMonitorService;
 use crate::shared::services::validation::ValidationService;
-use std::sync::Arc;
 use tracing::warn;
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct AuthService {
     db: crate::db::Database,
@@ -43,6 +45,7 @@ impl AuthService {
         &self.security_monitor
     }
 
+    /// TODO: document
     pub fn new(db: crate::db::Database) -> Result<Self, String> {
         let db_arc = std::sync::Arc::new(db.clone());
         let session_repository = SessionRepository::new(db_arc);

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use tracing::instrument;
-use uuid::Uuid;
 
 use crate::domains::inventory::domain::models::material::{
     InventoryDashboardData, InventoryStats, InventoryTransaction, InventoryTransactionType,
@@ -19,6 +18,7 @@ use super::errors::{InventoryError, InventoryResult};
 use super::input::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
 
+/// TODO: document
 #[derive(Debug)]
 pub struct InventoryService {
     db: Arc<Database>,
@@ -27,6 +27,7 @@ pub struct InventoryService {
 }
 
 impl InventoryService {
+    /// TODO: document
     pub fn new(db: Arc<Database>, material_service: Arc<MaterialService>) -> Self {
         Self {
             db: db.clone(),
@@ -35,6 +36,7 @@ impl InventoryService {
         }
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn list_materials(
         &self,
@@ -49,6 +51,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn get_material_stats(&self) -> InventoryResult<MaterialStats> {
         self.gateway
@@ -78,6 +81,7 @@ impl InventoryService {
         })
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn get_inventory_stats(&self) -> InventoryResult<InventoryStats> {
         self.gateway
@@ -85,6 +89,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn update_stock(&self, request: UpdateStockRequest) -> InventoryResult<Material> {
         let material = self
@@ -103,6 +108,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn record_consumption(
         &self,
@@ -123,6 +129,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self, event), fields(intervention_id = %event.intervention_id))]
     pub fn handle_intervention_finalized(
         &self,
@@ -154,7 +161,7 @@ impl InventoryService {
 
             let total_used = consumption.quantity_used + consumption.waste_quantity;
             let mut transaction = InventoryTransaction::new(
-                Uuid::new_v4().to_string(),
+                crate::shared::utils::uuid::generate_uuid_string(),
                 consumption.material_id.clone(),
                 InventoryTransactionType::StockOut,
                 total_used,

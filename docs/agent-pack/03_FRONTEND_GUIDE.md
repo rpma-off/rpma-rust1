@@ -6,14 +6,16 @@ The frontend is a Next.js 14 (App Router) application built with React 18, TypeS
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/` | Next.js App Router pages (40+ routes) |
+| `app/` | Next.js App Router pages (25+ routes) |
 | `components/` | Shared, non-domain UI primitives (shadcn/ui base) |
 | `components/ui/` | shadcn/ui component library (Button, Dialog, Input, etc.) |
 | `domains/` | Domain-specific hubs mirroring backend bounded contexts |
-| `hooks/` | Shared custom hooks (60+) |
-| `lib/` | Utilities, IPC client, query keys |
+| `hooks/` | Shared custom hooks |
+| `lib/` | Utilities, IPC client, query keys, logging |
 | `lib/backend/` | **AUTO-GENERATED TYPES — DO NOT EDIT** |
-| `lib/ipc/` | Core IPC layer (client, utils, cache, adapter) |
+| `lib/ipc/` | Core IPC layer (client, utils, cache, adapter, commands) |
+| `shared/` | Shared utilities, contracts, types |
+| `types/` | Manual TypeScript type definitions |
 
 ### Domain Structure (`frontend/src/domains/[domain]/`)
 
@@ -22,9 +24,11 @@ Each domain contains:
 - `components/` — Domain-specific React components
 - `hooks/` — Domain-specific custom hooks
 - `ipc/` — IPC wrapper functions for Tauri calls
+- `services/` — Frontend business logic
 - `stores/` — Zustand stores (where needed)
+- `server/` — Server-side operations (where needed)
 
-**Frontend Feature Domains** (18 total):
+**Frontend Feature Domains** (21 total):
 - **Core Entities**: `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `sync`, `documents`, `settings`, `notifications` (direct backend parity)
 - **High-Level Features**: `admin`, `bootstrap`, `dashboard`, `performance`, `audit` (aggregate or specialized modules)
 
@@ -45,15 +49,20 @@ Each domain contains:
 | `/bootstrap-admin` | `app/bootstrap-admin/page.tsx` | First admin setup |
 | `/dashboard` | `app/dashboard/page.tsx` | Main dashboard |
 | `/tasks` | `app/tasks/page.tsx` | Task list |
+| `/tasks/[id]` | `app/tasks/[id]/page.tsx` | Task detail |
+| `/tasks/new` | `app/tasks/new/page.tsx` | Create task |
 | `/clients` | `app/clients/page.tsx` | Client list |
+| `/clients/[id]` | `app/clients/[id]/page.tsx` | Client detail |
 | `/interventions` | `app/interventions/page.tsx` | Interventions list |
-| `/interventions/[id]` | `app/interventions/[id]/page.tsx` | Intervention detail/workflow |
 | `/inventory` | `app/inventory/page.tsx` | Inventory management |
 | `/quotes` | `app/quotes/page.tsx` | Quotes list |
 | `/schedule` | `app/schedule/page.tsx` | Calendar view |
 | `/settings` | `app/settings/page.tsx` | User preferences |
 | `/admin` | `app/admin/page.tsx` | Admin panel |
 | `/audit` | `app/audit/page.tsx` | Audit logs |
+| `/users` | `app/users/page.tsx` | User management |
+| `/messages` | `app/messages/page.tsx` | Messaging |
+| `/configuration` | `app/configuration/page.tsx` | System configuration |
 
 ---
 
@@ -68,9 +77,14 @@ Each domain contains:
 | File | Purpose |
 |------|---------|
 | `client.ts` | `ipcClient` with namespaced operations |
-| `utils.ts` | `safeInvoke()` wrapper with auto session token injection, error handling, correlation ID, timeout (120s) |
+| `utils.ts` | `safeInvoke()` wrapper with auto session token injection, error handling, correlation ID, timeout |
 | `cache.ts` | Response caching logic |
 | `commands.ts` | Command name constants |
+| `adapter.ts` | IPC adapter abstraction |
+| `real-adapter.ts` | Real Tauri adapter |
+| `test-adapter.ts` | Test mock adapter |
+| `metrics.ts` | IPC call metrics |
+| `retry.ts` | Retry logic for failed calls |
 
 **Usage**:
 ```typescript
@@ -112,7 +126,7 @@ export const taskIpc = {
 
 **Provider**: `frontend/src/app/providers.tsx`
 
-**Query Keys**: Centralized in `frontend/src/lib/query-keys.ts` (if available) or per-domain.
+**Query Keys**: Centralized in `frontend/src/lib/query-keys.ts` or per-domain.
 
 **Domain API Hooks**: `frontend/src/domains/[domain]/api/*.ts`
 ```typescript
@@ -152,8 +166,16 @@ export function useTasks() {
 ## Design System
 
 **shadcn/ui Components**: `frontend/src/components/ui/`
-- Button, Dialog, Input, Select, Table, Card, etc.
+- Button, Dialog, Input, Select, Table, Card, Badge
+- Accordion, Alert, AlertDialog, Avatar
+- Checkbox, Collapsible, Command, ConfirmDialog
+- DropdownMenu, EmptyState, ErrorBoundary, Form
+- Label, Loading, Popover, Progress, RadioGroup
+- ScrollArea, Select, Separator, Sheet, Skeleton
+- Slider, Switch, Table, Tabs, Textarea, Toast, Tooltip
 
 **Forms**: Use `react-hook-form` + Zod validation.
 
 **Loading States**: React Query loading + skeleton components (`<PageSkeleton />`, `loading.tsx`).
+
+**Error Handling**: ErrorBoundary components with fallback UI.

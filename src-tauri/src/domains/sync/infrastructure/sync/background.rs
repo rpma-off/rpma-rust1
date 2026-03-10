@@ -86,12 +86,14 @@ impl Default for ConflictResolver {
 }
 
 impl ConflictResolver {
+    /// TODO: document
     pub fn new() -> Self {
         Self {
             strategy: ConflictResolutionStrategy::LastWriteWins,
         }
     }
 
+    /// TODO: document
     pub fn with_strategy(strategy: ConflictResolutionStrategy) -> Self {
         Self { strategy }
     }
@@ -221,6 +223,7 @@ impl Default for SyncMetrics {
 }
 
 impl SyncMetrics {
+    /// TODO: document
     pub fn new() -> Self {
         Self {
             metrics: Arc::new(Mutex::new(SyncQueueMetrics {
@@ -235,6 +238,7 @@ impl SyncMetrics {
         }
     }
 
+    /// TODO: document
     pub async fn record_sync_result(&self, result: &SyncResult) {
         let mut metrics = self.metrics.lock().await;
         metrics.completed_operations += result.successful_operations as i64;
@@ -243,16 +247,19 @@ impl SyncMetrics {
         metrics.processing_operations = 0;
     }
 
+    /// TODO: document
     pub async fn record_sync_error(&self, _error: &BackgroundSyncError) {
         let mut metrics = self.metrics.lock().await;
         metrics.failed_operations += 1;
     }
 
+    /// TODO: document
     pub async fn update_pending_count(&self, count: i64) {
         let mut metrics = self.metrics.lock().await;
         metrics.pending_operations = count;
     }
 
+    /// TODO: document
     pub async fn get_current(&self) -> Result<SyncQueueMetrics, String> {
         let metrics = self.metrics.lock().await;
         Ok(metrics.clone())

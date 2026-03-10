@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientStats {
     pub total_clients: i32,
@@ -23,6 +24,7 @@ pub struct ClientStats {
     pub clients_by_type: HashMap<String, i32>,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientActivityMetrics {
     pub client_id: String,
@@ -35,6 +37,7 @@ pub struct ClientActivityMetrics {
     pub total_revenue: Option<f64>,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientGeographicStats {
     pub clients_by_state: HashMap<String, i32>,
@@ -42,6 +45,7 @@ pub struct ClientGeographicStats {
     pub top_regions: Vec<(String, i32)>,
 }
 
+/// TODO: document
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientLifecycleReport {
     pub client_id: String,

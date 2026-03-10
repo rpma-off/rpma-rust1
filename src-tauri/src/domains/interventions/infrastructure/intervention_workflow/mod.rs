@@ -5,11 +5,11 @@
 //! - `workflow_steps`   — step advancement, progress saving, completion requirements
 //! - `workflow_queries` — read-only delegators to InterventionDataService
 
+use std::sync::Arc;
+
 use crate::db::Database;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
-
-use std::sync::Arc;
 
 mod workflow_engine;
 mod workflow_queries;

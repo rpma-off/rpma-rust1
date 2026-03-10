@@ -3,20 +3,32 @@
  */
 
 export { SettingsProvider, useSettingsContext } from './SettingsProvider';
+/** TODO: document */
 export { useSettings } from './useSettings';
+/** TODO: document */
 export { useSettingsActions } from './useSettingsActions';
 
+/** TODO: document */
 export { ProfileSettingsTab } from '../components/ProfileSettingsTab';
+/** TODO: document */
 export { PreferencesTab } from '../components/PreferencesTab';
+/** TODO: document */
 export { SecurityTab } from '../components/SecurityTab';
+/** TODO: document */
 export { PerformanceTab } from '../components/PerformanceTab';
+/** TODO: document */
 export { AccessibilityTab } from '../components/AccessibilityTab';
+/** TODO: document */
 export { NotificationsTab } from '../components/NotificationsTab';
+/** TODO: document */
 export { default as SettingsPageContent } from '../components/SettingsPageContent';
 
+/** TODO: document */
 export { settingsService, configurationService } from '../server';
+/** TODO: document */
 export { settingsIpc } from '../ipc/settings.ipc';
 
+/** TODO: document */
 export {
   DEFAULT_PROFILE,
   DEFAULT_PREFERENCES,
@@ -28,6 +40,7 @@ export {
   isAdminOnlyCategory,
 } from '../services';
 
+/** TODO: document */
 export type {
   UserSettings,
   UpdatePreferencesRequest,
@@ -40,4 +53,5 @@ export type {
   UseSettingsActionsResult,
 } from './types';
 
+/** TODO: document */
 export type { Configuration, BusinessRule, SettingsCategory } from '../services';

@@ -5,11 +5,13 @@ use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
 
+/// TODO: document
 pub struct QuotesFacade {
     quote_service: Arc<QuoteService>,
 }
 
 impl QuotesFacade {
+    /// TODO: document
     pub fn new(quote_service: Arc<QuoteService>) -> Self {
         Self { quote_service }
     }
@@ -52,6 +54,7 @@ impl QuotesFacade {
         }
     }
 
+    /// TODO: document
     pub fn map_quote_service_error(&self, e: String) -> AppError {
         let lower = e.to_lowercase();
         if lower.contains("not found") || lower.contains("introuvable") {
@@ -61,6 +64,7 @@ impl QuotesFacade {
         }
     }
 
+    /// TODO: document
     pub fn create(
         &self,
         role: &UserRole,
@@ -73,6 +77,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn get(&self, role: &UserRole, id: &str) -> Result<Option<Quote>, AppError> {
         self.check_permission(role, "read")?;
         self.quote_service
@@ -80,6 +85,7 @@ impl QuotesFacade {
             .map_err(|_| AppError::Database("Failed to retrieve quote".to_string()))
     }
 
+    /// TODO: document
     pub fn list(&self, role: &UserRole, query: &QuoteQuery) -> Result<QuoteListResponse, AppError> {
         self.check_permission(role, "read")?;
         self.quote_service
@@ -87,6 +93,7 @@ impl QuotesFacade {
             .map_err(|_| AppError::Database("Failed to list quotes".to_string()))
     }
 
+    /// TODO: document
     pub fn update(
         &self,
         role: &UserRole,
@@ -99,6 +106,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn delete(&self, role: &UserRole, id: &str) -> Result<bool, AppError> {
         self.check_permission(role, "delete")?;
         self.quote_service
@@ -106,6 +114,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn duplicate(&self, role: &UserRole, id: &str, user_id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "duplicate")?;
         self.quote_service
@@ -113,6 +122,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn add_item(
         &self,
         role: &UserRole,
@@ -125,6 +135,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn update_item(
         &self,
         role: &UserRole,
@@ -138,6 +149,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn delete_item(
         &self,
         role: &UserRole,
@@ -150,6 +162,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn mark_sent(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
@@ -157,6 +170,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn mark_accepted(
         &self,
         role: &UserRole,
@@ -169,6 +183,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn mark_rejected(
         &self,
         role: &UserRole,
@@ -181,6 +196,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn mark_expired(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "expire")?;
         self.quote_service
@@ -188,6 +204,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn mark_changes_requested(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
@@ -195,6 +212,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn reopen(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
@@ -202,6 +220,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn convert_to_task(
         &self,
         role: &UserRole,
@@ -215,6 +234,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn get_attachments(
         &self,
         role: &UserRole,
@@ -226,6 +246,7 @@ impl QuotesFacade {
             .map_err(|_| AppError::Database("Failed to retrieve attachments".to_string()))
     }
 
+    /// TODO: document
     pub fn create_attachment(
         &self,
         role: &UserRole,
@@ -239,6 +260,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn update_attachment(
         &self,
         role: &UserRole,
@@ -252,6 +274,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn delete_attachment(
         &self,
         role: &UserRole,
@@ -264,6 +287,7 @@ impl QuotesFacade {
             .map_err(|e| self.map_quote_service_error(e))
     }
 
+    /// TODO: document
     pub fn get_attachment(
         &self,
         role: &UserRole,

@@ -217,7 +217,7 @@ impl AuditLogHandler {
             _ => {
                 let event_type_str = event.event_type();
                 AuditEvent {
-                    id: uuid::Uuid::new_v4().to_string(),
+                    id: crate::shared::utils::uuid::generate_uuid_string(),
                     event_type: AuditEventType::DataCreated,
                     user_id: "system".to_string(),
                     action: event_type_str.to_string(),

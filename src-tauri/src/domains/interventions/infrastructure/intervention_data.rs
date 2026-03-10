@@ -66,7 +66,7 @@ impl InterventionDataService {
             })?;
         let vehicle_plate = vehicle_plate.unwrap_or_else(|| "UNKNOWN".to_string());
 
-        let intervention_id = uuid::Uuid::new_v4().to_string();
+        let intervention_id = crate::shared::utils::uuid::generate_uuid_string();
 
         let mut intervention =
             Intervention::new(request.task_id.clone(), task_number.clone(), vehicle_plate);
@@ -144,6 +144,14 @@ impl InterventionDataService {
             .customer_requirements
             .clone()
             .map(|reqs| reqs.join("; "));
+
+        // Enforce domain invariants before persisting: validate ranges for
+        // completion_percentage, GPS coordinates, vehicle_year, satisfaction
+        // score, etc.  A validation failure here means the task data contains
+        // out-of-range values that should not propagate into the intervention.
+        intervention
+            .validate()
+            .map_err(|errors| InterventionError::BusinessRule(errors.join("; ")))?;
 
         self.repository
             .create_intervention_with_tx(tx, &intervention)?;
@@ -370,6 +378,7 @@ impl InterventionDataService {
         self.repository.save_steps_batch_with_tx(tx, steps)
     }
 
+    /// TODO: document
     pub fn save_step(&self, step: &InterventionStep) -> InterventionResult<()> {
         self.repository.save_step(step)
     }

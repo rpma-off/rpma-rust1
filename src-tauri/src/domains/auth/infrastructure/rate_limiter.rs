@@ -5,6 +5,7 @@ use rusqlite::params;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct LoginAttempt {
     pub count: u32,
@@ -14,6 +15,7 @@ pub struct LoginAttempt {
     pub lock_until: Option<DateTime<Utc>>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct RateLimiterService {
     db: crate::db::Database,
@@ -25,6 +27,7 @@ pub struct RateLimiterService {
 }
 
 impl RateLimiterService {
+    /// TODO: document
     pub fn new(db: crate::db::Database) -> Self {
         Self {
             db,
@@ -175,7 +178,7 @@ impl RateLimiterService {
                  (id, identifier, attempt_count, first_attempt, last_attempt, is_locked, lock_until, created_at, updated_at)
                  VALUES (?, ?, 1, ?, ?, 0, NULL, ?, ?)",
                 params![
-                    uuid::Uuid::new_v4().to_string(),
+                    crate::shared::utils::uuid::generate_uuid_string(),
                     identifier,
                     now.to_rfc3339(),
                     now.to_rfc3339(),
@@ -338,7 +341,7 @@ impl RateLimiterService {
                  (id, identifier, attempt_count, first_attempt, last_attempt, is_locked, lock_until, created_at, updated_at)
                  VALUES (?, ?, 1, ?, ?, 0, NULL, ?, ?)",
                 params![
-                    uuid::Uuid::new_v4().to_string(),
+                    crate::shared::utils::uuid::generate_uuid_string(),
                     identifier,
                     now.to_rfc3339(),
                     now.to_rfc3339(),

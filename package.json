@@ -58,6 +58,8 @@
     "complexity:enforce": "node scripts/enforce-complexity-rules.js",
     "maintainability:audit": "node scripts/maintainability-audit.js",
     "maintainability:audit:strict": "node scripts/maintainability-audit.js --strict",
+    "maintainability:check": "bash scripts/maintainability-check.sh",
+    "maintainability:check:strict": "bash scripts/maintainability-check.sh --strict",
     "code-review:check": "node scripts/code-review-check.js",
     "install": "npm run frontend:install",
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",

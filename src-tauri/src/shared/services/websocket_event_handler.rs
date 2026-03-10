@@ -8,7 +8,7 @@ use crate::shared::services::domain_event::DomainEvent;
 use crate::shared::services::event_bus::EventHandler;
 use async_trait::async_trait;
 use std::sync::Arc;
-use tracing::debug;
+use tracing::{debug, warn};
 
 /// WebSocket event handler that broadcasts domain events to connected clients
 pub struct WebSocketEventHandler {
@@ -167,7 +167,7 @@ impl WebSocketEventHandler {
                 user_id, reason, ..
             } => {
                 // Don't broadcast auth failures for security
-                debug!("Auth failure for user {:?}: {}", user_id, reason);
+                warn!("Auth failure for user {:?}: {}", user_id, reason);
                 None
             }
             DomainEvent::AuthenticationSuccess { user_id, .. } => {

@@ -1,5 +1,5 @@
-import type { Intervention, InterventionStep } from '@/lib/backend/interventions';
-import type { InterventionReport } from '@/lib/backend/reports';
+import type { Intervention, InterventionStep } from '@/domains/interventions';
+import type { InterventionReport } from '../ipc/reports.ipc';
 import { PLACEHOLDERS, type InterventionReportViewModel, type ReportStepViewModel } from './report-view-model.types';
 
 // ─── Label maps ─────────────────────────────────────────────────────────────

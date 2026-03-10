@@ -155,6 +155,7 @@ pub trait WorkflowStrategy: Send + Sync {
 pub struct StandardPPFStrategy;
 
 impl StandardPPFStrategy {
+    /// TODO: document
     pub fn new() -> Self {
         Self
     }
@@ -273,6 +274,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
 pub struct ExpressPPFStrategy;
 
 impl ExpressPPFStrategy {
+    /// TODO: document
     pub fn new() -> Self {
         Self
     }

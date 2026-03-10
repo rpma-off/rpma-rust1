@@ -17,7 +17,8 @@ The repository enforces Domain-Driven Design (DDD). Cross-domain access is stric
 
 ### Backend DDD Domains (14)
 Located in `src-tauri/src/domains/`:
-- **auth/users**: Authentication, sessions, RBAC, profiles
+- **auth**: Authentication, sessions, RBAC
+- **users**: User profiles, roles, management
 - **tasks**: Work order lifecycle, assignment, status (includes `status` subdomain)
 - **interventions**: PPF execution workflow, steps, progress
 - **inventory**: Material tracking, stock, consumption
@@ -25,14 +26,13 @@ Located in `src-tauri/src/domains/`:
 - **calendar**: Scheduling, timeline views
 - **clients**: Customer profiles, history
 - **reports**: Business intelligence, analytics, exports
-- **documents**: Photo storage, file attachments
+- **documents**: Photo storage, file attachments, intervention reports
 - **sync**: Offline queue, background sync
-- **audit**: Security logging, activity monitoring
+- **audit**: Security logging, activity monitoring, alerting
 - **settings**: System and user configuration
-- **notifications**: In-app notifications and messaging (includes `message` subdomain)
-- **navigation**: Backend-driven navigation and shortcuts
+- **notifications**: In-app notifications and messaging
 
-### Frontend Feature Domains (18)
+### Frontend Feature Domains (21)
 Located in `frontend/src/domains/`:
 `admin`, `audit`, `auth`, `bootstrap`, `calendar`, `clients`, `dashboard`, `documents`, `interventions`, `inventory`, `notifications`, `performance`, `quotes`, `reports`, `settings`, `sync`, `tasks`, `users`.
 
@@ -52,14 +52,14 @@ Located in `frontend/src/domains/`:
 
 **Entry Points**:
 - Frontend: `frontend/src/app/layout.tsx`, `frontend/src/app/page.tsx`
-- Backend Commands: `src-tauri/src/main.rs` (command registration lines 66-312)
-- Database: `src-tauri/src/db/mod.rs`, `src-tauri/src/schema.sql`
+- Backend Commands: `src-tauri/src/main.rs` (command registration lines 69-315, ~246 commands)
+- Database: `src-tauri/src/db/mod.rs`, `src-tauri/src/db/connection.rs`
 - IPC Client: `frontend/src/lib/ipc/client.ts`, `frontend/src/lib/ipc/utils.ts`
 
 **Key Configuration**:
 - Type Generation: `npm run types:sync` → outputs to `frontend/src/lib/backend/`
-- Migrations: `src-tauri/migrations/` (52 migrations, versions 002-052)
-- Session Duration: 8 hours (28,800 seconds)
+- Migrations: `src-tauri/migrations/` (53 migrations, versions 002-054)
+- Session Duration: 8 hours (480 minutes / 28,800 seconds)
 
 ---
 
