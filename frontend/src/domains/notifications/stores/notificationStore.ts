@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Notification } from '@/lib/backend/notifications';
+import type { Notification } from '../api/notificationTypes';
 
 interface NotificationState {
   notifications: Notification[];

@@ -1,1 +1,15 @@
-export * from './api';
+export { CalendarProvider, useCalendarDomainContext } from './api/CalendarProvider';
+export { useCalendar } from './hooks/useCalendar';
+export type { CalendarViewMode, CalendarState, UseCalendarReturn } from './hooks/useCalendar';
+export type { CalendarDomainContextValue } from './api/types';
+export { useCalendarStore } from './stores/calendarStore';
+export { useCalendarEvents } from './hooks/useCalendarEvents';
+export { getCalendarTasks, checkCalendarConflicts, scheduleTask, rescheduleTask, createDateRange, createCalendarFilter } from './ipc/calendar';
+export { CalendarHeader } from './components/CalendarHeader';
+export { CalendarView } from './components/CalendarView';
+export { MonthView } from './components/MonthView';
+export { WeekView } from './components/WeekView';
+export { DayView } from './components/DayView';
+export { AgendaView } from './components/AgendaView';
+export { CalendarFilters } from './components/CalendarFilters';
+export { CalendarDashboard } from './components/CalendarDashboard';

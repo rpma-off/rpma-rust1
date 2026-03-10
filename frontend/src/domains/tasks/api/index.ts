@@ -48,8 +48,20 @@ export {
   CompletedTaskPageContent,
 } from '../components/completed';
 
-/** TODO: document */
-export * from '../components/TaskForm';
+export { default as TaskForm } from '../components/TaskForm/TaskForm';
+export { default as TaskFormWizard } from '../components/TaskForm/TaskFormWizard';
+export { useTaskForm } from '../components/TaskForm/useTaskForm';
+export { useTaskFormSteps } from '../components/TaskForm/TaskFormSteps';
+export { useTaskFormSubmission } from '../components/TaskForm/TaskFormSubmission';
+export { TaskSummaryCard } from '../components/TaskForm/TaskSummaryCard';
+export { TaskActionBar } from '../components/TaskForm/TaskActionBar';
+export { VehicleStep } from '../components/TaskForm/steps/VehicleStep';
+export { CustomerStep } from '../components/TaskForm/steps/CustomerStep';
+export { PPFStep } from '../components/TaskForm/steps/PPFStep';
+export { ScheduleStep } from '../components/TaskForm/steps/ScheduleStep';
+export type { FormStep, TaskFormData, TaskFormProps, FormStepProps, PPFZone } from '../components/TaskForm/types';
+export { ENHANCED_STEPS, DEFAULT_FORM_DATA, ENHANCED_VALIDATION_RULES, PPF_ZONES, VEHICLE_MAKES, TIME_SLOTS } from '../components/TaskForm/types';
+
 
 /** TODO: document */
 export {

@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { reportsIpc } from '../ipc/reports.ipc';
 import { reportKeys } from '@/lib/query-keys';
-import type { InterventionReport } from '@/lib/backend/reports';
+import type { InterventionReport } from '../ipc/reports.ipc';
 
 interface UseInterventionReportOptions {
   interventionId: string | null | undefined;

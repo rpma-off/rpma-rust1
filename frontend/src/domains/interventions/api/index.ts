@@ -129,3 +129,7 @@ export type {
   WorkflowStepStatus,
   TaskWorkflowProgress,
 } from './types';
+
+// Raw backend model types surfaced for consumers (e.g. reports) that need
+// the canonical Intervention/InterventionStep shapes.
+export type { Intervention, InterventionStep } from '../ipc/interventions.ipc';

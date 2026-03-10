@@ -45,5 +45,6 @@ export type {
   UseMessagesResult,
 } from './types';
 
-/** TODO: document */
-export type * from './notificationTypes';
+export type { Notification } from './notificationTypes';
+export type { GetNotificationsResponse, SuccessResponse, CreateNotificationRequest } from './notificationTypes';
+

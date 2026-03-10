@@ -19,12 +19,13 @@ mod user_account_manager;
 mod user_ops;
 mod username;
 
+use std::sync::Arc;
+
 use crate::domains::auth::infrastructure::rate_limiter::RateLimiterService;
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use crate::shared::services::performance_monitor::PerformanceMonitorService;
 use crate::shared::services::security_monitor::SecurityMonitorService;
 use crate::shared::services::validation::ValidationService;
-use std::sync::Arc;
 use tracing::warn;
 
 /// TODO: document

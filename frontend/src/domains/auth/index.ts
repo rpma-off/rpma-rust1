@@ -1,1 +1,17 @@
-export * from './api';
+export { AuthProvider, AuthContext } from './api/AuthProvider';
+export { useAuth } from './api/useAuth';
+export { useAuthActions } from './api/useAuthActions';
+export { authBootstrap } from './api/bootstrapAdmin';
+export { getSessionToken, requireSessionToken } from './services/sessionToken';
+export { default as PasswordStrengthMeter } from './components/PasswordStrengthMeter';
+export { LoginForm } from './components/LoginForm';
+export { SignupForm } from './components/SignupForm';
+export { default as TOTPSetup } from './components/TOTPSetup';
+export { useAuthRedirect } from './hooks/useAuthRedirect';
+export { useAdminBootstrapCheck } from './hooks/useAdminBootstrapCheck';
+export { useSignupForm } from './hooks/useSignupForm';
+export { useLoginForm } from './hooks/useLoginForm';
+export { useBootstrapAdminPage } from './hooks/useBootstrapAdminPage';
+export { useDashboardPage } from './hooks/useDashboardPage';
+export { useHomePage } from './hooks/useHomePage';
+export type { AuthContextType, AuthState, AuthResponse, LoginCredentials, SignupCredentials, AuthenticatedRequest, UserSession, UserRole, UserAccount, PasswordValidationResult } from './api/types';

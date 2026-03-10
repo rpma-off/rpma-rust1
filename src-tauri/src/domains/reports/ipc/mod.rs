@@ -1,10 +1,11 @@
+use std::sync::Arc;
+
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::reports::application::report_service::ReportService;
 use crate::domains::reports::domain::models::intervention_report::InterventionReport;
 use crate::domains::reports::ReportsFacade;
 use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
-use std::sync::Arc;
 use tracing::{debug, instrument};
 
 fn build_facade(state: &AppState<'_>) -> ReportsFacade {

@@ -9,9 +9,10 @@
 //! - `write_ops`       — Write operations (stock updates)
 //! - `repository_impl` — `Repository<Material, String>` trait implementation
 
+use std::sync::Arc;
+
 use crate::db::Database;
 use crate::shared::repositories::cache::{Cache, CacheKeyBuilder};
-use std::sync::Arc;
 
 // ── Submodules ────────────────────────────────────────────────────────────────
 
