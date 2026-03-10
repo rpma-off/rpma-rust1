@@ -29,7 +29,7 @@ export const authIpc = {
     safeInvoke<void>(IPC_COMMANDS.AUTH_LOGOUT, { token }),
 
   validateSession: (token: string): Promise<UserSession> =>
-    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { sessionToken: token }, validateUserSession, 30000),
+    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, {}, validateUserSession, 30000),
 
   // 2FA commands are listed in NOT_IMPLEMENTED_COMMANDS and short-circuited by safeInvoke;
   // session_token injection is not needed at the IPC layer.

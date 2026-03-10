@@ -225,8 +225,8 @@ function extractAndValidate<T>(
 }
 
 const getUserSettingsCacheKey = (sessionToken: string): string => `user-settings:${sessionToken}`;
-const invalidateUserSettingsCache = (sessionToken: string): void => {
-  invalidatePattern(getUserSettingsCacheKey(sessionToken));
+const invalidateUserSettingsCache = (): void => {
+  invalidatePattern('user-settings');
 };
 
 export const ipcClient = {
@@ -271,7 +271,7 @@ export const ipcClient = {
      * @returns Promise resolving to user session data if valid
      */
     validateSession: (token: string) =>
-      cachedInvoke(`auth:session:${token}`, 'auth_validate_session', { sessionToken: token }, validateUserSession, 30000),
+      cachedInvoke(`auth:session:${token}`, 'auth_validate_session', {}, validateUserSession, 30000),
 
     /**
      * Enables 2FA for the current user
@@ -1028,95 +1028,95 @@ export const ipcClient = {
 
   // Settings operations
   settings: {
-    getAppSettings: (sessionToken?: string) =>
-      safeInvoke<JsonValue>('get_app_settings', { sessionToken: sessionToken || '' }),
+    getAppSettings: () =>
+      safeInvoke<JsonValue>('get_app_settings', {}),
 
     updateNotificationSettings: (request: JsonObject, sessionToken: string) =>
       safeInvoke<JsonValue>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
 
     // User settings operations
-    getUserSettings: (sessionToken: string) =>
-      cachedInvoke<UserSettings>(getUserSettingsCacheKey(sessionToken), 'get_user_settings', { sessionToken }, undefined, 30000),
+    getUserSettings: () =>
+      cachedInvoke<UserSettings>('user-settings', 'get_user_settings', {}, undefined, 30000),
 
-    updateUserProfile: async (request: JsonObject, sessionToken: string) => {
-      const result = await safeInvoke<JsonValue>('update_user_profile', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+    updateUserProfile: async (request: JsonObject) => {
+      const result = await safeInvoke<JsonValue>('update_user_profile', { request });
+      invalidateUserSettingsCache();
       return result;
     },
 
-    updateUserPreferences: async (request: JsonObject, sessionToken: string) => {
-      const result = await safeInvoke<JsonValue>('update_user_preferences', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+    updateUserPreferences: async (request: JsonObject) => {
+      const result = await safeInvoke<JsonValue>('update_user_preferences', { request });
+      invalidateUserSettingsCache();
       return result;
     },
 
     updateUserSecurity: async (request: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('update_user_security', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+      invalidateUserSettingsCache();
       return result;
     },
 
-    updateUserPerformance: async (request: JsonObject, sessionToken: string) => {
-      const result = await safeInvoke<JsonValue>('update_user_performance', { request, sessionToken });
-      invalidateUserSettingsCache(sessionToken);
+    updateUserPerformance: async (request: JsonObject) => {
+      const result = await safeInvoke<JsonValue>('update_user_performance', { request });
+      invalidateUserSettingsCache();
       return result;
     },
 
     updateUserAccessibility: async (request: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('update_user_accessibility', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+      invalidateUserSettingsCache();
       return result;
     },
 
     updateUserNotifications: async (request: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<JsonValue>('update_user_notifications', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+      invalidateUserSettingsCache();
       return result;
     },
 
     changeUserPassword: async (request: JsonObject, sessionToken: string) => {
       const result = await safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } });
-      invalidateUserSettingsCache(sessionToken);
+      invalidateUserSettingsCache();
       return result;
     },
 
     // Security operations
-    getActiveSessions: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_active_sessions', { sessionToken }),
+    getActiveSessions: () =>
+      safeInvoke<JsonValue>('get_active_sessions', {}),
 
-    revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
+    revokeSession: (sessionId: string) =>
+      safeInvoke<void>('revoke_session', { sessionId }),
 
-    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<void>('revoke_all_sessions_except_current', { sessionToken }),
+    revokeAllSessionsExceptCurrent: () =>
+      safeInvoke<void>('revoke_all_sessions_except_current', {}),
 
-    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
+    updateSessionTimeout: (timeoutMinutes: number) =>
+      safeInvoke<void>('update_session_timeout', { timeoutMinutes }),
 
-    getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
+    getSessionTimeoutConfig: () =>
+      safeInvoke<JsonValue>('get_session_timeout_config', {}),
 
-    uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
+    uploadUserAvatar: (fileData: string, fileName: string, mimeType: string) =>
       safeInvoke<string>('upload_user_avatar', {
-        request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
+        request: { avatar_data: fileData, mime_type: mimeType }
       }).then((result) => {
-        invalidateUserSettingsCache(sessionToken);
+        invalidateUserSettingsCache();
         return result;
       }),
 
-    exportUserData: (sessionToken: string) =>
-      safeInvoke<JsonObject>('export_user_data', { sessionToken }),
+    exportUserData: () =>
+      safeInvoke<JsonObject>('export_user_data', {}),
 
     deleteUserAccount: async (confirmation: string, sessionToken: string) => {
       const result = await safeInvoke<string>('delete_user_account', {
         request: { confirmation, session_token: sessionToken }
       });
-      invalidateUserSettingsCache(sessionToken);
+      invalidateUserSettingsCache();
       return result;
     },
 
-    getDataConsent: (sessionToken: string) =>
-      safeInvoke<JsonObject>('get_data_consent', { sessionToken }),
+    getDataConsent: () =>
+      safeInvoke<JsonObject>('get_data_consent', {}),
 
     updateDataConsent: (request: JsonObject, sessionToken: string) =>
       safeInvoke<JsonObject>('update_data_consent', {
@@ -1126,20 +1126,20 @@ export const ipcClient = {
 
   // Security session management operations
   security: {
-    getActiveSessions: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_active_sessions', { sessionToken }),
+    getActiveSessions: () =>
+      safeInvoke<JsonValue>('get_active_sessions', {}),
 
-    revokeSession: (sessionId: string, sessionToken: string) =>
-      safeInvoke<void>('revoke_session', { sessionId, sessionToken }),
+    revokeSession: (sessionId: string) =>
+      safeInvoke<void>('revoke_session', { sessionId }),
 
-    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      safeInvoke<void>('revoke_all_sessions_except_current', { sessionToken }),
+    revokeAllSessionsExceptCurrent: () =>
+      safeInvoke<void>('revoke_all_sessions_except_current', {}),
 
-    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      safeInvoke<void>('update_session_timeout', { timeoutMinutes, sessionToken }),
+    updateSessionTimeout: (timeoutMinutes: number) =>
+      safeInvoke<void>('update_session_timeout', { timeoutMinutes }),
 
-    getSessionTimeoutConfig: (sessionToken: string) =>
-      safeInvoke<JsonValue>('get_session_timeout_config', { sessionToken }),
+    getSessionTimeoutConfig: () =>
+      safeInvoke<JsonValue>('get_session_timeout_config', {}),
   },
 
   // Dashboard operations
@@ -1420,9 +1420,8 @@ export const ipcClient = {
      * @param query - Query parameters for filtering and pagination
      * @returns Promise resolving to paginated material list
      */
-    list: (sessionToken: string, query: MaterialQueryParams) =>
+    list: (query: MaterialQueryParams = {}) =>
       safeInvoke('material_list', {
-        sessionToken,
         ...query
       }),
 
@@ -1432,12 +1431,9 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created material
      */
-    create: (data: MaterialCreateRequest, sessionToken: string) =>
+    create: (data: MaterialCreateRequest) =>
       safeInvoke('material_create', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       }),
 
     /**
@@ -1447,15 +1443,12 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material
      */
-    update: (id: string, data: MaterialUpdateRequest, sessionToken: string) => {
+    update: (id: string, data: MaterialUpdateRequest) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_update', {
         id,
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       });
     },
 
@@ -1465,11 +1458,8 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to material details
      */
-    get: (id: string, sessionToken: string) =>
-      safeInvoke('material_get', {
-        sessionToken,
-        id
-      }),
+    get: (id: string) =>
+      safeInvoke('material_get', { id }),
 
     /**
      * Deletes a material
@@ -1477,13 +1467,10 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to deletion result
      */
-    delete: (id: string, sessionToken: string) => {
+    delete: (id: string) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
-      return safeInvoke('material_delete', {
-        sessionToken,
-        id
-      });
+      return safeInvoke('material_delete', { id });
     },
 
     /**
@@ -1492,14 +1479,11 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material with current stock
      */
-    updateStock: (data: StockUpdateRequest, sessionToken: string) => {
+    updateStock: (data: StockUpdateRequest) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_update_stock', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       });
     },
 
@@ -1509,12 +1493,9 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to updated material with current stock
      */
-    adjustStock: (data: StockAdjustmentRequest, sessionToken: string) =>
+    adjustStock: (data: StockAdjustmentRequest) =>
       safeInvoke('material_adjust_stock', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       }),
 
     /**
@@ -1523,14 +1504,11 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to consumption record
      */
-    recordConsumption: (data: ConsumptionRecordRequest, sessionToken: string) => {
+    recordConsumption: (data: ConsumptionRecordRequest) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_record_consumption', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       });
     },
 
@@ -1541,9 +1519,8 @@ export const ipcClient = {
      * @param query - Query parameters for pagination and filtering
      * @returns Promise resolving to consumption history
      */
-    getConsumptionHistory: (materialId: string, sessionToken: string, query?: ConsumptionHistoryQuery) =>
+    getConsumptionHistory: (materialId: string, query?: ConsumptionHistoryQuery) =>
       safeInvoke('material_get_consumption_history', {
-        sessionToken,
         material_id: materialId,
         page: query?.page || 1,
         limit: query?.limit || 50,
@@ -1555,14 +1532,11 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created transaction
      */
-    createInventoryTransaction: (data: InventoryTransactionRequest, sessionToken: string) => {
+    createInventoryTransaction: (data: InventoryTransactionRequest) => {
       invalidatePattern('materials:*');
       invalidatePattern('material:*');
       return safeInvoke('material_create_inventory_transaction', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       });
     },
 
@@ -1573,9 +1547,8 @@ export const ipcClient = {
      * @param query - Query parameters for pagination and filtering
      * @returns Promise resolving to transaction history
      */
-    getTransactionHistory: (materialId: string, sessionToken: string, query?: TransactionHistoryQuery) =>
+    getTransactionHistory: (materialId: string, query?: TransactionHistoryQuery) =>
       safeInvoke('material_get_transaction_history', {
-        sessionToken,
         material_id: materialId,
         page: query?.page || 1,
         limit: query?.limit || 50,
@@ -1587,12 +1560,9 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created category
      */
-    createCategory: (data: CategoryCreateRequest, sessionToken: string) =>
+    createCategory: (data: CategoryCreateRequest) =>
       safeInvoke('material_create_category', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       }),
 
     /**
@@ -1600,10 +1570,8 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to category list
      */
-    listCategories: (sessionToken: string) =>
-      safeInvoke('material_list_categories', {
-        sessionToken
-      }),
+    listCategories: () =>
+      safeInvoke('material_list_categories', {}),
 
     /**
      * Creates a new supplier
@@ -1611,12 +1579,9 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to created supplier
      */
-    createSupplier: (data: SupplierCreateRequest, sessionToken: string) =>
+    createSupplier: (data: SupplierCreateRequest) =>
       safeInvoke('material_create_supplier', {
-        request: {
-          ...data,
-          session_token: sessionToken
-        }
+        request: { ...data }
       }),
 
     /**
@@ -1624,40 +1589,32 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to supplier list
      */
-    listSuppliers: (sessionToken: string) =>
-      safeInvoke('material_list_suppliers', {
-        sessionToken
-      }),
+    listSuppliers: () =>
+      safeInvoke('material_list_suppliers', {}),
 
     /**
      * Gets material statistics
      * @param sessionToken - User's session token
      * @returns Promise resolving to material statistics
      */
-    getStats: (sessionToken: string) =>
-      safeInvoke('material_get_stats', {
-        sessionToken
-      }),
+    getStats: () =>
+      safeInvoke('material_get_stats', {}),
 
     /**
      * Gets materials with low stock levels
      * @param sessionToken - User's session token
      * @returns Promise resolving to low stock materials
      */
-    getLowStockMaterials: (sessionToken: string) =>
-      safeInvoke('material_get_low_stock_materials', {
-        sessionToken
-      }),
+    getLowStockMaterials: () =>
+      safeInvoke('material_get_low_stock_materials', {}),
 
     /**
      * Gets expired or near-expiry materials
      * @param sessionToken - User's session token
      * @returns Promise resolving to expired materials
      */
-    getExpiredMaterials: (sessionToken: string) =>
-      safeInvoke('material_get_expired_materials', {
-        sessionToken
-      }),
+    getExpiredMaterials: () =>
+      safeInvoke('material_get_expired_materials', {}),
 
     /**
      * Gets inventory movement summary for a material
@@ -1665,9 +1622,8 @@ export const ipcClient = {
      * @param sessionToken - User's session token
      * @returns Promise resolving to inventory movement summary
      */
-    getInventoryMovementSummary: (materialId: string, sessionToken: string) =>
+    getInventoryMovementSummary: (materialId: string) =>
       safeInvoke('material_get_inventory_movement_summary', {
-        sessionToken,
         material_id: materialId,
       }),
   },

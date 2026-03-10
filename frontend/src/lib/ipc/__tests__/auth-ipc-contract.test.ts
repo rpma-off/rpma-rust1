@@ -166,7 +166,7 @@ describe('ipcClient.auth IPC contract tests', () => {
   });
 
   describe('validateSession', () => {
-    it('uses cachedInvoke with correct cache key and TTL', async () => {
+    it('uses cachedInvoke with correct cache key and TTL without sessionToken in payload', async () => {
       const token = 'my-session-token';
 
       await ipcClient.auth.validateSession(token);
@@ -174,7 +174,7 @@ describe('ipcClient.auth IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledWith(
         `auth:session:${token}`,
         'auth_validate_session',
-        { sessionToken: token },
+        {},
         expect.any(Function),
         30000
       );
@@ -184,67 +184,66 @@ describe('ipcClient.auth IPC contract tests', () => {
   // ─── 2FA Operations ──────────────────────────────────────────────
 
   describe('enable2FA', () => {
-    it('passes session_token (snake_case) to safeInvoke', async () => {
-      await ipcClient.auth.enable2FA('tok-abc');
+    it('calls safeInvoke without session_token in payload', async () => {
+      await ipcClient.auth.enable2FA();
 
       expect(safeInvoke).toHaveBeenCalledWith(
         'enable_2fa',
-        { session_token: 'tok-abc' }
+        {}
       );
     });
   });
 
   describe('verify2FASetup', () => {
-    it('passes verification_code, backup_codes, and session_token', async () => {
+    it('passes verification_code and backup_codes without session_token', async () => {
       const backupCodes = ['code1', 'code2', 'code3'];
       safeInvoke.mockResolvedValueOnce(undefined);
 
-      await ipcClient.auth.verify2FASetup('123456', backupCodes, 'tok-abc');
+      await ipcClient.auth.verify2FASetup('123456', backupCodes);
 
       expect(safeInvoke).toHaveBeenCalledWith(
         'verify_2fa_setup',
         {
           verification_code: '123456',
           backup_codes: backupCodes,
-          session_token: 'tok-abc',
         }
       );
     });
   });
 
   describe('disable2FA', () => {
-    it('passes password and session_token', async () => {
+    it('passes password without session_token', async () => {
       safeInvoke.mockResolvedValueOnce(undefined);
 
-      await ipcClient.auth.disable2FA('myPassword', 'tok-abc');
+      await ipcClient.auth.disable2FA('myPassword');
 
       expect(safeInvoke).toHaveBeenCalledWith(
         'disable_2fa',
-        { password: 'myPassword', session_token: 'tok-abc' }
+        { password: 'myPassword' }
       );
     });
   });
 
   describe('regenerateBackupCodes', () => {
-    it('passes session_token to safeInvoke', async () => {
-      await ipcClient.auth.regenerateBackupCodes('tok-abc');
+    it('calls safeInvoke without session_token', async () => {
+      await ipcClient.auth.regenerateBackupCodes();
 
       expect(safeInvoke).toHaveBeenCalledWith(
         'regenerate_backup_codes',
-        { session_token: 'tok-abc' }
+        {}
       );
     });
   });
 
   describe('is2FAEnabled', () => {
-    it('passes session_token to safeInvoke', async () => {
+    it('calls safeInvoke without session_token', async () => {
       safeInvoke.mockResolvedValueOnce(true);
 
-      const result = await ipcClient.auth.is2FAEnabled('tok-abc');
+      const result = await ipcClient.auth.is2FAEnabled();
 
       expect(safeInvoke).toHaveBeenCalledWith(
         'is_2fa_enabled',
-        { session_token: 'tok-abc' }
+        {}
       );
       expect(result).toBe(true);
     });
@@ -273,7 +272,7 @@ describe('ipcClient.auth IPC contract tests', () => {
       safeInvoke.mockRejectedValueOnce(new Error('Invalid TOTP code'));
 
       await expect(
-        ipcClient.auth.verify2FASetup('000000', [], 'tok-abc')
+        ipcClient.auth.verify2FASetup('000000', [])
       ).rejects.toThrow('Invalid TOTP code');
     });
   });

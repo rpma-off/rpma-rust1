@@ -6,18 +6,18 @@ import type { JsonValue } from '@/types/json';
  * Security session management operations
  */
 export const securityOperations = {
-  getActiveSessions: (sessionToken: string) =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, { sessionToken }),
+  getActiveSessions: () =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {}),
 
-  revokeSession: (sessionId: string, sessionToken: string) =>
-    safeInvoke<void>(IPC_COMMANDS.REVOKE_SESSION, { sessionId, sessionToken }),
+  revokeSession: (sessionId: string) =>
+    safeInvoke<void>(IPC_COMMANDS.REVOKE_SESSION, { sessionId }),
 
-  revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-    safeInvoke<void>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, { sessionToken }),
+  revokeAllSessionsExceptCurrent: () =>
+    safeInvoke<void>(IPC_COMMANDS.REVOKE_ALL_SESSIONS_EXCEPT_CURRENT, {}),
 
-  updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-    safeInvoke<void>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, { timeoutMinutes, sessionToken }),
+  updateSessionTimeout: (timeoutMinutes: number) =>
+    safeInvoke<void>(IPC_COMMANDS.UPDATE_SESSION_TIMEOUT, { timeoutMinutes }),
 
-  getSessionTimeoutConfig: (sessionToken: string) =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, { sessionToken }),
+  getSessionTimeoutConfig: () =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_SESSION_TIMEOUT_CONFIG, {}),
 };

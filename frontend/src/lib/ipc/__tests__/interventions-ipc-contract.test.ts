@@ -104,7 +104,7 @@ describe('interventionOperations IPC contract tests', () => {
         task_id: 'task-123',
         workflow_type: 'ppf_installation',
         technician_id: 'tech-456',
-        scheduled_date: '2025-02-15',
+        scheduled_date: '2025-02-15'
       };
       
       const mockResponse = {
@@ -116,11 +116,10 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateStartInterventionResponse(mockResponse));
 
-      await interventionOperations.start(startData, 'session-token');
+      await interventionOperations.start(startData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: startData },
-        sessionToken: 'session-token'
+        action: { action: 'Start', data: startData }
       });
       expect(validateStartInterventionResponse).toHaveBeenCalledWith(mockResponse);
     });
@@ -130,7 +129,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.start({}, 'session-token');
+        await interventionOperations.start({});
       } catch (error) {
         expect(error.message).toBe('Invalid response format for intervention start');
       }
@@ -145,11 +144,10 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
-      await interventionOperations.get('intervention-123', 'session-token');
+      await interventionOperations.get('intervention-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Get', id: 'intervention-123' },
-        sessionToken: 'session-token'
+        action: { action: 'Get', id: 'intervention-123' }
       });
       expect(validateIntervention).toHaveBeenCalledWith(mockResponse.intervention);
     });
@@ -159,7 +157,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.get('intervention-123', 'session-token');
+        await interventionOperations.get('intervention-123');
       } catch (error) {
         expect(error.message).toBe('Invalid response format for intervention get');
       }
@@ -173,11 +171,10 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getActiveByTask('task-123', 'session-token');
+      const result = await interventionOperations.getActiveByTask('task-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'GetActiveByTask', task_id: 'task-123' },
-        sessionToken: 'session-token'
+        action: { action: 'GetActiveByTask', task_id: 'task-123' }
       });
       expect(result).toEqual({ intervention: mockResponse.interventions[0] });
     });
@@ -187,11 +184,10 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getLatestByTask('task-123', 'session-token');
+      const result = await interventionOperations.getLatestByTask('task-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_get_latest_by_task', {
-        taskId: 'task-123',
-        sessionToken: 'session-token'
+        taskId: 'task-123'
       });
       expect(result).toEqual({ intervention: mockResponse });
     });
@@ -206,11 +202,10 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
-      await interventionOperations.updateWorkflow('intervention-123', updateData, 'session-token');
+      await interventionOperations.updateWorkflow('intervention-123', updateData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Update', id: 'intervention-123', data: updateData },
-        sessionToken: 'session-token'
+        action: { action: 'Update', id: 'intervention-123', data: updateData }
       });
       expect(validateIntervention).toHaveBeenCalledWith(mockResponse.intervention);
     });
@@ -230,11 +225,10 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.finalize(finalizeData, 'session-token');
+      const result = await interventionOperations.finalize(finalizeData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Finalize', data: finalizeData },
-        sessionToken: 'session-token'
+        action: { action: 'Finalize', data: finalizeData }
       });
       expect(result).toEqual(mockResponse);
     });
@@ -261,7 +255,7 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.advanceStep(stepData, 'session-token');
+      const result = await interventionOperations.advanceStep(stepData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -273,8 +267,7 @@ describe('interventionOperations IPC contract tests', () => {
           photos: ['photo-1.jpg'],
           quality_check_passed: true,
           issues: []
-        },
-        sessionToken: 'session-token'
+        }
       });
       expect(result).toEqual(mockResponse);
     });
@@ -284,7 +277,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.advanceStep({}, 'session-token');
+        await interventionOperations.advanceStep({});
       } catch (error) {
         expect(error.message).toBe('Invalid response format for advance step');
       }
@@ -299,11 +292,10 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
 
-      await interventionOperations.getStep('step-1', 'session-token');
+      await interventionOperations.getStep('step-1');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: { action: 'GetStep', step_id: 'step-1' },
-        sessionToken: 'session-token'
+        action: { action: 'GetStep', step_id: 'step-1' }
       });
       expect(validateInterventionStep).toHaveBeenCalledWith(mockResponse.step);
     });
@@ -313,7 +305,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.getStep('step-1', 'session-token');
+        await interventionOperations.getStep('step-1');
       } catch (error) {
         expect(error.message).toBe('Invalid response format for get step');
       }
@@ -331,11 +323,10 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getProgress('intervention-123', 'session-token');
+      const result = await interventionOperations.getProgress('intervention-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: { action: 'Get', intervention_id: 'intervention-123' },
-        sessionToken: 'session-token'
+        action: { action: 'Get', intervention_id: 'intervention-123' }
       });
       expect(result).toEqual({
         steps: mockResponse.steps,
@@ -348,7 +339,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.getProgress('intervention-123', 'session-token');
+        await interventionOperations.getProgress('intervention-123');
       } catch (error) {
         expect(error.message).toBe('Invalid response format for get progress');
       }
@@ -370,7 +361,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
 
-      await interventionOperations.saveStepProgress(stepProgressData, 'session-token');
+      await interventionOperations.saveStepProgress(stepProgressData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -379,8 +370,7 @@ describe('interventionOperations IPC contract tests', () => {
           collected_data: { temperature: 23 },
           notes: 'Progress saved',
           photos: ['photo-1.jpg']
-        },
-        sessionToken: 'session-token'
+        }
       });
       expect(validateInterventionStep).toHaveBeenCalledWith(mockResponse.step);
     });
@@ -390,7 +380,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.saveStepProgress({}, 'session-token');
+        await interventionOperations.saveStepProgress({});
       } catch (error) {
         expect(error.message).toBe('Invalid response format for save step progress');
       }
@@ -419,11 +409,10 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.list(filters, 'session-token');
+      const result = await interventionOperations.list(filters);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { action: 'List', query: { status: 'in_progress', technician_id: 'tech-123', limit: 20, page: 1 } },
-        session_token: 'session-token'
+        action: { action: 'List', query: { status: 'in_progress', technician_id: 'tech-123', limit: 20, page: 1 } }
       });
       expect(result).toEqual({
         interventions: mockResponse.interventions,
@@ -436,7 +425,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(invalidResponse);
 
       try {
-        await interventionOperations.list({}, 'session-token');
+        await interventionOperations.list({});
       } catch (error) {
         expect(error.message).toBe('Invalid response format for intervention list');
       }
@@ -470,29 +459,27 @@ describe('interventionOperations IPC contract tests', () => {
     it('validates required fields for start operation', async () => {
       const invalidData = {
         // Missing required task_id
-        technician_id: 'tech-123',
+        technician_id: 'tech-123'
       };
 
       safeInvoke.mockResolvedValue({
         type: 'Started',
         intervention: { id: 'intervention-123' },
-        steps: [],
+        steps: []
       });
 
-      await interventionOperations.start(invalidData, 'session-token');
+      await interventionOperations.start(invalidData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: invalidData },
-        sessionToken: 'session-token'
+        action: { action: 'Start', data: invalidData }
       });
     });
 
     it('validates intervention ID format for get operation', async () => {
-      await interventionOperations.get('', 'session-token');
+      await interventionOperations.get('');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Get', id: '' },
-        sessionToken: 'session-token'
+        action: { action: 'Get', id: '' }
       });
     });
 
@@ -503,7 +490,7 @@ describe('interventionOperations IPC contract tests', () => {
         // Missing required fields
       };
 
-      await interventionOperations.advanceStep(invalidStepData, 'session-token');
+      await interventionOperations.advanceStep(invalidStepData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -515,8 +502,7 @@ describe('interventionOperations IPC contract tests', () => {
           photos: undefined,
           quality_check_passed: undefined,
           issues: undefined
-        },
-        sessionToken: 'session-token'
+        }
       });
     });
 
@@ -527,11 +513,10 @@ describe('interventionOperations IPC contract tests', () => {
         offset: -1
       };
 
-      await interventionOperations.list(invalidFilters, 'session-token');
+      await interventionOperations.list(invalidFilters);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { action: 'List', query: { status: 'invalid_status', limit: -1, page: 2 } },
-        session_token: 'session-token'
+        action: { action: 'List', query: { status: 'invalid_status', limit: -1, page: 2 } }
       });
     });
   });
@@ -545,14 +530,14 @@ describe('interventionOperations IPC contract tests', () => {
           task_id: 'task-123',
           status: 'in_progress',
           technician_id: 'tech-123',
-          created_at: '2025-02-09T10:00:00Z',
+          created_at: '2025-02-09T10:00:00Z'
         },
         steps: [
           {
             id: 'step-1',
             name: 'Preparation',
             status: 'pending',
-            order: 1,
+            order: 1
           }
         ]
       };
@@ -563,7 +548,7 @@ describe('interventionOperations IPC contract tests', () => {
       const result = await interventionOperations.start({
         task_id: 'task-123',
         technician_id: 'tech-123'
-      }, 'session-token');
+      });
 
       expect(validateStartInterventionResponse).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(validateStartInterventionResponse(mockResponse));
@@ -576,7 +561,7 @@ describe('interventionOperations IPC contract tests', () => {
           intervention_id: 'intervention-123',
           completion_percentage: 65,
           current_step_id: 'step-2',
-          status: 'in_progress',
+          status: 'in_progress'
         },
         steps: [
           {
@@ -584,20 +569,20 @@ describe('interventionOperations IPC contract tests', () => {
             name: 'Preparation',
             status: 'completed',
             duration_minutes: 30,
-            completed_at: '2025-02-09T10:30:00Z',
+            completed_at: '2025-02-09T10:30:00Z'
           },
           {
             id: 'step-2',
             name: 'Application',
             status: 'in_progress',
-            started_at: '2025-02-09T11:00:00Z',
+            started_at: '2025-02-09T11:00:00Z'
           }
         ]
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getProgress('intervention-123', 'session-token');
+      const result = await interventionOperations.getProgress('intervention-123');
 
       expect(result).toEqual({
         steps: mockResponse.steps,
@@ -613,7 +598,7 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getActiveByTask('task-123', 'session-token');
+      const result = await interventionOperations.getActiveByTask('task-123');
 
       expect(result).toEqual({ intervention: null });
     });
@@ -625,7 +610,7 @@ describe('interventionOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await interventionOperations.getLatestByTask('task-123', 'session-token');
+      const result = await interventionOperations.getLatestByTask('task-123');
 
       expect(result).toEqual({ intervention: null });
     });
@@ -705,7 +690,7 @@ describe('interventionOperations IPC contract tests', () => {
       safeInvoke.mockRejectedValue(errorResponse);
 
       try {
-        await interventionOperations.start({}, 'session-token');
+        await interventionOperations.start({});
       } catch (error) {
         expect(error).toEqual(errorResponse);
       }
@@ -716,14 +701,14 @@ describe('interventionOperations IPC contract tests', () => {
         type: 'NotFound',
         error: {
           code: 'NOT_FOUND',
-          message: 'Intervention not found',
+          message: 'Intervention not found'
         }
       };
 
       safeInvoke.mockResolvedValue(notFoundResponse);
 
       try {
-        await interventionOperations.get('nonexistent-intervention', 'session-token');
+        await interventionOperations.get('nonexistent-intervention');
       } catch (error) {
         expect(error.message).toBe('Invalid response format for intervention get');
       }
@@ -749,7 +734,7 @@ describe('interventionOperations IPC contract tests', () => {
         await interventionOperations.advanceStep({
           intervention_id: 'intervention-123',
           step_id: 'step-2'
-        }, 'session-token');
+        });
       } catch (error) {
         expect(error).toEqual(workflowError);
       }
@@ -760,7 +745,7 @@ describe('interventionOperations IPC contract tests', () => {
         type: 'PermissionError',
         error: {
           code: 'PERMISSION_DENIED',
-          message: 'Insufficient permissions to access this intervention',
+          message: 'Insufficient permissions to access this intervention'
         }
       };
 
@@ -779,14 +764,13 @@ describe('interventionOperations IPC contract tests', () => {
       const longNotes = 'a'.repeat(10000);
       const startData = {
         task_id: 'task-123',
-        notes: longNotes,
+        notes: longNotes
       };
 
-      await interventionOperations.start(startData, 'session-token');
+      await interventionOperations.start(startData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: startData },
-        sessionToken: 'session-token'
+        action: { action: 'Start', data: startData }
       });
     });
 
@@ -795,10 +779,10 @@ describe('interventionOperations IPC contract tests', () => {
       const stepData = {
         intervention_id: 'intervention-123',
         step_id: 'step-1',
-        notes: specialNotes,
+        notes: specialNotes
       };
 
-      await interventionOperations.advanceStep(stepData, 'session-token');
+      await interventionOperations.advanceStep(stepData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -810,8 +794,7 @@ describe('interventionOperations IPC contract tests', () => {
           photos: undefined,
           quality_check_passed: undefined,
           issues: undefined
-        },
-        sessionToken: 'session-token'
+        }
       });
     });
 
@@ -819,10 +802,10 @@ describe('interventionOperations IPC contract tests', () => {
       const stepData = {
         intervention_id: 'intervention-123',
         step_id: 'step-1',
-        photos: [],
+        photos: []
       };
 
-      await interventionOperations.advanceStep(stepData, 'session-token');
+      await interventionOperations.advanceStep(stepData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -834,8 +817,7 @@ describe('interventionOperations IPC contract tests', () => {
           photos: [],
           quality_check_passed: undefined,
           issues: undefined
-        },
-        sessionToken: 'session-token'
+        }
       });
     });
 
@@ -843,14 +825,13 @@ describe('interventionOperations IPC contract tests', () => {
       const updateData = {
         notes: null,
         technician_id: null,
-        scheduled_date: null,
+        scheduled_date: null
       };
 
-      await interventionOperations.updateWorkflow('intervention-123', updateData, 'session-token');
+      await interventionOperations.updateWorkflow('intervention-123', updateData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Update', id: 'intervention-123', data: updateData },
-        sessionToken: 'session-token'
+        action: { action: 'Update', id: 'intervention-123', data: updateData }
       });
     });
 
@@ -858,10 +839,10 @@ describe('interventionOperations IPC contract tests', () => {
       const stepProgressData = {
         intervention_id: 'intervention-123',
         step_id: 'step-1',
-        progress_percentage: 100,
+        progress_percentage: 100
       };
 
-      await interventionOperations.saveStepProgress(stepProgressData, 'session-token');
+      await interventionOperations.saveStepProgress(stepProgressData);
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
         action: {
@@ -870,8 +851,7 @@ describe('interventionOperations IPC contract tests', () => {
           collected_data: undefined,
           notes: undefined,
           photos: undefined
-        },
-        sessionToken: 'session-token'
+        }
       });
     });
   });

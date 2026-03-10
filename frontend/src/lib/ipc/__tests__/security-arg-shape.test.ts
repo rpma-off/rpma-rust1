@@ -14,33 +14,27 @@ describe('ipcClient.security IPC argument shapes', () => {
     safeInvoke.mockResolvedValue('ok');
   });
 
-  it('uses camelCase top-level args for security session commands', async () => {
-    await ipcClient.security.getActiveSessions('token-a');
-    expect(safeInvoke).toHaveBeenCalledWith('get_active_sessions', {
-      sessionToken: 'token-a',
-    });
+  it('calls security session commands without sessionToken in payload', async () => {
+    await ipcClient.security.getActiveSessions();
+    expect(safeInvoke).toHaveBeenCalledWith('get_active_sessions', {});
 
-    await ipcClient.security.revokeSession('session-1', 'token-a');
+    await ipcClient.security.revokeSession('session-1');
     expect(safeInvoke).toHaveBeenCalledWith('revoke_session', {
       sessionId: 'session-1',
-      sessionToken: 'token-a',
     });
 
-    await ipcClient.security.revokeAllSessionsExceptCurrent('token-a');
+    await ipcClient.security.revokeAllSessionsExceptCurrent();
     expect(safeInvoke).toHaveBeenCalledWith(
       'revoke_all_sessions_except_current',
-      { sessionToken: 'token-a' }
+      {}
     );
 
-    await ipcClient.security.updateSessionTimeout(180, 'token-a');
+    await ipcClient.security.updateSessionTimeout(180);
     expect(safeInvoke).toHaveBeenCalledWith('update_session_timeout', {
       timeoutMinutes: 180,
-      sessionToken: 'token-a',
     });
 
-    await ipcClient.security.getSessionTimeoutConfig('token-a');
-    expect(safeInvoke).toHaveBeenCalledWith('get_session_timeout_config', {
-      sessionToken: 'token-a',
-    });
+    await ipcClient.security.getSessionTimeoutConfig();
+    expect(safeInvoke).toHaveBeenCalledWith('get_session_timeout_config', {});
   });
 });

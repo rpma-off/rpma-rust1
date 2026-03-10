@@ -30,33 +30,32 @@ describe('ipcClient.material IPC argument shapes', () => {
       stats: {
         total_materials: 0,
         total_value: 0,
-        low_stock_count: 0,
-      },
+        low_stock_count: 0
+      }
     });
   });
 
   // Material CRUD Operations
   describe('Material CRUD operations', () => {
-    it('uses top-level sessionToken for material_list', async () => {
-      await ipcClient.material.list('token-a', {
+    it('calls material_list without sessionToken in payload', async () => {
+      await ipcClient.material.list({
         page: 1,
         limit: 20,
         search: 'test',
         material_type: 'ppf_film',
-        category: 'films',
+        category: 'films'
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('material_list', {
-        sessionToken: 'token-a',
         page: 1,
         limit: 20,
         search: 'test',
         material_type: 'ppf_film',
-        category: 'films',
+        category: 'films'
       });
     });
 
-    it('uses nested request.session_token for material_create', async () => {
+    it('calls material_create without session_token in nested request', async () => {
       await ipcClient.material.create(
         {
           sku: 'TEST-PPF-001',
@@ -65,7 +64,7 @@ describe('ipcClient.material IPC argument shapes', () => {
           material_type: 'ppf_film',
           unit_of_measure: 'meter',
           minimum_stock: 20,
-          maximum_stock: 500,
+          maximum_stock: 500
         },
         'token-b'
       );
@@ -78,18 +77,17 @@ describe('ipcClient.material IPC argument shapes', () => {
           material_type: 'ppf_film',
           unit_of_measure: 'meter',
           minimum_stock: 20,
-          maximum_stock: 500,
-          session_token: 'token-b',
-        },
+          maximum_stock: 500
+        }
       });
     });
 
-    it('uses nested request.session_token for material_update', async () => {
+    it('calls material_update without session_token in nested request', async () => {
       await ipcClient.material.update(
         'material-123',
         {
           name: 'Updated Material Name',
-          minimum_stock: 25,
+          minimum_stock: 25
         },
         'token-c'
       );
@@ -98,39 +96,36 @@ describe('ipcClient.material IPC argument shapes', () => {
         id: 'material-123',
         request: {
           name: 'Updated Material Name',
-          minimum_stock: 25,
-          session_token: 'token-c',
-        },
+          minimum_stock: 25
+        }
       });
     });
 
-    it('uses top-level sessionToken for material_get', async () => {
-      await ipcClient.material.get('material-123', 'token-d');
+    it('calls material_get without sessionToken in payload', async () => {
+      await ipcClient.material.get('material-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get', {
-        sessionToken: 'token-d',
-        id: 'material-123',
+        id: 'material-123'
       });
     });
 
-    it('uses top-level sessionToken for material_delete', async () => {
-      await ipcClient.material.delete('material-123', 'token-e');
+    it('calls material_delete without sessionToken in payload', async () => {
+      await ipcClient.material.delete('material-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_delete', {
-        sessionToken: 'token-e',
-        id: 'material-123',
+        id: 'material-123'
       });
     });
   });
 
   // Stock Management Operations
   describe('Stock Management operations', () => {
-    it('uses nested request.session_token for update_stock', async () => {
+    it('calls update_stock without session_token in nested request', async () => {
       await ipcClient.material.updateStock(
         {
           material_id: 'material-123',
           quantity_change: 50,
-          reason: 'Purchase order',
+          reason: 'Purchase order'
         },
         'token-f'
       );
@@ -139,18 +134,17 @@ describe('ipcClient.material IPC argument shapes', () => {
         request: {
           material_id: 'material-123',
           quantity_change: 50,
-          reason: 'Purchase order',
-          session_token: 'token-f',
-        },
+          reason: 'Purchase order'
+        }
       });
     });
 
-    it('uses nested request.session_token for adjust_stock', async () => {
+    it('calls adjust_stock without session_token in nested request', async () => {
       await ipcClient.material.adjustStock(
         {
           material_id: 'material-123',
           quantity_change: -5,
-          reason: 'Physical count adjustment',
+          reason: 'Physical count adjustment'
         },
         'token-g'
       );
@@ -159,23 +153,22 @@ describe('ipcClient.material IPC argument shapes', () => {
         request: {
           material_id: 'material-123',
           quantity_change: -5,
-          reason: 'Physical count adjustment',
-          session_token: 'token-g',
-        },
+          reason: 'Physical count adjustment'
+        }
       });
     });
   });
 
   // Consumption Tracking Operations
   describe('Consumption Tracking operations', () => {
-    it('uses nested request.session_token for record_consumption', async () => {
+    it('calls record_consumption without session_token in nested request', async () => {
       await ipcClient.material.recordConsumption(
         {
           intervention_id: 'intervention-123',
           material_id: 'material-123',
           quantity_used: 15,
           waste_quantity: 2,
-          step_id: 'step-123',
+          step_id: 'step-123'
         },
         'token-h'
       );
@@ -186,37 +179,35 @@ describe('ipcClient.material IPC argument shapes', () => {
           material_id: 'material-123',
           quantity_used: 15,
           waste_quantity: 2,
-          step_id: 'step-123',
-          session_token: 'token-h',
-        },
+          step_id: 'step-123'
+        }
       });
     });
 
-    it('uses top-level sessionToken for get_consumption_history', async () => {
+    it('calls get_consumption_history without sessionToken in payload', async () => {
       await ipcClient.material.getConsumptionHistory('material-123', 'token-i', {
         page: 1,
-        limit: 50,
+        limit: 50
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_consumption_history', {
-        sessionToken: 'token-i',
         material_id: 'material-123',
         page: 1,
-        limit: 50,
+        limit: 50
       });
     });
   });
 
   // Inventory Transaction Operations
   describe('Inventory Transaction operations', () => {
-    it('uses nested request.session_token for create_inventory_transaction', async () => {
+    it('calls create_inventory_transaction without session_token in nested request', async () => {
       await ipcClient.material.createInventoryTransaction(
         {
           material_id: 'material-123',
           transaction_type: 'stock_in',
           quantity: 100,
           reference_number: 'PO-001',
-          reference_type: 'Purchase Order',
+          reference_type: 'Purchase Order'
         },
         'token-j'
       );
@@ -227,35 +218,33 @@ describe('ipcClient.material IPC argument shapes', () => {
           transaction_type: 'stock_in',
           quantity: 100,
           reference_number: 'PO-001',
-          reference_type: 'Purchase Order',
-          session_token: 'token-j',
-        },
+          reference_type: 'Purchase Order'
+        }
       });
     });
 
-    it('uses top-level sessionToken for get_transaction_history', async () => {
+    it('calls get_transaction_history without sessionToken in payload', async () => {
       await ipcClient.material.getTransactionHistory('material-123', 'token-k', {
         page: 1,
-        limit: 50,
+        limit: 50
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_transaction_history', {
-        sessionToken: 'token-k',
         material_id: 'material-123',
         page: 1,
-        limit: 50,
+        limit: 50
       });
     });
   });
 
   // Material Categories Operations
   describe('Material Categories operations', () => {
-    it('uses nested request.session_token for create_material_category', async () => {
+    it('calls create_material_category without session_token in nested request', async () => {
       await ipcClient.material.createCategory(
         {
           name: 'Test Category',
           code: 'TEST-CAT',
-          description: 'Test category description',
+          description: 'Test category description'
         },
         'token-l'
       );
@@ -264,30 +253,28 @@ describe('ipcClient.material IPC argument shapes', () => {
         request: {
           name: 'Test Category',
           code: 'TEST-CAT',
-          description: 'Test category description',
-          session_token: 'token-l',
-        },
+          description: 'Test category description'
+        }
       });
     });
 
-    it('uses top-level sessionToken for list_material_categories', async () => {
+    it('calls list_material_categories without sessionToken in payload', async () => {
       await ipcClient.material.listCategories('token-m');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_list_categories', {
-        sessionToken: 'token-m',
       });
     });
   });
 
   // Supplier Operations
   describe('Supplier operations', () => {
-    it('uses nested request.session_token for create_supplier', async () => {
+    it('calls create_supplier without session_token in nested request', async () => {
       await ipcClient.material.createSupplier(
         {
           name: 'Test Supplier',
           code: 'SUP-001',
           email: 'supplier@example.com',
-          phone: '555-1234',
+          phone: '555-1234'
         },
         'token-n'
       );
@@ -297,53 +284,47 @@ describe('ipcClient.material IPC argument shapes', () => {
           name: 'Test Supplier',
           code: 'SUP-001',
           email: 'supplier@example.com',
-          phone: '555-1234',
-          session_token: 'token-n',
-        },
+          phone: '555-1234'
+        }
       });
     });
 
-    it('uses top-level sessionToken for list_suppliers', async () => {
+    it('calls list_suppliers without sessionToken in payload', async () => {
       await ipcClient.material.listSuppliers('token-o');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_list_suppliers', {
-        sessionToken: 'token-o',
       });
     });
   });
 
   // Reporting and Statistics
   describe('Reporting and Statistics operations', () => {
-    it('uses top-level sessionToken for get_material_stats', async () => {
+    it('calls get_material_stats without sessionToken in payload', async () => {
       await ipcClient.material.getStats('token-p');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_stats', {
-        sessionToken: 'token-p',
       });
     });
 
-    it('uses top-level sessionToken for get_low_stock_materials', async () => {
+    it('calls get_low_stock_materials without sessionToken in payload', async () => {
       await ipcClient.material.getLowStockMaterials('token-q');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_low_stock_materials', {
-        sessionToken: 'token-q',
       });
     });
 
-    it('uses top-level sessionToken for get_expired_materials', async () => {
+    it('calls get_expired_materials without sessionToken in payload', async () => {
       await ipcClient.material.getExpiredMaterials('token-r');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_expired_materials', {
-        sessionToken: 'token-r',
       });
     });
 
-    it('uses top-level sessionToken for get_inventory_movement_summary', async () => {
-      await ipcClient.material.getInventoryMovementSummary('material-123', 'token-s');
+    it('calls get_inventory_movement_summary without sessionToken in payload', async () => {
+      await ipcClient.material.getInventoryMovementSummary('material-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('material_get_inventory_movement_summary', {
-        sessionToken: 'token-s',
-        material_id: 'material-123',
+        material_id: 'material-123'
       });
     });
   });
@@ -355,7 +336,7 @@ describe('ipcClient.material IPC argument shapes', () => {
         {
           material_id: 'material-123',
           quantity_change: 50,
-          reason: 'Purchase order',
+          reason: 'Purchase order'
         },
         'token-f'
       );
@@ -369,7 +350,7 @@ describe('ipcClient.material IPC argument shapes', () => {
         'material-123',
         {
           name: 'Updated Material Name',
-          minimum_stock: 25,
+          minimum_stock: 25
         },
         'token-c'
       );
@@ -379,7 +360,7 @@ describe('ipcClient.material IPC argument shapes', () => {
     });
 
     it('invalidates cache patterns for material_delete', async () => {
-      await ipcClient.material.delete('material-123', 'token-e');
+      await ipcClient.material.delete('material-123');
 
       expect(invalidatePattern).toHaveBeenCalledWith('materials:*');
       expect(invalidatePattern).toHaveBeenCalledWith('material:*');
@@ -390,7 +371,7 @@ describe('ipcClient.material IPC argument shapes', () => {
         {
           intervention_id: 'intervention-123',
           material_id: 'material-123',
-          quantity_used: 15,
+          quantity_used: 15
         },
         'token-h'
       );
@@ -404,7 +385,7 @@ describe('ipcClient.material IPC argument shapes', () => {
         {
           material_id: 'material-123',
           transaction_type: 'stock_in',
-          quantity: 100,
+          quantity: 100
         },
         'token-j'
       );
@@ -429,7 +410,7 @@ describe('ipcClient.material IPC argument shapes', () => {
               unit_of_measure: 'meter',
               current_stock: 50,
               minimum_stock: 20,
-              maximum_stock: 500,
+              maximum_stock: 500
             },
           ],
           pagination: {
@@ -437,14 +418,14 @@ describe('ipcClient.material IPC argument shapes', () => {
             limit: 20,
             total: 1,
             has_next: false,
-            has_prev: false,
-          },
-        },
+            has_prev: false
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await ipcClient.material.list('token-a');
+      const result = await ipcClient.material.list();
 
       expect(result).toHaveProperty('success', true);
       expect(result).toHaveProperty('data');
@@ -470,13 +451,13 @@ describe('ipcClient.material IPC argument shapes', () => {
           minimum_stock: 20,
           maximum_stock: 500,
           created_at: '2025-02-09T10:00:00Z',
-          updated_at: '2025-02-09T10:00:00Z',
-        },
+          updated_at: '2025-02-09T10:00:00Z'
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await ipcClient.material.get('material-123', 'token-d');
+      const result = await ipcClient.material.get('material-123');
 
       expect(result).toHaveProperty('success', true);
       expect(result).toHaveProperty('data');
@@ -498,14 +479,14 @@ describe('ipcClient.material IPC argument shapes', () => {
           material_types: {
             ppf_film: 5,
             adhesive: 3,
-            tool: 2,
+            tool: 2
           },
           categories: {
             films: 5,
             adhesives: 3,
-            tools: 2,
-          },
-        },
+            tools: 2
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -534,7 +515,7 @@ describe('ipcClient.material IPC argument shapes', () => {
               quantity_used: 15,
               waste_quantity: 2,
               recorded_at: '2025-02-09T10:00:00Z',
-              recorded_by: 'tech-001',
+              recorded_by: 'tech-001'
             },
           ],
           pagination: {
@@ -542,14 +523,14 @@ describe('ipcClient.material IPC argument shapes', () => {
             limit: 50,
             total: 1,
             has_next: false,
-            has_prev: false,
-          },
-        },
+            has_prev: false
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await ipcClient.material.getConsumptionHistory('material-123', 'token-i');
+      const result = await ipcClient.material.getConsumptionHistory('material-123');
 
       expect(result).toHaveProperty('success', true);
       expect(result).toHaveProperty('data');
@@ -572,9 +553,9 @@ describe('ipcClient.material IPC argument shapes', () => {
           message: 'SKU is required',
           details: {
             field: 'sku',
-            value: '',
-          },
-        },
+            value: ''
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -582,7 +563,7 @@ describe('ipcClient.material IPC argument shapes', () => {
       const result = await ipcClient.material.create(
         {
           name: 'Test Material',
-          material_type: 'ppf_film',
+          material_type: 'ppf_film'
         },
         'token-b'
       );
@@ -600,14 +581,14 @@ describe('ipcClient.material IPC argument shapes', () => {
           code: 'NOT_FOUND',
           message: 'Material not found',
           details: {
-            material_id: 'non-existent-material',
-          },
-        },
+            material_id: 'non-existent-material'
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await ipcClient.material.get('non-existent-material', 'token-d');
+      const result = await ipcClient.material.get('non-existent-material');
 
       expect(result).toHaveProperty('success', false);
       expect(result).toHaveProperty('error');
@@ -623,9 +604,9 @@ describe('ipcClient.material IPC argument shapes', () => {
           details: {
             material_id: 'material-123',
             requested_quantity: 100,
-            available_quantity: 50,
-          },
-        },
+            available_quantity: 50
+          }
+        }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -634,7 +615,7 @@ describe('ipcClient.material IPC argument shapes', () => {
         {
           material_id: 'material-123',
           quantity_change: -100,
-          reason: 'Test withdrawal',
+          reason: 'Test withdrawal'
         },
         'token-f'
       );

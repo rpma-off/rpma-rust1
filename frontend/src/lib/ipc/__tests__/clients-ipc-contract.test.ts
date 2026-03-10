@@ -26,7 +26,7 @@ jest.mock('../utils/crud-helpers', () => ({
     discriminatedUnion: jest.fn(),
     discriminatedUnionNullable: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn(),
+    statistics: jest.fn()
   },
 }));
 
@@ -81,8 +81,8 @@ describe('clientOperations IPC contract tests', () => {
         limit: 20,
         total: 0,
         has_next: false,
-        has_prev: false,
-      },
+        has_prev: false
+      }
     });
     
     // Setup ResponseHandlers mocks
@@ -101,30 +101,28 @@ describe('clientOperations IPC contract tests', () => {
         email: 'john@example.com',
         phone: '555-1234',
         address_city: 'Paris',
-        customer_type: 'individual',
+        customer_type: 'individual'
       };
       
-      await clientOperations.create(createData, 'session-token');
+      await clientOperations.create(createData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: createData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: createData }
         }
       }, expect.any(Function));
       expect(invalidatePattern).toHaveBeenCalledWith('client:');
     });
 
     it('calls cachedInvoke with correct parameters for get', async () => {
-      await clientOperations.get('client-123', 'session-token');
+      await clientOperations.get('client-123');
 
       expect(cachedInvoke).toHaveBeenCalledWith(
         'client:client-123',
         'client_crud',
         {
           request: {
-            action: { action: 'Get', id: 'client-123' },
-            session_token: 'session-token'
+            action: { action: 'Get', id: 'client-123' }
           }
         },
         expect.any(Function)
@@ -135,27 +133,25 @@ describe('clientOperations IPC contract tests', () => {
       const updateData = {
         name: 'John Doe Smith',
         phone: '555-5678',
-        address_street: '456 Oak Ave',
+        address_street: '456 Oak Ave'
       };
       
-      await clientOperations.update('client-123', updateData, 'session-token');
+      await clientOperations.update('client-123', updateData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Update', id: 'client-123', data: updateData },
-          session_token: 'session-token'
+          action: { action: 'Update', id: 'client-123', data: updateData }
         }
       }, expect.any(Function));
       expect(invalidatePattern).toHaveBeenCalledWith('client:');
     });
 
     it('calls safeInvoke with correct parameters for delete', async () => {
-      await clientOperations.delete('client-123', 'session-token');
+      await clientOperations.delete('client-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Delete', id: 'client-123' },
-          session_token: 'session-token'
+          action: { action: 'Delete', id: 'client-123' }
         }
       });
       expect(invalidatePattern).toHaveBeenCalledWith('client:');
@@ -167,15 +163,14 @@ describe('clientOperations IPC contract tests', () => {
         limit: 20,
         search: 'john',
         status: 'active',
-        customer_type: 'individual',
+        customer_type: 'individual'
       };
       
-      await clientOperations.list(filters, 'session-token');
+      await clientOperations.list(filters);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'List', filters },
-          session_token: 'session-token'
+          action: { action: 'List', filters }
         }
       }, expect.any(Function));
     });
@@ -192,12 +187,11 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateClientWithTasks(mockResponse));
 
-      await clientOperations.getWithTasks('client-123', 'session-token');
+      await clientOperations.getWithTasks('client-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'GetWithTasks', id: 'client-123' },
-          session_token: 'session-token'
+          action: { action: 'GetWithTasks', id: 'client-123' }
         }
       });
       expect(extractAndValidate).toHaveBeenCalledWith(mockResponse, validateClientWithTasks, {
@@ -214,7 +208,7 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(null);
 
-      const result = await clientOperations.getWithTasks('nonexistent-client', 'session-token');
+      const result = await clientOperations.getWithTasks('nonexistent-client');
 
       expect(result).toBeNull();
       expect(extractAndValidate).toHaveBeenCalledWith(mockResponse, validateClientWithTasks, {
@@ -232,12 +226,11 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(mockResponse);
 
-      const result = await clientOperations.search('john', 10, 'session-token');
+      const result = await clientOperations.search('john', 10);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Search', query: 'john', limit: 10 },
-          session_token: 'session-token'
+          action: { action: 'Search', query: 'john', limit: 10 }
         }
       });
       expect(result).toEqual(mockResponse);
@@ -248,7 +241,7 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue([]);
 
-      const result = await clientOperations.search('nonexistent', 10, 'session-token');
+      const result = await clientOperations.search('nonexistent', 10);
 
       expect(result).toEqual([]);
     });
@@ -257,7 +250,7 @@ describe('clientOperations IPC contract tests', () => {
       const filters = {
         page: 1,
         limit: 20,
-        search: 'test',
+        search: 'test'
       };
       
       const mockListResult = {
@@ -270,7 +263,7 @@ describe('clientOperations IPC contract tests', () => {
 
       safeInvoke.mockResolvedValue(mockListResult);
 
-      const result = await clientOperations.listWithTasks(filters, 5, 'session-token');
+      const result = await clientOperations.listWithTasks(filters, 5);
 
       expect(result).toEqual([
         { ...mockListResult.data[0], tasks: [] },
@@ -297,8 +290,7 @@ describe('clientOperations IPC contract tests', () => {
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Stats' },
-          session_token: 'session-token'
+          action: { action: 'Stats' }
         }
       });
       expect(extractAndValidate).toHaveBeenCalledWith(mockResponse, parseClientStatistics);
@@ -310,15 +302,14 @@ describe('clientOperations IPC contract tests', () => {
       const invalidData = {
         // Missing required name and email
         phone: '555-1234',
-        address_city: 'Paris',
+        address_city: 'Paris'
       };
 
-      await clientOperations.create(invalidData, 'session-token');
+      await clientOperations.create(invalidData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: invalidData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: invalidData }
         }
       }, expect.any(Function));
     });
@@ -327,29 +318,27 @@ describe('clientOperations IPC contract tests', () => {
       const invalidEmailData = {
         name: 'John Doe',
         email: 'invalid-email-format',
-        phone: '555-1234',
+        phone: '555-1234'
       };
 
-      await clientOperations.create(invalidEmailData, 'session-token');
+      await clientOperations.create(invalidEmailData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: invalidEmailData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: invalidEmailData }
         }
       }, expect.any(Function));
     });
 
     it('validates client ID format for get operation', async () => {
-      await clientOperations.get('', 'session-token');
+      await clientOperations.get('');
 
       expect(cachedInvoke).toHaveBeenCalledWith(
         'client:',
         'client_crud',
         {
           request: {
-            action: { action: 'Get', id: '' },
-            session_token: 'session-token'
+            action: { action: 'Get', id: '' }
           }
         },
         expect.any(Function)
@@ -357,12 +346,11 @@ describe('clientOperations IPC contract tests', () => {
     });
 
     it('validates search query parameters', async () => {
-      await clientOperations.search('', 0, 'session-token');
+      await clientOperations.search('', 0);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Search', query: '', limit: 0 },
-          session_token: 'session-token'
+          action: { action: 'Search', query: '', limit: 0 }
         }
       });
     });
@@ -372,15 +360,14 @@ describe('clientOperations IPC contract tests', () => {
         page: -1,
         limit: -1,
         status: 'invalid_status',
-        customer_type: 'invalid_type',
+        customer_type: 'invalid_type'
       };
 
-      await clientOperations.list(invalidFilters, 'session-token');
+      await clientOperations.list(invalidFilters);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'List', filters: invalidFilters },
-          session_token: 'session-token'
+          action: { action: 'List', filters: invalidFilters }
         }
       }, expect.any(Function));
     });
@@ -399,7 +386,7 @@ describe('clientOperations IPC contract tests', () => {
           customer_type: 'individual',
           status: 'active',
           created_at: '2025-02-09T10:00:00Z',
-          updated_at: '2025-02-09T10:00:00Z',
+          updated_at: '2025-02-09T10:00:00Z'
         }
       };
 
@@ -409,7 +396,7 @@ describe('clientOperations IPC contract tests', () => {
       const result = await clientOperations.create({
         name: 'John Doe',
         email: 'john@example.com'
-      }, 'session-token');
+      });
 
       expect(validateClient).toHaveBeenCalledWith(mockResponse.data);
       expect(result).toEqual(validateClient(mockResponse.data));
@@ -423,14 +410,14 @@ describe('clientOperations IPC contract tests', () => {
             name: 'John Doe',
             email: 'john@example.com',
             status: 'active',
-            customer_type: 'individual',
+            customer_type: 'individual'
           },
           {
             id: 'client-456',
             name: 'Jane Smith',
             email: 'jane@example.com',
             status: 'active',
-            customer_type: 'business',
+            customer_type: 'business'
           }
         ],
         pagination: {
@@ -438,14 +425,14 @@ describe('clientOperations IPC contract tests', () => {
           limit: 20,
           total: 2,
           has_next: false,
-          has_prev: false,
+          has_prev: false
         }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
       ResponseHandlers.list.mockReturnValue((result) => validateClientListResponse(result));
 
-      const result = await clientOperations.list({ page: 1 }, 'session-token');
+      const result = await clientOperations.list({ page: 1 });
 
       expect(validateClientListResponse).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(validateClientListResponse(mockResponse));
@@ -459,7 +446,7 @@ describe('clientOperations IPC contract tests', () => {
           name: 'John Doe',
           email: 'john@example.com',
           customer_type: 'individual',
-          status: 'active',
+          status: 'active'
         },
         tasks: [
           {
@@ -467,7 +454,7 @@ describe('clientOperations IPC contract tests', () => {
             title: 'PPF Installation',
             status: 'completed',
             scheduled_date: '2025-01-15',
-            vehicle_plate: 'ABC-123',
+            vehicle_plate: 'ABC-123'
           }
         ]
       };
@@ -475,7 +462,7 @@ describe('clientOperations IPC contract tests', () => {
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(validateClientWithTasks(mockResponse));
 
-      const result = await clientOperations.getWithTasks('client-123', 'session-token');
+      const result = await clientOperations.getWithTasks('client-123');
 
       expect(validateClientWithTasks).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(validateClientWithTasks(mockResponse));
@@ -520,14 +507,14 @@ describe('clientOperations IPC contract tests', () => {
           name: 'John Doe',
           email: 'john@example.com',
           phone: '555-1234',
-          customer_type: 'individual',
+          customer_type: 'individual'
         },
         {
           id: 'client-456',
           name: 'Johnny Smith',
           email: 'johnny@example.com',
           phone: '555-5678',
-          customer_type: 'individual',
+          customer_type: 'individual'
         }
       ];
 
@@ -539,7 +526,7 @@ describe('clientOperations IPC contract tests', () => {
         return [];
       });
 
-      const result = await clientOperations.search('john', 10, 'session-token');
+      const result = await clientOperations.search('john', 10);
 
       expect(validateClient).toHaveBeenCalledTimes(2);
       expect(Array.isArray(result)).toBe(true);
@@ -613,7 +600,7 @@ describe('clientOperations IPC contract tests', () => {
         await clientOperations.create({
           name: 'Test',
           email: 'invalid-email'
-        }, 'session-token');
+        });
       } catch (error) {
         expect(error).toEqual(errorResponse);
       }
@@ -638,7 +625,7 @@ describe('clientOperations IPC contract tests', () => {
         await clientOperations.create({
           name: 'John Doe',
           email: 'john@example.com'
-        }, 'session-token');
+        });
       } catch (error) {
         expect(error).toEqual(duplicateError);
       }
@@ -649,14 +636,14 @@ describe('clientOperations IPC contract tests', () => {
         type: 'NotFound',
         error: {
           code: 'NOT_FOUND',
-          message: 'Client not found',
+          message: 'Client not found'
         }
       };
 
       cachedInvoke.mockResolvedValue(notFoundResponse);
       ResponseHandlers.discriminatedUnionNullable.mockReturnValue((_result) => null);
 
-      const result = await clientOperations.get('nonexistent-client', 'session-token');
+      const result = await clientOperations.get('nonexistent-client');
 
       expect(result).toBeNull();
     });
@@ -666,7 +653,7 @@ describe('clientOperations IPC contract tests', () => {
         type: 'PermissionError',
         error: {
           code: 'PERMISSION_DENIED',
-          message: 'Insufficient permissions to access this client',
+          message: 'Insufficient permissions to access this client'
         }
       };
 
@@ -685,15 +672,14 @@ describe('clientOperations IPC contract tests', () => {
       const longName = 'a'.repeat(500);
       const clientData = {
         name: longName,
-        email: 'test@example.com',
+        email: 'test@example.com'
       };
 
-      await clientOperations.create(clientData, 'session-token');
+      await clientOperations.create(clientData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: clientData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: clientData }
         }
       }, expect.any(Function));
     });
@@ -702,26 +688,24 @@ describe('clientOperations IPC contract tests', () => {
       const specialName = 'Client with special chars: éàüß@#$%^&*()';
       const clientData = {
         name: specialName,
-        email: 'test@example.com',
+        email: 'test@example.com'
       };
 
-      await clientOperations.create(clientData, 'session-token');
+      await clientOperations.create(clientData);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: clientData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: clientData }
         }
       }, expect.any(Function));
     });
 
     it('handles empty list filters', async () => {
-      await clientOperations.list({}, 'session-token');
+      await clientOperations.list({});
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'List', filters: {} },
-          session_token: 'session-token'
+          action: { action: 'List', filters: {} }
         }
       }, expect.any(Function));
     });
@@ -733,37 +717,34 @@ describe('clientOperations IPC contract tests', () => {
         phone: null,
         address_street: null,
         address_city: null,
-        notes: null,
+        notes: null
       };
 
-      await clientOperations.create(clientWithNulls, 'session-token');
+      await clientOperations.create(clientWithNulls);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Create', data: clientWithNulls },
-          session_token: 'session-token'
+          action: { action: 'Create', data: clientWithNulls }
         }
       }, expect.any(Function));
     });
 
     it('handles maximum search limit', async () => {
-      await clientOperations.search('test', 1000, 'session-token');
+      await clientOperations.search('test', 1000);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Search', query: 'test', limit: 1000 },
-          session_token: 'session-token'
+          action: { action: 'Search', query: 'test', limit: 1000 }
         }
       });
     });
 
     it('handles search with empty query', async () => {
-      await clientOperations.search('', 10, 'session-token');
+      await clientOperations.search('', 10);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'Search', query: '', limit: 10 },
-          session_token: 'session-token'
+          action: { action: 'Search', query: '', limit: 10 }
         }
       });
     });
@@ -771,12 +752,11 @@ describe('clientOperations IPC contract tests', () => {
     it('handles listWithTasks with zero task limit', async () => {
       const filters = { page: 1, limit: 20 };
       
-      await clientOperations.listWithTasks(filters, 0, 'session-token');
+      await clientOperations.listWithTasks(filters, 0);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
-          action: { action: 'List', filters },
-          session_token: 'session-token'
+          action: { action: 'List', filters }
         }
       }, expect.any(Function));
     });

@@ -28,7 +28,7 @@ describe('Configuration loader via IPC', () => {
     jest.clearAllMocks();
   });
 
-  it('loads app settings via IPC with session token', async () => {
+  it('loads app settings via IPC', async () => {
     const mockSettings = {
       general: {
         auto_save: true,
@@ -45,22 +45,18 @@ describe('Configuration loader via IPC', () => {
 
     safeInvoke.mockResolvedValue(mockSettings);
 
-    const result = await settingsOperations.getAppSettings('admin-token');
+    const result = await settingsOperations.getAppSettings();
 
-    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {
-      sessionToken: 'admin-token',
-    });
+    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {});
     expect(result).toEqual(mockSettings);
   });
 
-  it('loads app settings with empty session token when not provided', async () => {
+  it('loads app settings without session token parameter', async () => {
     safeInvoke.mockResolvedValue({});
 
     await settingsOperations.getAppSettings();
 
-    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {
-      sessionToken: '',
-    });
+    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {});
   });
 
   it('handles IPC errors gracefully', async () => {

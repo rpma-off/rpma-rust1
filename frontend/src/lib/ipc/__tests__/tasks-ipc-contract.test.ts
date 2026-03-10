@@ -14,13 +14,13 @@ jest.mock('../utils/crud-helpers', () => ({
     update: jest.fn(),
     delete: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn(),
+    statistics: jest.fn()
   })),
   ResponseHandlers: {
     discriminatedUnion: jest.fn(),
     discriminatedUnionNullable: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn(),
+    statistics: jest.fn()
   },
 }));
 
@@ -43,7 +43,7 @@ const { ResponseHandlers } = jest.requireMock('../utils/crud-helpers') as {
     discriminatedUnion: jest.Mock,
     discriminatedUnionNullable: jest.Mock,
     list: jest.Mock,
-    statistics: jest.Mock,
+    statistics: jest.Mock
   };
 };
 
@@ -79,8 +79,8 @@ describe('taskOperations IPC contract tests', () => {
         limit: 20,
         total: 0,
         has_next: false,
-        has_prev: false,
-      },
+        has_prev: false
+      }
     });
     
     // Setup ResponseHandlers mocks
@@ -108,30 +108,28 @@ describe('taskOperations IPC contract tests', () => {
       const createData = {
         title: 'New Task',
         description: 'Task description',
-        vehicle_plate: 'ABC-123',
+        vehicle_plate: 'ABC-123'
       };
       
-      await taskOperations.create(createData, 'session-token');
+      await taskOperations.create(createData);
 
        expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
          request: {
-           action: { action: 'Create', data: createData },
-           session_token: 'session-token'
+           action: { action: 'Create', data: createData }
          }
        });
       expect(invalidatePattern).toHaveBeenCalledWith('task:');
     });
 
     it('calls cachedInvoke with correct parameters for get', async () => {
-      await taskOperations.get('task-123', 'session-token');
+      await taskOperations.get('task-123');
 
       expect(cachedInvoke).toHaveBeenCalledWith(
         'task:task-123',
         'task_crud',
         {
           request: {
-            action: { action: 'Get', id: 'task-123' },
-            session_token: 'session-token'
+            action: { action: 'Get', id: 'task-123' }
           }
         },
         expect.any(Function)
@@ -141,27 +139,25 @@ describe('taskOperations IPC contract tests', () => {
     it('calls safeInvoke with correct parameters for update', async () => {
       const updateData = {
         title: 'Updated Task',
-        status: 'completed',
+        status: 'completed'
       };
       
-      await taskOperations.update('task-123', updateData, 'session-token');
+      await taskOperations.update('task-123', updateData);
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Update', id: 'task-123', data: updateData },
-          session_token: 'session-token'
+          action: { action: 'Update', id: 'task-123', data: updateData }
         }
       });
       expect(invalidatePattern).toHaveBeenCalledWith('task:');
     });
 
     it('calls safeInvoke with correct parameters for delete', async () => {
-      await taskOperations.delete('task-123', 'session-token');
+      await taskOperations.delete('task-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Delete', id: 'task-123' },
-          session_token: 'session-token'
+          action: { action: 'Delete', id: 'task-123' }
         }
       });
       expect(invalidatePattern).toHaveBeenCalledWith('task:');
@@ -172,10 +168,10 @@ describe('taskOperations IPC contract tests', () => {
         page: 1,
         limit: 20,
         status: 'pending',
-        technician_id: 'tech-123',
+        technician_id: 'tech-123'
       };
       
-      await taskOperations.list(filters, 'session-token');
+      await taskOperations.list(filters);
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
@@ -194,8 +190,7 @@ describe('taskOperations IPC contract tests', () => {
               sort_by: 'created_at',
               sort_order: 'desc'
             }
-          },
-          session_token: 'session-token'
+          }
         }
       });
     });
@@ -207,44 +202,40 @@ describe('taskOperations IPC contract tests', () => {
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'GetStatistics' },
-          session_token: 'session-token'
+          action: { action: 'GetStatistics' }
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for checkTaskAssignment', async () => {
-      await taskOperations.checkTaskAssignment('task-123', 'user-456', 'session-token');
+      await taskOperations.checkTaskAssignment('task-123', 'user-456');
 
       expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
         request: {
           task_id: 'task-123',
-          user_id: 'user-456',
-          session_token: 'session-token'
+          user_id: 'user-456'
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for checkTaskAvailability', async () => {
-      await taskOperations.checkTaskAvailability('task-123', 'session-token');
+      await taskOperations.checkTaskAvailability('task-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('check_task_availability', {
         request: {
-          task_id: 'task-123',
-          session_token: 'session-token'
+          task_id: 'task-123'
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for validateTaskAssignmentChange', async () => {
-      await taskOperations.validateTaskAssignmentChange('task-123', 'old-user', 'new-user', 'session-token');
+      await taskOperations.validateTaskAssignmentChange('task-123', 'old-user', 'new-user');
 
       expect(safeInvoke).toHaveBeenCalledWith('validate_task_assignment_change', {
         request: {
           task_id: 'task-123',
           old_user_id: 'old-user',
-          new_user_id: 'new-user',
-          session_token: 'session-token'
+          new_user_id: 'new-user'
         }
       });
     });
@@ -252,65 +243,60 @@ describe('taskOperations IPC contract tests', () => {
     it('calls safeInvoke and extractAndValidate for editTask', async () => {
       const updates = { title: 'Updated Task' };
       
-      await taskOperations.editTask('task-123', updates, 'session-token');
+      await taskOperations.editTask('task-123', updates);
 
       expect(safeInvoke).toHaveBeenCalledWith('edit_task', {
         request: {
           task_id: 'task-123',
-          data: updates,
-          session_token: 'session-token'
+          data: updates
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for addTaskNote', async () => {
-      await taskOperations.addTaskNote('task-123', 'Test note', 'session-token');
+      await taskOperations.addTaskNote('task-123', 'Test note');
 
       expect(safeInvoke).toHaveBeenCalledWith('add_task_note', {
         request: {
           task_id: 'task-123',
-          note: 'Test note',
-          session_token: 'session-token'
+          note: 'Test note'
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for sendTaskMessage', async () => {
-      await taskOperations.sendTaskMessage('task-123', 'Test message', 'info', 'session-token');
+      await taskOperations.sendTaskMessage('task-123', 'Test message', 'info');
 
       expect(safeInvoke).toHaveBeenCalledWith('send_task_message', {
         request: {
           task_id: 'task-123',
           message: 'Test message',
-          message_type: 'info',
-          session_token: 'session-token'
+          message_type: 'info'
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for delayTask', async () => {
-      await taskOperations.delayTask('task-123', '2025-03-01', 'Customer request', 'session-token');
+      await taskOperations.delayTask('task-123', '2025-03-01', 'Customer request');
 
       expect(safeInvoke).toHaveBeenCalledWith('delay_task', {
         request: {
           task_id: 'task-123',
           new_scheduled_date: '2025-03-01',
-          reason: 'Customer request',
-          session_token: 'session-token'
+          reason: 'Customer request'
         }
       });
     });
 
     it('calls safeInvoke with correct parameters for reportTaskIssue', async () => {
-      await taskOperations.reportTaskIssue('task-123', 'material', 'high', 'Issue description', 'session-token');
+      await taskOperations.reportTaskIssue('task-123', 'material', 'high', 'Issue description');
 
       expect(safeInvoke).toHaveBeenCalledWith('report_task_issue', {
         request: {
           task_id: 'task-123',
           issue_type: 'material',
           severity: 'high',
-          description: 'Issue description',
-          session_token: 'session-token'
+          description: 'Issue description'
         }
       });
     });
@@ -324,7 +310,7 @@ describe('taskOperations IPC contract tests', () => {
         }
       };
       
-      await taskOperations.exportTasksCsv(options, 'session-token');
+      await taskOperations.exportTasksCsv(options);
 
       expect(safeInvoke).toHaveBeenCalledWith('export_tasks_csv', {
         request: {
@@ -332,8 +318,7 @@ describe('taskOperations IPC contract tests', () => {
           filter: {
             date_from: '2025-01-01',
             date_to: '2025-01-31'
-          },
-          session_token: 'session-token'
+          }
         }
       });
     });
@@ -342,16 +327,15 @@ describe('taskOperations IPC contract tests', () => {
       const options = {
         csv_lines: ['line1', 'line2'],
         skip_duplicates: true,
-        update_existing: false,
+        update_existing: false
       };
       
-      await taskOperations.importTasksBulk(options, 'session-token');
+      await taskOperations.importTasksBulk(options);
 
       expect(safeInvoke).toHaveBeenCalledWith('import_tasks_bulk', {
         request: {
           csv_data: 'line1\nline2',
-          update_existing: false,
-          session_token: 'session-token'
+          update_existing: false
         }
       });
     });
@@ -361,33 +345,31 @@ describe('taskOperations IPC contract tests', () => {
     it('validates required fields for create operation', async () => {
       const invalidData = {
         // Missing required title
-        description: 'Task without title',
+        description: 'Task without title'
       };
 
       try {
-        await taskOperations.create(invalidData, 'session-token');
+        await taskOperations.create(invalidData);
       } catch (error) {
         expect(error).toBeDefined();
       }
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Create', data: invalidData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: invalidData }
         }
       });
     });
 
     it('validates task ID format for get operation', async () => {
-      await taskOperations.get('', 'session-token');
+      await taskOperations.get('');
 
       expect(cachedInvoke).toHaveBeenCalledWith(
         'task:',
         'task_crud',
         {
           request: {
-            action: { action: 'Get', id: '' },
-            session_token: 'session-token'
+            action: { action: 'Get', id: '' }
           }
         },
         expect.any(Function)
@@ -396,15 +378,14 @@ describe('taskOperations IPC contract tests', () => {
 
     it('validates update data structure', async () => {
       const invalidUpdateData = {
-        invalid_field: 'should not exist',
+        invalid_field: 'should not exist'
       };
 
-      await taskOperations.update('task-123', invalidUpdateData, 'session-token');
+      await taskOperations.update('task-123', invalidUpdateData);
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Update', id: 'task-123', data: invalidUpdateData },
-          session_token: 'session-token'
+          action: { action: 'Update', id: 'task-123', data: invalidUpdateData }
         }
       });
     });
@@ -416,12 +397,12 @@ describe('taskOperations IPC contract tests', () => {
         id: 'task-123',
         title: 'New Task',
         status: 'pending',
-        created_at: '2025-02-09T10:00:00Z',
+        created_at: '2025-02-09T10:00:00Z'
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await taskOperations.create({ title: 'New Task' }, 'session-token');
+      const result = await taskOperations.create({ title: 'New Task' });
 
       expect(validateTask).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockResponse);
@@ -433,12 +414,12 @@ describe('taskOperations IPC contract tests', () => {
           {
             id: 'task-123',
             title: 'Task 1',
-            status: 'pending',
+            status: 'pending'
           },
           {
             id: 'task-456',
             title: 'Task 2',
-            status: 'completed',
+            status: 'completed'
           }
         ],
         pagination: {
@@ -446,14 +427,14 @@ describe('taskOperations IPC contract tests', () => {
           limit: 20,
           total: 2,
           has_next: false,
-          has_prev: false,
+          has_prev: false
         }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
       ResponseHandlers.list.mockReturnValue((result) => validateTaskListResponse(result));
 
-      const result = await taskOperations.list({ page: 1 }, 'session-token');
+      const result = await taskOperations.list({ page: 1 });
 
       expect(validateTaskListResponse).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(validateTaskListResponse(mockResponse));
@@ -462,7 +443,7 @@ describe('taskOperations IPC contract tests', () => {
     it('handles null response for get operation', async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await taskOperations.get('nonexistent-task', 'session-token');
+      const result = await taskOperations.get('nonexistent-task');
 
       expect(result).toBeNull();
     });
@@ -524,7 +505,7 @@ describe('taskOperations IPC contract tests', () => {
       safeInvoke.mockRejectedValue(errorResponse);
 
       try {
-        await taskOperations.create({}, 'session-token');
+        await taskOperations.create({});
       } catch (error) {
         expect(error).toEqual(errorResponse);
       }
@@ -533,7 +514,7 @@ describe('taskOperations IPC contract tests', () => {
     it('handles not found errors for get operation', async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await taskOperations.get('nonexistent-task', 'session-token');
+      const result = await taskOperations.get('nonexistent-task');
 
       expect(result).toBeNull();
     });
@@ -543,7 +524,7 @@ describe('taskOperations IPC contract tests', () => {
         type: 'PermissionError',
         error: {
           code: 'PERMISSION_DENIED',
-          message: 'Insufficient permissions to perform this operation',
+          message: 'Insufficient permissions to perform this operation'
         }
       };
 
@@ -562,15 +543,14 @@ describe('taskOperations IPC contract tests', () => {
       const longDescription = 'a'.repeat(10000);
       const taskData = {
         title: 'Task with long description',
-        description: longDescription,
+        description: longDescription
       };
 
-      await taskOperations.create(taskData, 'session-token');
+      await taskOperations.create(taskData);
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Create', data: taskData },
-          session_token: 'session-token'
+          action: { action: 'Create', data: taskData }
         }
       });
     });
@@ -578,18 +558,17 @@ describe('taskOperations IPC contract tests', () => {
     it('handles special characters in task titles', async () => {
       const specialTitle = 'Task with special chars: éàüß@#$%^&*()';
       
-      await taskOperations.create({ title: specialTitle }, 'session-token');
+      await taskOperations.create({ title: specialTitle });
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Create', data: { title: specialTitle } },
-          session_token: 'session-token'
+          action: { action: 'Create', data: { title: specialTitle } }
         }
       });
     });
 
     it('handles empty list filters', async () => {
-      await taskOperations.list({}, 'session-token');
+      await taskOperations.list({});
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
@@ -608,8 +587,7 @@ describe('taskOperations IPC contract tests', () => {
               sort_by: 'created_at',
               sort_order: 'desc'
             }
-          },
-          session_token: 'session-token'
+          }
         }
       });
     });
@@ -619,15 +597,14 @@ describe('taskOperations IPC contract tests', () => {
         title: 'Task with null fields',
         description: null,
         technician_id: null,
-        scheduled_date: null,
+        scheduled_date: null
       };
 
-      await taskOperations.create(taskWithNulls, 'session-token');
+      await taskOperations.create(taskWithNulls);
 
       expect(safeInvoke).toHaveBeenCalledWith('task_crud', {
         request: {
-          action: { action: 'Create', data: taskWithNulls },
-          session_token: 'session-token'
+          action: { action: 'Create', data: taskWithNulls }
         }
       });
     });

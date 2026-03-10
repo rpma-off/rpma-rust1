@@ -21,13 +21,12 @@ describe('inventory server IPC contracts', () => {
   it('calls material list with sessionToken-first payloads', async () => {
     mockSafeInvoke.mockResolvedValue({ data: [], pagination: { page: 1, limit: 10, total: 0 } } as never);
 
-    await materialOperations.list('test-token', { page: 1, limit: 10, material_type: 'ppf_film' as never });
+    await materialOperations.list({ page: 1, limit: 10, material_type: 'ppf_film' as never });
 
     expect(mockSafeInvoke).toHaveBeenCalledWith('material_list', {
-      sessionToken: 'test-token',
       page: 1,
       limit: 10,
-      material_type: 'ppf_film',
+      material_type: 'ppf_film'
     });
   });
 
@@ -37,15 +36,14 @@ describe('inventory server IPC contracts', () => {
       name: 'Test Material 1',
       material_type: 'ppf_film' as const,
       unit_of_measure: 'meter' as const,
-      current_stock: 50,
+      current_stock: 50
     };
     mockSafeInvoke.mockResolvedValue({ id: 'material-1', ...request } as never);
 
-    await materialOperations.create(request, 'test-token');
+    await materialOperations.create(request);
 
     expect(mockSafeInvoke).toHaveBeenCalledWith('material_create', {
-      sessionToken: 'test-token',
-      request,
+      request
     });
   });
 
@@ -53,12 +51,11 @@ describe('inventory server IPC contracts', () => {
     const request = { name: 'Updated name', current_stock: 75 };
     mockSafeInvoke.mockResolvedValue({ id: 'material-1', ...request } as never);
 
-    await materialOperations.update('material-1', request, 'test-token');
+    await materialOperations.update('material-1', request);
 
     expect(mockSafeInvoke).toHaveBeenCalledWith('material_update', {
-      sessionToken: 'test-token',
       id: 'material-1',
-      request,
+      request
     });
   });
 
@@ -66,15 +63,14 @@ describe('inventory server IPC contracts', () => {
     const request = {
       material_id: 'material-1',
       quantity_change: 5,
-      reason: 'Restock',
+      reason: 'Restock'
     };
     mockSafeInvoke.mockResolvedValue({ id: 'material-1', current_stock: 55 } as never);
 
-    await stockOperations.updateStock(request, 'test-token');
+    await stockOperations.updateStock(request);
 
     expect(mockSafeInvoke).toHaveBeenCalledWith('material_update_stock', {
-      sessionToken: 'test-token',
-      request,
+      request
     });
   });
 
@@ -82,24 +78,22 @@ describe('inventory server IPC contracts', () => {
     const consumptionRequest = {
       intervention_id: 'intervention-1',
       material_id: 'material-1',
-      quantity_used: 2,
+      quantity_used: 2
     };
 
     mockSafeInvoke.mockResolvedValueOnce(undefined as never);
     mockSafeInvoke.mockResolvedValueOnce([] as never);
 
-    await consumptionOperations.recordConsumption(consumptionRequest, 'test-token');
-    await transactionOperations.getTransactionHistory('material-1', 'test-token');
+    await consumptionOperations.recordConsumption(consumptionRequest);
+    await transactionOperations.getTransactionHistory('material-1');
 
     expect(mockSafeInvoke).toHaveBeenNthCalledWith(1, 'material_record_consumption', {
-      sessionToken: 'test-token',
-      request: consumptionRequest,
+      request: consumptionRequest
     });
     expect(mockSafeInvoke).toHaveBeenNthCalledWith(2, 'material_get_transaction_history', {
-      sessionToken: 'test-token',
       material_id: 'material-1',
       page: 1,
-      limit: 50,
+      limit: 50
     });
   });
 
@@ -116,10 +110,10 @@ describe('inventory server IPC contracts', () => {
           available_stock: 5,
           minimum_stock: 10,
           effective_threshold: 10,
-          shortage_quantity: 5,
+          shortage_quantity: 5
         },
       ],
-      total: 1,
+      total: 1
     } as never);
     mockSafeInvoke.mockResolvedValueOnce([] as never);
 
@@ -127,10 +121,8 @@ describe('inventory server IPC contracts', () => {
     await reportingOperations.getExpiredMaterials('test-token');
 
     expect(mockSafeInvoke).toHaveBeenNthCalledWith(1, 'material_get_low_stock_materials', {
-      sessionToken: 'test-token',
     });
     expect(mockSafeInvoke).toHaveBeenNthCalledWith(2, 'material_get_expired_materials', {
-      sessionToken: 'test-token',
     });
   });
 });

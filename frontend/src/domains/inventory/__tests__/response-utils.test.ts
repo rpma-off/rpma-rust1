@@ -60,7 +60,6 @@ describe('inventory response-utils', () => {
     expect(mockSafeInvoke).toHaveBeenCalledWith(
       IPC_COMMANDS.DECOMPRESS_DATA_FROM_IPC,
       {
-        sessionToken: 'session-token',
         request: {
           compressed: {
             data: 'base64-gzip-payload',

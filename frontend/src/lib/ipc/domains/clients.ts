@@ -16,12 +16,11 @@ import type { JsonValue } from '@/types/json';
  * Client CRUD and query operations using safeInvoke for IPC discipline
  */
 export const clientOperations = {
-  create: async (data: Record<string, unknown>, sessionToken: string) => {
+  create: async (data: Record<string, unknown>) => {
     const validator = ResponseHandlers.discriminatedUnion('Created', validateClient);
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Create', data: data as JsonValue },
-        session_token: sessionToken,
+        action: { action: 'Create', data: data as JsonValue }
       },
     }, validator);
     invalidatePattern('client:');
@@ -29,11 +28,10 @@ export const clientOperations = {
     return validator(rawResult);
   },
 
-  get: async (id: string, sessionToken: string) => {
+  get: async (id: string) => {
     const rawResult = await cachedInvoke(`client:${id}`, IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Get', id },
-        session_token: sessionToken,
+        action: { action: 'Get', id }
       },
     }, (r: JsonValue) => extractAndValidate(r, validateClient, { handleNotFound: true }));
     if (rawResult && typeof rawResult === 'object' && (rawResult as { type?: string }).type === 'NotFound') {
@@ -42,12 +40,11 @@ export const clientOperations = {
     return rawResult;
   },
 
-  update: async (id: string, data: Record<string, unknown>, sessionToken: string) => {
+  update: async (id: string, data: Record<string, unknown>) => {
     const validator = ResponseHandlers.discriminatedUnion('Updated', validateClient);
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Update', id, data: data as JsonValue },
-        session_token: sessionToken,
+        action: { action: 'Update', id, data: data as JsonValue }
       },
     }, validator);
     invalidatePattern('client:');
@@ -55,11 +52,10 @@ export const clientOperations = {
     return validator(rawResult);
   },
 
-  delete: async (id: string, sessionToken: string) => {
+  delete: async (id: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Delete', id },
-        session_token: sessionToken,
+        action: { action: 'Delete', id }
       },
     });
     invalidatePattern('client:');
@@ -67,22 +63,20 @@ export const clientOperations = {
     return result;
   },
 
-  list: async (filters: Record<string, unknown>, sessionToken: string) => {
+  list: async (filters: Record<string, unknown>) => {
     const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'List', filters: filters as JsonValue },
-        session_token: sessionToken,
+        action: { action: 'List', filters: filters as JsonValue }
       },
     }, validator);
     return validator(rawResult);
   },
 
-  getWithTasks: async (id: string, sessionToken: string) => {
+  getWithTasks: async (id: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'GetWithTasks', id },
-        session_token: sessionToken,
+        action: { action: 'GetWithTasks', id }
       },
     });
     return extractAndValidate(result, validateClientWithTasks, {
@@ -91,11 +85,10 @@ export const clientOperations = {
     });
   },
 
-  search: async (query: string, limit: number, sessionToken: string) => {
+  search: async (query: string, limit: number) => {
     const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Search', query, limit },
-        session_token: sessionToken,
+        action: { action: 'Search', query, limit }
       },
     });
     if (Array.isArray(rawResult)) {
@@ -107,14 +100,12 @@ export const clientOperations = {
   listWithTasks: async (
     filters: Record<string, unknown>,
     limitTasks: number,
-    sessionToken: string,
   ) => {
     if (limitTasks === 0) {
       const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
       const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
         request: {
-          action: { action: 'List', filters: filters as JsonValue },
-          session_token: sessionToken,
+          action: { action: 'List', filters: filters as JsonValue }
         },
       }, validator);
       return validator(rawResult);
@@ -132,8 +123,7 @@ export const clientOperations = {
             sort_order: 'asc',
           },
           limit_tasks: limitTasks,
-        },
-        session_token: sessionToken,
+        }
       },
     });
     if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as Record<string, unknown>).data)) {
@@ -142,11 +132,10 @@ export const clientOperations = {
     return [];
   },
 
-  stats: async (sessionToken: string) => {
+  stats: async () => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
       request: {
-        action: { action: 'Stats' },
-        session_token: sessionToken,
+        action: { action: 'Stats' }
       },
     });
     return extractAndValidate(result, parseClientStatistics);
