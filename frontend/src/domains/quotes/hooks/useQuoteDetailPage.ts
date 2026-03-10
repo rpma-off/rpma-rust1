@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/domains/auth';
+import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import {
   useDeleteQuote,
   useDuplicateQuote,
@@ -11,15 +14,19 @@ import {
   useQuoteItems,
   useQuoteStatus,
 } from './useQuotes';
+import type { ConvertQuoteToTaskResponse } from '@/types/quote.types';
 
 export type ActiveTab = 'details' | 'items' | 'images' | 'documents' | 'history';
 
 export function useQuoteDetailPage(quoteId: string) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast: uiToast } = useToast();
   const [activeTab, setActiveTab] = useState<ActiveTab>('details');
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [convertLoading, setConvertLoading] = useState(false);
   const [acceptedTaskId, setAcceptedTaskId] = useState<string | null>(null);
   const [newLabel, setNewLabel] = useState('');
   const [newKind, setNewKind] = useState<QuoteItemKind>('service');
@@ -188,6 +195,66 @@ export function useQuoteDetailPage(quoteId: string) {
     }
   };
 
+  const handleConvertToTask = async () => {
+    if (!quoteId || !quote) {
+      return;
+    }
+
+    if (!user?.token) {
+      uiToast({
+        title: 'Not authenticated',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const plate = quote.vehicle_plate?.trim() ?? '';
+    const model = quote.vehicle_model?.trim() ?? '';
+
+    if (!plate || !model) {
+      uiToast({
+        title: 'Vehicle plate and model are required to convert this quote.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setConvertLoading(true);
+      const result = await quotesIpc.convertToTask(
+        quoteId,
+        {
+          plate,
+          model,
+          make: quote.vehicle_make ?? '',
+          year: quote.vehicle_year ?? '',
+          vin: quote.vehicle_vin ?? '',
+        },
+        user.token
+      );
+      const response = result as ConvertQuoteToTaskResponse | null;
+
+      if (response?.task_id) {
+        uiToast({ title: 'Task created successfully' });
+        router.push(`/tasks/${response.task_id}`);
+        return;
+      }
+
+      uiToast({
+        title: 'Conversion failed',
+        variant: 'destructive',
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Conversion failed';
+      uiToast({
+        title: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setConvertLoading(false);
+    }
+  };
+
   const isDraft = quote?.status === 'draft';
   const isSent = quote?.status === 'sent';
   const isAccepted = quote?.status === 'accepted';
@@ -233,6 +300,7 @@ export function useQuoteDetailPage(quoteId: string) {
     isExpired,
     isChangesRequested,
     canEdit,
+    convertLoading,
     handleAddItem,
     handleDeleteItem,
     handleMarkSent,
@@ -245,6 +313,7 @@ export function useQuoteDetailPage(quoteId: string) {
     handleExportPdf,
     handleCopyLink,
     handleDuplicate,
+    handleConvertToTask,
     refetch,
   };
 }
