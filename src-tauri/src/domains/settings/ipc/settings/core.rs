@@ -5,7 +5,9 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::{AppSettings, SystemConfiguration};
-use crate::shared::contracts::auth::UserSession;
+use crate::resolve_context;
+use crate::shared::context::AuthContext;
+use crate::shared::contracts::auth::UserRole;
 
 use std::sync::Mutex;
 
@@ -21,22 +23,14 @@ pub async fn get_app_settings(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-
-    let user = crate::authenticate!(
-        &session_token,
-        &state,
-        crate::shared::contracts::auth::UserRole::Admin
-    );
-
-    crate::commands::update_correlation_context_user(&user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id, UserRole::Admin);
 
     let settings = state
         .settings_service
         .get_app_settings_db()
         .map_err(|e| handle_settings_error(e, "get_app_settings"))?;
 
-    Ok(ApiResponse::success(settings).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get system configuration with lazy initialization.
@@ -56,22 +50,12 @@ pub fn get_system_config() -> Result<SystemConfiguration, String> {
         .ok_or_else(|| "Failed to get system config".to_string())
 }
 
-/// Common authentication helper for settings operations.
-pub fn authenticate_user(session_token: &str, state: &AppState) -> Result<UserSession, AppError> {
-    state
-        .auth_service
-        .validate_session(session_token)
-        .map_err(|e| AppError::Authentication(format!("Session validation failed: {}", e)))
-}
-
 /// Validate settings update permissions.
 pub fn validate_settings_permissions(
-    user: &UserSession,
-    required_role: crate::shared::contracts::auth::UserRole,
+    auth: &AuthContext,
+    required_role: UserRole,
 ) -> Result<(), AppError> {
-    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin)
-        && user.role != required_role
-    {
+    if !matches!(auth.role, UserRole::Admin) && auth.role != required_role {
         return Err(AppError::Authorization(
             "Insufficient permissions to modify settings".to_string(),
         ));
@@ -86,13 +70,14 @@ pub fn handle_settings_error<E: std::fmt::Display>(error: E, operation: &str) ->
 }
 
 /// Extract the canonical user ID for settings operations.
-pub fn settings_user_id(user: &UserSession) -> &str {
-    &user.user_id
+pub fn settings_user_id(auth: &AuthContext) -> &str {
+    &auth.user_id
 }
 
 #[cfg(test)]
 mod tests {
     use super::settings_user_id;
+    use crate::shared::context::AuthContext;
     use crate::shared::contracts::auth::{UserRole, UserSession};
 
     #[test]
@@ -108,7 +93,8 @@ mod tests {
             last_activity: "2099-01-01T00:00:00Z".to_string(),
             created_at: "2099-01-01T00:00:00Z".to_string(),
         };
+        let auth = AuthContext::from(&session);
 
-        assert_eq!(settings_user_id(&session), "user-123");
+        assert_eq!(settings_user_id(&auth), "user-123");
     }
 }
