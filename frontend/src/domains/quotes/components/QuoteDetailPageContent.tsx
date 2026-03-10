@@ -17,6 +17,7 @@ import {
   Quote,
   Image,
   History,
+  ArrowRight,
 } from 'lucide-react';
 import {
   QuoteConvertDialog,
@@ -89,7 +90,9 @@ export function QuoteDetailPageContent() {
     setNewDescription,
     isDraft,
     isSent,
+    isAccepted,
     canEdit,
+    convertLoading,
     handleAddItem,
     handleDeleteItem,
     handleMarkSent,
@@ -102,6 +105,7 @@ export function QuoteDetailPageContent() {
     handleExportPdf,
     handleCopyLink,
     handleDuplicate,
+    handleConvertToTask,
     refetch,
   } = useQuoteDetailPage(quoteId);
 
@@ -157,6 +161,17 @@ export function QuoteDetailPageContent() {
             Refuser
           </Button>
         </>
+      )}
+      {isAccepted && !quote.task_id && (
+        <Button
+          onClick={handleConvertToTask}
+          disabled={convertLoading}
+          size="sm"
+          variant="default"
+        >
+          <ArrowRight className="mr-2 h-4 w-4" />
+          Convert to Task
+        </Button>
       )}
       <Button
         onClick={handleExportPdf}
