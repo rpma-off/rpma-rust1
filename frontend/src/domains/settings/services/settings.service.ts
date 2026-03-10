@@ -222,7 +222,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<Record<string, unknown>>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      const data = await ipcClient.settings.exportUserData(token);
+      const data = await ipcClient.settings.exportUserData();
       return ok(data);
     } catch (error) {
       return fail(error, 'Failed to export user data');

@@ -85,7 +85,7 @@ describe('useInterventionData', () => {
 
     expect(result.current.data?.steps).toHaveLength(1);
     expect(mockInterventions.getProgress).not.toHaveBeenCalled();
-    expect(mockInterventions.getLatestByTask).toHaveBeenCalledWith('task-1', 'test-token');
+    expect(mockInterventions.getLatestByTask).toHaveBeenCalledWith('task-1');
   });
 
   it('fetches steps when the intervention does not include them', async () => {
@@ -130,7 +130,7 @@ describe('useInterventionData', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-2', 'test-token');
+    expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-2');
     expect(result.current.data?.steps).toHaveLength(1);
   });
 
@@ -158,7 +158,7 @@ describe('useInterventionData', () => {
       expect(result.current.isSuccess).toBe(true);
     });
 
-    expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-3', 'test-token');
+    expect(mockInterventions.getProgress).toHaveBeenCalledWith('inter-3');
   });
 
   it('uses step_data as fallback when collected_data is null', async () => {

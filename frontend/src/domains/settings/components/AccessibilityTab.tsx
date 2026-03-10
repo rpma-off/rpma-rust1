@@ -122,7 +122,7 @@ export function AccessibilityTab({ user }: AccessibilitySettingsTabProps) {
     });
 
     try {
-      await ipcClient.settings.updateUserAccessibility(data, user.token);
+      await ipcClient.settings.updateUserAccessibility(data);
 
       setSaveSuccess(true);
       logInfo('Accessibility settings updated successfully', { userId: user.user_id });

@@ -473,16 +473,13 @@ describe('taskOperations IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledTimes(1);
     });
 
-    it('passes session token correctly in nested requests', async () => {
-      const sessionToken = 'valid-session-token';
-      
-      await taskOperations.checkTaskAssignment('task-123', 'user-456', sessionToken);
+    it('passes no session token in nested requests (safeInvoke injects it)', async () => {
+      await taskOperations.checkTaskAssignment('task-123', 'user-456');
 
       expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
         request: {
           task_id: 'task-123',
           user_id: 'user-456',
-          session_token: sessionToken
         }
       });
     });

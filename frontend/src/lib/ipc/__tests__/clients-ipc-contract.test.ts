@@ -558,23 +558,19 @@ describe('clientOperations IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledTimes(1);
     });
 
-    it('passes session token correctly in nested requests', async () => {
-      const sessionToken = 'valid-session-token';
-      
-      await clientOperations.getWithTasks('client-123', sessionToken);
-      await clientOperations.search('john', 10, sessionToken);
+    it('passes no session token in nested requests (safeInvoke injects it)', async () => {
+      await clientOperations.getWithTasks('client-123');
+      await clientOperations.search('john', 10);
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
           action: { action: 'GetWithTasks', id: 'client-123' },
-          session_token: sessionToken
         }
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('client_crud', {
         request: {
           action: { action: 'Search', query: 'john', limit: 10 },
-          session_token: sessionToken
         }
       });
     });
