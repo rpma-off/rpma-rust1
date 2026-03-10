@@ -46,7 +46,7 @@ function AuthLoadingSkeleton({ className }: { className?: string }) {
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading, isAuthenticating } = useAuth();
+  const { user, loading: authLoading, isAuthenticating, isHydrating } = useAuth();
   const pathname = usePathname();
 
   // Initialize menu event listeners for authenticated users
@@ -74,8 +74,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  useAuthRedirect(user, authLoading, isAuthenticating);
+  useAuthRedirect(user, authLoading, isAuthenticating, isHydrating);
   useAdminBootstrapCheck(user, authLoading, isAuthenticating);
+
+  if (isHydrating) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8">
+        <AuthLoadingSkeleton />
+      </div>
+    );
+  }
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAuthPending = authLoading || isAuthenticating;

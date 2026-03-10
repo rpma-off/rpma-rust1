@@ -23,6 +23,7 @@ export interface AuthState {
   profile: UserAccount | null;
   loading: boolean;
   isAuthenticating: boolean;
+  isHydrating: boolean;
 }
 
 /**
@@ -62,6 +63,7 @@ export interface AuthContextType {
   session: UserSession | null; // For compatibility with migrated pages
   loading: boolean;
   isAuthenticating: boolean;
+  isHydrating: boolean;
   signIn: (email: string, password: string) => Promise<AuthResponse<UserSession>>;
   signUp: (email: string, password: string, profile: Partial<UserAccount>) => Promise<AuthResponse<UserSession>>;
   signOut: () => Promise<void>;

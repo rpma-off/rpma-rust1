@@ -101,8 +101,10 @@ describe('AuthProvider / useAuth', () => {
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
+    expect(result.current.isHydrating).toBe(true);
+
     await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+      expect(result.current.isHydrating).toBe(false);
     });
 
     expect(authIpc.validateSession).toHaveBeenCalledWith('stored-token');
