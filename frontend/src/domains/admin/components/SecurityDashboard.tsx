@@ -100,7 +100,7 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
     if (!user?.token) return;
 
     try {
-      await ipcClient.settings.revokeSession(sessionId, user.token);
+      await ipcClient.settings.revokeSession(sessionId);
       toast.success('Session révoquée');
       loadSecurityData(); // Refresh data
     } catch (err) {

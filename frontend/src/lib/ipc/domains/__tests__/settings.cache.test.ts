@@ -7,6 +7,11 @@ jest.mock('../../core', () => ({
   invalidatePattern: jest.fn(),
 }));
 
+jest.mock('@/shared/contracts/session', () => ({
+  requireSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+  getSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+}));
+
 const { safeInvoke, cachedInvoke, invalidatePattern } = jest.requireMock('../../core') as {
   safeInvoke: jest.Mock;
   cachedInvoke: jest.Mock;
@@ -18,13 +23,13 @@ describe('settingsOperations cache behavior', () => {
     jest.clearAllMocks();
   });
 
-  it('uses a user-scoped cache key for getUserSettings', async () => {
+  it('uses a shared cache key for getUserSettings', async () => {
     cachedInvoke.mockResolvedValue({ profile: {}, preferences: {}, security: {}, performance: {}, accessibility: {}, notifications: {} });
 
     await settingsOperations.getUserSettings();
 
     expect(cachedInvoke).toHaveBeenCalledWith(
-      expect.stringMatching(/^user-settings:/),
+      'user-settings',
       IPC_COMMANDS.GET_USER_SETTINGS,
       {},
       undefined,
@@ -32,14 +37,14 @@ describe('settingsOperations cache behavior', () => {
     );
   });
 
-  it('invalidates the same user-scoped cache key after mutation', async () => {
+  it('invalidates the cache key after mutation', async () => {
     safeInvoke.mockResolvedValue('ok');
 
     await settingsOperations.updateUserPreferences({ language: 'en' });
 
     expect(safeInvoke).toHaveBeenCalledWith(
       IPC_COMMANDS.UPDATE_USER_PREFERENCES,
-      { request: { language: 'en' } }
+      { request: { language: 'en', session_token: 'test-session-token' } }
     );
     expect(invalidatePattern).toHaveBeenCalled();
   });

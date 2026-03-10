@@ -45,7 +45,7 @@ describe('ipcClient.settings IPC argument shapes', () => {
     await ipcClient.settings.getUserSettings();
 
     expect(cachedInvoke).toHaveBeenCalledWith(
-      expect.stringMatching(/^user-settings:/),
+      'user-settings',
       'get_user_settings',
       {},
       undefined,

@@ -441,7 +441,7 @@ describe('interventionOperations IPC contract tests', () => {
       };
       safeInvoke.mockResolvedValue(mockResponse);
 
-      await interventionOperations.list({ status: 'active' }, 'token-abc');
+      await interventionOperations.list({ status: 'active' });
 
       const callArgs = safeInvoke.mock.calls[0];
       expect(callArgs[0]).toBe('intervention_management');
@@ -450,8 +450,9 @@ describe('interventionOperations IPC contract tests', () => {
       expect(callArgs[1].action).toHaveProperty('action', 'List');
       expect(callArgs[1].action).toHaveProperty('query');
       expect(callArgs[1].action).not.toHaveProperty('List');
-      // Verify session_token is at top level (not sessionToken)
-      expect(callArgs[1]).toHaveProperty('session_token', 'token-abc');
+      // session_token is injected by safeInvoke automatically (not passed manually)
+      expect(callArgs[1]).not.toHaveProperty('session_token');
+      expect(callArgs[1]).not.toHaveProperty('sessionToken');
     });
   });
 
@@ -637,24 +638,20 @@ describe('interventionOperations IPC contract tests', () => {
       expect(safeInvoke).toHaveBeenCalledTimes(operations.length);
     });
 
-    it('passes session token correctly in all requests', async () => {
-      const sessionToken = 'valid-session-token';
-      
-      await interventionOperations.start({ task_id: 'task-123' }, sessionToken);
-      await interventionOperations.get('intervention-123', sessionToken);
+    it('passes no session token in args (safeInvoke injects it automatically)', async () => {
+      await interventionOperations.start({ task_id: 'task-123' });
+      await interventionOperations.get('intervention-123');
       await interventionOperations.advanceStep({
         intervention_id: 'intervention-123',
         step_id: 'step-1'
-      }, sessionToken);
+      });
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
         action: { action: 'Start', data: { task_id: 'task-123' } },
-        sessionToken: sessionToken
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
         action: { action: 'Get', id: 'intervention-123' },
-        sessionToken: sessionToken
       });
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
@@ -668,7 +665,6 @@ describe('interventionOperations IPC contract tests', () => {
           quality_check_passed: undefined,
           issues: undefined
         },
-        sessionToken: sessionToken
       });
     });
   });

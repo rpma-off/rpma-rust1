@@ -91,7 +91,7 @@ describe('useInventory', () => {
     });
 
     expect(result.current.materials).toHaveLength(1);
-    expect(mockInventoryIpc.getDashboardData).toHaveBeenCalledWith('session-token');
+    expect(mockInventoryIpc.getDashboardData).toHaveBeenCalledWith();
   });
 
   it('returns auth error when no token is available', async () => {

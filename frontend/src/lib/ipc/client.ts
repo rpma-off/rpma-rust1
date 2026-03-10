@@ -1,6 +1,7 @@
 import './mock/init';
 import { safeInvoke } from './utils';
 import { cachedInvoke, invalidatePattern } from './cache';
+import { requireSessionToken } from '@/shared/contracts/session';
 import { signalMutation } from '@/lib/data-freshness';
 import type { ApiError } from '@/lib/backend';
 import type { JsonObject, JsonValue } from '@/types/json';
@@ -1031,8 +1032,10 @@ export const ipcClient = {
     getAppSettings: () =>
       safeInvoke<JsonValue>('get_app_settings', {}),
 
-    updateNotificationSettings: (request: JsonObject, sessionToken: string) =>
-      safeInvoke<JsonValue>('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
+    updateNotificationSettings: async (request: JsonObject) => {
+      const sessionToken = await requireSessionToken();
+      return safeInvoke<JsonValue>('update_notification_settings', { request: { ...request, session_token: sessionToken } });
+    },
 
     // User settings operations
     getUserSettings: () =>
@@ -1050,7 +1053,8 @@ export const ipcClient = {
       return result;
     },
 
-    updateUserSecurity: async (request: JsonObject, sessionToken: string) => {
+    updateUserSecurity: async (request: JsonObject) => {
+      const sessionToken = await requireSessionToken();
       const result = await safeInvoke<JsonValue>('update_user_security', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache();
       return result;
@@ -1062,19 +1066,22 @@ export const ipcClient = {
       return result;
     },
 
-    updateUserAccessibility: async (request: JsonObject, sessionToken: string) => {
+    updateUserAccessibility: async (request: JsonObject) => {
+      const sessionToken = await requireSessionToken();
       const result = await safeInvoke<JsonValue>('update_user_accessibility', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache();
       return result;
     },
 
-    updateUserNotifications: async (request: JsonObject, sessionToken: string) => {
+    updateUserNotifications: async (request: JsonObject) => {
+      const sessionToken = await requireSessionToken();
       const result = await safeInvoke<JsonValue>('update_user_notifications', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache();
       return result;
     },
 
-    changeUserPassword: async (request: JsonObject, sessionToken: string) => {
+    changeUserPassword: async (request: JsonObject) => {
+      const sessionToken = await requireSessionToken();
       const result = await safeInvoke<string>('change_user_password', { request: { ...request, session_token: sessionToken } });
       invalidateUserSettingsCache();
       return result;
@@ -1107,7 +1114,8 @@ export const ipcClient = {
     exportUserData: () =>
       safeInvoke<JsonObject>('export_user_data', {}),
 
-    deleteUserAccount: async (confirmation: string, sessionToken: string) => {
+    deleteUserAccount: async (confirmation: string) => {
+      const sessionToken = await requireSessionToken();
       const result = await safeInvoke<string>('delete_user_account', {
         request: { confirmation, session_token: sessionToken }
       });

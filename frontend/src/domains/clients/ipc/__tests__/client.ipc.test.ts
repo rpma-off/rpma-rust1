@@ -18,6 +18,11 @@ jest.mock('@/lib/validation/backend-type-guards', () => ({
   validateClientListResponse: jest.fn(() => true),
 }));
 
+jest.mock('@/shared/contracts/session', () => ({
+  requireSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+  getSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+}));
+
 const { safeInvoke, extractAndValidate } = jest.requireMock('@/lib/ipc/core') as {
   safeInvoke: jest.Mock;
   extractAndValidate: jest.Mock;

@@ -229,8 +229,7 @@ export function useQuoteDetailPage(quoteId: string) {
           make: quote.vehicle_make ?? '',
           year: quote.vehicle_year ?? '',
           vin: quote.vehicle_vin ?? '',
-        },
-        user.token
+        }
       );
       const response = result as ConvertQuoteToTaskResponse | null;
 
