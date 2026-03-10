@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, Trash2, X, LogOut, User, Shield, HelpCircle, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/domains/auth';
+import { useOrganization } from '@/domains/organizations';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -170,6 +171,43 @@ function UserDropdown({ onMobileClose }: { onMobileClose?: () => void }) {
   );
 }
 
+function OrganizationSection() {
+  const { user } = useAuth();
+  const { data: organization, isLoading } = useOrganization(user?.token ?? null);
+
+  const orgName = organization?.name || 'Organisation';
+  const orgLogo = organization?.logo_url || organization?.logo_data;
+  const orgInitials = orgName.slice(0, 2).toUpperCase();
+
+  return (
+    <Link
+      href="/settings/organization"
+      className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer"
+    >
+      <div className="flex items-center gap-3">
+        {orgLogo ? (
+          <div className="h-8 w-8 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+            <img 
+              src={orgLogo} 
+              alt={orgName}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="h-8 w-8 rounded-md bg-[hsl(var(--rpma-teal))] flex items-center justify-center text-xs font-semibold text-white">
+            {isLoading ? <Building2 className="h-4 w-4" /> : orgInitials}
+          </div>
+        )}
+        <div>
+          <div className="text-xs text-muted-foreground">Entreprise</div>
+          <div className="text-sm font-semibold text-foreground">{isLoading ? '...' : orgName}</div>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
+  );
+}
+
 export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle: () => void }) {
   const pathname = usePathname();
 
@@ -197,21 +235,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
       </div>
 
       <div className="border-b border-[hsl(var(--rpma-border))]">
-        <Link
-          href="/settings/organization"
-          className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer"
-        >
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-              <Building2 className="h-4 w-4" />
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Entreprise</div>
-              <div className="text-sm font-semibold text-foreground">Organisation</div>
-            </div>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </Link>
+        <OrganizationSection />
         <UserDropdown />
       </div>
 
@@ -264,6 +288,44 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
   );
 }
 
+function OrganizationSectionMobile({ onClose }: { onClose?: () => void }) {
+  const { user } = useAuth();
+  const { data: organization, isLoading } = useOrganization(user?.token ?? null);
+
+  const orgName = organization?.name || 'Organisation';
+  const orgLogo = organization?.logo_url || organization?.logo_data;
+  const orgInitials = orgName.slice(0, 2).toUpperCase();
+
+  return (
+    <Link
+      href="/settings/organization"
+      onClick={onClose}
+      className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer"
+    >
+      <div className="flex items-center gap-3">
+        {orgLogo ? (
+          <div className="h-8 w-8 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+            <img 
+              src={orgLogo} 
+              alt={orgName}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        ) : (
+          <div className="h-8 w-8 rounded-md bg-[hsl(var(--rpma-teal))] flex items-center justify-center text-xs font-semibold text-white">
+            {isLoading ? <Building2 className="h-4 w-4" /> : orgInitials}
+          </div>
+        )}
+        <div>
+          <div className="text-xs text-muted-foreground">Entreprise</div>
+          <div className="text-sm font-semibold text-foreground">{isLoading ? '...' : orgName}</div>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+    </Link>
+  );
+}
+
 export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const pathname = usePathname();
 
@@ -293,22 +355,7 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
         </div>
 
         <div className="border-b border-[hsl(var(--rpma-border))]">
-          <Link
-            href="/settings/organization"
-            onClick={onClose}
-            className="flex items-center justify-between px-4 py-3 hover:bg-muted/20 cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Entreprise</div>
-                <div className="text-sm font-semibold text-foreground">Organisation</div>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
+          <OrganizationSectionMobile onClose={onClose} />
           <UserDropdown onMobileClose={onClose} />
         </div>
 

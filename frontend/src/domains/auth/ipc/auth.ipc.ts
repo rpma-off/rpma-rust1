@@ -1,17 +1,19 @@
 import { safeInvoke, cachedInvoke, extractAndValidate } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { validateUserSession } from '@/lib/validation/backend-type-guards';
+import { requireSessionToken } from '@/shared/contracts/session';
 import type { UserSession, SignupRequest } from '@/lib/ipc/types/auth.types';
 import type { JsonValue } from '@/types/json';
 
-// Re-export getUserProfile from users to avoid circular dependency
-// safeInvoke auto-injects session_token for protected commands
-const getUserProfile = (id: string): Promise<JsonValue> =>
-  safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
+const getUserProfile = async (id: string): Promise<JsonValue> => {
+  const sessionToken = await requireSessionToken();
+  return safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
     request: {
       action: { action: 'Get', id },
+      session_token: sessionToken,
     }
   }, (data: JsonValue) => extractAndValidate(data, undefined, { handleNotFound: true }));
+};
 
 export const authIpc = {
   login: (email: string, password: string): Promise<UserSession> =>
@@ -29,7 +31,7 @@ export const authIpc = {
     safeInvoke<void>(IPC_COMMANDS.AUTH_LOGOUT, { token }),
 
   validateSession: (token: string): Promise<UserSession> =>
-    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, {}, validateUserSession, 30000),
+    cachedInvoke(`auth:session:${token}`, IPC_COMMANDS.AUTH_VALIDATE_SESSION, { session_token: token }, validateUserSession, 30000),
 
   // 2FA commands are listed in NOT_IMPLEMENTED_COMMANDS and short-circuited by safeInvoke;
   // session_token injection is not needed at the IPC layer.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,12 @@ export default function OnboardingPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (status?.completed) {
+      router.push('/dashboard');
+    }
+  }, [status?.completed, router]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -53,11 +59,6 @@ export default function OnboardingPage() {
         </Card>
       </div>
     );
-  }
-
-  if (status?.completed) {
-    router.push('/dashboard');
-    return null;
   }
 
   const validateStep = (currentStep: number): boolean => {
