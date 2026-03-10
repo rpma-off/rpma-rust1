@@ -32,10 +32,9 @@ function ensureObject(result: JsonValue, context: string): asserts result is Jso
 }
 
 export const interventionsIpc = {
-  start: async (data: StartInterventionRequest, sessionToken: string) => {
+  start: async (data: StartInterventionRequest) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Start', data },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'intervention start');
@@ -50,10 +49,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for intervention start');
   },
 
-  get: async (id: string, sessionToken: string) => {
+  get: async (id: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Get', id },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'intervention get');
@@ -66,10 +64,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for intervention get');
   },
 
-  getActiveByTask: async (taskId: string, sessionToken: string) => {
+  getActiveByTask: async (taskId: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'GetActiveByTask', task_id: taskId },
-      sessionToken: sessionToken
     });
 
     if (result && typeof result === 'object' && 'type' in result) {
@@ -85,10 +82,9 @@ export const interventionsIpc = {
     return { intervention: null };
   },
 
-  getLatestByTask: async (taskId: string, sessionToken: string) => {
+  getLatestByTask: async (taskId: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_GET_LATEST_BY_TASK, {
       taskId: taskId,
-      sessionToken: sessionToken
     });
 
     // safeInvoke already unwraps ApiResponse.data — result IS the Intervention or null
@@ -99,7 +95,7 @@ export const interventionsIpc = {
     return { intervention: null };
   },
 
-  advanceStep: async (stepData: AdvanceStepRequest, sessionToken: string) => {
+  advanceStep: async (stepData: AdvanceStepRequest) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: {
         action: 'AdvanceStep',
@@ -111,7 +107,6 @@ export const interventionsIpc = {
         quality_check_passed: stepData.quality_check_passed,
         issues: stepData.issues
       },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'advance step');
@@ -131,10 +126,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for advance step');
   },
 
-  getStep: async (stepId: string, sessionToken: string) => {
+  getStep: async (stepId: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: { action: 'GetStep', step_id: stepId },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'get step');
@@ -147,10 +141,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for get step');
   },
 
-  getProgress: async (interventionId: string, sessionToken: string) => {
+  getProgress: async (interventionId: string) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: { action: 'Get', intervention_id: interventionId },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'get progress');
@@ -171,7 +164,7 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for get progress');
   },
 
-  saveStepProgress: async (stepData: SaveStepProgressRequest, sessionToken: string) => {
+  saveStepProgress: async (stepData: SaveStepProgressRequest) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_PROGRESS, {
       action: {
         action: 'SaveStepProgress',
@@ -180,7 +173,6 @@ export const interventionsIpc = {
         notes: stepData.notes,
         photos: stepData.photos,
       } as unknown as JsonObject,
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'save step progress');
@@ -195,10 +187,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for save step progress');
   },
 
-  updateWorkflow: async (id: string, data: JsonObject, sessionToken: string) => {
+  updateWorkflow: async (id: string, data: JsonObject) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Update', id, data },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'update workflow');
@@ -213,10 +204,9 @@ export const interventionsIpc = {
     throw new Error('Invalid response format for update workflow');
   },
 
-  finalize: async (data: FinalizeInterventionRequest, sessionToken: string) => {
+  finalize: async (data: FinalizeInterventionRequest) => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_WORKFLOW, {
       action: { action: 'Finalize', data },
-      sessionToken: sessionToken
     });
 
     ensureObject(result, 'finalize intervention');
@@ -240,7 +230,7 @@ export const interventionsIpc = {
     technician_id?: string;
     limit?: number;
     offset?: number
-  }, sessionToken: string) => {
+  }) => {
     const query: Record<string, string | number> = {};
     if (filters.status) query.status = filters.status;
     if (filters.technician_id) query.technician_id = filters.technician_id;
@@ -249,7 +239,6 @@ export const interventionsIpc = {
 
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.INTERVENTION_MANAGEMENT, {
       action: { action: 'List', query },
-      session_token: sessionToken
     });
 
     ensureObject(result, 'intervention list');

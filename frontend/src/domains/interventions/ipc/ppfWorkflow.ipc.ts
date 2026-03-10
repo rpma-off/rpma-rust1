@@ -6,10 +6,10 @@ import type {
 import { interventionsIpc } from './interventions.ipc';
 
 export const ppfWorkflowIpc = {
-  saveStepDraft: async (payload: SaveStepProgressRequest, sessionToken: string) =>
-    interventionsIpc.saveStepProgress(payload, sessionToken),
-  advanceStep: async (payload: AdvanceStepRequest, sessionToken: string) =>
-    interventionsIpc.advanceStep(payload, sessionToken),
-  finalize: async (payload: FinalizeInterventionRequest, sessionToken: string) =>
-    interventionsIpc.finalize(payload, sessionToken),
+  saveStepDraft: (payload: SaveStepProgressRequest) =>
+    interventionsIpc.saveStepProgress(payload),
+  advanceStep: (payload: AdvanceStepRequest) =>
+    interventionsIpc.advanceStep(payload),
+  finalize: (payload: FinalizeInterventionRequest) =>
+    interventionsIpc.finalize(payload),
 };

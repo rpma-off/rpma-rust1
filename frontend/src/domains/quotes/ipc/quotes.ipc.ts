@@ -1,10 +1,12 @@
 import { safeInvoke, invalidatePattern } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { signalMutation } from '@/lib/data-freshness';
+import { requireSessionToken } from '@/shared/contracts/session';
 import type { JsonObject } from '@/types/json';
 
 export const quotesIpc = {
-  create: async (data: JsonObject, sessionToken: string) => {
+  create: async (data: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_create', {
       request: { session_token: sessionToken, data }
     });
@@ -13,17 +15,22 @@ export const quotesIpc = {
     return result;
   },
 
-  get: (id: string, sessionToken: string) =>
-    safeInvoke('quote_get', {
+  get: async (id: string) => {
+    const sessionToken = await requireSessionToken();
+    return safeInvoke('quote_get', {
       request: { session_token: sessionToken, id }
-    }),
+    });
+  },
 
-  list: (filters: JsonObject, sessionToken: string) =>
-    safeInvoke('quote_list', {
+  list: async (filters: JsonObject) => {
+    const sessionToken = await requireSessionToken();
+    return safeInvoke('quote_list', {
       request: { session_token: sessionToken, filters }
-    }),
+    });
+  },
 
-  update: async (id: string, data: JsonObject, sessionToken: string) => {
+  update: async (id: string, data: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_update', {
       request: { session_token: sessionToken, id, data }
     });
@@ -32,7 +39,8 @@ export const quotesIpc = {
     return result;
   },
 
-  delete: async (id: string, sessionToken: string) => {
+  delete: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_delete', {
       request: { session_token: sessionToken, id }
     });
@@ -41,7 +49,8 @@ export const quotesIpc = {
     return result;
   },
 
-  addItem: async (quoteId: string, item: JsonObject, sessionToken: string) => {
+  addItem: async (quoteId: string, item: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_item_add', {
       request: { session_token: sessionToken, quote_id: quoteId, item }
     });
@@ -50,7 +59,8 @@ export const quotesIpc = {
     return result;
   },
 
-  updateItem: async (quoteId: string, itemId: string, data: JsonObject, sessionToken: string) => {
+  updateItem: async (quoteId: string, itemId: string, data: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_item_update', {
       request: { session_token: sessionToken, quote_id: quoteId, item_id: itemId, data }
     });
@@ -59,7 +69,8 @@ export const quotesIpc = {
     return result;
   },
 
-  deleteItem: async (quoteId: string, itemId: string, sessionToken: string) => {
+  deleteItem: async (quoteId: string, itemId: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_item_delete', {
       request: { session_token: sessionToken, quote_id: quoteId, item_id: itemId }
     });
@@ -68,7 +79,8 @@ export const quotesIpc = {
     return result;
   },
 
-  markSent: async (id: string, sessionToken: string) => {
+  markSent: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_mark_sent', {
       request: { session_token: sessionToken, id }
     });
@@ -77,7 +89,8 @@ export const quotesIpc = {
     return result;
   },
 
-  markAccepted: async (id: string, sessionToken: string) => {
+  markAccepted: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_mark_accepted', {
       request: { session_token: sessionToken, id }
     });
@@ -86,7 +99,8 @@ export const quotesIpc = {
     return result;
   },
 
-  markRejected: async (id: string, sessionToken: string) => {
+  markRejected: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_mark_rejected', {
       request: { session_token: sessionToken, id }
     });
@@ -95,7 +109,8 @@ export const quotesIpc = {
     return result;
   },
 
-  markExpired: async (id: string, sessionToken: string) => {
+  markExpired: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke(IPC_COMMANDS.QUOTE_MARK_EXPIRED, {
       request: { session_token: sessionToken, id }
     });
@@ -104,7 +119,8 @@ export const quotesIpc = {
     return result;
   },
 
-  markChangesRequested: async (id: string, sessionToken: string) => {
+  markChangesRequested: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke(IPC_COMMANDS.QUOTE_MARK_CHANGES_REQUESTED, {
       request: { session_token: sessionToken, id }
     });
@@ -113,7 +129,8 @@ export const quotesIpc = {
     return result;
   },
 
-  reopen: async (id: string, sessionToken: string) => {
+  reopen: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke(IPC_COMMANDS.QUOTE_REOPEN, {
       request: { session_token: sessionToken, id }
     });
@@ -122,7 +139,8 @@ export const quotesIpc = {
     return result;
   },
 
-  duplicate: async (id: string, sessionToken: string) => {
+  duplicate: async (id: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke(IPC_COMMANDS.QUOTE_DUPLICATE, {
       request: { session_token: sessionToken, id }
     });
@@ -131,22 +149,29 @@ export const quotesIpc = {
     return result;
   },
 
-  exportPdf: (id: string, sessionToken: string) =>
-    safeInvoke('quote_export_pdf', {
+  exportPdf: async (id: string) => {
+    const sessionToken = await requireSessionToken();
+    return safeInvoke('quote_export_pdf', {
       request: { session_token: sessionToken, id }
-    }),
+    });
+  },
 
-  getAttachments: (quoteId: string, sessionToken: string) =>
-    safeInvoke('quote_attachments_get', {
+  getAttachments: async (quoteId: string) => {
+    const sessionToken = await requireSessionToken();
+    return safeInvoke('quote_attachments_get', {
       request: { session_token: sessionToken, quote_id: quoteId }
-    }),
+    });
+  },
 
-  openAttachment: (attachmentId: string, sessionToken: string) =>
-    safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_OPEN, {
+  openAttachment: async (attachmentId: string) => {
+    const sessionToken = await requireSessionToken();
+    return safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_OPEN, {
       request: { session_token: sessionToken, attachment_id: attachmentId }
-    }),
+    });
+  },
 
-  createAttachment: async (quoteId: string, data: JsonObject, sessionToken: string) => {
+  createAttachment: async (quoteId: string, data: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_attachment_create', {
       request: { session_token: sessionToken, quote_id: quoteId, data }
     });
@@ -155,7 +180,8 @@ export const quotesIpc = {
     return result;
   },
 
-  updateAttachment: async (quoteId: string, attachmentId: string, data: JsonObject, sessionToken: string) => {
+  updateAttachment: async (quoteId: string, attachmentId: string, data: JsonObject) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_attachment_update', {
       request: { session_token: sessionToken, quote_id: quoteId, attachment_id: attachmentId, data }
     });
@@ -164,7 +190,8 @@ export const quotesIpc = {
     return result;
   },
 
-  deleteAttachment: async (quoteId: string, attachmentId: string, sessionToken: string) => {
+  deleteAttachment: async (quoteId: string, attachmentId: string) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke('quote_attachment_delete', {
       request: { session_token: sessionToken, quote_id: quoteId, attachment_id: attachmentId }
     });
@@ -183,9 +210,9 @@ export const quotesIpc = {
       vin: string;
       scheduledDate?: string;
       ppfZones?: string[];
-    },
-    sessionToken: string
+    }
   ) => {
+    const sessionToken = await requireSessionToken();
     const result = await safeInvoke(IPC_COMMANDS.QUOTE_CONVERT_TO_TASK, {
       request: {
         session_token: sessionToken,
