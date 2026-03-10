@@ -8,11 +8,11 @@ Located under `src-tauri/src/domains/[domain]/`:
 
 | Layer | Responsibility | Example Files |
 |-------|----------------|---------------|
-| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for auth, correlation context, and mapping | `domains/tasks/ipc/task/facade.rs` |
-| **Facade** (`mod.rs`) | Unified entry point; simplifies domain interaction for external callers (main.rs) | `domains/tasks/mod.rs` |
-| **Application** (`application/`) | Use cases, transaction boundaries, authorization enforcement, orchestration | `domains/tasks/application/task_service.rs` |
+| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for auth, correlation context, and mapping | `domains/tasks/ipc/task/mod.rs`, `domains/interventions/ipc/intervention/mod.rs` |
+| **Facade** (`facade.rs`) | Unified entry point; simplifies domain interaction for external callers | `domains/tasks/facade.rs` |
+| **Application** (`application/`) | Use cases, transaction boundaries, authorization enforcement, orchestration | `domains/tasks/application/` |
 | **Domain** (`domain/`) | Pure Rust structs, business rules, validation, entities, value objects — no I/O | `domains/tasks/domain/models/task.rs` |
-| **Infrastructure** (`infrastructure/`) | SQLite repositories, raw SQL, external adapters | `domains/tasks/infrastructure/task_repository.rs` |
+| **Infrastructure** (`infrastructure/`) | SQLite repositories, raw SQL, external adapters | `domains/tasks/infrastructure/` |
 
 Data flow direction: **IPC → Facade → Application → Domain → Infrastructure**
 
@@ -36,9 +36,9 @@ Data flow direction: **IPC → Facade → Application → Domain → Infrastruct
 
 **Key Files**:
 - Frontend: `frontend/src/domains/tasks/ipc/task.ipc.ts`
-- IPC Handler: `src-tauri/src/domains/tasks/ipc/task.rs` (`task_crud`)
-- Application: `src-tauri/src/domains/tasks/application/task_service.rs`
-- Repository: `src-tauri/src/domains/tasks/infrastructure/task_repository.rs`
+- IPC Handler: `src-tauri/src/domains/tasks/ipc/task/` (`task_crud`)
+- Application: `src-tauri/src/domains/tasks/application/`
+- Repository: `src-tauri/src/domains/tasks/infrastructure/`
 
 ### 2. Intervention Workflow (Start/Advance/Complete)
 
@@ -46,18 +46,19 @@ Data flow direction: **IPC → Facade → Application → Domain → Infrastruct
 
 **Flow**:
 1. Frontend calls `intervention_start` or `intervention_advance_step`
-2. IPC handler validates session via `authenticate!` macro
+2. IPC handler validates session via `AuthMiddleware`
 3. Application service checks RBAC (technician role required)
-4. Domain layer validates step prerequisites
+4. Domain layer validates step prerequisites via `InterventionStateMachine`
 5. Repository updates `interventions` table
 6. Audit event logged
 7. Sync operation enqueued
 
 **Key Files**:
 - Frontend: `frontend/src/domains/interventions/ipc/intervention.ipc.ts`
-- IPC Start: `src-tauri/src/domains/interventions/ipc/intervention.rs` (`intervention_start`)
-- IPC Advance: `src-tauri/src/domains/interventions/ipc/intervention.rs` (`intervention_advance_step`)
-- Application: `src-tauri/src/domains/interventions/application/intervention_service.rs`
+- IPC Start: `src-tauri/src/domains/interventions/ipc/intervention/mod.rs` (`intervention_start`)
+- IPC Advance: `src-tauri/src/domains/interventions/ipc/intervention/mod.rs` (`intervention_advance_step`)
+- State Machine: `src-tauri/src/domains/interventions/domain/services/intervention_state_machine.rs`
+- Infrastructure: `src-tauri/src/domains/interventions/infrastructure/intervention_workflow/`
 
 ### 3. Calendar Scheduling Flow
 
@@ -70,7 +71,7 @@ Data flow direction: **IPC → Facade → Application → Domain → Infrastruct
 4. Sync queue receives update operation
 
 **Key Files**:
-- Frontend: `frontend/src/domains/calendar/components/Calendar.tsx`
+- Frontend: `frontend/src/domains/calendar/`
 - IPC: `src-tauri/src/domains/calendar/ipc/calendar.rs` (`calendar_schedule_task`)
 
 ---
@@ -85,10 +86,10 @@ Data flow direction: **IPC → Facade → Application → Domain → Infrastruct
 |-----------|---------|----------|
 | `SyncOperation` | Queue item model | `domain/models/sync.rs` |
 | `OperationType` | `Create`, `Update`, `Delete` | `domain/models/sync.rs` |
-| `EntityType` | `Task`, `Client`, `Intervention`, `Material`, etc. | `domain/models/sync.rs` |
+| `EntityType` | `Task`, `Client`, `Intervention`, `Step`, `Photo`, `User` | `domain/models/sync.rs` |
 | `SyncStatus` | `Pending`, `Processing`, `Completed`, `Failed`, `Abandoned` | `domain/models/sync.rs` |
-| Background Service | Processes queue periodically | `application/sync_service.rs` |
-| Queue Management | Enqueue/dequeue operations | `infrastructure/queue.rs` |
+| Background Service | Processes queue periodically | `infrastructure/sync/background.rs` |
+| Queue Management | Enqueue/dequeue operations | `infrastructure/sync/queue.rs` |
 
 **Sync Flow**:
 ```
@@ -100,10 +101,10 @@ Local Change → Enqueue (sync_queue table) → Background Processor → Remote 
 **Key IPC Commands**:
 - `sync_enqueue` — add operation to queue
 - `sync_now` — trigger immediate sync
-- `sync_get_status` — check queue status
+- `sync_get_metrics` — check queue metrics
 - `sync_start_background_service` / `sync_stop_background_service`
 
-**Sync Table**: `sync_queue` (created by sync domain infrastructure)
+**Sync Table**: `sync_queue` (managed by sync domain infrastructure)
 
 ---
 
@@ -111,13 +112,15 @@ Local Change → Enqueue (sync_queue table) → Background Processor → Remote 
 
 **Location**: `src-tauri/src/shared/event_bus/`
 
-- `bus.rs` — Global event bus with `InMemoryEventBus`
-- `events.rs` — Domain events (`InterventionFinalized`, `MaterialConsumed`, etc.)
+- `bus.rs` — Global event bus implementation
+- `events.rs` — Domain events definitions
 
 **Usage**: Cross-domain communication without direct imports. Events flow:
 ```
 Domain Operation → Publish Event → Event Bus → Registered Handlers
 ```
+
+**Related**: `src-tauri/src/shared/services/event_system.rs`, `src-tauri/src/shared/services/domain_event.rs`
 
 ---
 
@@ -129,8 +132,14 @@ Domain Operation → Publish Event → Event Bus → Registered Handlers
 
 **Key Components**:
 - Connection: `src-tauri/src/db/connection.rs`
-- Async Wrapper: `src-tauri/src/db/mod.rs` (`AsyncDatabase`)
-- Transactions: `with_transaction()` method
+- Database Wrapper: `src-tauri/src/db/mod.rs`
+- Transactions: Available via `with_transaction()` pattern
 - WAL Checkpoint: Manual via `checkpoint_wal` or automatic SQLite threshold
 
-**Pool Stats Available**: `get_database_pool_stats` command.
+**Performance Monitoring**:
+- `QueryPerformanceMonitor` in `connection.rs` tracks all query executions
+- Slow query threshold: 100ms
+- Prepared statement cache for frequently executed queries
+- Pool stats available via `get_database_pool_stats` command
+
+**Pool Stats Available**: `get_database_pool_stats`, `get_database_pool_health` commands.
