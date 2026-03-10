@@ -16,6 +16,7 @@ use crate::domains::quotes::application::{
 
 // --- Commands ---
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, request), fields(correlation_id = tracing::field::Empty, user_id = tracing::field::Empty))]
 pub async fn quote_create(
@@ -48,6 +49,7 @@ pub async fn quote_create(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_get(
@@ -78,6 +80,7 @@ pub async fn quote_get(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_list(
@@ -104,6 +107,7 @@ pub async fn quote_list(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_update(
@@ -128,6 +132,7 @@ pub async fn quote_update(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_delete(
@@ -154,6 +159,7 @@ pub async fn quote_delete(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_item_add(
@@ -177,6 +183,7 @@ pub async fn quote_item_add(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_item_update(
@@ -205,6 +212,7 @@ pub async fn quote_item_update(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_item_delete(
@@ -228,6 +236,7 @@ pub async fn quote_item_delete(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_mark_sent(
@@ -252,6 +261,7 @@ pub async fn quote_mark_sent(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_mark_accepted(
@@ -276,6 +286,7 @@ pub async fn quote_mark_accepted(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_mark_rejected(
@@ -300,6 +311,7 @@ pub async fn quote_mark_rejected(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_mark_expired(
@@ -324,6 +336,7 @@ pub async fn quote_mark_expired(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_duplicate(
@@ -348,6 +361,7 @@ pub async fn quote_duplicate(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_export_pdf(
@@ -500,6 +514,7 @@ fn generate_quote_pdf(quote: &Quote, path: &std::path::Path) -> std::io::Result<
     Ok(())
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_attachments_get(
@@ -526,6 +541,7 @@ pub async fn quote_attachments_get(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_attachment_create(
@@ -559,6 +575,7 @@ pub async fn quote_attachment_create(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_attachment_update(
@@ -596,6 +613,7 @@ pub async fn quote_attachment_update(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_attachment_delete(
@@ -634,6 +652,7 @@ pub async fn quote_attachment_delete(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_mark_changes_requested(
@@ -658,6 +677,7 @@ pub async fn quote_mark_changes_requested(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_reopen(
@@ -682,6 +702,7 @@ pub async fn quote_reopen(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_attachment_open(

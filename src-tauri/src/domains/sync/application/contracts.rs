@@ -1,5 +1,6 @@
 //! Application-layer contracts for the Sync bounded context.
 
+/// TODO: document
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SyncResult {
     pub processed_operations: usize,

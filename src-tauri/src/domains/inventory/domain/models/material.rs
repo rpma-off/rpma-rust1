@@ -234,6 +234,7 @@ impl Material {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
 #[ts(export)]
 pub struct LowStockMaterial {
@@ -267,6 +268,7 @@ impl FromSqlRow for LowStockMaterial {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
 #[ts(export)]
 pub struct LowStockMaterialsResponse {

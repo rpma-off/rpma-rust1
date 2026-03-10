@@ -18,6 +18,7 @@ fn default_quality_check_passed() -> bool {
     true
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum InterventionProgressAction {
@@ -50,6 +51,7 @@ pub enum InterventionProgressAction {
     },
 }
 
+/// TODO: document
 #[derive(Serialize)]
 #[serde(tag = "type")]
 pub enum InterventionProgressResponse {
@@ -80,6 +82,7 @@ async fn intervention_ctx(
     Ok(ctx)
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token), fields(user_id, correlation_id))]
 pub async fn intervention_get_progress(
@@ -111,6 +114,7 @@ pub async fn intervention_get_progress(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token), fields(user_id, correlation_id))]
 pub async fn intervention_advance_step(
@@ -155,6 +159,7 @@ pub async fn intervention_advance_step(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(
     skip(state, session_token, progress_data),
@@ -200,6 +205,7 @@ pub async fn intervention_save_step_progress(
     }
 }
 
+/// TODO: document
 #[tauri::command]
 #[instrument(skip(state, session_token, action), fields(user_id, correlation_id))]
 pub async fn intervention_progress(

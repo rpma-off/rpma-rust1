@@ -8,6 +8,7 @@ use crate::shared::repositories::Repository;
 use std::sync::Arc;
 use tracing::{debug, error, info, warn};
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct UserService {
     user_repo: Arc<UserRepository>,
@@ -26,6 +27,7 @@ fn auth_role_to_repo_role(
 }
 
 impl UserService {
+    /// TODO: document
     pub fn new(user_repo: Arc<UserRepository>) -> Self {
         Self { user_repo }
     }

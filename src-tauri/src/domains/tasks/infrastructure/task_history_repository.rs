@@ -84,6 +84,7 @@ pub struct TaskHistoryRepository {
 }
 
 impl TaskHistoryRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self {
             db,
@@ -244,6 +245,7 @@ impl TaskHistoryRepository {
         self.cache.remove(&self.cache_key_builder.id(id));
     }
 
+    /// TODO: document
     pub fn invalidate_all_cache(&self) {
         self.cache.clear();
     }

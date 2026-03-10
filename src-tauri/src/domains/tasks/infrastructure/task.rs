@@ -183,6 +183,7 @@ impl TaskService {
             .map_err(convert_to_app_error)
     }
 
+    /// TODO: document
     pub async fn get_task_async(&self, id: &str) -> AppResult<Option<Task>> {
         self.queries
             .get_task_async(id)
@@ -313,18 +314,21 @@ impl TaskService {
             .map_err(convert_to_app_error)
     }
 
+    /// TODO: document
     pub fn get_completion_rate(&self, days: i32) -> AppResult<f64> {
         self.statistics
             .get_completion_rate(days)
             .map_err(convert_to_app_error)
     }
 
+    /// TODO: document
     pub fn get_average_duration_by_status(&self) -> AppResult<Vec<(String, f64)>> {
         self.statistics
             .get_average_duration_by_status()
             .map_err(convert_to_app_error)
     }
 
+    /// TODO: document
     pub fn get_priority_distribution(&self) -> AppResult<Vec<(String, i64)>> {
         self.statistics
             .get_priority_distribution()

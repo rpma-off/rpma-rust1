@@ -13,6 +13,7 @@ use tracing::info;
 // Import authentication macros
 use crate::authenticate;
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserAccessibilityRequest {
     pub session_token: String,

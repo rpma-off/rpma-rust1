@@ -13,10 +13,12 @@ pub struct ClientsFacade {
 }
 
 impl ClientsFacade {
+    /// TODO: document
     pub fn new(client_service: Arc<ClientService>) -> Self {
         Self { client_service }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

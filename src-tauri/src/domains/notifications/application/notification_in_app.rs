@@ -6,6 +6,7 @@ use crate::domains::notifications::infrastructure::notification_in_app_repositor
 use crate::shared::repositories::base::Repository;
 use crate::shared::repositories::cache::Cache;
 
+/// TODO: document
 #[derive(Debug, Clone)]
 pub struct NotificationInAppService {
     db: Arc<Database>,
@@ -13,6 +14,7 @@ pub struct NotificationInAppService {
 }
 
 impl NotificationInAppService {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self { db, cache }
     }
@@ -21,6 +23,7 @@ impl NotificationInAppService {
         NotificationRepository::new(self.db.clone(), self.cache.clone())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn find_by_user(
         &self,
@@ -33,6 +36,7 @@ impl NotificationInAppService {
             .map_err(|e| e.to_string())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn count_unread(&self, user_id: &str) -> Result<i32, String> {
         self.repo()
@@ -41,11 +45,13 @@ impl NotificationInAppService {
             .map_err(|e| e.to_string())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn mark_read(&self, id: &str) -> Result<(), String> {
         self.repo().mark_read(id).await.map_err(|e| e.to_string())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn mark_all_read(&self, user_id: &str) -> Result<(), String> {
         self.repo()
@@ -54,6 +60,7 @@ impl NotificationInAppService {
             .map_err(|e| e.to_string())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn delete(&self, id: &str) -> Result<(), String> {
         self.repo()
@@ -63,6 +70,7 @@ impl NotificationInAppService {
             .map_err(|e| e.to_string())
     }
 
+    /// TODO: document
     #[tracing::instrument(skip(self))]
     pub async fn save(&self, notification: Notification) -> Result<Notification, String> {
         self.repo()

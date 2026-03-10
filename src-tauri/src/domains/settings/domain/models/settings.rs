@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct GeneralSettings {
     pub auto_save: bool,
@@ -13,6 +14,7 @@ pub struct GeneralSettings {
     pub currency: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SecuritySettings {
     pub two_factor_enabled: bool,
@@ -23,6 +25,7 @@ pub struct SecuritySettings {
     pub login_attempts_max: u8,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationSettings {
     pub push_notifications: bool,
@@ -34,6 +37,7 @@ pub struct NotificationSettings {
     pub daily_digest: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AppearanceSettings {
     pub dark_mode: bool,
@@ -42,6 +46,7 @@ pub struct AppearanceSettings {
     pub compact_view: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DataManagementSettings {
     pub auto_backup: bool,
@@ -51,6 +56,7 @@ pub struct DataManagementSettings {
     pub compression_enabled: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct StorageSettings {
     pub photo_storage_type: String, // "local", "cloud", "hybrid"
@@ -66,6 +72,7 @@ pub struct StorageSettings {
     pub compression_quality: u8, // 1-100
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DatabaseSettings {
     pub connection_status: String,
@@ -75,6 +82,7 @@ pub struct DatabaseSettings {
     pub query_timeout: u32,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct IntegrationSettings {
     pub api_enabled: bool,
@@ -83,6 +91,7 @@ pub struct IntegrationSettings {
     pub sync_interval: u32, // minutes
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct PerformanceSettings {
     pub cache_enabled: bool,
@@ -92,6 +101,7 @@ pub struct PerformanceSettings {
     pub cpu_limit: f32,    // percentage
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct BackupSettings {
     pub auto_backup: bool,
@@ -101,6 +111,7 @@ pub struct BackupSettings {
     pub include_attachments: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct DiagnosticSettings {
     pub logging_level: String, // error, warn, info, debug
@@ -110,6 +121,7 @@ pub struct DiagnosticSettings {
     pub metrics_collection: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct AppSettings {
     pub general: GeneralSettings,
@@ -153,6 +165,7 @@ impl Default for AppSettings {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct SystemConfiguration {
     pub database: DatabaseSettings,
@@ -303,6 +316,7 @@ impl Default for DiagnosticSettings {
 
 // User-specific settings models
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserProfileSettings {
     pub full_name: String,
@@ -312,6 +326,7 @@ pub struct UserProfileSettings {
     pub notes: Option<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserPreferences {
     // Notifications
@@ -339,12 +354,14 @@ pub struct UserPreferences {
     pub refresh_interval: u32,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserSecuritySettings {
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserPerformanceSettings {
     pub cache_enabled: bool,
@@ -356,6 +373,7 @@ pub struct UserPerformanceSettings {
     pub preload_data: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserAccessibilitySettings {
     pub high_contrast: bool,
@@ -370,6 +388,7 @@ pub struct UserAccessibilitySettings {
     pub color_blind_mode: String, // 'none', 'protanopia', 'deuteranopia', 'tritanopia'
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserNotificationSettings {
     pub email_enabled: bool,
@@ -391,6 +410,7 @@ pub struct UserNotificationSettings {
     pub sound_volume: u32,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct UserSettings {
     pub profile: UserProfileSettings,

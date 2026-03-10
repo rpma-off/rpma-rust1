@@ -13,6 +13,7 @@ use rusqlite::params;
 use std::sync::Arc;
 use tracing::{error, info};
 
+/// TODO: document
 #[derive(Clone)]
 pub struct MessageService {
     repository: Arc<MessageRepository>,
@@ -20,6 +21,7 @@ pub struct MessageService {
 }
 
 impl MessageService {
+    /// TODO: document
     pub fn new(repository: Arc<MessageRepository>, db: Arc<crate::db::Database>) -> Self {
         Self { repository, db }
     }

@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationChannel {
     Email,
@@ -31,6 +32,7 @@ impl rusqlite::ToSql for NotificationChannel {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationType {
     TaskAssignment,
@@ -67,6 +69,7 @@ impl rusqlite::ToSql for NotificationType {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationTemplate {
     pub id: String,
@@ -83,6 +86,7 @@ pub struct NotificationTemplate {
     pub updated_at: DateTime<Utc>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationMessage {
     pub id: String,
@@ -105,6 +109,7 @@ pub struct NotificationMessage {
     pub updated_at: DateTime<Utc>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum NotificationPriority {
     Low,
@@ -125,6 +130,7 @@ impl std::fmt::Display for NotificationPriority {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum NotificationStatus {
     Pending,
@@ -145,6 +151,7 @@ impl std::fmt::Display for NotificationStatus {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct EmailConfig {
     pub provider: EmailProvider,
@@ -153,6 +160,7 @@ pub struct EmailConfig {
     pub from_name: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum EmailProvider {
     SendGrid,
@@ -171,6 +179,7 @@ impl std::fmt::Display for EmailProvider {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SmsConfig {
     pub provider: SmsProvider,
@@ -178,6 +187,7 @@ pub struct SmsConfig {
     pub from_number: String,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum SmsProvider {
     Twilio,
@@ -194,6 +204,7 @@ impl std::fmt::Display for SmsProvider {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationConfig {
     pub email: Option<EmailConfig>,
@@ -205,6 +216,7 @@ pub struct NotificationConfig {
 }
 
 // Template variables for substitution
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TemplateVariables {
     pub user_name: Option<String>,
@@ -231,6 +243,7 @@ impl Default for NotificationConfig {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationPreferences {
     pub id: String,
@@ -265,6 +278,7 @@ pub struct NotificationPreferences {
 }
 
 impl NotificationPreferences {
+    /// TODO: document
     pub fn new(user_id: String) -> Self {
         let now = chrono::Utc::now().timestamp();
         Self {
@@ -291,6 +305,7 @@ impl NotificationPreferences {
         }
     }
 
+    /// TODO: document
     pub fn from_row(row: &Row) -> SqliteResult<Self> {
         Ok(Self {
             id: row.get("id")?,
@@ -324,6 +339,7 @@ impl FromSqlRow for NotificationPreferences {
 }
 
 impl NotificationTemplate {
+    /// TODO: document
     pub fn new(
         id: String,
         name: String,
@@ -348,6 +364,7 @@ impl NotificationTemplate {
         }
     }
 
+    /// TODO: document
     pub fn from_row(row: &Row) -> SqliteResult<Self> {
         let notification_type_value: Option<String> = row
             .get("notification_type")
@@ -402,6 +419,7 @@ impl FromSqlRow for NotificationTemplate {
 }
 
 impl NotificationMessage {
+    /// TODO: document
     pub fn new(
         user_id: String,
         notification_type: NotificationType,
@@ -431,6 +449,7 @@ impl NotificationMessage {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct Notification {
     pub id: String,
@@ -447,6 +466,7 @@ pub struct Notification {
 }
 
 impl Notification {
+    /// TODO: document
     pub fn new(
         user_id: String,
         r#type: String,

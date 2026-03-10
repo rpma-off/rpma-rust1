@@ -18,6 +18,7 @@ pub struct ReportService {
 }
 
 impl ReportService {
+    /// TODO: document
     pub fn new(db: Arc<Database>, app_data_dir: std::path::PathBuf) -> Self {
         let repository = Box::new(ReportRepository::new(db.clone()));
         Self {

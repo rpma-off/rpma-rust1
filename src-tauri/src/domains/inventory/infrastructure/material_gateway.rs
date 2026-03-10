@@ -10,16 +10,19 @@ use crate::domains::inventory::infrastructure::material::{
     RecordConsumptionRequest, UpdateStockRequest,
 };
 
+/// TODO: document
 #[derive(Debug)]
 pub struct MaterialGateway {
     service: Arc<MaterialService>,
 }
 
 impl MaterialGateway {
+    /// TODO: document
     pub fn new(service: Arc<MaterialService>) -> Self {
         Self { service }
     }
 
+    /// TODO: document
     pub fn list_materials(
         &self,
         material_type: Option<MaterialType>,
@@ -32,18 +35,22 @@ impl MaterialGateway {
             .list_materials(material_type, category, active_only, limit, offset)
     }
 
+    /// TODO: document
     pub fn get_material(&self, material_id: &str) -> MaterialResult<Option<Material>> {
         self.service.get_material(material_id)
     }
 
+    /// TODO: document
     pub fn get_materials_by_ids(&self, ids: &[&str]) -> MaterialResult<HashMap<String, Material>> {
         self.service.get_materials_by_ids(ids)
     }
 
+    /// TODO: document
     pub fn update_stock(&self, request: UpdateStockRequest) -> MaterialResult<Material> {
         self.service.update_stock(request)
     }
 
+    /// TODO: document
     pub fn record_consumption(
         &self,
         request: RecordConsumptionRequest,
@@ -51,22 +58,27 @@ impl MaterialGateway {
         self.service.record_consumption(request)
     }
 
+    /// TODO: document
     pub fn get_material_stats(&self) -> MaterialResult<MaterialStats> {
         self.service.get_material_stats()
     }
 
+    /// TODO: document
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
         self.service.get_inventory_stats()
     }
 
+    /// TODO: document
     pub fn get_low_stock_materials(&self) -> MaterialResult<LowStockMaterialsResponse> {
         self.service.get_low_stock_materials()
     }
 
+    /// TODO: document
     pub fn get_expired_materials(&self) -> MaterialResult<Vec<Material>> {
         self.service.get_expired_materials()
     }
 
+    /// TODO: document
     pub fn get_intervention_consumption(
         &self,
         intervention_id: &str,

@@ -10,12 +10,14 @@ use tracing::{info, instrument};
 
 const SESSION_DURATION_SECONDS: i64 = 8 * 3600; // 8 hours
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct SessionService {
     repository: SessionRepository,
 }
 
 impl SessionService {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self {
             repository: SessionRepository::new(db),

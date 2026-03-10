@@ -104,6 +104,7 @@ pub struct NotificationPreferencesRepository {
 }
 
 impl NotificationPreferencesRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
         Self {
             db,
@@ -335,6 +336,7 @@ impl NotificationPreferencesRepository {
         self.cache.remove(&self.cache_key_builder.id(user_id));
     }
 
+    /// TODO: document
     pub fn invalidate_all_cache(&self) {
         self.cache.clear();
     }

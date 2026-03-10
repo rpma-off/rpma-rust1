@@ -14,6 +14,7 @@ pub enum MessageType {
 }
 
 impl MessageType {
+    /// TODO: document
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "email" => Some(MessageType::Email),
@@ -23,6 +24,7 @@ impl MessageType {
         }
     }
 
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             MessageType::Email => "email",
@@ -50,6 +52,7 @@ pub enum MessageStatus {
 }
 
 impl MessageStatus {
+    /// TODO: document
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "pending" => Some(MessageStatus::Pending),
@@ -61,6 +64,7 @@ impl MessageStatus {
         }
     }
 
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             MessageStatus::Pending => "pending",
@@ -89,6 +93,7 @@ pub enum MessagePriority {
 }
 
 impl MessagePriority {
+    /// TODO: document
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "low" => Some(MessagePriority::Low),
@@ -99,6 +104,7 @@ impl MessagePriority {
         }
     }
 
+    /// TODO: document
     pub fn to_str(&self) -> &'static str {
         match self {
             MessagePriority::Low => "low",

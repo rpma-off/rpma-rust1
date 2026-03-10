@@ -10,11 +10,13 @@ use crate::shared::contracts::auth::{UserRole, UserSession};
 use std::sync::Arc;
 use tracing::info;
 
+/// TODO: document
 pub struct SystemConfigService {
     settings_service: Arc<SettingsService>,
 }
 
 impl SystemConfigService {
+    /// TODO: document
     pub fn new(settings_service: Arc<SettingsService>) -> Self {
         Self { settings_service }
     }

@@ -15,6 +15,7 @@ fn build_facade(state: &AppState<'_>) -> ReportsFacade {
     ReportsFacade::new(report_service)
 }
 
+/// TODO: document
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn reports_get_capabilities(

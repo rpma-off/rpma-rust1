@@ -12,6 +12,7 @@ use crate::domains::calendar::infrastructure::calendar_event_service::CalendarEv
 use crate::shared::ipc::errors::AppError;
 use crate::shared::ipc::CommandContext;
 
+/// TODO: document
 pub enum CalendarCommand {
     GetTasks {
         date_range: CalendarDateRange,
@@ -57,6 +58,7 @@ pub enum CalendarCommand {
     },
 }
 
+/// TODO: document
 pub enum CalendarResponse {
     Tasks(Vec<CalendarTask>),
     OptionalEvent(Option<CalendarEvent>),
@@ -82,6 +84,7 @@ impl fmt::Debug for CalendarFacade {
 }
 
 impl CalendarFacade {
+    /// TODO: document
     pub fn new(calendar_service: Arc<CalendarService>, db: Arc<crate::db::Database>) -> Self {
         Self {
             calendar_service,
@@ -89,6 +92,7 @@ impl CalendarFacade {
         }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }
@@ -113,6 +117,7 @@ impl CalendarFacade {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn execute(
         &self,
         command: CalendarCommand,

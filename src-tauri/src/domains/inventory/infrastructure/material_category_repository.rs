@@ -13,6 +13,7 @@ pub(crate) struct MaterialCategoryRepository {
 }
 
 impl MaterialCategoryRepository {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }

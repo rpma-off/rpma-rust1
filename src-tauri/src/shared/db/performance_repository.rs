@@ -20,6 +20,7 @@ pub struct PerformanceRepository<'a> {
 }
 
 impl<'a> PerformanceRepository<'a> {
+    /// TODO: document
     pub fn new(db: &'a Database) -> Self {
         Self { db }
     }

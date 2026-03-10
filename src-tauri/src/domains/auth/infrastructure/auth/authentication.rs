@@ -90,8 +90,6 @@ impl super::AuthService {
             match e {
                 rusqlite::Error::QueryReturnedNoRows => {
                     warn!("User not found or inactive: {}", validated_email);
-                    // Log security event for invalid email attempt
-                    //                     // let _ = self.security_monitor.log_auth_failure(None, None, "user_not_found");
                     "Invalid email or password".to_string()
                 },
                 _ => {

@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tracing::{debug, warn};
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceMetric {
     pub id: String,
@@ -21,6 +22,7 @@ pub struct PerformanceMetric {
     pub metadata: Option<HashMap<String, serde_json::Value>>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceStats {
     pub total_requests: u64,
@@ -35,6 +37,7 @@ pub struct PerformanceStats {
     pub most_frequent_commands: Vec<(String, u64)>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct PerformanceMonitorService {
     db: Database,
@@ -44,6 +47,7 @@ pub struct PerformanceMonitorService {
 }
 
 impl PerformanceMonitorService {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self {
             db,
@@ -241,6 +245,7 @@ pub struct CommandPerformanceTracker {
 }
 
 impl CommandPerformanceTracker {
+    /// TODO: document
     pub fn new(performance_monitor: Arc<PerformanceMonitorService>) -> Self {
         Self {
             performance_monitor,

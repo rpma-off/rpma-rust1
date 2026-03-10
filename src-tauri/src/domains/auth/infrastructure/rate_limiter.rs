@@ -5,6 +5,7 @@ use rusqlite::params;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct LoginAttempt {
     pub count: u32,
@@ -14,6 +15,7 @@ pub struct LoginAttempt {
     pub lock_until: Option<DateTime<Utc>>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct RateLimiterService {
     db: crate::db::Database,
@@ -25,6 +27,7 @@ pub struct RateLimiterService {
 }
 
 impl RateLimiterService {
+    /// TODO: document
     pub fn new(db: crate::db::Database) -> Self {
         Self {
             db,

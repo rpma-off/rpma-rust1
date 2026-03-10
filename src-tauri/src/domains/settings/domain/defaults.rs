@@ -15,6 +15,7 @@ use super::models::settings::{
 
 // ── User Profile ────────────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_profile() -> UserProfileSettings {
     UserProfileSettings {
         full_name: String::new(),
@@ -27,6 +28,7 @@ pub fn default_profile() -> UserProfileSettings {
 
 // ── User Preferences ────────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_preferences() -> UserPreferences {
     UserPreferences {
         email_notifications: true,
@@ -50,6 +52,7 @@ pub fn default_preferences() -> UserPreferences {
 
 // ── User Security ───────────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_security() -> UserSecuritySettings {
     UserSecuritySettings {
         two_factor_enabled: false,
@@ -59,6 +62,7 @@ pub fn default_security() -> UserSecuritySettings {
 
 // ── User Performance ────────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_performance() -> UserPerformanceSettings {
     UserPerformanceSettings {
         cache_enabled: true,
@@ -73,6 +77,7 @@ pub fn default_performance() -> UserPerformanceSettings {
 
 // ── User Accessibility ──────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_accessibility() -> UserAccessibilitySettings {
     UserAccessibilitySettings {
         high_contrast: false,
@@ -90,6 +95,7 @@ pub fn default_accessibility() -> UserAccessibilitySettings {
 
 // ── User Notifications ──────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_notifications() -> UserNotificationSettings {
     UserNotificationSettings {
         email_enabled: true,
@@ -114,6 +120,7 @@ pub fn default_notifications() -> UserNotificationSettings {
 
 // ── Composite ───────────────────────────────────────────────────────
 
+/// TODO: document
 pub fn default_user_settings() -> UserSettings {
     UserSettings {
         profile: default_profile(),

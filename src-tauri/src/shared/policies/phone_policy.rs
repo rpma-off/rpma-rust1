@@ -1,5 +1,6 @@
 //! Phone number validation and normalization policy.
 
+/// TODO: document
 pub fn normalize_dialable_phone_number(phone_number: &str) -> Result<String, String> {
     if phone_number.is_empty() {
         return Err("Phone number cannot be empty".to_string());

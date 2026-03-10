@@ -20,6 +20,7 @@ pub struct UserSession {
     pub created_at: String,    // RFC3339
 }
 
+/// TODO: document
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, TS)]
 pub enum UserRole {
     #[serde(rename = "admin")]
@@ -76,6 +77,7 @@ impl Default for SessionTimeoutConfig {
 }
 
 impl UserSession {
+    /// TODO: document
     pub fn new(
         user_id: String,
         username: String,
@@ -99,6 +101,7 @@ impl UserSession {
         }
     }
 
+    /// TODO: document
     pub fn is_expired(&self) -> bool {
         match DateTime::parse_from_rfc3339(&self.expires_at) {
             Ok(expires_at) => Utc::now() > expires_at.with_timezone(&Utc),
@@ -106,11 +109,13 @@ impl UserSession {
         }
     }
 
+    /// TODO: document
     pub fn update_activity(&mut self) {
         self.last_activity = Utc::now().to_rfc3339();
     }
 }
 
+/// TODO: document
 #[derive(Clone, Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct UserAccount {
@@ -140,6 +145,7 @@ pub struct UserAccount {
 }
 
 impl UserAccount {
+    /// TODO: document
     pub fn new(
         email: String,
         username: String,
@@ -170,6 +176,7 @@ impl UserAccount {
         }
     }
 
+    /// TODO: document
     pub fn update_last_login(&mut self) {
         self.last_login = Some(now());
         self.login_count += 1;

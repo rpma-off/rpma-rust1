@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 pub use crate::shared::services::event_system::DomainEvent;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InterventionFinalized {
     pub intervention_id: String,

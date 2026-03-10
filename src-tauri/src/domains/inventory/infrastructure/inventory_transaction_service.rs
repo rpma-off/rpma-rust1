@@ -22,6 +22,7 @@ pub(crate) struct InventoryTransactionService {
 }
 
 impl InventoryTransactionService {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self { db }
     }

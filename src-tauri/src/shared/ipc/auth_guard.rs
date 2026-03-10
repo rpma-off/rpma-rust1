@@ -5,9 +5,11 @@ use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::{AppResult, CommandContext};
 
+/// TODO: document
 pub struct AuthGuard;
 
 impl AuthGuard {
+    /// TODO: document
     pub async fn require_authenticated(
         session_token: &str,
         state: &AppState<'_>,
@@ -16,6 +18,7 @@ impl AuthGuard {
         AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await
     }
 
+    /// TODO: document
     pub async fn require_role(
         session_token: &str,
         state: &AppState<'_>,

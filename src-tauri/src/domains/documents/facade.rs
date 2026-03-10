@@ -17,6 +17,7 @@ pub struct DocumentsFacade {
     photo_service: Arc<PhotoService>,
 }
 
+/// TODO: document
 pub struct DocumentsServices {
     pub db: Arc<crate::db::Database>,
     pub intervention_service: Arc<crate::shared::services::cross_domain::InterventionService>,
@@ -24,6 +25,7 @@ pub struct DocumentsServices {
     pub app_data_dir: std::path::PathBuf,
 }
 
+/// TODO: document
 pub enum DocumentsCommand {
     StorePhoto {
         request: StorePhotoRequest,
@@ -54,6 +56,7 @@ pub enum DocumentsCommand {
     },
 }
 
+/// TODO: document
 pub enum DocumentsResponse {
     StorePhoto(StorePhotoResponse),
     Photos(GetPhotosResponse),
@@ -66,10 +69,12 @@ pub enum DocumentsResponse {
 }
 
 impl DocumentsFacade {
+    /// TODO: document
     pub fn new(photo_service: Arc<PhotoService>) -> Self {
         Self { photo_service }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }
@@ -93,6 +98,7 @@ impl DocumentsFacade {
         Ok(())
     }
 
+    /// TODO: document
     pub async fn execute(
         &self,
         command: DocumentsCommand,

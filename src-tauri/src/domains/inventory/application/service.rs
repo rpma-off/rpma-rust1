@@ -19,6 +19,7 @@ use super::errors::{InventoryError, InventoryResult};
 use super::input::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
 
+/// TODO: document
 #[derive(Debug)]
 pub struct InventoryService {
     db: Arc<Database>,
@@ -27,6 +28,7 @@ pub struct InventoryService {
 }
 
 impl InventoryService {
+    /// TODO: document
     pub fn new(db: Arc<Database>, material_service: Arc<MaterialService>) -> Self {
         Self {
             db: db.clone(),
@@ -35,6 +37,7 @@ impl InventoryService {
         }
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn list_materials(
         &self,
@@ -49,6 +52,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn get_material_stats(&self) -> InventoryResult<MaterialStats> {
         self.gateway
@@ -78,6 +82,7 @@ impl InventoryService {
         })
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn get_inventory_stats(&self) -> InventoryResult<InventoryStats> {
         self.gateway
@@ -85,6 +90,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn update_stock(&self, request: UpdateStockRequest) -> InventoryResult<Material> {
         let material = self
@@ -103,6 +109,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self))]
     pub fn record_consumption(
         &self,
@@ -123,6 +130,7 @@ impl InventoryService {
             .map_err(InventoryError::from)
     }
 
+    /// TODO: document
     #[instrument(skip(self, event), fields(intervention_id = %event.intervention_id))]
     pub fn handle_intervention_finalized(
         &self,

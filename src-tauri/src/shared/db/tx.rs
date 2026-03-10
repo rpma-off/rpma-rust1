@@ -8,6 +8,7 @@ use crate::shared::error::{AppError, AppResult};
 pub type DbConn = crate::db::PooledConn;
 pub type DbTx<'a> = rusqlite::Transaction<'a>;
 
+/// TODO: document
 pub fn with_db_connection<T, F>(db: &crate::db::Database, f: F) -> AppResult<T>
 where
     F: FnOnce(&DbConn) -> AppResult<T>,
@@ -18,6 +19,7 @@ where
     f(&conn)
 }
 
+/// TODO: document
 pub fn with_db_transaction<T, F>(db: &crate::db::Database, f: F) -> AppResult<T>
 where
     F: FnOnce(&DbTx<'_>) -> AppResult<T>,

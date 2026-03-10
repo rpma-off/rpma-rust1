@@ -17,6 +17,7 @@ use crate::authenticate;
 // Re-export DataConsent from models for backward compatibility
 pub use crate::domains::settings::domain::models::settings::DataConsent;
 
+/// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateDataConsentRequest {
     pub session_token: String,

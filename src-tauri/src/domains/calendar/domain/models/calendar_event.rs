@@ -5,6 +5,7 @@ use std::str::FromStr;
 // Conditional import removed
 use ts_rs::TS;
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CalendarEvent {
@@ -60,6 +61,7 @@ pub struct CalendarEvent {
     pub deleted_by: Option<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EventType {
@@ -70,6 +72,7 @@ pub enum EventType {
     Other,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum EventStatus {
@@ -106,6 +109,7 @@ impl FromStr for EventStatus {
     }
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct EventParticipant {
@@ -115,6 +119,7 @@ pub struct EventParticipant {
     pub status: ParticipantStatus,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum ParticipantStatus {
@@ -124,6 +129,7 @@ pub enum ParticipantStatus {
     NeedsAction,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateEventInput {
@@ -148,6 +154,7 @@ pub struct CreateEventInput {
     pub notes: Option<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateEventInput {

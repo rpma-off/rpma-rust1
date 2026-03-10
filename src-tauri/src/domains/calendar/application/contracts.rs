@@ -43,6 +43,7 @@ pub struct ScheduleTaskRequest {
 }
 
 // Request structures for calendar event commands
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetEventByIdRequest {
     pub id: String,
@@ -51,6 +52,7 @@ pub struct GetEventByIdRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct CreateEventRequest {
     pub event_data: CreateEventInput,
@@ -59,6 +61,7 @@ pub struct CreateEventRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct UpdateEventRequest {
     pub id: String,
@@ -68,6 +71,7 @@ pub struct UpdateEventRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct DeleteEventRequest {
     pub id: String,
@@ -76,6 +80,7 @@ pub struct DeleteEventRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetEventsForTechnicianRequest {
     pub technician_id: String,
@@ -84,6 +89,7 @@ pub struct GetEventsForTechnicianRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetEventsForTaskRequest {
     pub task_id: String,

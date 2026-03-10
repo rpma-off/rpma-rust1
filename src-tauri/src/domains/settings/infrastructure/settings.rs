@@ -28,12 +28,14 @@ mod update_security;
 
 // ---------------------------------------------------------------------------
 
+/// TODO: document
 #[derive(Clone, Debug)]
 pub struct SettingsService {
     db: Arc<crate::db::Database>,
 }
 
 impl SettingsService {
+    /// TODO: document
     pub fn new(db: Arc<crate::db::Database>) -> Self {
         Self { db }
     }

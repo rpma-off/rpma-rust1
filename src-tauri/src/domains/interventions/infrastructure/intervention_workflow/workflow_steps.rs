@@ -252,6 +252,7 @@ impl super::InterventionWorkflowService {
                 .map_or(false, |issues| !issues.is_empty())
     }
 
+    /// TODO: document
     pub fn apply_completion_requirements(
         &self,
         step: &mut InterventionStep,

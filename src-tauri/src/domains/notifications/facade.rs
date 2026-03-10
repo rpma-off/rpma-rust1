@@ -24,10 +24,12 @@ impl fmt::Debug for NotificationsFacade {
 }
 
 impl NotificationsFacade {
+    /// TODO: document
     pub fn new(message_service: Arc<MessageService>) -> Self {
         Self { message_service }
     }
 
+    /// TODO: document
     pub fn is_ready(&self) -> bool {
         true
     }

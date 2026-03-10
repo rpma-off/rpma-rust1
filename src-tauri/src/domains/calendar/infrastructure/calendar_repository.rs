@@ -14,6 +14,7 @@ pub struct CalendarRepository {
 }
 
 impl CalendarRepository {
+    /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }

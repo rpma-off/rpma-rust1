@@ -13,6 +13,7 @@ impl super::MaterialService {
 
     // -- Category --
 
+    /// TODO: document
     pub fn create_material_category(
         &self,
         request: CreateMaterialCategoryRequest,
@@ -22,10 +23,12 @@ impl super::MaterialService {
             .create_material_category(request, created_by)
     }
 
+    /// TODO: document
     pub fn get_material_category(&self, id: &str) -> MaterialResult<Option<MaterialCategory>> {
         self.categories.get_material_category(id)
     }
 
+    /// TODO: document
     pub fn list_material_categories(
         &self,
         active_only: bool,
@@ -36,6 +39,7 @@ impl super::MaterialService {
             .list_material_categories(active_only, limit, offset)
     }
 
+    /// TODO: document
     pub fn update_material_category(
         &self,
         id: &str,
@@ -48,6 +52,7 @@ impl super::MaterialService {
 
     // -- Supplier --
 
+    /// TODO: document
     pub fn create_supplier(
         &self,
         request: CreateSupplierRequest,
@@ -56,10 +61,12 @@ impl super::MaterialService {
         self.suppliers.create_supplier(request, created_by)
     }
 
+    /// TODO: document
     pub fn get_supplier(&self, id: &str) -> MaterialResult<Option<Supplier>> {
         self.suppliers.get_supplier(id)
     }
 
+    /// TODO: document
     pub fn list_suppliers(
         &self,
         active_only: bool,
@@ -71,6 +78,7 @@ impl super::MaterialService {
             .list_suppliers(active_only, preferred_only, limit, offset)
     }
 
+    /// TODO: document
     pub fn update_supplier(
         &self,
         id: &str,
@@ -82,6 +90,7 @@ impl super::MaterialService {
 
     // -- Consumption reads --
 
+    /// TODO: document
     pub fn get_intervention_consumption(
         &self,
         intervention_id: &str,
@@ -90,6 +99,7 @@ impl super::MaterialService {
             .get_intervention_consumption(intervention_id)
     }
 
+    /// TODO: document
     pub fn get_consumption_history(
         &self,
         material_id: &str,
@@ -102,6 +112,7 @@ impl super::MaterialService {
 
     // -- Transaction reads / stats --
 
+    /// TODO: document
     pub fn list_inventory_transactions_by_material(
         &self,
         material_id: &str,
@@ -117,6 +128,7 @@ impl super::MaterialService {
         )
     }
 
+    /// TODO: document
     pub fn list_recent_inventory_transactions(
         &self,
         limit: i32,
@@ -124,10 +136,12 @@ impl super::MaterialService {
         self.transactions.list_recent_inventory_transactions(limit)
     }
 
+    /// TODO: document
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
         self.transactions.get_inventory_stats()
     }
 
+    /// TODO: document
     pub fn get_inventory_movement_summary(
         &self,
         material_id: Option<&str>,

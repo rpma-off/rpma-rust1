@@ -1,5 +1,6 @@
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 
+/// TODO: document
 pub fn validate_transition(
     current: &InterventionStatus,
     next: &InterventionStatus,

@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tracing::{error, info, warn};
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecurityEventType {
     AuthenticationFailure,
@@ -24,6 +25,7 @@ pub enum SecurityEventType {
     PathTraversalAttempt,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AlertSeverity {
     Low,
@@ -32,6 +34,7 @@ pub enum AlertSeverity {
     Critical,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityEvent {
     pub id: String,
@@ -47,6 +50,7 @@ pub struct SecurityEvent {
     pub mitigated: bool,
 }
 
+/// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityAlert {
     pub id: String,
@@ -63,6 +67,7 @@ pub struct SecurityAlert {
     pub actions_taken: Vec<String>,
 }
 
+/// TODO: document
 #[derive(Debug, Clone)]
 pub struct SecurityMetrics {
     pub total_events_today: u64,
@@ -73,6 +78,7 @@ pub struct SecurityMetrics {
     pub suspicious_activities_detected: u64,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct SecurityMonitorService {
     db: Database,
@@ -82,6 +88,7 @@ pub struct SecurityMonitorService {
     alert_thresholds: SecurityThresholds,
 }
 
+/// TODO: document
 #[derive(Debug, Clone)]
 pub struct SecurityThresholds {
     pub max_failed_auth_per_hour: u32,
@@ -104,6 +111,7 @@ impl Default for SecurityThresholds {
 }
 
 impl SecurityMonitorService {
+    /// TODO: document
     pub fn new(db: Database) -> Self {
         Self {
             db,
@@ -491,6 +499,7 @@ impl SecurityMonitorService {
 // Convenience functions for logging common security events
 
 impl SecurityMonitorService {
+    /// TODO: document
     pub fn log_auth_failure(
         &self,
         user_id: Option<&str>,
@@ -517,6 +526,7 @@ impl SecurityMonitorService {
         self.log_event(event)
     }
 
+    /// TODO: document
     pub fn log_auth_success(&self, user_id: &str, ip: Option<&str>) -> Result<(), String> {
         let event = SecurityEvent {
             id: uuid::Uuid::new_v4().to_string(),
@@ -538,6 +548,7 @@ impl SecurityMonitorService {
         self.log_event(event)
     }
 
+    /// TODO: document
     pub fn log_suspicious_activity(
         &self,
         user_id: Option<&str>,
@@ -560,6 +571,7 @@ impl SecurityMonitorService {
         self.log_event(event)
     }
 
+    /// TODO: document
     pub fn log_rate_limit_exceeded(&self, ip: Option<&str>, endpoint: &str) -> Result<(), String> {
         let event = SecurityEvent {
             id: uuid::Uuid::new_v4().to_string(),

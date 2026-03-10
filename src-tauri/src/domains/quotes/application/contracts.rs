@@ -3,6 +3,7 @@
 use crate::domains::quotes::domain::models::quote::*;
 use serde::Deserialize;
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteCreateRequest {
     pub session_token: String,
@@ -11,6 +12,7 @@ pub struct QuoteCreateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteGetRequest {
     pub session_token: String,
@@ -19,6 +21,7 @@ pub struct QuoteGetRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteListRequest {
     pub session_token: String,
@@ -28,6 +31,7 @@ pub struct QuoteListRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteUpdateRequest {
     pub session_token: String,
@@ -37,6 +41,7 @@ pub struct QuoteUpdateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteDeleteRequest {
     pub session_token: String,
@@ -45,6 +50,7 @@ pub struct QuoteDeleteRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemAddRequest {
     pub session_token: String,
@@ -54,6 +60,7 @@ pub struct QuoteItemAddRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemUpdateRequest {
     pub session_token: String,
@@ -64,6 +71,7 @@ pub struct QuoteItemUpdateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemDeleteRequest {
     pub session_token: String,
@@ -73,6 +81,7 @@ pub struct QuoteItemDeleteRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteStatusRequest {
     pub session_token: String,
@@ -81,6 +90,7 @@ pub struct QuoteStatusRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteDuplicateRequest {
     pub session_token: String,
@@ -89,6 +99,7 @@ pub struct QuoteDuplicateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentsGetRequest {
     pub session_token: String,
@@ -97,6 +108,7 @@ pub struct QuoteAttachmentsGetRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentCreateRequest {
     pub session_token: String,
@@ -106,6 +118,7 @@ pub struct QuoteAttachmentCreateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentUpdateRequest {
     pub session_token: String,
@@ -116,6 +129,7 @@ pub struct QuoteAttachmentUpdateRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentDeleteRequest {
     pub session_token: String,
@@ -125,6 +139,7 @@ pub struct QuoteAttachmentDeleteRequest {
     pub correlation_id: Option<String>,
 }
 
+/// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentOpenRequest {
     pub session_token: String,

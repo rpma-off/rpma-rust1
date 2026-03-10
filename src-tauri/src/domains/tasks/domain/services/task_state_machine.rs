@@ -1,5 +1,6 @@
 use crate::domains::tasks::domain::models::task::TaskStatus;
 
+/// TODO: document
 pub fn validate_status_transition(current: &TaskStatus, new: &TaskStatus) -> Result<(), String> {
     if current == new {
         return Err(format!("Task is already in status '{}'", current));
@@ -22,6 +23,7 @@ pub fn validate_status_transition(current: &TaskStatus, new: &TaskStatus) -> Res
     }
 }
 
+/// TODO: document
 pub fn allowed_transitions(current: &TaskStatus) -> Vec<TaskStatus> {
     match current {
         TaskStatus::Draft => vec![

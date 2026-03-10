@@ -322,6 +322,7 @@ impl ClientTaskIntegrationService {
 
 // Supporting data structures
 
+/// TODO: document
 #[derive(Debug)]
 pub struct ClientWithTasks {
     pub client: Client,
@@ -329,6 +330,7 @@ pub struct ClientWithTasks {
     pub stats: ClientTaskStats,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct ClientTaskStats {
     pub total_tasks: i32,
@@ -337,6 +339,7 @@ pub struct ClientTaskStats {
     pub last_task_date: Option<i64>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct ClientWithOverdueTasks {
     pub client: Client,
@@ -344,6 +347,7 @@ pub struct ClientWithOverdueTasks {
     pub overdue_task_titles: Vec<String>,
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub enum ClientDeletionResult {
     SafeToDelete,
@@ -351,6 +355,7 @@ pub enum ClientDeletionResult {
     Cascaded { deleted_tasks: i32 },
 }
 
+/// TODO: document
 #[derive(Debug)]
 pub struct ClientWorkload {
     pub client_id: String,
