@@ -6,12 +6,10 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::UserPreferences;
 use crate::domains::settings::ipc::settings::core::{handle_settings_error, settings_user_id};
+use crate::resolve_context;
 
 use serde::Deserialize;
 use tracing::info;
-
-// Import authentication macros
-use crate::authenticate;
 
 /// TODO: document
 #[derive(Deserialize)]
@@ -58,15 +56,11 @@ pub async fn update_general_settings(
     request: UpdateGeneralSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     info!("Updating general settings");
 
-    let correlation_id_clone = request.correlation_id.clone();
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
-
     // Only admins can update system-wide settings
-    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) {
+    if !matches!(ctx.auth.role, crate::shared::contracts::auth::UserRole::Admin) {
         return Err(AppError::Authorization(
             "Only administrators can update general settings".to_string(),
         ));
@@ -95,10 +89,10 @@ pub async fn update_general_settings(
 
     state
         .settings_service
-        .update_general_settings_db(&app_settings.general, settings_user_id(&user))
+        .update_general_settings_db(&app_settings.general, settings_user_id(&ctx.auth))
         .map(|_| {
             ApiResponse::success("General settings updated successfully".to_string())
-                .with_correlation_id(correlation_id_clone.clone())
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update general settings"))
 }
@@ -111,16 +105,12 @@ pub async fn update_user_preferences(
     request: UpdateUserPreferencesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let _correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     info!("Updating user preferences");
-
-    let correlation_id_clone = request.correlation_id.clone();
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     let mut preferences: UserPreferences = state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
+        .get_user_settings(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load user preferences"))?
         .preferences;
 
@@ -175,10 +165,10 @@ pub async fn update_user_preferences(
 
     state
         .settings_service
-        .update_user_preferences(&settings_user_id(&user), &preferences)
+        .update_user_preferences(settings_user_id(&ctx.auth), &preferences)
         .map(|_| {
             ApiResponse::success("User preferences updated successfully".to_string())
-                .with_correlation_id(correlation_id_clone.clone())
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user preferences"))
 }
@@ -196,15 +186,14 @@ pub async fn update_user_performance(
     let _correlation_id_init = crate::commands::init_correlation_context(&correlation_id, None);
     info!("Updating user performance settings");
 
-    let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
 
     state
         .settings_service
-        .update_user_performance(&settings_user_id(&user), &request)
+        .update_user_performance(settings_user_id(&ctx.auth), &request)
         .map(|_| {
             ApiResponse::success("Performance settings updated successfully".to_string())
-                .with_correlation_id(correlation_id.clone())
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user performance"))
 }

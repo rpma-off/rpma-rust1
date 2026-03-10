@@ -2,13 +2,13 @@
 //!
 //! This module handles task assignment validation and availability checking.
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AvailabilityCheckResponse, ValidationResult,
 };
 use crate::domains::tasks::TasksFacade;
+use crate::resolve_context;
 use tracing::{debug, info};
 
 /// Request for checking task assignment eligibility
@@ -48,13 +48,10 @@ pub async fn check_task_assignment(
     request: CheckTaskAssignmentRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AssignmentCheckResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     debug!("Checking task assignment eligibility");
 
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
-
-    task_policy_service::ensure_assignment_management_role(&session)?;
+    task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
 
     let task = state
         .task_service
@@ -82,7 +79,7 @@ pub async fn check_task_assignment(
         request.task_id, request.user_id
     );
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Check task availability
@@ -92,11 +89,8 @@ pub async fn check_task_availability(
     request: CheckTaskAvailabilityRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<AvailabilityCheckResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     debug!("Checking task availability");
-
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     let task = state
         .task_service
@@ -116,7 +110,7 @@ pub async fn check_task_availability(
         request.task_id
     );
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Validate task assignment change
@@ -126,13 +120,10 @@ pub async fn validate_task_assignment_change(
     request: ValidateTaskAssignmentChangeRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<ValidationResult>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&request.session_token, &state, &request.correlation_id);
     debug!("Validating task assignment change");
 
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
-
-    task_policy_service::ensure_assignment_management_role(&session)?;
+    task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
 
     let task = state
         .task_service
@@ -163,5 +154,5 @@ pub async fn validate_task_assignment_change(
         request.task_id
     );
 
-    Ok(ApiResponse::success(validation_result).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(validation_result).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

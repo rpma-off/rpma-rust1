@@ -557,11 +557,11 @@ impl TaskService {
     pub fn apply_role_based_filters(
         &self,
         filter: &mut crate::domains::tasks::ipc::task_types::TaskFilter,
-        session: &crate::shared::contracts::auth::UserSession,
+        auth: &crate::shared::context::AuthContext,
     ) {
         use crate::shared::contracts::auth::UserRole;
 
-        match session.role {
+        match auth.role {
             UserRole::Admin => {
                 // Admin can see all tasks
             }
@@ -571,11 +571,11 @@ impl TaskService {
             }
             UserRole::Technician => {
                 // Technician can only see their assigned tasks
-                filter.assigned_to = Some(session.user_id.clone());
+                filter.assigned_to = Some(auth.user_id.clone());
             }
             UserRole::Viewer => {
                 // Viewer has limited access
-                filter.assigned_to = Some(session.user_id.clone());
+                filter.assigned_to = Some(auth.user_id.clone());
             }
         }
     }
