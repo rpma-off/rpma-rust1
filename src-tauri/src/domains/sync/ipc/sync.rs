@@ -1,8 +1,8 @@
 //! Tauri commands for background sync service - PRD-08
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::sync::application::SyncResult;
+use crate::resolve_context;
 use tracing::{error, info, instrument};
 
 /// Start the background sync service
@@ -13,9 +13,7 @@ pub async fn sync_start_background_service(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -32,7 +30,7 @@ pub async fn sync_start_background_service(
     })?;
 
     info!("Background sync service started");
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Stop the background sync service
@@ -43,9 +41,7 @@ pub async fn sync_stop_background_service(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -62,7 +58,7 @@ pub async fn sync_stop_background_service(
     })?;
 
     info!("Background sync service stopped");
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Trigger immediate sync
@@ -73,9 +69,7 @@ pub async fn sync_now(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<SyncResult>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -99,7 +93,7 @@ pub async fn sync_now(
         duration_ms: result.duration_ms,
         errors: result.errors,
     })
-    .with_correlation_id(Some(correlation_id)))
+    .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get current sync status
@@ -110,9 +104,7 @@ pub async fn sync_get_status(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     let service_arc = std::sync::Arc::clone(&state.background_sync);
 
     let service_clone = {
@@ -140,7 +132,7 @@ pub async fn sync_get_status(
         "last_sync": status.last_sync.map(|dt| dt.timestamp_millis()),
         "errors": status.errors
     }))
-    .with_correlation_id(Some(correlation_id)))
+    .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get operations for a specific entity
@@ -153,9 +145,7 @@ pub async fn sync_get_operations_for_entity(
     session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<crate::domains::sync::domain::models::sync::SyncOperation>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&session_token, &state, &correlation_id);
     let queue = std::sync::Arc::clone(&state.sync_queue);
     let ops = queue
         .get_operations_for_entity(&entity_id, &entity_type)
@@ -163,5 +153,5 @@ pub async fn sync_get_operations_for_entity(
             error!(error = %e, entity_id = %entity_id, entity_type = %entity_type, "Failed to get operations for entity");
             AppError::Sync("Failed to get operations for entity".to_string())
         })?;
-    Ok(ApiResponse::success(ops).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(ops).with_correlation_id(Some(ctx.correlation_id)))
 }
