@@ -19,7 +19,7 @@ use crate::domains::tasks::infrastructure::task_import::TaskImportService;
 use crate::domains::tasks::ipc::task::types::BulkImportResponse;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::TasksFacade;
-use crate::shared::contracts::auth::UserSession;
+use crate::shared::context::RequestContext;
 use crate::shared::contracts::notification::NotificationSender;
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.
@@ -55,10 +55,10 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, and persist a timestamped note on a task.
-    #[instrument(skip(self, current_user, raw_note), fields(user_id = %current_user.user_id, task_id = %task_id))]
+    #[instrument(skip(self, ctx, raw_note), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
     pub async fn add_note(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         task_id: &str,
         raw_note: &str,
     ) -> Result<String, AppError> {
@@ -68,10 +68,10 @@ impl TaskCommandService {
         }
 
         let task = self.fetch_task(task_id).await?;
-        task_policy_service::check_task_permissions(current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
         let facade = self.facade();
-        let note_entry = facade.format_note_entry(&current_user.user_id, note);
+        let note_entry = facade.format_note_entry(&ctx.auth.user_id, note);
         let updated_notes = facade.append_note(task.notes.as_deref(), &note_entry);
 
         let update_request = UpdateTaskRequest {
@@ -81,7 +81,7 @@ impl TaskCommandService {
         };
 
         self.task_service
-            .update_task_async(update_request, &current_user.user_id)
+            .update_task_async(update_request, &ctx.auth.user_id)
             .await
             .map_err(|e| AppError::db_sanitized("tasks.add_note", e))?;
 
@@ -95,10 +95,10 @@ impl TaskCommandService {
 
     /// Validate a task-scoped message and route it through the notification
     /// service.
-    #[instrument(skip(self, current_user, raw_body), fields(user_id = %current_user.user_id, task_id = %task_id))]
+    #[instrument(skip(self, ctx, raw_body), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
     pub async fn send_message(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         task_id: &str,
         raw_body: &str,
         raw_message_type: Option<&str>,
@@ -110,7 +110,7 @@ impl TaskCommandService {
         }
 
         let task = self.fetch_task(task_id).await?;
-        task_policy_service::check_task_permissions(current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
         let message_type = TasksFacade::validate_message_type(raw_message_type)?;
 
@@ -162,10 +162,10 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, persist a task issue, and optionally escalate.
-    #[instrument(skip(self, current_user, raw_description), fields(user_id = %current_user.user_id, task_id = %task_id, issue_type = %raw_issue_type))]
+    #[instrument(skip(self, ctx, raw_description), fields(user_id = %ctx.auth.user_id, task_id = %task_id, issue_type = %raw_issue_type))]
     pub async fn report_issue(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         task_id: &str,
         raw_issue_type: &str,
         raw_description: &str,
@@ -178,11 +178,11 @@ impl TaskCommandService {
         let severity = TasksFacade::validate_severity(raw_severity)?;
 
         let task = self.fetch_task(task_id).await?;
-        task_policy_service::check_task_permissions(current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
         let facade = self.facade();
         let issue_entry =
-            facade.format_issue_entry(&current_user.user_id, issue_type, &severity, description);
+            facade.format_issue_entry(&ctx.auth.user_id, issue_type, &severity, description);
         let updated_notes = facade.append_note(task.notes.as_deref(), &issue_entry);
 
         let update_request = UpdateTaskRequest {
@@ -192,7 +192,7 @@ impl TaskCommandService {
         };
 
         self.task_service
-            .update_task_async(update_request, &current_user.user_id)
+            .update_task_async(update_request, &ctx.auth.user_id)
             .await
             .map_err(|e| AppError::db_sanitized("tasks.report_issue", e))?;
 
@@ -286,18 +286,18 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate role and delegate CSV import to the task service.
-    #[instrument(skip(self, current_user, csv_data), fields(user_id = %current_user.user_id, update_existing = %update_existing))]
+    #[instrument(skip(self, ctx, csv_data), fields(user_id = %ctx.auth.user_id, update_existing = %update_existing))]
     pub async fn import_bulk(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         csv_data: &str,
         update_existing: bool,
     ) -> Result<BulkImportResponse, AppError> {
-        task_policy_service::ensure_assignment_management_role(current_user)?;
+        task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
 
         let import_result = self
             .task_service
-            .import_from_csv(csv_data, &current_user.user_id, update_existing)
+            .import_from_csv(csv_data, &ctx.auth.user_id, update_existing)
             .await
             .map_err(|e| AppError::db_sanitized("tasks.import.bulk", e))?;
 
@@ -325,16 +325,16 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Reschedule a task via the calendar service and optionally update notes.
-    #[instrument(skip(self, current_user, additional_notes), fields(user_id = %current_user.user_id, task_id = %task_id, new_date = %new_scheduled_date))]
+    #[instrument(skip(self, ctx, additional_notes), fields(user_id = %ctx.auth.user_id, task_id = %task_id, new_date = %new_scheduled_date))]
     pub async fn delay_task(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         task_id: &str,
         new_scheduled_date: String,
         additional_notes: Option<String>,
     ) -> Result<Task, AppError> {
         let task = self.fetch_task(task_id).await?;
-        task_policy_service::check_task_permissions(current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
         let calendar_service =
             crate::shared::services::cross_domain::CalendarService::new(self.db.clone());
@@ -344,7 +344,7 @@ impl TaskCommandService {
                 new_scheduled_date.clone(),
                 None,
                 None,
-                &current_user.user_id,
+                &ctx.auth.user_id,
             )
             .await
             .map_err(|e| {
@@ -359,7 +359,7 @@ impl TaskCommandService {
                 ..Default::default()
             };
             self.task_service
-                .update_task_async(update_request, &current_user.user_id)
+                .update_task_async(update_request, &ctx.auth.user_id)
                 .await
                 .map_err(|e| {
                     error!("Task notes update failed: {}", e);
@@ -387,17 +387,17 @@ impl TaskCommandService {
 
     /// Apply field-level restrictions, validate status transitions, and persist
     /// an edit.
-    #[instrument(skip(self, current_user, data), fields(user_id = %current_user.user_id, task_id = %task_id))]
+    #[instrument(skip(self, ctx, data), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
     pub async fn edit_task(
         &self,
-        current_user: &UserSession,
+        ctx: &RequestContext,
         task_id: &str,
         data: &UpdateTaskRequest,
     ) -> Result<Task, AppError> {
         let task = self.fetch_task(task_id).await?;
-        task_policy_service::check_task_permissions(current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
-        if current_user.role == crate::shared::contracts::auth::UserRole::Technician {
+        if ctx.auth.role == crate::shared::contracts::auth::UserRole::Technician {
             task_policy_service::enforce_technician_field_restrictions(data)?;
         }
 
@@ -433,7 +433,7 @@ impl TaskCommandService {
 
         let updated_task = self
             .task_service
-            .update_task_async(update_request, &current_user.user_id)
+            .update_task_async(update_request, &ctx.auth.user_id)
             .await
             .map_err(|e| {
                 error!("Task update failed: {}", e);

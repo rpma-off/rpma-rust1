@@ -1,7 +1,8 @@
 use crate::commands::AppError;
 use crate::domains::tasks::domain::models::task::{Task, TaskStatus, UpdateTaskRequest};
 use crate::domains::tasks::domain::services::task_state_machine;
-use crate::shared::contracts::auth::{UserRole, UserSession};
+use crate::shared::context::AuthContext;
+use crate::shared::contracts::auth::UserRole;
 
 const TECHNICIAN_ALLOWED_FIELDS: &[&str] = &[
     "status",
@@ -19,15 +20,15 @@ pub fn validate_status_change(current: &TaskStatus, new: &TaskStatus) -> Result<
 
 /// TODO: document
 pub fn check_task_permissions(
-    session: &UserSession,
+    auth: &AuthContext,
     task: &Task,
     operation: &str,
 ) -> Result<(), AppError> {
-    match session.role {
+    match auth.role {
         UserRole::Admin => Ok(()),
         UserRole::Supervisor => Ok(()),
         UserRole::Technician => {
-            if task.technician_id.as_ref() == Some(&session.user_id) {
+            if task.technician_id.as_ref() == Some(&auth.user_id) {
                 Ok(())
             } else {
                 Err(AppError::Authorization(
@@ -45,8 +46,8 @@ pub fn check_task_permissions(
 }
 
 /// TODO: document
-pub fn ensure_assignment_management_role(session: &UserSession) -> Result<(), AppError> {
-    if matches!(session.role, UserRole::Admin | UserRole::Supervisor) {
+pub fn ensure_assignment_management_role(auth: &AuthContext) -> Result<(), AppError> {
+    if matches!(auth.role, UserRole::Admin | UserRole::Supervisor) {
         Ok(())
     } else {
         Err(AppError::Authorization(
