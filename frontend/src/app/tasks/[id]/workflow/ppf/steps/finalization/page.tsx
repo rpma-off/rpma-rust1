@@ -3,6 +3,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   PpfChecklist,
   PpfPhotoGrid,
   PpfStepHero,
@@ -69,6 +79,7 @@ export default function FinalizationStepPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = useState(false);
   const hasHydratedFromServerRef = useRef(false);
 
   useEffect(() => {
@@ -138,6 +149,16 @@ export default function FinalizationStepPage() {
     }
   };
 
+  const handleOpenFinalizeDialog = () => {
+    if (!canValidate || isValidating) return;
+    setIsFinalizeDialogOpen(true);
+  };
+
+  const handleConfirmFinalize = async () => {
+    setIsFinalizeDialogOpen(false);
+    await handleValidate();
+  };
+
   const handleDownloadStepData = () => {
     if (!intervention?.id || !stepRecord) return;
     const payload = buildStepExportPayload(taskId, intervention.id, stepRecord);
@@ -146,83 +167,101 @@ export default function FinalizationStepPage() {
   };
 
   return (
-    <PpfWorkflowLayout
-      stepId="finalization"
-      actionBar={{
-        summary: summaryText,
-        onSaveDraft: handleSaveDraft,
-        onDownloadData: handleDownloadStepData,
-        onValidate: handleValidate,
-        validateLabel: 'Finalisation',
-        saveDisabled: isSaving,
-        downloadDisabled: !stepRecord,
-        validateDisabled: !canValidate || isValidating,
-      }}
-    >
-      <PpfStepHero
-        stepLabel={stepLabel}
-        title="🏁 Finalisation et Validation"
-        subtitle="Contrôle qualité final et validation client"
-        badge={badge}
-        rightSlot={
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-white/70">Étape finale</div>
-            <div className="text-2xl font-extrabold">~8 min</div>
-            <div className="text-[10px] text-white/60">Finalisation</div>
-          </div>
-        }
-        progressSegments={{ total: 4, filled: 4 }}
-        gradientClassName="bg-gradient-to-r from-emerald-600 to-emerald-800"
-      />
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="space-y-4">
-          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-semibold text-foreground">✅ Checklist Finale</div>
-              <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                {checklistCount} / {checklistTotal}
-              </span>
+    <>
+      <PpfWorkflowLayout
+        stepId="finalization"
+        actionBar={{
+          summary: summaryText,
+          onSaveDraft: handleSaveDraft,
+          onDownloadData: handleDownloadStepData,
+          onValidate: handleOpenFinalizeDialog,
+          validateLabel: 'Finalisation',
+          saveDisabled: isSaving,
+          downloadDisabled: !stepRecord,
+          validateDisabled: !canValidate || isValidating,
+        }}
+      >
+        <PpfStepHero
+          stepLabel={stepLabel}
+          title="🏁 Finalisation et Validation"
+          subtitle="Contrôle qualité final et validation client"
+          badge={badge}
+          rightSlot={
+            <div>
+              <div className="text-[10px] uppercase font-semibold text-white/70">Étape finale</div>
+              <div className="text-2xl font-extrabold">~8 min</div>
+              <div className="text-[10px] text-white/60">Finalisation</div>
             </div>
-            <PpfChecklist
-              items={FINAL_CHECKLIST}
-              values={checklist}
-              onToggle={(id) => setChecklist((prev) => ({ ...prev, [id]: !prev[id] }))}
-            />
+          }
+          progressSegments={{ total: 4, filled: 4 }}
+          gradientClassName="bg-gradient-to-r from-emerald-600 to-emerald-800"
+        />
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="text-sm font-semibold text-foreground">✅ Checklist Finale</div>
+                <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                  {checklistCount} / {checklistTotal}
+                </span>
+              </div>
+              <PpfChecklist
+                items={FINAL_CHECKLIST}
+                values={checklist}
+                onToggle={(id) => setChecklist((prev) => ({ ...prev, [id]: !prev[id] }))}
+              />
+            </div>
+
+            <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+              <label className="mb-2 block text-xs font-semibold text-foreground">Notes de finalisation</label>
+              <textarea
+                className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
+                rows={4}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Observations finales, remarques client..."
+              />
+            </div>
           </div>
 
-          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <label className="mb-2 block text-xs font-semibold text-foreground">Notes de finalisation</label>
-            <textarea
-              className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
-              rows={4}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Observations finales, remarques client..."
-            />
+          <div className="space-y-4">
+            <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+              <PpfPhotoGrid
+                taskId={taskId}
+                interventionId={intervention?.id}
+                stepId="finalization"
+                type="after"
+                photos={photos}
+                minPhotos={requiredPhotos}
+                onChange={setPhotos}
+                title="📷 Photos de finalisation"
+                hint="Vue avant · latérales · arrière"
+              />
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-700">
+              Finalisez l’intervention une fois toutes les vérifications et photos validées.
+            </div>
           </div>
         </div>
+      </PpfWorkflowLayout>
 
-        <div className="space-y-4">
-          <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <PpfPhotoGrid
-              taskId={taskId}
-              interventionId={intervention?.id}
-              stepId="finalization"
-              type="after"
-              photos={photos}
-              minPhotos={requiredPhotos}
-              onChange={setPhotos}
-              title="📷 Photos de finalisation"
-              hint="Vue avant · latérales · arrière"
-            />
-          </div>
-
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-700">
-            Finalisez l’intervention une fois toutes les vérifications et photos validées.
-          </div>
-        </div>
-      </div>
-    </PpfWorkflowLayout>
+      <AlertDialog open={isFinalizeDialogOpen} onOpenChange={setIsFinalizeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finaliser l&apos;intervention ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Assurez-vous que toutes les étapes sont complètes et que les photos ont
+              était prises.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmFinalize}>Confirmer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
