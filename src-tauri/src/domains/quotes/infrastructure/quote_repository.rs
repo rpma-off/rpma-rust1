@@ -505,20 +505,20 @@ impl QuoteRepository {
         let tid = task_id.to_string();
         self.db
             .with_transaction(|tx| {
-                tx.execute(
-                    "UPDATE quotes SET task_id = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
-                    params![tid, qid],
-                )
-                .map_err(|e| format!("Failed to link task to quote: {}", e))?;
                 let rows = tx
                     .execute(
-                        "UPDATE quotes SET status = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
-                        params![status_str, qid],
+                        "UPDATE quotes SET task_id = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                        params![tid, qid],
                     )
-                    .map_err(|e| format!("Failed to update quote status: {}", e))?;
+                    .map_err(|e| format!("Failed to link task to quote: {}", e))?;
                 if rows == 0 {
-                    return Err(format!("Quote {} not found", qid));
+                    return Err(format!("Quote {} not found or already deleted", qid));
                 }
+                tx.execute(
+                    "UPDATE quotes SET status = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                    params![status_str, qid],
+                )
+                .map_err(|e| format!("Failed to update quote status: {}", e))?;
                 Ok(())
             })
             .map_err(RepoError::Database)?;
