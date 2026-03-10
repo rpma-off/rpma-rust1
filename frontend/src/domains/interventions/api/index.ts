@@ -4,6 +4,7 @@ export { useInterventionWorkflow } from './useInterventionWorkflow';
 export { useInterventionData, useWorkflowStepData } from './useInterventionData';
 export { useInterventionActions } from './useInterventionActions';
 export { useInstallationStep, ZONE_CHECKLIST } from '../hooks/useInstallationStep';
+export { usePpfWorkflow } from '../hooks/usePpfWorkflow';
 
 export { interventionDashboard } from './interventionDashboard';
 export {

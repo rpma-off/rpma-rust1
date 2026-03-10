@@ -12,8 +12,8 @@ import {
   PpfWorkflowLayout,
   getNextPPFStepId,
   getPPFStepPath,
+  usePpfWorkflow,
 } from '@/domains/interventions';
-import { usePpfWorkflow } from '@/domains/interventions/api/client';
 import type { StepType } from '@/lib/backend';
 import type { Defect } from '@/domains/interventions';
 import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
