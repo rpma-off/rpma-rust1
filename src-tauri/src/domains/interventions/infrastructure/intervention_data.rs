@@ -145,6 +145,14 @@ impl InterventionDataService {
             .clone()
             .map(|reqs| reqs.join("; "));
 
+        // Enforce domain invariants before persisting: validate ranges for
+        // completion_percentage, GPS coordinates, vehicle_year, satisfaction
+        // score, etc.  A validation failure here means the task data contains
+        // out-of-range values that should not propagate into the intervention.
+        intervention
+            .validate()
+            .map_err(|errors| InterventionError::BusinessRule(errors.join("; ")))?;
+
         self.repository
             .create_intervention_with_tx(tx, &intervention)?;
 

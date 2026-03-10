@@ -79,11 +79,7 @@ impl QuoteService {
             items: Vec::new(),
         };
 
-        self.repo
-            .create(&quote)
-            .map_err(Self::map_create_repo_error)?;
-
-        // Add items if provided — QW-2: batch insert replaces N individual inserts + N cache invalidations.
+        // Build items before persisting so we can insert quote + items atomically.
         let items: Vec<QuoteItem> = req
             .items
             .iter()
@@ -103,9 +99,12 @@ impl QuoteService {
                 updated_at: now,
             })
             .collect();
+
+        // Atomic: quote row + all item rows in a single transaction so a
+        // partial failure never leaves an orphaned quote without items.
         self.repo
-            .add_items_batch(&items)
-            .map_err(|_| "Impossible d'ajouter les articles au devis.".to_string())?;
+            .create_with_items(&quote, &items)
+            .map_err(Self::map_create_repo_error)?;
         quote.items = items;
 
         // Recalculate totals
@@ -613,12 +612,11 @@ impl QuoteService {
             ));
         }
 
-        // Link the task and update status
+        // Atomic: link the task and flip the status in a single transaction so a
+        // partial failure never leaves a task linked to a quote whose status was
+        // not yet updated to Converted.
         self.repo
-            .link_task(quote_id, task_id)
-            .map_err(Self::map_repo_error)?;
-        self.repo
-            .update_status(quote_id, &QuoteStatus::Converted)
+            .link_task_and_update_status(quote_id, task_id, &QuoteStatus::Converted)
             .map_err(Self::map_repo_error)?;
 
         // Emit QuoteConverted event so intervention can be created
