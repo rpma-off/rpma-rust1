@@ -32,6 +32,22 @@ impl AuthContext {
             email: session.email.clone(),
         }
     }
+
+    /// Reconstruct a [`UserSession`] from this context.
+    ///
+    /// Useful when downstream APIs still accept `&UserSession`. The
+    /// returned session carries a synthetic token and a far-future
+    /// expiry — it MUST NOT be used for authentication.
+    pub fn to_user_session(&self) -> UserSession {
+        UserSession::new(
+            self.user_id.clone(),
+            self.username.clone(),
+            self.email.clone(),
+            self.role.clone(),
+            self.session_id.clone(),
+            86_400,
+        )
+    }
 }
 
 impl From<&UserSession> for AuthContext {
