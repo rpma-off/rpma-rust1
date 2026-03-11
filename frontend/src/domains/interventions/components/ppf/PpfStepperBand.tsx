@@ -36,11 +36,13 @@ export function PpfStepperBand({
           const previousStepLabel = previousStep
             ? (PPF_STEP_CONFIG[previousStep.id]?.label ?? previousStep.label)
             : null;
-          const lockReason = isLocked
-            ? previousStep && previousStep.status !== 'completed'
-              ? `Complétez d'abord « ${previousStepLabel} »`
-              : 'Étape verrouillée'
-            : null;
+          let lockReason: string | null = null;
+          if (isLocked) {
+            lockReason =
+              previousStep && previousStep.status !== 'completed'
+                ? `Complétez d'abord « ${previousStepLabel} » pour déverrouiller cette étape.`
+                : 'Étape verrouillée tant que les étapes précédentes ne sont pas validées.';
+          }
           const circleClasses = cn(
             'flex h-9 w-9 items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
             isDone && 'border-emerald-600 bg-emerald-600 text-white',
