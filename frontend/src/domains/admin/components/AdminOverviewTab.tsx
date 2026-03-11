@@ -24,11 +24,11 @@ interface AdminOverviewTabProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dashboardStats: Record<string, any> | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  WorkflowExecutionDashboard: React.ComponentType<any>;
+  WorkflowExecutionDashboard?: React.ComponentType<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  QualityAssuranceDashboard: React.ComponentType<any>;
+  QualityAssuranceDashboard?: React.ComponentType<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  PhotoDocumentationDashboard: React.ComponentType<any>;
+  PhotoDocumentationDashboard?: React.ComponentType<any>;
 }
 
 function getActivityIcon(type: RecentActivity['type']) {
@@ -132,15 +132,17 @@ export function AdminOverviewTab({
          </Card>
        </div>
 
-       {/* Dashboard Components */}
-       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-         <WorkflowExecutionDashboard taskStats={dashboardStats?.tasks} />
-         <QualityAssuranceDashboard
-           clientStats={dashboardStats?.clients}
-           userStats={dashboardStats?.users}
-         />
-         <PhotoDocumentationDashboard syncStats={dashboardStats?.sync} />
-       </div>
-     </div>
+        {/* Dashboard Components */}
+        {WorkflowExecutionDashboard && QualityAssuranceDashboard && PhotoDocumentationDashboard && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <WorkflowExecutionDashboard taskStats={dashboardStats?.tasks} />
+            <QualityAssuranceDashboard
+              clientStats={dashboardStats?.clients}
+              userStats={dashboardStats?.users}
+            />
+            <PhotoDocumentationDashboard syncStats={dashboardStats?.sync} />
+          </div>
+        )}
+      </div>
   );
 }

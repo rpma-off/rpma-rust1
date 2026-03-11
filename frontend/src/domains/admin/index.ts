@@ -13,8 +13,6 @@ export { SecurityPoliciesTab } from './components/SecurityPoliciesTab';
 export { IntegrationsTab } from './components/IntegrationsTab';
 export { PerformanceTab } from './components/PerformanceTab';
 export { MonitoringTab } from './components/MonitoringTab';
-export { QualityAssuranceDashboard } from './components/QualityAssuranceDashboard';
-export { PhotoDocumentationDashboard } from './components/PhotoDocumentationDashboard';
 export { SecurityDashboard } from './components/SecurityDashboard';
 export { default as ConfigurationPageContent } from './components/ConfigurationPageContent';
 export { AdminOverviewTab } from './components/AdminOverviewTab';

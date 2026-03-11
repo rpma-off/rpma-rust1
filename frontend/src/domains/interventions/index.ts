@@ -27,7 +27,6 @@ export { PpfZoneTracker } from './components/ppf/PpfZoneTracker';
 export { PpfQualitySlider } from './components/ppf/PpfQualitySlider';
 export { PPF_STEP_CONFIG } from './components/ppf/ppfWorkflow.config';
 export { WorkflowNavigationButton } from './components/workflow/WorkflowNavigationButton';
-export { WorkflowExecutionDashboard } from './components/WorkflowExecutionDashboard';
 export type { Defect } from './components/workflow/ppf/VehicleDiagram';
 export { getPPFStepPath, getNextPPFStepId, getPPFStepTitle, getPPFStepDescription, buildPPFStepsFromData, getCurrentPPFStepId } from './utils/ppf-workflow';
 export { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from './utils/step-export';

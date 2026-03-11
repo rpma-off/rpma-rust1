@@ -728,6 +728,26 @@ export const fr = {
     certifications: "Certifications",
   },
 
+  // Staff
+  staff: {
+    title: "Employés/Ressources",
+    subtitle: "Répertoire du personnel",
+    total: "Total",
+    active: "Actifs",
+    inactive: "Inactifs",
+    technicians: "Techniciens",
+    searchPlaceholder: "Rechercher par nom ou email...",
+    allRoles: "Tous les rôles",
+    allStatuses: "Tous les statuts",
+    statusActive: "Actif",
+    statusInactive: "Inactif",
+    roleAdmin: "Administrateur",
+    roleSupervisor: "Superviseur",
+    roleTechnician: "Technicien",
+    roleViewer: "Observateur",
+    noStaffFound: "Aucun membre du personnel trouvé",
+  },
+
   // Admin
   admin: {
     title: "Administration",

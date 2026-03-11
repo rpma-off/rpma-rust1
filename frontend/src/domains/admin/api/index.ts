@@ -33,10 +33,6 @@ export { PerformanceTab } from '../components/PerformanceTab';
 /** TODO: document */
 export { MonitoringTab } from '../components/MonitoringTab';
 /** TODO: document */
-export { QualityAssuranceDashboard } from '../components/QualityAssuranceDashboard';
-/** TODO: document */
-export { PhotoDocumentationDashboard } from '../components/PhotoDocumentationDashboard';
-/** TODO: document */
 export { SecurityDashboard } from '../components/SecurityDashboard';
 /** TODO: document */
 export { default as ConfigurationPageContent } from '../components/ConfigurationPageContent';

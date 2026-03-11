@@ -71,8 +71,6 @@ export { PPF_STEP_CONFIG } from '../components/ppf/ppfWorkflow.config';
 /** TODO: document */
 export { WorkflowNavigationButton } from '../components/workflow/WorkflowNavigationButton';
 /** TODO: document */
-export { WorkflowExecutionDashboard } from '../components/WorkflowExecutionDashboard';
-/** TODO: document */
 export type { Defect } from '../components/workflow/ppf/VehicleDiagram';
 
 /** TODO: document */
