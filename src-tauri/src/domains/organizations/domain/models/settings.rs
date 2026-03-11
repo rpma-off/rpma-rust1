@@ -123,6 +123,12 @@ impl Default for InvoicingSettings {
     }
 }
 
+/// Business-hours configuration for the organization.
+///
+/// **NOTE — DUPLICATE**: `business_hours` also exists in the Settings domain
+/// (`AppSettings.business_hours: serde_json::Value`) with a richer JSON schema.
+/// A future migration should consolidate these into a single canonical location
+/// (likely the Settings domain) to avoid drift.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct BusinessSettings {
     pub business_hours_start: String,

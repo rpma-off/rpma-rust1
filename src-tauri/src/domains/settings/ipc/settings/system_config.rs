@@ -87,6 +87,9 @@ pub struct UpdateIntegrationsRequest {
 }
 
 /// Replace the global integrations array.  Admin only.
+///
+/// **NOTE**: No sync backend exists. Integration configs are stored locally
+/// but have no runtime effect. Retained for future use.
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn update_integrations(
@@ -117,6 +120,9 @@ pub struct UpdatePerformanceConfigsRequest {
 }
 
 /// Replace the global performance_configs array.  Admin only.
+///
+/// **NOTE**: No sync backend exists. Performance configs are stored locally
+/// but have no runtime effect. Retained for future use.
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn update_performance_configs(

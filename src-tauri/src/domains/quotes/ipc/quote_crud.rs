@@ -1,7 +1,7 @@
 //! Quote CRUD commands — create, get, list, update, delete, duplicate
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::quotes::domain::models::quote::*;
+use crate::domains::quotes::domain::models::quote::{Quote, QuoteListResponse};
 use crate::domains::quotes::QuotesFacade;
 use tracing::{debug, error, info, instrument, Span};
 
@@ -76,7 +76,7 @@ pub async fn quote_get(
 pub async fn quote_list(
     request: QuoteListRequest,
     state: AppState<'_>,
-) -> Result<ApiResponse<Vec<Quote>>, AppError> {
+) -> Result<ApiResponse<QuoteListResponse>, AppError> {
     debug!("quote_list command received");
     let ctx = resolve_context!(&state, &request.correlation_id);
     let correlation_id = ctx.correlation_id.clone();
@@ -84,11 +84,10 @@ pub async fn quote_list(
 
     match facade.list(
         &ctx.auth.role,
-        request.status.as_deref(),
-        request.client_id.as_deref(),
+        &request.filters,
     ) {
-        Ok(quotes) => {
-            Ok(ApiResponse::success(quotes).with_correlation_id(Some(correlation_id.clone())))
+        Ok(response) => {
+            Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
         }
         Err(e) => {
             error!("Failed to list quotes: {}", e);
@@ -133,7 +132,7 @@ pub async fn quote_delete(
     let correlation_id = ctx.correlation_id.clone();
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.delete(&ctx.auth.role, &request.id, ctx.user_id()) {
+    match facade.delete(&ctx.auth.role, &request.id) {
         Ok(deleted) => {
             info!(quote_id = %request.id, "Quote deleted");
             Ok(ApiResponse::success(deleted).with_correlation_id(Some(correlation_id.clone())))

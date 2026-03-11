@@ -7,17 +7,26 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
-/// TODO: document
+/// Notification delivery channel.
+///
+/// Only `InApp` is functional. External channels (`Email`, `Sms`, `Push`)
+/// are retained for schema compatibility but have no delivery implementation.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationChannel {
+    /// In-app notification — the only functional channel.
+    InApp,
+    /// NOT IMPLEMENTED — retained for schema compatibility only.
     Email,
+    /// NOT IMPLEMENTED — retained for schema compatibility only.
     Sms,
+    /// NOT IMPLEMENTED — retained for schema compatibility only.
     Push,
 }
 
 impl std::fmt::Display for NotificationChannel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
+            Self::InApp => "in_app",
             Self::Email => "email",
             Self::Sms => "sms",
             Self::Push => "push",
@@ -151,7 +160,8 @@ impl std::fmt::Display for NotificationStatus {
     }
 }
 
-/// TODO: document
+/// NOT IMPLEMENTED — Email delivery is not available.
+/// Retained for schema/type compatibility only.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct EmailConfig {
     pub provider: EmailProvider,
@@ -160,7 +170,7 @@ pub struct EmailConfig {
     pub from_name: String,
 }
 
-/// TODO: document
+/// NOT IMPLEMENTED — Email delivery is not available.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum EmailProvider {
     SendGrid,
@@ -179,7 +189,8 @@ impl std::fmt::Display for EmailProvider {
     }
 }
 
-/// TODO: document
+/// NOT IMPLEMENTED — SMS delivery is not available.
+/// Retained for schema/type compatibility only.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct SmsConfig {
     pub provider: SmsProvider,
@@ -187,7 +198,7 @@ pub struct SmsConfig {
     pub from_number: String,
 }
 
-/// TODO: document
+/// NOT IMPLEMENTED — SMS delivery is not available.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub enum SmsProvider {
     Twilio,
@@ -204,11 +215,17 @@ impl std::fmt::Display for SmsProvider {
     }
 }
 
-/// TODO: document
+/// Notification service configuration.
+///
+/// Only in-app notifications are functional. The `email` and `sms` fields
+/// are retained for schema compatibility but are never used for delivery.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationConfig {
+    /// NOT IMPLEMENTED — retained for schema compatibility.
     pub email: Option<EmailConfig>,
+    /// NOT IMPLEMENTED — retained for schema compatibility.
     pub sms: Option<SmsConfig>,
+    /// NOT IMPLEMENTED — retained for schema compatibility.
     pub push_enabled: bool,
     pub quiet_hours_start: Option<String>, // HH:MM format
     pub quiet_hours_end: Option<String>,   // HH:MM format
@@ -391,6 +408,7 @@ impl NotificationTemplate {
             channel: row
                 .get::<_, Option<String>>("channel")?
                 .and_then(|s| match s.as_str() {
+                    "in_app" => Some(NotificationChannel::InApp),
                     "email" => Some(NotificationChannel::Email),
                     "sms" => Some(NotificationChannel::Sms),
                     "push" => Some(NotificationChannel::Push),

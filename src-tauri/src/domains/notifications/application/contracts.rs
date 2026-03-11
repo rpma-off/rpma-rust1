@@ -17,16 +17,28 @@ pub struct SendNotificationRequest {
     pub correlation_id: Option<String>,
 }
 
-/// TODO: document
+/// Request to update notification service configuration.
+///
+/// Only `quiet_hours_*` and `timezone` have an effect. The `email_*`,
+/// `sms_*`, and `push_enabled` fields are NOT IMPLEMENTED and are
+/// retained for API/schema compatibility only.
 #[derive(Debug, Serialize, Deserialize, TS)]
 pub struct UpdateNotificationConfigRequest {
+    /// NOT IMPLEMENTED — no email delivery.
     pub email_provider: Option<String>,
+    /// NOT IMPLEMENTED — no email delivery.
     pub email_api_key: Option<String>,
+    /// NOT IMPLEMENTED — no email delivery.
     pub email_from_email: Option<String>,
+    /// NOT IMPLEMENTED — no email delivery.
     pub email_from_name: Option<String>,
+    /// NOT IMPLEMENTED — no SMS delivery.
     pub sms_provider: Option<String>,
+    /// NOT IMPLEMENTED — no SMS delivery.
     pub sms_api_key: Option<String>,
+    /// NOT IMPLEMENTED — no SMS delivery.
     pub sms_from_number: Option<String>,
+    /// NOT IMPLEMENTED — no push delivery.
     pub push_enabled: Option<bool>,
     pub quiet_hours_start: Option<String>,
     pub quiet_hours_end: Option<String>,
