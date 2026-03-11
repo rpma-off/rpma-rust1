@@ -1,7 +1,6 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { recordMetric } from './metrics';
 import { logger } from '../logging';
-import { getSessionToken } from '@/shared/contracts/session';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
@@ -21,9 +20,9 @@ export const NOT_IMPLEMENTED_COMMANDS = new Set([
 ]);
 
 /**
- * IPC commands that do not require a session token.
- * All other commands are considered protected and will have session_token
- * auto-injected into the args before being sent to the backend.
+ * IPC commands that do not require an authenticated backend session.
+ * All other commands are considered protected and will fail on the backend
+ * if no active session is available in memory.
  */
 export const PUBLIC_COMMANDS = new Set([
   // Auth - no session required (or handled via separate token param)
@@ -163,34 +162,6 @@ export async function safeInvoke<T>(
     ...(args ?? {}),
     correlation_id: correlationId,
   };
-
-  // Auto-inject session token for protected commands when not already supplied
-  const isProtected = !PUBLIC_COMMANDS.has(command);
-  const hasExplicitToken =
-    argsWithCorrelation.session_token !== null && argsWithCorrelation.session_token !== undefined ||
-    argsWithCorrelation.sessionToken !== null && argsWithCorrelation.sessionToken !== undefined;
-  if (isProtected && !hasExplicitToken) {
-    const token = await getSessionToken();
-    if (token) {
-      argsWithCorrelation.sessionToken = token;
-      argsWithCorrelation.session_token = token;
-    } else {
-      const authError: EnhancedError = new Error(
-        "Erreur d'authentification. Veuillez vous reconnecter."
-      );
-      authError.code = 'AUTHENTICATION';
-      authError.correlationId = correlationId;
-      authError.alreadyLogged = false;
-      throw authError;
-    }
-  }
-
-  // Normalize: ensure both camelCase and snake_case session token forms are always present
-  if (argsWithCorrelation.session_token && !argsWithCorrelation.sessionToken) {
-    argsWithCorrelation.sessionToken = argsWithCorrelation.session_token;
-  } else if (argsWithCorrelation.sessionToken && !argsWithCorrelation.session_token) {
-    argsWithCorrelation.session_token = argsWithCorrelation.sessionToken;
-  }
 
   try {
     // Log IPC call start

@@ -80,7 +80,7 @@ export function SecurityPoliciesTab() {
     try {
       setLoading(true);
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const policies = (appSettings?.security_policies || []) as unknown as SecurityPolicy[];
       setSecurityPolicies(Array.isArray(policies) ? policies : []);
@@ -123,9 +123,7 @@ export function SecurityPoliciesTab() {
       }
 
       await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
 
       toast.success(editingPolicy ? 'Politique mise à jour avec succès' : 'Politique créée avec succès');
       setShowCreateDialog(false);
@@ -146,9 +144,7 @@ export function SecurityPoliciesTab() {
       const sessionToken = session?.token || '';
       const updatedPolicies = securityPolicies.filter((policy) => policy.id !== policyToDelete.id);
       await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
       toast.success('Politique supprimée avec succès');
       await loadSecurityPolicies();
     } catch (error) {
@@ -172,9 +168,7 @@ export function SecurityPoliciesTab() {
         p.id === policy.id ? { ...p, is_active: !p.is_active, isActive: !p.is_active } : p
       );
       await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
       toast.success(`Politique ${policy.is_active ? 'désactivée' : 'activée'} avec succès`);
       await loadSecurityPolicies();
     } catch (error) {

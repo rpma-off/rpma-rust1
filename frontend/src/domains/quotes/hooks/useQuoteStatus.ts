@@ -15,7 +15,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.markSent(id, user.token);
+        const result = await quotesIpc.markSent(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {
@@ -32,7 +32,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.markAccepted(id, user.token);
+        const result = await quotesIpc.markAccepted(id);
         const response = result as QuoteAcceptResponse | null;
         return response?.quote?.id ? response : null;
       } catch {
@@ -49,7 +49,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.markRejected(id, user.token);
+        const result = await quotesIpc.markRejected(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {
@@ -66,7 +66,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.markExpired(id, user.token);
+        const result = await quotesIpc.markExpired(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {
@@ -83,7 +83,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.markChangesRequested(id, user.token);
+        const result = await quotesIpc.markChangesRequested(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {
@@ -100,7 +100,7 @@ export function useQuoteStatus() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.reopen(id, user.token);
+        const result = await quotesIpc.reopen(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {

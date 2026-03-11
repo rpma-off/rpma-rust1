@@ -26,7 +26,6 @@ pub struct LogMessage {
     pub level: LogLevel,
     pub message: String,
     pub context: Option<String>,
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -38,14 +37,8 @@ pub async fn send_log_to_frontend(
     state: AppState<'_>,
     log_message: LogMessage,
 ) -> Result<(), String> {
-    let _ctx = AuthGuard::require_role(
-        &log_message.session_token,
-        &state,
-        UserRole::Technician,
-        &log_message.correlation_id,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &log_message.correlation_id)
+        .map_err(|e| e.to_string())?;
 
     let level_str = match log_message.level {
         LogLevel::Debug => "DEBUG",
@@ -81,7 +74,6 @@ pub async fn send_log_to_frontend(
 pub struct LogTaskCreationDebugRequest {
     pub task_data: serde_json::Value,
     pub step: String,
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -93,14 +85,8 @@ pub async fn log_task_creation_debug(
     state: AppState<'_>,
     request: LogTaskCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
-    let _ctx = AuthGuard::require_role(
-        &request.session_token,
-        &state,
-        UserRole::Technician,
-        &request.correlation_id,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &request.correlation_id)
+        .map_err(|e| e.to_string())?;
 
     let correlation_id = request.correlation_id.clone();
     debug!(
@@ -121,7 +107,6 @@ pub async fn log_task_creation_debug(
 pub struct LogClientCreationDebugRequest {
     pub client_data: serde_json::Value,
     pub step: String,
-    pub session_token: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }
@@ -133,14 +118,8 @@ pub async fn log_client_creation_debug(
     state: AppState<'_>,
     request: LogClientCreationDebugRequest,
 ) -> Result<ApiResponse<()>, String> {
-    let _ctx = AuthGuard::require_role(
-        &request.session_token,
-        &state,
-        UserRole::Technician,
-        &request.correlation_id,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
+    let _ctx = AuthGuard::require_role(&state, UserRole::Technician, &request.correlation_id)
+        .map_err(|e| e.to_string())?;
 
     let correlation_id = request.correlation_id.clone();
     debug!(

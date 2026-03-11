@@ -8,8 +8,6 @@ export interface EntityCountsResponse {
 }
 
 export const entityCountsIpc = {
-  getCounts: (sessionToken: string) =>
-    safeInvoke<EntityCountsResponse>(IPC_COMMANDS.GET_ENTITY_COUNTS, {
-      sessionToken,
-    }),
+  getCounts: () =>
+    safeInvoke<EntityCountsResponse>(IPC_COMMANDS.GET_ENTITY_COUNTS, {}),
 };

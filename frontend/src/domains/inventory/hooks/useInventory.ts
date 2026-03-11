@@ -131,7 +131,7 @@ export function useInventory(query?: InventoryQuery) {
     try {
       setLoading(true);
       setError(null);
-      const result = await inventoryIpc.material.list(sessionToken, {
+      const result = await inventoryIpc.material.list({
         material_type: query?.material_type ?? undefined,
         category: query?.category ?? undefined,
         active_only: query?.active_only,
@@ -153,7 +153,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     try {
-      const result = await inventoryIpc.getInventoryStats(sessionToken);
+      const result = await inventoryIpc.getInventoryStats();
       setStats(result);
     } catch (err) {
       console.error('Failed to fetch inventory stats:', err);
@@ -167,7 +167,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     try {
-      const result = await inventoryIpc.reporting.getLowStockMaterials(sessionToken);
+      const result = await inventoryIpc.reporting.getLowStockMaterials();
       setLowStockMaterials(result.items);
     } catch (err) {
       console.error('Failed to fetch low stock materials:', err);
@@ -181,7 +181,7 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     try {
-      const result = await inventoryIpc.reporting.getExpiredMaterials(sessionToken);
+      const result = await inventoryIpc.reporting.getExpiredMaterials();
       setExpiredMaterials(result);
     } catch (err) {
       console.error('Failed to fetch expired materials:', err);
@@ -209,7 +209,7 @@ export function useInventory(query?: InventoryQuery) {
       setLoading(true);
       setError(null);
       const t0 = performance.now();
-      const data = await inventoryIpc.getDashboardData(sessionToken);
+      const data = await inventoryIpc.getDashboardData();
       const elapsed = performance.now() - t0;
       if (elapsed > 200) console.warn(`[Perf] fetchDashboard slow: ${elapsed.toFixed(1)}ms`);
       setMaterials(data.materials);
@@ -252,7 +252,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    const result = await inventoryIpc.material.create(request, sessionToken);
+    const result = await inventoryIpc.material.create(request);
     setMaterials(prev => [...prev, result]);
     void fetchStats();
     return result;
@@ -266,7 +266,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    const result = await inventoryIpc.material.update(id, request, sessionToken);
+    const result = await inventoryIpc.material.update(id, request);
     setMaterials(prev => prev.map(m => m.id === id ? result : m));
     void fetchStats();
     return result;
@@ -280,7 +280,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    const result = await inventoryIpc.stock.updateStock(request, sessionToken);
+    const result = await inventoryIpc.stock.updateStock(request);
     setMaterials(prev => prev.map(m => m.id === request.material_id ? result : m));
     void fetchStats();
     void fetchLowStock();
@@ -295,7 +295,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    await inventoryIpc.consumption.recordConsumption(request, sessionToken);
+    await inventoryIpc.consumption.recordConsumption(request);
     await Promise.allSettled([fetchMaterials(), fetchStats()]);
   }, [fetchMaterials, fetchStats, hasInventoryAccess, sessionToken]);
 
@@ -307,7 +307,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    return inventoryIpc.material.get(id, sessionToken);
+    return inventoryIpc.material.get(id);
   }, [hasInventoryAccess, sessionToken]);
 
   const getMaterialBySku = useCallback(async (sku: string): Promise<Material | null> => {
@@ -318,7 +318,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    return inventoryIpc.getMaterialBySku(sessionToken, sku);
+    return inventoryIpc.getMaterialBySku(sku);
   }, [hasInventoryAccess, sessionToken]);
 
   const getInterventionConsumption = useCallback(async (interventionId: string): Promise<MaterialConsumption[]> => {
@@ -329,7 +329,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    return inventoryIpc.getInterventionConsumption(sessionToken, interventionId);
+    return inventoryIpc.getInterventionConsumption(interventionId);
   }, [hasInventoryAccess, sessionToken]);
 
   const getInterventionSummary = useCallback(async (interventionId: string): Promise<InterventionMaterialSummary> => {
@@ -340,7 +340,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    return inventoryIpc.getInterventionSummary(sessionToken, interventionId);
+    return inventoryIpc.getInterventionSummary(interventionId);
   }, [hasInventoryAccess, sessionToken]);
 
   const getMaterialStats = useCallback(async (): Promise<MaterialStats> => {
@@ -351,7 +351,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    return inventoryIpc.getMaterialStats(sessionToken);
+    return inventoryIpc.getMaterialStats();
   }, [hasInventoryAccess, sessionToken]);
 
   const deleteMaterial = useCallback(async (id: string) => {
@@ -362,7 +362,7 @@ export function useInventory(query?: InventoryQuery) {
       throw new Error(PERMISSION_ERROR_MESSAGE);
     }
 
-    await inventoryIpc.material.delete(id, sessionToken);
+    await inventoryIpc.material.delete(id);
     setMaterials(prev => prev.filter(m => m.id !== id));
     void fetchStats();
   }, [fetchStats, hasInventoryAccess, sessionToken]);

@@ -1,19 +1,28 @@
-# ADR-004: Domain Events
+# ADR-004: Domain Events and Cross-Domain Orchestration
 
 ## Status
 Accepted
 
 ## Context
-Cross-domain orchestration (e.g., intervention finalization triggering inventory updates) must not create tight coupling between domains.
+Cross-domain interactions (e.g., updating inventory after a task is completed) must be handled without creating direct, circular, or tight coupling between bounded contexts.
 
 ## Decision
-- A global in-memory event bus lives in `src-tauri/src/shared/services/event_bus.rs` and is wrapped by `src-tauri/src/shared/event_bus/`.
-- Events are defined in `src-tauri/src/shared/event_bus/events.rs` (e.g., `InterventionFinalized`, `MaterialConsumed`).
-- Events are published after successful operations (see `publish_event` usage in `src-tauri/src/domains/interventions/infrastructure/intervention_workflow.rs`).
-- Handlers are registered at application startup in `src-tauri/src/service_builder.rs`.
-- The inventory domain listens for `InterventionFinalized` via `InterventionFinalizedHandler` (`src-tauri/src/domains/inventory/application/handlers.rs`).
+
+### Event Bus Architecture
+- A global, in-memory, asynchronous event bus provides the communication backbone (`src-tauri/src/shared/services/event_bus.rs`).
+- Events are defined centrally in `src-tauri/src/shared/event_bus/events.rs` as plain Rust structs (e.g., `InterventionFinalized`, `MaterialConsumed`).
+
+### Publishing and Subscription
+- Bounded contexts publish events immediately following successful state changes (e.g., `InterventionFinalized` published from the interventions domain).
+- Subscriptions and handlers are registered during application startup in `src-tauri/src/service_builder.rs`.
+- Handlers (e.g., `InterventionFinalizedHandler` in the inventory domain) translate external events into local commands or queries.
+
+### Delivery Semantics
+- Event delivery is in-process and asynchronous, aligning with the offline-first requirement.
+- No external message broker (RabbitMQ, Redis) is permitted.
+- Consuming domains are responsible for ensuring idempotency if an event is processed multiple times.
 
 ## Consequences
-- Domains remain decoupled; adding new event listeners does not modify the publishing domain.
-- Event delivery is in-process and asynchronous (offline-first, no external broker).
-- Idempotency must be handled by the consuming domain where needed.
+- Adding new side effects to a business operation does not require modifying the origin domain.
+- Domain boundaries are respected while allowing rich system-wide workflows.
+- The system remains responsive as cross-domain logic is executed out-of-band relative to the primary IPC request.

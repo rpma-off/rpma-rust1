@@ -26,7 +26,7 @@ export function useEditTaskPage() {
 
       try {
         setLoading(true);
-        const task = await taskGateway.getTask(taskId, user.token);
+        const task = await taskGateway.getTask(taskId);
         setTaskData(task);
       } catch (err) {
         console.error('Failed to fetch task:', err);

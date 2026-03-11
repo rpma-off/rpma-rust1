@@ -2,20 +2,19 @@
 //!
 //! This module handles complex task filtering, pagination, and listing operations.
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::domain::models::task::{
     Task, TaskListResponse, TaskPriority, TaskStatus,
 };
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatistics;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
+use crate::resolve_context;
 use serde::Deserialize;
 use tracing::{debug, info};
 
 /// Request for getting tasks with clients
 #[derive(Deserialize, Debug)]
 pub struct GetTasksWithClientsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     pub page: Option<u32>,
     pub limit: Option<u32>,
@@ -26,7 +25,6 @@ pub struct GetTasksWithClientsRequest {
 /// Request for getting task statistics
 #[derive(Deserialize, Debug)]
 pub struct GetTaskStatisticsRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -35,7 +33,6 @@ pub struct GetTaskStatisticsRequest {
 /// Request for getting completion rate
 #[derive(Deserialize, Debug)]
 pub struct GetCompletionRateRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -44,7 +41,6 @@ pub struct GetCompletionRateRequest {
 /// Request for getting average duration by status
 #[derive(Deserialize, Debug)]
 pub struct GetAverageDurationByStatusRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -53,7 +49,6 @@ pub struct GetAverageDurationByStatusRequest {
 /// Request for getting priority distribution
 #[derive(Deserialize, Debug)]
 pub struct GetPriorityDistributionRequest {
-    pub session_token: String,
     pub filter: Option<TaskFilter>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -62,7 +57,6 @@ pub struct GetPriorityDistributionRequest {
 /// Request for getting user assigned tasks
 #[derive(Deserialize, Debug)]
 pub struct GetUserAssignedTasksRequest {
-    pub session_token: String,
     pub user_id: Option<String>, // If None, uses the authenticated user
     pub filter: Option<TaskFilter>,
     pub include_completed: Option<bool>,
@@ -75,16 +69,9 @@ pub async fn get_tasks_with_clients(
     request: GetTasksWithClientsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskListResponse>, AppError> {
-    // Set correlation context for tracing throughout the call stack
-    let correlation_id = crate::set_correlation_context!(&request.correlation_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     debug!("Getting tasks with client information");
-
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-
-    // Update correlation context with user_id after authentication
-    crate::set_correlation_context!(&Some(correlation_id.clone()), &session.user_id);
 
     // Build filter based on user role
     let mut filter = request.filter.unwrap_or_default();
@@ -92,7 +79,7 @@ pub async fn get_tasks_with_clients(
     // Delegate role-based filtering to the service layer
     state
         .task_service
-        .apply_role_based_filters(&mut filter, &session);
+        .apply_role_based_filters(&mut filter, &ctx.auth);
 
     // Set pagination defaults
     let page = request.page.unwrap_or(1).max(1);
@@ -136,7 +123,7 @@ pub async fn get_tasks_with_clients(
 
     info!("Retrieved {} tasks with clients (page {})", data_len, page);
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get user assigned tasks
@@ -145,20 +132,16 @@ pub async fn get_user_assigned_tasks(
     request: GetUserAssignedTasksRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<Task>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting user assigned tasks");
 
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
-
     // Determine which user's tasks to get
-    let target_user_id = request.user_id.unwrap_or_else(|| session.user_id.clone());
+    let target_user_id = request.user_id.unwrap_or_else(|| ctx.auth.user_id.clone());
 
     // Check permissions - users can only see their own tasks unless they have appropriate role
-    if target_user_id != session.user_id
+    if target_user_id != ctx.auth.user_id
         && !matches!(
-            session.role,
+            ctx.auth.role,
             crate::shared::contracts::auth::UserRole::Admin
                 | crate::shared::contracts::auth::UserRole::Supervisor
         )
@@ -195,7 +178,7 @@ pub async fn get_user_assigned_tasks(
         target_user_id
     );
 
-    Ok(ApiResponse::success(tasks).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(tasks).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get task statistics
@@ -204,16 +187,12 @@ pub async fn get_task_statistics(
     request: GetTaskStatisticsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<TaskStatistics>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task statistics");
-
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based filtering to statistics
     let mut filter = request.filter.unwrap_or_default();
-    filter.apply_role_scope(&session.role, &session.user_id);
+    filter.apply_role_scope(&ctx.auth.role, &ctx.auth.user_id);
 
     // Get statistics from service
     let stats = state.task_service.get_task_statistics().map_err(|e| {
@@ -223,7 +202,7 @@ pub async fn get_task_statistics(
 
     info!("Retrieved task statistics for filter: {:?}", filter);
 
-    Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(stats).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get completion rate
@@ -232,16 +211,12 @@ pub async fn get_completion_rate(
     request: GetCompletionRateRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<f64>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task completion rate");
-
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-    filter.apply_role_scope(&session.role, &session.user_id);
+    filter.apply_role_scope(&ctx.auth.role, &ctx.auth.user_id);
 
     // Calculate completion rate
     let stats = state.task_service.get_task_statistics().map_err(|e| {
@@ -254,7 +229,7 @@ pub async fn get_completion_rate(
 
     info!("Calculated completion rate: {:.2}%", completion_rate);
 
-    Ok(ApiResponse::success(completion_rate).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(completion_rate).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get average duration by status
@@ -263,16 +238,12 @@ pub async fn get_average_duration_by_status(
     request: GetAverageDurationByStatusRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<std::collections::HashMap<String, f64>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting average duration by status");
-
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-    filter.apply_role_scope(&session.role, &session.user_id);
+    filter.apply_role_scope(&ctx.auth.role, &ctx.auth.user_id);
 
     // Get average durations by status
     let avg_durations_vec = state
@@ -292,7 +263,7 @@ pub async fn get_average_duration_by_status(
         avg_durations.len()
     );
 
-    Ok(ApiResponse::success(avg_durations).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(avg_durations).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get priority distribution
@@ -301,16 +272,12 @@ pub async fn get_priority_distribution(
     request: GetPriorityDistributionRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<std::collections::HashMap<String, u64>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task priority distribution");
-
-    // Authenticate user
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     // Apply role-based filtering
     let mut filter = request.filter.unwrap_or_default();
-    filter.apply_role_scope(&session.role, &session.user_id);
+    filter.apply_role_scope(&ctx.auth.role, &ctx.auth.user_id);
 
     // Get priority distribution
     let priority_dist_vec = state
@@ -332,5 +299,5 @@ pub async fn get_priority_distribution(
         priority_dist.len()
     );
 
-    Ok(ApiResponse::success(priority_dist).with_correlation_id(Some(correlation_id.clone())))
+    Ok(ApiResponse::success(priority_dist).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

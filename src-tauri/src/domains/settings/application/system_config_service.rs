@@ -6,7 +6,8 @@
 use crate::commands::AppError;
 use crate::domains::settings::domain::models::settings::AppSettings;
 use crate::domains::settings::infrastructure::settings::SettingsService;
-use crate::shared::contracts::auth::{UserRole, UserSession};
+use crate::shared::context::RequestContext;
+use crate::shared::contracts::auth::UserRole;
 use std::sync::Arc;
 use tracing::info;
 
@@ -23,8 +24,8 @@ impl SystemConfigService {
 
     // ── RBAC helper ──────────────────────────────────────────────────────────
 
-    fn require_admin(user: &UserSession) -> Result<(), AppError> {
-        if !matches!(user.role, UserRole::Admin) {
+    fn require_admin(ctx: &RequestContext) -> Result<(), AppError> {
+        if !matches!(ctx.auth.role, UserRole::Admin) {
             return Err(AppError::Authorization(
                 "Only administrators can modify system configuration".to_string(),
             ));
@@ -35,8 +36,8 @@ impl SystemConfigService {
     // ── read ─────────────────────────────────────────────────────────────────
 
     /// Return the global `AppSettings`.  Admins only.
-    pub fn get_app_settings(&self, user: &UserSession) -> Result<AppSettings, AppError> {
-        Self::require_admin(user)?;
+    pub fn get_app_settings(&self, ctx: &RequestContext) -> Result<AppSettings, AppError> {
+        Self::require_admin(ctx)?;
         self.settings_service.get_app_settings_db()
     }
 
@@ -45,14 +46,14 @@ impl SystemConfigService {
     /// Update the five `general_settings` fields.  Admins only.
     pub fn update_general_settings(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         auto_save: Option<bool>,
         language: Option<String>,
         timezone: Option<String>,
         date_format: Option<String>,
         currency: Option<String>,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
 
         let mut current = self.settings_service.get_app_settings_db()?;
 
@@ -63,74 +64,74 @@ impl SystemConfigService {
         if let Some(v) = currency    { current.general.currency     = v; }
 
         self.settings_service
-            .update_general_settings_db(&current.general, &user.user_id)?;
+            .update_general_settings_db(&current.general, &ctx.auth.user_id)?;
 
-        info!("general_settings updated by user_id={}", user.user_id);
+        info!("general_settings updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 
     /// Replace the `business_rules` array.  Admins only.
     pub fn update_business_rules(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         rules: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
         self.settings_service
-            .update_business_rules_db(&rules, &user.user_id)?;
-        info!("business_rules updated by user_id={}", user.user_id);
+            .update_business_rules_db(&rules, &ctx.auth.user_id)?;
+        info!("business_rules updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 
     /// Replace the `security_policies` array.  Admins only.
     pub fn update_security_policies(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         policies: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
         self.settings_service
-            .update_security_policies_db(&policies, &user.user_id)?;
-        info!("security_policies updated by user_id={}", user.user_id);
+            .update_security_policies_db(&policies, &ctx.auth.user_id)?;
+        info!("security_policies updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 
     /// Replace the `integrations` array.  Admins only.
     pub fn update_integrations(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         integrations: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
         self.settings_service
-            .update_integrations_db(&integrations, &user.user_id)?;
-        info!("integrations updated by user_id={}", user.user_id);
+            .update_integrations_db(&integrations, &ctx.auth.user_id)?;
+        info!("integrations updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 
     /// Replace the `performance_configs` array.  Admins only.
     pub fn update_performance_configs(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         configs: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
         self.settings_service
-            .update_performance_configs_db(&configs, &user.user_id)?;
-        info!("performance_configs updated by user_id={}", user.user_id);
+            .update_performance_configs_db(&configs, &ctx.auth.user_id)?;
+        info!("performance_configs updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 
     /// Replace the `business_hours` object.  Admins only.
     pub fn update_business_hours(
         &self,
-        user: &UserSession,
+        ctx: &RequestContext,
         hours: serde_json::Value,
     ) -> Result<(), AppError> {
-        Self::require_admin(user)?;
+        Self::require_admin(ctx)?;
         self.settings_service
-            .update_business_hours_db(&hours, &user.user_id)?;
-        info!("business_hours updated by user_id={}", user.user_id);
+            .update_business_hours_db(&hours, &ctx.auth.user_id)?;
+        info!("business_hours updated by user_id={}", ctx.auth.user_id);
         Ok(())
     }
 }

@@ -1,7 +1,7 @@
 //! Notification commands for Tauri
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::resolve_context;
 use crate::domains::notifications::application::{
     build_notification_config, SendNotificationRequest, UpdateNotificationConfigRequest,
 };
@@ -22,15 +22,12 @@ lazy_static! {
 
 /// Initialize the notification service with configuration
 #[tauri::command]
-#[instrument(skip(config, state, session_token))]
+#[instrument(skip(config, state))]
 pub async fn initialize_notification_service(
     config: UpdateNotificationConfigRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&config.correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &config.correlation_id);
 
     // Build config via application layer
     let notification_config = build_notification_config(&config).map_err(|e| {
@@ -43,20 +40,17 @@ pub async fn initialize_notification_service(
     *global_service = Some(service);
 
     info!("Notification service initialized");
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Send a notification
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id = %request.user_id))]
+#[instrument(skip(state, request), fields(user_id = %request.user_id))]
 pub async fn send_notification(
     request: SendNotificationRequest,
-    session_token: String,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard.as_ref().ok_or(AppError::Configuration(
@@ -76,22 +70,19 @@ pub async fn send_notification(
             AppError::Internal(e)
         })?;
 
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Test notification configuration
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn test_notification_config(
     recipient: String,
     channel: NotificationChannel,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let service = service_guard.as_ref().ok_or(AppError::Configuration(
@@ -135,21 +126,18 @@ pub async fn test_notification_config(
 
     Ok(
         ApiResponse::success("Test notification sent successfully".to_string())
-            .with_correlation_id(Some(correlation_id)),
+            .with_correlation_id(Some(ctx.correlation_id)),
     )
 }
 
 /// Get notification service status
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_notification_status(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let _is_initialized = service_guard.is_some();
@@ -171,5 +159,5 @@ pub async fn get_notification_status(
         })
     };
 
-    Ok(ApiResponse::success(config).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(config).with_correlation_id(Some(ctx.correlation_id)))
 }

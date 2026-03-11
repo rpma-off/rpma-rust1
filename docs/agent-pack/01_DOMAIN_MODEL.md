@@ -17,7 +17,7 @@ Core entities, their relationships, statuses, and storage mapping.
 - `technician_id`, `assigned_at`, `assigned_by` — assignment
 - `scheduled_date`, `date_rdv`, `heure_rdv` — scheduling
 - `ppf_zones`, `custom_ppf_zones` — PPF configuration
-- `created_at`, `updated_at`, `deleted_at`, `synced` — audit fields
+- `created_at`, `updated_at`, `deleted_at`, `synced`, `last_synced_at` — audit fields
 
 **Status Enum** (`TaskStatus` in `src-tauri/src/domains/tasks/domain/models/task.rs`):
 | Status | Description |
@@ -35,6 +35,14 @@ Core entities, their relationships, statuses, and storage mapping.
 | `Archived` | Historical record |
 | `Failed` | Unsuccessful completion |
 | `Invalid` | Invalid/corrupted |
+
+**Validation Rules** (CreateTaskRequest):
+- `vehicle_plate`: required, non-empty
+- `vehicle_model`: required, non-empty
+- `ppf_zones`: required, non-empty array, each zone max 100 chars
+- `scheduled_date`: required, non-empty
+- `vehicle_year`: optional, must be between 1900-2100
+- `customer_email`: optional, must contain '@' and '.'
 
 **Relations**: Belongs to a Client; contains one or more Interventions.
 
@@ -54,8 +62,8 @@ Core entities, their relationships, statuses, and storage mapping.
 - `scheduled_at`, `started_at`, `completed_at`, `paused_at` — timing
 - `ppf_zones_config`, `ppf_zones_extended`, `film_type`, `film_brand`, `film_model` — PPF config
 - `weather_condition`, `lighting_condition`, `temperature_celsius`, `humidity_percentage` — environment
-- `customer_satisfaction`, `quality_score`, `customer_signature` — finalization
-- `created_at`, `updated_at`, `synced` — audit fields
+- `customer_satisfaction` (1-10), `quality_score` (0-100), `customer_signature` — finalization
+- `synced`, `last_synced_at` — audit fields
 
 **Status Enum** (`InterventionStatus` in `src-tauri/src/domains/interventions/domain/models/intervention.rs`):
 | Status | Description |
@@ -65,6 +73,24 @@ Core entities, their relationships, statuses, and storage mapping.
 | `Paused` | Temporarily stopped |
 | `Completed` | Finished successfully |
 | `Cancelled` | Abandoned |
+
+**StepStatus Enum** (for workflow steps):
+| Status | Description |
+|--------|-------------|
+| `Pending` | Not started |
+| `InProgress` | Active |
+| `Paused` | Temporarily stopped |
+| `Completed` | Done |
+| `Failed` | Unsuccessful |
+| `Skipped` | Bypassed |
+| `Rework` | Needs redo |
+
+**Validation Rules**:
+- `vehicle_plate`: required, non-empty
+- `vehicle_year`: optional, must be between 1900-2100
+- `completion_percentage`: must be 0.0-100.0
+- `customer_satisfaction`: optional, must be 1-10
+- `quality_score`: optional, must be 0-100
 
 **Relations**: Belongs to a Task; contains Photos; consumes Inventory/Materials.
 
@@ -82,6 +108,12 @@ Core entities, their relationships, statuses, and storage mapping.
 - `notes`, `tags` — metadata
 - `total_tasks`, `active_tasks`, `completed_tasks`, `last_task_date` — statistics
 - `created_at`, `updated_at`, `deleted_at`, `synced` — audit fields
+
+**Validation Rules** (CreateClientRequest):
+- `name`: required, non-empty, max 100 chars
+- `email`: optional, valid email format
+- `phone`: optional, 7-20 digits
+- `notes`: optional, max 1000 chars
 
 **Relations**: Has many Tasks, Quotes.
 
@@ -120,7 +152,7 @@ Core entities, their relationships, statuses, and storage mapping.
 **Key Fields**:
 - `id`, `sku`, `name`, `description` — identifiers
 - `material_type` — `PpfFilm`, `Adhesive`, `CleaningSolution`, `Tool`, `Consumable`
-- `category`, `subcategory`, `category_id` — categorization
+- `category`, `subcategory` — categorization
 - `brand`, `model`, `specifications` — specs
 - `unit_of_measure` — `Piece`, `Meter`, `Liter`, `Gram`, `Roll`
 - `current_stock`, `minimum_stock`, `maximum_stock`, `reorder_point` — inventory levels

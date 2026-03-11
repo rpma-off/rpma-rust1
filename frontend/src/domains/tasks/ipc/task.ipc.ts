@@ -18,11 +18,10 @@ import type {
 } from '@/lib/backend';
 
 export const taskIpc = {
-  create: async (data: CreateTaskRequest, sessionToken: string): Promise<Task> => {
+  create: async (data: CreateTaskRequest): Promise<Task> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
       request: {
-        action: { action: 'Create', data },
-        session_token: sessionToken
+        action: { action: 'Create', data }
       }
     });
     invalidatePattern('task:');
@@ -30,19 +29,18 @@ export const taskIpc = {
     return extractAndValidate(result, validateTask) as Task;
   },
 
-  get: (id: string, sessionToken: string): Promise<Task | null> =>
-    cachedInvoke(`task:${id}`, IPC_COMMANDS.TASK_CRUD, {
+  get: async (id: string): Promise<Task | null> => {
+    return cachedInvoke(`task:${id}`, IPC_COMMANDS.TASK_CRUD, {
       request: {
-        action: { action: 'Get', id },
-        session_token: sessionToken
+        action: { action: 'Get', id }
       }
-    }, (data: JsonValue) => extractAndValidate(data, validateTask, { handleNotFound: true }) as Task | null),
+    }, (data: JsonValue) => extractAndValidate(data, validateTask, { handleNotFound: true }) as Task | null);
+  },
 
-  update: async (id: string, data: UpdateTaskRequest, sessionToken: string): Promise<Task> => {
+  update: async (id: string, data: UpdateTaskRequest): Promise<Task> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
       request: {
-        action: { action: 'Update', id, data },
-        session_token: sessionToken
+        action: { action: 'Update', id, data }
       }
     });
     invalidatePattern('task:');
@@ -50,8 +48,8 @@ export const taskIpc = {
     return extractAndValidate(result, validateTask) as Task;
   },
 
-  list: (filters: Partial<TaskQuery>, sessionToken: string): Promise<TaskListResponse> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
+  list: async (filters: Partial<TaskQuery>): Promise<TaskListResponse> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
       request: {
         action: {
           action: 'List',
@@ -68,67 +66,68 @@ export const taskIpc = {
             sort_by: filters.sort_by ?? 'created_at',
             sort_order: filters.sort_order ?? 'desc'
           }
-        },
-        session_token: sessionToken
+        }
       }
-    }).then(result => {
-      const data = result as unknown as TaskListResponse;
-      if (!validateTaskListResponse(data)) {
-        throw new Error('Invalid response format for task list');
-      }
-      return data;
-    }),
+    });
+    const data = result as unknown as TaskListResponse;
+    if (!validateTaskListResponse(data)) {
+      throw new Error('Invalid response format for task list');
+    }
+    return data;
+  },
 
-  delete: async (id: string, sessionToken: string): Promise<void> => {
+  delete: async (id: string): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.TASK_CRUD, {
       request: {
-        action: { action: 'Delete', id },
-        session_token: sessionToken
+        action: { action: 'Delete', id }
       }
     });
     invalidatePattern('task:');
     signalMutation('tasks');
   },
 
-  statistics: (sessionToken: string): Promise<TaskStatistics> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
+  statistics: async (): Promise<TaskStatistics> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
       request: {
-        action: { action: 'GetStatistics' },
-        session_token: sessionToken
+        action: { action: 'GetStatistics' }
       }
-    }).then(result => extractAndValidate(result) as TaskStatistics),
+    });
+    return extractAndValidate(result) as TaskStatistics;
+  },
 
-  checkTaskAssignment: (taskId: string, userId: string, sessionToken: string): Promise<TaskAssignmentCheckResponse> =>
-    safeInvoke<TaskAssignmentCheckResponse>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
-      request: { task_id: taskId, user_id: userId, session_token: sessionToken }
-    }),
+  checkTaskAssignment: async (taskId: string, userId: string): Promise<TaskAssignmentCheckResponse> => {
+    return safeInvoke<TaskAssignmentCheckResponse>(IPC_COMMANDS.CHECK_TASK_ASSIGNMENT, {
+      request: { task_id: taskId, user_id: userId }
+    });
+  },
 
-  checkTaskAvailability: (taskId: string, sessionToken: string): Promise<TaskAvailabilityCheckResponse> =>
-    safeInvoke<TaskAvailabilityCheckResponse>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
-      request: { task_id: taskId, session_token: sessionToken }
-    }),
+  checkTaskAvailability: async (taskId: string): Promise<TaskAvailabilityCheckResponse> => {
+    return safeInvoke<TaskAvailabilityCheckResponse>(IPC_COMMANDS.CHECK_TASK_AVAILABILITY, {
+      request: { task_id: taskId }
+    });
+  },
 
-  getTaskHistory: (taskId: string, sessionToken: string): Promise<TaskHistoryEntry[]> =>
-    safeInvoke<TaskHistoryEntry[]>(IPC_COMMANDS.GET_TASK_HISTORY, {
-      request: { task_id: taskId, session_token: sessionToken }
-    }),
+  getTaskHistory: async (taskId: string): Promise<TaskHistoryEntry[]> => {
+    return safeInvoke<TaskHistoryEntry[]>(IPC_COMMANDS.GET_TASK_HISTORY, {
+      request: { task_id: taskId }
+    });
+  },
 
-  validateTaskAssignmentChange: (
+  validateTaskAssignmentChange: async (
     taskId: string,
     oldUserId: string | null,
-    newUserId: string,
-    sessionToken: string
-  ): Promise<JsonValue> =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
-      request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, session_token: sessionToken }
-    }),
+    newUserId: string
+  ): Promise<JsonValue> => {
+    return safeInvoke<JsonValue>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
+      request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, }
+    });
+  },
 
-  editTask: async (taskId: string, updates: JsonObject, sessionToken: string): Promise<Task> => {
+  editTask: async (taskId: string, updates: JsonObject): Promise<Task> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.EDIT_TASK, {
       request: {
         task_id: taskId,
-        data: updates,
-        session_token: sessionToken
+        data: updates
       }
     });
     invalidatePattern('task:');
@@ -136,12 +135,11 @@ export const taskIpc = {
     return extractAndValidate(result, validateTask) as Task;
   },
 
-  addTaskNote: async (taskId: string, note: string, sessionToken: string): Promise<void> => {
+  addTaskNote: async (taskId: string, note: string): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.ADD_TASK_NOTE, {
       request: {
         task_id: taskId,
-        note,
-        session_token: sessionToken
+        note
       }
     });
     invalidatePattern('task:');
@@ -151,26 +149,23 @@ export const taskIpc = {
   sendTaskMessage: async (
     taskId: string,
     message: string,
-    messageType: string,
-    sessionToken: string
+    messageType: string
   ): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.SEND_TASK_MESSAGE, {
       request: {
         task_id: taskId,
         message,
-        message_type: messageType,
-        session_token: sessionToken
+        message_type: messageType
       }
     });
   },
 
-  delayTask: async (taskId: string, newDate: string, reason: string, sessionToken: string): Promise<void> => {
+  delayTask: async (taskId: string, newDate: string, reason: string): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.DELAY_TASK, {
       request: {
         task_id: taskId,
         new_scheduled_date: newDate,
-        reason,
-        session_token: sessionToken
+        reason
       }
     });
     invalidatePattern('task:');
@@ -181,25 +176,22 @@ export const taskIpc = {
     taskId: string,
     issueType: string,
     severity: string,
-    description: string,
-    sessionToken: string
+    description: string
   ): Promise<void> => {
     await safeInvoke<void>(IPC_COMMANDS.REPORT_TASK_ISSUE, {
       request: {
         task_id: taskId,
         issue_type: issueType,
         severity,
-        description,
-        session_token: sessionToken
+        description
       }
     });
   },
 
-  exportTasksCsv: (
-    options: { include_notes?: boolean; date_range?: { start_date?: string; end_date?: string } },
-    sessionToken: string
-  ): Promise<string> =>
-    safeInvoke<string>(IPC_COMMANDS.EXPORT_TASKS_CSV, {
+  exportTasksCsv: async (
+    options: { include_notes?: boolean; date_range?: { start_date?: string; end_date?: string } }
+  ): Promise<string> => {
+    return safeInvoke<string>(IPC_COMMANDS.EXPORT_TASKS_CSV, {
       request: {
         include_client_data: options.include_notes ?? false,
         filter: options.date_range
@@ -207,23 +199,22 @@ export const taskIpc = {
               date_from: options.date_range.start_date,
               date_to: options.date_range.end_date
             }
-          : undefined,
-        session_token: sessionToken
+          : undefined
       }
-    }),
+    });
+  },
 
-  importTasksBulk: (
-    options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean },
-    sessionToken: string
-  ): Promise<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }> =>
-    safeInvoke<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }>(
+  importTasksBulk: async (
+    options: { csv_lines: string[]; skip_duplicates?: boolean; update_existing?: boolean }
+  ): Promise<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }> => {
+    return safeInvoke<{ total_processed: number; successful: number; failed: number; errors: string[]; duplicates_skipped: number }>(
       IPC_COMMANDS.IMPORT_TASKS_BULK,
       {
         request: {
           csv_data: options.csv_lines.join('\n'),
-          update_existing: options.update_existing ?? false,
-          session_token: sessionToken
+          update_existing: options.update_existing ?? false
         }
       }
-    ),
+    );
+  },
 };

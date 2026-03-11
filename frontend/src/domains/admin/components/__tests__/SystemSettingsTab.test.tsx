@@ -14,6 +14,7 @@ jest.mock('@/shared/utils', () => ({
   settingsOperations: {
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
+    updateBusinessRules: jest.fn(),
   },
   LogDomain: {
     AUTH: 'AUTH',
@@ -100,12 +101,14 @@ jest.mock('sonner', () => ({
 
 const mockGetAppSettings = settingsOperations.getAppSettings as jest.Mock;
 const mockUpdateGeneralSettings = settingsOperations.updateGeneralSettings as jest.Mock;
+const mockUpdateBusinessRules = settingsOperations.updateBusinessRules as jest.Mock;
 
 describe('Configuration tabs regressions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetAppSettings.mockResolvedValue({ general: {} });
     mockUpdateGeneralSettings.mockResolvedValue({});
+    mockUpdateBusinessRules.mockResolvedValue({});
   });
 
   it('renders business hours schedule entries', async () => {
@@ -171,7 +174,7 @@ describe('Configuration tabs regressions', () => {
     await user.click(screen.getByRole('button', { name: /Confirmer/i }));
 
     await waitFor(() => {
-      expect(mockUpdateGeneralSettings).toHaveBeenCalled();
+      expect(mockUpdateBusinessRules).toHaveBeenCalled();
     });
   });
 });

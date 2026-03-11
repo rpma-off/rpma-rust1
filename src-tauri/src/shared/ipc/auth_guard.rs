@@ -1,36 +1,32 @@
 //! Shared authentication guard for IPC command adapters.
 
 use crate::shared::app_state::AppState;
-use crate::shared::auth_middleware::AuthMiddleware;
+use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
-use crate::shared::ipc::{AppResult, CommandContext};
+use crate::shared::ipc::AppResult;
 
 /// TODO: document
 pub struct AuthGuard;
 
 impl AuthGuard {
     /// TODO: document
-    pub async fn require_authenticated(
-        session_token: &str,
+    pub fn require_authenticated(
         state: &AppState<'_>,
         correlation_id: &Option<String>,
-    ) -> AppResult<CommandContext> {
-        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await
+    ) -> AppResult<RequestContext> {
+        crate::shared::context::session_resolver::resolve_request_context(state, None, correlation_id)
     }
 
     /// TODO: document
-    pub async fn require_role(
-        session_token: &str,
+    pub fn require_role(
         state: &AppState<'_>,
         required_role: UserRole,
         correlation_id: &Option<String>,
-    ) -> AppResult<CommandContext> {
-        AuthMiddleware::authenticate_command(
-            session_token,
+    ) -> AppResult<RequestContext> {
+        crate::shared::context::session_resolver::resolve_request_context(
             state,
             Some(required_role),
             correlation_id,
         )
-        .await
     }
 }

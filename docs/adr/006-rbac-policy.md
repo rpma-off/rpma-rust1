@@ -1,24 +1,34 @@
-# ADR-006: RBAC Policy
+# ADR-006: RBAC Policy and Session Security
 
 ## Status
 Accepted
 
 ## Context
-The application supports multiple user roles (Admin, Supervisor, Technician, Viewer) with different access levels. Session management is handled locally without a remote token authority.
+The application requires a tiered access control system to manage permissions for multiple user roles (Admin, Supervisor, Technician, Viewer) in an offline-first desktop environment.
 
 ## Decision
-- All protected IPC commands require a `session_token` parameter.
-- Session tokens are plain UUID strings stored directly in the `sessions` table (introduced by migration `041_replace_user_sessions_with_sessions.sql`). The previous JWT-based `user_sessions` table was replaced; no JWT signing or verification is performed.
-- Session tokens carry an 8-hour TTL enforced by the `expires_at` column and the `is_expired()` check in `UserSession`. The `SessionTimeoutConfig` default is 480 minutes (8 hours).
-- The `authenticate!` macro validates the session token and returns the current user by delegating to `AuthMiddleware::authenticate` (`src-tauri/src/shared/auth_middleware.rs`).
-- Role-based checks are performed at the command handler level using helpers in `src-tauri/src/shared/auth_middleware.rs`.
-- The four roles form a hierarchy: `Admin > Supervisor > Technician > Viewer`. `AuthMiddleware::has_permission` encodes the hierarchy; callers may also use `can_perform_task_operation`, `can_perform_client_operation`, and `can_perform_user_operation` for resource-specific checks.
-- Session tokens are validated on every protected endpoint.
-- Two-factor authentication (2FA) commands (`enable_2fa`, `verify_2fa_setup`, `disable_2fa`, `regenerate_backup_codes`, `is_2fa_enabled`) are not implemented in the current backend and are explicitly enumerated in the frontend's `NOT_IMPLEMENTED_COMMANDS` guard to prevent silent failures.
-- The `sessions` table enforces valid role values via a `BEFORE INSERT` trigger that rejects any value outside `('admin', 'supervisor', 'technician', 'viewer')`.
+
+### Role Hierarchy
+Roles follow a strict linear hierarchy: `Admin > Supervisor > Technician > Viewer`.
+- `AuthMiddleware::has_permission` implements this comparison.
+- Higher roles inherit all permissions of lower roles.
+
+### Enforcement Mechanism
+- All protected IPC commands require a valid `session_token`.
+- `AuthMiddleware::authenticate_command` validates the token and extracts the `UserSession`.
+- Role-based checks are performed at the IPC command handler or application service level using helpers in `src-tauri/src/shared/auth_middleware.rs`.
+- Hierarchical checks (e.g., `can_perform_task_operation`) ensure users only access resources permitted by their role.
+
+### Session Integrity
+- Session tokens are UUID strings stored in the local `sessions` table.
+- A `BEFORE INSERT` trigger on the `sessions` table enforces valid role values: `('admin', 'supervisor', 'technician', 'viewer')`.
+- Session TTL is 8 hours (480 minutes), enforced by the `expires_at` column and backend validation logic.
+
+### Auditing
+- `node scripts/ipc-authorization-audit.js` runs in CI to verify that all protected commands have appropriate RBAC guards and follow established security patterns.
+- `node scripts/ipc-consistency-check.js` ensures command handlers align with their declared security metadata.
 
 ## Consequences
-- Unauthorized access is blocked at the IPC boundary.
-- Role definitions can evolve without changing the authentication mechanism.
-- Every command handler follows a consistent authentication pattern.
-- Introducing 2FA in a future iteration requires removing the affected commands from `NOT_IMPLEMENTED_COMMANDS` and providing the corresponding backend handlers.
+- Unauthorized access is blocked at the IPC entry point.
+- The hierarchy simplifies permission management by avoiding complex many-to-many role-permission mappings.
+- Security consistency is verified automatically by CI scripts.

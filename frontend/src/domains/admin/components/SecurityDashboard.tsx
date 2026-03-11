@@ -64,7 +64,7 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
       const [metricsData, alertsData, sessionsData] = await Promise.all([
         ipcClient.audit.getMetrics(user.token),
         ipcClient.audit.getAlerts(user.token),
-        ipcClient.settings.getActiveSessions(user.token),
+        ipcClient.settings.getActiveSessions(),
       ]);
 
       setMetrics(metricsData as unknown as SecurityMetrics);
@@ -100,7 +100,7 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
     if (!user?.token) return;
 
     try {
-      await ipcClient.settings.revokeSession(sessionId, user.token);
+      await ipcClient.settings.revokeSession(sessionId);
       toast.success('Session révoquée');
       loadSecurityData(); // Refresh data
     } catch (err) {

@@ -42,7 +42,7 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
     try {
       setLoading(true);
       setError(null);
-      const result = await quotesIpc.list(filters, user.token);
+      const result = await quotesIpc.list(filters);
       const listResult = result as unknown as QuoteListResponse;
       if (listResult?.data) {
         setQuotes(listResult.data);
@@ -104,7 +104,7 @@ export function useQuote(id: string | null) {
     try {
       setLoading(true);
       setError(null);
-      const result = await quotesIpc.get(id, user.token);
+      const result = await quotesIpc.get(id);
       const quote = result as unknown as Quote;
       if (quote?.id) {
         setQuote(quote);
@@ -143,7 +143,6 @@ export function useCreateQuote() {
         }
         const result = await quotesIpc.create(
           data as unknown as JsonObject,
-          user.token,
         );
         const quote = result as unknown as Quote;
         if (quote?.id) {
@@ -179,7 +178,6 @@ export function useUpdateQuote() {
         const result = await quotesIpc.update(
           id,
           data as unknown as JsonObject,
-          user.token,
         );
         const quote = result as unknown as Quote;
         if (quote?.id) {
@@ -212,7 +210,7 @@ export function useDeleteQuote() {
       try {
         setLoading(true);
         setError(null);
-        const result = await quotesIpc.delete(id, user.token);
+        const result = await quotesIpc.delete(id);
         return (result as unknown as boolean) ?? false;
       } catch (err: unknown) {
         setError(normalizeError(err));

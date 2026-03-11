@@ -34,8 +34,8 @@ export function InventoryReports() {
       setLoading(true);
       setError(null);
       const [lowStock, movements] = await Promise.all([
-        inventoryIpc.getLowStockMaterials(user.token),
-        inventoryIpc.getMovementSummaries(user.token),
+        inventoryIpc.getLowStockMaterials(),
+        inventoryIpc.getMovementSummaries(),
       ]);
       setLowStockMaterials(lowStock.items);
       setMovementSummary(movements);

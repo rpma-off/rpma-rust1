@@ -84,7 +84,7 @@ npm run types:sync
 **Pipeline**:
 1. Rust binary: `src-tauri/src/bin/export-types.rs` exports types via `ts-rs`
 2. Node script: `scripts/write-types.js` processes and splits by domain
-3. Result: `frontend/src/lib/backend/*.ts`
+3. Result: `frontend/src/types/*.ts`
 
 **Output Files**:
 - `auth.ts`, `tasks.ts`, `interventions.ts`, `inventory.ts`, `clients.ts`
@@ -92,8 +92,7 @@ npm run types:sync
 - `documents.ts`, `notifications.ts`, `common.ts`, `index.ts`
 
 **Important**: 
-- `frontend/src/types/` contains **manual** types
-- Generated types go to `frontend/src/lib/backend/`
+- `frontend/src/types/` contains **generated** types
 - **DO NOT EDIT** generated type files manually
 
 ---

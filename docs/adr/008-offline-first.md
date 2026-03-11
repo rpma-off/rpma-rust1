@@ -4,23 +4,31 @@
 Accepted
 
 ## Context
-RPMA v2 is a desktop application that must work without an internet connection. Local data is the source of truth.
+The application is designed for desktop environments where internet connectivity is intermittent or unavailable. Local data is the authoritative source of truth.
 
 ## Decision
-- SQLite in WAL mode is the primary data store, ensuring data integrity and concurrent read access.
-- All business operations work against the local database with no dependency on remote services.
-- Sync is optional and handled by a dedicated `sync` domain that queues changes for later upload via `SyncQueue` and `BackgroundSyncService`, both initialized in `src-tauri/src/service_builder.rs`.
-- The event bus is in-memory and does not require network connectivity.
-- No online services, payments, or external sync are introduced in the bounded context architecture.
-- Database migrations are embedded in the binary using the `include_dir!` macro (`static MIGRATIONS_DIR`). This ensures the correct migration set ships with each application version without runtime file-system access.
-- A `schema_version` table tracks the highest applied migration number. `Database::initialize_or_migrate` applies pending migrations on startup in filename-sorted order.
-- `Database::ensure_required_views` is called at the end of every startup initialization sequence to recreate SQL views (`client_statistics`, `calendar_tasks`) that may be missing in older schema revisions, providing forward compatibility without a dedicated migration for each view change.
-- Periodic WAL checkpointing (`PRAGMA wal_checkpoint(PASSIVE)`) is performed via `Database::checkpoint_wal` and the `OperationPool` to bound WAL file growth.
-- Session tokens are UUID strings stored in the local `sessions` table (replacing the former `user_sessions` table in migration 041). Session state is therefore fully offline-capable and requires no network round-trip for validation.
+
+### Local Persistence
+- SQLite in WAL (Write-Ahead Logging) mode is the primary data store.
+- All business operations are executed against the local database without remote dependencies.
+- Periodic WAL checkpointing via `Database::checkpoint_wal` bounds the size of the `-wal` sidecar file.
+
+### Offline Identity
+- Session management is handled via a local `sessions` table (UUID-based).
+- Authentication and authorization checks are performed entirely against local state, requiring no network round-trips.
+
+### Embedded Resources
+- Database migrations are embedded in the binary using `include_dir!`.
+- Application logic and schema definitions ship as a single unit, ensuring consistent operation regardless of host filesystem state.
+
+### Optional Synchronization
+- A dedicated `sync` domain manages the background synchronization of local changes to remote targets when connectivity is available.
+- The `SyncQueue` buffers outgoing changes to prevent data loss during offline periods.
+
+### Startup Integrity
+- `Database::ensure_required_views` recreates SQL views (e.g., `client_statistics`) on every startup, ensuring the frontend has access to required projections even if the schema was migrated across disparate versions.
 
 ## Consequences
-- The application is fully functional offline.
-- Data conflicts during sync must be handled by the sync domain (not by individual bounded contexts).
-- All domain logic is designed for local-first operation.
-- Embedding migrations eliminates deployment-time schema file dependencies and simplifies the release artifact.
-- Views are guaranteed to exist at runtime regardless of the migration path taken to reach the current schema version.
+- Full application functionality is maintained in air-gapped environments.
+- Latency is minimized by avoiding remote requests in critical user paths.
+- Deployment is simplified to a single binary containing all logic and schema assets.

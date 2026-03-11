@@ -98,7 +98,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      const settings = await ipcClient.settings.getUserSettings(token);
+      const settings = await ipcClient.settings.getUserSettings();
       return ok(settings);
     } catch (error) {
       return fail(error, 'Failed to get user settings');
@@ -112,7 +112,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      await ipcClient.settings.updateUserPreferences(data, token);
+      await ipcClient.settings.updateUserPreferences(data);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update preferences');
@@ -126,7 +126,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      await ipcClient.settings.updateUserNotifications(data, token);
+      await ipcClient.settings.updateUserNotifications(data);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update notifications');
@@ -140,7 +140,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      await ipcClient.settings.updateUserAccessibility(data, token);
+      await ipcClient.settings.updateUserAccessibility(data);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update accessibility settings');
@@ -154,7 +154,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<UserSettings>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      await ipcClient.settings.updateUserPerformance(data, token);
+      await ipcClient.settings.updateUserPerformance(data);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update performance settings');
@@ -176,7 +176,7 @@ export class SettingsService {
         profilePayload.avatar_url = data.profile_picture;
       }
 
-      await ipcClient.settings.updateUserProfile(profilePayload as JsonObject, token);
+      await ipcClient.settings.updateUserProfile(profilePayload as JsonObject);
       return this.getUserSettings(token);
     } catch (error) {
       return fail(error, 'Failed to update profile');
@@ -191,7 +191,7 @@ export class SettingsService {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       const payload = normalizePasswordRequest(data);
-      await ipcClient.settings.changeUserPassword(payload, token);
+      await ipcClient.settings.changeUserPassword(payload);
       return ok(undefined);
     } catch (error) {
       return fail(error, 'Failed to change password');
@@ -205,10 +205,10 @@ export class SettingsService {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
       await Promise.all([
-        ipcClient.settings.updateUserPreferences(DEFAULT_PREFERENCES, token),
-        ipcClient.settings.updateUserNotifications(DEFAULT_NOTIFICATIONS, token),
-        ipcClient.settings.updateUserAccessibility(DEFAULT_ACCESSIBILITY, token),
-        ipcClient.settings.updateUserPerformance(DEFAULT_PERFORMANCE, token),
+        ipcClient.settings.updateUserPreferences(DEFAULT_PREFERENCES),
+        ipcClient.settings.updateUserNotifications(DEFAULT_NOTIFICATIONS),
+        ipcClient.settings.updateUserAccessibility(DEFAULT_ACCESSIBILITY),
+        ipcClient.settings.updateUserPerformance(DEFAULT_PERFORMANCE),
       ]);
       return this.getUserSettings(token);
     } catch (error) {
@@ -222,7 +222,7 @@ export class SettingsService {
   ): Promise<SettingsServiceResponse<Record<string, unknown>>> {
     try {
       const token = resolveToken(sessionTokenOrUserId, maybeSessionToken);
-      const data = await ipcClient.settings.exportUserData(token);
+      const data = await ipcClient.settings.exportUserData();
       return ok(data);
     } catch (error) {
       return fail(error, 'Failed to export user data');

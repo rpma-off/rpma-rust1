@@ -273,6 +273,15 @@ export const IPC_COMMANDS = {
   QUOTE_ATTACHMENT_OPEN: 'quote_attachment_open',
   QUOTE_CONVERT_TO_TASK: 'quote_convert_to_task',
 
+  // Organization commands
+  GET_ONBOARDING_STATUS: 'get_onboarding_status',
+  COMPLETE_ONBOARDING: 'complete_onboarding',
+  GET_ORGANIZATION: 'get_organization',
+  UPDATE_ORGANIZATION: 'update_organization',
+  UPLOAD_LOGO: 'upload_logo',
+  GET_ORGANIZATION_SETTINGS: 'get_organization_settings',
+  UPDATE_ORGANIZATION_SETTINGS: 'update_organization_settings',
+
   // WebSocket commands
   INIT_WEBSOCKET_SERVER: 'init_websocket_server',
   BROADCAST_WEBSOCKET_MESSAGE: 'broadcast_websocket_message',

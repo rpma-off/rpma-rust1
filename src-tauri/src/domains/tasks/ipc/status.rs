@@ -1,9 +1,9 @@
-use crate::authenticate;
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::domains::tasks::domain::models::task::Task;
+use crate::resolve_context;
 
 /// Transition a task to a new status with validation.
 ///
@@ -12,19 +12,16 @@ use crate::domains::tasks::domain::models::task::Task;
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_transition_status(
-    session_token: String,
     request: StatusTransitionRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Task>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &request.correlation_id);
 
     // Viewers cannot change task status (status transitions are "update" operations).
-    check_task_permission!(&current_user.role, "update");
+    check_task_permission!(&ctx.auth.role, "update");
 
     // For Technicians, verify they are assigned to this task.
-    if current_user.role == crate::shared::contracts::auth::UserRole::Technician {
+    if ctx.auth.role == crate::shared::contracts::auth::UserRole::Technician {
         let task = state
             .task_service
             .get_task_async(&request.task_id)
@@ -32,7 +29,7 @@ pub async fn task_transition_status(
             .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
             .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
-        task_policy_service::check_task_permissions(&current_user, &task, "edit")?;
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
     }
 
     let task = state.task_service.transition_status(
@@ -41,7 +38,7 @@ pub async fn task_transition_status(
         request.reason.as_deref(),
     )?;
 
-    Ok(ApiResponse::success(task).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Get status distribution for all tasks.
@@ -50,17 +47,14 @@ pub async fn task_transition_status(
 #[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn task_get_status_distribution(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<StatusDistribution>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let distribution = state.task_service.get_status_distribution()?;
 
-    Ok(ApiResponse::success(distribution).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(distribution).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 #[cfg(test)]

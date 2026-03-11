@@ -15,11 +15,11 @@ RPMA v2 is an **offline-first desktop application** for managing Paint Protectio
 ## Core Bounded Contexts (Domains)
 The repository enforces Domain-Driven Design (DDD). Cross-domain access is strictly forbidden except through public interfaces.
 
-### Backend DDD Domains (14)
+### Backend DDD Domains (16)
 Located in `src-tauri/src/domains/`:
 - **auth**: Authentication, sessions, RBAC
 - **users**: User profiles, roles, management
-- **tasks**: Work order lifecycle, assignment, status (includes `status` subdomain)
+- **tasks**: Work order lifecycle, assignment, status
 - **interventions**: PPF execution workflow, steps, progress
 - **inventory**: Material tracking, stock, consumption
 - **quotes**: Quote lifecycle, pricing, conversion to tasks
@@ -31,12 +31,12 @@ Located in `src-tauri/src/domains/`:
 - **audit**: Security logging, activity monitoring, alerting
 - **settings**: System and user configuration
 - **notifications**: In-app notifications and messaging
+- **organizations**: Organization management, onboarding
 
-### Frontend Feature Domains (21)
+### Frontend Feature Domains (18)
 Located in `frontend/src/domains/`:
-`admin`, `audit`, `auth`, `bootstrap`, `calendar`, `clients`, `dashboard`, `documents`, `interventions`, `inventory`, `notifications`, `performance`, `quotes`, `reports`, `settings`, `sync`, `tasks`, `users`.
-
-*Note: Some frontend domains (like `dashboard`, `admin`, `performance`) aggregate multiple backend domains or interact with specialized backend command modules.*
+- **Core Entities**: `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `sync`, `documents`, `settings`, `notifications`
+- **High-Level Features**: `admin`, `bootstrap`, `dashboard`, `performance`, `audit`, `organizations`
 
 ## Golden Paths
 
@@ -52,13 +52,13 @@ Located in `frontend/src/domains/`:
 
 **Entry Points**:
 - Frontend: `frontend/src/app/layout.tsx`, `frontend/src/app/page.tsx`
-- Backend Commands: `src-tauri/src/main.rs` (command registration lines 69-315, ~246 commands)
+- Backend Commands: `src-tauri/src/main.rs` (command registration, ~131 commands)
 - Database: `src-tauri/src/db/mod.rs`, `src-tauri/src/db/connection.rs`
 - IPC Client: `frontend/src/lib/ipc/client.ts`, `frontend/src/lib/ipc/utils.ts`
 
 **Key Configuration**:
-- Type Generation: `npm run types:sync` → outputs to `frontend/src/lib/backend/`
-- Migrations: `src-tauri/migrations/` (53 migrations, versions 002-054)
+- Type Generation: `npm run types:sync` → outputs to `frontend/src/types/`
+- Migrations: `src-tauri/migrations/` (53 migrations, versions 002-056)
 - Session Duration: 8 hours (480 minutes / 28,800 seconds)
 
 ---

@@ -142,7 +142,7 @@ mod tests {
     #[test]
     fn any_role_can_access_user_categories() {
         for role in [UserRole::Admin, UserRole::Supervisor, UserRole::Technician] {
-            let user = session(role);
+            let user = session(role.clone());
             for cat in [
                 SettingsCategory::Profile,
                 SettingsCategory::Preferences,

@@ -39,6 +39,7 @@ PRAGMA journal_mode = WAL;
 PRAGMA synchronous = NORMAL;
 PRAGMA busy_timeout = 5000;
 PRAGMA temp_store = MEMORY;
+PRAGMA foreign_keys = ON;
 ```
 This configuration balances durability and performance, enabling concurrent read access without blocking during writes.
 
@@ -60,7 +61,7 @@ NNN_description.sql
 ```
 - `NNN` — Sequential 3-digit version
 
-**Current Migrations**: 53 files (versions 002-054).
+**Current Migrations**: 53 files (versions 002-056, missing 001, 029, 030).
 
 ### Migration Tracking
 **Table**: `schema_version`
@@ -113,8 +114,8 @@ Located in `src-tauri/src/db/migrations/rust_migrations/`:
 
 ### 1. Create Migration File
 ```bash
-# Next version number (e.g., 055)
-touch src-tauri/migrations/055_new_feature.sql
+# Next version number (e.g., 057)
+touch src-tauri/migrations/057_new_feature.sql
 ```
 
 ### 2. Write Migration SQL
@@ -178,6 +179,6 @@ npm run types:sync
 
 **Reset Dev Database**:
 Delete the `.db` file in AppData and restart the app to re-run all migrations:
-- Windows: `%APPDATA%/rpma-rust1/rpma.db`
-- macOS: `~/Library/Application Support/rpma-rust1/rpma.db`
-- Linux: `~/.config/rpma-rust1/rpma.db`
+- Windows: `%APPDATA%/rpma-rust/rpma.db`
+- macOS: `~/Library/Application Support/rpma-rust/rpma.db`
+- Linux: `~/.config/rpma-rust/rpma.db`

@@ -1,22 +1,29 @@
-# ADR-007: Logging Correlation
+# ADR-007: Logging and Distributed Tracing
 
 ## Status
 Accepted
 
 ## Context
-Distributed tracing across IPC -> application -> infrastructure layers requires a consistent correlation ID.
+Diagnosing issues in a multi-layered Tauri application requires the ability to trace a single user action from the frontend through the IPC boundary and down to the database layer.
 
 ## Decision
-- Each IPC command accepts an optional `correlation_id` parameter.
-- `init_correlation_context` generates or reuses a correlation ID at the command boundary (`src-tauri/src/shared/ipc/correlation.rs`). Generated IDs carry an `ipc-` prefix to distinguish them from caller-supplied IDs.
-- The `set_correlation_context!` macro (declared in `src-tauri/src/shared/auth_middleware.rs`) is an alternative entry point for commands that need to initialize the correlation context inline before calling `authenticate!`.
-- The correlation ID is propagated through `tracing::Span` instrumentation and stored in thread-local storage via `CorrelationContext`.
-- `ApiResponse::with_correlation_id` attaches the ID to responses for frontend debugging.
-- `update_correlation_context_user` enriches the context with the authenticated user ID after the `authenticate!` call.
-- The frontend `safeInvoke` wrapper independently generates or reuses a correlation ID and injects it into every IPC call's argument payload (`correlation_id` field). If the backend echoes a `correlation_id` in the response envelope, `safeInvoke` adopts the backend value as the effective ID for its own log entries.
+
+### Correlation ID Lifecycle
+- Every request is assigned a unique `correlation_id`.
+- The frontend `safeInvoke` wrapper generates or reuses this ID and injects it into every IPC payload.
+- The backend initializes the `CorrelationContext` at the IPC boundary (`src-tauri/src/shared/ipc/correlation.rs`).
+- Backend-generated IDs carry an `ipc-` prefix to distinguish them from client-supplied IDs.
+
+### Propagation and Context
+- The correlation ID is stored in thread-local storage and automatically propagated through `tracing::Span` instrumentation.
+- All logs emitted during the request lifecycle (including SQL queries and event bus handlers) are enriched with the ID.
+- The `update_correlation_context_user` helper attaches the authenticated user ID to the context after successful login validation.
+
+### Observability API
+- The `ApiResponse` envelope echoes the `correlation_id` back to the frontend.
+- Backend performance metrics and slow query logs include the correlation ID for precise debugging.
 
 ## Consequences
-- Every request can be traced end-to-end through logs.
-- The frontend can match responses to requests via correlation IDs.
-- Structured logging with `tracing` provides filtering and search capabilities.
-- Correlation context is thread-local; callers must ensure context is initialized before any log statement that expects a correlation ID.
+- End-to-end tracing is possible across all layers of the stack.
+- Production logs can be filtered by user session or specific request ID.
+- Frontend errors can be mapped to exact backend log entries using the ID returned in the error envelope.

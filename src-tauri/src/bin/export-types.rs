@@ -79,6 +79,14 @@ use rpma_ppf_intervention::shared::contracts::common::{
 };
 use rpma_ppf_intervention::shared::contracts::prediction::CompletionTimePrediction;
 
+use rpma_ppf_intervention::domains::organizations::domain::models::organization::{
+    CreateOrganizationRequest, OnboardingData, OnboardingStatus, Organization,
+    UpdateOrganizationRequest,
+};
+use rpma_ppf_intervention::domains::organizations::domain::models::settings::{
+    OrganizationSetting, UpdateOrganizationSettingsRequest,
+};
+
 use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
 
 // Import service request types from canonical domain paths
@@ -315,8 +323,7 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &LowStockMaterial::export_to_string()
-            .expect("Failed to export LowStockMaterial type"),
+        &LowStockMaterial::export_to_string().expect("Failed to export LowStockMaterial type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -799,8 +806,7 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &InterventionReport::export_to_string()
-            .expect("Failed to export InterventionReport type"),
+        &InterventionReport::export_to_string().expect("Failed to export InterventionReport type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -904,6 +910,41 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&UserSettings::export_to_string().expect("Failed to export UserSettings type"));
+    type_definitions.push_str("\n\n");
+
+    // Domain: organizations
+    type_definitions.push_str("// @domain:organizations\n");
+    type_definitions.push_str("// Organization types\n");
+    type_definitions
+        .push_str(&Organization::export_to_string().expect("Failed to export Organization type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateOrganizationRequest::export_to_string()
+            .expect("Failed to export CreateOrganizationRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateOrganizationRequest::export_to_string()
+            .expect("Failed to export UpdateOrganizationRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &OnboardingStatus::export_to_string().expect("Failed to export OnboardingStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &OnboardingData::export_to_string().expect("Failed to export OnboardingData type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &OrganizationSetting::export_to_string()
+            .expect("Failed to export OrganizationSetting type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateOrganizationSettingsRequest::export_to_string()
+            .expect("Failed to export UpdateOrganizationSettingsRequest type"),
+    );
     type_definitions.push_str("\n\n");
 
     // List of all types we're exporting to filter out invalid imports
@@ -1052,6 +1093,14 @@ fn main() {
         "LowStockMaterial",
         "LowStockMaterialsResponse",
         "InventoryDashboardData",
+        // Organization types
+        "Organization",
+        "CreateOrganizationRequest",
+        "UpdateOrganizationRequest",
+        "OnboardingStatus",
+        "OnboardingData",
+        "OrganizationSetting",
+        "UpdateOrganizationSettingsRequest",
     ];
 
     // Post-process: remove import statements for types that are defined in this file

@@ -48,7 +48,7 @@ export function useInterventionActions({
         throw new Error('Vous devez être connecté pour démarrer une intervention');
       }
 
-      const result = await InterventionWorkflowService.startIntervention(data.taskId!, data, sessionToken);
+      const result = await InterventionWorkflowService.startIntervention(data.taskId!, data);
 
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to start intervention');
@@ -106,7 +106,7 @@ export function useInterventionActions({
         issues: data.observations?.filter(obs => obs.includes('issue')) || [],
       };
 
-      const result = await InterventionWorkflowService.advanceStep(intervention_id, apiData, sessionToken);
+      const result = await InterventionWorkflowService.advanceStep(intervention_id, apiData);
 
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to advance step');
@@ -174,7 +174,7 @@ export function useInterventionActions({
         customer_comments: data.customer_comments,
       };
 
-      const result = await InterventionWorkflowService.finalizeIntervention(intervention_id!, apiData, sessionToken);
+      const result = await InterventionWorkflowService.finalizeIntervention(intervention_id!, apiData);
 
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to finalize intervention');

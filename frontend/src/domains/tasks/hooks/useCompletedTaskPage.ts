@@ -103,7 +103,7 @@ export function useCompletedTaskPage() {
     if (!interventionData?.id || !session?.token) return;
 
     inventoryIpc
-      .getInterventionConsumption(session.token, interventionData.id)
+      .getInterventionConsumption(interventionData.id)
       .then(setMaterials)
       .catch((err) => {
         console.error('Failed to load materials consumption:', err);

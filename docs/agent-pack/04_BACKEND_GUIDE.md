@@ -6,7 +6,7 @@ The backend is built in Rust using the Tauri framework with strict Domain-Driven
 
 | Directory | Purpose |
 |-----------|---------|
-| `main.rs` | Tauri builder, command registration (~246 commands, lines 69-315) |
+| `main.rs` | Tauri builder, command registration (~131 commands) |
 | `commands/` | Cross-domain/system IPC handlers |
 | `db/` | Connection pooling, migrations, queries |
 | `domains/` | Bounded contexts (DDD) |
@@ -42,11 +42,10 @@ domains/[domain]/
 │   └── policy.rs     # Domain policies
 └── infrastructure/   # Repositories, SQL, adapters
 └── tests/            # Domain tests (unit, integration, permission, validation)
-└── facade.rs         # Unified domain entry point
 └── mod.rs            # Module exports
 ```
 
-**Backend DDD Domains** (14): `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `settings`, `audit`, `sync`, `documents`, `notifications`
+**Backend DDD Domains** (16): `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `settings`, `audit`, `sync`, `documents`, `notifications`, `organizations`
 
 **Command Modules** (in `commands/`): `system`, `ui`, `performance`, `navigation`, `ipc_optimization`, `websocket`, `log`
 
@@ -54,7 +53,7 @@ domains/[domain]/
 
 ## Command Registration
 
-**Location**: `src-tauri/src/main.rs` lines 69-315
+**Location**: `src-tauri/src/main.rs`
 
 Commands registered via `tauri::generate_handler![]`:
 
@@ -69,7 +68,7 @@ Commands registered via `tauri::generate_handler![]`:
     // Auth
     domains::auth::ipc::auth::auth_login,
     domains::auth::ipc::auth::auth_create_account,
-    // ... ~246 commands total
+    // ... ~131 commands total
 ])
 ```
 
@@ -91,24 +90,17 @@ Commands registered via `tauri::generate_handler![]`:
 **Location**: `src-tauri/src/domains/[domain]/application/`
 - Orchestrate domain logic, handle transaction boundaries, and enforce authorization.
 
-### Step 4: Domain Facade
-**Location**: `src-tauri/src/domains/[domain]/facade.rs`
-- Create a `[Domain]Facade` struct.
-- Define `[Domain]Command` and `[Domain]Response` enums.
-- Implement `execute()` to delegate to application services.
-- Re-export via `mod.rs`.
-
-### Step 5: IPC Handler
-**Location**: `src-tauri/src/domains/[domain]/ipc/[entity]/`
+### Step 4: IPC Handler
+**Location**: `src-tauri/src/domains/[domain]/ipc/[entity].rs`
 - Use `AuthMiddleware::authenticate_command` to validate sessions.
-- Delegate all execution to the domain `Facade`.
+- Delegate all execution to application services.
 - Map results to `ApiResponse`.
 
-### Step 6: Register Command
+### Step 5: Register Command
 **Location**: `src-tauri/src/main.rs`
 - Add the handler to `tauri::generate_handler![]`.
 
-### Step 7: Generate Types & Frontend Wrapper
+### Step 6: Generate Types & Frontend Wrapper
 ```bash
 npm run types:sync
 ```

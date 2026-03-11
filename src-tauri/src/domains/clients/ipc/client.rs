@@ -7,10 +7,8 @@ use crate::domains::clients::application::{
 use crate::domains::clients::domain::models::client::ClientWithTasks;
 use crate::domains::clients::ClientsFacade;
 use crate::shared::services::cross_domain::Task;
+use crate::resolve_context;
 use tracing::{debug, error, info, instrument, warn};
-
-// Import authentication macros
-use crate::authenticate;
 
 /// Client CRUD operations
 #[tauri::command]
@@ -19,36 +17,24 @@ pub async fn client_crud(
     request: ClientCrudRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    // Initialize correlation context at command start
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
+    let correlation_id = ctx.correlation_id.clone();
 
     let action = request.action;
-    let session_token = request.session_token;
     info!(
         correlation_id = %correlation_id,
         "client_crud command received - action: {:?}",
         action
     );
-    debug!(
-        correlation_id = %correlation_id,
-        "Client CRUD operation requested with action: {:?}, session_token length: {}",
-        action,
-        session_token.len()
-    );
+    debug!(correlation_id = %correlation_id, "Client CRUD operation requested with action: {:?}", action);
 
     // Determine required permission via application layer
     let permission = required_permission(&action);
     let validated_action = sanitize_client_action(action)?;
 
-    // Centralized authentication
-    let current_user = authenticate!(&session_token, &state);
-
-    // Update correlation context with user_id after authentication
-    crate::commands::update_correlation_context_user(&current_user.user_id);
-
     // Rate limiting: 100 requests per minute per user for client operations
     let rate_limiter = state.auth_service.rate_limiter();
-    let rate_limit_key = format!("client_ops:{}", current_user.user_id);
+    let rate_limit_key = format!("client_ops:{}", ctx.user_id());
     if !rate_limiter
         .check_and_record(&rate_limit_key, 100, 60)
         .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
@@ -61,7 +47,7 @@ pub async fn client_crud(
     // Check specific permission if provided
     if let Some(perm) = permission {
         if !crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(
-            &current_user.role,
+            &ctx.auth.role,
             perm,
         ) {
             return Err(crate::commands::AppError::Authorization(format!(
@@ -84,7 +70,7 @@ pub async fn client_crud(
                     handle_client_creation(
                         &clients_facade,
                         data,
-                        &current_user.user_id,
+                        ctx.user_id(),
                         Some(correlation_id.clone()),
                     )
                     .await
@@ -107,7 +93,7 @@ pub async fn client_crud(
                         &clients_facade,
                         &id,
                         data,
-                        &current_user.user_id,
+                        ctx.user_id(),
                         Some(correlation_id.clone()),
                     )
                     .await
@@ -116,7 +102,7 @@ pub async fn client_crud(
                     handle_client_deletion(
                         &clients_facade,
                         &id,
-                        &current_user.user_id,
+                        ctx.user_id(),
                         Some(correlation_id.clone()),
                     )
                     .await

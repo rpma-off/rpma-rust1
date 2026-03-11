@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
 import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { useAuthRedirect, useAdminBootstrapCheck } from '@/domains/auth';
+import { useOnboardingCheck } from '@/domains/organizations';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
 import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -76,6 +77,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   useAuthRedirect(user, authLoading, isAuthenticating, isHydrating);
   useAdminBootstrapCheck(user, authLoading, isAuthenticating);
+  useOnboardingCheck(user, authLoading, isAuthenticating);
 
   if (isHydrating) {
     return (

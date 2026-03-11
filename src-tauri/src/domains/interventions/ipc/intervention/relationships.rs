@@ -5,8 +5,8 @@
 //! - Management operations with complex filtering
 //! - Operations involving interventions, tasks, and users
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
 
@@ -95,18 +95,15 @@ pub struct InterventionQueryRequest {
 
 /// Main intervention management command (unified interface)
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn intervention_management(
     action: InterventionManagementAction,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionManagementResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx = resolve_context!(&state, &correlation_id);
+    let correlation_id = ctx.correlation_id.clone();
     info!("Processing intervention management action");
-
-    let session = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     match action {
         InterventionManagementAction::List { query } => {
@@ -115,10 +112,8 @@ pub async fn intervention_management(
             let filter_status = query_status_clone.as_deref();
             let _filter =
                 crate::domains::interventions::domain::models::intervention::InterventionFilter {
-                    technician_id: if session.role
-                        == crate::shared::contracts::auth::UserRole::Technician
-                    {
-                        Some(session.user_id.clone())
+                    technician_id: if ctx.auth.role == crate::shared::contracts::auth::UserRole::Technician {
+                        Some(ctx.auth.user_id.clone())
                     } else {
                         query.technician_id.clone()
                     },
@@ -160,11 +155,11 @@ pub async fn intervention_management(
             to_date: _,
         } => {
             // Check permissions for viewing stats
-            let target_technician_id = technician_id.unwrap_or(session.user_id.clone());
+            let target_technician_id = technician_id.unwrap_or(ctx.auth.user_id.clone());
 
-            if target_technician_id != session.user_id
-                && session.role != crate::shared::contracts::auth::UserRole::Admin
-                && session.role != crate::shared::contracts::auth::UserRole::Supervisor
+            if target_technician_id != ctx.auth.user_id
+                && ctx.auth.role != crate::shared::contracts::auth::UserRole::Admin
+                && ctx.auth.role != crate::shared::contracts::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to view these statistics".to_string(),
@@ -219,12 +214,12 @@ pub async fn intervention_management(
             // Check task access
             let task_access = state
                 .task_service
-                .check_task_assignment(&task_id, &session.user_id)
+                .check_task_assignment(&task_id, &ctx.auth.user_id)
                 .unwrap_or(false);
 
             if !task_access
                 && !matches!(
-                    session.role,
+                    ctx.auth.role,
                     crate::shared::contracts::auth::UserRole::Admin
                         | crate::shared::contracts::auth::UserRole::Supervisor
                 )
@@ -268,8 +263,8 @@ pub async fn intervention_management(
             updates,
         } => {
             // Only admins and supervisors can do bulk updates
-            if session.role != crate::shared::contracts::auth::UserRole::Admin
-                && session.role != crate::shared::contracts::auth::UserRole::Supervisor
+            if ctx.auth.role != crate::shared::contracts::auth::UserRole::Admin
+                && ctx.auth.role != crate::shared::contracts::auth::UserRole::Supervisor
             {
                 return Err(AppError::Authorization(
                     "Not authorized to perform bulk updates".to_string(),

@@ -14,7 +14,7 @@ fn validate_bootstrap_request_requires_user_id() {
     let facade = UsersFacade::new();
 
     let err = facade
-        .validate_bootstrap_request("", "session-token", "user-1")
+        .validate_bootstrap_request("", "user-1")
         .unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }

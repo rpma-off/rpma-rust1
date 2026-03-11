@@ -15,6 +15,7 @@ import type {
 import type { Pagination } from '@/types/api';
 import type { JsonValue } from '@/types/json';
 import { unwrapApiResponse, validateLowStockPayload, validateMaterialListPayload } from './response-utils';
+// safeInvoke auto-injects session_token for all protected commands (ADR-005).
 
 type PaginationInfo = {
   page: number;
@@ -141,33 +142,25 @@ type MaterialQuery = {
   sort_order?: 'asc' | 'desc';
 };
 
-/**
- * Inventory management operations including CRUD and specialized inventory operations
- */
-
 // Material CRUD operations
 export const materialOperations = {
   /**
    * Lists materials with pagination and filtering
-   * @param sessionToken - User's session token
    * @param query - Query parameters for filtering and pagination
    * @returns Promise resolving to paginated material list
    */
-  list: (sessionToken: string, query: Partial<MaterialQuery>): Promise<MaterialListResponse> =>
+  list: (query: Partial<MaterialQuery>): Promise<MaterialListResponse> =>
     safeInvoke<MaterialListResponse>(IPC_COMMANDS.MATERIAL_LIST, {
-      sessionToken,
       ...query
     }),
 
   /**
    * Creates a new material
    * @param data - Material creation data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to created material
    */
-  create: (data: CreateMaterialRequest, sessionToken: string): Promise<Material> =>
+  create: (data: CreateMaterialRequest): Promise<Material> =>
     safeInvoke<Material>(IPC_COMMANDS.MATERIAL_CREATE, {
-      sessionToken,
       request: { ...data }
     }),
 
@@ -175,12 +168,10 @@ export const materialOperations = {
    * Updates an existing material
    * @param id - Material ID
    * @param data - Material update data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to updated material
    */
-  update: (id: string, data: UpdateMaterialRequest, sessionToken: string): Promise<Material> =>
+  update: (id: string, data: UpdateMaterialRequest): Promise<Material> =>
     safeInvoke<Material>(IPC_COMMANDS.MATERIAL_UPDATE, {
-      sessionToken,
       id,
       request: { ...data }
     }),
@@ -188,24 +179,20 @@ export const materialOperations = {
   /**
    * Gets a material by ID
    * @param id - Material ID
-   * @param sessionToken - User's session token
    * @returns Promise resolving to material details
    */
-  get: (id: string, sessionToken: string): Promise<Material> =>
+  get: (id: string): Promise<Material> =>
     safeInvoke<Material>(IPC_COMMANDS.MATERIAL_GET, {
-      sessionToken,
       id
     }),
 
   /**
    * Deletes a material
    * @param id - Material ID
-   * @param sessionToken - User's session token
    * @returns Promise resolving to deletion result
    */
-  delete: (id: string, sessionToken: string): Promise<void> =>
+  delete: (id: string): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.MATERIAL_DELETE, {
-      sessionToken,
       id
     }),
 };
@@ -215,24 +202,20 @@ export const stockOperations = {
   /**
    * Updates material stock levels
    * @param data - Stock update data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to updated material with current stock
    */
-  updateStock: (data: UpdateStockRequest, sessionToken: string): Promise<Material> =>
+  updateStock: (data: UpdateStockRequest): Promise<Material> =>
     safeInvoke<Material>(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
-      sessionToken,
       request: { ...data }
     }),
 
   /**
    * Adjusts material stock with correction reason
    * @param data - Stock adjustment data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to updated material with current stock
    */
-  adjustStock: (data: AdjustStockRequest, sessionToken: string): Promise<Material> =>
+  adjustStock: (data: AdjustStockRequest): Promise<Material> =>
     safeInvoke<Material>(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
-      sessionToken,
       request: { ...data }
     }),
 };
@@ -242,29 +225,24 @@ export const consumptionOperations = {
   /**
    * Records material consumption for an intervention
    * @param data - Consumption recording data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to consumption record
    */
-  recordConsumption: (data: RecordConsumptionRequest, sessionToken: string): Promise<void> =>
+  recordConsumption: (data: RecordConsumptionRequest): Promise<void> =>
     safeInvoke<void>(IPC_COMMANDS.MATERIAL_RECORD_CONSUMPTION, {
-      sessionToken,
       request: { ...data }
     }),
 
   /**
    * Gets consumption history for a material
    * @param materialId - Material ID
-   * @param sessionToken - User's session token
    * @param query - Query parameters for pagination and filtering
    * @returns Promise resolving to consumption history
    */
   getConsumptionHistory: (
     materialId: string,
-    sessionToken: string,
     query?: { page?: number; limit?: number }
   ): Promise<ConsumptionHistory> =>
     safeInvoke<ConsumptionHistory>(IPC_COMMANDS.MATERIAL_GET_CONSUMPTION_HISTORY, {
-      sessionToken,
       material_id: materialId,
       page: query?.page || 1,
       limit: query?.limit || 50,
@@ -276,31 +254,26 @@ export const transactionOperations = {
   /**
    * Creates an inventory transaction
    * @param data - Transaction creation data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to created transaction
    */
-  createInventoryTransaction: (data: CreateInventoryTransactionRequest, sessionToken: string): Promise<InventoryTransaction> =>
+  createInventoryTransaction: (data: CreateInventoryTransactionRequest): Promise<InventoryTransaction> =>
     safeInvoke<InventoryTransaction>(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
-      sessionToken,
       request: { ...data }
     }),
 
   /**
    * Gets transaction history for a material
    * @param materialId - Material ID
-   * @param sessionToken - User's session token
    * @param query - Query parameters for pagination and filtering
    * @returns Promise resolving to transaction history
    */
   getTransactionHistory: (
     materialId: string,
-    sessionToken: string,
     query?: { page?: number; limit?: number }
   ): Promise<{ transactions: InventoryTransaction[]; pagination: Pagination }> =>
     safeInvoke<{ transactions: InventoryTransaction[]; pagination: Pagination }>(
       IPC_COMMANDS.MATERIAL_GET_TRANSACTION_HISTORY,
       {
-        sessionToken,
         material_id: materialId,
         page: query?.page || 1,
         limit: query?.limit || 50,
@@ -313,24 +286,19 @@ export const categoryOperations = {
   /**
    * Creates a new material category
    * @param data - Category creation data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to created category
    */
-  createCategory: (data: CreateMaterialCategoryRequest, sessionToken: string): Promise<MaterialCategory> =>
+  createCategory: (data: CreateMaterialCategoryRequest): Promise<MaterialCategory> =>
     safeInvoke<MaterialCategory>(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
-      sessionToken,
       request: { ...data }
     }),
 
   /**
    * Lists all material categories
-   * @param sessionToken - User's session token
    * @returns Promise resolving to category list
    */
-  listCategories: (sessionToken: string): Promise<MaterialCategory[]> =>
-    safeInvoke<MaterialCategory[]>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {
-      sessionToken
-    }),
+  listCategories: (): Promise<MaterialCategory[]> =>
+    safeInvoke<MaterialCategory[]>(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {}),
 };
 
 // Supplier operations
@@ -338,73 +306,57 @@ export const supplierOperations = {
   /**
    * Creates a new supplier
    * @param data - Supplier creation data
-   * @param sessionToken - User's session token
    * @returns Promise resolving to created supplier
    */
-  createSupplier: (data: CreateSupplierRequest, sessionToken: string): Promise<Supplier> =>
+  createSupplier: (data: CreateSupplierRequest): Promise<Supplier> =>
     safeInvoke<Supplier>(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
-      sessionToken,
       request: { ...data }
     }),
 
   /**
    * Lists all suppliers
-   * @param sessionToken - User's session token
    * @returns Promise resolving to supplier list
    */
-  listSuppliers: (sessionToken: string): Promise<Supplier[]> =>
-    safeInvoke<Supplier[]>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {
-      sessionToken
-    }),
+  listSuppliers: (): Promise<Supplier[]> =>
+    safeInvoke<Supplier[]>(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {}),
 };
 
 // Reporting and statistics operations
 export const reportingOperations = {
   /**
    * Gets material statistics
-   * @param sessionToken - User's session token
    * @returns Promise resolving to material statistics
    */
-  getStats: (sessionToken: string): Promise<MaterialStats> =>
-    safeInvoke<MaterialStats>(IPC_COMMANDS.MATERIAL_GET_STATS, {
-      sessionToken
-    }),
+  getStats: (): Promise<MaterialStats> =>
+    safeInvoke<MaterialStats>(IPC_COMMANDS.MATERIAL_GET_STATS, {}),
 
   /**
    * Gets materials with low stock levels
-   * @param sessionToken - User's session token
    * @returns Promise resolving to low stock materials
    */
-  getLowStockMaterials: (sessionToken: string): Promise<LowStockMaterialsResponse> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {
-      sessionToken
-    }).then(async result => {
-      const payload = await unwrapApiResponse<unknown>(result, 'get low stock materials', sessionToken);
+  getLowStockMaterials: (): Promise<LowStockMaterialsResponse> =>
+    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_LOW_STOCK_MATERIALS, {}).then(async result => {
+      const payload = await unwrapApiResponse<unknown>(result, 'get low stock materials');
       return validateLowStockPayload(payload, 'get low stock materials');
     }),
 
   /**
    * Gets expired or near-expiry materials
-   * @param sessionToken - User's session token
    * @returns Promise resolving to expired materials
    */
-  getExpiredMaterials: (sessionToken: string): Promise<Material[]> =>
-    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {
-      sessionToken
-    }).then(async result => {
-      const payload = await unwrapApiResponse<unknown>(result, 'get expired materials', sessionToken);
+  getExpiredMaterials: (): Promise<Material[]> =>
+    safeInvoke<unknown>(IPC_COMMANDS.MATERIAL_GET_EXPIRED_MATERIALS, {}).then(async result => {
+      const payload = await unwrapApiResponse<unknown>(result, 'get expired materials');
       return validateMaterialListPayload(payload, 'get expired materials');
     }),
 
   /**
    * Gets inventory movement summary for a material
    * @param materialId - Material ID
-   * @param sessionToken - User's session token
    * @returns Promise resolving to inventory movement summary
    */
-  getInventoryMovementSummary: (materialId: string, sessionToken: string): Promise<InventoryMovementSummary> =>
+  getInventoryMovementSummary: (materialId: string): Promise<InventoryMovementSummary> =>
     safeInvoke<InventoryMovementSummary>(IPC_COMMANDS.MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY, {
-      sessionToken,
       material_id: materialId,
     }),
 };

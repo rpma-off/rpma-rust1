@@ -8,6 +8,7 @@ export * from './documents';
 export * from './interventions';
 export * from './inventory';
 export * from './notifications';
+export * from './organizations';
 export * from './quotes';
 export * from './reports';
 export * from './settings';

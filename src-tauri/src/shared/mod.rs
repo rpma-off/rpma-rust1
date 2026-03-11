@@ -2,6 +2,7 @@
 
 pub mod app_state;
 pub mod auth_middleware;
+pub mod context;
 pub mod contracts;
 pub mod db;
 pub mod error;

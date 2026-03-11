@@ -5,12 +5,10 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::application::SystemConfigService;
-use crate::domains::settings::ipc::settings::core::settings_user_id;
+use crate::resolve_context;
 
 use serde::Deserialize;
 use tracing::info;
-
-use crate::authenticate;
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -23,7 +21,6 @@ fn make_service(state: &AppState<'_>) -> SystemConfigService {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessRulesRequest {
-    pub session_token: String,
     pub rules: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -36,16 +33,17 @@ pub async fn update_business_rules(
     request: UpdateBusinessRulesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating business_rules");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(settings_user_id(&user));
-
-    make_service(&state).update_business_rules(&user, request.rules)?;
+    make_service(&state).update_business_rules(&ctx, request.rules)?;
 
     Ok(ApiResponse::success("Business rules updated successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -53,7 +51,6 @@ pub async fn update_business_rules(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateSecurityPoliciesRequest {
-    pub session_token: String,
     pub policies: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -66,16 +63,17 @@ pub async fn update_security_policies(
     request: UpdateSecurityPoliciesRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating security_policies");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(settings_user_id(&user));
-
-    make_service(&state).update_security_policies(&user, request.policies)?;
+    make_service(&state).update_security_policies(&ctx, request.policies)?;
 
     Ok(ApiResponse::success("Security policies updated successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,7 +81,6 @@ pub async fn update_security_policies(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateIntegrationsRequest {
-    pub session_token: String,
     pub integrations: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -96,16 +93,17 @@ pub async fn update_integrations(
     request: UpdateIntegrationsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating integrations");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(settings_user_id(&user));
-
-    make_service(&state).update_integrations(&user, request.integrations)?;
+    make_service(&state).update_integrations(&ctx, request.integrations)?;
 
     Ok(ApiResponse::success("Integrations updated successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +111,6 @@ pub async fn update_integrations(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdatePerformanceConfigsRequest {
-    pub session_token: String,
     pub configs: Vec<serde_json::Value>,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -126,16 +123,17 @@ pub async fn update_performance_configs(
     request: UpdatePerformanceConfigsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating performance_configs");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(settings_user_id(&user));
-
-    make_service(&state).update_performance_configs(&user, request.configs)?;
+    make_service(&state).update_performance_configs(&ctx, request.configs)?;
 
     Ok(ApiResponse::success("Performance configs updated successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,7 +141,6 @@ pub async fn update_performance_configs(
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateBusinessHoursRequest {
-    pub session_token: String,
     pub hours: serde_json::Value,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -156,14 +153,15 @@ pub async fn update_business_hours(
     request: UpdateBusinessHoursRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating business_hours");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(settings_user_id(&user));
-
-    make_service(&state).update_business_hours(&user, request.hours)?;
+    make_service(&state).update_business_hours(&ctx, request.hours)?;
 
     Ok(ApiResponse::success("Business hours updated successfully".to_string())
-        .with_correlation_id(Some(correlation_id)))
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }

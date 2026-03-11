@@ -6,17 +6,14 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::domain::models::settings::UserNotificationSettings;
 use crate::domains::settings::ipc::settings::core::{handle_settings_error, settings_user_id};
+use crate::resolve_context;
 
 use serde::Deserialize;
 use tracing::info;
 
-// Import authentication macros
-use crate::authenticate;
-
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateNotificationSettingsRequest {
-    pub session_token: String,
     pub push_notifications: Option<bool>,
     pub email_notifications: Option<bool>,
     pub sms_notifications: Option<bool>,
@@ -31,7 +28,6 @@ pub struct UpdateNotificationSettingsRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserNotificationsRequest {
-    pub session_token: String,
     pub email_enabled: Option<bool>,
     pub push_enabled: Option<bool>,
     pub in_app_enabled: Option<bool>,
@@ -61,18 +57,12 @@ pub async fn update_notification_settings(
     request: UpdateNotificationSettingsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(
+        &state,
+        &request.correlation_id,
+        crate::shared::contracts::auth::UserRole::Admin
+    );
     info!("Updating notification settings");
-
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
-
-    // Only admins can update system notification settings
-    if !matches!(user.role, crate::shared::contracts::auth::UserRole::Admin) {
-        return Err(AppError::Authorization(
-            "Only administrators can update notification settings".to_string(),
-        ));
-    }
 
     let mut app_settings = state
         .settings_service
@@ -103,10 +93,10 @@ pub async fn update_notification_settings(
 
     state
         .settings_service
-        .save_app_settings_db(&app_settings, settings_user_id(&user))
+        .save_app_settings_db(&app_settings, settings_user_id(&ctx.auth))
         .map(|_| {
             ApiResponse::success("Notification settings updated successfully".to_string())
-                .with_correlation_id(Some(correlation_id.clone()))
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update notification settings"))
 }
@@ -119,15 +109,12 @@ pub async fn update_user_notifications(
     request: UpdateUserNotificationsRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user notification settings");
-
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     let mut notification_settings: UserNotificationSettings = state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
+        .get_user_settings(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load user notification settings"))?
         .notifications;
 
@@ -185,10 +172,10 @@ pub async fn update_user_notifications(
 
     state
         .settings_service
-        .update_user_notifications(&settings_user_id(&user), &notification_settings)
+        .update_user_notifications(settings_user_id(&ctx.auth), &notification_settings)
         .map(|_| {
             ApiResponse::success("Notification settings updated successfully".to_string())
-                .with_correlation_id(Some(correlation_id.clone()))
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user notifications"))
 }

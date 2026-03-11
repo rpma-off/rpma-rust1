@@ -18,7 +18,7 @@ export function useDuplicateQuote() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.duplicate(id, user.token);
+        const result = await quotesIpc.duplicate(id);
         const quote = result as Quote | null;
         return quote?.id ? quote : null;
       } catch {
@@ -44,7 +44,7 @@ export function useQuoteExportPdf() {
       if (!user?.token) return null;
       try {
         setLoading(true);
-        const result = await quotesIpc.exportPdf(id, user.token);
+        const result = await quotesIpc.exportPdf(id);
         const response = result as QuoteExportResponse | null;
         return response?.file_path ? response : null;
       } catch {
@@ -90,7 +90,7 @@ export function useConvertQuoteToTask() {
       setError(null);
 
       try {
-        const result = await quotesIpc.convertToTask(quoteId, vehicleInfo, user.token);
+        const result = await quotesIpc.convertToTask(quoteId, vehicleInfo);
         const response = result as ConvertQuoteToTaskResponse | null;
 
         if (response?.task_id) {

@@ -2,19 +2,18 @@
 
 RPMA v2 follows strict 4-Layer Domain-Driven Design (DDD) architecture.
 
-## 5-Layer Backend Architecture (DDD + Facade)
+## 4-Layer Backend Architecture (DDD)
 
 Located under `src-tauri/src/domains/[domain]/`:
 
 | Layer | Responsibility | Example Files |
 |-------|----------------|---------------|
-| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for auth, correlation context, and mapping | `domains/tasks/ipc/task/mod.rs`, `domains/interventions/ipc/intervention/mod.rs` |
-| **Facade** (`facade.rs`) | Unified entry point; simplifies domain interaction for external callers | `domains/tasks/facade.rs` |
+| **IPC** (`ipc/`) | Tauri command handlers; thin boundary for auth, correlation context, and mapping | `domains/tasks/ipc/task.rs`, `domains/interventions/ipc/intervention.rs` |
 | **Application** (`application/`) | Use cases, transaction boundaries, authorization enforcement, orchestration | `domains/tasks/application/` |
 | **Domain** (`domain/`) | Pure Rust structs, business rules, validation, entities, value objects — no I/O | `domains/tasks/domain/models/task.rs` |
 | **Infrastructure** (`infrastructure/`) | SQLite repositories, raw SQL, external adapters | `domains/tasks/infrastructure/` |
 
-Data flow direction: **IPC → Facade → Application → Domain → Infrastructure**
+Data flow direction: **IPC → Application → Domain → Infrastructure**
 
 ---
 
@@ -27,38 +26,37 @@ Data flow direction: **IPC → Facade → Application → Domain → Infrastruct
 │  Frontend   │────▶│  IPC Client  │────▶│ Tauri Cmd    │────▶│  App Service │────▶│  Repository  │────▶│   SQLite    │
 │    Form     │     │  (lib/ipc)   │     │ (task_crud)  │     │ (application)│     │(infrastructure)│    │    WAL      │
 └─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘     └─────────────┘
-                                                                                           │
-                                                                                           ▼
-                                                                                    ┌──────────────┐
-                                                                                    │ audit_events │
-                                                                                    └──────────────┘
+                                                                                            │
+                                                                                            ▼
+                                                                                     ┌──────────────┐
+                                                                                     │ audit_events │
+                                                                                     └──────────────┘
 ```
 
 **Key Files**:
 - Frontend: `frontend/src/domains/tasks/ipc/task.ipc.ts`
-- IPC Handler: `src-tauri/src/domains/tasks/ipc/task/` (`task_crud`)
+- IPC Handler: `src-tauri/src/domains/tasks/ipc/task.rs` (`task_crud`)
 - Application: `src-tauri/src/domains/tasks/application/`
 - Repository: `src-tauri/src/domains/tasks/infrastructure/`
 
 ### 2. Intervention Workflow (Start/Advance/Complete)
 
-**Entry**: `frontend/src/app/interventions/[id]/page.tsx`
+**Entry**: `frontend/src/app/tasks/[id]/workflow/ppf/page.tsx`
 
 **Flow**:
 1. Frontend calls `intervention_start` or `intervention_advance_step`
 2. IPC handler validates session via `AuthMiddleware`
 3. Application service checks RBAC (technician role required)
-4. Domain layer validates step prerequisites via `InterventionStateMachine`
+4. Domain layer validates step prerequisites
 5. Repository updates `interventions` table
 6. Audit event logged
 7. Sync operation enqueued
 
 **Key Files**:
 - Frontend: `frontend/src/domains/interventions/ipc/intervention.ipc.ts`
-- IPC Start: `src-tauri/src/domains/interventions/ipc/intervention/mod.rs` (`intervention_start`)
-- IPC Advance: `src-tauri/src/domains/interventions/ipc/intervention/mod.rs` (`intervention_advance_step`)
-- State Machine: `src-tauri/src/domains/interventions/domain/services/intervention_state_machine.rs`
-- Infrastructure: `src-tauri/src/domains/interventions/infrastructure/intervention_workflow/`
+- IPC Start: `src-tauri/src/domains/interventions/ipc/intervention.rs` (`intervention_start`)
+- IPC Advance: `src-tauri/src/domains/interventions/ipc/intervention.rs` (`intervention_advance_step`)
+- Infrastructure: `src-tauri/src/domains/interventions/infrastructure/`
 
 ### 3. Calendar Scheduling Flow
 
@@ -143,3 +141,12 @@ Domain Operation → Publish Event → Event Bus → Registered Handlers
 - Pool stats available via `get_database_pool_stats` command
 
 **Pool Stats Available**: `get_database_pool_stats`, `get_database_pool_health` commands.
+
+**SQLite Pragmas** (set in `connection.rs`):
+```sql
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA busy_timeout = 5000;
+PRAGMA temp_store = MEMORY;
+PRAGMA foreign_keys = ON;
+```

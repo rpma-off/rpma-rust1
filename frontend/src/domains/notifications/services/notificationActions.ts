@@ -1,13 +1,9 @@
 import { notificationApi } from '@/lib/ipc/notification';
-import { getSessionToken } from '@/shared/contracts/session';
 import { toast } from 'sonner';
 
 export async function getNotifications() {
-  const sessionToken = await getSessionToken();
-  if (!sessionToken) return { success: false, error: 'Not authenticated' };
-
   try {
-    const result = await notificationApi.get(sessionToken);
+    const result = await notificationApi.get();
     return { success: true, data: result };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to fetch notifications';
@@ -17,11 +13,8 @@ export async function getNotifications() {
 }
 
 export async function markNotificationRead(id: string) {
-  const sessionToken = await getSessionToken();
-  if (!sessionToken) return { success: false };
-
   try {
-    await notificationApi.markRead(id, sessionToken);
+    await notificationApi.markRead(id);
     return { success: true };
   } catch (error) {
     console.error('Failed to mark notification as read:', error);
@@ -30,11 +23,8 @@ export async function markNotificationRead(id: string) {
 }
 
 export async function markAllNotificationsRead() {
-  const sessionToken = await getSessionToken();
-  if (!sessionToken) return { success: false };
-
   try {
-    await notificationApi.markAllRead(sessionToken);
+    await notificationApi.markAllRead();
     return { success: true };
   } catch (error) {
     console.error('Failed to mark all notifications as read:', error);
@@ -43,11 +33,8 @@ export async function markAllNotificationsRead() {
 }
 
 export async function deleteNotification(id: string) {
-  const sessionToken = await getSessionToken();
-  if (!sessionToken) return { success: false };
-
   try {
-    await notificationApi.delete(id, sessionToken);
+    await notificationApi.delete(id);
     return { success: true };
   } catch (error) {
     console.error('Failed to delete notification:', error);

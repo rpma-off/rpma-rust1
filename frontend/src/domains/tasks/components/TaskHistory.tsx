@@ -36,7 +36,7 @@ export function TaskHistory({ taskId }: TaskHistoryProps) {
     queryKey: ['tasks', taskId, 'history'],
     queryFn: async () => {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
-      return taskGateway.getTaskHistory(taskId, user.token);
+      return taskGateway.getTaskHistory(taskId);
     },
     enabled: !!user?.token
   });

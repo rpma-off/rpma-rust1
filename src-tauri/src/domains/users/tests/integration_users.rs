@@ -6,7 +6,7 @@ fn bootstrap_request_requires_matching_authenticated_user() {
     let facade = UsersFacade::new();
 
     let err = facade
-        .validate_bootstrap_request("target-user", "session-token", "acting-user")
+        .validate_bootstrap_request("target-user", "acting-user")
         .unwrap_err();
     assert!(matches!(err, AppError::Authorization(_)));
 }

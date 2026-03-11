@@ -6,16 +6,14 @@ The frontend is a Next.js 14 (App Router) application built with React 18, TypeS
 
 | Directory | Purpose |
 |-----------|---------|
-| `app/` | Next.js App Router pages (25+ routes) |
+| `app/` | Next.js App Router pages (~38 routes) |
 | `components/` | Shared, non-domain UI primitives (shadcn/ui base) |
 | `components/ui/` | shadcn/ui component library (Button, Dialog, Input, etc.) |
 | `domains/` | Domain-specific hubs mirroring backend bounded contexts |
 | `hooks/` | Shared custom hooks |
 | `lib/` | Utilities, IPC client, query keys, logging |
-| `lib/backend/` | **AUTO-GENERATED TYPES — DO NOT EDIT** |
-| `lib/ipc/` | Core IPC layer (client, utils, cache, adapter, commands) |
-| `shared/` | Shared utilities, contracts, types |
-| `types/` | Manual TypeScript type definitions |
+| `types/` | **AUTO-GENERATED TYPES — DO NOT EDIT** (from Rust via ts-rs) |
+| `shared/` | Shared utilities, contracts |
 
 ### Domain Structure (`frontend/src/domains/[domain]/`)
 
@@ -26,11 +24,10 @@ Each domain contains:
 - `ipc/` — IPC wrapper functions for Tauri calls
 - `services/` — Frontend business logic
 - `stores/` — Zustand stores (where needed)
-- `server/` — Server-side operations (where needed)
 
-**Frontend Feature Domains** (21 total):
-- **Core Entities**: `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `sync`, `documents`, `settings`, `notifications` (direct backend parity)
-- **High-Level Features**: `admin`, `bootstrap`, `dashboard`, `performance`, `audit` (aggregate or specialized modules)
+**Frontend Feature Domains** (18 total):
+- **Core Entities**: `auth`, `users`, `tasks`, `interventions`, `clients`, `inventory`, `quotes`, `calendar`, `reports`, `sync`, `documents`, `settings`, `notifications`
+- **High-Level Features**: `admin`, `bootstrap`, `dashboard`, `performance`, `audit`, `organizations`
 
 ---
 
@@ -51,6 +48,7 @@ Each domain contains:
 | `/tasks` | `app/tasks/page.tsx` | Task list |
 | `/tasks/[id]` | `app/tasks/[id]/page.tsx` | Task detail |
 | `/tasks/new` | `app/tasks/new/page.tsx` | Create task |
+| `/tasks/[id]/workflow/ppf` | `app/tasks/[id]/workflow/ppf/page.tsx` | PPF workflow |
 | `/clients` | `app/clients/page.tsx` | Client list |
 | `/clients/[id]` | `app/clients/[id]/page.tsx` | Client detail |
 | `/interventions` | `app/interventions/page.tsx` | Interventions list |
@@ -58,6 +56,8 @@ Each domain contains:
 | `/quotes` | `app/quotes/page.tsx` | Quotes list |
 | `/schedule` | `app/schedule/page.tsx` | Calendar view |
 | `/settings` | `app/settings/page.tsx` | User preferences |
+| `/settings/profile` | `app/settings/profile/page.tsx` | Profile settings |
+| `/settings/security` | `app/settings/security/page.tsx` | Security settings |
 | `/admin` | `app/admin/page.tsx` | Admin panel |
 | `/audit` | `app/audit/page.tsx` | Audit logs |
 | `/users` | `app/users/page.tsx` | User management |
@@ -78,13 +78,7 @@ Each domain contains:
 |------|---------|
 | `client.ts` | `ipcClient` with namespaced operations |
 | `utils.ts` | `safeInvoke()` wrapper with auto session token injection, error handling, correlation ID, timeout |
-| `cache.ts` | Response caching logic |
 | `commands.ts` | Command name constants |
-| `adapter.ts` | IPC adapter abstraction |
-| `real-adapter.ts` | Real Tauri adapter |
-| `test-adapter.ts` | Test mock adapter |
-| `metrics.ts` | IPC call metrics |
-| `retry.ts` | Retry logic for failed calls |
 
 **Usage**:
 ```typescript
@@ -94,15 +88,22 @@ import { safeInvoke } from '@/lib/ipc/utils';
 const result = await safeInvoke('task_crud', { action: 'list' });
 ```
 
+**Public Commands** (no auth required):
+- `auth_login`, `auth_create_account`, `auth_validate_session`, `auth_logout`
+- `has_admins`, `bootstrap_first_admin`
+- `ui_window_*`, `navigation_*`
+- `get_app_info`
+
+**Timeout**: Default 120 seconds (configurable)
+
 #### 2. Domain IPC Layer (`frontend/src/domains/[domain]/ipc/*.ipc.ts`)
 
 Example: `frontend/src/domains/tasks/ipc/task.ipc.ts`
 ```typescript
 export const taskIpc = {
-  create: async (data: CreateTaskPayload, sessionToken: string) => {
+  create: async (data: CreateTaskPayload) => {
     return safeInvoke(IPC_COMMANDS.TASK_CRUD, {
       action: 'create',
-      token: sessionToken,
       data
     });
   },
@@ -134,7 +135,7 @@ export const taskIpc = {
 export function useTasks() {
   return useQuery({
     queryKey: ['tasks', 'list'],
-    queryFn: () => taskIpc.list(sessionToken)
+    queryFn: () => taskIpc.list()
   });
 }
 ```
@@ -144,7 +145,7 @@ export function useTasks() {
 ## Adding New UI Features
 
 1. **Define Rust Types First**: Add structs with `#[derive(TS)]` in `src-tauri/src/domains/[domain]/domain/models/`
-2. **Sync Types**: Run `npm run types:sync` → outputs to `frontend/src/lib/backend/`
+2. **Sync Types**: Run `npm run types:sync` → outputs to `frontend/src/types/`
 3. **Create IPC Wrapper**: Add to `frontend/src/domains/[domain]/ipc/*.ipc.ts`
 4. **Create API Hook**: Add React Query hook in `frontend/src/domains/[domain]/api/`
 5. **Build UI Components**: Use existing shadcn primitives in `components/ui/`
@@ -157,9 +158,9 @@ export function useTasks() {
 |---------|----------|
 | **Type Drift** | Always run `npm run types:sync` after Rust model changes |
 | **Direct Domain Imports** | Never import `domains/A/components` into `domains/B`. Use `api/` hooks |
-| **Large Payloads** | Use streaming or chunking for bulk uploads (see `ipc_optimization` commands) |
+| **Large Payloads** | Use streaming or chunking for bulk uploads |
 | **Raw Invoke** | Always use `safeInvoke` wrapper for consistent error handling |
-| **Generated Types Location** | Types are in `lib/backend/` NOT `types/` (which contains manual types) |
+| **Generated Types Location** | Types are in `types/` NOT `lib/backend/` (old location) |
 
 ---
 

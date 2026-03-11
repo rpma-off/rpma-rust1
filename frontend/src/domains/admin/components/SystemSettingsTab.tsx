@@ -104,7 +104,7 @@ export function SystemSettingsTab() {
       logInfoRef.current('Loading system configurations');
 
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const generalSettings = (appSettings?.general || {}) as Record<string, JsonValue>;
       const inferDataType = (value: JsonValue): 'boolean' | 'number' | 'string' => {
@@ -160,7 +160,7 @@ export function SystemSettingsTab() {
     try {
       logInfoRef.current('Loading business hours configuration');
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const stored = appSettings?.business_hours as unknown as BusinessHoursConfig | undefined;
       setBusinessHours(
@@ -220,10 +220,10 @@ export function SystemSettingsTab() {
         updateRequest[config.key] = config.value;
       }
 
-      await settingsOperations.updateGeneralSettings(updateRequest as unknown as JsonObject, sessionToken);
+      await settingsOperations.updateGeneralSettings(updateRequest as unknown as JsonObject);
 
       if (businessHours) {
-        await settingsOperations.updateBusinessHours(businessHours as unknown as JsonObject, sessionToken);
+        await settingsOperations.updateBusinessHours(businessHours as unknown as JsonObject);
       }
 
       logFormSubmit(configurations, true);

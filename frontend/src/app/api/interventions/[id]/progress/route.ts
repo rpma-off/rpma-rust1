@@ -77,7 +77,7 @@ export async function GET(
 
     // 3. Rï¿½cupï¿½ration de l'intervention
     const workflowService = interventionWorkflowService;
-    const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionResult = await workflowService.getInterventionById(interventionId);
 
     if (!interventionResult.success) {
       return NextResponse.json(
@@ -104,7 +104,7 @@ export async function GET(
     }
 
     // 4. Rï¿½cupï¿½ration des ï¿½tapes
-    const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+    const stepsResult = await workflowService.getInterventionSteps(interventionId);
     if (!stepsResult.success) {
       return NextResponse.json(
         {
@@ -214,7 +214,7 @@ export async function PUT(
 
     // 5. Rï¿½cupï¿½ration de l'intervention
     const workflowService = interventionWorkflowService;
-    const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionResult = await workflowService.getInterventionById(interventionId);
 
     if (!interventionResult.success) {
       return NextResponse.json(
@@ -250,8 +250,8 @@ export async function PUT(
     );
 
     // 7. Rï¿½cupï¿½ration des donnï¿½es mises Ã  jour
-    const updatedInterventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
-    const updatedStepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+    const updatedInterventionResult = await workflowService.getInterventionById(interventionId);
+    const updatedStepsResult = await workflowService.getInterventionSteps(interventionId);
 
     if (!updatedInterventionResult.success || !updatedStepsResult.success) {
       return NextResponse.json(

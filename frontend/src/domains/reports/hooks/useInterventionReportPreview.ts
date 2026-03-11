@@ -28,8 +28,8 @@ export function useInterventionReportPreview(
     enabled: !!interventionId && !!token,
     queryFn: async () => {
       const [intervention, progressResult, report] = await Promise.all([
-        interventionsIpc.get(interventionId!, token),
-        interventionsIpc.getProgress(interventionId!, token),
+        interventionsIpc.get(interventionId!),
+        interventionsIpc.getProgress(interventionId!),
         reportsIpc.getByIntervention(interventionId!).catch(() => null),
       ]);
 

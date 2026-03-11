@@ -35,7 +35,7 @@ export function useQuotesPage() {
 
     setClientsLoading(true);
     try {
-      const map = await fetchClientMap(user.token);
+      const map = await fetchClientMap();
       setClientMap(prev => ({ ...prev, ...map }));
     } catch (err) {
       console.error('Failed to fetch clients:', err);

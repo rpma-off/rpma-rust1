@@ -58,18 +58,18 @@ describe('SecurityTab contracts', () => {
     mockSettingsIpc.getSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 480 });
   });
 
-  it('calls updateSessionTimeout with selected timeout and session token', async () => {
+  it('calls updateSessionTimeout with selected timeout without session token', async () => {
     render(<SecurityTab user={user} />);
 
     const timeoutSelect = await screen.findByDisplayValue('8 heures');
     fireEvent.change(timeoutSelect, { target: { value: '240' } });
 
     await waitFor(() => {
-      expect(mockSettingsIpc.updateSessionTimeout).toHaveBeenCalledWith(240, 'session-token');
+      expect(mockSettingsIpc.updateSessionTimeout).toHaveBeenCalledWith(240);
     });
   });
 
-  it('calls revokeSession with the selected session id and session token', async () => {
+  it('calls revokeSession with the selected session id without session token', async () => {
     mockSettingsIpc.getActiveSessions.mockResolvedValue([
       {
         id: 'session-2',
@@ -87,7 +87,7 @@ describe('SecurityTab contracts', () => {
     fireEvent.click(revokeButton);
 
     await waitFor(() => {
-      expect(mockSettingsIpc.revokeSession).toHaveBeenCalledWith('session-2', 'session-token');
+      expect(mockSettingsIpc.revokeSession).toHaveBeenCalledWith('session-2');
     });
   });
 });

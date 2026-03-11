@@ -68,19 +68,14 @@ pub enum UserRole {
 ### Permission Logic
 **Location**: `src-tauri/src/shared/auth_middleware.rs` (`AuthMiddleware`)
 
-```rust
-pub fn has_permission(user_role: &UserRole, required_role: &UserRole) -> bool {
-    match (user_role, required_role) {
-        (Admin, _) => true,
-        (Supervisor, Admin) => false,
-        (Supervisor, _) => true,
-        (Technician, Admin | Supervisor) => false,
-        (Technician, _) => true,
-        (Viewer, Viewer) => true,
-        (Viewer, _) => false,
-    }
-}
-```
+**Permission Matrix**:
+
+| User Role | Admin Required | Supervisor Required | Technician Required | Viewer Required |
+|-----------|----------------|---------------------|---------------------|-----------------|
+| Admin | YES | YES | YES | YES |
+| Supervisor | NO | YES | YES | YES |
+| Technician | NO | NO | YES | YES |
+| Viewer | NO | NO | NO | YES |
 
 ### Enforcement Pattern
 
@@ -153,7 +148,7 @@ Additional granular permission checks exist in domain services for specific oper
 ### Local Database
 - Data lives locally in SQLite
 - Path: Tauri `app_data_dir()` → `rpma.db`
-- Windows: `%APPDATA%/rpma-rust1/rpma.db`
+- Windows: `%APPDATA%/rpma-rust/rpma.db`
 - WAL mode for concurrent access
 
 ### Secrets

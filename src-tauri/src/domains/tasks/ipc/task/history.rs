@@ -1,15 +1,14 @@
 //! Task history IPC commands
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::domain::models::task::TaskHistory;
+use crate::resolve_context;
 use serde::Deserialize;
 use tracing::{debug, info};
 
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct GetTaskHistoryRequest {
-    pub session_token: String,
     pub task_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -22,11 +21,8 @@ pub async fn get_task_history(
     request: GetTaskHistoryRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<TaskHistory>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting task history");
-
-    let session = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&session.user_id);
 
     let task = state
         .task_service
@@ -50,5 +46,5 @@ pub async fn get_task_history(
 
     info!("Retrieved {} history entries for task", history.len());
 
-    Ok(ApiResponse::success(history).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(history).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

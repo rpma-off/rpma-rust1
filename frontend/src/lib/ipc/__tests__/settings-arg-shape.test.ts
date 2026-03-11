@@ -35,103 +35,86 @@ describe('ipcClient.settings IPC argument shapes', () => {
     });
   });
 
-  it('uses top-level sessionToken for get_app_settings', async () => {
-    await ipcClient.settings.getAppSettings('token-a');
+  it('calls get_app_settings without sessionToken in payload', async () => {
+    await ipcClient.settings.getAppSettings();
 
-    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {
-      sessionToken: 'token-a',
-    });
+    expect(safeInvoke).toHaveBeenCalledWith('get_app_settings', {});
   });
 
-  it('uses top-level sessionToken for get_user_settings', async () => {
-    await ipcClient.settings.getUserSettings('token-b');
+  it('calls get_user_settings without sessionToken in payload', async () => {
+    await ipcClient.settings.getUserSettings();
 
     expect(cachedInvoke).toHaveBeenCalledWith(
-      'user-settings:token-b',
+      'user-settings',
       'get_user_settings',
-      { sessionToken: 'token-b' },
+      {},
       undefined,
       30000
     );
   });
 
-  it('uses top-level sessionToken for update_user_performance', async () => {
+  it('calls update_user_performance without sessionToken in payload', async () => {
     const request = { cache_enabled: true, cache_size: 150 };
 
-    await ipcClient.settings.updateUserPerformance(request, 'token-c');
+    await ipcClient.settings.updateUserPerformance(request);
 
     expect(safeInvoke).toHaveBeenCalledWith('update_user_performance', {
       request,
-      sessionToken: 'token-c',
     });
-    expect(invalidatePattern).toHaveBeenCalledWith('user-settings:token-c');
+    expect(invalidatePattern).toHaveBeenCalled();
   });
 
-  it('uses camelCase top-level args for session management commands', async () => {
-    await ipcClient.settings.getActiveSessions('token-d');
-    expect(safeInvoke).toHaveBeenCalledWith('get_active_sessions', {
-      sessionToken: 'token-d',
-    });
+  it('calls session management commands without sessionToken in payload', async () => {
+    await ipcClient.settings.getActiveSessions();
+    expect(safeInvoke).toHaveBeenCalledWith('get_active_sessions', {});
 
-    await ipcClient.settings.revokeSession('session-1', 'token-d');
+    await ipcClient.settings.revokeSession('session-1');
     expect(safeInvoke).toHaveBeenCalledWith('revoke_session', {
       sessionId: 'session-1',
-      sessionToken: 'token-d',
     });
 
-    await ipcClient.settings.revokeAllSessionsExceptCurrent('token-d');
+    await ipcClient.settings.revokeAllSessionsExceptCurrent();
     expect(safeInvoke).toHaveBeenCalledWith(
       'revoke_all_sessions_except_current',
-      { sessionToken: 'token-d' }
+      {}
     );
 
-    await ipcClient.settings.updateSessionTimeout(240, 'token-d');
+    await ipcClient.settings.updateSessionTimeout(240);
     expect(safeInvoke).toHaveBeenCalledWith('update_session_timeout', {
       timeoutMinutes: 240,
-      sessionToken: 'token-d',
     });
 
-    await ipcClient.settings.getSessionTimeoutConfig('token-d');
-    expect(safeInvoke).toHaveBeenCalledWith('get_session_timeout_config', {
-      sessionToken: 'token-d',
-    });
+    await ipcClient.settings.getSessionTimeoutConfig();
+    expect(safeInvoke).toHaveBeenCalledWith('get_session_timeout_config', {});
   });
 
-  it('uses top-level sessionToken for export and consent read commands', async () => {
-    await ipcClient.settings.exportUserData('token-e');
-    expect(safeInvoke).toHaveBeenCalledWith('export_user_data', {
-      sessionToken: 'token-e',
-    });
+  it('calls export and consent commands without sessionToken in payload', async () => {
+    await ipcClient.settings.exportUserData();
+    expect(safeInvoke).toHaveBeenCalledWith('export_user_data', {});
 
-    await ipcClient.settings.getDataConsent('token-e');
-    expect(safeInvoke).toHaveBeenCalledWith('get_data_consent', {
-      sessionToken: 'token-e',
-    });
+    await ipcClient.settings.getDataConsent();
+    expect(safeInvoke).toHaveBeenCalledWith('get_data_consent', {});
   });
 
-  it('keeps nested request.session_token for struct-based settings commands', async () => {
+  it('calls struct-based settings commands without session_token in nested request', async () => {
     await ipcClient.settings.updateUserProfile(
-      { full_name: 'Alice Example' },
-      'token-f'
+      { full_name: 'Alice Example' }
     );
     expect(safeInvoke).toHaveBeenCalledWith('update_user_profile', {
       request: {
         full_name: 'Alice Example',
-        session_token: 'token-f',
       },
     });
 
     await ipcClient.settings.uploadUserAvatar(
       'base64',
       'avatar.png',
-      'image/png',
-      'token-f'
+      'image/png'
     );
     expect(safeInvoke).toHaveBeenCalledWith('upload_user_avatar', {
       request: {
         avatar_data: 'base64',
         mime_type: 'image/png',
-        session_token: 'token-f',
       },
     });
   });

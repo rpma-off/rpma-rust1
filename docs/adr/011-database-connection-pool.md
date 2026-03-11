@@ -4,37 +4,25 @@
 Accepted
 
 ## Context
-RPMA v2 is a desktop application using SQLite as the primary data store. SQLite has specific concurrency limitations (single writer) that require careful connection pool design to maximize throughput while ensuring data integrity.
+SQLite's single-writer limitation requires a specialized connection pool design to prevent write-heavy operations from blocking interactive read requests and background analytical queries.
 
 ## Decision
-The application uses a tiered connection pool architecture with operation-specific pools:
 
-- **Read Pool**: Optimized for SELECT queries with high concurrency (80 max connections, 15 min idle)
-- **Write Pool**: Dedicated for INSERT/UPDATE/DELETE operations (30 max connections, 5 min idle, 60s timeout)
-- **Report Pool**: Long-running analytical queries (20 max connections, 300s timeout)
+### Tiered Pool Strategy
+The `OperationPool` (`src-tauri/src/db/operation_pool.rs`) manages three dedicated pools with workload-specific configurations:
 
-The `OperationPool` (`src-tauri/src/db/operation_pool.rs`) manages these tiered pools. Each pool has operation-specific timeouts and connection limits optimized for its workload.
+- **Read Pool**: 80 connections, 15 minimum idle. Optimized for concurrent SELECT operations.
+- **Write Pool**: 30 connections, 60s timeout. Dedicated for INSERT/UPDATE/DELETE to prevent writer starvation.
+- **Report Pool**: 20 connections, 300s timeout. Isolated for long-running, CPU-intensive analytical queries.
 
-### Connection Management
-- Connection retry logic with 3 attempts and exponential backoff (100ms * attempt number)
-- `ConnectionCustomizer` sets `busy_timeout = 5000` and `temp_store = MEMORY` on every connection
-- `DynamicPoolManager` monitors wait times and can auto-adjust pool size based on load
+### Connection Resilience
+- Automatic retry logic with exponential backoff (up to 3 attempts) is used for connection acquisition.
+- A `busy_timeout` of 5 seconds is applied to all connections to handle transient locks.
 
-### Prepared Statement Caching
-- `PreparedStatementCache` (`src-tauri/src/db/connection.rs`) caches compiled SQLite statements to reduce parsing overhead
-- Cache statistics are exposed via `Database::get_performance_stats()`
-
-### Async Database Support
-- `AsyncDatabase` wraps synchronous operations with `tokio::task::spawn_blocking` to prevent blocking the async runtime
-- Provides `execute_async`, `with_transaction_async`, and streaming query support
+### Dynamic Management
+- `DynamicPoolManager` monitors connection wait times and can auto-adjust pool size (between 10 and 50 connections) based on load.
 
 ## Consequences
-- Write operations have dedicated pool capacity to avoid blocking on read-heavy workloads
-- Long-running report queries don't block interactive operations
-- Prepared statement cache reduces CPU overhead for repeated queries
-- Async wrapper enables integration with Tauri async commands without blocking the runtime
-- Pool health metrics are exposed via `Database::get_pool_health()` for monitoring
-
-## Related
-- ADR-002: Transaction Boundaries
-- ADR-008: Offline-First Strategy
+- System responsiveness is maintained even during heavy batch processing or report generation.
+- Connection management is centralized and transparent to the application layer.
+- Thread exhaustion is prevented by bounding database-specific threads.

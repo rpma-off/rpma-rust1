@@ -27,7 +27,6 @@ type DecompressPayload = {
       compression_ratio: number;
     };
   };
-  sessionToken: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -40,9 +39,8 @@ function normalizeApiError(response: ApiEnvelope<unknown>, ctx: string): string 
   return code ? `${rawMessage} (${code})` : rawMessage;
 }
 
-async function decompressApiData(data: string, sessionToken: string): Promise<unknown> {
+async function decompressApiData(data: string): Promise<unknown> {
   const payload: DecompressPayload = {
-    sessionToken,
     request: {
       compressed: {
         data,
@@ -56,7 +54,7 @@ async function decompressApiData(data: string, sessionToken: string): Promise<un
   return safeInvoke<unknown>(IPC_COMMANDS.DECOMPRESS_DATA_FROM_IPC, payload as unknown as JsonObject);
 }
 
-export async function unwrapApiResponse<T>(raw: unknown, ctx: string, sessionToken?: string): Promise<T> {
+export async function unwrapApiResponse<T>(raw: unknown, ctx: string): Promise<T> {
   if (!isRecord(raw)) {
     return raw as T;
   }
@@ -72,10 +70,7 @@ export async function unwrapApiResponse<T>(raw: unknown, ctx: string, sessionTok
       if (typeof response.data !== 'string') {
         throw new Error(`Invalid compressed response format for ${ctx}`);
       }
-      if (!sessionToken) {
-        throw new Error(`Missing session token for compressed response in ${ctx}`);
-      }
-      return await decompressApiData(response.data, sessionToken) as T;
+      return await decompressApiData(response.data) as T;
     }
 
     if (response.compressed === false && typeof response.data === 'string') {
@@ -93,10 +88,7 @@ export async function unwrapApiResponse<T>(raw: unknown, ctx: string, sessionTok
     if (typeof response.data !== 'string') {
       throw new Error(`Invalid compressed response format for ${ctx}`);
     }
-    if (!sessionToken) {
-      throw new Error(`Missing session token for compressed response in ${ctx}`);
-    }
-    return await decompressApiData(response.data, sessionToken) as T;
+    return await decompressApiData(response.data) as T;
   }
 
   return raw as T;

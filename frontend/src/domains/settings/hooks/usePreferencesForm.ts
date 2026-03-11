@@ -92,7 +92,7 @@ export function usePreferencesForm(user?: UserSession) {
 
       setIsLoading(true);
       try {
-        const settings = await ipcClient.settings.getUserSettings(user.token);
+        const settings = await ipcClient.settings.getUserSettings();
 
         // Apply loaded preferences to form
         if (settings) {
@@ -143,19 +143,19 @@ export function usePreferencesForm(user?: UserSession) {
 
       if (dirtyFields.preferences && Object.keys(dirtyFields.preferences).length > 0) {
         updatePromises.push(
-          ipcClient.settings.updateUserPreferences(data.preferences, user.token)
+          ipcClient.settings.updateUserPreferences(data.preferences)
         );
       }
 
       if (dirtyFields.notifications && Object.keys(dirtyFields.notifications).length > 0) {
         updatePromises.push(
-          ipcClient.settings.updateUserNotifications(data.notifications, user.token)
+          ipcClient.settings.updateUserNotifications(data.notifications)
         );
       }
 
       if (dirtyFields.accessibility && Object.keys(dirtyFields.accessibility).length > 0) {
         updatePromises.push(
-          ipcClient.settings.updateUserAccessibility(data.accessibility, user.token)
+          ipcClient.settings.updateUserAccessibility(data.accessibility)
         );
       }
 

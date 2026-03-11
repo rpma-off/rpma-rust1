@@ -45,7 +45,6 @@ export class InterventionWorkflowService {
   static async startIntervention(
     taskId: string,
     data: object,
-    sessionToken: string
   ): Promise<ApiResponse<unknown>> {
     const payload = data as Record<string, unknown>;
     this.log('startIntervention', { taskId, dataKeys: Object.keys(payload) });
@@ -59,7 +58,7 @@ export class InterventionWorkflowService {
         priority: (payload.priority as string | undefined) ?? 'medium',
       };
       
-      const validatedResponse = await interventionsIpc.start(requestData as unknown as StartInterventionRequest, sessionToken);
+      const validatedResponse = await interventionsIpc.start(requestData as unknown as StartInterventionRequest);
 
       this.log('startIntervention.success', {
         interventionId: validatedResponse.intervention.id,
@@ -88,11 +87,11 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async getInterventionById(id: string, sessionToken: string): Promise<ApiResponse<PPFIntervention>> {
+  static async getInterventionById(id: string): Promise<ApiResponse<PPFIntervention>> {
     this.log('getInterventionById', { id });
 
     try {
-      const result = await interventionsIpc.get(id, sessionToken);
+      const result = await interventionsIpc.get(id);
 
       // Map backend Intervention to frontend PPFIntervention format
       const intervention = result;
@@ -131,11 +130,11 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async getInterventionSteps(interventionId: string, sessionToken: string): Promise<ApiResponse<ListResponse<PPFInterventionStep>>> {
+  static async getInterventionSteps(interventionId: string): Promise<ApiResponse<ListResponse<PPFInterventionStep>>> {
     this.log('getInterventionSteps', { interventionId });
 
     try {
-      const result = await interventionsIpc.getProgress(interventionId, sessionToken);
+      const result = await interventionsIpc.getProgress(interventionId);
 
       const data: PPFInterventionStep[] = result.steps.map((step: Record<string, unknown>) => ({
         id: String(step.id ?? ''),
@@ -192,10 +191,10 @@ export class InterventionWorkflowService {
     return this.notImplemented('Intervention list is not implemented in this service. Use interventionsIpc.list directly.');
   }
 
-  static async getActiveByTask(taskId: string, sessionToken: string): Promise<ApiResponse<Record<string, unknown> | null>> {
+  static async getActiveByTask(taskId: string): Promise<ApiResponse<Record<string, unknown> | null>> {
     this.log('getActiveByTask', { taskId });
     try {
-      const result = await interventionsIpc.getActiveByTask(taskId, sessionToken);
+      const result = await interventionsIpc.getActiveByTask(taskId);
       return { success: true, data: result.intervention, error: undefined };
     } catch (error) {
       this.log('getActiveByTask.error', { taskId, error: error instanceof Error ? error.message : 'Unknown error' }, 'error');
@@ -203,9 +202,9 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async advanceStep(interventionId: string, stepData: unknown, sessionToken: string): Promise<ApiResponse<unknown>> {
+  static async advanceStep(interventionId: string, stepData: unknown): Promise<ApiResponse<unknown>> {
     try {
-      const result = await interventionsIpc.advanceStep(stepData as AdvanceStepRequest, sessionToken);
+      const result = await interventionsIpc.advanceStep(stepData as AdvanceStepRequest);
 
       // Map backend response to frontend format
       return {
@@ -223,9 +222,9 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async finalizeIntervention(interventionId: string, finalData: unknown, sessionToken: string): Promise<ApiResponse<unknown>> {
+  static async finalizeIntervention(interventionId: string, finalData: unknown): Promise<ApiResponse<unknown>> {
     try {
-      const result = await interventionsIpc.finalize(finalData as FinalizeInterventionRequest, sessionToken);
+      const result = await interventionsIpc.finalize(finalData as FinalizeInterventionRequest);
 
       // Map backend response to frontend format
       return {
@@ -260,7 +259,6 @@ export class InterventionWorkflowService {
   static async saveStepProgress(
     stepId: string,
     collectedData: unknown,
-    sessionToken: string,
     notes?: string,
     photos?: string[]
   ): Promise<ApiResponse<unknown>> {
@@ -276,7 +274,7 @@ export class InterventionWorkflowService {
             collected_data: collectedData as JsonValue,
             notes: notes || null,
             photos: photos || null
-          }, sessionToken),
+          }),
           new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Request timeout')), 25000) // 25s frontend timeout
           )
@@ -309,11 +307,10 @@ export class InterventionWorkflowService {
     return this.notImplemented('Skip step is not implemented by the backend IPC.');
   }
 
-  static async getActive(sessionToken: string): Promise<Record<string, unknown>[]> {
+  static async getActive(): Promise<Record<string, unknown>[]> {
     try {
       const result = await interventionsIpc.list(
         { status: 'in_progress' },
-        sessionToken
       );
       return (result.interventions || []) as unknown as Record<string, unknown>[];
     } catch (error) {
@@ -321,7 +318,7 @@ export class InterventionWorkflowService {
     }
   }
 
-  static async getRecent(sessionToken: string, days: number = 7): Promise<Record<string, unknown>[]> {
+  static async getRecent(days: number = 7): Promise<Record<string, unknown>[]> {
     try {
       // Calculate date 7 days ago
       const fromDate = new Date();
@@ -329,7 +326,6 @@ export class InterventionWorkflowService {
 
       const result = await interventionsIpc.list(
         { status: 'completed', limit: 50 },
-        sessionToken
       );
 
       const recentInterventions = result.interventions.filter((intervention: Record<string, unknown>) => {

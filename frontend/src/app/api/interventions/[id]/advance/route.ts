@@ -96,7 +96,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     // 4. Validation de l'existence de l'intervention
     const workflowService = interventionWorkflowService;
-    const interventionCheck = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionCheck = await workflowService.getInterventionById(interventionId);
     
     if (!interventionCheck.success) {
       return NextResponse.json(ApiResponseFactory.error(
@@ -118,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // 7. Appel du service mï¿½tier
-    const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+    const stepsResult = await workflowService.getInterventionSteps(interventionId);
     if (!stepsResult.success || !stepsResult.data) {
       return NextResponse.json(ApiResponseFactory.error(
         'Unable to load intervention steps',
@@ -148,7 +148,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       issues: null,
     };
 
-    const result = await workflowService.advanceStep(interventionId, advancePayload, sessionToken);
+    const result = await workflowService.advanceStep(interventionId, advancePayload);
 
     if (!result.success) {
       return NextResponse.json(ApiResponseFactory.error(

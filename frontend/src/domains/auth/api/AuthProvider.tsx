@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = useCallback(async (user: UserSession) => {
     try {
-      const profile = await authIpc.getUserProfile(user.user_id, user.token);
+      const profile = await authIpc.getUserProfile(user.user_id);
       if (profile && typeof profile === 'object' && Object.keys(profile).length > 0) {
         setState(prev => ({
           ...prev,

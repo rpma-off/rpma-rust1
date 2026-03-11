@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const sessionToken = authHeader ? authHeader.replace('Bearer ', '') : '';
 
     // 3. Appel du service mï¿½tier pour rï¿½cupï¿½rer les ï¿½tapes
-    const result = await interventionWorkflowService.getInterventionSteps(interventionId, sessionToken);
+    const result = await interventionWorkflowService.getInterventionSteps(interventionId);
 
     if (!result.success) {
       console.error('[API] interventions/[id]/steps - Service error:', result.error?.message);

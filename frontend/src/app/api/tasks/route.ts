@@ -80,7 +80,7 @@ async function handleGet(request: NextRequest, context?: unknown) {
     };
 
     // Use IPC to list tasks
-    const result = await taskIpc.list(taskQuery, sessionToken);
+    const result = await taskIpc.list(taskQuery);
 
     return NextResponse.json(
       { success: true, data: (result as { data?: unknown })?.data, pagination: (result as { pagination?: unknown })?.pagination },
@@ -178,7 +178,7 @@ async function handlePost(request: NextRequest, context?: unknown) {
     };
 
     // Create task using IPC
-    const result = await taskIpc.create(createTaskData, sessionToken);
+    const result = await taskIpc.create(createTaskData);
 
     return NextResponse.json(
       { success: true, data: result },

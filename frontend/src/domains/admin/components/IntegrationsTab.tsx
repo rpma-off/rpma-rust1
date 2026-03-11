@@ -74,7 +74,7 @@ export function IntegrationsTab() {
     try {
       setLoading(true);
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const configs = (appSettings?.integrations || []) as unknown as IntegrationConfig[];
       setIntegrations(Array.isArray(configs) ? configs : []);
@@ -116,9 +116,7 @@ export function IntegrationsTab() {
       }
 
       await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
 
       toast.success(editingIntegration ? 'Intégration mise à jour avec succès' : 'Intégration créée avec succès');
       setShowCreateDialog(false);
@@ -139,9 +137,7 @@ export function IntegrationsTab() {
       const sessionToken = session?.token || '';
       const updatedIntegrations = integrations.filter((integration) => integration.id !== integrationToDelete.id);
       await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
       toast.success('Intégration supprimée avec succès');
       await loadIntegrations();
     } catch (error) {
@@ -192,9 +188,7 @@ export function IntegrationsTab() {
           : i
       );
       await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>,
-        sessionToken
-      );
+        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
       toast.success(`Intégration ${integration.isActive ? 'désactivée' : 'activée'} avec succès`);
       await loadIntegrations();
     } catch (error) {

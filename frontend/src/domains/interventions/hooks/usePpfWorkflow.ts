@@ -87,7 +87,6 @@ export function usePpfWorkflow(taskIdOverride?: string) {
           notes: null,
           photos: options?.photos ?? null,
         },
-        session.token
       );
 
       if (options?.invalidate) {

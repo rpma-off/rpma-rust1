@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { statusApi } from '@/lib/ipc/status';
-import { useAuth } from '@/domains/auth';
 import { taskIpc } from '../ipc/task.ipc';
 import type { StatusDistribution, Task, TaskQuery } from '@/lib/backend';
 import { toast } from 'sonner';
 
 export function useTaskStatus() {
-  const { user } = useAuth();
-  const sessionToken = user?.token;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,14 +14,9 @@ export function useTaskStatus() {
     try {
       setLoading(true);
       setError(null);
-      if (!sessionToken) {
-        setTasks([]);
-        setError('Authentication required');
-        return;
-      }
       // Fetch all tasks for Kanban board - in a real app you might want to add filters
       const query: Partial<TaskQuery> = {};
-      const result = await taskIpc.list(query, sessionToken);
+      const result = await taskIpc.list(query);
       setTasks(result.data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load tasks';
@@ -33,23 +25,18 @@ export function useTaskStatus() {
     } finally {
       setLoading(false);
     }
-  }, [sessionToken]);
+  }, []);
 
   const fetchDistribution = useCallback(async () => {
     try {
-      if (!sessionToken) {
-        setDistribution(null);
-        setError('Authentication required');
-        return;
-      }
-      const data = await statusApi.getStatusDistribution(sessionToken);
+      const data = await statusApi.getStatusDistribution();
       setDistribution(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load status distribution';
       setError(message);
       toast.error(message);
     }
-  }, [sessionToken]);
+  }, []);
 
   const transitionStatus = useCallback(async (
     taskId: string,
@@ -57,17 +44,12 @@ export function useTaskStatus() {
     reason?: string
   ) => {
     try {
-      if (!sessionToken) {
-        const message = 'Authentication required';
-        toast.error(message);
-        return { success: false, error: message };
-      }
       const result = await statusApi.transitionStatus({
         task_id: taskId,
         new_status: newStatus,
         reason: reason || null,
         correlation_id: null,
-      }, sessionToken);
+      });
 
       toast.success(`Task status updated to ${newStatus}`);
       await fetchTasks(); // Refresh tasks
@@ -78,7 +60,7 @@ export function useTaskStatus() {
       toast.error(message);
       return { success: false, error: message };
     }
-  }, [fetchDistribution, fetchTasks, sessionToken]);
+  }, [fetchDistribution, fetchTasks]);
 
   useEffect(() => {
     fetchTasks();

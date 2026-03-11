@@ -159,7 +159,7 @@ export function useTaskActions(task: TaskWithDetails) {
         notes: null,
       };
 
-      const result = await InterventionWorkflowService.startIntervention(task.id, interventionData, user.token);
+      const result = await InterventionWorkflowService.startIntervention(task.id, interventionData);
 
       if (!result.success || !result.data) {
         throw new Error(result.error?.message || 'Invalid response format for intervention start');

@@ -37,11 +37,11 @@ pub mod clients;
 pub mod documents;
 pub mod interventions;
 pub mod inventory;
+pub mod notifications;
+pub mod organizations;
 pub mod quotes;
 pub mod reports;
 pub mod settings;
 pub mod sync;
 pub mod tasks;
 pub mod users;
-
-pub mod notifications;

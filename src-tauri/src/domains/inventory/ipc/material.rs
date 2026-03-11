@@ -2,8 +2,8 @@
 //!
 //! Provides IPC endpoints for material inventory management and consumption tracking.
 
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppState};
+use crate::resolve_context;
 use crate::domains::inventory::infrastructure::material::{
     CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
     CreateSupplierRequest, MaterialError, RecordConsumptionRequest, UpdateStockRequest,
@@ -25,26 +25,23 @@ fn map_material_err(operation: &str, e: MaterialError) -> crate::commands::AppEr
 
 /// Create a new material
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create(
     state: AppState<'_>,
-    session_token: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.create_material(request, Some(current_user.user_id)) {
+    match service.create_material(request, Some(ctx.user_id().to_string())) {
         Ok(material) => {
             info!(material_id = %material.id, "Material created");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to create material");
@@ -55,25 +52,22 @@ pub async fn material_create(
 
 /// Get material by ID
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_material(&id) {
         Ok(material) => {
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to get material");
@@ -84,25 +78,22 @@ pub async fn material_get(
 
 /// Get material by SKU
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_by_sku(
     state: AppState<'_>,
-    session_token: String,
     sku: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Option<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_material_by_sku(&sku) {
         Ok(material) => {
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, sku = %sku, "Failed to get material by SKU");
@@ -113,10 +104,9 @@ pub async fn material_get_by_sku(
 
 /// List materials with filtering
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list(
     state: AppState<'_>,
-    session_token: String,
     material_type: Option<String>,
     category: Option<String>,
     active_only: Option<bool>,
@@ -127,10 +117,8 @@ pub async fn material_list(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     // Parse Option<String> into Option<MaterialType> (IPC boundary is always String).
@@ -160,7 +148,7 @@ pub async fn material_list(
         offset,
     ) {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list materials");
@@ -171,10 +159,9 @@ pub async fn material_list(
 
 /// Update material
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_update(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     request: CreateMaterialRequest,
     correlation_id: Option<String>,
@@ -182,16 +169,14 @@ pub async fn material_update(
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.update_material(&id, request, Some(current_user.user_id)) {
+    match service.update_material(&id, request, Some(ctx.user_id().to_string())) {
         Ok(material) => {
             info!(material_id = %id, "Material updated");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to update material");
@@ -202,26 +187,23 @@ pub async fn material_update(
 
 /// Update material stock
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_update_stock(
     state: AppState<'_>,
-    session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.update_stock(request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock updated");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to update material stock");
@@ -232,26 +214,23 @@ pub async fn material_update_stock(
 
 /// Record material consumption
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_record_consumption(
     state: AppState<'_>,
-    session_token: String,
     request: RecordConsumptionRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialConsumption>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
     match service.record_consumption(request) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
-            Ok(ApiResponse::success(consumption).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(consumption).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to record material consumption");
@@ -262,25 +241,22 @@ pub async fn material_record_consumption(
 
 /// Get material consumption for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_intervention_consumption(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
         Ok(consumptions) => Ok(
-            ApiResponse::success(consumptions).with_correlation_id(Some(correlation_id.clone()))
+            ApiResponse::success(consumptions).with_correlation_id(Some(ctx.correlation_id.clone()))
         ),
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention consumption");
@@ -291,25 +267,22 @@ pub async fn material_get_intervention_consumption(
 
 /// Get material consumption summary for an intervention
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_intervention_summary(
     state: AppState<'_>,
-    session_token: String,
     intervention_id: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InterventionMaterialSummary>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_intervention_material_summary(&intervention_id) {
         Ok(summary) => {
-            Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(summary).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention material summary");
@@ -320,24 +293,21 @@ pub async fn material_get_intervention_summary(
 
 /// Get material statistics
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_stats(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialStats>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
     match service.get_material_stats() {
         Ok(stats) => {
-            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get material stats");
@@ -348,24 +318,21 @@ pub async fn material_get_stats(
 
 /// Get low stock materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_low_stock(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
@@ -376,24 +343,21 @@ pub async fn material_get_low_stock(
 
 /// Get expired materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_expired(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_expired_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");
@@ -404,24 +368,21 @@ pub async fn material_get_expired(
 
 /// Get inventory statistics
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn inventory_get_stats(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryStats>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
     match service.get_inventory_stats() {
         Ok(stats) => {
-            Ok(ApiResponse::success(stats).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(stats).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get inventory stats");
@@ -432,23 +393,20 @@ pub async fn inventory_get_stats(
 
 /// Delete (soft-delete/archive) a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_delete(
     state: AppState<'_>,
-    session_token: String,
     id: String,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, crate::commands::AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.delete_material(&id, Some(current_user.user_id)) {
+    match service.delete_material(&id, Some(ctx.user_id().to_string())) {
         Ok(()) => {
             info!(material_id = %id, "Material archived");
-            Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to delete material");
@@ -459,31 +417,28 @@ pub async fn material_delete(
 
 /// Adjust material stock with reason
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_adjust_stock(
     state: AppState<'_>,
-    session_token: String,
     request: UpdateStockRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Material>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     let adjusted_request = UpdateStockRequest {
-        recorded_by: Some(current_user.user_id),
+        recorded_by: Some(ctx.user_id().to_string()),
         ..request
     };
 
     match service.update_stock(adjusted_request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock adjusted");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to adjust material stock");
@@ -494,10 +449,9 @@ pub async fn material_adjust_stock(
 
 /// Get consumption history for a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_consumption_history(
     state: AppState<'_>,
-    session_token: String,
     material_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -506,15 +460,13 @@ pub async fn material_get_consumption_history(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialConsumption>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_consumption_history(&material_id, limit, offset) {
         Ok(records) => {
-            Ok(ApiResponse::success(records).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(records).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, material_id = %material_id, "Failed to get consumption history");
@@ -525,26 +477,23 @@ pub async fn material_get_consumption_history(
 
 /// Create inventory transaction
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_inventory_transaction(
     state: AppState<'_>,
-    session_token: String,
     request: CreateInventoryTransactionRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryTransaction>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.create_inventory_transaction(request, &current_user.user_id) {
+    match service.create_inventory_transaction(request, ctx.user_id()) {
         Ok(transaction) => {
             info!(transaction_id = %transaction.id, "Inventory transaction created");
-            Ok(ApiResponse::success(transaction).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(transaction).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to create inventory transaction");
@@ -555,10 +504,9 @@ pub async fn material_create_inventory_transaction(
 
 /// Get transaction history for a material
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_transaction_history(
     state: AppState<'_>,
-    session_token: String,
     material_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -567,15 +515,13 @@ pub async fn material_get_transaction_history(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::InventoryTransaction>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.list_inventory_transactions_by_material(&material_id, None, limit, offset) {
         Ok(transactions) => Ok(
-            ApiResponse::success(transactions).with_correlation_id(Some(correlation_id.clone()))
+            ApiResponse::success(transactions).with_correlation_id(Some(ctx.correlation_id.clone()))
         ),
         Err(e) => {
             error!(error = %e, material_id = %material_id, "Failed to get transaction history");
@@ -586,26 +532,23 @@ pub async fn material_get_transaction_history(
 
 /// Create material category
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_category(
     state: AppState<'_>,
-    session_token: String,
     request: CreateMaterialCategoryRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::MaterialCategory>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.create_material_category(request, Some(current_user.user_id)) {
+    match service.create_material_category(request, Some(ctx.user_id().to_string())) {
         Ok(category) => {
             info!(category_id = %category.id, "Material category created");
-            Ok(ApiResponse::success(category).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(category).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to create material category");
@@ -616,10 +559,9 @@ pub async fn material_create_category(
 
 /// List material categories
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list_categories(
     state: AppState<'_>,
-    session_token: String,
     active_only: Option<bool>,
     limit: Option<i32>,
     offset: Option<i32>,
@@ -628,15 +570,13 @@ pub async fn material_list_categories(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::MaterialCategory>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.list_material_categories(active_only.unwrap_or(true), limit, offset) {
         Ok(categories) => {
-            Ok(ApiResponse::success(categories).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(categories).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list material categories");
@@ -647,26 +587,23 @@ pub async fn material_list_categories(
 
 /// Create supplier
 #[tauri::command]
-#[instrument(skip(state, session_token, request), fields(user_id))]
+#[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create_supplier(
     state: AppState<'_>,
-    session_token: String,
     request: CreateSupplierRequest,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::Supplier>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Supervisor);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.create_supplier(request, Some(current_user.user_id)) {
+    match service.create_supplier(request, Some(ctx.user_id().to_string())) {
         Ok(supplier) => {
             info!(supplier_id = %supplier.id, "Supplier created");
-            Ok(ApiResponse::success(supplier).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(supplier).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to create supplier");
@@ -677,10 +614,9 @@ pub async fn material_create_supplier(
 
 /// List suppliers
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_list_suppliers(
     state: AppState<'_>,
-    session_token: String,
     active_only: Option<bool>,
     preferred_only: Option<bool>,
     limit: Option<i32>,
@@ -690,15 +626,13 @@ pub async fn material_list_suppliers(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Supplier>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.list_suppliers(active_only.unwrap_or(true), preferred_only, limit, offset) {
         Ok(suppliers) => {
-            Ok(ApiResponse::success(suppliers).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(suppliers).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list suppliers");
@@ -709,24 +643,21 @@ pub async fn material_list_suppliers(
 
 /// Get low stock materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_low_stock_materials(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_low_stock_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
@@ -737,24 +668,21 @@ pub async fn material_get_low_stock_materials(
 
 /// Get expired materials
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_expired_materials(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_expired_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");
@@ -765,10 +693,9 @@ pub async fn material_get_expired_materials(
 
 /// Get inventory movement summary
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn material_get_inventory_movement_summary(
     state: AppState<'_>,
-    session_token: String,
     material_id: Option<String>,
     date_from: Option<String>,
     date_to: Option<String>,
@@ -777,10 +704,8 @@ pub async fn material_get_inventory_movement_summary(
     ApiResponse<Vec<crate::domains::inventory::domain::models::material::InventoryMovementSummary>>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
     match service.get_inventory_movement_summary(
@@ -789,7 +714,7 @@ pub async fn material_get_inventory_movement_summary(
         date_to.as_deref(),
     ) {
         Ok(summary) => {
-            Ok(ApiResponse::success(summary).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(summary).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get inventory movement summary");
@@ -800,24 +725,21 @@ pub async fn material_get_inventory_movement_summary(
 
 /// S-1 perf: aggregated dashboard — replaces 4 IPC calls (materials + stats + low_stock + expired) with 1.
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id))]
+#[instrument(skip(state), fields(user_id))]
 pub async fn inventory_get_dashboard_data(
     state: AppState<'_>,
-    session_token: String,
     correlation_id: Option<String>,
 ) -> Result<
     ApiResponse<crate::domains::inventory::domain::models::material::InventoryDashboardData>,
     crate::commands::AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state, UserRole::Technician);
-    tracing::Span::current().record("user_id", &current_user.user_id.as_str());
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
+    tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
     match service.get_dashboard_data() {
         Ok(data) => {
-            Ok(ApiResponse::success(data).with_correlation_id(Some(correlation_id.clone())))
+            Ok(ApiResponse::success(data).with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get inventory dashboard data");

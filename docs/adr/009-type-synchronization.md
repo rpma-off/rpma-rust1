@@ -4,17 +4,24 @@
 Accepted
 
 ## Context
-The frontend is written in TypeScript and the backend in Rust. Keeping IPC payload types consistent across the language boundary manually is error-prone and produces silent runtime deserialization failures.
+Manual maintenance of TypeScript interfaces mirroring Rust models is error-prone and leads to runtime deserialization failures. A single source of truth is required for the IPC boundary.
 
 ## Decision
-- Rust models that cross the IPC boundary derive `ts_rs::TS` and are annotated with `#[ts(export)]`.
-- A dedicated Cargo binary (`src-tauri/src/bin/export-types`) compiled under the `export-types` feature flag introspects all exported types and emits their TypeScript equivalents to stdout.
-- `npm run types:sync` (defined in the root `package.json`) runs this binary and pipes the output through `scripts/write-types.js`, which writes the generated declarations to `frontend/src/types/`. These files are auto-generated and must not be edited manually.
-- `npm run types:drift-check` (`scripts/check-type-drift.js`) detects divergence between the committed generated types and the current Rust model definitions. The CI pipeline runs `scripts/ci-type-drift-check.js` as part of the `check` job.
-- The production `build` script (`npm run build`) calls `types:sync` before invoking the Tauri build, ensuring the shipped frontend always reflects the current Rust models.
+
+### Rust-Driven Generation
+- All Rust structs and enums that cross the IPC boundary must derive `ts_rs::TS` and be marked with `#[ts(export)]`.
+- These models are primarily located in `src-tauri/src/domains/*/domain/models/` and `src-tauri/src/models/`.
+
+### Automated Pipeline
+- The `export-types` binary (`src-tauri/src/bin/export-types.rs`) introspects all exported Rust types and generates their TypeScript equivalents.
+- `npm run types:sync` executes this binary and writes the output to the protected `frontend/src/types/` directory.
+- This sync operation is a mandatory prerequisite for `npm run dev` and `npm run build`.
+
+### Enforcement and Drift Detection
+- `npm run types:drift-check` and its CI counterpart `scripts/ci-type-drift-check.js` verify that committed TypeScript declarations exactly match the current Rust models.
+- Manual edits to `frontend/src/types/` are prohibited and will be reverted by the sync process or caught by the drift check.
 
 ## Consequences
-- Type mismatches between Rust models and TypeScript consumers are detected before compilation.
-- The `frontend/src/types/` directory is a derived artifact; changes to it outside the generation pipeline indicate a manual edit and will fail the drift check.
-- Adding a new IPC payload type requires deriving `TS`, annotating with `#[ts(export)]`, and running `types:sync` before updating frontend consumers.
-- Removing or renaming a Rust field is a breaking IPC change and will be surfaced by the drift check in CI.
+- Type safety is guaranteed between the Rust backend and TypeScript frontend.
+- IPC contract changes are detected at compile-time/CI-time rather than runtime.
+- Backend engineers own the API contract definition through Rust types.

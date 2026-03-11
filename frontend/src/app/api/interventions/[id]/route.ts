@@ -78,7 +78,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const workflowService = interventionWorkflowService;
 
     // Rï¿½cupï¿½ration de l'intervention de base
-    const interventionResult = await workflowService.getInterventionById(interventionId, sessionToken);
+    const interventionResult = await workflowService.getInterventionById(interventionId);
     
     if (!interventionResult.success) {
       return NextResponse.json(
@@ -111,7 +111,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     // Rï¿½cupï¿½ration des ï¿½tapes si demandï¿½es
     if (includeSteps) {
-      const stepsResult = await workflowService.getInterventionSteps(interventionId, sessionToken);
+      const stepsResult = await workflowService.getInterventionSteps(interventionId);
       if (stepsResult.success) {
         responseData.steps = (stepsResult.data?.data || []) as unknown as Record<string, unknown>[];
       }

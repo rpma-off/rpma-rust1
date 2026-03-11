@@ -44,7 +44,7 @@ export function useInterventionSync({
 
         console.info('Fetching active intervention for task:', currentTaskId);
 
-        const result = await interventionWorkflowService.getActiveByTask(currentTaskId, sessionToken);
+        const result = await interventionWorkflowService.getActiveByTask(currentTaskId);
         console.info('IPC result for active intervention:', result);
 
         const interventionData = result.data;
@@ -122,7 +122,7 @@ export function useInterventionSync({
         console.info('Fetching intervention steps for intervention:', interventionId);
         const session = await AuthSecureStorage.getSession();
         const sessionToken = session.token || '';
-        const result = await interventionWorkflowService.getInterventionSteps(interventionId, sessionToken);
+        const result = await interventionWorkflowService.getInterventionSteps(interventionId);
         console.info('IPC result for intervention steps:', result);
 
         if (result.success && result.data) {

@@ -80,18 +80,11 @@ pub async fn ui_window_set_always_on_top(
 /// Get dashboard statistics
 #[command]
 pub async fn dashboard_get_stats(
-    session_token: String,
     state: super::AppState<'_>,
     _time_range: Option<String>,
     correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
-    let ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        super::UserRole::Viewer,
-        &correlation_id,
-    )
-    .await?;
+    let ctx = AuthGuard::require_role(&state, super::UserRole::Viewer, &correlation_id)?;
 
     let payload = serde_json::json!({
         "tasks": { "total": 0, "completed": 0, "pending": 0, "active": 0 },
@@ -106,17 +99,10 @@ pub async fn dashboard_get_stats(
 /// Get lightweight entity counters for dashboard cards.
 #[command]
 pub async fn get_entity_counts(
-    session_token: String,
     state: super::AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
-    let ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        super::UserRole::Viewer,
-        &correlation_id,
-    )
-    .await?;
+    let ctx = AuthGuard::require_role(&state, super::UserRole::Viewer, &correlation_id)?;
 
     let pool = state.db.pool().clone();
     let counts = tokio::task::spawn_blocking(move || {
@@ -138,24 +124,17 @@ pub async fn get_entity_counts(
 /// Get recent activities for admin dashboard
 #[command]
 pub async fn get_recent_activities(
-    session_token: String,
     state: super::AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Vec<serde_json::Value>, String> {
     use tracing::debug;
 
-    let ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        super::UserRole::Admin,
-        &correlation_id,
-    )
-    .await
-    .map_err(|e| e.to_string())?;
+    let ctx = AuthGuard::require_role(&state, super::UserRole::Admin, &correlation_id)
+        .map_err(|e| e.to_string())?;
 
     debug!(
         "Retrieving recent activities for admin: {}",
-        ctx.session.username
+        ctx.auth.username
     );
 
     let activities: Vec<serde_json::Value> = Vec::new();

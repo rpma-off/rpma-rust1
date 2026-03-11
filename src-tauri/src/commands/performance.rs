@@ -69,14 +69,12 @@ pub struct CacheConfigRequest {
 
 /// Get performance statistics
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_performance_stats(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<PerformanceStatsResponse>, AppError> {
-    let ctx =
-        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
     // Start performance tracking
     let _timer = state
@@ -104,15 +102,13 @@ pub async fn get_performance_stats(
 
 /// Get recent performance metrics
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_performance_metrics(
-    session_token: String,
     limit: Option<usize>,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<PerformanceMetricResponse>>, AppError> {
-    let ctx =
-        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
     // Start performance tracking
     let _timer = state
@@ -140,14 +136,12 @@ pub async fn get_performance_metrics(
 
 /// Clean up old performance metrics (admin only)
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn cleanup_performance_metrics(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx =
-        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
 
     // NOTE: Implement performance metrics cleanup
@@ -162,14 +156,12 @@ pub async fn cleanup_performance_metrics(
 
 /// Get cache statistics
 #[tauri::command]
-#[instrument(skip(state, session_token))]
+#[instrument(skip(state))]
 pub async fn get_cache_statistics(
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<CacheStatsResponse>, AppError> {
-    let ctx =
-        AuthGuard::require_role(&session_token, &state, UserRole::Admin, &correlation_id).await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
 
     // Get cache stats from the cache manager
@@ -202,19 +194,12 @@ pub async fn get_cache_statistics(
 
 /// Clear application cache
 #[tauri::command]
-#[instrument(skip(state, session_token, request))]
+#[instrument(skip(state, request))]
 pub async fn clear_application_cache(
-    session_token: String,
     request: CacheClearRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Admin,
-        &request.correlation_id,
-    )
-    .await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &request.correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
 
     let cache_manager = CacheManager::default()?;
@@ -242,19 +227,12 @@ pub async fn clear_application_cache(
 
 /// Configure cache settings
 #[tauri::command]
-#[instrument(skip(state, session_token, request))]
+#[instrument(skip(state, request))]
 pub async fn configure_cache_settings(
-    session_token: String,
     request: CacheConfigRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = AuthGuard::require_role(
-        &session_token,
-        &state,
-        UserRole::Admin,
-        &request.correlation_id,
-    )
-    .await?;
+    let ctx = AuthGuard::require_role(&state, UserRole::Admin, &request.correlation_id)?;
     let correlation_id = ctx.correlation_id.clone();
 
     // Note: In a real implementation, this would update the cache manager configuration

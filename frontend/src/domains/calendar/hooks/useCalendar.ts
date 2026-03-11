@@ -122,7 +122,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const tasks = await getCalendarTasks(calendarFilter, user.token);
+      const tasks = await getCalendarTasks(calendarFilter);
       setState(prev => ({ ...prev, tasks, isLoading: false }));
     } catch (error) {
       console.error('Failed to fetch calendar tasks:', error);
@@ -164,7 +164,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         message: 'Authentication required to check conflicts',
       };
     }
-    return await checkCalendarConflicts(taskId, newDate, user.token, newStart, newEnd);
+    return await checkCalendarConflicts(taskId, newDate, newStart, newEnd);
   }, [user?.token]);
 
   const rescheduleTaskWithConflictCheck = useCallback(async (
@@ -184,7 +184,7 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
 
       // Use atomic schedule_task command that checks conflicts
       // and updates both task + calendar_events in a single transaction
-      const result = await scheduleTask(taskId, newDate, user.token, newStart, newEnd);
+      const result = await scheduleTask(taskId, newDate, newStart, newEnd);
 
       if (result.has_conflict) {
         return {

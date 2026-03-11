@@ -50,7 +50,7 @@
     }
 
     // First get the full task details to ensure we have the correct UUID
-    const taskResult = await taskIpc.get(taskId, sessionToken);
+    const taskResult = await taskIpc.get(taskId);
     if (!taskResult) {
       return NextResponse.json(
         { error: 'Task not found' },
@@ -59,7 +59,7 @@
     }
 
     // Use the task's UUID for intervention lookup
-    const result = await interventionsIpc.getActiveByTask(taskResult.id, sessionToken) as { type: string; intervention?: Intervention | null };
+    const result = await interventionsIpc.getActiveByTask(taskResult.id) as { type: string; intervention?: Intervention | null };
 
     // The response should be { type: 'ActiveRetrieved', intervention: ... }
     if (result.type === 'ActiveRetrieved') {

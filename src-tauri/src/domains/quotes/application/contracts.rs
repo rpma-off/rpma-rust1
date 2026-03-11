@@ -6,7 +6,6 @@ use serde::Deserialize;
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteCreateRequest {
-    pub session_token: String,
     pub data: CreateQuoteRequest,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -15,7 +14,6 @@ pub struct QuoteCreateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteGetRequest {
-    pub session_token: String,
     pub id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -24,7 +22,6 @@ pub struct QuoteGetRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteListRequest {
-    pub session_token: String,
     #[serde(default)]
     pub filters: QuoteQuery,
     #[serde(default)]
@@ -34,7 +31,6 @@ pub struct QuoteListRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteUpdateRequest {
-    pub session_token: String,
     pub id: String,
     pub data: UpdateQuoteRequest,
     #[serde(default)]
@@ -44,7 +40,6 @@ pub struct QuoteUpdateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteDeleteRequest {
-    pub session_token: String,
     pub id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -53,7 +48,6 @@ pub struct QuoteDeleteRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemAddRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub item: CreateQuoteItemRequest,
     #[serde(default)]
@@ -63,7 +57,6 @@ pub struct QuoteItemAddRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemUpdateRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub item_id: String,
     pub data: UpdateQuoteItemRequest,
@@ -74,7 +67,6 @@ pub struct QuoteItemUpdateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteItemDeleteRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub item_id: String,
     #[serde(default)]
@@ -84,7 +76,6 @@ pub struct QuoteItemDeleteRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteStatusRequest {
-    pub session_token: String,
     pub id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -93,7 +84,6 @@ pub struct QuoteStatusRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteDuplicateRequest {
-    pub session_token: String,
     pub id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -102,7 +92,6 @@ pub struct QuoteDuplicateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentsGetRequest {
-    pub session_token: String,
     pub quote_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -111,7 +100,6 @@ pub struct QuoteAttachmentsGetRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentCreateRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub data: CreateQuoteAttachmentRequest,
     #[serde(default)]
@@ -121,7 +109,6 @@ pub struct QuoteAttachmentCreateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentUpdateRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub attachment_id: String,
     pub data: UpdateQuoteAttachmentRequest,
@@ -132,7 +119,6 @@ pub struct QuoteAttachmentUpdateRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentDeleteRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub attachment_id: String,
     #[serde(default)]
@@ -142,7 +128,6 @@ pub struct QuoteAttachmentDeleteRequest {
 /// TODO: document
 #[derive(Deserialize, Debug)]
 pub struct QuoteAttachmentOpenRequest {
-    pub session_token: String,
     pub attachment_id: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -155,7 +140,6 @@ pub struct QuoteAttachmentOpenRequest {
 /// layer.
 #[derive(Deserialize, Debug)]
 pub struct QuoteConvertToTaskRequest {
-    pub session_token: String,
     pub quote_id: String,
     pub vehicle_plate: String,
     pub vehicle_model: String,

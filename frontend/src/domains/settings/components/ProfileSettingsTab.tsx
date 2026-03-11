@@ -66,7 +66,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       setUsingDefaultSettings(false);
       
       try {
-        const settings = await ipcClient.settings.getUserSettings(user.token);
+        const settings = await ipcClient.settings.getUserSettings();
         setUserSettings(settings);
         logInfo('User settings loaded', { userId: user.user_id });
       } catch (error) {
@@ -211,7 +211,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
         avatar_url: userSettings?.profile?.avatar_url ?? null,
       };
 
-      await ipcClient.settings.updateUserProfile(profileData, user.token);
+      await ipcClient.settings.updateUserProfile(profileData);
 
       setSaveSuccess(true);
       logInfo('Profile updated successfully', {
@@ -290,8 +290,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       const avatarUrl = await ipcClient.settings.uploadUserAvatar(
         base64Data,
         file.name,
-        file.type,
-        user.token
+        file.type
       );
 
       setUserSettings((prev) => prev ? ({

@@ -6,7 +6,7 @@ use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::interventions::{
     InterventionsCommand, InterventionsFacade, InterventionsResponse,
 };
-use crate::shared::auth_middleware::AuthMiddleware;
+use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
@@ -70,31 +70,27 @@ pub enum InterventionProgressResponse {
     },
 }
 
-async fn intervention_ctx(
+fn intervention_ctx(
     state: &AppState<'_>,
-    session_token: &str,
     correlation_id: &Option<String>,
-) -> Result<crate::shared::ipc::CommandContext, AppError> {
-    let ctx =
-        AuthMiddleware::authenticate_command(session_token, state, None, correlation_id).await?;
-    super::ensure_intervention_permission(&ctx.session)?;
-    tracing::Span::current().record("user_id", &ctx.session.user_id.as_str());
+) -> Result<crate::shared::context::RequestContext, AppError> {
+    let ctx = resolve_context!(state, correlation_id);
+    tracing::Span::current().record("user_id", ctx.user_id());
     Ok(ctx)
 }
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id, correlation_id))]
+#[instrument(skip(state), fields(user_id, correlation_id))]
 pub async fn intervention_get_progress(
     intervention_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<
     ApiResponse<crate::domains::interventions::domain::models::intervention::InterventionProgress>,
     AppError,
 > {
-    let ctx = intervention_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -116,7 +112,7 @@ pub async fn intervention_get_progress(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token), fields(user_id, correlation_id))]
+#[instrument(skip(state), fields(user_id, correlation_id))]
 pub async fn intervention_advance_step(
     intervention_id: String,
     step_id: String,
@@ -124,14 +120,13 @@ pub async fn intervention_advance_step(
     photos: Option<Vec<String>>,
     notes: Option<String>,
     issues: Option<Vec<String>>,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<
     ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>,
     AppError,
 > {
-    let ctx = intervention_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -162,7 +157,7 @@ pub async fn intervention_advance_step(
 /// TODO: document
 #[tauri::command]
 #[instrument(
-    skip(state, session_token, progress_data),
+    skip(state, progress_data),
     fields(user_id, correlation_id)
 )]
 pub async fn intervention_save_step_progress(
@@ -171,11 +166,10 @@ pub async fn intervention_save_step_progress(
     progress_data: serde_json::Value,
     notes: Option<String>,
     photos: Option<Vec<String>>,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let ctx = intervention_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
@@ -207,14 +201,13 @@ pub async fn intervention_save_step_progress(
 
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, session_token, action), fields(user_id, correlation_id))]
+#[instrument(skip(state, action), fields(user_id, correlation_id))]
 pub async fn intervention_progress(
     action: InterventionProgressAction,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionProgressResponse>, AppError> {
-    let ctx = intervention_ctx(&state, &session_token, &correlation_id).await?;
+    let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     let command = match action {

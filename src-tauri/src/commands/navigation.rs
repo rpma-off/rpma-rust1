@@ -70,15 +70,15 @@ lazy_static! {
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_update(
-    session_token: String,
     state: AppState<'_>,
     path: String,
     _options: serde_json::Value,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
@@ -89,14 +89,14 @@ pub async fn navigation_update(
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_add_to_history(
-    session_token: String,
     state: AppState<'_>,
     path: String,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     history.add(path);
@@ -107,13 +107,13 @@ pub async fn navigation_add_to_history(
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_go_back(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Option<String>, String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_back().cloned())
@@ -123,13 +123,13 @@ pub async fn navigation_go_back(
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_go_forward(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Option<String>, String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     let mut history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.go_forward().cloned())
@@ -139,13 +139,13 @@ pub async fn navigation_go_forward(
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_get_current(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<Option<String>, String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     let history = NAVIGATION_HISTORY.lock().map_err(|e| e.to_string())?;
     Ok(history.get_current().cloned())
@@ -155,13 +155,13 @@ pub async fn navigation_get_current(
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_refresh(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     // This command triggers a refresh in the frontend
     // The actual refresh is handled by the frontend calling window.location.reload()
@@ -172,14 +172,14 @@ pub async fn navigation_refresh(
 #[tauri::command]
 #[instrument(skip_all)]
 pub async fn shortcuts_register(
-    session_token: String,
     state: AppState<'_>,
     shortcuts: serde_json::Value,
     correlation_id: Option<String>,
 ) -> Result<(), String> {
-    let _ctx = AuthGuard::require_role(&session_token, &state, UserRole::Viewer, &correlation_id)
-        .await
-        .map_err(|e| e.to_string())?;
+    let _ctx =
+        AuthGuard::require_role(&state, UserRole::Viewer, &correlation_id).map_err(|e| {
+            e.to_string()
+        })?;
 
     debug!("Registering keyboard shortcuts");
 

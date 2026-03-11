@@ -142,7 +142,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
         try {
           // First try to get active intervention
-          let result: unknown = await interventionsIpc.getActiveByTask(taskId, session.token);
+          let result: unknown = await interventionsIpc.getActiveByTask(taskId);
 
          let intervention: Intervention | null = null;
 
@@ -170,7 +170,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
           // If no active intervention, try to get the latest (including completed)
           if (!intervention) {
-            result = await interventionsIpc.getLatestByTask(taskId, session.token);
+            result = await interventionsIpc.getLatestByTask(taskId);
 
            if (result && typeof result === 'object' && 'intervention' in result) {
              const typedResult = result as { intervention?: Intervention };
@@ -228,7 +228,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     queryFn: async (): Promise<PPFStepsData | null> => {
       if (!session?.token || !interventionData?.intervention?.id) return null;
       try {
-        const result = await interventionsIpc.getProgress(interventionData.intervention.id, session.token);
+        const result = await interventionsIpc.getProgress(interventionData.intervention.id);
         return result as PPFStepsData;
       } catch (error) {
         const cached = queryClient.getQueryData<PPFStepsData | null>(
@@ -318,7 +318,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         notes: currentStep.notes || null,
         quality_check_passed: true,
         issues: null
-       }, session.token);
+       });
 
        return { success: true, stepId };
     },
@@ -356,7 +356,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
          collected_data: collectedData || {},
          notes: null,
          photos: photos || null
-       }, session.token);
+       });
       
       return { success: true, stepId, savedStep };
     },
@@ -389,7 +389,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
         };
 
         // Finalize the intervention
-       const _finalizeResponse = await interventionsIpc.finalize(finalizationData, session.token);
+       const _finalizeResponse = await interventionsIpc.finalize(finalizationData);
 
       return { success: true };
     },

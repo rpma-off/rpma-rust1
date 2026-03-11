@@ -9,7 +9,7 @@ RPMA v2 is designed for technicians working in workshops with touch-friendly int
 **Entry Routes**:
 - `/dashboard` → Active tasks overview
 - `/interventions` → Intervention list
-- `/interventions/[id]` → Active intervention workflow
+- `/tasks/[id]/workflow/ppf` → Active intervention workflow
 
 **Key UI States**:
 - Today's assigned tasks list

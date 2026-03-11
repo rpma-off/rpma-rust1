@@ -70,7 +70,7 @@ export function usePerformanceConfig() {
     try {
       setLoading(true);
       const sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings(sessionToken);
+      const data = await settingsOperations.getAppSettings();
       const appSettings = data as Record<string, JsonValue>;
       const configs = (appSettings?.performance_configs || []) as unknown as PerformanceConfig[];
       setPerformanceConfigs(Array.isArray(configs) ? configs : []);
@@ -113,9 +113,7 @@ export function usePerformanceConfig() {
       }
 
       await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedConfigs as unknown as JsonValue[]);
 
       toast.success(editingConfig ? 'Configuration mise à jour avec succès' : 'Configuration créée avec succès');
       setShowCreateDialog(false);
@@ -136,9 +134,7 @@ export function usePerformanceConfig() {
       const sessionToken = session?.token || '';
       const updatedConfigs = performanceConfigs.filter((config) => config.id !== configToDelete.id);
       await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedConfigs as unknown as JsonValue[]);
       toast.success('Configuration supprimée avec succès');
       await loadPerformanceConfigs();
     } catch (error) {
@@ -162,9 +158,7 @@ export function usePerformanceConfig() {
         c.id === config.id ? { ...c, isActive: !c.isActive } : c
       );
       await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[],
-        sessionToken
-      );
+        updatedConfigs as unknown as JsonValue[]);
       toast.success(`Configuration ${config.isActive ? 'désactivée' : 'activée'} avec succès`);
       await loadPerformanceConfigs();
     } catch (error) {

@@ -6,19 +6,16 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::settings::application::{apply_profile_updates, build_export_payload};
 use crate::domains::settings::ipc::settings::core::{handle_settings_error, settings_user_id};
+use crate::resolve_context;
 
 use serde::Deserialize;
 use serde_json::json;
 
 use tracing::info;
 
-// Import authentication macros
-use crate::authenticate;
-
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UpdateUserProfileRequest {
-    pub session_token: String,
     #[serde(default)]
     pub full_name: Option<String>,
     #[serde(default)]
@@ -46,7 +43,6 @@ pub struct UpdateUserProfileRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct ChangeUserPasswordRequest {
-    pub session_token: String,
     pub current_password: String,
     pub new_password: String,
     #[serde(default)]
@@ -56,7 +52,6 @@ pub struct ChangeUserPasswordRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct DeleteUserAccountRequest {
-    pub session_token: String,
     pub confirmation: String,
     #[serde(default)]
     pub correlation_id: Option<String>,
@@ -65,7 +60,6 @@ pub struct DeleteUserAccountRequest {
 /// TODO: document
 #[derive(Deserialize)]
 pub struct UploadUserAvatarRequest {
-    pub session_token: String,
     pub avatar_data: String, // Base64 encoded image
     pub mime_type: String,
     #[serde(default)]
@@ -77,21 +71,17 @@ pub struct UploadUserAvatarRequest {
 #[tauri::command]
 
 pub async fn get_user_settings(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<crate::domains::settings::domain::models::settings::UserSettings>, AppError>
 {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx = resolve_context!(&state, &correlation_id);
     info!("Getting user settings");
-
-    let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
-        .map(|v| ApiResponse::success(v).with_correlation_id(Some(correlation_id.clone())))
+        .get_user_settings(settings_user_id(&ctx.auth))
+        .map(|v| ApiResponse::success(v).with_correlation_id(Some(ctx.correlation_id.clone())))
         .map_err(|e| handle_settings_error(e, "Get user settings"))
 }
 
@@ -106,14 +96,12 @@ pub async fn update_user_profile(
     ApiResponse<crate::domains::settings::domain::models::settings::UserProfileSettings>,
     AppError,
 > {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Updating user profile");
 
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let existing_profile = state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
+        .get_user_settings(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load existing user profile"))?
         .profile;
 
@@ -130,9 +118,9 @@ pub async fn update_user_profile(
 
     state
         .settings_service
-        .update_user_profile(&settings_user_id(&user), &profile_settings)
+        .update_user_profile(settings_user_id(&ctx.auth), &profile_settings)
         .map(|_| {
-            ApiResponse::success(profile_settings).with_correlation_id(Some(correlation_id.clone()))
+            ApiResponse::success(profile_settings).with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Update user profile"))
 }
@@ -145,24 +133,21 @@ pub async fn change_user_password(
     request: ChangeUserPasswordRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Changing user password");
-
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
         .change_user_password(
-            &settings_user_id(&user),
+            settings_user_id(&ctx.auth),
             &request.current_password,
             &request.new_password,
-            &request.session_token,
+            &ctx.auth.session_id,
             state.auth_service.as_ref(),
         )
         .map(|_| {
             ApiResponse::success("Password changed successfully".to_string())
-                .with_correlation_id(Some(correlation_id.clone()))
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Change user password"))
 }
@@ -172,28 +157,25 @@ pub async fn change_user_password(
 #[tauri::command]
 
 pub async fn export_user_data(
-    session_token: String,
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
+    let ctx = resolve_context!(&state, &correlation_id);
     info!("Exporting user data");
 
-    let user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
     let settings = state
         .settings_service
-        .get_user_settings(&settings_user_id(&user))
+        .get_user_settings(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load user settings for export"))?;
 
     let account = state
         .auth_service
-        .get_user(&settings_user_id(&user))
+        .get_user(settings_user_id(&ctx.auth))
         .map_err(|e| AppError::Database(format!("Failed to load user account: {}", e)))?;
 
     let consent = state
         .settings_service
-        .get_user_consent(&settings_user_id(&user))
+        .get_user_consent(settings_user_id(&ctx.auth))
         .map_err(|e| handle_settings_error(e, "Load user consent for export"))?;
 
     let user_identity = match account {
@@ -212,16 +194,16 @@ pub async fn export_user_data(
             "updated_at": account.updated_at
         }),
         None => json!({
-            "id": settings_user_id(&user),
-            "email": user.email,
-            "username": user.username,
-            "role": user.role
+            "id": settings_user_id(&ctx.auth),
+            "email": ctx.auth.email,
+            "username": ctx.auth.username,
+            "role": ctx.auth.role
         }),
     };
 
     Ok(
         ApiResponse::success(build_export_payload(user_identity, &settings, consent))
-            .with_correlation_id(Some(correlation_id.clone())),
+            .with_correlation_id(Some(ctx.correlation_id.clone())),
     )
 }
 
@@ -233,11 +215,8 @@ pub async fn delete_user_account(
     request: DeleteUserAccountRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Deleting user account");
-
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     // Validate confirmation
     if request.confirmation != "DELETE" {
@@ -248,10 +227,10 @@ pub async fn delete_user_account(
 
     state
         .settings_service
-        .delete_user_account(&settings_user_id(&user))
+        .delete_user_account(settings_user_id(&ctx.auth))
         .map(|_| {
             ApiResponse::success("Account deleted successfully".to_string())
-                .with_correlation_id(Some(correlation_id.clone()))
+                .with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Delete user account"))
 }
@@ -264,21 +243,18 @@ pub async fn upload_user_avatar(
     request: UploadUserAvatarRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<String>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     info!("Uploading user avatar");
-
-    let user = authenticate!(&request.session_token, &state);
-    crate::commands::update_correlation_context_user(&settings_user_id(&user));
 
     state
         .settings_service
         .upload_avatar(
-            &settings_user_id(&user),
+            settings_user_id(&ctx.auth),
             &request.avatar_data,
             &request.mime_type,
         )
         .map(|data_url| {
-            ApiResponse::success(data_url).with_correlation_id(Some(correlation_id.clone()))
+            ApiResponse::success(data_url).with_correlation_id(Some(ctx.correlation_id.clone()))
         })
         .map_err(|e| handle_settings_error(e, "Upload user avatar"))
 }

@@ -7,6 +7,11 @@ jest.mock('../../core', () => ({
   invalidatePattern: jest.fn(),
 }));
 
+jest.mock('@/shared/contracts/session', () => ({
+  requireSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+  getSessionToken: jest.fn().mockResolvedValue('test-session-token'),
+}));
+
 const { safeInvoke, cachedInvoke, invalidatePattern } = jest.requireMock('../../core') as {
   safeInvoke: jest.Mock;
   cachedInvoke: jest.Mock;
@@ -18,50 +23,46 @@ describe('settingsOperations cache behavior', () => {
     jest.clearAllMocks();
   });
 
-  it('uses a user-scoped cache key for getUserSettings', async () => {
+  it('uses a shared cache key for getUserSettings', async () => {
     cachedInvoke.mockResolvedValue({ profile: {}, preferences: {}, security: {}, performance: {}, accessibility: {}, notifications: {} });
 
-    await settingsOperations.getUserSettings('token-a');
+    await settingsOperations.getUserSettings();
 
     expect(cachedInvoke).toHaveBeenCalledWith(
-      'user-settings:token-a',
+      'user-settings',
       IPC_COMMANDS.GET_USER_SETTINGS,
-      { sessionToken: 'token-a' },
+      {},
       undefined,
       30000
     );
   });
 
-  it('invalidates the same user-scoped cache key after mutation', async () => {
+  it('invalidates the cache key after mutation', async () => {
     safeInvoke.mockResolvedValue('ok');
 
-    await settingsOperations.updateUserPreferences({ language: 'en' }, 'token-b');
+    await settingsOperations.updateUserPreferences({ language: 'en' });
 
     expect(safeInvoke).toHaveBeenCalledWith(
       IPC_COMMANDS.UPDATE_USER_PREFERENCES,
-      { request: { language: 'en', session_token: 'token-b' } }
+      { request: { language: 'en', session_token: 'test-session-token' } }
     );
-    expect(invalidatePattern).toHaveBeenCalledWith('user-settings:token-b');
+    expect(invalidatePattern).toHaveBeenCalled();
   });
 
   it('uses camelCase top-level args for non-struct settings commands', async () => {
     safeInvoke.mockResolvedValue('ok');
 
-    await settingsOperations.updateUserPerformance({ cache_enabled: true }, 'token-c');
+    await settingsOperations.updateUserPerformance({ cache_enabled: true });
     expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.UPDATE_USER_PERFORMANCE, {
       request: { cache_enabled: true },
-      sessionToken: 'token-c',
     });
 
-    await settingsOperations.getActiveSessions('token-c');
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {
-      sessionToken: 'token-c',
-    });
+    await settingsOperations.getActiveSessions();
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {});
 
-    await settingsOperations.revokeSession('session-1', 'token-c');
+    await settingsOperations.revokeSession('session-1');
     expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.REVOKE_SESSION, {
       sessionId: 'session-1',
-      sessionToken: 'token-c',
     });
   });
 });

@@ -86,7 +86,6 @@ export function useNewQuotePage() {
               notes: null,
               tags: null,
             },
-            user.token,
           );
           resolvedClientId = newClient.id;
         } catch (err) {

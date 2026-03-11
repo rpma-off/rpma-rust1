@@ -14,37 +14,31 @@ describe('notificationApi IPC contract tests', () => {
     safeInvoke.mockResolvedValue({});
   });
 
-  it('uses top-level sessionToken for get_notifications', async () => {
-    await notificationApi.get('token-a');
+  it('calls get_notifications without sessionToken in payload', async () => {
+    await notificationApi.get();
 
-    expect(safeInvoke).toHaveBeenCalledWith('get_notifications', {
-      sessionToken: 'token-a',
-    });
+    expect(safeInvoke).toHaveBeenCalledWith('get_notifications', {});
   });
 
-  it('uses top-level sessionToken for mark_notification_read', async () => {
-    await notificationApi.markRead('notif-1', 'token-b');
+  it('calls mark_notification_read without sessionToken in payload', async () => {
+    await notificationApi.markRead('notif-1');
 
     expect(safeInvoke).toHaveBeenCalledWith('mark_notification_read', {
       id: 'notif-1',
-      sessionToken: 'token-b',
     });
   });
 
-  it('uses top-level sessionToken for mark_all_notifications_read', async () => {
-    await notificationApi.markAllRead('token-c');
+  it('calls mark_all_notifications_read without sessionToken in payload', async () => {
+    await notificationApi.markAllRead();
 
-    expect(safeInvoke).toHaveBeenCalledWith('mark_all_notifications_read', {
-      sessionToken: 'token-c',
-    });
+    expect(safeInvoke).toHaveBeenCalledWith('mark_all_notifications_read', {});
   });
 
-  it('uses top-level sessionToken for delete_notification', async () => {
-    await notificationApi.delete('notif-2', 'token-d');
+  it('calls delete_notification without sessionToken in payload', async () => {
+    await notificationApi.delete('notif-2');
 
     expect(safeInvoke).toHaveBeenCalledWith('delete_notification', {
       id: 'notif-2',
-      sessionToken: 'token-d',
     });
   });
 

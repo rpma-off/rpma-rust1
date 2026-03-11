@@ -6,6 +6,7 @@ use crate::domains::inventory::InventoryFacade;
 use crate::domains::settings::infrastructure::settings::SettingsService;
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::users::infrastructure::user::UserService;
+use crate::infrastructure::auth::session_store::SessionStore;
 use std::sync::{Arc, Mutex};
 use tauri::State;
 
@@ -28,6 +29,7 @@ pub struct AppStateType {
     pub quote_service: Arc<crate::domains::quotes::infrastructure::quote::QuoteService>,
     pub auth_service: Arc<crate::domains::auth::infrastructure::auth::AuthService>,
     pub session_service: Arc<crate::domains::auth::infrastructure::session::SessionService>,
+    pub session_store: Arc<SessionStore>,
     pub settings_service: Arc<SettingsService>,
     pub user_service: Arc<UserService>,
     pub cache_service: Arc<crate::shared::services::cache::CacheService>,

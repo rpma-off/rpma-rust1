@@ -1,5 +1,5 @@
-use crate::authenticate;
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::resolve_context;
 use crate::domains::notifications::domain::models::message::*;
 use tracing;
 
@@ -8,13 +8,10 @@ use tracing;
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Message>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let msg = state
         .message_service
@@ -22,7 +19,7 @@ pub async fn message_send(
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    Ok(ApiResponse::success(msg).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(msg).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get messages with filtering and pagination
@@ -30,13 +27,10 @@ pub async fn message_send(
 #[tauri::command]
 pub async fn message_get_list(
     query: MessageQuery,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<MessageListResponse>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let list = state
         .message_service
@@ -44,7 +38,7 @@ pub async fn message_get_list(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(ApiResponse::success(list).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(list).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Mark message as read
@@ -52,13 +46,10 @@ pub async fn message_get_list(
 #[tauri::command]
 pub async fn message_mark_read(
     message_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     state
         .message_service
@@ -66,7 +57,7 @@ pub async fn message_mark_read(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get message templates
@@ -75,13 +66,10 @@ pub async fn message_mark_read(
 pub async fn message_get_templates(
     category: Option<String>,
     message_type: Option<String>,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<MessageTemplate>>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let templates = state
         .message_service
@@ -89,7 +77,7 @@ pub async fn message_get_templates(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(ApiResponse::success(templates).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(templates).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get user notification preferences
@@ -97,13 +85,10 @@ pub async fn message_get_templates(
 #[tauri::command]
 pub async fn message_get_preferences(
     user_id: String,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let prefs = state
         .message_service
@@ -111,7 +96,7 @@ pub async fn message_get_preferences(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(ApiResponse::success(prefs).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(prefs).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Update user notification preferences
@@ -120,13 +105,10 @@ pub async fn message_get_preferences(
 pub async fn message_update_preferences(
     user_id: String,
     updates: UpdateNotificationPreferencesRequest,
-    session_token: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
-    let correlation_id = crate::commands::init_correlation_context(&correlation_id, None);
-    let current_user = authenticate!(&session_token, &state);
-    crate::commands::update_correlation_context_user(&current_user.user_id);
+    let ctx = resolve_context!(&state, &correlation_id);
 
     let prefs = state
         .message_service
@@ -134,5 +116,5 @@ pub async fn message_update_preferences(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
 
-    Ok(ApiResponse::success(prefs).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(prefs).with_correlation_id(Some(ctx.correlation_id)))
 }

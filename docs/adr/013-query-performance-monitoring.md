@@ -1,53 +1,28 @@
-# ADR-013: Query Performance Monitoring
+# ADR-013: Query Performance and Observability
 
 ## Status
 Accepted
 
 ## Context
-Performance issues in SQLite can be difficult to diagnose without visibility into query execution times. The application implements built-in performance monitoring to identify slow queries and connection bottlenecks.
+Maintaining performance in an offline SQLite-based application requires visibility into execution times and connection pool health to identify bottlenecks.
 
 ## Decision
 
-### Query Performance Monitor
-- `QueryPerformanceMonitor` (`src-tauri/src/db/connection.rs`) tracks all query executions
-- Queries exceeding 100ms are logged as slow queries
-- Statistics include: query text, duration, rows affected, timestamp
+### Performance Monitoring
+- `QueryPerformanceMonitor` tracks every SQL execution.
+- **Slow Query Logging**: Queries exceeding 100ms are logged with a warning level and associated `correlation_id`.
+- **Long Transactions**: Transactions active for more than 250ms are flagged as potential performance risks.
 
-### Slow Query Threshold
-- Default threshold: 100ms (`Duration::from_millis(100)`)
-- Configurable via `RPMA_DB_METRICS` environment variable
-- Long-running transactions (>250ms) are logged with warning level
+### Statement Optimization
+- `PreparedStatementCache` caches compiled SQLite statements to eliminate redundant parsing overhead.
+- Cache hit/miss ratios are tracked and exposed via performance metrics.
 
-### Prepared Statement Cache
-- `PreparedStatementCache` caches compiled SQLite statements
-- Reduces parsing overhead for frequently executed queries
-- Cache statistics exposed via `Database::stmt_cache().stats()`
-
-### Streaming Queries
-- `ChunkedQuery` enables processing large result sets in chunks
-- Useful for exports, reports, and pagination
-- Supports optional count query for total results
-
-### Performance Metrics API
-- `Database::get_performance_stats()` returns:
-  - Total queries executed
-  - Slow queries count and details
-  - Cache hit/miss statistics
-- `Database::clear_performance_stats()` resets all metrics
-- `Database::get_pool_health()` returns connection pool utilization
-
-### Async Query Support
-- `AsyncDatabase::execute_async()` wraps blocking database operations
-- Uses `tokio::task::spawn_blocking` to avoid blocking the async runtime
-- Connection wait times are recorded for dynamic pool management
+### Observability API
+- `Database::get_performance_stats()` provides a centralized view of query counts, slow queries, and cache statistics.
+- `Database::get_pool_health()` exposes real-time utilization metrics for the read, write, and report pools.
+- These metrics are accessible to the frontend via the `system` command set for diagnostic purposes.
 
 ## Consequences
-- Slow queries are identified and logged for debugging
-- Cache effectiveness can be measured
-- Pool utilization is observable via IPC commands
-- Performance data aids in capacity planning
-- Async database wrapper enables responsive UI during heavy queries
-
-## Related
-- ADR-011: Database Connection Pool Architecture
-- ADR-007: Logging Correlation
+- Performance regression is easily detected during development and testing.
+- Database bottlenecks are surfaced with sufficient context (SQL text and correlation ID) for immediate remediation.
+- The system provides built-in tools for analyzing real-world usage patterns.
