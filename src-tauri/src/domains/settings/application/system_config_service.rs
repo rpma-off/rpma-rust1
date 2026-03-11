@@ -33,6 +33,37 @@ impl SystemConfigService {
         Ok(())
     }
 
+    // ── validation helpers ───────────────────────────────────────────────────
+
+    /// Validate that a JSON array is non-empty and that every element is an
+    /// object.  This enforces a minimal structure contract in the application
+    /// layer rather than relying on the caller to supply well-formed data.
+    fn validate_json_object_array(items: &[serde_json::Value], field: &str) -> Result<(), AppError> {
+        if items.is_empty() {
+            return Err(AppError::Validation(format!(
+                "{field} must contain at least one entry"
+            )));
+        }
+        for (i, item) in items.iter().enumerate() {
+            if !item.is_object() {
+                return Err(AppError::Validation(format!(
+                    "{field}[{i}] must be a JSON object"
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    /// Validate that `business_hours` is a non-null JSON object.
+    fn validate_business_hours(hours: &serde_json::Value) -> Result<(), AppError> {
+        if !hours.is_object() {
+            return Err(AppError::Validation(
+                "business_hours must be a JSON object".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
     // ── read ─────────────────────────────────────────────────────────────────
 
     /// Return the global `AppSettings`.  Admins only.
@@ -77,6 +108,7 @@ impl SystemConfigService {
         rules: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
         Self::require_admin(ctx)?;
+        Self::validate_json_object_array(&rules, "business_rules")?;
         self.settings_service
             .update_business_rules_db(&rules, &ctx.auth.user_id)?;
         info!("business_rules updated by user_id={}", ctx.auth.user_id);
@@ -90,6 +122,7 @@ impl SystemConfigService {
         policies: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
         Self::require_admin(ctx)?;
+        Self::validate_json_object_array(&policies, "security_policies")?;
         self.settings_service
             .update_security_policies_db(&policies, &ctx.auth.user_id)?;
         info!("security_policies updated by user_id={}", ctx.auth.user_id);
@@ -103,6 +136,7 @@ impl SystemConfigService {
         integrations: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
         Self::require_admin(ctx)?;
+        Self::validate_json_object_array(&integrations, "integrations")?;
         self.settings_service
             .update_integrations_db(&integrations, &ctx.auth.user_id)?;
         info!("integrations updated by user_id={}", ctx.auth.user_id);
@@ -116,6 +150,7 @@ impl SystemConfigService {
         configs: Vec<serde_json::Value>,
     ) -> Result<(), AppError> {
         Self::require_admin(ctx)?;
+        Self::validate_json_object_array(&configs, "performance_configs")?;
         self.settings_service
             .update_performance_configs_db(&configs, &ctx.auth.user_id)?;
         info!("performance_configs updated by user_id={}", ctx.auth.user_id);
@@ -129,6 +164,7 @@ impl SystemConfigService {
         hours: serde_json::Value,
     ) -> Result<(), AppError> {
         Self::require_admin(ctx)?;
+        Self::validate_business_hours(&hours)?;
         self.settings_service
             .update_business_hours_db(&hours, &ctx.auth.user_id)?;
         info!("business_hours updated by user_id={}", ctx.auth.user_id);
