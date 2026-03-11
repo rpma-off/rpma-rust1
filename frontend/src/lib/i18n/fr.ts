@@ -728,6 +728,61 @@ export const fr = {
     certifications: "Certifications",
   },
 
+  // Onboarding
+  onboarding: {
+    welcomeTitle: "Bienvenue sur RPMA",
+    welcomeSubtitle: "Configurons votre organisation",
+    checkingSetup: "Vérification de l'état de la configuration...",
+    steps: {
+      organization: "Organisation",
+      organizationDesc: "Configurez votre organisation",
+      adminUser: "Utilisateur Admin",
+      adminUserDesc: "Créer un compte administrateur",
+      complete: "Terminé",
+      completeDesc: "Finaliser la configuration",
+    },
+    organization: {
+      title: "Détails de l'organisation",
+      description: "Entrez les informations de base de votre organisation",
+      name: "Nom de l'organisation",
+      nameRequired: "Le nom de l'organisation est obligatoire",
+      email: "E-mail",
+      emailInvalid: "Format d'e-mail invalide",
+      phone: "Téléphone",
+      streetAddress: "Adresse",
+      city: "Ville",
+      postalCode: "Code postal",
+      country: "Pays",
+    },
+    admin: {
+      title: "Compte administrateur",
+      description: "Créez le premier compte administrateur pour votre organisation",
+      firstName: "Prénom",
+      firstNameRequired: "Le prénom est obligatoire",
+      lastName: "Nom",
+      lastNameRequired: "Le nom est obligatoire",
+      email: "E-mail",
+      emailRequired: "L'e-mail admin est obligatoire",
+      emailInvalid: "Format d'e-mail invalide",
+      password: "Mot de passe",
+      passwordRequired: "Le mot de passe est obligatoire",
+      passwordMinLength: "Le mot de passe doit contenir au moins 8 caractères",
+    },
+    buttons: {
+      nextStep: "Étape suivante",
+      back: "Retour",
+      completeSetup: "Terminer la configuration",
+      goToDashboard: "Aller au tableau de bord",
+    },
+    complete: {
+      title: "Configuration terminée !",
+      description: "Votre organisation a été créée avec succès. Vous pouvez maintenant commencer à utiliser RPMA.",
+    },
+    errors: {
+      submitFailed: "Échec de la finalisation de l'onboarding. Veuillez réessayer.",
+    },
+  },
+
   // Staff
   staff: {
     title: "Employés/Ressources",

@@ -9,6 +9,7 @@ pub(crate) mod task_import;
 pub(crate) mod task_queries;
 pub(crate) mod task_repository;
 pub(crate) mod task_repository_streaming;
+pub(crate) mod task_row_mapping;
 pub(crate) mod task_rules_repository;
 pub(crate) mod task_statistics;
 pub(crate) mod task_update;
