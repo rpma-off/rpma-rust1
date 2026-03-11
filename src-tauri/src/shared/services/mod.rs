@@ -9,7 +9,6 @@ pub mod cross_domain;
 pub mod document_storage;
 pub mod domain_event;
 pub mod event_bus;
-pub mod event_system;
 pub mod performance_monitor;
 pub mod security_monitor;
 pub mod system;

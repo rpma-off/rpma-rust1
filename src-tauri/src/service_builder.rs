@@ -269,9 +269,9 @@ impl ServiceBuilder {
             material_service.clone(),
         ));
 
-        // Quote service currently depends on the event_system bus implementation.
+        // Quote service currently depends on the event_bus implementation.
         let quote_event_bus =
-            Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+            Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
 
         // Initialize Event Bus (self-contained, thread-safe)
         let event_bus = Arc::new(InMemoryEventBus::new());

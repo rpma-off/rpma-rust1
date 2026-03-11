@@ -4,7 +4,7 @@ use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::shared::ipc::errors::AppError;
 use crate::shared::repositories::Cache;
-use crate::shared::services::event_system::InMemoryEventBus;
+use crate::shared::services::event_bus::InMemoryEventBus;
 use std::sync::Arc;
 
 fn make_facade(db: Arc<Database>) -> QuotesFacade {

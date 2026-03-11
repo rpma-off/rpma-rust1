@@ -6,6 +6,7 @@
 pub mod audit_log_handler;
 pub mod audit_repository;
 pub mod audit_service;
+pub mod audit_types;
 
 pub use crate::logging::correlation;
 pub use crate::logging::{LogDomain, RPMARequestLogger};

@@ -192,6 +192,7 @@ custom-protocol = ["tauri/custom-protocol"]
 sqlcipher = []  # Optional feature for SQLCipher encryption support
 export-types = [] # Opens domain visibility for the export-types binary (ts-rs)
 legacy-tests = [] # Enable legacy integration/performance/proptest modules
+perf-monitoring = [] # Enable DB persistence of command performance metrics (disabled by default in release)
 
 [dev-dependencies]
 # Testing framework

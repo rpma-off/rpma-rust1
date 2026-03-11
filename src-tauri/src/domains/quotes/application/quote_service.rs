@@ -20,7 +20,7 @@ use tracing::{info, warn};
 pub struct QuoteService {
     pub(super) repo: Arc<QuoteRepository>,
     pub(super) _db: Arc<crate::db::Database>,
-    pub(super) event_bus: Arc<crate::shared::services::event_system::InMemoryEventBus>,
+    pub(super) event_bus: Arc<crate::shared::services::event_bus::InMemoryEventBus>,
 }
 
 impl QuoteService {
@@ -28,7 +28,7 @@ impl QuoteService {
     pub fn new(
         repo: Arc<QuoteRepository>,
         db: Arc<crate::db::Database>,
-        event_bus: Arc<crate::shared::services::event_system::InMemoryEventBus>,
+        event_bus: Arc<crate::shared::services::event_bus::InMemoryEventBus>,
     ) -> Self {
         Self {
             repo,

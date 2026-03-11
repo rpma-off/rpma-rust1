@@ -1,4 +1,8 @@
 //! Performance monitoring and metrics collection service
+//!
+//! In-memory metrics are always collected. Database persistence of metrics
+//! is gated behind the `perf-monitoring` Cargo feature (disabled by default
+//! in release builds).
 
 use crate::db::Database;
 use crate::shared::db::performance_repository::PerformanceRepository;
@@ -78,27 +82,31 @@ impl PerformanceMonitorService {
         // Invalidate stats cache
         *self.stats_cache.lock().unwrap_or_else(|e| e.into_inner()) = None;
 
-        // Store in database
-        let metadata_json = metric
-            .metadata
-            .as_ref()
-            .map(serde_json::to_string)
-            .transpose()
-            .map_err(|e| format!("Failed to serialize metadata: {}", e))?
-            .unwrap_or_else(|| "{}".to_string());
+        // Persist to database only when the perf-monitoring feature is enabled.
+        if cfg!(feature = "perf-monitoring") {
+            let metadata_json = metric
+                .metadata
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()
+                .map_err(|e| format!("Failed to serialize metadata: {}", e))?
+                .unwrap_or_else(|| "{}".to_string());
 
-        let repo = PerformanceRepository::new(&self.db);
-        repo.insert_metric(
-            &metric.id,
-            &metric.command,
-            metric.duration_ms,
-            metric.success,
-            &metric.timestamp.to_rfc3339(),
-            metric.user_id.as_deref(),
-            metric.error_message.as_deref(),
-            &metadata_json,
-            &Utc::now().to_rfc3339(),
-        )
+            let repo = PerformanceRepository::new(&self.db);
+            repo.insert_metric(
+                &metric.id,
+                &metric.command,
+                metric.duration_ms,
+                metric.success,
+                &metric.timestamp.to_rfc3339(),
+                metric.user_id.as_deref(),
+                metric.error_message.as_deref(),
+                &metadata_json,
+                &Utc::now().to_rfc3339(),
+            )?;
+        }
+
+        Ok(())
     }
 
     /// Get performance statistics

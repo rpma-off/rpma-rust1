@@ -8,7 +8,7 @@ fn setup_service() -> (QuoteService, Arc<crate::db::Database>) {
     let db = Arc::new(crate::test_utils::setup_test_db_sync());
     let cache = Arc::new(Cache::new(100));
     let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
-    let event_bus = Arc::new(crate::shared::services::event_system::InMemoryEventBus::new());
+    let event_bus = Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
     let service = QuoteService::new(repo, db.clone(), event_bus);
 
     let now = chrono::Utc::now().timestamp_millis();

@@ -21,7 +21,8 @@ impl QuoteService {
         accepted_by: &str,
         error_message: Option<String>,
     ) -> Result<(), String> {
-        use crate::shared::services::event_system::{DomainEvent, EventPublisher};
+        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::EventPublisher;
 
         let event = DomainEvent::QuoteAccepted {
             id: crate::shared::utils::uuid::generate_uuid_string(),
@@ -47,7 +48,8 @@ impl QuoteService {
         rejected_by: &str,
         reason: Option<String>,
     ) -> Result<(), String> {
-        use crate::shared::services::event_system::{DomainEvent, EventPublisher};
+        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::EventPublisher;
 
         let event = DomainEvent::QuoteRejected {
             id: crate::shared::utils::uuid::generate_uuid_string(),
@@ -72,7 +74,8 @@ impl QuoteService {
         task_id: &str,
         task_number: &str,
     ) -> Result<(), String> {
-        use crate::shared::services::event_system::{DomainEvent, EventPublisher};
+        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::EventPublisher;
 
         let event = DomainEvent::QuoteConverted {
             id: crate::shared::utils::uuid::generate_uuid_string(),

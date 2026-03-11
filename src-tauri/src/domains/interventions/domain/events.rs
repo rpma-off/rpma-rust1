@@ -3,7 +3,7 @@
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
-pub use crate::shared::services::event_system::DomainEvent;
+pub use crate::shared::services::domain_event::DomainEvent;
 
 /// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize)]
