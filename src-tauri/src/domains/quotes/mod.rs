@@ -1,5 +1,5 @@
 mod facade;
-pub(crate) use facade::QuotesFacade;
+pub use facade::QuotesFacade;
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
 pub mod domain;

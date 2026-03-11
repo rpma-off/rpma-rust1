@@ -64,7 +64,7 @@ pub use crate::domains::interventions::infrastructure::intervention::{
 };
 
 // Quote services and models
-pub use crate::domains::quotes::facade::QuotesFacade;
+pub use crate::domains::quotes::QuotesFacade;
 pub use crate::domains::quotes::infrastructure::quote::QuoteService;
 pub use crate::domains::quotes::domain::models::quote::{
     CreateQuoteItemRequest, CreateQuoteRequest, QuoteItemKind, QuoteStatus,
