@@ -15,7 +15,6 @@
 #[test]
 fn all_domain_facades_accessible_within_crate() {
     // These will fail to compile if facade re-exports are removed or broken.
-    let _ = std::any::type_name::<crate::domains::audit::AuditFacade>();
     let _ = std::any::type_name::<crate::domains::auth::AuthFacade>();
     let _ = std::any::type_name::<crate::domains::clients::ClientsFacade>();
     let _ = std::any::type_name::<crate::domains::users::UsersFacade>();

@@ -4,4 +4,4 @@
 //! and alerting capabilities. Placed in shared so that the auth domain
 //! can use it without importing from the audit domain's infrastructure.
 
-pub use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
+pub use crate::domains::auth::infrastructure::security_monitor::SecurityMonitorService;

@@ -6,7 +6,7 @@
 //!
 //! ## Domains
 //!
-//! - **auth**: Authentication, sessions, tokens, 2FA
+//! - **auth**: Authentication, sessions, tokens, security monitoring
 //! - **users**: User management, profiles, roles
 //! - **tasks**: Task CRUD, status transitions, assignments
 //! - **interventions**: Intervention workflow, steps, progress
@@ -16,7 +16,6 @@
 //! - **calendar**: Calendar events, scheduling
 //! - **reports**: Report generation, analytics, exports
 //! - **settings**: User and system settings
-//! - **audit**: Audit logging, security monitoring
 //! - **sync**: Offline sync, background operations
 //! - **documents**: Document management
 //!
@@ -30,7 +29,6 @@
 //! Domain modules do not introduce new code; they provide organizational
 //! re-exports that make the dependency graph explicit and discoverable.
 
-pub mod audit;
 pub mod auth;
 pub mod calendar;
 pub mod clients;

@@ -4,7 +4,7 @@
 //! including large datasets, concurrent operations, and complex queries.
 
 use crate::db::Database;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::logging::audit_service::AuditService;
 use crate::domains::clients::domain::models::client::Client;
 use crate::domains::clients::infrastructure::client_repository::ClientRepository;
 use crate::domains::interventions::domain::models::intervention::{

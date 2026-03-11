@@ -1,7 +1,7 @@
 //! Security monitoring commands for admin interface
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::audit::application::{
+use crate::domains::auth::application::{
     AcknowledgeSecurityAlertRequest, CleanupSecurityEventsRequest, GetSecurityAlertsRequest,
     GetSecurityEventsRequest, GetSecurityMetricsRequest, ResolveSecurityAlertRequest,
     SecurityAlertResponse, SecurityEventResponse, SecurityMetricsResponse,

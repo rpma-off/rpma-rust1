@@ -7,7 +7,7 @@
 //! - Memory and resource usage under load
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::logging::audit_service::AuditService;
 use crate::domains::clients::domain::models::client::{Client, CustomerType};
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::interventions::domain::models::intervention::Intervention;

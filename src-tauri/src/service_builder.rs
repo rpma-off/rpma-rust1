@@ -53,8 +53,8 @@
 //! ```
 
 use crate::db::Database;
-use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::logging::audit_log_handler::AuditLogHandler;
+use crate::shared::logging::audit_service::AuditService;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::infrastructure::auth::session_store::SessionStore;
 use crate::shared::app_state::AppStateType;

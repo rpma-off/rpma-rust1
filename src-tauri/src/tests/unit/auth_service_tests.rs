@@ -6,7 +6,7 @@
 //! - Password hashing and verification
 //! - Security monitoring integration
 
-use crate::domains::audit::infrastructure::security_monitor::SecurityMonitorService;
+use crate::domains::auth::infrastructure::security_monitor::SecurityMonitorService;
 use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole, UserSession};
 use crate::domains::auth::infrastructure::auth::AuthService;

@@ -30,7 +30,7 @@ pub use crate::domains::tasks::infrastructure::task::TaskService;
 // Auth domain
 pub use crate::domains::auth::infrastructure::auth::AuthService;
 pub use crate::shared::contracts::auth::UserRole;
-pub use crate::domains::audit::infrastructure::audit_service::{
+pub use crate::shared::logging::audit_service::{
     ActionResult, AuditEventType, AuditService,
 };
 

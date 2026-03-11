@@ -7,7 +7,7 @@
 //! - User permissions across multiple domains
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
+use crate::shared::logging::audit_service::{AuditEvent, AuditService};
 use crate::domains::auth::infrastructure::auth::AuthService;
 use crate::domains::clients::domain::models::client::{Client, CustomerType};
 use crate::domains::clients::infrastructure::client::ClientService;

@@ -4,7 +4,7 @@
 //! including event creation, querying, and retention management.
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::{
+use crate::shared::logging::audit_service::{
     ActionResult, AuditEvent, AuditEventType, AuditService,
 };
 use crate::test_utils::TestDatabase;

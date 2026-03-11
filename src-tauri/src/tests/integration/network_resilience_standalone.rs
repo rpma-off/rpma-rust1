@@ -3,7 +3,7 @@
 //! This module contains standalone test functions for network resilience testing
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::{AuditEvent, AuditService};
+use crate::shared::logging::audit_service::{AuditEvent, AuditService};
 use crate::domains::clients::domain::models::client::{Client, CustomerType};
 use crate::domains::clients::infrastructure::client::ClientService;
 use crate::domains::interventions::domain::models::intervention::Intervention;

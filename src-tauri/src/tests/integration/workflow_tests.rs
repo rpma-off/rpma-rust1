@@ -4,7 +4,7 @@
 //! between tasks and interventions to ensure proper synchronization.
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::logging::audit_service::AuditService;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
 use crate::domains::interventions::infrastructure::intervention_types::{

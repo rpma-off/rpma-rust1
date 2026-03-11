@@ -4,7 +4,7 @@
 //! ensuring proper stock updates, consumption records, and rollback behavior.
 
 use crate::commands::AppResult;
-use crate::domains::audit::infrastructure::audit_service::AuditService;
+use crate::shared::logging::audit_service::AuditService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest, StartInterventionRequest,
 };
