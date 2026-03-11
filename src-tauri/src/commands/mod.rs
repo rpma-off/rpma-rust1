@@ -3,16 +3,12 @@
 //! This module contains all Tauri commands for IPC communication
 //! between the frontend and backend.
 
-pub mod compression;
 pub mod correlation_helpers;
 pub mod error_utils;
 pub mod errors;
-pub mod ipc_optimization;
 pub mod log;
 pub mod navigation;
 pub mod performance;
-// pub mod photo; // Temporarily disabled - no photo.rs or photo/ directory
-pub mod streaming;
 pub mod system;
 pub mod ui;
 pub mod websocket;

@@ -53,7 +53,7 @@ impl InMemoryEventBus {
     ///
     /// Handler errors are logged but never propagate to the caller.
     /// Handler panics are caught so one faulty handler cannot break others.
-    pub async fn publish(&self, event: DomainEvent) -> Result<(), String> {
+    pub async fn dispatch(&self, event: DomainEvent) -> Result<(), String> {
         let event_type = event.event_type();
         let handlers = {
             let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
@@ -88,10 +88,9 @@ impl InMemoryEventBus {
     /// Publish multiple events
     ///
     /// All events are published even if individual handlers fail.
-    pub async fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String> {
+    pub async fn dispatch_batch(&self, events: Vec<DomainEvent>) -> Result<(), String> {
         for event in events {
-            // publish() never returns Err — handler errors are logged internally
-            let _ = self.publish(event).await;
+            let _ = self.dispatch(event).await;
         }
         Ok(())
     }
@@ -122,10 +121,32 @@ impl Clone for InMemoryEventBus {
     }
 }
 
-/// Event publisher trait for dependency injection
+/// Event publisher trait for dependency injection (sync interface)
 pub trait EventPublisher: Send + Sync {
     /// Publish a domain event
     fn publish(&self, event: DomainEvent) -> Result<(), String>;
+
+    /// Publish multiple events
+    fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String>;
+}
+
+impl EventPublisher for InMemoryEventBus {
+    fn publish(&self, event: DomainEvent) -> Result<(), String> {
+        let bus = self.clone();
+        tokio::spawn(async move {
+            if let Err(e) = bus.dispatch(event).await {
+                tracing::error!("Failed to publish event: {}", e);
+            }
+        });
+        Ok(())
+    }
+
+    fn publish_batch(&self, events: Vec<DomainEvent>) -> Result<(), String> {
+        for event in events {
+            EventPublisher::publish(self, event)?;
+        }
+        Ok(())
+    }
 }
 
 /// Helper function to create domain events with current timestamp
@@ -319,7 +340,7 @@ mod tests {
         let event =
             event_factory::task_created("task-123".to_string(), "Test Task".to_string(), None);
 
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         assert_eq!(counter.load(Ordering::SeqCst), 1);
     }
@@ -346,7 +367,7 @@ mod tests {
         let event =
             event_factory::task_created("task-123".to_string(), "Test Task".to_string(), None);
 
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         // Both handlers should receive the TaskCreated event
         assert_eq!(counter1.load(Ordering::SeqCst), 1);
@@ -367,7 +388,7 @@ mod tests {
 
         // Publish an event the handler is NOT interested in
         let event = event_factory::authentication_success("user-123".to_string());
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         // Handler should not have been called
         assert_eq!(counter.load(Ordering::SeqCst), 0);
@@ -391,7 +412,7 @@ mod tests {
             event_factory::task_created("task-3".to_string(), "Task 3".to_string(), None),
         ];
 
-        event_bus.publish_batch(events).await.unwrap();
+        event_bus.dispatch_batch(events).await.unwrap();
 
         assert_eq!(counter.load(Ordering::SeqCst), 3);
     }

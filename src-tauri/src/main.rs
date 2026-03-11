@@ -300,13 +300,6 @@ fn main() {
             commands::performance::get_cache_statistics,
             commands::performance::clear_application_cache,
             commands::performance::configure_cache_settings,
-            // ── IPC / Streaming ──────────────────────────────────────────
-            commands::ipc_optimization::compress_data_for_ipc,
-            commands::ipc_optimization::decompress_data_from_ipc,
-            commands::ipc_optimization::start_stream_transfer,
-            commands::ipc_optimization::send_stream_chunk,
-            commands::ipc_optimization::get_stream_data,
-            commands::ipc_optimization::get_ipc_stats,
             // ── WebSocket ────────────────────────────────────────────────
             commands::websocket_commands::init_websocket_server,
             commands::websocket_commands::broadcast_websocket_message,

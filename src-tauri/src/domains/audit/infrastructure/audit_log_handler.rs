@@ -286,7 +286,7 @@ mod tests {
             "Audit Test Task".to_string(),
             Some("user-1".to_string()),
         );
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         let history = audit_service
             .get_resource_history("task", "task-audit-1", None)
@@ -300,7 +300,7 @@ mod tests {
         let (event_bus, audit_service) = setup_audit_handler().await;
 
         let event = event_factory::intervention_completed("int-audit-1".to_string());
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         let history = audit_service
             .get_resource_history("intervention", "int-audit-1", None)
@@ -319,7 +319,7 @@ mod tests {
             2.5,
             "m²".to_string(),
         );
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         let history = audit_service
             .get_resource_history("material", "mat-1", None)
@@ -360,7 +360,7 @@ mod tests {
             None,
         );
         // publish should succeed even though FailingHandler errors
-        event_bus.publish(event).await.unwrap();
+        event_bus.dispatch(event).await.unwrap();
 
         // AuditLogHandler should still have written its entry
         let history = audit_service
@@ -410,7 +410,7 @@ mod tests {
         let event =
             event_factory::task_created("task-panic-1".to_string(), "Panic Test".to_string(), None);
         // publish should succeed even though PanickingHandler panics
-        let result = event_bus.publish(event).await;
+        let result = event_bus.dispatch(event).await;
         assert!(result.is_ok());
 
         // CountingHandler should still have been called

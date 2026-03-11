@@ -36,7 +36,7 @@ impl DomainEventBus for InMemoryEventBus {
     fn publish(&self, event: DomainEvent) {
         let bus = self.clone();
         tokio::spawn(async move {
-            if let Err(err) = bus.publish(event).await {
+            if let Err(err) = bus.dispatch(event).await {
                 tracing::error!(error = %err, "Failed to publish domain event");
             }
         });

@@ -5,7 +5,7 @@
 //! existing consumers that import from `shared::event_bus` continue to
 //! compile without changes.
 
-pub use crate::shared::services::event_system::DomainEvent;
+pub use crate::shared::services::domain_event::DomainEvent;
 
 // Re-export from owning domains for backward compatibility.
 pub use crate::domains::interventions::domain::events::InterventionFinalized;

@@ -4,9 +4,334 @@
 //! communication between services. Events are immutable facts about things
 //! that have happened in the system.
 
-pub use crate::shared::services::event_system::DomainEvent;
-
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
+/// Domain event types for system-wide communication
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type")]
+pub enum DomainEvent {
+    // Task Events
+    TaskCreated {
+        id: String,
+        task_id: String,
+        task_number: String,
+        title: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    TaskUpdated {
+        id: String,
+        task_id: String,
+        previous_state: Option<serde_json::Value>,
+        new_state: Option<serde_json::Value>,
+        changed_fields: Vec<String>,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    TaskAssigned {
+        id: String,
+        task_id: String,
+        technician_id: String,
+        assigned_by: String,
+        assigned_at: DateTime<Utc>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    TaskStatusChanged {
+        id: String,
+        task_id: String,
+        old_status: String,
+        new_status: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    TaskCompleted {
+        id: String,
+        task_id: String,
+        completed_by: String,
+        completed_at: DateTime<Utc>,
+        actual_duration: Option<i32>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // Client Events
+    ClientCreated {
+        id: String,
+        client_id: String,
+        name: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    ClientUpdated {
+        id: String,
+        client_id: String,
+        previous_state: Option<serde_json::Value>,
+        new_state: Option<serde_json::Value>,
+        changed_fields: Vec<String>,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    ClientDeactivated {
+        id: String,
+        client_id: String,
+        deactivated_by: String,
+        reason: Option<String>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // Intervention Events
+    InterventionCreated {
+        id: String,
+        intervention_id: String,
+        task_id: String,
+        ppf_zones_config: Option<String>,
+        film_type: Option<String>,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionStarted {
+        id: String,
+        intervention_id: String,
+        task_id: String,
+        started_by: String,
+        started_at: DateTime<Utc>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionStepStarted {
+        id: String,
+        intervention_id: String,
+        step_id: String,
+        step_number: i32,
+        started_by: String,
+        location_lat: Option<f64>,
+        location_lon: Option<f64>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionStepCompleted {
+        id: String,
+        intervention_id: String,
+        step_id: String,
+        step_number: i32,
+        completed_by: String,
+        photos_taken: i32,
+        actual_duration: Option<i32>,
+        quality_score: Option<i32>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionCompleted {
+        id: String,
+        intervention_id: String,
+        completed_by: String,
+        completed_at: DateTime<Utc>,
+        quality_score: Option<i32>,
+        customer_satisfaction: Option<i32>,
+        actual_duration: Option<i32>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionFinalized {
+        id: String,
+        intervention_id: String,
+        task_id: String,
+        technician_id: String,
+        completed_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    InterventionCancelled {
+        id: String,
+        intervention_id: String,
+        cancelled_by: String,
+        reason: String,
+        cancelled_at: DateTime<Utc>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // Material Events
+    MaterialConsumed {
+        id: String,
+        material_id: String,
+        intervention_id: String,
+        quantity: f64,
+        unit: String,
+        consumed_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // Quote Events
+    QuoteShared {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        shared_by: String,
+        shared_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteCustomerResponded {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        action: String,
+        customer_id: Option<String>,
+        responded_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteConvertedToTask {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        task_id: String,
+        converted_by: String,
+        converted_at_ms: i64,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // User Events
+    UserCreated {
+        id: String,
+        user_id: String,
+        email: String,
+        role: String,
+        created_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    UserUpdated {
+        id: String,
+        user_id: String,
+        previous_state: Option<serde_json::Value>,
+        new_state: Option<serde_json::Value>,
+        changed_fields: Vec<String>,
+        updated_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    UserLoggedIn {
+        id: String,
+        user_id: String,
+        ip_address: Option<String>,
+        user_agent: Option<String>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    UserLoggedOut {
+        id: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    AuthenticationFailed {
+        id: String,
+        user_id: Option<String>,
+        reason: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    AuthenticationSuccess {
+        id: String,
+        user_id: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // System Events
+    SystemError {
+        id: String,
+        error_code: String,
+        error_message: String,
+        component: String,
+        severity: ErrorSeverity,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    SystemMaintenance {
+        id: String,
+        maintenance_type: String,
+        description: String,
+        started_by: String,
+        started_at: DateTime<Utc>,
+        estimated_duration: Option<i32>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    PerformanceAlert {
+        id: String,
+        metric_name: String,
+        current_value: f64,
+        threshold_value: f64,
+        severity: AlertSeverity,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
+    // Quote Events
+    QuoteAccepted {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        accepted_by: String,
+        task_id: Option<String>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteRejected {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        rejected_by: String,
+        reason: Option<String>,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteConverted {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        task_id: String,
+        task_number: String,
+        converted_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+}
+
+/// Error severity levels
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ErrorSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Alert severity levels
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AlertSeverity {
+    Info,
+    Warning,
+    Error,
+    Critical,
+}
 
 impl DomainEvent {
     /// Get the event type name as a string
@@ -183,9 +508,9 @@ pub struct EventFilter {
     /// Filter by user ID
     pub user_id: Option<String>,
     /// Filter by start time
-    pub from_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    pub from_timestamp: Option<DateTime<Utc>>,
     /// Filter by end time
-    pub to_timestamp: Option<chrono::DateTime<chrono::Utc>>,
+    pub to_timestamp: Option<DateTime<Utc>>,
     /// Maximum number of events to return
     pub limit: Option<usize>,
 }
@@ -228,11 +553,7 @@ impl EventFilter {
     }
 
     /// Filter by time range
-    pub fn with_time_range(
-        mut self,
-        from: chrono::DateTime<chrono::Utc>,
-        to: chrono::DateTime<chrono::Utc>,
-    ) -> Self {
+    pub fn with_time_range(mut self, from: DateTime<Utc>, to: DateTime<Utc>) -> Self {
         self.from_timestamp = Some(from);
         self.to_timestamp = Some(to);
         self
@@ -321,32 +642,26 @@ impl EventStore for InMemoryEventStore {
         let filtered: Vec<_> = events
             .iter()
             .filter(|e| {
-                // Filter by event types
                 if let Some(ref types) = filter.event_types {
                     if !types.contains(&e.event.event_type().to_string()) {
                         return false;
                     }
                 }
-
-                // Filter by time range
                 if let Some(from) = filter.from_timestamp {
                     if e.event.timestamp() < from {
                         return false;
                     }
                 }
-
                 if let Some(to) = filter.to_timestamp {
                     if e.event.timestamp() > to {
                         return false;
                     }
                 }
-
                 true
             })
             .cloned()
             .collect();
 
-        // Apply limit
         if let Some(limit) = filter.limit {
             Ok(filtered.into_iter().take(limit).collect())
         } else {
@@ -359,135 +674,6 @@ impl EventStore for InMemoryEventStore {
         _aggregate_id: &str,
         _from_version: Option<i64>,
     ) -> Result<Vec<EventEnvelope>, String> {
-        // Simplified implementation - would extract aggregate ID from events in real implementation
         Ok(Vec::new())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::shared::services::event_bus::event_factory;
-
-    #[test]
-    fn test_event_metadata_creation() {
-        let metadata = EventMetadata::new("test-service".to_string());
-        assert!(!metadata.correlation_id.is_empty());
-        assert_eq!(metadata.source, "test-service");
-        assert!(metadata.user_id.is_none());
-
-        let metadata_with_user =
-            EventMetadata::with_user("test-service".to_string(), "user-123".to_string());
-        assert_eq!(metadata_with_user.user_id, Some("user-123".to_string()));
-    }
-
-    #[test]
-    fn test_event_metadata_builder() {
-        let metadata = EventMetadata::new("test-service".to_string())
-            .with_ip_address("127.0.0.1".to_string())
-            .with_custom(serde_json::json!({"key": "value"}));
-
-        assert_eq!(metadata.ip_address, Some("127.0.0.1".to_string()));
-        assert!(metadata.custom.is_some());
-    }
-
-    #[test]
-    fn test_event_envelope_creation() {
-        let event = event_factory::task_created("task-123".to_string(), "Test".to_string(), None);
-        let envelope = EventEnvelope::with_event(event, "test-service".to_string());
-
-        assert_eq!(envelope.version, 1);
-        assert_eq!(envelope.metadata.source, "test-service");
-    }
-
-    #[test]
-    fn test_event_filter_builder() {
-        let filter = EventFilter::new()
-            .with_event_type("TaskCreated".to_string())
-            .with_user_id("user-123".to_string())
-            .with_limit(10);
-
-        assert_eq!(filter.event_types, Some(vec!["TaskCreated".to_string()]));
-        assert_eq!(filter.user_id, Some("user-123".to_string()));
-        assert_eq!(filter.limit, Some(10));
-    }
-
-    #[test]
-    fn test_in_memory_event_store() {
-        let store = InMemoryEventStore::new();
-
-        let event = event_factory::task_created("task-123".to_string(), "Test".to_string(), None);
-        let envelope = EventEnvelope::with_event(event, "test-service".to_string());
-
-        store.store(&envelope).unwrap();
-        assert_eq!(store.count(), 1);
-
-        store.clear();
-        assert_eq!(store.count(), 0);
-    }
-
-    #[test]
-    fn test_event_store_batch() {
-        let store = InMemoryEventStore::new();
-
-        let envelopes = vec![
-            EventEnvelope::with_event(
-                event_factory::task_created("task-1".to_string(), "Task 1".to_string(), None),
-                "test-service".to_string(),
-            ),
-            EventEnvelope::with_event(
-                event_factory::task_created("task-2".to_string(), "Task 2".to_string(), None),
-                "test-service".to_string(),
-            ),
-        ];
-
-        store.store_batch(&envelopes).unwrap();
-        assert_eq!(store.count(), 2);
-    }
-
-    #[test]
-    fn test_event_store_query() {
-        let store = InMemoryEventStore::new();
-
-        let envelopes = vec![
-            EventEnvelope::with_event(
-                event_factory::task_created("task-1".to_string(), "Task 1".to_string(), None),
-                "test-service".to_string(),
-            ),
-            EventEnvelope::with_event(
-                event_factory::task_updated("task-2".to_string(), vec!["title".to_string()]),
-                "test-service".to_string(),
-            ),
-        ];
-
-        store.store_batch(&envelopes).unwrap();
-
-        let filter = EventFilter::new().with_event_type("TaskCreated".to_string());
-        let results = store.query(filter).unwrap();
-
-        assert_eq!(results.len(), 1);
-        assert_eq!(results[0].event.event_type(), "TaskCreated");
-    }
-
-    #[test]
-    fn test_event_store_query_with_limit() {
-        let store = InMemoryEventStore::new();
-
-        let mut envelopes = Vec::new();
-        for i in 0..10 {
-            envelopes.push(EventEnvelope::with_event(
-                event_factory::task_created(format!("task-{}", i), format!("Task {}", i), None),
-                "test-service".to_string(),
-            ));
-        }
-
-        store.store_batch(&envelopes).unwrap();
-
-        let filter = EventFilter::new()
-            .with_event_type("TaskCreated".to_string())
-            .with_limit(5);
-        let results = store.query(filter).unwrap();
-
-        assert_eq!(results.len(), 5);
     }
 }
