@@ -6,6 +6,10 @@
 //!
 //! ADR-021 dependency graph / initialization order
 //!
+//! ADR-021 (`docs/adr/021-centralized-service-orchestration.md`) designates
+//! `ServiceBuilder` as the authoritative factory for startup orchestration and
+//! requires services to be initialized in dependency order.
+//!
 //! ```text
 //! Roots
 //!   Database
@@ -394,7 +398,8 @@ mod tests {
 
         assert!(
             visiting.insert(service),
-            "circular dependency detected while visiting {service}"
+            "circular dependency detected while visiting {}",
+            service
         );
 
         if let Some(dependencies) = graph.get(service) {
