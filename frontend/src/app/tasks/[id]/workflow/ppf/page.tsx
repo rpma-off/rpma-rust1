@@ -29,6 +29,14 @@ export default function PPFWorkflowPage() {
 
   const completedCount = orderedSteps.filter((step) => step.status === 'completed').length;
   const totalSteps = orderedSteps.length;
+  const getLockReason = (stepIndex: number) => {
+    const previousStep = orderedSteps[stepIndex - 1];
+    if (previousStep && previousStep.status !== 'completed') {
+      const previousLabel = PPF_STEP_CONFIG[previousStep.id]?.label ?? previousStep.title;
+      return `Complétez d'abord « ${previousLabel} » pour déverrouiller cette étape.`;
+    }
+    return 'Étape verrouillée tant que les étapes précédentes ne sont pas validées.';
+  };
 
   const surfaceInfo = task?.ppf_zones?.length ? `${task.ppf_zones.length} zones` : '—';
   const scheduledDate = task?.scheduled_date
@@ -129,12 +137,13 @@ export default function PPFWorkflowPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {orderedSteps.map((step) => {
+        {orderedSteps.map((step, stepIndex) => {
           const config = PPF_STEP_CONFIG[step.id];
           const Icon = config.icon;
           const isDone = step.status === 'completed';
           const isActive = step.id === currentStep?.id;
           const isLocked = !canAccessStep(step.id) && !isDone && !isActive;
+          const lockReason = isLocked ? getLockReason(stepIndex) : null;
 
           const cardStyles = cn(
             'rounded-xl border bg-white p-4 shadow-sm transition',
@@ -147,6 +156,7 @@ export default function PPFWorkflowPage() {
               key={step.id}
               className={cardStyles}
               role="button"
+              aria-disabled={isLocked}
               tabIndex={isLocked ? -1 : 0}
               onClick={() => {
                 if (isLocked) return;
@@ -182,6 +192,9 @@ export default function PPFWorkflowPage() {
                 {isLocked ? 'Verrouillé' : isDone ? 'Consulter' : 'Commencer'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              {lockReason && (
+                <p className="mt-2 text-[11px] font-medium text-amber-700">{lockReason}</p>
+              )}
             </div>
           );
         })}

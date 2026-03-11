@@ -3,6 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { StepType } from '@/lib/backend';
+import { PPF_STEP_CONFIG } from './ppfWorkflow.config';
 
 type StepItem = {
   id: StepType;
@@ -31,6 +32,17 @@ export function PpfStepperBand({
           const isDone = step.status === 'completed';
           const isActive = step.id === currentStepId;
           const isLocked = !isDone && !isActive && !canAccessStep(step.id);
+          const previousStep = index > 0 ? steps[index - 1] : null;
+          const previousStepLabel = previousStep
+            ? (PPF_STEP_CONFIG[previousStep.id]?.label ?? previousStep.label)
+            : null;
+          let lockReason: string | null = null;
+          if (isLocked) {
+            lockReason =
+              previousStep && previousStep.status !== 'completed'
+                ? `Complétez d'abord « ${previousStepLabel} » pour déverrouiller cette étape.`
+                : 'Étape verrouillée tant que les étapes précédentes ne sont pas validées.';
+          }
           const circleClasses = cn(
             'flex h-9 w-9 items-center justify-center rounded-full border-2 text-xs font-bold transition-all',
             isDone && 'border-emerald-600 bg-emerald-600 text-white',
@@ -51,6 +63,8 @@ export function PpfStepperBand({
                   type="button"
                   className={circleClasses}
                   disabled={isLocked}
+                  aria-disabled={isLocked}
+                  title={lockReason ?? undefined}
                   onClick={() => {
                     if (isLocked) return;
                     onStepClick(step.id);
@@ -61,6 +75,7 @@ export function PpfStepperBand({
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-foreground">{step.label}</div>
                   <div className="text-[10px] text-muted-foreground">{step.duration}</div>
+                  {lockReason && <div className="text-[10px] font-medium text-amber-700">{lockReason}</div>}
                 </div>
               </div>
               {index < steps.length - 1 && <div className={lineClasses} />}
