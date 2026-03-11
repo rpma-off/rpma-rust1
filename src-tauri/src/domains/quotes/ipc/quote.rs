@@ -7,8 +7,8 @@
 //! - `quote_attachments` — attachment CRUD + open
 //! - `quote_export`      — PDF export + convert-to-task
 
-pub use quote_attachments::*;
-pub use quote_crud::*;
-pub use quote_export::*;
-pub use quote_items::*;
-pub use quote_status::*;
+pub use super::quote_attachments::*;
+pub use super::quote_crud::*;
+pub use super::quote_export::*;
+pub use super::quote_items::*;
+pub use super::quote_status::*;
