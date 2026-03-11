@@ -200,7 +200,12 @@ pub async fn material_update_stock(
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.material_service.clone();
 
-    match service.update_stock(request) {
+    let adjusted_request = UpdateStockRequest {
+        recorded_by: Some(ctx.user_id().to_string()),
+        ..request
+    };
+
+    match service.update_stock(adjusted_request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock updated");
             Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
@@ -227,7 +232,12 @@ pub async fn material_record_consumption(
     tracing::Span::current().record("user_id", ctx.user_id());
     let service = state.inventory_service.clone();
 
-    match service.record_consumption(request) {
+    let adjusted_request = RecordConsumptionRequest {
+        recorded_by: Some(ctx.user_id().to_string()),
+        ..request
+    };
+
+    match service.record_consumption(adjusted_request) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
             Ok(ApiResponse::success(consumption).with_correlation_id(Some(ctx.correlation_id.clone())))
