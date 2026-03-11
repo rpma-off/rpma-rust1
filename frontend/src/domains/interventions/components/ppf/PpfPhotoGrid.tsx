@@ -41,6 +41,28 @@ type PpfPhotoGridProps = {
   hint?: string;
 };
 
+function getFriendlyUploadErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'Impossible de téléverser les photos pour le moment. Veuillez réessayer.';
+  }
+
+  const message = error.message.toLowerCase();
+  if (message.includes('permission') || message.includes('denied') || message.includes('forbidden')) {
+    return "Accès aux photos refusé. Vérifiez les permissions de l'application puis réessayez.";
+  }
+  if (message.includes('size') || message.includes('too large')) {
+    return 'La photo est trop volumineuse. Choisissez une image plus légère puis réessayez.';
+  }
+  if (message.includes('format') || message.includes('mime') || message.includes('type')) {
+    return "Format d'image non pris en charge. Utilisez une photo JPG ou PNG.";
+  }
+  if (message.includes('network') || message.includes('offline')) {
+    return 'Téléversement indisponible hors ligne. Réessayez lorsque la connexion est rétablie.';
+  }
+
+  return 'Impossible de téléverser les photos pour le moment. Veuillez réessayer.';
+}
+
 export function PpfPhotoGrid({
   taskId,
   interventionId,
@@ -69,7 +91,7 @@ export function PpfPhotoGrid({
         onChange(nextPhotos);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Erreur lors du téléversement des photos');
+      toast.error(getFriendlyUploadErrorMessage(error));
     } finally {
       setIsUploading(false);
       if (inputRef.current) {
