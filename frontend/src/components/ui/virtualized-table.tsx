@@ -226,6 +226,10 @@ export function VirtualizedTable<T extends Record<string, any>>({
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const item = sortedData[virtualRow.index];
 
+            if (!item) {
+              return null;
+            }
+
             return (
               <div
                 key={item?.id ?? virtualRow.key}
