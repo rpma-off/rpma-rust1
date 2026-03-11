@@ -24,7 +24,7 @@ export function useRecordChanges(
     loading: isLoading,
     error: error ?? null,
     count: data?.length ?? 0,
-    refresh: async () => { await refetch(); },
+    refresh: () => refetch().then(() => undefined),
   };
 }
 
@@ -49,6 +49,6 @@ export function useTableChanges(
     loading: isLoading,
     error: error ?? null,
     count: data?.length ?? 0,
-    refresh: async () => { await refetch(); },
+    refresh: () => refetch().then(() => undefined),
   };
 }

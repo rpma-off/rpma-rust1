@@ -16,7 +16,7 @@ export function useAuditLog(): UseAuditLogResult {
     logs: data ?? [],
     loading: isLoading,
     error: error?.message ?? null,
-    refetch: async () => { await refetch(); },
+    refetch: () => refetch().then(() => undefined),
   };
 }
 

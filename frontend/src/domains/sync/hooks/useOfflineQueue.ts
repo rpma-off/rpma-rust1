@@ -255,6 +255,8 @@ export const useOfflineQueue = (
 
     // TODO: Replace with real IPC dispatch per operation.type
     // e.g. await tasksIpc.updateStatus(operation.entityId, operation.data)
+    // This error is caught by processBatch, which marks the operation as FAILED
+    // with the error message — preventing silent data loss from the old simulateApiCall placeholder.
     throw new Error(`useOfflineQueue.processOperation is not yet implemented for type: ${operation.type}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [permissionChecker]);
