@@ -1,7 +1,8 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { memo } from 'react';
 import type { Task } from '@/lib/backend';
 import { cn } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface TaskCardProps {
   task: Task;
@@ -23,7 +24,7 @@ const priorityColors = {
   low: 'var(--priority-low)',
 };
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({ task, onClick }: TaskCardProps) {
   const statusColor = statusColors[task.status as keyof typeof statusColors] || 'bg-gray-500';
   const priorityColor = priorityColors[task.priority as keyof typeof priorityColors] || 'border-gray-400';
 
@@ -68,4 +69,6 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       </CardContent>
     </Card>
   );
-}
+});
+
+TaskCard.displayName = 'TaskCard';

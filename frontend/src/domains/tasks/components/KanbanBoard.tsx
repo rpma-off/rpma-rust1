@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { StatusColumn } from './StatusColumn';
-import { TaskCard } from './TaskCard';
-import { useTaskStatus } from '../hooks/useTaskStatus';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { Task } from '@/shared/types';
+import { useTaskStatus } from '../hooks/useTaskStatus';
+import { StatusColumn } from './StatusColumn';
+import { TaskCard } from './TaskCard';
 
 const STATUS_COLUMNS: Array<{ id: string; labelKey: string; color: string }> = [
   { id: 'quote', labelKey: 'tasks.kanban.quotes', color: 'bg-gray-500' },
@@ -26,14 +26,13 @@ export function KanbanBoard() {
     STATUS_COLUMNS.forEach(col => grouped.set(col.id, []));
 
     tasks.forEach(task => {
-      const existing = grouped.get(task.status) || [];
-      grouped.set(task.status, [...existing, task]);
+      grouped.get(task.status)?.push(task);
     });
 
     return grouped;
   }, [tasks]);
 
-  const handleDragEnd = async (result: DropResult) => {
+  const handleDragEnd = useCallback(async (result: DropResult) => {
     const { draggableId, destination, source } = result;
 
     // Dropped outside valid area
@@ -54,7 +53,7 @@ export function KanbanBoard() {
 
     // Transition the task status
     await transitionStatus(draggableId, newStatus, 'Moved via Kanban board');
-  };
+  }, [transitionStatus]);
 
   if (loading) {
     return (

@@ -1,6 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,14 +26,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { ErrorState } from '@/shared/ui/layout/ErrorState';
-import { Plus, Search, Edit, AlertTriangle, Package, Trash2, ArrowUpDown, X } from 'lucide-react';
+import { useTranslation } from '@/shared/hooks/useTranslation';
+import { VirtualizedTable } from '@/components/ui/virtualized-table';
+import { useAuth } from '@/domains/auth';
 import { useMaterials } from '../hooks/useMaterials';
 import type { Material, MaterialType } from '../api/types';
 import { useInventory } from '../hooks/useInventory';
 import { MaterialForm } from './MaterialForm';
-import { toast } from 'sonner';
-import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/domains/auth';
 
 function getMaterialTypeLabel(materialType: string, t: (key: string) => string): string {
   switch (materialType) {
@@ -74,25 +75,29 @@ export function MaterialCatalog() {
   const { stats, updateStock, deleteMaterial } = useInventory();
 
   const filteredMaterials = useMemo(() => materials ?? [], [materials]);
+  const categoryEntries = useMemo(
+    () => Object.entries(stats?.materials_by_category ?? {}),
+    [stats?.materials_by_category]
+  );
   const hasActiveFilters = searchTerm.trim().length > 0 || materialTypeFilter !== 'all' || categoryFilter !== 'all';
 
-  const handleEdit = (material: Material) => {
+  const handleEdit = useCallback((material: Material) => {
     setEditingMaterial(material);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     setEditingMaterial(null);
     setShowForm(true);
-  };
+  }, []);
 
-  const handleFormClose = () => {
+  const handleFormClose = useCallback(() => {
     setShowForm(false);
     setEditingMaterial(null);
     void refetch();
-  };
+  }, [refetch]);
 
-  const handleArchive = async (materialId: string) => {
+  const handleArchive = useCallback(async (materialId: string) => {
     if (!user?.token) {
       toast.error(t('errors.unauthorized'));
       return;
@@ -107,16 +112,16 @@ export function MaterialCatalog() {
     } finally {
       setArchiving(null);
     }
-  };
+  }, [deleteMaterial, t, user?.token]);
 
-  const handleStockAdjust = (material: Material) => {
+  const handleStockAdjust = useCallback((material: Material) => {
     setStockMaterial(material);
     setStockQuantity(0);
     setStockReason('');
     setShowStockDialog(true);
-  };
+  }, []);
 
-  const submitStockAdjustment = async () => {
+  const submitStockAdjustment = useCallback(async () => {
     if (!stockMaterial || stockQuantity === 0 || !stockReason.trim()) return;
 
     try {
@@ -134,15 +139,15 @@ export function MaterialCatalog() {
     } finally {
       setStockSaving(false);
     }
-  };
+  }, [refetch, stockMaterial, stockQuantity, stockReason, t, updateStock]);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSearchTerm('');
     setMaterialTypeFilter('all');
     setCategoryFilter('all');
-  };
+  }, []);
 
-  const formatCurrency = (value?: number, currency: string = 'EUR') => {
+  const formatCurrency = useCallback((value?: number, currency: string = 'EUR') => {
     if (typeof value !== 'number') {
       return t('common.notDefined');
     }
@@ -152,7 +157,137 @@ export function MaterialCatalog() {
       currency,
       minimumFractionDigits: 2,
     }).format(value);
-  };
+  }, [t]);
+
+  const materialColumns = useMemo(
+    () => [
+      {
+        key: 'sku',
+        header: t('inventory.sku'),
+        width: 130,
+        render: (value: unknown) => (
+          <div className="font-mono text-foreground">{String(value || '-')}</div>
+        ),
+      },
+      {
+        key: 'name',
+        header: t('inventory.name'),
+        width: 220,
+        render: (value: unknown) => (
+          <div className="text-foreground truncate">{String(value || '-')}</div>
+        ),
+      },
+      {
+        key: 'material_type',
+        header: t('inventory.materialType'),
+        width: 170,
+        render: (value: unknown) => (
+          <Badge variant="outline" className="text-blue-600 border-blue-300">
+            {getMaterialTypeLabel(String(value || ''), t)}
+          </Badge>
+        ),
+      },
+      {
+        key: 'current_stock',
+        header: t('inventory.currentStock'),
+        width: 180,
+        render: (_value: unknown, material: Material) => (
+          <div className="flex items-center gap-2">
+            <span className="text-foreground">
+              {material.current_stock} {material.unit_of_measure}
+            </span>
+            {material.current_stock <= (material.minimum_stock || 0) && (
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+            )}
+          </div>
+        ),
+      },
+      {
+        key: 'unit_cost',
+        header: t('inventory.unitCost'),
+        width: 140,
+        render: (_value: unknown, material: Material) => (
+          <div className="text-foreground">
+            {formatCurrency(material.unit_cost, material.currency)}
+          </div>
+        ),
+      },
+      {
+        key: 'status',
+        header: t('inventory.status'),
+        width: 120,
+        render: (_value: unknown, material: Material) => (
+          <Badge
+            variant={material.is_active ? 'default' : 'secondary'}
+            className={material.is_active ? 'bg-[hsl(var(--rpma-teal))] text-white' : ''}
+          >
+            {material.is_active ? t('inventory.active') : t('inventory.inactive')}
+          </Badge>
+        ),
+      },
+      {
+        key: 'actions',
+        header: t('common.actions'),
+        width: 150,
+        render: (_value: unknown, material: Material) => (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t('common.edit')}
+              title={t('common.edit')}
+              onClick={() => handleEdit(material)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t('inventory.adjustStock')}
+              title={t('inventory.adjustStock')}
+              onClick={() => handleStockAdjust(material)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowUpDown className="w-4 h-4" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t('inventory.archiveMaterial')}
+                  title={t('inventory.archiveMaterial')}
+                  className="text-muted-foreground hover:text-destructive"
+                  disabled={archiving === material.id}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('inventory.archiveConfirmTitle')}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t('inventory.archiveConfirmDescription', { name: material.name })}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleArchive(material.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {t('inventory.archiveMaterial')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        ),
+      },
+    ],
+    [archiving, formatCurrency, handleArchive, handleEdit, handleStockAdjust, t]
+  );
 
   if (!user?.token) {
     return <ErrorState message={t('errors.unauthorized')} />;
@@ -235,12 +370,11 @@ export function MaterialCatalog() {
               </SelectTrigger>
               <SelectContent className="bg-white border-[hsl(var(--rpma-border))]">
                 <SelectItem value="all">{t('inventory.allCategories')}</SelectItem>
-                {stats?.materials_by_category &&
-                  Object.keys(stats.materials_by_category).map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category} ({stats.materials_by_category[category]})
-                    </SelectItem>
-                  ))}
+                {categoryEntries.map(([category, count]) => (
+                  <SelectItem key={category} value={category}>
+                    {category} ({count})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             {hasActiveFilters && (
@@ -268,106 +402,115 @@ export function MaterialCatalog() {
               action={!hasActiveFilters ? <Button onClick={handleCreate}>{t('inventory.addFirstMaterial')}</Button> : undefined}
             />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="rpma-table-header">
-                  <TableHead>{t('inventory.sku')}</TableHead>
-                  <TableHead>{t('inventory.name')}</TableHead>
-                  <TableHead>{t('inventory.materialType')}</TableHead>
-                  <TableHead>{t('inventory.currentStock')}</TableHead>
-                  <TableHead>{t('inventory.unitCost')}</TableHead>
-                  <TableHead>{t('inventory.status')}</TableHead>
-                  <TableHead>{t('common.actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMaterials.map((material) => (
-                  <TableRow key={material.id} className="border-border hover:bg-[hsl(var(--rpma-surface))]/35">
-                    <TableCell className="text-foreground font-mono">{material.sku}</TableCell>
-                    <TableCell className="text-foreground">{material.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-blue-600 border-blue-300">
-                        {getMaterialTypeLabel(material.material_type, t)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-foreground">
-                          {material.current_stock} {material.unit_of_measure}
-                        </span>
-                        {material.current_stock <= (material.minimum_stock || 0) && (
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-foreground">{formatCurrency(material.unit_cost, material.currency)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={material.is_active ? 'default' : 'secondary'}
-                        className={material.is_active ? 'bg-[hsl(var(--rpma-teal))] text-white' : ''}
-                      >
-                        {material.is_active ? t('inventory.active') : t('inventory.inactive')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={t('common.edit')}
-                          title={t('common.edit')}
-                          onClick={() => handleEdit(material)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          aria-label={t('inventory.adjustStock')}
-                          title={t('inventory.adjustStock')}
-                          onClick={() => handleStockAdjust(material)}
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <ArrowUpDown className="w-4 h-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label={t('inventory.archiveMaterial')}
-                              title={t('inventory.archiveMaterial')}
-                              className="text-muted-foreground hover:text-destructive"
-                              disabled={archiving === material.id}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>{t('inventory.archiveConfirmTitle')}</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t('inventory.archiveConfirmDescription', { name: material.name })}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleArchive(material.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                {t('inventory.archiveMaterial')}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            filteredMaterials.length > 50 ? (
+              <VirtualizedTable
+                data={filteredMaterials}
+                columns={materialColumns}
+                rowHeight={64}
+                maxHeight={640}
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="rpma-table-header">
+                    <TableHead>{t('inventory.sku')}</TableHead>
+                    <TableHead>{t('inventory.name')}</TableHead>
+                    <TableHead>{t('inventory.materialType')}</TableHead>
+                    <TableHead>{t('inventory.currentStock')}</TableHead>
+                    <TableHead>{t('inventory.unitCost')}</TableHead>
+                    <TableHead>{t('inventory.status')}</TableHead>
+                    <TableHead>{t('common.actions')}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredMaterials.map((material) => (
+                    <TableRow key={material.id} className="border-border hover:bg-[hsl(var(--rpma-surface))]/35">
+                      <TableCell className="text-foreground font-mono">{material.sku}</TableCell>
+                      <TableCell className="text-foreground">{material.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-blue-600 border-blue-300">
+                          {getMaterialTypeLabel(material.material_type, t)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground">
+                            {material.current_stock} {material.unit_of_measure}
+                          </span>
+                          {material.current_stock <= (material.minimum_stock || 0) && (
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-foreground">{formatCurrency(material.unit_cost, material.currency)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={material.is_active ? 'default' : 'secondary'}
+                          className={material.is_active ? 'bg-[hsl(var(--rpma-teal))] text-white' : ''}
+                        >
+                          {material.is_active ? t('inventory.active') : t('inventory.inactive')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={t('common.edit')}
+                            title={t('common.edit')}
+                            onClick={() => handleEdit(material)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={t('inventory.adjustStock')}
+                            title={t('inventory.adjustStock')}
+                            onClick={() => handleStockAdjust(material)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <ArrowUpDown className="w-4 h-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label={t('inventory.archiveMaterial')}
+                                title={t('inventory.archiveMaterial')}
+                                className="text-muted-foreground hover:text-destructive"
+                                disabled={archiving === material.id}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t('inventory.archiveConfirmTitle')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t('inventory.archiveConfirmDescription', { name: material.name })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleArchive(material.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {t('inventory.archiveMaterial')}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )
           )}
         </CardContent>
       </Card>

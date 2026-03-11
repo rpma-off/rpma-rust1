@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { VirtualizedList, usePerformanceMonitor } from './virtualization';
-import { cn } from '@/lib/utils';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { usePerformanceMonitor } from './virtualization';
 
 interface Column<T> {
   key: keyof T | string;
@@ -33,7 +33,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
   data,
   columns,
   height = 400,
-  maxHeight: _maxHeight,
+  maxHeight,
   rowHeight = 48,
   className = '',
   onRowClick,
@@ -43,6 +43,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
   onSelectionChange
 }: VirtualizedTableProps<T>) {
   usePerformanceMonitor('VirtualizedTable');
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -62,7 +63,17 @@ export function VirtualizedTable<T extends Record<string, any>>({
     });
   }, [data, sortConfig]);
 
-  const handleSort = (key: string) => {
+  const tableHeight = maxHeight ?? height;
+  const bodyHeight = Math.max(tableHeight - rowHeight, rowHeight);
+
+  const rowVirtualizer = useVirtualizer({
+    count: sortedData.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: 6,
+  });
+
+  const handleSort = useCallback((key: string) => {
     setSortConfig(current => {
       if (current?.key === key) {
         if (current.direction === 'asc') return { key, direction: 'desc' };
@@ -70,9 +81,9 @@ export function VirtualizedTable<T extends Record<string, any>>({
       }
       return { key, direction: 'asc' };
     });
-  };
+  }, []);
 
-  const handleRowSelect = (index: number) => {
+  const handleRowSelect = useCallback((index: number) => {
     if (!selectable || !onSelectionChange) return;
 
     const newSelection = new Set(selectedRows);
@@ -82,20 +93,17 @@ export function VirtualizedTable<T extends Record<string, any>>({
       newSelection.add(index);
     }
     onSelectionChange(newSelection);
-  };
+  }, [onSelectionChange, selectable, selectedRows]);
 
-  const handleRowClick = (item: T, index: number) => {
+  const handleRowClick = useCallback((item: T, index: number) => {
     if (selectable) {
       handleRowSelect(index);
     }
     onRowClick?.(item, index);
-  };
+  }, [handleRowSelect, onRowClick, selectable]);
 
-  const renderItem = (item: T, index: number) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.02 }}
+  const renderItem = useCallback((item: T, index: number) => (
+    <div
       className={cn(
         'flex items-center border-b border-[hsl(var(--rpma-border))] hover:bg-[#f5f6f7] transition-colors cursor-pointer group',
         selectable && selectedRows.has(index) && 'bg-[hsl(var(--rpma-teal))]/10 border-[hsl(var(--rpma-teal))]/30',
@@ -136,8 +144,17 @@ export function VirtualizedTable<T extends Record<string, any>>({
           </div>
         );
       })}
-    </motion.div>
-  );
+    </div>
+  ), [
+    className,
+    columns,
+    handleRowClick,
+    handleRowSelect,
+    onRowHover,
+    rowHeight,
+    selectable,
+    selectedRows,
+  ]);
 
   const _totalWidth = columns.reduce((sum, col) => sum + (col.width || 150), selectable ? 60 : 0);
 
@@ -194,13 +211,38 @@ export function VirtualizedTable<T extends Record<string, any>>({
       </div>
 
       {/* Virtualized Body */}
-      <VirtualizedList
-        items={sortedData}
-        itemHeight={rowHeight}
-        containerHeight={height - rowHeight} // Subtract header height
-        renderItem={renderItem}
-        className="bg-background"
-      />
+      <div
+        ref={parentRef}
+        className="bg-background overflow-auto"
+        style={{ height: bodyHeight }}
+      >
+        <div
+          style={{
+            height: rowVirtualizer.getTotalSize(),
+            position: 'relative',
+            width: '100%',
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const item = sortedData[virtualRow.index];
+
+            return (
+              <div
+                key={item?.id ?? virtualRow.key}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {renderItem(item, virtualRow.index)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Footer */}
       <div className="bg-[hsl(var(--rpma-surface))] border-t border-[hsl(var(--rpma-border))] px-4 py-2">

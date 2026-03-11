@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { UserAccount } from '@/types';
 import { bigintToNumber } from '@/lib/utils/timestamp-conversion';
-import { useUserActions } from '../api/useUserActions';
-import { ChangeRoleDialog } from './ChangeRoleDialog';
+import { UserAccount } from '@/types';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useUserActions } from '../api/useUserActions';
+import { ChangeRoleDialog } from './ChangeRoleDialog';
 
 interface UserListProps {
   users: UserAccount[];
@@ -15,7 +15,30 @@ interface UserListProps {
   onRefresh: () => void;
 }
 
-export function UserList({ users, onEdit, onRefresh }: UserListProps) {
+const ROLE_BADGE_COLORS: Record<string, string> = {
+  admin: 'bg-red-100 text-red-800',
+  supervisor: 'bg-blue-100 text-blue-800',
+  technician: 'bg-green-100 text-green-800',
+  viewer: 'bg-gray-100 text-gray-800',
+};
+
+function formatUserDate(
+  timestamp: bigint | string | null | undefined,
+  t: (key: string) => string
+) {
+  if (!timestamp) return t('users.never');
+
+  try {
+    const date = typeof timestamp === 'bigint'
+      ? new Date(bigintToNumber(timestamp) || 0)
+      : new Date(timestamp);
+    return date.toLocaleDateString();
+  } catch {
+    return t('users.invalidDate');
+  }
+}
+
+export const UserList = memo(function UserList({ users, onEdit, onRefresh }: UserListProps) {
   const { deleteUser } = useUserActions();
   const { t } = useTranslation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -28,7 +51,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserAccount | null>(null);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!userToDelete) return;
 
     try {
@@ -49,34 +72,32 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
     } finally {
       setDeletingId(null);
     }
-  };
+  }, [deleteUser, onRefresh, t, userToDelete]);
 
-  const confirmDeleteUser = (user: UserAccount) => {
+  const confirmDeleteUser = useCallback((user: UserAccount) => {
     setUserToDelete(user);
     setDeleteConfirmOpen(true);
-  };
+  }, []);
 
-  const formatDate = (timestamp: bigint | string | null | undefined) => {
-    if (!timestamp) return t('users.never');
-    try {
-      const date = typeof timestamp === 'bigint'
-        ? new Date(bigintToNumber(timestamp) || 0)
-        : new Date(timestamp);
-      return date.toLocaleDateString();
-    } catch {
-      return t('users.invalidDate');
-    }
-  };
+  const openRoleChangeDialog = useCallback((user: UserAccount) => {
+    setRoleChangeUser({
+      id: user.id,
+      name: `${user.first_name} ${user.last_name}`,
+      email: user.email,
+      role: user.role,
+    });
+  }, []);
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'supervisor': return 'bg-blue-100 text-blue-800';
-      case 'technician': return 'bg-green-100 text-green-800';
-      case 'viewer': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const preparedUsers = useMemo(
+    () =>
+      users.map((user) => ({
+        ...user,
+        createdAtLabel: formatUserDate(user.created_at, t),
+        lastLoginLabel: user.last_login ? formatUserDate(user.last_login, t) : t('users.never'),
+        roleBadgeColor: ROLE_BADGE_COLORS[user.role] || ROLE_BADGE_COLORS.viewer,
+      })),
+    [t, users]
+  );
 
   return (
     <div className="rpma-shell overflow-hidden">
@@ -109,7 +130,7 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[hsl(var(--rpma-border))]">
-              {users.map((user) => (
+              {preparedUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-[hsl(var(--rpma-surface))]">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-foreground">
@@ -122,11 +143,11 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {user.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
-                      {user.role}
-                    </span>
-                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap">
+                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.roleBadgeColor}`}>
+                       {user.role}
+                     </span>
+                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       user.is_active
@@ -135,30 +156,25 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
                     }`}>
                       {user.is_active ? t('users.active') : t('users.inactive')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {user.last_login ? formatDate(user.last_login) : t('users.never')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {formatDate(user.created_at)}
-                  </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                     <button
+                   </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                     {user.lastLoginLabel}
+                   </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                     {user.createdAtLabel}
+                   </td>
+                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
                        onClick={() => onEdit(user)}
                        className="text-indigo-600 hover:text-indigo-900 mr-4"
                      >
                        {t('common.edit')}
-                     </button>
-                     <button
-                       onClick={() => setRoleChangeUser({
-                         id: user.id,
-                         name: `${user.first_name} ${user.last_name}`,
-                         email: user.email,
-                         role: user.role
-                       })}
-                       className="text-blue-600 hover:text-blue-900 mr-4"
-                     >
-                       {t('users.changeRole')}
+                      </button>
+                      <button
+                        onClick={() => openRoleChangeDialog(user)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        {t('users.changeRole')}
                      </button>
                      <button
                        onClick={() => confirmDeleteUser(user)}
@@ -203,4 +219,6 @@ export function UserList({ users, onEdit, onRefresh }: UserListProps) {
       />
     </div>
   );
-}
+});
+
+UserList.displayName = 'UserList';
