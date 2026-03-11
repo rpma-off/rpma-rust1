@@ -42,9 +42,9 @@ use rpma_ppf_intervention::domains::notifications::domain::models::message::{
     UpdateNotificationPreferencesRequest,
 };
 use rpma_ppf_intervention::domains::notifications::domain::models::notification::{
-    EmailConfig, EmailProvider, Notification, NotificationChannel, NotificationConfig,
+    Notification, NotificationChannel, NotificationConfig,
     NotificationMessage, NotificationPriority, NotificationStatus, NotificationTemplate,
-    NotificationType, SmsConfig, SmsProvider, TemplateVariables,
+    NotificationType, TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
     AttachmentType, ConvertQuoteToTaskResponse, CreateQuoteAttachmentRequest,
@@ -675,18 +675,6 @@ fn main() {
         &TemplateVariables::export_to_string().expect("Failed to export TemplateVariables type"),
     );
     type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&EmailProvider::export_to_string().expect("Failed to export EmailProvider type"));
-    type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&EmailConfig::export_to_string().expect("Failed to export EmailConfig type"));
-    type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&SmsProvider::export_to_string().expect("Failed to export SmsProvider type"));
-    type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&SmsConfig::export_to_string().expect("Failed to export SmsConfig type"));
-    type_definitions.push_str("\n");
     type_definitions.push_str(
         &NotificationConfig::export_to_string().expect("Failed to export NotificationConfig type"),
     );
@@ -1028,10 +1016,6 @@ fn main() {
         "NotificationPriority",
         "NotificationStatus",
         "TemplateVariables",
-        "EmailProvider",
-        "EmailConfig",
-        "SmsProvider",
-        "SmsConfig",
         "NotificationConfig",
         "UpdateNotificationConfigRequest",
         "SendNotificationRequest",

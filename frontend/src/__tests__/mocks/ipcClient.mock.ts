@@ -38,7 +38,6 @@ export const mockIpcClient = {
   notifications: {
     initialize: jest.fn(),
     send: jest.fn(),
-    testConfig: jest.fn(),
     getStatus: jest.fn(),
   },
   settings: {

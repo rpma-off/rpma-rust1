@@ -897,9 +897,6 @@ export const ipcClient = {
     send: (request: SendNotificationRequest) =>
       safeInvoke<void>('send_notification', { request }),
 
-    testConfig: (recipient: string, channel: 'Email' | 'Sms' | 'Push') =>
-      safeInvoke<string>('test_notification_config', { recipient, channel }),
-
     getStatus: () =>
       safeInvoke<JsonValue>('get_notification_status', {}),
 

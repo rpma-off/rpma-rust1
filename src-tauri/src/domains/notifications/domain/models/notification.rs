@@ -9,29 +9,15 @@ use ts_rs::TS;
 
 /// Notification delivery channel.
 ///
-/// Only `InApp` is functional. External channels (`Email`, `Sms`, `Push`)
-/// are retained for schema compatibility but have no delivery implementation.
+/// Only `InApp` is functional.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum NotificationChannel {
-    /// In-app notification — the only functional channel.
     InApp,
-    /// NOT IMPLEMENTED — retained for schema compatibility only.
-    Email,
-    /// NOT IMPLEMENTED — retained for schema compatibility only.
-    Sms,
-    /// NOT IMPLEMENTED — retained for schema compatibility only.
-    Push,
 }
 
 impl std::fmt::Display for NotificationChannel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::InApp => "in_app",
-            Self::Email => "email",
-            Self::Sms => "sms",
-            Self::Push => "push",
-        };
-        write!(f, "{}", s)
+        write!(f, "in_app")
     }
 }
 
@@ -160,73 +146,9 @@ impl std::fmt::Display for NotificationStatus {
     }
 }
 
-/// NOT IMPLEMENTED — Email delivery is not available.
-/// Retained for schema/type compatibility only.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct EmailConfig {
-    pub provider: EmailProvider,
-    pub api_key: String,
-    pub from_email: String,
-    pub from_name: String,
-}
-
-/// NOT IMPLEMENTED — Email delivery is not available.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub enum EmailProvider {
-    SendGrid,
-    Mailgun,
-    Smtp,
-}
-
-impl std::fmt::Display for EmailProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::SendGrid => "sendgrid",
-            Self::Mailgun => "mailgun",
-            Self::Smtp => "smtp",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-/// NOT IMPLEMENTED — SMS delivery is not available.
-/// Retained for schema/type compatibility only.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct SmsConfig {
-    pub provider: SmsProvider,
-    pub api_key: String,
-    pub from_number: String,
-}
-
-/// NOT IMPLEMENTED — SMS delivery is not available.
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub enum SmsProvider {
-    Twilio,
-    AwsSns,
-}
-
-impl std::fmt::Display for SmsProvider {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Twilio => "twilio",
-            Self::AwsSns => "aws_sns",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-/// Notification service configuration.
-///
-/// Only in-app notifications are functional. The `email` and `sms` fields
-/// are retained for schema compatibility but are never used for delivery.
+/// Notification service configuration (in-app only).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct NotificationConfig {
-    /// NOT IMPLEMENTED — retained for schema compatibility.
-    pub email: Option<EmailConfig>,
-    /// NOT IMPLEMENTED — retained for schema compatibility.
-    pub sms: Option<SmsConfig>,
-    /// NOT IMPLEMENTED — retained for schema compatibility.
-    pub push_enabled: bool,
     pub quiet_hours_start: Option<String>, // HH:MM format
     pub quiet_hours_end: Option<String>,   // HH:MM format
     pub timezone: String,
@@ -250,9 +172,6 @@ pub struct TemplateVariables {
 impl Default for NotificationConfig {
     fn default() -> Self {
         Self {
-            email: None,
-            sms: None,
-            push_enabled: true,
             quiet_hours_start: Some("22:00".to_string()),
             quiet_hours_end: Some("08:00".to_string()),
             timezone: "Europe/Paris".to_string(),
@@ -266,8 +185,6 @@ pub struct NotificationPreferences {
     pub id: String,
     pub user_id: String,
 
-    pub email_enabled: bool,
-    pub sms_enabled: bool,
     pub in_app_enabled: bool,
 
     pub task_assigned: bool,
@@ -285,9 +202,6 @@ pub struct NotificationPreferences {
     pub quiet_hours_start: Option<String>,
     pub quiet_hours_end: Option<String>,
 
-    pub email_frequency: String,
-    pub email_digest_time: String,
-
     #[ts(type = "string")]
     pub created_at: i64,
     #[ts(type = "string")]
@@ -301,8 +215,6 @@ impl NotificationPreferences {
         Self {
             id: crate::shared::utils::uuid::generate_uuid_string(),
             user_id,
-            email_enabled: true,
-            sms_enabled: false,
             in_app_enabled: true,
             task_assigned: true,
             task_updated: true,
@@ -315,8 +227,6 @@ impl NotificationPreferences {
             quiet_hours_enabled: false,
             quiet_hours_start: None,
             quiet_hours_end: None,
-            email_frequency: "immediate".to_string(),
-            email_digest_time: "09:00".to_string(),
             created_at: now,
             updated_at: now,
         }
@@ -327,8 +237,6 @@ impl NotificationPreferences {
         Ok(Self {
             id: row.get("id")?,
             user_id: row.get("user_id")?,
-            email_enabled: row.get::<_, i32>("email_enabled")? == 1,
-            sms_enabled: row.get::<_, i32>("sms_enabled")? == 1,
             in_app_enabled: row.get::<_, i32>("in_app_enabled")? == 1,
             task_assigned: row.get::<_, i32>("task_assigned")? == 1,
             task_updated: row.get::<_, i32>("task_updated")? == 1,
@@ -341,8 +249,6 @@ impl NotificationPreferences {
             quiet_hours_enabled: row.get::<_, i32>("quiet_hours_enabled")? == 1,
             quiet_hours_start: row.get("quiet_hours_start")?,
             quiet_hours_end: row.get("quiet_hours_end")?,
-            email_frequency: row.get("email_frequency")?,
-            email_digest_time: row.get("email_digest_time")?,
             created_at: row.get("created_at")?,
             updated_at: row.get("updated_at")?,
         })
@@ -409,12 +315,9 @@ impl NotificationTemplate {
                 .get::<_, Option<String>>("channel")?
                 .and_then(|s| match s.as_str() {
                     "in_app" => Some(NotificationChannel::InApp),
-                    "email" => Some(NotificationChannel::Email),
-                    "sms" => Some(NotificationChannel::Sms),
-                    "push" => Some(NotificationChannel::Push),
                     _ => None,
                 })
-                .unwrap_or(NotificationChannel::Email),
+                .unwrap_or(NotificationChannel::InApp),
             subject_template: row.get("subject")?,
             body_template: row.get("body")?,
             variables: row

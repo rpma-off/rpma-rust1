@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Mail, MessageSquare, Save } from 'lucide-react';
+import { Bell, Save } from 'lucide-react';
 import type { UpdateNotificationPreferencesRequest } from '@/lib/backend';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useNotificationPreferences } from '../api/useMessages';
 
@@ -19,8 +18,6 @@ interface NotificationPreferencesProps {
 export function NotificationPreferences({ userId }: NotificationPreferencesProps) {
   const { preferences, loading, error, updatePreferences } = useNotificationPreferences(userId);
   const [localPrefs, setLocalPrefs] = useState<UpdateNotificationPreferencesRequest>({
-    email_enabled: null,
-    sms_enabled: null,
     in_app_enabled: null,
     task_assigned: null,
     task_updated: null,
@@ -33,16 +30,12 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
     quiet_hours_enabled: null,
     quiet_hours_start: null,
     quiet_hours_end: null,
-    email_frequency: null,
-    email_digest_time: null,
     correlation_id: null,
   });
 
   useEffect(() => {
     if (preferences) {
       setLocalPrefs({
-        email_enabled: preferences.email_enabled,
-        sms_enabled: preferences.sms_enabled,
         in_app_enabled: preferences.in_app_enabled,
         task_assigned: preferences.task_assigned,
         task_updated: preferences.task_updated,
@@ -55,8 +48,6 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
         quiet_hours_enabled: preferences.quiet_hours_enabled,
         quiet_hours_start: preferences.quiet_hours_start || null,
         quiet_hours_end: preferences.quiet_hours_end || null,
-        email_frequency: preferences.email_frequency,
-        email_digest_time: preferences.email_digest_time,
         correlation_id: null,
       });
     }
@@ -98,40 +89,6 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
         <div>
           <h3 className="text-lg font-medium mb-4">Canaux de communication</h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <div>
-                  <Label htmlFor="email-enabled">Notifications par email</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recevoir des notifications par email
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="email-enabled"
-                checked={localPrefs.email_enabled ?? false}
-                onCheckedChange={(checked) => updatePreference('email_enabled', checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <div>
-                  <Label htmlFor="sms-enabled">Notifications par SMS</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Recevoir des notifications par SMS (coûts supplémentaires possibles)
-                  </p>
-                </div>
-              </div>
-              <Switch
-                id="sms-enabled"
-                checked={localPrefs.sms_enabled ?? false}
-                onCheckedChange={(checked) => updatePreference('sms_enabled', checked)}
-              />
-            </div>
-
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
@@ -268,45 +225,6 @@ export function NotificationPreferences({ userId }: NotificationPreferencesProps
             </div>
           )}
         </div>
-
-        <Separator />
-
-        {/* Email Settings */}
-        {localPrefs.email_enabled && (
-          <div>
-            <h3 className="text-lg font-medium mb-4">Paramètres d&apos;email</h3>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email-frequency">Fréquence des emails</Label>
-                <Select
-                  value={localPrefs.email_frequency || 'immediate'}
-                  onValueChange={(value) => updatePreference('email_frequency', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="immediate">Immédiat</SelectItem>
-                    <SelectItem value="daily">Quotidien</SelectItem>
-                    <SelectItem value="weekly">Hebdomadaire</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {(localPrefs.email_frequency === 'daily' || localPrefs.email_frequency === 'weekly') && (
-                <div>
-                  <Label htmlFor="email-digest-time">Heure d&apos;envoi du résumé</Label>
-                  <Input
-                    id="email-digest-time"
-                    type="time"
-                    value={localPrefs.email_digest_time || '09:00'}
-                    onChange={(e) => updatePreference('email_digest_time', e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Save Button */}
         <div className="flex justify-end">

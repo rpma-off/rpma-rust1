@@ -8,7 +8,8 @@ use crate::domains::calendar::domain::models::calendar_event::{
     CalendarEvent, CreateEventInput, UpdateEventInput,
 };
 use crate::domains::calendar::infrastructure::calendar::CalendarService;
-use crate::domains::calendar::infrastructure::calendar_event_service::CalendarEventService;
+use crate::domains::calendar::infrastructure::calendar_event_repository::CalendarEventRepository;
+use crate::shared::repositories::base::Repository;
 use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
 
@@ -137,47 +138,66 @@ impl CalendarFacade {
                 Ok(CalendarResponse::Tasks(tasks))
             }
             CalendarCommand::GetEventById { id } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let event = service
-                    .get_event_by_id(id)
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let event = repo
+                    .find_by_id(id)
                     .await
                     .map_err(|e| AppError::internal_sanitized("get_calendar_event", &e))?;
                 Ok(CalendarResponse::OptionalEvent(event))
             }
             CalendarCommand::CreateEvent { event_data } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let event = service
-                    .create_event(event_data, Some(ctx.auth.user_id.clone()))
-                    .await?;
+                if event_data.title.trim().is_empty() {
+                    return Err(AppError::Validation(
+                        "Event title cannot be empty".to_string(),
+                    ));
+                }
+                if event_data.start_datetime >= event_data.end_datetime {
+                    return Err(AppError::Validation(
+                        "Event start time must be before end time".to_string(),
+                    ));
+                }
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let event = repo
+                    .create(event_data, Some(ctx.auth.user_id.clone()))
+                    .await
+                    .map_err(|e| AppError::internal_sanitized("create_calendar_event", &e))?;
                 Ok(CalendarResponse::Event(event))
             }
             CalendarCommand::UpdateEvent { id, event_data } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let event = service
-                    .update_event(id, event_data, Some(ctx.auth.user_id.clone()))
-                    .await?;
+                if let (Some(start), Some(end)) = (&event_data.start_datetime, &event_data.end_datetime) {
+                    if start >= end {
+                        return Err(AppError::Validation(
+                            "Event start time must be before end time".to_string(),
+                        ));
+                    }
+                }
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let event = repo
+                    .update(&id, event_data, Some(ctx.auth.user_id.clone()))
+                    .await
+                    .map_err(|e| AppError::internal_sanitized("update_calendar_event", &e))?;
                 Ok(CalendarResponse::OptionalEvent(event))
             }
             CalendarCommand::DeleteEvent { id } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let deleted = service
-                    .delete_event(id)
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let deleted = repo
+                    .delete_by_id(id)
                     .await
                     .map_err(|e| AppError::internal_sanitized("delete_calendar_event", &e))?;
                 Ok(CalendarResponse::Deleted(deleted))
             }
             CalendarCommand::GetEventsForTechnician { technician_id } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let events = service
-                    .get_events_for_technician(technician_id)
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let events = repo
+                    .find_by_technician(&technician_id)
                     .await
                     .map_err(|e| AppError::internal_sanitized("get_technician_events", &e))?;
                 Ok(CalendarResponse::Events(events))
             }
             CalendarCommand::GetEventsForTask { task_id } => {
-                let service = CalendarEventService::new(self.db.clone());
-                let events = service
-                    .get_events_for_task(task_id)
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let events = repo
+                    .find_by_task(&task_id)
                     .await
                     .map_err(|e| AppError::internal_sanitized("get_task_events", &e))?;
                 Ok(CalendarResponse::Events(events))
@@ -188,9 +208,10 @@ impl CalendarFacade {
                 technician_id,
             } => {
                 self.validate_date_range(&start_date, &end_date)?;
-                let service = CalendarEventService::new(self.db.clone());
-                let events = service
-                    .get_events_in_range(start_date, end_date, technician_id)
+                let repo = CalendarEventRepository::new(self.db.clone());
+                let tech_id = technician_id.as_deref();
+                let events = repo
+                    .find_by_date_range(&start_date, &end_date, tech_id)
                     .await
                     .map_err(|e| AppError::internal_sanitized("get_events", &e))?;
                 Ok(CalendarResponse::Events(events))

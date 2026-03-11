@@ -237,35 +237,31 @@ impl MessageService {
 
         let prefs = conn
             .query_row(
-                "SELECT id, user_id, email_enabled, sms_enabled, in_app_enabled, \
+                "SELECT id, user_id, in_app_enabled, \
                  task_assigned, task_updated, task_completed, task_overdue, \
                  client_created, client_updated, system_alerts, maintenance_notifications, \
                  quiet_hours_enabled, quiet_hours_start, quiet_hours_end, \
-                 email_frequency, email_digest_time, created_at, updated_at \
+                 created_at, updated_at \
                  FROM notification_preferences WHERE user_id = ?",
                 params![user_id],
                 |row| {
                     Ok(NotificationPreferences {
                         id: row.get(0)?,
                         user_id: row.get(1)?,
-                        email_enabled: row.get(2)?,
-                        sms_enabled: row.get(3)?,
-                        in_app_enabled: row.get(4)?,
-                        task_assigned: row.get(5)?,
-                        task_updated: row.get(6)?,
-                        task_completed: row.get(7)?,
-                        task_overdue: row.get(8)?,
-                        client_created: row.get(9)?,
-                        client_updated: row.get(10)?,
-                        system_alerts: row.get(11)?,
-                        maintenance_notifications: row.get(12)?,
-                        quiet_hours_enabled: row.get(13)?,
-                        quiet_hours_start: row.get(14)?,
-                        quiet_hours_end: row.get(15)?,
-                        email_frequency: row.get(16)?,
-                        email_digest_time: row.get(17)?,
-                        created_at: row.get(18)?,
-                        updated_at: row.get(19)?,
+                        in_app_enabled: row.get(2)?,
+                        task_assigned: row.get(3)?,
+                        task_updated: row.get(4)?,
+                        task_completed: row.get(5)?,
+                        task_overdue: row.get(6)?,
+                        client_created: row.get(7)?,
+                        client_updated: row.get(8)?,
+                        system_alerts: row.get(9)?,
+                        maintenance_notifications: row.get(10)?,
+                        quiet_hours_enabled: row.get(11)?,
+                        quiet_hours_start: row.get(12)?,
+                        quiet_hours_end: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
                     })
                 },
             )
@@ -292,14 +288,6 @@ impl MessageService {
         let now = chrono::Utc::now().timestamp();
         let mut param_values: Vec<String> = vec![now.to_string()];
 
-        if let Some(v) = updates.email_enabled {
-            sql.push_str(", email_enabled = ?");
-            param_values.push(v.to_string());
-        }
-        if let Some(v) = updates.sms_enabled {
-            sql.push_str(", sms_enabled = ?");
-            param_values.push(v.to_string());
-        }
         if let Some(v) = updates.in_app_enabled {
             sql.push_str(", in_app_enabled = ?");
             param_values.push(v.to_string());
@@ -346,14 +334,6 @@ impl MessageService {
         }
         if let Some(ref v) = updates.quiet_hours_end {
             sql.push_str(", quiet_hours_end = ?");
-            param_values.push(v.clone());
-        }
-        if let Some(ref v) = updates.email_frequency {
-            sql.push_str(", email_frequency = ?");
-            param_values.push(v.clone());
-        }
-        if let Some(ref v) = updates.email_digest_time {
-            sql.push_str(", email_digest_time = ?");
             param_values.push(v.clone());
         }
 

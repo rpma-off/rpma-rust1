@@ -22,12 +22,6 @@ export const POST = withAuth(async (request: NextRequestWithUser) => {
       return NextResponse.json({ success: true, message: 'Notification sent' });
     }
 
-    if (body.action === 'test') {
-      const { recipient, channel } = body;
-      const result = await notificationService.testNotificationConfig(recipient, channel, token);
-      return NextResponse.json({ success: true, message: result });
-    }
-
     if (body.action === 'status') {
       const status = await notificationService.getNotificationStatus(token);
       return NextResponse.json({ success: true, data: status });

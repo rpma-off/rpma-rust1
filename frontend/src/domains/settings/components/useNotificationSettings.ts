@@ -10,10 +10,10 @@ import type { UserSession } from '@/lib/backend';
 import { useLogger } from '@/shared/hooks/useLogger';
 
 export async function sendTestNotification(
-  recipient: string,
+  _recipient: string,
   _sessionToken: string
 ): Promise<string> {
-  return ipcClient.notifications.testConfig(recipient, 'Email');
+  throw new Error('External notification channels are not available');
 }
 
 // Notification settings form schema

@@ -181,7 +181,6 @@ export function createTestAdapter(overrides?: TestAdapterOverrides): IpcAdapter 
     notifications: {
       initialize: noop,
       send: noop,
-      testConfig: noop,
       getStatus: noop,
       getRecentActivities: noop,
     },

@@ -1,8 +1,4 @@
-//! Notification commands for Tauri
-//!
-//! Only in-app notifications are functional. External delivery channels
-//! (Push/Email/SMS) are not implemented — see the in-app notification and
-//! message sub-modules for the working notification surface.
+//! Notification commands for Tauri (in-app only).
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::resolve_context;
@@ -20,9 +16,6 @@ lazy_static! {
 }
 
 /// Initialize the notification service with configuration.
-///
-/// Only in-app notification configuration is stored. External delivery
-/// channels are not implemented.
 #[tauri::command]
 #[instrument(skip(config, state))]
 pub async fn initialize_notification_service(
@@ -32,9 +25,6 @@ pub async fn initialize_notification_service(
     let ctx = resolve_context!(&state, &config.correlation_id);
 
     let notification_config = NotificationConfig {
-        email: None,
-        sms: None,
-        push_enabled: false,
         quiet_hours_start: config.quiet_hours_start.clone(),
         quiet_hours_end: config.quiet_hours_end.clone(),
         timezone: config

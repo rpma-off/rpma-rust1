@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Mail, MessageSquare, Users, Search } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import type { Message, MessageQuery } from '@/lib/backend';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,17 +51,8 @@ export function MessageInbox({ userId }: MessageInboxProps) {
     }
   };
 
-  const getMessageIcon = (messageType: string) => {
-    switch (messageType) {
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'sms':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'in_app':
-        return <Users className="h-4 w-4" />;
-      default:
-        return <MessageSquare className="h-4 w-4" />;
-    }
+  const getMessageIcon = (_messageType: string) => {
+    return <Users className="h-4 w-4" />;
   };
 
   const getStatusBadge = (status: string) => {
@@ -133,8 +124,6 @@ export function MessageInbox({ userId }: MessageInboxProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="sms">SMS</SelectItem>
                 <SelectItem value="in_app">In-App</SelectItem>
               </SelectContent>
             </Select>

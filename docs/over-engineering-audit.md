@@ -410,15 +410,15 @@ Le backend RPMA v2 affiche un **score moyen d'over-engineering de 2,7/5** sur se
 | `shared/services/event_system.rs` (doublon event bus) | 1 fichier | ~790 LOC |
 | **Total Priorité 1** | **~25–26 fichiers** | **~4 700 LOC** |
 
-### 🟠 Priorité 2 — Fusionner / Aplatir
+### 🟠 Priorité 2 — Fusionner / Aplatir ✅ APPLIQUÉ
 
-| Cible | Action | Gain estimé |
-|-------|--------|-------------|
-| `notifications` : supprimer canaux Push/Email/SMS non implémentés | Supprimer ~5 fichiers infra | ~3 000 LOC |
-| `clients` : fusionner `client_statistics.rs` + `client_task_integration.rs` | -1 fichier | ~200 LOC |
-| `calendar` : fusionner `calendar.rs` + `calendar_event_repository.rs` | -1 fichier | ~400 LOC |
-| `documents` : déplacer PDF utils vers `shared/pdf/` | Réorganisation | ~200 LOC |
-| **Total Priorité 2** | **~7–8 fichiers** | **~3 800 LOC** |
+| Cible | Action | Gain estimé | Statut |
+|-------|--------|-------------|--------|
+| `notifications` : supprimer canaux Push/Email/SMS non implémentés | Supprimer ~5 fichiers infra | ~3 000 LOC | ✅ FAIT |
+| `clients` : fusionner `client_statistics.rs` + `client_task_integration.rs` | -1 fichier | ~200 LOC | ✅ FAIT |
+| `calendar` : supprimer `calendar_event_service.rs` (wrapper transparent) | -1 fichier, validation absorbée par le facade | ~162 LOC | ✅ FAIT |
+| `documents` : déplacer PDF utils vers `shared/pdf/` | Réorganisation | ~200 LOC | ⏭️ Dépriorisé (1 consommateur, 0 réduction LOC) |
+| **Total Priorité 2** | **~6–7 fichiers** | **~3 362 LOC** | ✅ |
 
 ### 🟡 Priorité 3 — Simplifier à moyen terme
 

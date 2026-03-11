@@ -118,8 +118,6 @@ export const ipcClient = {
       mockSafeInvoke('initialize_notification_service', { config, session_token: sessionToken }),
     send: (request: JsonObject, sessionToken: string) =>
       mockSafeInvoke('send_notification', { request, session_token: sessionToken }),
-    testConfig: (recipient: string, channel: 'Email' | 'Sms' | 'Push', sessionToken: string) =>
-      mockSafeInvoke('test_notification_config', { recipient, channel, session_token: sessionToken }),
     getStatus: (sessionToken: string) =>
       mockSafeInvoke('get_notification_status', { session_token: sessionToken }),
     getRecentActivities: (sessionToken: string) =>

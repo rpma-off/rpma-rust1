@@ -106,7 +106,6 @@ export const IPC_COMMANDS = {
   // Notification commands
   INITIALIZE_NOTIFICATION_SERVICE: 'initialize_notification_service',
   SEND_NOTIFICATION: 'send_notification',
-  TEST_NOTIFICATION_CONFIG: 'test_notification_config',
   GET_NOTIFICATION_STATUS: 'get_notification_status',
   GET_NOTIFICATIONS: 'get_notifications',
   MARK_NOTIFICATION_READ: 'mark_notification_read',

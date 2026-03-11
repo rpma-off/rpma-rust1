@@ -3,14 +3,6 @@ import type { NotificationConfig as IpcNotificationConfig } from '@/lib/ipc/type
 import type { JsonValue } from '@/types/json';
 
 export interface NotificationConfig {
-  email_provider?: string;
-  email_api_key?: string;
-  email_from_email?: string;
-  email_from_name?: string;
-  sms_provider?: string;
-  sms_api_key?: string;
-  sms_from_number?: string;
-  push_enabled?: boolean;
   quiet_hours_start?: string;
   quiet_hours_end?: string;
   timezone?: string;
@@ -44,10 +36,6 @@ export class NotificationService {
       ...request,
       correlation_id: request.correlation_id ?? null,
     });
-  }
-
-  static async testNotificationConfig(recipient: string, channel: 'Email' | 'Sms' | 'Push', _sessionToken: string): Promise<string> {
-    return ipcClient.notifications.testConfig(recipient, channel);
   }
 
   static async getNotificationStatus(_sessionToken: string): Promise<JsonValue> {

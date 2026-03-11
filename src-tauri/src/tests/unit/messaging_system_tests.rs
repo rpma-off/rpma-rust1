@@ -900,8 +900,6 @@ async fn test_notification_preferences_crud() {
     let prefs = prefs.unwrap();
 
     assert_eq!(prefs.user_id, user_id);
-    assert!(!prefs.email_enabled);
-    assert!(prefs.sms_enabled);
     assert!(!prefs.in_app_enabled);
     assert!(prefs.task_assigned);
     assert!(!prefs.task_updated);
@@ -914,8 +912,6 @@ async fn test_notification_preferences_crud() {
     assert!(prefs.quiet_hours_enabled);
     assert_eq!(prefs.quiet_hours_start, Some("21:00".to_string()));
     assert_eq!(prefs.quiet_hours_end, Some("09:00".to_string()));
-    assert_eq!(prefs.email_frequency, "daily");
-    assert_eq!(prefs.email_digest_time, "08:00");
 
     // Update preferences
     db.execute(
@@ -946,7 +942,6 @@ async fn test_notification_preferences_crud() {
 
     assert!(updated_prefs.is_some());
     let updated_prefs = updated_prefs.unwrap();
-    assert!(updated_prefs.email_enabled);
     assert!(updated_prefs.task_updated);
     assert!(updated_prefs.system_alerts);
     assert!(!updated_prefs.quiet_hours_enabled);

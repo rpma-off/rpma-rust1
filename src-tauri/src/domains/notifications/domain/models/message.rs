@@ -198,9 +198,6 @@ pub struct NotificationPreferences {
     pub id: String,
     pub user_id: String,
 
-    // Channel preferences
-    pub email_enabled: bool,
-    pub sms_enabled: bool,
     pub in_app_enabled: bool,
 
     // Task notifications
@@ -222,10 +219,6 @@ pub struct NotificationPreferences {
     pub quiet_hours_start: Option<String>,
     pub quiet_hours_end: Option<String>,
 
-    // Email settings
-    pub email_frequency: String,
-    pub email_digest_time: String,
-
     pub created_at: i64,
     pub updated_at: i64,
 }
@@ -234,8 +227,6 @@ pub struct NotificationPreferences {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct UpdateNotificationPreferencesRequest {
-    pub email_enabled: Option<bool>,
-    pub sms_enabled: Option<bool>,
     pub in_app_enabled: Option<bool>,
     pub task_assigned: Option<bool>,
     pub task_updated: Option<bool>,
@@ -248,8 +239,6 @@ pub struct UpdateNotificationPreferencesRequest {
     pub quiet_hours_enabled: Option<bool>,
     pub quiet_hours_start: Option<String>,
     pub quiet_hours_end: Option<String>,
-    pub email_frequency: Option<String>,
-    pub email_digest_time: Option<String>,
     #[serde(default)]
     pub correlation_id: Option<String>,
 }

@@ -14,8 +14,6 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Default)]
 pub struct NotificationPreferencesQuery {
     pub user_id: Option<String>,
-    pub email_enabled: Option<bool>,
-    pub sms_enabled: Option<bool>,
     pub in_app_enabled: Option<bool>,
     pub quiet_hours_enabled: Option<bool>,
     pub limit: Option<i64>,
@@ -32,16 +30,6 @@ impl NotificationPreferencesQuery {
         if let Some(user_id) = &self.user_id {
             conditions.push("user_id = ?".to_string());
             params.push(user_id.clone().into());
-        }
-
-        if let Some(email_enabled) = self.email_enabled {
-            conditions.push("email_enabled = ?".to_string());
-            params.push((if email_enabled { 1 } else { 0 }).into());
-        }
-
-        if let Some(sms_enabled) = self.sms_enabled {
-            conditions.push("sms_enabled = ?".to_string());
-            params.push((if sms_enabled { 1 } else { 0 }).into());
         }
 
         if let Some(in_app_enabled) = self.in_app_enabled {
@@ -70,8 +58,6 @@ impl NotificationPreferencesQuery {
                 "created_at",
                 "updated_at",
                 "user_id",
-                "email_enabled",
-                "sms_enabled",
                 "in_app_enabled",
                 "quiet_hours_enabled",
             ],
@@ -396,8 +382,6 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                 .execute(
                     "UPDATE notification_preferences SET
                         user_id = ?,
-                        email_enabled = ?,
-                        sms_enabled = ?,
                         in_app_enabled = ?,
                         task_assigned = ?,
                         task_updated = ?,
@@ -410,14 +394,10 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                         quiet_hours_enabled = ?,
                         quiet_hours_start = ?,
                         quiet_hours_end = ?,
-                        email_frequency = ?,
-                        email_digest_time = ?,
                         updated_at = ?
                         WHERE id = ?",
                     params![
                         entity.user_id,
-                        if entity.email_enabled { 1 } else { 0 },
-                        if entity.sms_enabled { 1 } else { 0 },
                         if entity.in_app_enabled { 1 } else { 0 },
                         if entity.task_assigned { 1 } else { 0 },
                         if entity.task_updated { 1 } else { 0 },
@@ -426,16 +406,10 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                         if entity.client_created { 1 } else { 0 },
                         if entity.client_updated { 1 } else { 0 },
                         if entity.system_alerts { 1 } else { 0 },
-                        if entity.maintenance_notifications {
-                            1
-                        } else {
-                            0
-                        },
+                        if entity.maintenance_notifications { 1 } else { 0 },
                         if entity.quiet_hours_enabled { 1 } else { 0 },
                         entity.quiet_hours_start,
                         entity.quiet_hours_end,
-                        entity.email_frequency,
-                        entity.email_digest_time,
                         now,
                         entity.id,
                     ],
@@ -445,18 +419,15 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
             self.db
                 .execute(
                     "INSERT INTO notification_preferences (
-                        id, user_id, email_enabled, sms_enabled, in_app_enabled,
+                        id, user_id, in_app_enabled,
                         task_assigned, task_updated, task_completed, task_overdue,
                         client_created, client_updated, system_alerts, maintenance_notifications,
                         quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
-                        email_frequency, email_digest_time,
                         created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     params![
                         entity.id,
                         entity.user_id,
-                        if entity.email_enabled { 1 } else { 0 },
-                        if entity.sms_enabled { 1 } else { 0 },
                         if entity.in_app_enabled { 1 } else { 0 },
                         if entity.task_assigned { 1 } else { 0 },
                         if entity.task_updated { 1 } else { 0 },
@@ -465,16 +436,10 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                         if entity.client_created { 1 } else { 0 },
                         if entity.client_updated { 1 } else { 0 },
                         if entity.system_alerts { 1 } else { 0 },
-                        if entity.maintenance_notifications {
-                            1
-                        } else {
-                            0
-                        },
+                        if entity.maintenance_notifications { 1 } else { 0 },
                         if entity.quiet_hours_enabled { 1 } else { 0 },
                         entity.quiet_hours_start,
                         entity.quiet_hours_end,
-                        entity.email_frequency,
-                        entity.email_digest_time,
                         entity.created_at,
                         entity.updated_at,
                     ],
@@ -627,10 +592,10 @@ mod tests {
         repo.save(prefs.clone()).await.unwrap();
 
         prefs.task_assigned = false;
-        prefs.email_enabled = false;
+        prefs.in_app_enabled = false;
         let updated = repo.save(prefs).await.unwrap();
         assert!(!updated.task_assigned);
-        assert!(!updated.email_enabled);
+        assert!(!updated.in_app_enabled);
     }
 
     #[tokio::test]

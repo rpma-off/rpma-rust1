@@ -3,4 +3,4 @@
 /**
  * User notification preferences
  */
-export type NotificationPreferences = { id: string, user_id: string, email_enabled: boolean, sms_enabled: boolean, in_app_enabled: boolean, task_assigned: boolean, task_updated: boolean, task_completed: boolean, task_overdue: boolean, client_created: boolean, client_updated: boolean, system_alerts: boolean, maintenance_notifications: boolean, quiet_hours_enabled: boolean, quiet_hours_start: string | null, quiet_hours_end: string | null, email_frequency: string, email_digest_time: string, created_at: bigint, updated_at: bigint, };
+export type NotificationPreferences = { id: string, user_id: string, in_app_enabled: boolean, task_assigned: boolean, task_updated: boolean, task_completed: boolean, task_overdue: boolean, client_created: boolean, client_updated: boolean, system_alerts: boolean, maintenance_notifications: boolean, quiet_hours_enabled: boolean, quiet_hours_start: string | null, quiet_hours_end: string | null, created_at: bigint, updated_at: bigint, };

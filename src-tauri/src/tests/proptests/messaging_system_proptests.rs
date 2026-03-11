@@ -464,8 +464,6 @@ proptest! {
 
     #[test]
     fn test_notification_preferences_with_random_valid_data(
-        email_enabled in prop::bool::ANY,
-        sms_enabled in prop::bool::ANY,
         in_app_enabled in prop::bool::ANY,
         task_assigned in prop::bool::ANY,
         task_updated in prop::bool::ANY,
@@ -477,9 +475,7 @@ proptest! {
         maintenance_notifications in prop::bool::ANY,
         quiet_hours_enabled in prop::bool::ANY,
         quiet_hours_start in time_strategy(),
-        quiet_hours_end in time_strategy(),
-        email_frequency in email_frequency_strategy(),
-        email_digest_time in time_strategy()
+        quiet_hours_end in time_strategy()
     ) {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
@@ -493,17 +489,15 @@ proptest! {
             let pref_id = Uuid::new_v4().to_string();
             db.execute(r#"
                 INSERT OR REPLACE INTO notification_preferences (
-                    id, user_id, email_enabled, sms_enabled, in_app_enabled,
+                    id, user_id, in_app_enabled,
                     task_assigned, task_updated, task_completed, task_overdue,
                     client_created, client_updated, system_alerts, maintenance_notifications,
                     quiet_hours_enabled, quiet_hours_start, quiet_hours_end,
-                    email_frequency, email_digest_time, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             "#, params![
                 pref_id,
                 user_id,
-                email_enabled as i32,
-                sms_enabled as i32,
                 in_app_enabled as i32,
                 task_assigned as i32,
                 task_updated as i32,
@@ -516,8 +510,6 @@ proptest! {
                 quiet_hours_enabled as i32,
                 quiet_hours_start.clone(),
                 quiet_hours_end.clone(),
-                email_frequency.clone(),
-                email_digest_time.clone(),
                 chrono::Utc::now().timestamp(),
                 chrono::Utc::now().timestamp()
             ]).unwrap();
@@ -534,8 +526,6 @@ proptest! {
             let prefs = retrieved.unwrap();
 
             prop_assert_eq!(prefs.user_id, user_id);
-            prop_assert_eq!(prefs.email_enabled, email_enabled);
-            prop_assert_eq!(prefs.sms_enabled, sms_enabled);
             prop_assert_eq!(prefs.in_app_enabled, in_app_enabled);
             prop_assert_eq!(prefs.task_assigned, task_assigned);
             prop_assert_eq!(prefs.task_updated, task_updated);
@@ -548,8 +538,6 @@ proptest! {
             prop_assert_eq!(prefs.quiet_hours_enabled, quiet_hours_enabled);
             prop_assert_eq!(prefs.quiet_hours_start, Some(quiet_hours_start));
             prop_assert_eq!(prefs.quiet_hours_end, Some(quiet_hours_end));
-            prop_assert_eq!(prefs.email_frequency, email_frequency);
-            prop_assert_eq!(prefs.email_digest_time, email_digest_time);
 
             // Validate quiet hours logic
             if quiet_hours_enabled {
