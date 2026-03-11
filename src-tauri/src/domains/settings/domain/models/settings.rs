@@ -358,6 +358,7 @@ pub struct UserPreferences {
 /// TODO: document
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UserSecuritySettings {
+    /// NOT IMPLEMENTED — planned for v3, has no effect.
     pub two_factor_enabled: bool,
     pub session_timeout: u32, // minutes
 }
