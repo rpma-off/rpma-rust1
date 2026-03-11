@@ -4,30 +4,49 @@
 //! all application services, making dependencies explicit and improving
 //! the maintainability of the application startup process.
 //!
-//! ## Service Dependencies
+//! ADR-021 dependency graph / initialization order
 //!
-//! The following services have these dependencies:
+//! ```text
+//! Roots
+//!   Database
+//!   Repositories.{client,user,quote,message}
+//!   AppDataDir
 //!
-//! - **TaskService**: Database
-//! - **ClientService**: ClientRepository
-//! - **DashboardService**: Database
-//! - **InterventionService**: Database
-//! - **TaskImportService**: No external dependencies
-//! - **AuthService**: Database
-//! - **SettingsService**: Database
-//! - **PhotoService**: Database, StorageSettings
-//! - **MaterialService**: Database
-//! - **AnalyticsService**: Database
-//! - **SessionService**: Database
-//! - **CacheService**: Self-contained (uses internal caching)
-//! - **ReportJobService**: Database, CacheService
-//! - **PerformanceMonitorService**: Database
-//! - **CommandPerformanceTracker**: PerformanceMonitorService
-//! - **PredictionService**: Database
-//! - **SyncQueue**: Database
-//! - **BackgroundSyncService**: SyncQueue
-//! - **EventBus**: Self-contained (in-memory pub/sub)
-//! - **WebSocketEventHandler**: EventBus
+//! 1. TaskService                     <- Database
+//! 2. ClientService                   <- Repositories.client
+//! 3. InterventionService             <- Database
+//! 4. InterventionWorkflowService     <- Database
+//! 5. SettingsService                 <- Database
+//! 6. TaskImportService               <- Database
+//! 7. AuthService                     <- Database (plus init)
+//! 8. UserService                     <- Repositories.user
+//! 9. CacheService                    <- self-contained
+//! 10. SessionService                 <- Database
+//! 11. SessionStore                   <- self-contained
+//! 12. PhotoService                   <- Database + AppDataDir-derived storage settings
+//! 13. MaterialService                <- Database
+//! 14. InventoryFacade                <- Database + MaterialService
+//! 15. QuoteEventBus                  <- self-contained
+//! 16. EventBus                       <- self-contained
+//! 17. QuoteService                   <- Repositories.quote + Database + QuoteEventBus
+//! 18. MessageService                 <- Repositories.message + Database
+//! 19. SyncQueue                      <- Database
+//! 20. BackgroundSyncService          <- SyncQueue
+//! 21. AsyncDatabase                  <- Database
+//! 22. PerformanceMonitorService      <- Database
+//! 23. CommandPerformanceTracker      <- PerformanceMonitorService
+//! 24. WebSocketEventHandler          <- EventBus registration
+//! 25. AuditService                   <- Database (plus init)
+//! 26. AuditLogHandler                <- AuditService + EventBus registration
+//! 27. InterventionFinalizedHandler   <- InventoryFacade + global EventBus registration
+//! 28. QuoteAcceptedHandler           <- InterventionWorkflowService + global EventBus registration
+//! 29. QuoteConvertedHandler          <- InterventionWorkflowService + global EventBus registration
+//!
+//! The graph is intentionally acyclic: every edge points from a root resource or an
+//! earlier-initialized service to a later-initialized one. If a future change needs a
+//! back-reference, extract the shared logic into a smaller service or inject it lazily
+//! instead of introducing a constructor-time cycle.
+//! ```
 
 use crate::db::Database;
 use crate::domains::audit::infrastructure::audit_log_handler::AuditLogHandler;
@@ -39,7 +58,87 @@ use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::shared::repositories::Repositories;
 use crate::shared::services::event_bus::InMemoryEventBus;
 use crate::shared::services::websocket_event_handler::WebSocketEventHandler;
+#[cfg(test)]
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
+
+#[cfg(test)]
+const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
+    "TaskService",
+    "ClientService",
+    "InterventionService",
+    "InterventionWorkflowService",
+    "SettingsService",
+    "TaskImportService",
+    "AuthService",
+    "UserService",
+    "CacheService",
+    "SessionService",
+    "SessionStore",
+    "PhotoService",
+    "MaterialService",
+    "InventoryFacade",
+    "QuoteEventBus",
+    "EventBus",
+    "QuoteService",
+    "MessageService",
+    "SyncQueue",
+    "BackgroundSyncService",
+    "AsyncDatabase",
+    "PerformanceMonitorService",
+    "CommandPerformanceTracker",
+    "WebSocketEventHandler",
+    "AuditService",
+    "AuditLogHandler",
+    "InterventionFinalizedHandler",
+    "QuoteAcceptedHandler",
+    "QuoteConvertedHandler",
+];
+
+#[cfg(test)]
+const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
+    ("TaskService", &["Database"]),
+    ("ClientService", &["Repositories.client"]),
+    ("InterventionService", &["Database"]),
+    ("InterventionWorkflowService", &["Database"]),
+    ("SettingsService", &["Database"]),
+    ("TaskImportService", &["Database"]),
+    ("AuthService", &["Database"]),
+    ("UserService", &["Repositories.user"]),
+    ("CacheService", &[]),
+    ("SessionService", &["Database"]),
+    ("SessionStore", &[]),
+    ("PhotoService", &["Database", "AppDataDir"]),
+    ("MaterialService", &["Database"]),
+    ("InventoryFacade", &["Database", "MaterialService"]),
+    ("QuoteEventBus", &[]),
+    ("EventBus", &[]),
+    (
+        "QuoteService",
+        &["Repositories.quote", "Database", "QuoteEventBus"],
+    ),
+    ("MessageService", &["Repositories.message", "Database"]),
+    ("SyncQueue", &["Database"]),
+    ("BackgroundSyncService", &["SyncQueue"]),
+    ("AsyncDatabase", &["Database"]),
+    ("PerformanceMonitorService", &["Database"]),
+    ("CommandPerformanceTracker", &["PerformanceMonitorService"]),
+    ("WebSocketEventHandler", &["EventBus"]),
+    ("AuditService", &["Database"]),
+    ("AuditLogHandler", &["AuditService", "EventBus"]),
+    (
+        "InterventionFinalizedHandler",
+        &["InventoryFacade", "EventBus"],
+    ),
+    (
+        "QuoteAcceptedHandler",
+        &["InterventionWorkflowService", "EventBus"],
+    ),
+    (
+        "QuoteConvertedHandler",
+        &["InterventionWorkflowService", "EventBus"],
+    ),
+];
 
 /// Service Builder
 ///
@@ -283,6 +382,33 @@ impl ServiceBuilder {
 mod tests {
     use super::*;
 
+    fn visit_service(
+        service: &'static str,
+        graph: &HashMap<&'static str, &'static [&'static str]>,
+        visiting: &mut HashSet<&'static str>,
+        visited: &mut HashSet<&'static str>,
+    ) {
+        if visited.contains(service) {
+            return;
+        }
+
+        assert!(
+            visiting.insert(service),
+            "circular dependency detected while visiting {service}"
+        );
+
+        if let Some(dependencies) = graph.get(service) {
+            for dependency in *dependencies {
+                if graph.contains_key(dependency) {
+                    visit_service(dependency, graph, visiting, visited);
+                }
+            }
+        }
+
+        visiting.remove(service);
+        visited.insert(service);
+    }
+
     #[tokio::test]
     async fn test_service_builder_creation() {
         let db = Arc::new(Database::new_in_memory().await.expect("create db"));
@@ -324,5 +450,41 @@ mod tests {
             handler_count > 0,
             "WebSocket handler should be registered for TaskCreated"
         );
+    }
+
+    #[test]
+    fn test_documented_service_graph_is_acyclic() {
+        let graph: HashMap<_, _> = DOCUMENTED_SERVICE_DEPENDENCIES.iter().copied().collect();
+        let mut visiting = HashSet::new();
+        let mut visited = HashSet::new();
+
+        for service in DOCUMENTED_SERVICE_INIT_ORDER {
+            visit_service(service, &graph, &mut visiting, &mut visited);
+        }
+    }
+
+    #[test]
+    fn test_documented_service_initialization_order_respects_dependencies() {
+        let init_positions: HashMap<_, _> = DOCUMENTED_SERVICE_INIT_ORDER
+            .iter()
+            .enumerate()
+            .map(|(index, service)| (*service, index))
+            .collect();
+
+        for (service, dependencies) in DOCUMENTED_SERVICE_DEPENDENCIES {
+            let service_index = init_positions
+                .get(service)
+                .copied()
+                .expect("documented service must appear in init order");
+
+            for dependency in *dependencies {
+                if let Some(dependency_index) = init_positions.get(dependency) {
+                    assert!(
+                        dependency_index < &service_index,
+                        "{dependency} must be initialized before {service}"
+                    );
+                }
+            }
+        }
     }
 }
