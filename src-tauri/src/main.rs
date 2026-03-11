@@ -234,8 +234,6 @@ fn main() {
             domains::organizations::ipc::update_organization_settings,
             // ── Notifications ────────────────────────────────────────────
             domains::notifications::ipc::notification::initialize_notification_service,
-            domains::notifications::ipc::notification::send_notification,
-            domains::notifications::ipc::notification::test_notification_config,
             domains::notifications::ipc::notification::get_notification_status,
             domains::notifications::ipc::notification_in_app::get_notifications,
             domains::notifications::ipc::notification_in_app::mark_notification_read,
