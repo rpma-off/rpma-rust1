@@ -6,8 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogDomain } from '@/lib/logging/types';
 import type { UserSession } from '@/lib/backend';
-import { useLogger } from '@/shared/hooks/useLogger';
 import { useIpcClient } from '@/lib/ipc/client';
+import { useLogger } from '@/shared/hooks/useLogger';
 
 // Password change form schema
 const passwordChangeSchema = z.object({
@@ -122,7 +122,7 @@ export function useSecuritySettings(user?: UserSession) {
     };
 
     loadSecurityData();
-  }, [user?.token, user?.user_id, logInfo, logError]);
+  }, [user?.token, user?.user_id, logInfo, logError, ipcClient.settings]);
 
   const onPasswordChange = useCallback(async (data: PasswordChangeFormData) => {
     if (!user?.token) {
@@ -154,7 +154,7 @@ export function useSecuritySettings(user?: UserSession) {
     } finally {
       setIsChangingPassword(false);
     }
-  }, [user?.token, user?.user_id, passwordForm, logUserAction, logInfo, logError]);
+  }, [user?.token, user?.user_id, passwordForm, logUserAction, logInfo, logError, ipcClient.settings]);
 
   const handleRevokeSession = useCallback(async (sessionId: string) => {
     if (!user?.token) return;
@@ -172,7 +172,7 @@ export function useSecuritySettings(user?: UserSession) {
         error: error instanceof Error ? error.message : error
       });
     }
-  }, [user?.token, logUserAction, logInfo, logError]);
+  }, [user?.token, logUserAction, logInfo, logError, ipcClient.settings]);
 
   const handleUpdateSessionTimeout = useCallback(async (minutes: number) => {
     if (!user?.token) return;
@@ -187,7 +187,7 @@ export function useSecuritySettings(user?: UserSession) {
     } catch (error) {
       logError('Session timeout update failed', { minutes, error: error instanceof Error ? error.message : error });
     }
-  }, [user?.token, logUserAction, logInfo, logError]);
+  }, [user?.token, logUserAction, logInfo, logError, ipcClient.settings]);
 
   const toggleShowCurrentPassword = useCallback(() => setShowCurrentPassword(v => !v), []);
   const toggleShowNewPassword = useCallback(() => setShowNewPassword(v => !v), []);

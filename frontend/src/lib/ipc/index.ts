@@ -1,5 +1,5 @@
 import { ipcClient as realIpcClient, useIpcClient as realUseIpcClient } from './client';
-import { ipcClient as mockIpcClient, useIpcClient as mockUseIpcClient, initMockIpc } from './mock/mock-client';
+import { ipcClient as mockIpcClient, useIpcClient as mockUseIpcClient, installMockControls } from './mock/mock-client';
 import { tauriAdapter } from './real-adapter';
 
 const useMock =
@@ -12,12 +12,12 @@ const useMock =
 if (useMock) {
   if (typeof window !== 'undefined') {
     // Window is already available, initialize immediately
-    initMockIpc();
+    installMockControls();
   } else {
     // Window not available yet, wait for it
     const initWhenReady = () => {
       if (typeof window !== 'undefined') {
-        initMockIpc();
+        installMockControls();
       }
     };
     

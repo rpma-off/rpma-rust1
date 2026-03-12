@@ -1,7 +1,7 @@
 // Configuration service
 import { ipcClient } from '@/lib/ipc/client';
-import { AuthSecureStorage } from '@/lib/secureStorage';
-import type { JsonValue, JsonObject } from '@/types/json';
+import { AuthSecureStorage as _AuthSecureStorage } from '@/lib/secureStorage';
+import type { JsonValue, JsonObject as _JsonObject } from '@/types/json';
 import type { Configuration, BusinessRule } from './types';
 
 export interface ServiceResponse<T> {
@@ -93,7 +93,7 @@ export const configurationService = {
     }
   },
 
-  async deleteSystemConfiguration(id: string): Promise<ServiceResponse<void>> {
+  async deleteSystemConfiguration(_id: string): Promise<ServiceResponse<void>> {
     try {
       // Deletion logic
       return ok(undefined);
@@ -159,7 +159,7 @@ export const configurationService = {
     }
   },
 
-  async deleteBusinessRule(id: string): Promise<ServiceResponse<void>> {
+  async deleteBusinessRule(_id: string): Promise<ServiceResponse<void>> {
     try {
       // Logic to delete rule
       return ok(undefined);

@@ -13,11 +13,11 @@ interface PerformanceProviderProps {
 
 export function PerformanceProvider({ children, autoRefresh: _autoRefresh = false, refreshInterval: _refreshInterval = 30000 }: PerformanceProviderProps) {
   const [metrics, setMetrics] = useState<PerformanceContextValue['metrics']>([]);
-  const [stats, setStats] = useState<PerformanceContextValue['stats']>(null);
-  const [cacheStats, setCacheStats] = useState<PerformanceContextValue['cacheStats']>(null);
-  const [systemHealth, setSystemHealth] = useState<PerformanceContextValue['systemHealth']>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [stats, _setStats] = useState<PerformanceContextValue['stats']>(null);
+  const [cacheStats, _setCacheStats] = useState<PerformanceContextValue['cacheStats']>(null);
+  const [systemHealth, _setSystemHealth] = useState<PerformanceContextValue['systemHealth']>(null);
+  const [loading, _setLoading] = useState(false);
+  const [error, _setError] = useState<string | null>(null);
 
   // Performance monitoring removed — stubs return empty data
   const refreshMetrics = useCallback(async () => { setMetrics([]); }, []);

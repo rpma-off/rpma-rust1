@@ -251,6 +251,22 @@
           }
         ]
       }
+    },
+
+    {
+      "files": [
+        "**/__tests__/**",
+        "**/*.test.{ts,tsx}",
+        "**/*.spec.{ts,tsx}"
+      ],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "import/order": "off",
+        "react/display-name": "off",
+        "@typescript-eslint/ban-ts-comment": "off",
+        "no-restricted-imports": "off"
+      }
     }
 
   ]

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Building2, Save, X, AlertCircle, CheckCircle, Upload, Palette } from 'lucide-react';
+import type { UpdateOrganizationRequest } from '@/lib/backend';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/domains/auth';
 import { useOrganization, useUpdateOrganization } from '../api/useOrganization';
-import type { UpdateOrganizationRequest } from '@/lib/backend';
 
 interface OrganizationFormData {
   name: string;

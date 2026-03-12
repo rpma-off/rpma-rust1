@@ -10,13 +10,13 @@ import type {
   OnboardingStatus,
   OnboardingData,
   UpdateOrganizationRequest,
-  UpdateOrganizationSettingsRequest
+  UpdateOrganizationSettingsRequest,
+  UserSettings,
+  UserListResponse
 } from '@/lib/backend';
-import type { Material, MaterialStats } from '@/shared/types';
 import type { JsonObject, JsonValue } from '@/types/json';
 import { handleInvoke, resetDb } from './mock-db';
 import { installMockControls } from './mock-controls';
-import { defaultFixtures } from './fixtures';
 
 const mockSafeInvoke = <T>(command: string, args?: JsonObject) =>
   handleInvoke(command, args) as Promise<T>;
@@ -225,7 +225,7 @@ export const ipcClient = {
   },
   photos: {
     list: (interventionId: string) => mockSafeInvoke('document_get_photos', { request: { intervention_id: interventionId } }),
-    upload: (interventionId: string, file: any, photoType: string) => mockSafeInvoke('document_store_photo', { request: { intervention_id: interventionId, file_name: file.name, mime_type: file.mimeType, photo_type: photoType }, image_data: Array.from(file.bytes) }),
+    upload: (interventionId: string, file: any, photoType: string) => mockSafeInvoke('document_store_photo', { request: { intervention_id: interventionId, file_name: file.name, mime_type: file.mimeType, photo_type: photoType }, image_data: Array.from(file.bytes) as number[] }),
     delete: (photoId: string) => mockSafeInvoke('document_delete_photo', { photo_id: photoId }),
   },
   material: {

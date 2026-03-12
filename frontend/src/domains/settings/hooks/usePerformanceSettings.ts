@@ -6,8 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { LogDomain } from '@/lib/logging/types';
 import type { UserSession, UserPerformanceSettings } from '@/lib/backend';
-import { useLogger } from '@/shared/hooks/useLogger';
 import { useIpcClient } from '@/lib/ipc/client';
+import { useLogger } from '@/shared/hooks/useLogger';
 
 // Performance settings form schema
 const performanceSchema = z.object({
@@ -75,8 +75,8 @@ export function usePerformanceSettings(user?: UserSession) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [cacheStats, setCacheStats] = useState<CacheStats>(DEFAULT_CACHE_STATS);
-  const [syncStats, setSyncStats] = useState<SyncStats>(DEFAULT_SYNC_STATS);
+  const [_cacheStats, _setCacheStats] = useState<CacheStats>(DEFAULT_CACHE_STATS);
+  const [_syncStats, _setSyncStats] = useState<SyncStats>(DEFAULT_SYNC_STATS);
   const [isOnline, setIsOnline] = useState(true);
 
   const { logInfo, logError, logUserAction } = useLogger({
@@ -132,7 +132,7 @@ export function usePerformanceSettings(user?: UserSession) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [logInfo, logError, form, user?.token]);
+  }, [logInfo, logError, form, user?.token, ipcClient.settings]);
 
   const onSubmit = useCallback(async (data: PerformanceFormData) => {
     if (!user?.token) {
@@ -163,7 +163,7 @@ export function usePerformanceSettings(user?: UserSession) {
     } finally {
       setIsSaving(false);
     }
-  }, [user?.token, user?.user_id, form.formState.dirtyFields, logUserAction, logInfo, logError]);
+  }, [user?.token, user?.user_id, form.formState.dirtyFields, logUserAction, logInfo, logError, ipcClient.settings]);
 
   const handleClearCache = useCallback(async () => {
     // Cache management removed (performance monitoring infrastructure deleted)
@@ -178,8 +178,8 @@ export function usePerformanceSettings(user?: UserSession) {
     isSaving,
     saveSuccess,
     saveError,
-    cacheStats,
-    syncStats,
+    cacheStats: _cacheStats,
+    syncStats: _syncStats,
     isOnline,
     form,
     onSubmit,

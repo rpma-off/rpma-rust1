@@ -1,10 +1,10 @@
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import type { ApiResponse } from '@/types/api';
 import type { JsonObject, JsonValue } from '@/types/json';
+import { getSessionToken } from '@/shared/contracts/session';
 import { logger } from '../logging';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import { recordMetric } from './metrics';
-import { getSessionToken } from '@/shared/contracts/session';
 
 /**
  * IPC commands that do not require an authenticated backend session.

@@ -1,9 +1,9 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/domains/auth';
 import { useIpcClient } from '@/lib/ipc/client';
 import type { JsonObject } from '@/types/json';
+import { useAuth } from '@/domains/auth';
 
 const DEFAULT_PREFERENCES = {
   theme: 'system',

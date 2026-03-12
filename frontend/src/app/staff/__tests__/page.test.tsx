@@ -1,6 +1,6 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import StaffPage from '../page';
-import React from 'react';
 
 jest.mock('@/domains/auth', () => ({
   useAuth: jest.fn(),
@@ -59,7 +59,7 @@ jest.mock('@/domains/admin', () => ({
 
 describe('StaffPage', () => {
   it('renders without crashing', () => {
-    // @ts-ignore - Mocking useAuth for simple render test
+    // @ts-expect-error - Mocking useAuth for simple render test
     require('@/domains/auth').useAuth.mockReturnValue({ user: { role: 'admin' } });
     
     render(<StaffPage />);

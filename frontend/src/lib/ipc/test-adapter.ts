@@ -97,7 +97,7 @@ export const TEST_TASK_STATISTICS = {
 /* ────────────────────────────────────────────────────────── */
 
 /** Create a rejected promise with a structured IPC error. */
-function ipcError(code: string, message: string): Promise<never> {
+function _ipcError(code: string, message: string): Promise<never> {
   const err = Object.assign(new Error(message), { code });
   return Promise.reject(err);
 }
