@@ -65,6 +65,10 @@ export function mockNotFoundError(message: string, correlationId?: string): Mock
   return mockError('NOT_FOUND', message, correlationId);
 }
 
+export function mockAuthorizationError(correlationId?: string): MockApiError {
+  return mockError('AUTHORIZATION', 'Insufficient permissions for this action', correlationId);
+}
+
 // ── Mock session data ───────────────────────────────────────────────
 
 export const MOCK_SESSION = {
@@ -117,4 +121,55 @@ export const MOCK_QUOTE = {
   valid_until: '2026-06-01T00:00:00Z',
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
+} as const;
+
+export const MOCK_QUOTE_SENT = {
+  ...MOCK_QUOTE,
+  status: 'sent' as const,
+  updated_at: '2026-01-02T00:00:00Z',
+} as const;
+
+export const MOCK_QUOTE_ACCEPTED = {
+  quote: {
+    ...MOCK_QUOTE,
+    status: 'accepted' as const,
+    updated_at: '2026-01-03T00:00:00Z',
+  },
+  task_created: null,
+} as const;
+
+export const MOCK_TASK_HISTORY = [
+  {
+    id: 'hist-1',
+    task_id: 'task-golden-1',
+    action: 'created',
+    changed_by: 'user-golden-1',
+    old_value: null,
+    new_value: 'pending',
+    field_name: 'status',
+    timestamp: '2026-01-01T00:00:00Z',
+  },
+  {
+    id: 'hist-2',
+    task_id: 'task-golden-1',
+    action: 'status_changed',
+    changed_by: 'user-golden-1',
+    old_value: 'pending',
+    new_value: 'in_progress',
+    field_name: 'status',
+    timestamp: '2026-01-01T06:00:00Z',
+  },
+] as const;
+
+export const MOCK_INTERVENTION = {
+  id: 'intervention-golden-1',
+  task_id: 'task-golden-1',
+  intervention_type: 'ppf',
+  status: 'in_progress',
+  priority: 'medium',
+  description: 'PPF installation on hood and fenders',
+  started_at: '2026-01-01T08:00:00Z',
+  estimated_duration_minutes: 360,
+  created_at: '2026-01-01T08:00:00Z',
+  updated_at: '2026-01-01T08:00:00Z',
 } as const;

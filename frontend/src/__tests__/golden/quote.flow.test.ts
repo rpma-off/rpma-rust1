@@ -27,7 +27,10 @@ import { safeInvoke } from '@/lib/ipc/utils';
 import {
   mockSuccess,
   mockValidationError,
+  mockAuthorizationError,
   MOCK_QUOTE,
+  MOCK_QUOTE_SENT,
+  MOCK_QUOTE_ACCEPTED,
 } from '../utils/mock-ipc';
 
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as {
@@ -131,6 +134,64 @@ describe('Golden Flow – Quote Creation', () => {
         session_token: 'golden-session-token',
         data: { client_id: 'c1', items: [] },
       },
+    });
+
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs).toHaveProperty('correlation_id');
+    expect(typeof calledArgs.correlation_id).toBe('string');
+  });
+
+  // ─── 6. Send quote to client (success) ────────────────────────────
+
+  it('marks a quote as sent and returns updated quote', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess(MOCK_QUOTE_SENT));
+
+    const result = await safeInvoke('quote_mark_sent', {
+      request: { id: 'quote-golden-1' },
+    });
+
+    expect(result).toEqual(MOCK_QUOTE_SENT);
+    expect(result).toHaveProperty('status', 'sent');
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 7. Send quote — authorization error (viewer) ─────────────────
+
+  it('throws authorization error when viewer attempts to send a quote', async () => {
+    mockInvoke.mockResolvedValueOnce(mockAuthorizationError());
+
+    await expect(
+      safeInvoke('quote_mark_sent', {
+        request: { id: 'quote-golden-1' },
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHORIZATION' });
+  });
+
+  // ─── 8. Mark quote accepted (success) ─────────────────────────────
+
+  it('marks a quote as accepted and returns accept response', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess(MOCK_QUOTE_ACCEPTED));
+
+    const result = await safeInvoke('quote_mark_accepted', {
+      request: { id: 'quote-golden-1' },
+    });
+
+    expect(result).toEqual(MOCK_QUOTE_ACCEPTED);
+    expect(result).toHaveProperty('quote');
+    expect(result.quote).toHaveProperty('status', 'accepted');
+    expect(result).toHaveProperty('task_created', null);
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 9. Mark accepted — correlation ID forwarded ──────────────────
+
+  it('includes correlation_id when accepting a quote', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess(MOCK_QUOTE_ACCEPTED));
+
+    await safeInvoke('quote_mark_accepted', {
+      request: { id: 'quote-golden-1' },
     });
 
     const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;

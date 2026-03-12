@@ -26,9 +26,12 @@ jest.mock('@/lib/logging/types', () => ({
 import { safeInvoke } from '@/lib/ipc/utils';
 import {
   mockSuccess,
+  mockValidationError,
   mockNotFoundError,
   MOCK_TASK_DETAILS,
   MOCK_TASK_LIST,
+  MOCK_TASK_HISTORY,
+  MOCK_INTERVENTION,
 } from '../utils/mock-ipc';
 
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as {
@@ -98,6 +101,72 @@ describe('Golden Flow – Task Details & List', () => {
 
     expect(result).toEqual(stats);
     expect(result).toHaveProperty('total', 42);
+  });
+
+  // ─── 5. View task history (success) ───────────────────────────────
+
+  it('retrieves task history entries', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess([...MOCK_TASK_HISTORY]));
+
+    const result = await safeInvoke('get_task_history', {
+      request: { task_id: 'task-golden-1' },
+    });
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toHaveProperty('action', 'created');
+    expect(result[1]).toHaveProperty('action', 'status_changed');
+    expect(result[1]).toHaveProperty('old_value', 'pending');
+    expect(result[1]).toHaveProperty('new_value', 'in_progress');
+  });
+
+  // ─── 6. View task history — task not found ────────────────────────
+
+  it('throws NOT_FOUND when getting history for non-existent task', async () => {
+    mockInvoke.mockResolvedValueOnce(
+      mockNotFoundError('Task not found: nonexistent-task'),
+    );
+
+    await expect(
+      safeInvoke('get_task_history', {
+        request: { task_id: 'nonexistent-task' },
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  // ─── 7. Start intervention (success) ──────────────────────────────
+
+  it('starts an intervention for a task', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess(MOCK_INTERVENTION));
+
+    const result = await safeInvoke('intervention_start', {
+      task_id: 'task-golden-1',
+      intervention_type: 'ppf',
+      priority: 'medium',
+      description: 'PPF installation on hood and fenders',
+      estimated_duration_minutes: 360,
+    });
+
+    expect(result).toEqual(MOCK_INTERVENTION);
+    expect(result).toHaveProperty('task_id', 'task-golden-1');
+    expect(result).toHaveProperty('status', 'in_progress');
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 8. Start intervention — validation error ─────────────────────
+
+  it('throws validation error when intervention_type is missing', async () => {
+    mockInvoke.mockResolvedValueOnce(
+      mockValidationError('intervention_type is required'),
+    );
+
+    await expect(
+      safeInvoke('intervention_start', {
+        task_id: 'task-golden-1',
+        intervention_type: '',
+        priority: 'medium',
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
   });
 });
 

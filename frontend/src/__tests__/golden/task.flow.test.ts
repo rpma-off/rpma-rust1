@@ -29,6 +29,7 @@ import {
   mockSuccess,
   mockValidationError,
   mockNotFoundError,
+  mockAuthorizationError,
   MOCK_TASK,
 } from '../utils/mock-ipc';
 
@@ -164,6 +165,85 @@ describe('Golden Flow – Task Management', () => {
     expect(getSessionToken).not.toHaveBeenCalled();
     const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
     expect(calledArgs.session_token).toBe('explicit-tok');
+  });
+
+  // ─── 9. Transition status (success) ───────────────────────────────
+
+  it('transitions task status from pending to in_progress', async () => {
+    const updatedTask = { ...MOCK_TASK, status: 'in_progress' as const };
+    mockInvoke.mockResolvedValueOnce(mockSuccess(updatedTask));
+
+    const result = await safeInvoke('task_transition_status', {
+      task_id: 'task-golden-1',
+      new_status: 'in_progress',
+      reason: null,
+    });
+
+    expect(result).toEqual(updatedTask);
+    expect(result).toHaveProperty('status', 'in_progress');
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 10. Transition status — viewer is unauthorized ──────────────
+
+  it('rejects status transition for viewer role (authorization error)', async () => {
+    mockInvoke.mockResolvedValueOnce(mockAuthorizationError());
+
+    await expect(
+      safeInvoke('task_transition_status', {
+        task_id: 'task-golden-1',
+        new_status: 'in_progress',
+        reason: null,
+      }),
+    ).rejects.toMatchObject({ code: 'AUTHORIZATION' });
+  });
+
+  // ─── 11. Assign technician (success) ──────────────────────────────
+
+  it('assigns a technician to the task', async () => {
+    const assignedTask = { ...MOCK_TASK, technician_id: 'tech-golden-1' };
+    mockInvoke.mockResolvedValueOnce(mockSuccess(assignedTask));
+
+    const result = await safeInvoke('task_crud', {
+      request: {
+        action: {
+          action: 'Update',
+          id: 'task-golden-1',
+          data: { technician_id: 'tech-golden-1' },
+        },
+      },
+    });
+
+    expect(result).toHaveProperty('technician_id', 'tech-golden-1');
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 12. Delete task (success) ────────────────────────────────────
+
+  it('deletes a task and returns null', async () => {
+    mockInvoke.mockResolvedValueOnce(mockSuccess(null));
+
+    const result = await safeInvoke('task_crud', {
+      request: { action: { action: 'Delete', id: 'task-golden-1' } },
+    });
+
+    expect(result).toBeNull();
+    const calledArgs = mockInvoke.mock.calls[0][1] as Record<string, unknown>;
+    expect(calledArgs.session_token).toBe('golden-session-token');
+  });
+
+  // ─── 13. Delete task — not found ─────────────────────────────────
+
+  it('throws NOT_FOUND when deleting a non-existent task', async () => {
+    mockInvoke.mockResolvedValueOnce(mockNotFoundError('Task not found'));
+
+    await expect(
+      safeInvoke('task_crud', {
+        request: { action: { action: 'Delete', id: 'nonexistent' } },
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 });
 
