@@ -1,12 +1,13 @@
 //! Tests for the centralised settings defaults.
 //!
 //! Ensures that the `Default` impls on domain models return exactly the
-//! values declared in `domain::defaults`, preventing silent drift.
+//! values declared in `models`, preventing silent drift.
 
-use crate::domains::settings::domain::defaults;
-use crate::domains::settings::domain::models::settings::{
+use crate::domains::settings::models::{
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
+    default_profile, default_preferences, default_security, default_performance,
+    default_accessibility, default_notifications, default_user_settings,
 };
 
 // ── UserProfileSettings ─────────────────────────────────────────────
@@ -14,7 +15,7 @@ use crate::domains::settings::domain::models::settings::{
 #[test]
 fn profile_default_matches_centralised() {
     let d: UserProfileSettings = UserProfileSettings::default();
-    let c = defaults::default_profile();
+    let c = default_profile();
     assert_eq!(d.full_name, c.full_name);
     assert_eq!(d.email, c.email);
     assert_eq!(d.phone, c.phone);
@@ -27,7 +28,7 @@ fn profile_default_matches_centralised() {
 #[test]
 fn preferences_default_matches_centralised() {
     let d: UserPreferences = UserPreferences::default();
-    let c = defaults::default_preferences();
+    let c = default_preferences();
 
     assert_eq!(d.email_notifications, c.email_notifications);
     assert_eq!(d.push_notifications, c.push_notifications);
@@ -52,7 +53,7 @@ fn preferences_default_matches_centralised() {
 #[test]
 fn security_default_matches_centralised() {
     let d: UserSecuritySettings = UserSecuritySettings::default();
-    let c = defaults::default_security();
+    let c = default_security();
     assert_eq!(d.two_factor_enabled, c.two_factor_enabled);
     assert_eq!(d.session_timeout, c.session_timeout);
 }
@@ -62,7 +63,7 @@ fn security_default_matches_centralised() {
 #[test]
 fn performance_default_matches_centralised() {
     let d: UserPerformanceSettings = UserPerformanceSettings::default();
-    let c = defaults::default_performance();
+    let c = default_performance();
     assert_eq!(d.cache_enabled, c.cache_enabled);
     assert_eq!(d.cache_size, c.cache_size);
     assert_eq!(d.offline_mode, c.offline_mode);
@@ -77,7 +78,7 @@ fn performance_default_matches_centralised() {
 #[test]
 fn accessibility_default_matches_centralised() {
     let d: UserAccessibilitySettings = UserAccessibilitySettings::default();
-    let c = defaults::default_accessibility();
+    let c = default_accessibility();
     assert_eq!(d.high_contrast, c.high_contrast);
     assert_eq!(d.large_text, c.large_text);
     assert_eq!(d.reduce_motion, c.reduce_motion);
@@ -95,7 +96,7 @@ fn accessibility_default_matches_centralised() {
 #[test]
 fn notifications_default_matches_centralised() {
     let d: UserNotificationSettings = UserNotificationSettings::default();
-    let c = defaults::default_notifications();
+    let c = default_notifications();
     assert_eq!(d.email_enabled, c.email_enabled);
     assert_eq!(d.push_enabled, c.push_enabled);
     assert_eq!(d.in_app_enabled, c.in_app_enabled);
@@ -120,7 +121,7 @@ fn notifications_default_matches_centralised() {
 #[test]
 fn user_settings_default_composes_all_sub_defaults() {
     let d: UserSettings = UserSettings::default();
-    let c = defaults::default_user_settings();
+    let c = default_user_settings();
 
     // Profile
     assert_eq!(d.profile.full_name, c.profile.full_name);

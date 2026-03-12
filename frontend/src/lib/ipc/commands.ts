@@ -54,9 +54,7 @@ export const IPC_COMMANDS = {
   MATERIAL_LIST_SUPPLIERS: 'material_list_suppliers',
   MATERIAL_GET_STATS: 'material_get_stats',
   INVENTORY_GET_STATS: 'inventory_get_stats',
-  MATERIAL_GET_LOW_STOCK: 'material_get_low_stock',
   MATERIAL_GET_LOW_STOCK_MATERIALS: 'material_get_low_stock_materials',
-  MATERIAL_GET_EXPIRED: 'material_get_expired',
   MATERIAL_GET_EXPIRED_MATERIALS: 'material_get_expired_materials',
   MATERIAL_GET_INVENTORY_MOVEMENT_SUMMARY: 'material_get_inventory_movement_summary',
   // S-1 perf: batch endpoint — replaces 4 individual IPC calls on dashboard mount.

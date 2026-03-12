@@ -141,8 +141,6 @@ fn main() {
             domains::inventory::ipc::material::material_create_supplier,
             domains::inventory::ipc::material::material_list_suppliers,
             domains::inventory::ipc::material::material_get_stats,
-            domains::inventory::ipc::material::material_get_low_stock,
-            domains::inventory::ipc::material::material_get_expired,
             domains::inventory::ipc::material::material_get_low_stock_materials,
             domains::inventory::ipc::material::material_get_expired_materials,
             domains::inventory::ipc::material::material_get_inventory_movement_summary,

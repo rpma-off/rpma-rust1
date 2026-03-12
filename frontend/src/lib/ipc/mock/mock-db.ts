@@ -1205,10 +1205,6 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
     case 'inventory_get_stats': {
       return inventoryStats();
     }
-    case 'material_get_low_stock': {
-      return state.materials.filter(m => (m.minimum_stock ?? 0) > (m.current_stock ?? 0));
-    }
-    case 'material_get_expired':
     case 'material_get_expired_materials': {
       return state.materials.filter(m => Boolean(m.expiry_date));
     }

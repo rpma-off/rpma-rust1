@@ -326,56 +326,6 @@ pub async fn material_get_stats(
     }
 }
 
-/// Get low stock materials
-#[tauri::command]
-#[instrument(skip(state), fields(user_id))]
-pub async fn material_get_low_stock(
-    state: AppState<'_>,
-    correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<crate::domains::inventory::domain::models::material::LowStockMaterialsResponse>,
-    crate::commands::AppError,
-> {
-    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
-    tracing::Span::current().record("user_id", ctx.user_id());
-    let service = state.material_service.clone();
-
-    match service.get_low_stock_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get low stock materials");
-            Err(map_material_err("get_low_stock_materials", e))
-        }
-    }
-}
-
-/// Get expired materials
-#[tauri::command]
-#[instrument(skip(state), fields(user_id))]
-pub async fn material_get_expired(
-    state: AppState<'_>,
-    correlation_id: Option<String>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::inventory::domain::models::material::Material>>,
-    crate::commands::AppError,
-> {
-    let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
-    tracing::Span::current().record("user_id", ctx.user_id());
-    let service = state.material_service.clone();
-
-    match service.get_expired_materials() {
-        Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
-        }
-        Err(e) => {
-            error!(error = %e, "Failed to get expired materials");
-            Err(map_material_err("get_expired_materials", e))
-        }
-    }
-}
-
 /// Get inventory statistics
 #[tauri::command]
 #[instrument(skip(state), fields(user_id))]

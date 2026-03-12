@@ -948,7 +948,7 @@ mod tests {
             .unwrap();
 
         // Get low stock materials
-        let result = crate::domains::inventory::ipc::material::material_get_low_stock(state).await;
+        let result = crate::domains::inventory::ipc::material::material_get_low_stock_materials(state, None).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -1039,7 +1039,7 @@ mod tests {
         .unwrap();
 
         // Get expired materials
-        let result = crate::domains::inventory::ipc::material::material_get_expired(state).await;
+        let result = crate::domains::inventory::ipc::material::material_get_expired_materials(state, None).await;
 
         assert!(result.is_ok());
         let response = result.unwrap();

@@ -1,11 +1,4 @@
 export { useTaskFiltering } from '@/domains/tasks';
-export { useChangeTracking } from '@/domains/audit';
-export {
-  useEntitySyncStatus,
-  useOfflineActions,
-  useOfflineQueue,
-  useOfflineSync,
-} from '@/domains/sync';
 export {
   useVirtualScrolling,
 } from '@/shared/hooks/useVirtualScrolling';
