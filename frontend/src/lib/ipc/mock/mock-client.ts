@@ -5,10 +5,15 @@ import type {
   TaskListResponse,
   ClientListResponse,
   TaskStatistics,
-  ClientStatistics
+  ClientStatistics,
+  Organization,
+  OnboardingStatus,
+  OnboardingData,
+  UpdateOrganizationRequest,
+  UpdateOrganizationSettingsRequest
 } from '@/lib/backend';
 import type { Material, MaterialStats } from '@/shared/types';
-import type { JsonObject } from '@/types/json';
+import type { JsonObject, JsonValue } from '@/types/json';
 import { handleInvoke, resetDb } from './mock-db';
 import { installMockControls } from './mock-controls';
 import { defaultFixtures } from './fixtures';
@@ -22,280 +27,227 @@ export const ipcClient = {
       mockSafeInvoke<UserSession>('auth_login', { request: { email, password } }),
     createAccount: (request: JsonObject) =>
       mockSafeInvoke<UserSession>('auth_create_account', { request }),
-    refreshToken: (refreshToken: string) =>
-      mockSafeInvoke<UserSession>('auth_refresh_token', { refreshToken }),
-    logout: (token: string) =>
-      mockSafeInvoke<void>('auth_logout', { token }),
-    validateSession: (token: string) =>
-      mockSafeInvoke<UserSession>('auth_validate_session', { token }),
-    enable2FA: (_sessionToken: string) => mockSafeInvoke('enable_2fa'),
-    verify2FASetup: (_code: string, _backupCodes: string[], _sessionToken: string) => mockSafeInvoke('verify_2fa_setup'),
-    disable2FA: (_password: string, _sessionToken: string) => mockSafeInvoke('disable_2fa'),
-    regenerateBackupCodes: (_sessionToken: string) => mockSafeInvoke('regenerate_backup_codes'),
-    is2FAEnabled: (_sessionToken: string) => mockSafeInvoke('is_2fa_enabled')
+    logout: () =>
+      mockSafeInvoke<void>('auth_logout', {}),
+    validateSession: () =>
+      mockSafeInvoke<UserSession>('auth_validate_session', {}),
   },
   clients: {
-    create: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
-    get: (id: string, sessionToken: string) =>
-      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
-    getWithTasks: (id: string, sessionToken: string) =>
-      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'GetWithTasks', id }, session_token: sessionToken } }),
-    search: (query: string, limit: number, sessionToken: string) =>
-      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'Search', query, limit }, session_token: sessionToken } }),
-    list: (filters: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<ClientListResponse>('client_crud', { request: { action: { action: 'List', filters }, session_token: sessionToken } }),
-    listWithTasks: (filters: JsonObject, limitTasks: number, sessionToken: string) =>
-      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'ListWithTasks', filters, limit_tasks: limitTasks }, session_token: sessionToken } }),
-    stats: (sessionToken: string) =>
-      mockSafeInvoke<ClientStatistics>('client_crud', { request: { action: { action: 'Stats' }, session_token: sessionToken } }),
-    update: (id: string, data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
-    delete: (id: string, sessionToken: string) =>
-      mockSafeInvoke<void>('client_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } })
+    create: (data: JsonObject) =>
+      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Create', data } } }),
+    get: (id: string) =>
+      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'Get', id } } }),
+    getWithTasks: (id: string) =>
+      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'GetWithTasks', id } } }),
+    search: (query: string, limit: number) =>
+      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'Search', query, limit } } }),
+    list: (filters: JsonObject) =>
+      mockSafeInvoke<ClientListResponse>('client_crud', { request: { action: { action: 'List', filters } } }),
+    listWithTasks: (filters: JsonObject, limitTasks: number) =>
+      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'ListWithTasks', filters, limit_tasks: limitTasks } } }),
+    stats: () =>
+      mockSafeInvoke<ClientStatistics>('client_crud', { request: { action: { action: 'Stats' } } }),
+    update: (id: string, data: JsonObject) =>
+      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Update', id, data } } }),
+    delete: (id: string) =>
+      mockSafeInvoke<void>('client_crud', { request: { action: { action: 'Delete', id } } })
   },
   tasks: {
-    create: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
-    get: (id: string, sessionToken: string) =>
-      mockSafeInvoke<Task | null>('task_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
-    update: (id: string, data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
-    list: (filters: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<TaskListResponse>('task_crud', { request: { action: { action: 'List', filters }, session_token: sessionToken } }),
-    delete: (id: string, sessionToken: string) =>
-      mockSafeInvoke<void>('task_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } }),
-    statistics: (sessionToken: string) =>
-      mockSafeInvoke<TaskStatistics>('task_crud', { request: { action: { action: 'GetStatistics' }, session_token: sessionToken } }),
-    checkTaskAssignment: (_taskId: string, _userId: string, _sessionToken: string) => mockSafeInvoke('check_task_assignment'),
-    checkTaskAvailability: (_taskId: string, _sessionToken: string) => mockSafeInvoke('check_task_availability'),
-    validateTaskAssignmentChange: (_taskId: string, _oldUserId: string | null, _newUserId: string, _sessionToken: string) => mockSafeInvoke('validate_task_assignment_change'),
-    editTask: (taskId: string, updates: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Task>('edit_task', { request: { task_id: taskId, data: updates, session_token: sessionToken } }),
-    addTaskNote: () => mockSafeInvoke('add_task_note'),
-    sendTaskMessage: () => mockSafeInvoke('send_task_message'),
-    delayTask: () => mockSafeInvoke('delay_task'),
-    reportTaskIssue: () => mockSafeInvoke('report_task_issue'),
-    exportTasksCsv: () => mockSafeInvoke<string>('export_tasks_csv'),
-    importTasksBulk: () => mockSafeInvoke('import_tasks_bulk')
+    create: (data: JsonObject) =>
+      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Create', data } } }),
+    get: (id: string) =>
+      mockSafeInvoke<Task | null>('task_crud', { request: { action: { action: 'Get', id } } }),
+    update: (id: string, data: JsonObject) =>
+      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Update', id, data } } }),
+    list: (filters: JsonObject) =>
+      mockSafeInvoke<TaskListResponse>('task_crud', { request: { action: { action: 'List', filters } } }),
+    delete: (id: string) =>
+      mockSafeInvoke<void>('task_crud', { request: { action: { action: 'Delete', id } } }),
+    statistics: () =>
+      mockSafeInvoke<TaskStatistics>('task_crud', { request: { action: { action: 'GetStatistics' } } }),
+    checkTaskAssignment: (_taskId: string, _userId: string) => mockSafeInvoke('check_task_assignment'),
+    checkTaskAvailability: (_taskId: string) => mockSafeInvoke('check_task_availability'),
+    validateTaskAssignmentChange: (_taskId: string, _oldUserId: string | null, _newUserId: string) => mockSafeInvoke('validate_task_assignment_change'),
+    editTask: (taskId: string, updates: JsonObject) =>
+      mockSafeInvoke<Task>('edit_task', { request: { task_id: taskId, data: updates } }),
+    addTaskNote: (taskId: string, note: string) => mockSafeInvoke('add_task_note', { request: { task_id: taskId, note } }),
+    sendTaskMessage: (taskId: string, message: string, messageType: string) => mockSafeInvoke('send_task_message', { request: { task_id: taskId, message, message_type: messageType } }),
+    delayTask: (taskId: string, newDate: string, reason: string) => mockSafeInvoke('delay_task', { request: { task_id: taskId, new_scheduled_date: newDate, reason } }),
+    reportTaskIssue: (taskId: string, issueType: string, severity: string, description: string) => mockSafeInvoke('report_task_issue', { request: { task_id: taskId, issue_type: issueType, severity, description } }),
+    exportTasksCsv: (options: any) => mockSafeInvoke<string>('export_tasks_csv', { request: options }),
+    importTasksBulk: (options: any) => mockSafeInvoke('import_tasks_bulk', { request: options })
   },
   intervention: {
-    getActiveByTask: (taskId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
-    saveStepProgress: (request: JsonObject, sessionToken: string, correlationId?: string) =>
-      mockSafeInvoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
-    getStep: (stepId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
-    getProgress: (interventionId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken })
+    getActiveByTask: (taskId: string) =>
+      mockSafeInvoke('intervention_get_active_by_task', { task_id: taskId }),
+    saveStepProgress: (request: JsonObject, correlationId?: string) =>
+      mockSafeInvoke('intervention_save_step_progress', { request, correlation_id: correlationId }),
+    getStep: (stepId: string) =>
+      mockSafeInvoke('intervention_get_step', { step_id: stepId }),
+    getProgress: (interventionId: string) =>
+      mockSafeInvoke('intervention_get_progress', { intervention_id: interventionId })
   },
   interventions: {
-    start: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('intervention_workflow', { action: { action: 'Start', data }, session_token: sessionToken }),
-    get: (id: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_workflow', { action: { action: 'Get', id }, session_token: sessionToken }),
-    getActiveByTask: (taskId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_active_by_task', { task_id: taskId, session_token: sessionToken }),
-    getLatestByTask: (taskId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_latest_by_task', { taskId, sessionToken }),
-    advanceStep: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('intervention_progress', { action: { action: 'AdvanceStep', ...request }, session_token: sessionToken }),
-    saveStepProgress: (request: JsonObject, sessionToken: string, correlationId: string) =>
-      mockSafeInvoke('intervention_save_step_progress', { request, session_token: sessionToken, correlation_id: correlationId }),
-    getStep: (stepId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_step', { step_id: stepId, session_token: sessionToken }),
-    getProgress: (interventionId: string, sessionToken: string) =>
-      mockSafeInvoke('intervention_get_progress', { intervention_id: interventionId, session_token: sessionToken }),
-    updateWorkflow: (id: string, data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('intervention_workflow', { action: { action: 'Update', id, data }, session_token: sessionToken }),
-    finalize: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('intervention_workflow', { action: { action: 'Finalize', data }, session_token: sessionToken }),
-    list: (filters: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('intervention_management', { action: { List: { filters } }, session_token: sessionToken })
+    start: (data: JsonObject) =>
+      mockSafeInvoke('intervention_workflow', { action: { action: 'Start', data } }),
+    get: (id: string) =>
+      mockSafeInvoke('intervention_workflow', { action: { action: 'Get', id } }),
+    getActiveByTask: (taskId: string) =>
+      mockSafeInvoke('intervention_workflow', { action: { action: 'GetActiveByTask', task_id: taskId } }),
+    getLatestByTask: (taskId: string) =>
+      mockSafeInvoke('intervention_get_latest_by_task', { taskId }),
+    advanceStep: (stepData: any) =>
+      mockSafeInvoke('intervention_progress', { action: { action: 'AdvanceStep', ...stepData } }),
+    getStep: (stepId: string) =>
+      mockSafeInvoke('intervention_get_step', { step_id: stepId }),
+    getProgress: (interventionId: string) =>
+      mockSafeInvoke('intervention_progress', { action: { action: 'Get', intervention_id: interventionId } }),
+    saveStepProgress: (stepData: any) =>
+      mockSafeInvoke('intervention_progress', { action: { action: 'SaveStepProgress', ...stepData } }),
+    updateWorkflow: (id: string, data: JsonObject) =>
+      mockSafeInvoke('intervention_workflow', { action: { action: 'Update', id, data } }),
+    finalize: (data: any) =>
+      mockSafeInvoke('intervention_workflow', { action: { action: 'Finalize', data } }),
+    list: (filters: any) =>
+      mockSafeInvoke('intervention_management', { request: { action: { List: { filters } } } }),
   },
   notifications: {
-    initialize: (config: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('initialize_notification_service', { config, session_token: sessionToken }),
-    send: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('send_notification', { request, session_token: sessionToken }),
-    getStatus: (sessionToken: string) =>
-      mockSafeInvoke('get_notification_status', { session_token: sessionToken }),
-    getRecentActivities: (sessionToken: string) =>
-      mockSafeInvoke('get_recent_activities', { session_token: sessionToken })
+    initialize: (config: any) => mockSafeInvoke('initialize_notification_service', { config }),
+    send: (request: any) => mockSafeInvoke('send_notification', { request }),
+    getStatus: () => mockSafeInvoke('get_notification_status', {}),
+    getRecentActivities: () => mockSafeInvoke<JsonValue[]>('get_recent_activities', {}),
   },
   settings: {
-    getAppSettings: (sessionToken?: string) =>
-      mockSafeInvoke('get_app_settings', { sessionToken: sessionToken || '' }),
-    updateNotificationSettings: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_notification_settings', { request: { ...request, session_token: sessionToken } }),
-    getUserSettings: (sessionToken: string) =>
-      mockSafeInvoke('get_user_settings', { sessionToken }),
-    updateUserProfile: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_profile', { request: { ...request, session_token: sessionToken } }),
-    updateUserPreferences: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_preferences', { request: { ...request, session_token: sessionToken } }),
-    updateUserSecurity: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_security', { request: { ...request, session_token: sessionToken } }),
-    updateUserPerformance: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_performance', { request, sessionToken }),
-    updateUserAccessibility: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_accessibility', { request: { ...request, session_token: sessionToken } }),
-    updateUserNotifications: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_user_notifications', { request: { ...request, session_token: sessionToken } }),
-    changeUserPassword: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('change_user_password', { request: { ...request, session_token: sessionToken } }),
-    getActiveSessions: (sessionToken: string) =>
-      mockSafeInvoke('get_active_sessions', { sessionToken }),
-    revokeSession: (sessionId: string, sessionToken: string) =>
-      mockSafeInvoke('revoke_session', { sessionId, sessionToken }),
-    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      mockSafeInvoke('revoke_all_sessions_except_current', { sessionToken }),
-    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      mockSafeInvoke('update_session_timeout', { timeoutMinutes, sessionToken }),
-    getSessionTimeoutConfig: (sessionToken: string) =>
-      mockSafeInvoke('get_session_timeout_config', { sessionToken }),
-    uploadUserAvatar: (fileData: string, fileName: string, mimeType: string, sessionToken: string) =>
-      mockSafeInvoke('upload_user_avatar', {
-        request: { avatar_data: fileData, mime_type: mimeType, session_token: sessionToken }
-      }),
-    exportUserData: (sessionToken: string) =>
-      mockSafeInvoke('export_user_data', { sessionToken }),
-    deleteUserAccount: (confirmation: string, sessionToken: string) =>
-      mockSafeInvoke('delete_user_account', { request: { confirmation, session_token: sessionToken } }),
-    getDataConsent: (sessionToken: string) =>
-      mockSafeInvoke('get_data_consent', { sessionToken }),
-    updateDataConsent: (request: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_data_consent', { request: { ...request, session_token: sessionToken } })
+    getAppSettings: () => mockSafeInvoke('get_app_settings', {}),
+    updateNotificationSettings: (request: JsonObject) => mockSafeInvoke('update_notification_settings', { request }),
+    getUserSettings: () => mockSafeInvoke<UserSettings>('get_user_settings', {}),
+    updateUserProfile: (request: JsonObject) => mockSafeInvoke('update_user_profile', { request }),
+    updateUserPreferences: (request: JsonObject) => mockSafeInvoke('update_user_preferences', { request }),
+    updateUserSecurity: (request: JsonObject) => mockSafeInvoke('update_user_security', { request }),
+    updateUserPerformance: (request: JsonObject) => mockSafeInvoke('update_user_performance', { request }),
+    updateUserAccessibility: (request: JsonObject) => mockSafeInvoke('update_user_accessibility', { request }),
+    updateUserNotifications: (request: JsonObject) => mockSafeInvoke('update_user_notifications', { request }),
+    updateGeneralSettings: (request: JsonObject) => mockSafeInvoke('update_general_settings', { request }),
+    updateBusinessRules: (rules: JsonValue[]) => mockSafeInvoke('update_business_rules', { request: { rules } }),
+    updateSecurityPolicies: (policies: JsonValue[]) => mockSafeInvoke('update_security_policies', { request: { policies } }),
+    updateIntegrations: (integrations: JsonValue[]) => mockSafeInvoke('update_integrations', { request: { integrations } }),
+    updatePerformanceConfigs: (configs: JsonValue[]) => mockSafeInvoke('update_performance_configs', { request: { configs } }),
+    updateBusinessHours: (hours: JsonObject) => mockSafeInvoke('update_business_hours', { request: { hours } }),
+    changeUserPassword: (request: JsonObject) => mockSafeInvoke('change_user_password', { request }),
+    getActiveSessions: () => mockSafeInvoke('get_active_sessions', {}),
+    revokeSession: (sessionId: string) => mockSafeInvoke('revoke_session', { sessionId }),
+    revokeAllSessionsExceptCurrent: () => mockSafeInvoke('revoke_all_sessions_except_current', {}),
+    updateSessionTimeout: (timeoutMinutes: number) => mockSafeInvoke('update_session_timeout', { timeoutMinutes }),
+    getSessionTimeoutConfig: () => mockSafeInvoke('get_session_timeout_config', {}),
+    uploadUserAvatar: (fileData: string, fileName: string, mimeType: string) => mockSafeInvoke('upload_user_avatar', { request: { avatar_data: fileData, mime_type: mimeType } }),
+    exportUserData: () => mockSafeInvoke('export_user_data', {}),
+    deleteUserAccount: (confirmation: string) => mockSafeInvoke('delete_user_account', { request: { confirmation } }),
+    getDataConsent: () => mockSafeInvoke('get_data_consent', {}),
+    updateDataConsent: (request: JsonObject) => mockSafeInvoke('update_data_consent', { request }),
   },
-  material: {
-    list: (sessionToken: string, query: JsonObject) =>
-      mockSafeInvoke<Material[]>('material_list', { sessionToken, ...query }),
-    create: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Material>('material_create', { request: { ...data, session_token: sessionToken } }),
-    update: (id: string, data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke<Material>('material_update', { id, request: { ...data, session_token: sessionToken } }),
-    get: (id: string, sessionToken: string) =>
-      mockSafeInvoke<Material | null>('material_get', { id, sessionToken }),
-    delete: (id: string, sessionToken: string) =>
-      mockSafeInvoke('material_delete', { id, sessionToken }),
-    updateStock: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('material_update_stock', { request: { ...data, session_token: sessionToken } }),
-    adjustStock: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('material_adjust_stock', { request: { ...data, session_token: sessionToken } }),
-    recordConsumption: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('material_record_consumption', { request: { ...data, session_token: sessionToken } }),
-    getConsumptionHistory: () => mockSafeInvoke('material_get_consumption_history'),
-    createInventoryTransaction: () => mockSafeInvoke('material_create_inventory_transaction'),
-    getTransactionHistory: () => mockSafeInvoke('material_get_transaction_history'),
-    createCategory: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('material_create_category', { request: { ...data, session_token: sessionToken } }),
-    listCategories: (sessionToken: string) =>
-      mockSafeInvoke('material_list_categories', { sessionToken }),
-    createSupplier: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('material_create_supplier', { request: { ...data, session_token: sessionToken } }),
-    listSuppliers: (sessionToken: string) =>
-      mockSafeInvoke('material_list_suppliers', { sessionToken }),
-    getStats: (_sessionToken: string) =>
-      mockSafeInvoke<MaterialStats>('material_get_stats'),
-    getLowStockMaterials: (_sessionToken: string) =>
-      mockSafeInvoke<Material[]>('material_get_low_stock'),
-    getExpiredMaterials: (_sessionToken: string) =>
-      mockSafeInvoke<Material[]>('material_get_expired_materials'),
-    getInventoryMovementSummary: () => mockSafeInvoke('material_get_inventory_movement_summary')
-  },
-  calendar: {
-    getEvents: (startDate: string, endDate: string, technicianId: string | undefined, sessionToken: string) =>
-      mockSafeInvoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId, session_token: sessionToken }),
-    getEventById: (id: string, sessionToken: string) =>
-      mockSafeInvoke('get_event_by_id', { id, session_token: sessionToken }),
-    createEvent: (eventData: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('create_event', { event_data: eventData, session_token: sessionToken }),
-    updateEvent: (id: string, eventData: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('update_event', { id, event_data: eventData, session_token: sessionToken }),
-    deleteEvent: (id: string, sessionToken: string) =>
-      mockSafeInvoke('delete_event', { id, session_token: sessionToken }),
-    getEventsForTechnician: (technicianId: string, sessionToken: string) =>
-      mockSafeInvoke('get_events_for_technician', { technician_id: technicianId, session_token: sessionToken }),
-    getEventsForTask: (taskId: string, sessionToken: string) =>
-      mockSafeInvoke('get_events_for_task', { task_id: taskId, session_token: sessionToken })
-  },
-  dashboard: {
-    getStats: (sessionToken: string, timeRange?: string) =>
-      mockSafeInvoke('dashboard_get_stats', { session_token: sessionToken, timeRange })
-  },
-  users: {
-    create: (data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'Create', data }, session_token: sessionToken } }),
-    get: (id: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'Get', id }, session_token: sessionToken } }),
-    list: (limit: number, offset: number, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'List', limit, offset }, session_token: sessionToken } }),
-    update: (id: string, data: JsonObject, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'Update', id, data }, session_token: sessionToken } }),
-    delete: (id: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'Delete', id }, session_token: sessionToken } }),
-    changeRole: (userId: string, newRole: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { ChangeRole: { id: userId, new_role: newRole } }, session_token: sessionToken } }),
-    updateEmail: (userId: string, newEmail: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { action: 'Update', id: userId, data: { email: newEmail } }, session_token: sessionToken } }),
-    changePassword: (userId: string, newPassword: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { ChangePassword: { id: userId, new_password: newPassword } }, session_token: sessionToken } }),
-    banUser: (userId: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { Ban: { id: userId } }, session_token: sessionToken } }),
-    unbanUser: (userId: string, sessionToken: string) =>
-      mockSafeInvoke('user_crud', { request: { action: { Unban: { id: userId } }, session_token: sessionToken } })
-  },
-  bootstrap: {
-    firstAdmin: (userId: string, sessionToken: string) =>
-      mockSafeInvoke('bootstrap_first_admin', { request: { user_id: userId, session_token: sessionToken } }),
-    hasAdmins: () =>
-      mockSafeInvoke('has_admins')
+  organization: {
+    getOnboardingStatus: (): Promise<OnboardingStatus> =>
+      mockSafeInvoke<OnboardingStatus>('get_onboarding_status', {}),
+    completeOnboarding: (data: OnboardingData): Promise<Organization> =>
+      mockSafeInvoke<Organization>('complete_onboarding', { data }),
+    get: (_sessionToken: string): Promise<Organization> =>
+      mockSafeInvoke<Organization>('get_organization', {}),
+    update: (_sessionToken: string, data: UpdateOrganizationRequest): Promise<Organization> =>
+      mockSafeInvoke<Organization>('update_organization', { data }),
+    uploadLogo: (_sessionToken: string, filePath?: string, base64Data?: string): Promise<Organization> =>
+      mockSafeInvoke<Organization>('upload_logo', { file_path: filePath, base64_data: base64Data }),
+    getSettings: (_sessionToken: string): Promise<Record<string, string | number | boolean>> =>
+      mockSafeInvoke<Record<string, string | number | boolean>>('get_organization_settings', {}),
+    updateSettings: (_sessionToken: string, data: UpdateOrganizationSettingsRequest): Promise<Record<string, string | number | boolean>> =>
+      mockSafeInvoke<Record<string, string | number | boolean>>('update_organization_settings', { data }),
   },
   security: {
-    getMetrics: (sessionToken: string) =>
-      mockSafeInvoke('get_security_metrics', { session_token: sessionToken }),
-    getEvents: (limit: number, sessionToken: string) =>
-      mockSafeInvoke('get_security_events', { limit, session_token: sessionToken }),
-    getAlerts: (sessionToken: string) =>
-      mockSafeInvoke('get_security_alerts', { session_token: sessionToken }),
-    acknowledgeAlert: (alertId: string, sessionToken: string) =>
-      mockSafeInvoke('acknowledge_security_alert', { alert_id: alertId, session_token: sessionToken }),
-    resolveAlert: (alertId: string, actionsTaken: string[], sessionToken: string) =>
-      mockSafeInvoke('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken, session_token: sessionToken }),
-    cleanupEvents: (sessionToken: string) =>
-      mockSafeInvoke('cleanup_security_events', { session_token: sessionToken }),
-    getActiveSessions: (sessionToken: string) =>
-      mockSafeInvoke('get_active_sessions', { sessionToken }),
-    revokeSession: (sessionId: string, sessionToken: string) =>
-      mockSafeInvoke('revoke_session', { sessionId, sessionToken }),
-    revokeAllSessionsExceptCurrent: (sessionToken: string) =>
-      mockSafeInvoke('revoke_all_sessions_except_current', { sessionToken }),
-    updateSessionTimeout: (timeoutMinutes: number, sessionToken: string) =>
-      mockSafeInvoke('update_session_timeout', { timeoutMinutes, sessionToken }),
-    getSessionTimeoutConfig: (sessionToken: string) =>
-      mockSafeInvoke('get_session_timeout_config', { sessionToken })
+    getActiveSessions: () => mockSafeInvoke('get_active_sessions', {}),
+    revokeSession: (sessionId: string) => mockSafeInvoke('revoke_session', { sessionId }),
+    revokeAllSessionsExceptCurrent: () => mockSafeInvoke('revoke_all_sessions_except_current', {}),
+    updateSessionTimeout: (timeoutMinutes: number) => mockSafeInvoke('update_session_timeout', { timeoutMinutes }),
+    getSessionTimeoutConfig: () => mockSafeInvoke('get_session_timeout_config', {}),
   },
-  system: {
-    healthCheck: () => mockSafeInvoke('health_check'),
-    getDatabaseStatus: (sessionToken: string) => mockSafeInvoke('diagnose_database', { session_token: sessionToken }),
-    getDatabaseStats: (sessionToken: string) => mockSafeInvoke('get_database_stats', { session_token: sessionToken }),
-    getDatabasePoolStats: () => mockSafeInvoke('get_database_pool_stats'),
+  dashboard: {
+    getStats: (timeRange?: string) => mockSafeInvoke('dashboard_get_stats', { timeRange }),
+  },
+  users: {
+    create: (data: any): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Create', data } } }),
+    get: (id: string): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Get', id } } }),
+    list: (limit: number, offset: number): Promise<UserListResponse> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'List', limit, offset } } }).then(r => r as any),
+    update: (id: string, data: any): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Update', id, data } } }),
+    delete: (id: string): Promise<void> =>
+      mockSafeInvoke<void>('user_crud', { request: { action: { action: 'Delete', id } } }),
+    changeRole: (id: string, role: string): Promise<void> =>
+      mockSafeInvoke<void>('user_crud', { request: { action: { ChangeRole: { id, new_role: role } } } }),
+    updateEmail: (id: string, email: string): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Update', id, data: { email } } } }),
+    changePassword: (id: string, password: string): Promise<void> =>
+      mockSafeInvoke<void>('user_crud', { request: { action: { ChangePassword: { id, new_password: password } } } }),
+    banUser: (id: string): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { Ban: { id } } } }),
+    unbanUser: (id: string): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { Unban: { id } } } }),
+  },
+  bootstrap: {
+    firstAdmin: (userId: string) => mockSafeInvoke('bootstrap_first_admin', { request: { user_id: userId } }),
+    hasAdmins: () => mockSafeInvoke<boolean>('has_admins'),
+  },
+  admin: {
+    healthCheck: () => mockSafeInvoke<string>('health_check'),
+    getHealthStatus: () => mockSafeInvoke('health_check'),
+    getDatabaseStatus: () => mockSafeInvoke('diagnose_database', {}),
+    getDatabaseStats: () => mockSafeInvoke('get_database_stats', {}),
+    getDatabasePoolHealth: () => mockSafeInvoke('get_database_pool_health', {}),
     getAppInfo: () => mockSafeInvoke('get_app_info'),
-    vacuumDatabase: (sessionToken: string) => mockSafeInvoke('vacuum_database', { session_token: sessionToken })
+    getDeviceInfo: () => mockSafeInvoke('get_device_info'),
   },
-  ui: {
-    windowMinimize: () => mockSafeInvoke('ui_window_minimize'),
-    windowMaximize: () => mockSafeInvoke('ui_window_maximize'),
-    windowClose: () => mockSafeInvoke('ui_window_close'),
-    navigate: (path: string, options?: JsonObject) => mockSafeInvoke('navigation_update', { path, options }),
-    goBack: () => mockSafeInvoke('navigation_go_back'),
-    goForward: () => mockSafeInvoke('navigation_go_forward'),
-    getCurrent: () => mockSafeInvoke('navigation_get_current'),
-    addToHistory: (path: string) => mockSafeInvoke('navigation_add_to_history', { path }),
-    registerShortcuts: () => mockSafeInvoke('shortcuts_register'),
-    shellOpen: () => mockSafeInvoke('ui_shell_open_url'),
-    gpsGetCurrentPosition: () => mockSafeInvoke('ui_gps_get_current_position'),
-    initiateCustomerCall: () => mockSafeInvoke('ui_initiate_customer_call')
+  audit: {
+    getMetrics: () => mockSafeInvoke('get_security_metrics', {}),
+    getEvents: (limit: number) => mockSafeInvoke('get_security_events', { limit }),
+    getAlerts: () => mockSafeInvoke('get_security_alerts', {}),
+    acknowledgeAlert: (alertId: string) => mockSafeInvoke('acknowledge_security_alert', { alert_id: alertId }),
+    resolveAlert: (alertId: string, actionsTaken: string[]) => mockSafeInvoke('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken }),
+    cleanupEvents: () => mockSafeInvoke('cleanup_security_events', {}),
+  },
+  calendar: {
+    getEvents: (startDate: string, endDate: string, technicianId?: string) => mockSafeInvoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId }),
+    getEventById: (id: string) => mockSafeInvoke('get_event_by_id', { request: { id } }),
+    createEvent: (eventData: any) => mockSafeInvoke('create_event', { request: { event_data: eventData } }),
+    updateEvent: (id: string, eventData: any) => mockSafeInvoke('update_event', { request: { id, event_data: eventData } }),
+    deleteEvent: (id: string) => mockSafeInvoke('delete_event', { request: { id } }),
+    getEventsForTechnician: (technicianId: string) => mockSafeInvoke('get_events_for_technician', { request: { technician_id: technicianId } }),
+    getEventsForTask: (taskId: string) => mockSafeInvoke('get_events_for_task', { request: { task_id: taskId } }),
+  },
+  photos: {
+    list: (interventionId: string) => mockSafeInvoke('document_get_photos', { request: { intervention_id: interventionId } }),
+    upload: (interventionId: string, file: any, photoType: string) => mockSafeInvoke('document_store_photo', { request: { intervention_id: interventionId, file_name: file.name, mime_type: file.mimeType, photo_type: photoType }, image_data: Array.from(file.bytes) }),
+    delete: (photoId: string) => mockSafeInvoke('document_delete_photo', { photo_id: photoId }),
+  },
+  material: {
+    list: (query: any) => mockSafeInvoke('material_list', query),
+    create: (data: any) => mockSafeInvoke('material_create', { request: data }),
+    update: (id: string, data: any) => mockSafeInvoke('material_update', { id, request: data }),
+    get: (id: string) => mockSafeInvoke('material_get', { id }),
+    delete: (id: string) => mockSafeInvoke('material_delete', { id }),
+    updateStock: (data: any) => mockSafeInvoke('material_update_stock', { request: data }),
+    adjustStock: (data: any) => mockSafeInvoke('material_adjust_stock', { request: data }),
+    recordConsumption: (data: any) => mockSafeInvoke('material_record_consumption', { request: data }),
+    getConsumptionHistory: (materialId: string, query: any) => mockSafeInvoke('material_get_consumption_history', { material_id: materialId, ...query }),
+    createInventoryTransaction: (data: any) => mockSafeInvoke('material_create_inventory_transaction', { request: data }),
+    getTransactionHistory: (materialId: string, query: any) => mockSafeInvoke('material_get_transaction_history', { material_id: materialId, ...query }),
+    createCategory: (data: any) => mockSafeInvoke('material_create_category', { request: data }),
+    listCategories: () => mockSafeInvoke('material_list_categories', {}),
+    createSupplier: (data: any) => mockSafeInvoke('material_create_supplier', { request: data }),
+    listSuppliers: () => mockSafeInvoke('material_list_suppliers', {}),
+    getStats: () => mockSafeInvoke('material_get_stats', {}),
+    getLowStockMaterials: () => mockSafeInvoke('material_get_low_stock_materials', {}),
+    getExpiredMaterials: () => mockSafeInvoke('material_get_expired_materials', {}),
+    getInventoryMovementSummary: (materialId: string) => mockSafeInvoke('material_get_inventory_movement_summary', { material_id: materialId }),
   }
 } as const;
 
@@ -303,13 +255,4 @@ export function useIpcClient() {
   return ipcClient;
 }
 
-export function initMockIpc(): void {
-  console.log('[E2E Mock] Initializing IPC mock...');
-  installMockControls();
-  // Initialize the mock database with default fixtures
-  resetDb(defaultFixtures);
-  console.log('[E2E Mock] IPC mock initialized successfully');
-}
-
-
-
+export { resetDb, installMockControls };

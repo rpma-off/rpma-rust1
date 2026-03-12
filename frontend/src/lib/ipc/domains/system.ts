@@ -9,6 +9,9 @@ export const systemOperations = {
   getHealthStatus: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK),
 
+  getApplicationMetrics: () =>
+    safeInvoke<JsonValue>(IPC_COMMANDS.GET_IPC_STATS),
+
   getDatabaseStatus: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.DIAGNOSE_DATABASE, {}),
 

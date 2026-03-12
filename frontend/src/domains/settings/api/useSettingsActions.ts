@@ -1,103 +1,94 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/domains/auth';
-import { settingsService } from '../server';
-import { invalidateSettingsCache } from './useSettings';
-import type {
-  UseSettingsActionsResult,
-  UpdatePreferencesRequest,
-  UpdateNotificationsRequest,
-  UpdateAccessibilityRequest,
-  UpdatePerformanceRequest,
-  UpdateProfileRequest,
-  ChangePasswordRequest,
-} from './types';
+import { useIpcClient } from '@/lib/ipc/client';
+import type { JsonObject } from '@/types/json';
 
-export function useSettingsActions(): UseSettingsActionsResult {
+const DEFAULT_PREFERENCES = {
+  theme: 'system',
+  language: 'fr',
+  compact_view: false,
+  show_notifications: true,
+};
+
+const DEFAULT_ACCESSIBILITY = {
+  font_size: 'medium',
+  high_contrast: false,
+  reduce_motion: false,
+};
+
+const DEFAULT_NOTIFICATIONS = {
+  email_notifications: true,
+  push_notifications: true,
+  sms_notifications: false,
+  marketing_emails: false,
+};
+
+const DEFAULT_PERFORMANCE = {
+  enable_animations: true,
+  enable_hardware_acceleration: true,
+  cache_ttl: 3600,
+};
+
+export function useSettingsActions() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const ipcClient = useIpcClient();
 
-  const withToken = useCallback(async <T>(fn: (token: string) => Promise<T>): Promise<T | null> => {
-    if (!user?.token) {
-      return null;
-    }
-    return fn(user.token);
-  }, [user?.token]);
+  const onSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['user-settings', user?.user_id] });
+  };
 
-  const updatePreferences = useCallback(
-    async (data: UpdatePreferencesRequest) => {
-      const response = await withToken((token) => settingsService.updatePreferences(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
+  const updatePreferences = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.updateUserPreferences(data),
+    onSuccess,
+  });
+
+  const updateNotifications = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.updateUserNotifications(data),
+    onSuccess,
+  });
+
+  const updateAccessibility = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.updateUserAccessibility(data),
+    onSuccess,
+  });
+
+  const updatePerformance = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.updateUserPerformance(data),
+    onSuccess,
+  });
+
+  const updateProfile = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.updateUserProfile(data),
+    onSuccess,
+  });
+
+  const changePassword = useMutation({
+    mutationFn: (data: JsonObject) => ipcClient.settings.changeUserPassword(data),
+    onSuccess,
+  });
+
+  const resetSettings = useMutation({
+    mutationFn: async () => {
+      await Promise.all([
+        ipcClient.settings.updateUserPreferences(DEFAULT_PREFERENCES),
+        ipcClient.settings.updateUserNotifications(DEFAULT_NOTIFICATIONS),
+        ipcClient.settings.updateUserAccessibility(DEFAULT_ACCESSIBILITY),
+        ipcClient.settings.updateUserPerformance(DEFAULT_PERFORMANCE),
+      ]);
     },
-    [withToken]
-  );
-
-  const updateNotifications = useCallback(
-    async (data: UpdateNotificationsRequest) => {
-      const response = await withToken((token) => settingsService.updateNotifications(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
-    },
-    [withToken]
-  );
-
-  const updateAccessibility = useCallback(
-    async (data: UpdateAccessibilityRequest) => {
-      const response = await withToken((token) => settingsService.updateAccessibility(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
-    },
-    [withToken]
-  );
-
-  const updatePerformance = useCallback(
-    async (data: UpdatePerformanceRequest) => {
-      const response = await withToken((token) => settingsService.updatePerformance(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
-    },
-    [withToken]
-  );
-
-  const updateProfile = useCallback(
-    async (data: UpdateProfileRequest) => {
-      const response = await withToken((token) => settingsService.updateProfile(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
-    },
-    [withToken]
-  );
-
-  const changePassword = useCallback(
-    async (data: ChangePasswordRequest) => {
-      const response = await withToken((token) => settingsService.changePassword(token, data));
-      const ok = Boolean(response && (response as { success?: boolean }).success);
-      if (ok) invalidateSettingsCache();
-      return ok;
-    },
-    [withToken]
-  );
-
-  const resetSettings = useCallback(async () => {
-    const response = await withToken((token) => settingsService.resetSettings(token));
-    const ok = Boolean(response && (response as { success?: boolean }).success);
-    if (ok) invalidateSettingsCache();
-    return ok;
-  }, [withToken]);
+    onSuccess,
+  });
 
   return {
-    updatePreferences,
-    updateNotifications,
-    updateAccessibility,
-    updatePerformance,
-    updateProfile,
-    changePassword,
-    resetSettings,
+    updatePreferences: (data: JsonObject) => updatePreferences.mutateAsync(data).then(() => true).catch(() => false),
+    updateNotifications: (data: JsonObject) => updateNotifications.mutateAsync(data).then(() => true).catch(() => false),
+    updateAccessibility: (data: JsonObject) => updateAccessibility.mutateAsync(data).then(() => true).catch(() => false),
+    updatePerformance: (data: JsonObject) => updatePerformance.mutateAsync(data).then(() => true).catch(() => false),
+    updateProfile: (data: JsonObject) => updateProfile.mutateAsync(data).then(() => true).catch(() => false),
+    changePassword: (data: JsonObject) => changePassword.mutateAsync(data).then(() => true).catch(() => false),
+    resetSettings: () => resetSettings.mutateAsync().then(() => true).catch(() => false),
   };
 }

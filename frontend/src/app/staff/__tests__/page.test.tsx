@@ -1,32 +1,32 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
 import StaffPage from '../page';
+import React from 'react';
 
-vi.mock('@/domains/auth', () => ({
-  useAuth: vi.fn(),
+jest.mock('@/domains/auth', () => ({
+  useAuth: jest.fn(),
 }));
 
-vi.mock('@/domains/users', () => ({
-  useUsersPage: vi.fn(() => ({
+jest.mock('@/domains/users', () => ({
+  useUsersPage: jest.fn(() => ({
     users: [],
     loading: false,
     error: null,
-    refetch: vi.fn(),
+    refetch: jest.fn(),
     showForm: false,
     editingUser: null,
-    handleCreateUser: vi.fn(),
-    handleEditUser: vi.fn(),
-    handleFormClose: vi.fn(),
-    handleFormSuccess: vi.fn(),
+    handleCreateUser: jest.fn(),
+    handleEditUser: jest.fn(),
+    handleFormClose: jest.fn(),
+    handleFormSuccess: jest.fn(),
   })),
-  UserList: vi.fn(() => <div data-testid="user-list">User List</div>),
+  UserList: jest.fn(() => <div data-testid="user-list">User List</div>),
 }));
 
-vi.mock('@/domains/admin', () => ({
-  useAdminPage: vi.fn(() => ({
+jest.mock('@/domains/admin', () => ({
+  useAdminPage: jest.fn(() => ({
     t: (key: string) => key,
     activeTab: 'overview',
-    setActiveTab: vi.fn(),
+    setActiveTab: jest.fn(),
     isAuthorized: true,
     adminDashboard: {
       stats: {
@@ -44,22 +44,25 @@ vi.mock('@/domains/admin', () => ({
       searchQuery: '',
       roleFilter: 'all',
       showAddModal: false,
-      setSearchQuery: vi.fn(),
-      setRoleFilter: vi.fn(),
-      setShowAddModal: vi.fn(),
-      addUser: vi.fn(),
-      updateUserStatus: vi.fn(),
+      setSearchQuery: jest.fn(),
+      setRoleFilter: jest.fn(),
+      setShowAddModal: jest.fn(),
+      addUser: jest.fn(),
+      updateUserStatus: jest.fn(),
     },
-    handleDeleteUser: vi.fn(),
+    handleDeleteUser: jest.fn(),
   })),
-  AdminOverviewTab: vi.fn(() => <div>Overview Tab</div>),
-  AdminUsersTab: vi.fn(() => <div>Users Tab</div>),
-  AdminSystemTab: vi.fn(() => <div>System Tab</div>),
+  AdminOverviewTab: jest.fn(() => <div>Overview Tab</div>),
+  AdminUsersTab: jest.fn(() => <div>Users Tab</div>),
+  AdminSystemTab: jest.fn(() => <div>System Tab</div>),
 }));
 
 describe('StaffPage', () => {
   it('renders without crashing', () => {
+    // @ts-ignore - Mocking useAuth for simple render test
+    require('@/domains/auth').useAuth.mockReturnValue({ user: { role: 'admin' } });
+    
     render(<StaffPage />);
-    expect(screen.getByText('Employés/Ressources')).toBeInTheDocument();
+    expect(screen.getByText('nav.employeesResources')).toBeInTheDocument();
   });
 });

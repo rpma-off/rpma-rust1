@@ -124,11 +124,6 @@ export function createTestAdapter(overrides?: TestAdapterOverrides): IpcAdapter 
       refreshToken: () => Promise.resolve(TEST_SESSION as never),
       logout: () => Promise.resolve(undefined as never),
       validateSession: () => Promise.resolve(TEST_SESSION as never),
-      enable2FA: () => ipcError('NOT_IMPLEMENTED', '2FA not implemented'),
-      verify2FASetup: () => ipcError('NOT_IMPLEMENTED', '2FA not implemented'),
-      disable2FA: () => ipcError('NOT_IMPLEMENTED', '2FA not implemented'),
-      regenerateBackupCodes: () => ipcError('NOT_IMPLEMENTED', '2FA not implemented'),
-      is2FAEnabled: () => Promise.resolve(false as never),
     },
     tasks: {
       create: () => Promise.resolve(TEST_TASK as never),

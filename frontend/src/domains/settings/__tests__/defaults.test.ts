@@ -7,7 +7,7 @@ import {
   DEFAULT_NOTIFICATIONS,
   DEFAULT_USER_SETTINGS,
   isAdminOnlyCategory,
-} from '../services/defaults';
+} from '../api/defaults';
 
 describe('Settings defaults', () => {
   it('DEFAULT_PREFERENCES has expected language default', () => {

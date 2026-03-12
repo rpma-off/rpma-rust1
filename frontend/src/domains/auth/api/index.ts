@@ -17,8 +17,6 @@ export { default as PasswordStrengthMeter } from '../components/PasswordStrength
 export { LoginForm } from '../components/LoginForm';
 /** TODO: document */
 export { SignupForm } from '../components/SignupForm';
-/** TODO: document */
-export { default as TOTPSetup } from '../components/TOTPSetup';
 
 /** TODO: document */
 export { useAuthRedirect } from '../hooks/useAuthRedirect';

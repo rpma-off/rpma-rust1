@@ -6,7 +6,6 @@ export { getSessionToken, requireSessionToken } from './services/sessionToken';
 export { default as PasswordStrengthMeter } from './components/PasswordStrengthMeter';
 export { LoginForm } from './components/LoginForm';
 export { SignupForm } from './components/SignupForm';
-export { default as TOTPSetup } from './components/TOTPSetup';
 export { useAuthRedirect } from './hooks/useAuthRedirect';
 export { useAdminBootstrapCheck } from './hooks/useAdminBootstrapCheck';
 export { useSignupForm } from './hooks/useSignupForm';

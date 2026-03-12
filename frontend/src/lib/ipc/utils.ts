@@ -4,20 +4,7 @@ import type { JsonObject, JsonValue } from '@/types/json';
 import { logger } from '../logging';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import { recordMetric } from './metrics';
-
-/**
- * IPC commands that have no backend handler registered in main.rs.
- * Calling them will produce a Tauri "command not found" error.
- * safeInvoke short-circuits these with a clear, descriptive error.
- */
-export const NOT_IMPLEMENTED_COMMANDS = new Set([
-  'auth_refresh_token',
-  'enable_2fa',
-  'verify_2fa_setup',
-  'disable_2fa',
-  'regenerate_backup_codes',
-  'is_2fa_enabled',
-]);
+import { getSessionToken } from '@/shared/contracts/session';
 
 /**
  * IPC commands that do not require an authenticated backend session.
@@ -139,17 +126,6 @@ export async function safeInvoke<T>(
 ): Promise<T> {
   const startTime = performance.now();
 
-  // Guard: reject calls to commands with no backend handler
-  if (NOT_IMPLEMENTED_COMMANDS.has(command)) {
-    const notImplError: EnhancedError = new Error(
-      `La commande « ${command} » n'est pas encore implémentée côté backend.`
-    );
-    notImplError.code = 'NOT_IMPLEMENTED';
-    notImplError.correlationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
-    notImplError.alreadyLogged = false;
-    throw notImplError;
-  }
-
   const providedCorrelationId = typeof args?.correlation_id === 'string' ? args.correlation_id : undefined;
   const correlationId = providedCorrelationId ?? CorrelationContext.generateNew();
   if (providedCorrelationId) {
@@ -162,6 +138,25 @@ export async function safeInvoke<T>(
     ...(args ?? {}),
     correlation_id: correlationId,
   };
+
+  // Authentication & Session Token injection
+  if (!PUBLIC_COMMANDS.has(command)) {
+    // Inject token if not already provided
+    if (argsWithCorrelation.session_token === undefined && argsWithCorrelation.sessionToken === undefined) {
+      const sessionToken = await getSessionToken();
+
+      if (!sessionToken) {
+        const authError: EnhancedError = new Error("Erreur d'authentification. Veuillez vous reconnecter.");
+        authError.code = 'AUTHENTICATION';
+        authError.correlationId = correlationId;
+        authError.alreadyLogged = false;
+        throw authError;
+      }
+
+      argsWithCorrelation.session_token = sessionToken;
+      argsWithCorrelation.sessionToken = sessionToken;
+    }
+  }
 
   try {
     // Log IPC call start

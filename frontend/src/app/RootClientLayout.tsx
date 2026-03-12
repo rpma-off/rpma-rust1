@@ -13,7 +13,7 @@ import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
 import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { useAuth, useAuthRedirect, useAdminBootstrapCheck } from '@/domains/auth';
-import { useOnboardingCheck } from '@/domains/organizations';
+import { useOnboardingCheck } from '@/domains/settings';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

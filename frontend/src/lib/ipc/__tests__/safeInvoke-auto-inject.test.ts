@@ -31,7 +31,6 @@ jest.mock('@/lib/logging/types', () => ({
 }));
 
 import { safeInvoke } from '../utils';
-import { NOT_IMPLEMENTED_COMMANDS } from '../utils';
 
 // Retrieve mock references after all jest.mock calls
 const { invoke: mockInvoke } = jest.requireMock('@tauri-apps/api/core') as { invoke: jest.Mock };
@@ -235,29 +234,6 @@ describe('safeInvoke – session_token auto-injection', () => {
       );
     });
   });
-
-  describe('NOT_IMPLEMENTED command guard', () => {
-    it('throws NOT_IMPLEMENTED error without calling invoke for unimplemented commands', async () => {
-      await expect(safeInvoke('enable_2fa', {})).rejects.toMatchObject({
-        code: 'NOT_IMPLEMENTED',
-      });
-
-      expect(mockInvoke).not.toHaveBeenCalled();
-    });
-
-    it('includes the command name in the error message', async () => {
-      await expect(safeInvoke('enable_2fa', {})).rejects.toThrow('enable_2fa');
-    });
-
-    it('rejects all known NOT_IMPLEMENTED commands', async () => {
-      for (const cmd of NOT_IMPLEMENTED_COMMANDS) {
-        mockInvoke.mockClear();
-        await expect(safeInvoke(cmd, {})).rejects.toMatchObject({
-          code: 'NOT_IMPLEMENTED',
-        });
-        expect(mockInvoke).not.toHaveBeenCalled();
-      }
-    });
-  });
 });
+
 

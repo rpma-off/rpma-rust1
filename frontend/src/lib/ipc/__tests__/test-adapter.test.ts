@@ -65,13 +65,6 @@ describe('createTestAdapter', () => {
     expect(list).toEqual(TEST_TASK_LIST);
   });
 
-  it('auth.enable2FA rejects with NOT_IMPLEMENTED', async () => {
-    const adapter = createTestAdapter();
-    await expect(adapter.auth.enable2FA('tok')).rejects.toMatchObject({
-      message: expect.stringContaining('not implemented'),
-    });
-  });
-
   it('system.healthCheck resolves with ok status', async () => {
     const adapter = createTestAdapter();
     const result = await adapter.system.healthCheck();

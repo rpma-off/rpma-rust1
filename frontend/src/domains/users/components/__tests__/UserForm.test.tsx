@@ -138,8 +138,7 @@ describe('UserForm', () => {
             last_name: 'Smith',
             role: 'supervisor',
             password: 'password123',
-          },
-          'mock-token'
+          }
         );
       });
 
@@ -266,8 +265,7 @@ describe('UserForm', () => {
             last_name: 'Doe', // Unchanged
             role: 'admin',
             is_active: true,
-          },
-          'mock-token'
+          }
         );
       });
 
@@ -291,8 +289,7 @@ describe('UserForm', () => {
           'user-456',
           expect.objectContaining({
             is_active: false,
-          }),
-          'mock-token'
+          })
         );
       });
     });

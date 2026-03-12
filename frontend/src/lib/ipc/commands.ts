@@ -11,20 +11,8 @@ export const IPC_COMMANDS = {
   // Auth commands
   AUTH_LOGIN: 'auth_login',
   AUTH_CREATE_ACCOUNT: 'auth_create_account',
-  /** @deprecated NOT_IMPLEMENTED — no backend handler; refresh flow uses session re-validation */
-  AUTH_REFRESH_TOKEN: 'auth_refresh_token',
   AUTH_LOGOUT: 'auth_logout',
   AUTH_VALIDATE_SESSION: 'auth_validate_session',
-  /** @deprecated NOT_IMPLEMENTED — 2FA backend not yet available */
-  ENABLE_2FA: 'enable_2fa',
-  /** @deprecated NOT_IMPLEMENTED — 2FA backend not yet available */
-  VERIFY_2FA_SETUP: 'verify_2fa_setup',
-  /** @deprecated NOT_IMPLEMENTED — 2FA backend not yet available */
-  DISABLE_2FA: 'disable_2fa',
-  /** @deprecated NOT_IMPLEMENTED — 2FA backend not yet available */
-  REGENERATE_BACKUP_CODES: 'regenerate_backup_codes',
-  /** @deprecated NOT_IMPLEMENTED — 2FA backend not yet available */
-  IS_2FA_ENABLED: 'is_2fa_enabled',
 
   // Task commands
   TASK_CRUD: 'task_crud',

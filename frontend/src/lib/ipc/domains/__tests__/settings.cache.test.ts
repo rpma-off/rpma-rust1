@@ -44,7 +44,7 @@ describe('settingsOperations cache behavior', () => {
 
     expect(safeInvoke).toHaveBeenCalledWith(
       IPC_COMMANDS.UPDATE_USER_PREFERENCES,
-      { request: { language: 'en', session_token: 'test-session-token' } }
+      { request: { language: 'en' } }
     );
     expect(invalidatePattern).toHaveBeenCalled();
   });

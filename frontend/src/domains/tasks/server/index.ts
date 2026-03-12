@@ -6,8 +6,8 @@ export {
   generateFallbackTaskNumber,
   isValidTaskNumberFormat,
 } from '../utils/number-generator';
-export { taskPhotoService } from '@/domains/documents';
-export type { TaskPhotoQueryParams } from '@/domains/documents';
+export { taskPhotoService } from '@/shared/features/documents/task-photo.service';
+export type { TaskPhotoQueryParams } from '@/shared/features/documents/task-photo.service';
 
 export interface UpdateTaskData {
   title?: string;

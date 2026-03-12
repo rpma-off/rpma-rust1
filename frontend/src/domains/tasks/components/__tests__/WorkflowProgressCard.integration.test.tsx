@@ -90,12 +90,9 @@ describe('WorkflowProgressCard Integration', () => {
           expect.objectContaining({
             task_id: 'task-123',
             technician_id: 'user-123',
-            film_type: 'standard',
-          }),
-          'mock-token'
+          })
         );
       });
-
     });
 
     it('handles workflow start errors gracefully', async () => {

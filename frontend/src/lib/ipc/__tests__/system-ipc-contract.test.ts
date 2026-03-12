@@ -24,25 +24,25 @@ describe('systemOperations IPC contract tests', () => {
   it('calls safeInvoke with correct parameters for getApplicationMetrics', async () => {
     await systemOperations.getApplicationMetrics();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_PERFORMANCE_STATS);
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_IPC_STATS);
   });
 
   it('calls safeInvoke with correct parameters for getDatabaseStatus', async () => {
-    await systemOperations.getDatabaseStatus('test-token');
+    await systemOperations.getDatabaseStatus();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.DIAGNOSE_DATABASE, { session_token: 'test-token' });
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.DIAGNOSE_DATABASE, {});
   });
 
   it('calls safeInvoke with correct parameters for getDatabaseStats', async () => {
-    await systemOperations.getDatabaseStats('test-token');
+    await systemOperations.getDatabaseStats();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_STATS, { session_token: 'test-token' });
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_STATS, {});
   });
 
   it('calls safeInvoke with correct parameters for getDatabasePoolHealth', async () => {
-    await systemOperations.getDatabasePoolHealth('test-token');
+    await systemOperations.getDatabasePoolHealth();
 
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH, { session_token: 'test-token' });
+    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_DATABASE_POOL_HEALTH, {});
   });
 
   it('calls safeInvoke with correct parameters for getAppInfo', async () => {

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Download, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui';
-import { documentReportOperations } from '@/domains/documents';
+import { documentReportOperations } from '@/shared/features/documents/report-export';
 
 interface ReportDownloadActionsProps {
   interventionId: string;

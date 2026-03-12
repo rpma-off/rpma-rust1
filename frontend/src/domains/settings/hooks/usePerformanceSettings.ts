@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { LogDomain } from '@/lib/logging/types';
 import type { UserSession, UserPerformanceSettings } from '@/lib/backend';
 import { useLogger } from '@/shared/hooks/useLogger';
-import { settingsIpc } from '../ipc/settings.ipc';
+import { useIpcClient } from '@/lib/ipc/client';
 
 // Performance settings form schema
 const performanceSchema = z.object({
@@ -70,6 +70,7 @@ const DEFAULT_SYNC_STATS: SyncStats = {
 };
 
 export function usePerformanceSettings(user?: UserSession) {
+  const ipcClient = useIpcClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -103,7 +104,7 @@ export function usePerformanceSettings(user?: UserSession) {
 
       setIsLoading(true);
       try {
-        const userSettings = await settingsIpc.getUserSettings();
+        const userSettings = await ipcClient.settings.getUserSettings();
 
         if (userSettings?.performance) {
           form.reset(userSettings.performance as UserPerformanceSettings);
@@ -149,7 +150,7 @@ export function usePerformanceSettings(user?: UserSession) {
     });
 
     try {
-      await settingsIpc.updateUserPerformance(data);
+      await ipcClient.settings.updateUserPerformance(data);
 
       setSaveSuccess(true);
       logInfo('Performance settings updated successfully', { userId: user.user_id });

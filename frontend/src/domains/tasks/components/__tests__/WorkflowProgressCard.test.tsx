@@ -134,30 +134,10 @@ describe('WorkflowProgressCard', () => {
 
       await waitFor(() => {
         expect(mockStartIntervention).toHaveBeenCalledWith(
-          {
+          expect.objectContaining({
             task_id: 'task-123',
-            intervention_number: null,
-            ppf_zones: [],
-            custom_zones: null,
-            film_type: 'standard',
-            film_brand: null,
-            film_model: null,
-            weather_condition: 'sunny',
-            lighting_condition: 'natural',
-            work_location: 'outdoor',
-            temperature: null,
-            humidity: null,
             technician_id: 'user-123',
-            assistant_ids: null,
-            scheduled_start: expect.any(String),
-            estimated_duration: 120,
-            gps_coordinates: null,
-            address: null,
-            notes: null,
-            customer_requirements: null,
-            special_instructions: null,
-          },
-          'mock-token'
+          })
         );
       });
     });

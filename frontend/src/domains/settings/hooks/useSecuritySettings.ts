@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { LogDomain } from '@/lib/logging/types';
 import type { UserSession } from '@/lib/backend';
 import { useLogger } from '@/shared/hooks/useLogger';
-import { settingsIpc } from '../ipc/settings.ipc';
+import { useIpcClient } from '@/lib/ipc/client';
 
 // Password change form schema
 const passwordChangeSchema = z.object({
@@ -47,6 +47,7 @@ interface SessionResponse {
 }
 
 export function useSecuritySettings(user?: UserSession) {
+  const ipcClient = useIpcClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
@@ -79,8 +80,8 @@ export function useSecuritySettings(user?: UserSession) {
       setIsLoading(true);
       try {
         const [sessionsResponse, timeoutConfig] = await Promise.all([
-          settingsIpc.getActiveSessions(),
-          settingsIpc.getSessionTimeoutConfig(),
+          ipcClient.settings.getActiveSessions(),
+          ipcClient.settings.getSessionTimeoutConfig(),
         ]);
 
         if (sessionsResponse && Array.isArray(sessionsResponse)) {
@@ -136,7 +137,7 @@ export function useSecuritySettings(user?: UserSession) {
     logUserAction('Password change initiated', { userId: user.user_id });
 
     try {
-      await settingsIpc.changeUserPassword({
+      await ipcClient.settings.changeUserPassword({
         current_password: data.current_password,
         new_password: data.new_password,
       });
@@ -161,7 +162,7 @@ export function useSecuritySettings(user?: UserSession) {
     logUserAction('Session revocation initiated', { sessionId });
 
     try {
-      await settingsIpc.revokeSession(sessionId);
+      await ipcClient.settings.revokeSession(sessionId);
 
       setLoginSessions(prev => prev.filter(session => session.id !== sessionId));
       logInfo('Session revoked successfully', { sessionId });
@@ -179,7 +180,7 @@ export function useSecuritySettings(user?: UserSession) {
     logUserAction('Session timeout update initiated', { minutes });
 
     try {
-      await settingsIpc.updateSessionTimeout(minutes);
+      await ipcClient.settings.updateSessionTimeout(minutes);
 
       setSessionTimeout(minutes);
       logInfo('Session timeout updated', { minutes });

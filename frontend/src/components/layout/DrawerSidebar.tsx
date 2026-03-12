@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/domains/auth';
-import { useOrganization } from '@/domains/organizations';
+import { useOrganization } from '@/domains/settings';
 
 interface NavItem {
   href?: string;

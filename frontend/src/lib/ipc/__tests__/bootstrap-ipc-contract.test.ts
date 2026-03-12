@@ -14,13 +14,12 @@ describe('ipcClient.bootstrap IPC contract tests', () => {
     safeInvoke.mockResolvedValue('ok');
   });
 
-  it('passes user_id and session_token to safeInvoke', async () => {
-    await ipcClient.bootstrap.firstAdmin('user-1', 'session-abc');
+  it('passes user_id to safeInvoke', async () => {
+    await ipcClient.bootstrap.firstAdmin('user-1');
 
     expect(safeInvoke).toHaveBeenCalledWith('bootstrap_first_admin', {
       request: {
         user_id: 'user-1',
-        session_token: 'session-abc',
       },
     });
   });
@@ -38,7 +37,7 @@ describe('ipcClient.bootstrap IPC contract tests', () => {
     safeInvoke.mockRejectedValueOnce(new Error('bootstrap failed'));
 
     await expect(
-      ipcClient.bootstrap.firstAdmin('user-1', 'session-abc')
+      ipcClient.bootstrap.firstAdmin('user-1')
     ).rejects.toThrow('bootstrap failed');
   });
 });

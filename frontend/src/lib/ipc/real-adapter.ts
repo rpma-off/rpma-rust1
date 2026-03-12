@@ -5,7 +5,7 @@
  */
 
 import type { JsonObject } from '@/types/json';
-import { safeInvoke, NOT_IMPLEMENTED_COMMANDS, PUBLIC_COMMANDS } from './utils';
+import { safeInvoke, PUBLIC_COMMANDS } from './utils';
 import type { IpcAdapter, IpcInvokeOptions } from './adapter';
 
 /**
@@ -34,10 +34,10 @@ export class TauriAdapter implements IpcAdapter {
   }
 
   /**
-   * Check if command is implemented (not in NOT_IMPLEMENTED_COMMANDS)
+   * Check if command is implemented (always true now)
    */
   isImplemented(command: string): boolean {
-    return !NOT_IMPLEMENTED_COMMANDS.has(command);
+    return true;
   }
 
   /**

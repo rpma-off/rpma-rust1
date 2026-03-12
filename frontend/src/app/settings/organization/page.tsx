@@ -6,7 +6,7 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useAuth } from '@/domains/auth';
 
 const OrganizationSettingsTab = dynamic(
-  () => import('@/domains/organizations').then(mod => ({ default: mod.OrganizationSettingsTab })),
+  () => import('@/domains/settings/components/OrganizationSettingsTab').then(mod => ({ default: mod.OrganizationSettingsTab })),
   { loading: () => <LoadingState message="Chargement des paramètres de l'organisation..." /> }
 );
 

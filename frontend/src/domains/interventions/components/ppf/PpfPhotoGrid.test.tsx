@@ -5,7 +5,7 @@ import { PpfPhotoGrid } from './PpfPhotoGrid';
 const uploadPhotosMock = jest.fn();
 const toastErrorMock = jest.fn();
 
-jest.mock('@/domains/documents', () => ({
+jest.mock('@/shared/features/documents/usePhotoUpload', () => ({
   usePhotoUpload: () => ({
     uploadPhotos: uploadPhotosMock,
     isOnline: true,

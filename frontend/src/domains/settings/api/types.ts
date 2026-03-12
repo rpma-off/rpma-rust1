@@ -6,7 +6,7 @@ import type {
   UpdatePerformanceRequest,
   UpdateProfileRequest,
   ChangePasswordRequest,
-} from '../server';
+} from '@/types/settings.types';
 
 export type {
   UserSettings,
@@ -18,11 +18,34 @@ export type {
   ChangePasswordRequest,
 };
 
+export interface Configuration {
+  id: string;
+  key: string;
+  value: unknown;
+  category: string;
+}
+
+export interface BusinessRule {
+  id: string;
+  name: string;
+  description?: string;
+  category: string;
+  condition: string;
+  action: string;
+  priority: 'low' | 'medium' | 'high';
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+}
+
 export interface UseSettingsResult {
   settings: UserSettings | null;
   loading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<unknown>;
 }
 
 export interface UseSettingsActionsResult {

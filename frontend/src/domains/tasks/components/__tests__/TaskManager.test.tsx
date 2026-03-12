@@ -108,12 +108,10 @@ describe('TaskManager', () => {
           to_date: null,
           sort_by: 'created_at',
           sort_order: 'desc',
-        },
-        'mock-token'
+        }
       );
       expect(mockClientsList).toHaveBeenCalledWith(
-        { page: 1, limit: 100, sort_by: 'created_at', sort_order: 'desc' },
-        'mock-token'
+        { page: 1, limit: 100, sort_by: 'created_at', sort_order: 'desc' }
       );
     });
 
@@ -144,7 +142,7 @@ describe('TaskManager', () => {
     await user.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockTasksDelete).toHaveBeenCalledWith('task-1', 'mock-token');
+      expect(mockTasksDelete).toHaveBeenCalledWith('task-1');
     });
   });
 });

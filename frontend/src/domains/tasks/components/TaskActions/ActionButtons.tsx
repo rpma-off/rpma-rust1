@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TaskWithDetails } from '@/types/task.types';
 import { useAuth } from '@/domains/auth';
-import { documentReportOperations } from '@/domains/documents';
+import { documentReportOperations } from '@/shared/features/documents/report-export';
 
 interface ActionButtonsProps {
   task: TaskWithDetails;

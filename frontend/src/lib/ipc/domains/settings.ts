@@ -1,1 +1,3 @@
-export { settingsIpc as settingsOperations } from '@/domains/settings';
+import { ipcClient } from '../client';
+
+export const settingsOperations = ipcClient.settings;

@@ -3,45 +3,26 @@
  */
 
 export { SettingsProvider, useSettingsContext } from './SettingsProvider';
-/** TODO: document */
 export { useSettings } from './useSettings';
-/** TODO: document */
 export { useSettingsActions } from './useSettingsActions';
+export { useOrganization, useUpdateOrganization, useUploadLogo, useOrganizationSettings, useUpdateOrganizationSettings } from './useOrganization';
+export { useOnboardingStatus, useCompleteOnboarding, useNeedsOnboarding } from './useOnboarding';
+export { useOnboardingCheck } from '../hooks/useOnboardingCheck';
+export { configurationService } from './configurationService';
+export * from './defaults';
 
-/** TODO: document */
 export { ProfileSettingsTab } from '../components/ProfileSettingsTab';
-/** TODO: document */
 export { PreferencesTab } from '../components/PreferencesTab';
-/** TODO: document */
 export { SecurityTab } from '../components/SecurityTab';
-/** TODO: document */
 export { PerformanceTab } from '../components/PerformanceTab';
-/** TODO: document */
 export { AccessibilityTab } from '../components/AccessibilityTab';
-/** TODO: document */
 export { NotificationsTab } from '../components/NotificationsTab';
-/** TODO: document */
+export { OrganizationSettingsTab } from '../components/OrganizationSettingsTab';
 export { default as SettingsPageContent } from '../components/SettingsPageContent';
 
-/** TODO: document */
-export { settingsService, configurationService } from '../server';
-/** TODO: document */
-export { settingsIpc } from '../ipc/settings.ipc';
-
-/** TODO: document */
-export {
-  DEFAULT_PROFILE,
-  DEFAULT_PREFERENCES,
-  DEFAULT_SECURITY,
-  DEFAULT_PERFORMANCE,
-  DEFAULT_ACCESSIBILITY,
-  DEFAULT_NOTIFICATIONS,
-  DEFAULT_USER_SETTINGS,
-  isAdminOnlyCategory,
-} from '../services';
-
-/** TODO: document */
 export type {
+  Configuration,
+  BusinessRule,
   UserSettings,
   UpdatePreferencesRequest,
   UpdateNotificationsRequest,
@@ -52,6 +33,3 @@ export type {
   UseSettingsResult,
   UseSettingsActionsResult,
 } from './types';
-
-/** TODO: document */
-export type { Configuration, BusinessRule, SettingsCategory } from '../services';

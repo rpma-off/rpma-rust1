@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useOnboardingStatus, useCompleteOnboarding } from '@/domains/organizations';
+import { useOnboardingStatus, useCompleteOnboarding } from '@/domains/settings';
 import { useTranslation } from '@/shared/hooks';
-import type { CreateOrganizationRequest, OnboardingData } from '@/domains/organizations';
+import type { CreateOrganizationRequest, OnboardingData } from '@/lib/backend';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -27,12 +27,21 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [orgData, setOrgData] = useState<CreateOrganizationRequest>({
     name: '',
+    slug: null,
+    legal_name: null,
+    tax_id: null,
+    siret: null,
+    registration_number: null,
     email: '',
     phone: '',
+    website: null,
     address_street: '',
     address_city: '',
+    address_state: null,
     address_zip: '',
     address_country: 'France',
+    industry: null,
+    company_size: null,
   });
   const [adminData, setAdminData] = useState({
     email: '',
