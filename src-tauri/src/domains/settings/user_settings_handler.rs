@@ -1,13 +1,14 @@
 //! Flattened IPC handlers for User-specific Settings.
+//!
+//! Each handler authenticates the caller via `resolve_context!`, then
+//! delegates all business logic to [`SettingsFacade`].
 
-use std::sync::Arc;
-use tracing::{info, instrument};
+use tracing::instrument;
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::shared::contracts::auth::UserRole;
 use crate::resolve_context;
 use super::models::*;
-use super::user_settings_repository::UserSettingsRepository;
+use super::facade::SettingsFacade;
 
 #[tauri::command]
 #[instrument(skip(state))]
@@ -16,11 +17,8 @@ pub async fn get_user_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let settings = repository.get_user_settings(user_id)?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let settings = facade.get_user_settings(&ctx.auth.user_id)?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -32,13 +30,10 @@ pub async fn update_user_profile(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.profile = profile;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -50,13 +45,10 @@ pub async fn update_user_preferences(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.preferences = preferences;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -68,13 +60,10 @@ pub async fn update_user_security(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.security = security;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -86,13 +75,10 @@ pub async fn update_user_performance(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.performance = performance;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -104,13 +90,10 @@ pub async fn update_user_accessibility(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.accessibility = accessibility;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -122,13 +105,10 @@ pub async fn update_user_notifications(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let user_id = &ctx.auth.user_id;
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_user_settings(user_id)?;
+    let facade = SettingsFacade::new(state.db.clone());
+    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
     current.notifications = notifications;
-    repository.save_user_settings(user_id, &current)?;
-
+    facade.save_user_settings(&ctx.auth.user_id, &current)?;
     Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -138,10 +118,8 @@ pub async fn get_data_consent(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Option<DataConsent>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let repository = UserSettingsRepository::new(state.db.clone());
-
-    let consent = repository.get_data_consent(&ctx.auth.user_id)?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let consent = facade.get_data_consent(&ctx.auth.user_id)?;
     Ok(ApiResponse::success(consent).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -151,7 +129,7 @@ pub async fn change_user_password(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<()>, AppError> {
     let _ctx = resolve_context!(&state, &correlation_id);
-    // Placeholder - password change usually goes through AuthService
+    // Placeholder - password change goes through AuthService
     Ok(ApiResponse::success(()))
 }
 
@@ -194,3 +172,4 @@ pub async fn upload_user_avatar(
     // Placeholder
     Ok(ApiResponse::success("Avatar uploaded".to_string()))
 }
+

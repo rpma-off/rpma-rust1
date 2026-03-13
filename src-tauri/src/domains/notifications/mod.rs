@@ -1,3 +1,6 @@
+mod facade;
+pub use facade::NotificationsFacade;
+
 pub mod models;
 pub mod notification_handler;
 

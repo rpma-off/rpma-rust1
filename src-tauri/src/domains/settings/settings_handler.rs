@@ -1,13 +1,15 @@
 //! Flattened IPC handlers for global App Settings.
+//!
+//! Each handler authenticates the caller via `resolve_context!`, then
+//! delegates all business logic to [`SettingsFacade`].
 
-use std::sync::Arc;
-use tracing::{debug, info, instrument, error};
+use tracing::{info, instrument};
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::shared::contracts::auth::UserRole;
 use crate::resolve_context;
 use super::models::*;
-use super::settings_repository::SettingsRepository;
+use super::facade::SettingsFacade;
 
 #[tauri::command]
 #[instrument(skip(state))]
@@ -16,11 +18,8 @@ pub async fn get_app_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let settings = repository.get_app_settings_db()
-        .map_err(|e| AppError::Database(format!("Failed to get app settings: {}", e)))?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let settings = facade.get_app_settings()?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -32,14 +31,10 @@ pub async fn update_general_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.general = settings;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_general_settings(settings, &ctx.auth.user_id)?;
     info!("General settings updated");
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -50,14 +45,10 @@ pub async fn update_security_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.security = settings;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_security_settings(settings, &ctx.auth.user_id)?;
     info!("Security settings updated");
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -68,14 +59,10 @@ pub async fn update_notification_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.notifications = settings;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_notification_settings(settings, &ctx.auth.user_id)?;
     info!("Notification settings updated");
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 // ── System Config Commands ──────────────────────────────────────────────────
@@ -88,13 +75,9 @@ pub async fn update_business_rules(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.business_rules = rules;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_business_rules(rules, &ctx.auth.user_id)?;
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -105,13 +88,9 @@ pub async fn update_security_policies(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.security_policies = policies;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_security_policies(policies, &ctx.auth.user_id)?;
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -122,13 +101,9 @@ pub async fn update_integrations(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.integrations = integrations;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_integrations(integrations, &ctx.auth.user_id)?;
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -139,13 +114,9 @@ pub async fn update_performance_configs(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.performance_configs = configs;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_performance_configs(configs, &ctx.auth.user_id)?;
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -156,11 +127,7 @@ pub async fn update_business_hours(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let repository = SettingsRepository::new(state.db.clone());
-
-    let mut current = repository.get_app_settings_db()?;
-    current.business_hours = hours;
-    repository.save_app_settings_db(&current, &ctx.auth.user_id)?;
-
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let facade = SettingsFacade::new(state.db.clone());
+    let updated = facade.update_business_hours(hours, &ctx.auth.user_id)?;
+    Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }

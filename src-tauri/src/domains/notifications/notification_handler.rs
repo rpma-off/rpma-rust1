@@ -1279,6 +1279,17 @@ lazy_static! {
 }
 
 // ── IPC commands ──────────────────────────────────────────────────────────────
+//
+// Each command authenticates the caller, then delegates to `NotificationsFacade`
+// — direct use of `NotificationRepository` or `MessageService` is forbidden here.
+
+fn notifications_facade(state: &AppState<'_>) -> super::facade::NotificationsFacade {
+    super::facade::NotificationsFacade::new(
+        state.db.clone(),
+        state.repositories.cache.clone(),
+        state.message_service.clone(),
+    )
+}
 
 #[tracing::instrument(skip_all)]
 #[tauri::command]
@@ -1288,8 +1299,7 @@ pub async fn message_send(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Message>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let msg = state.message_service.send_message(&request).await
-        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let msg = notifications_facade(&state).send_message(&request).await?;
     Ok(ApiResponse::success(msg).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1301,8 +1311,7 @@ pub async fn message_get_list(
     state: AppState<'_>,
 ) -> Result<ApiResponse<MessageListResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let list = state.message_service.get_messages(&query).await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    let list = notifications_facade(&state).get_messages(&query).await?;
     Ok(ApiResponse::success(list).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1314,8 +1323,7 @@ pub async fn message_mark_read(
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    state.message_service.mark_read(&message_id).await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    notifications_facade(&state).mark_message_read(&message_id).await?;
     Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1328,8 +1336,9 @@ pub async fn message_get_templates(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Vec<MessageTemplate>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let templates = state.message_service.get_templates(category.as_deref(), message_type.as_deref()).await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    let templates = notifications_facade(&state)
+        .get_message_templates(category.as_deref(), message_type.as_deref())
+        .await?;
     Ok(ApiResponse::success(templates).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1341,8 +1350,7 @@ pub async fn message_get_preferences(
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let prefs = state.message_service.get_preferences(&user_id).await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    let prefs = notifications_facade(&state).get_preferences(&user_id).await?;
     Ok(ApiResponse::success(prefs).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1355,8 +1363,9 @@ pub async fn message_update_preferences(
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let prefs = state.message_service.update_preferences(&user_id, &updates).await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+    let prefs = notifications_facade(&state)
+        .update_preferences(&user_id, &updates)
+        .await?;
     Ok(ApiResponse::success(prefs).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -1402,14 +1411,20 @@ pub async fn get_notifications(
     state: AppState<'_>,
 ) -> Result<ApiResponse<GetNotificationsResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    let notifications = repo.find_by_user(&ctx.auth.user_id, 50).await.map_err(|e| {
-        error!(error = %e, "Failed to get notifications");
-        AppError::Database("Failed to get notifications".to_string())
-    })?;
-    let unread_count = repo.count_unread(&ctx.auth.user_id).await.unwrap_or(0);
-    info!(user_id = %ctx.auth.user_id, count = notifications.len(), unread = unread_count, "Retrieved notifications");
-    Ok(ApiResponse::success(GetNotificationsResponse { notifications, unread_count }).with_correlation_id(Some(ctx.correlation_id)))
+    let result = notifications_facade(&state)
+        .get_notifications(&ctx.auth.user_id, 50)
+        .await
+        .map_err(|e: AppError| {
+            error!(error = %e, "Failed to get notifications");
+            e
+        })?;
+    info!(
+        user_id = %ctx.auth.user_id,
+        count = result.notifications.len(),
+        unread = result.unread_count,
+        "Retrieved notifications"
+    );
+    Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -1420,11 +1435,13 @@ pub async fn mark_notification_read(
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.mark_read(&id).await.map_err(|e| {
-        error!(error = %e, notification_id = %id, "Failed to mark as read");
-        AppError::Database("Failed to mark notification as read".to_string())
-    })?;
+    notifications_facade(&state)
+        .mark_notification_read(&id)
+        .await
+        .map_err(|e| {
+            error!(error = %e, notification_id = %id, "Failed to mark as read");
+            e
+        })?;
     info!(notification_id = %id, "Notification marked as read");
     Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
 }
@@ -1436,11 +1453,13 @@ pub async fn mark_all_notifications_read(
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.mark_all_read(&ctx.auth.user_id).await.map_err(|e| {
-        error!(error = %e, "Failed to mark all as read");
-        AppError::Database("Failed to mark all notifications as read".to_string())
-    })?;
+    notifications_facade(&state)
+        .mark_all_notifications_read(&ctx.auth.user_id)
+        .await
+        .map_err(|e| {
+            error!(error = %e, "Failed to mark all as read");
+            e
+        })?;
     info!(user_id = %ctx.auth.user_id, "All notifications marked as read");
     Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
 }
@@ -1453,11 +1472,13 @@ pub async fn delete_notification(
     state: AppState<'_>,
 ) -> Result<ApiResponse<SuccessResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    repo.delete(&id).await.map_err(|e| {
-        error!(error = %e, notification_id = %id, "Failed to delete");
-        AppError::Database("Failed to delete notification".to_string())
-    })?;
+    notifications_facade(&state)
+        .delete_notification(&id)
+        .await
+        .map_err(|e| {
+            error!(error = %e, notification_id = %id, "Failed to delete");
+            e
+        })?;
     info!(notification_id = %id, "Notification deleted");
     Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
 }
@@ -1472,14 +1493,27 @@ pub async fn create_notification(
     let user_id = request.user_id.clone();
     let notification_type = request.r#type.clone();
     let notification = Notification::new(
-        user_id.clone(), notification_type.clone(), request.title,
-        request.message, request.entity_type, request.entity_id, request.entity_url,
+        user_id.clone(),
+        notification_type.clone(),
+        request.title,
+        request.message,
+        request.entity_type,
+        request.entity_id,
+        request.entity_url,
     );
-    let repo = NotificationRepository::new(state.db.clone(), state.repositories.cache.clone());
-    let created = repo.save(notification).await.map_err(|e| {
-        error!(error = %e, user_id = %user_id, "Failed to create notification");
-        AppError::Database("Failed to create notification".to_string())
-    })?;
-    info!(user_id = %user_id, notification_type = %notification_type, notification_id = %created.id, "Notification created");
+    let created = notifications_facade(&state)
+        .create_notification(notification)
+        .await
+        .map_err(|e| {
+            error!(error = %e, user_id = %user_id, "Failed to create notification");
+            e
+        })?;
+    info!(
+        user_id = %user_id,
+        notification_type = %notification_type,
+        notification_id = %created.id,
+        "Notification created"
+    );
     Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
 }
+
