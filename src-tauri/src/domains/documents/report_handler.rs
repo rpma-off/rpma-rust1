@@ -183,7 +183,7 @@ pub async fn report_generate(
 ) -> Result<ApiResponse<InterventionReport>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
     let current_user = ctx.auth.to_user_session();
-    let facade = DocumentsFacade::new(state.photo_service.clone());
+    let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
 
     // 1. Fetch intervention data
     let intervention_data = report_export_service::get_intervention_with_details(
@@ -201,7 +201,7 @@ pub async fn report_generate(
     )?;
 
     // 3. Generate report number
-    let report_number = facade.generate_report_number(state.db.clone())?;
+    let report_number = facade.generate_report_number()?;
 
     // 4. Generate PDF file
     let file_name = DocumentStorageService::generate_filename(
@@ -246,7 +246,7 @@ pub async fn report_generate(
     };
 
     // 7. Persist to database
-    facade.save_report(state.db.clone(), &report)?;
+    facade.save_report(&report)?;
 
     info!(
         report_number = %report.report_number,
@@ -265,8 +265,8 @@ pub async fn report_get(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Option<InterventionReport>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let facade = DocumentsFacade::new(state.photo_service.clone());
-    let report = facade.get_report(state.db.clone(), &report_id)?;
+    let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
+    let report = facade.get_report(&report_id)?;
     Ok(ApiResponse::success(report).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -278,8 +278,8 @@ pub async fn report_get_by_intervention(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Option<InterventionReport>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let facade = DocumentsFacade::new(state.photo_service.clone());
-    let report = facade.get_report_by_intervention(state.db.clone(), &intervention_id)?;
+    let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
+    let report = facade.get_report_by_intervention(&intervention_id)?;
     Ok(ApiResponse::success(report).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -292,7 +292,7 @@ pub async fn report_list(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Vec<InterventionReport>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let facade = DocumentsFacade::new(state.photo_service.clone());
-    let reports = facade.list_reports(state.db.clone(), limit.unwrap_or(50), offset.unwrap_or(0))?;
+    let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
+    let reports = facade.list_reports(limit.unwrap_or(50), offset.unwrap_or(0))?;
     Ok(ApiResponse::success(reports).with_correlation_id(Some(ctx.correlation_id)))
 }
