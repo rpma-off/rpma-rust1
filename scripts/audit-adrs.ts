@@ -36,10 +36,10 @@ function findAdrDir(rootDir) {
 
 function listFilesRecursively(rootDir) {
   const files = [];
-  const queue = [rootDir];
+  const stack = [rootDir];
 
-  while (queue.length > 0) {
-    const current = queue.pop();
+  while (stack.length > 0) {
+    const current = stack.pop();
     for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
       if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'target') {
         continue;
@@ -47,7 +47,7 @@ function listFilesRecursively(rootDir) {
 
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
-        queue.push(fullPath);
+        stack.push(fullPath);
       } else {
         files.push(fullPath);
       }
@@ -60,6 +60,7 @@ function listFilesRecursively(rootDir) {
 function normalizeReference(reference) {
   let normalized = reference.trim();
   normalized = normalized.replace(/^`|`$/g, '');
+  // ADR bullets in this repo use either "-" or "—" separators after path references.
   normalized = normalized.replace(/\s+[—-]\s+.*$/, '');
   normalized = normalized.replace(/:[0-9,-]+$/, '');
   normalized = normalized.replace(/\/$/, '/');
@@ -147,6 +148,7 @@ function resolveMatches(reference, rootDir, allFiles) {
     return fs.existsSync(absolutePath) ? [absolutePath] : [];
   }
 
+  // Treat directory references like `path/to/dir/` as "all files under this directory".
   const pattern = normalizedRef.endsWith('/') ? `${normalizedRef}**` : normalizedRef;
   const regex = globToRegex(pattern);
 

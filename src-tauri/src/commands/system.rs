@@ -16,8 +16,8 @@ pub struct DeviceInfo {
 }
 
 /// Get device information for fingerprinting
-#[tracing::instrument(skip_all)]
 /// ADR-018: Thin IPC layer
+#[tracing::instrument(skip_all)]
 #[tauri::command]
 pub async fn get_device_info(
     state: AppState<'_>,

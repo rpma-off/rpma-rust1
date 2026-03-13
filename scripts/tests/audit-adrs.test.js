@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const REPO_ROOT = '/home/runner/work/rpma-rust1/rpma-rust1';
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const SCRIPT_TS = path.join(REPO_ROOT, 'scripts', 'audit-adrs.ts');
 
 function write(filePath, content) {

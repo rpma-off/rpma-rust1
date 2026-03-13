@@ -36,8 +36,8 @@ pub mod auth {
         pub correlation_id: Option<String>,
     }
 
-#[tracing::instrument(skip(_state))]
 /// ADR-018: Thin IPC layer
+#[tracing::instrument(skip(_state))]
     #[tauri::command]
     pub async fn auth_refresh_token(
         _request: RefreshTokenRequest,
