@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use tauri::Emitter;
 
 use crate::shared::services::domain_event::DomainEvent;
 
@@ -146,6 +147,90 @@ impl EventPublisher for InMemoryEventBus {
             EventPublisher::publish(self, event)?;
         }
         Ok(())
+    }
+}
+
+/// Tauri event emitter that bridges domain events to the frontend via Tauri's event system.
+///
+/// Subscribes to key domain events and re-emits them as Tauri events so that
+/// frontend listeners can invalidate TanStack Query caches without polling.
+pub struct TauriEmitter {
+    app_handle: tauri::AppHandle,
+}
+
+impl TauriEmitter {
+    /// Create a new TauriEmitter backed by the given AppHandle.
+    pub fn new(app_handle: tauri::AppHandle) -> Self {
+        Self { app_handle }
+    }
+}
+
+#[async_trait]
+impl EventHandler for TauriEmitter {
+    async fn handle(&self, event: &DomainEvent) -> Result<(), String> {
+        match event {
+            DomainEvent::TaskStatusChanged {
+                task_id,
+                old_status,
+                new_status,
+                ..
+            } => {
+                self.app_handle
+                    .emit(
+                        "task:status_changed",
+                        serde_json::json!({
+                            "task_id": task_id,
+                            "old_status": old_status,
+                            "new_status": new_status,
+                        }),
+                    )
+                    .map_err(|e| e.to_string())?;
+            }
+            DomainEvent::InterventionStarted {
+                intervention_id,
+                task_id,
+                ..
+            } => {
+                self.app_handle
+                    .emit(
+                        "intervention:started",
+                        serde_json::json!({
+                            "intervention_id": intervention_id,
+                            "task_id": task_id,
+                        }),
+                    )
+                    .map_err(|e| e.to_string())?;
+            }
+            DomainEvent::NotificationReceived {
+                notification_id,
+                user_id,
+                message,
+                ..
+            } => {
+                self.app_handle
+                    .emit(
+                        "notification:received",
+                        serde_json::json!({
+                            "notification_id": notification_id,
+                            "user_id": user_id,
+                            "message": message,
+                        }),
+                    )
+                    .map_err(|e| e.to_string())?;
+            }
+            // TODO: ADD_MORE_EVENTS — register additional domain-to-Tauri event mappings here
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn interested_events(&self) -> Vec<&'static str> {
+        vec![
+            "TaskStatusChanged",
+            "InterventionStarted",
+            "NotificationReceived",
+            // TODO: ADD_MORE_EVENTS — add event type names here when extending handle()
+        ]
     }
 }
 

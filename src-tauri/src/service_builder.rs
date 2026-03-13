@@ -136,6 +136,7 @@ pub struct ServiceBuilder {
     db: Arc<Database>,
     repositories: Arc<Repositories>,
     app_data_dir: std::path::PathBuf,
+    app_handle: Option<tauri::AppHandle>,
 }
 
 impl ServiceBuilder {
@@ -154,7 +155,17 @@ impl ServiceBuilder {
             db,
             repositories,
             app_data_dir,
+            app_handle: None,
         }
+    }
+
+    /// Attach a Tauri AppHandle so the event bus can push events to the frontend.
+    ///
+    /// When provided, a [`TauriEmitter`] subscriber is registered on the event bus
+    /// at build time, forwarding key domain events as Tauri events to all windows.
+    pub fn with_app_handle(mut self, app_handle: tauri::AppHandle) -> Self {
+        self.app_handle = Some(app_handle);
+        self
     }
 
     /// Build all services and create AppStateType
@@ -302,6 +313,13 @@ impl ServiceBuilder {
             intervention_workflow_service.clone(),
         );
         register_handler(Arc::new(quote_converted_handler));
+
+        // Register Tauri event emitter when an AppHandle is available (production only)
+        if let Some(app_handle) = self.app_handle {
+            let tauri_emitter =
+                crate::shared::services::event_bus::TauriEmitter::new(app_handle);
+            event_bus.register_handler(tauri_emitter);
+        }
 
         // Note: Additional handlers can be registered here:
         // - SecurityMonitorHandler for security events
