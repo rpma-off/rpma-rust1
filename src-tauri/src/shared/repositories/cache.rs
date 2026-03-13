@@ -93,6 +93,12 @@ impl Cache {
         entries.clear();
     }
 
+    /// Remove all entries whose key starts with `prefix`
+    pub fn remove_by_prefix(&self, prefix: &str) {
+        let mut entries = self.entries.lock().unwrap();
+        entries.retain(|k, _| !k.starts_with(prefix));
+    }
+
     /// Check if key exists
     pub fn exists(&self, key: &str) -> bool {
         let entries = self.entries.lock().unwrap();
@@ -245,6 +251,21 @@ mod tests {
             "client:query:active:2024"
         );
         assert_eq!(builder.list(&["all"]), "client:list:all");
+    }
+
+    #[test]
+    fn test_cache_remove_by_prefix() {
+        let cache = Cache::new(10);
+
+        cache.set("user:1", "alice".to_string(), ttl::MEDIUM);
+        cache.set("user:2", "bob".to_string(), ttl::MEDIUM);
+        cache.set("client:1", "acme".to_string(), ttl::MEDIUM);
+
+        cache.remove_by_prefix("user:");
+
+        assert!(cache.get::<String>("user:1").is_none());
+        assert!(cache.get::<String>("user:2").is_none());
+        assert!(cache.get::<String>("client:1").is_some());
     }
 
     #[test]
