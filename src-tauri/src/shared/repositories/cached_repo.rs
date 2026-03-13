@@ -221,12 +221,16 @@ mod tests {
         CachedRepository::new(MockRepository::new(), cache, "test", Duration::from_secs(60))
     }
 
-    fn insert(repo: &CachedRepository<MockRepository>, id: &str, value: &str) {
+    fn insert(repo: &CachedRepository<MockRepository>, entity: FakeEntity) {
         repo.inner()
             .store
             .lock()
             .unwrap()
-            .insert(id.to_string(), FakeEntity { id: id.to_string(), value: value.to_string() });
+            .insert(entity.id.clone(), entity);
+    }
+
+    fn fake(id: &str, value: &str) -> FakeEntity {
+        FakeEntity { id: id.to_string(), value: value.to_string() }
     }
 
     // ── find_by_id ────────────────────────────────────────────────────────────
@@ -234,7 +238,7 @@ mod tests {
     #[tokio::test]
     async fn test_find_by_id_cache_miss_then_hit() {
         let repo = make_repo();
-        insert(&repo, "e1", "hello");
+        insert(&repo, fake("e1", "hello"));
 
         // First call — DB hit
         let result = repo.find_by_id("e1".to_string()).await.unwrap();
@@ -259,8 +263,8 @@ mod tests {
     #[tokio::test]
     async fn test_find_all_cache_miss_then_hit() {
         let repo = make_repo();
-        for i in 0..3u32 {
-            insert(&repo, &i.to_string(), &format!("v{}", i));
+        for i in 0..3 {
+            insert(&repo, fake(&i.to_string(), &format!("v{}", i)));
         }
 
         let all = repo.find_all().await.unwrap();
@@ -298,7 +302,7 @@ mod tests {
     #[tokio::test]
     async fn test_delete_invalidates_entity_and_list_cache() {
         let repo = make_repo();
-        insert(&repo, "del", "bye");
+        insert(&repo, fake("del", "bye"));
 
         // Warm up both caches
         let _ = repo.find_by_id("del".to_string()).await.unwrap();
@@ -319,7 +323,7 @@ mod tests {
     #[tokio::test]
     async fn test_exists_by_id_uses_entity_cache() {
         let repo = make_repo();
-        insert(&repo, "exist", "v");
+        insert(&repo, fake("exist", "v"));
 
         // Warm the per-entity cache
         let _ = repo.find_by_id("exist".to_string()).await.unwrap();
@@ -336,7 +340,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalidate_clears_entity_and_list() {
         let repo = make_repo();
-        insert(&repo, "inv", "v");
+        insert(&repo, fake("inv", "v"));
 
         let _ = repo.find_by_id("inv".to_string()).await.unwrap();
         let _ = repo.find_all().await.unwrap();
@@ -352,7 +356,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalidate_all_clears_entire_namespace() {
         let repo = make_repo();
-        insert(&repo, "a1", "v1");
+        insert(&repo, fake("a1", "v1"));
 
         let _ = repo.find_by_id("a1".to_string()).await.unwrap();
         let _ = repo.find_all().await.unwrap();
@@ -384,8 +388,8 @@ mod tests {
             Duration::from_secs(60),
         );
 
-        insert(&repo_a, "x", "from_a");
-        insert(&repo_b, "x", "from_b");
+        insert(&repo_a, fake("x", "from_a"));
+        insert(&repo_b, fake("x", "from_b"));
 
         // Warm both caches
         let _ = repo_a.find_by_id("x".to_string()).await.unwrap();
