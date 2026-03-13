@@ -1,3 +1,4 @@
+/// ADR-001: Application Layer
 use crate::db::InterventionError;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 use crate::domains::interventions::domain::services::intervention_state_machine;

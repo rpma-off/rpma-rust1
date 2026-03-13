@@ -11,6 +11,7 @@ use tracing::{error, info, instrument};
 use crate::shared::ipc::IntoDomainError;
 
 /// Update material stock
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, request), fields(user_id))]
 pub async fn material_update_stock(

@@ -37,6 +37,7 @@ pub mod auth {
     }
 
 #[tracing::instrument(skip(_state))]
+/// ADR-018: Thin IPC layer
     #[tauri::command]
     pub async fn auth_refresh_token(
         _request: RefreshTokenRequest,

@@ -1,6 +1,7 @@
 //! Session repository — CRUD operations against the `sessions` table.
 //! All timestamps are stored as epoch milliseconds (INTEGER) in SQLite.
 
+/// ADR-005: Repository Pattern
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::auth::domain::models::auth::{UserRole, UserSession};

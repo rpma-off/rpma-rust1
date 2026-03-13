@@ -1,3 +1,4 @@
+/// ADR-005: Repository Pattern
 use crate::db::InterventionResult;
 use crate::db::{Database, InterventionError};
 use crate::domains::interventions::domain::models::intervention::Intervention;

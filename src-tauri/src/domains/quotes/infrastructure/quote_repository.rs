@@ -2,6 +2,7 @@
 //!
 //! Provides database access patterns for Quote and QuoteItem entities.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::quotes::domain::models::quote::{
     AttachmentType, CreateQuoteAttachmentRequest, Quote, QuoteAttachment, QuoteItem, QuoteQuery,

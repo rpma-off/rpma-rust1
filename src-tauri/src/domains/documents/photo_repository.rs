@@ -2,6 +2,7 @@
 //!
 //! Provides consistent database access patterns for Photo entities.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::documents::{Photo, PhotoCategory, PhotoType};
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};

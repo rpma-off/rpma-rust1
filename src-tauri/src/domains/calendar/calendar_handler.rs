@@ -1144,6 +1144,7 @@ fn facade(state: &AppState<'_>) -> CalendarFacade {
 
 // ── IPC commands ──────────────────────────────────────────────────────────────
 
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn calendar_get_tasks(

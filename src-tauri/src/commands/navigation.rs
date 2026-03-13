@@ -68,6 +68,7 @@ lazy_static! {
 
 /// Update current navigation path
 #[tracing::instrument(skip(state))]
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 pub async fn navigation_update(
     state: AppState<'_>,

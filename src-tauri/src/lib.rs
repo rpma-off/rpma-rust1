@@ -1,3 +1,5 @@
+#![doc = include_str!("../../docs/adr/001-four-layer-architecture.md")]
+
 pub mod commands;
 pub mod db;
 pub mod domains;

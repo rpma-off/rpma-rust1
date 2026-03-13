@@ -4,6 +4,7 @@
 //! inside `ipc/task/facade.rs` command handlers, so that IPC handlers remain
 //! thin adapters (ADR-005).
 
+/// ADR-001: Application Layer
 use std::sync::Arc;
 
 use tracing::{error, info, instrument, warn};

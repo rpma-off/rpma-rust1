@@ -10,6 +10,7 @@ use crate::resolve_context;
 /// RBAC: Admin and Supervisor may transition any task; Technician may only
 /// transition tasks they are assigned to; Viewer is not permitted.
 #[tracing::instrument(skip_all)]
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 pub async fn task_transition_status(
     request: StatusTransitionRequest,

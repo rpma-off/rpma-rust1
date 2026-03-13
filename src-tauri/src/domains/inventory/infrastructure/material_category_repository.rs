@@ -1,5 +1,6 @@
 //! Material category repository — CRUD for `material_categories` table.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::inventory::domain::models::material::MaterialCategory;
 use rusqlite::params;

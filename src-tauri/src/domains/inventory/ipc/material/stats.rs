@@ -8,6 +8,7 @@ use tracing::{error, info, instrument};
 use crate::shared::ipc::IntoDomainError;
 
 /// Get material statistics
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state), fields(user_id))]
 pub async fn material_get_stats(

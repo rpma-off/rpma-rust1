@@ -3,6 +3,7 @@
 //! This service provides comprehensive audit trail functionality for security
 //! and compliance requirements, tracking all critical system events.
 
+/// ADR-001: Application Layer
 use crate::commands::AppResult;
 use crate::db::Database;
 use rusqlite::params;

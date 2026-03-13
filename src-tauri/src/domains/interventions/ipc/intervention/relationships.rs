@@ -94,6 +94,7 @@ pub struct InterventionQueryRequest {
 }
 
 /// Main intervention management command (unified interface)
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn intervention_management(

@@ -19,6 +19,7 @@ pub struct UploadLogoRequest {
     pub correlation_id: Option<String>,
 }
 
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_onboarding_status(

@@ -1292,6 +1292,7 @@ fn notifications_facade(state: &AppState<'_>) -> super::facade::NotificationsFac
 }
 
 #[tracing::instrument(skip_all)]
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 pub async fn message_send(
     request: SendMessageRequest,

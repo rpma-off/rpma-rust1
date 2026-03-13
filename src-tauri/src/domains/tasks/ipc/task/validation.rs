@@ -42,6 +42,7 @@ pub struct ValidateTaskAssignmentChangeRequest {
 }
 
 /// Check task assignment eligibility
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn check_task_assignment(

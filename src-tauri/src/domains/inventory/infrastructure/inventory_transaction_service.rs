@@ -5,6 +5,7 @@
 //! because it must update both `inventory_transactions` and `materials.current_stock`
 //! inside a single DB transaction.
 
+/// ADR-001: Application Layer
 use std::collections::HashMap;
 
 use crate::db::Database;

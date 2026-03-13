@@ -852,6 +852,7 @@ fn get_services(state: &AppState<'_>) -> DocumentsServices {
     }
 }
 
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, image_data))]
 pub async fn document_store_photo(

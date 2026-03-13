@@ -4,6 +4,7 @@
 //! following the bounded context architecture rule that SQL must live
 //! in infrastructure / db layers only.
 
+/// ADR-005: Repository Pattern
 use serde_json::json;
 
 /// Repository responsible for system-level database diagnostics.

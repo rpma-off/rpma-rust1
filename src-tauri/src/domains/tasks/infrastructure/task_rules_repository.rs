@@ -4,6 +4,7 @@
 //! and conflict detection. Named "repository" because it queries the database
 //! to enforce business rules (not pure validation).
 
+/// ADR-005: Repository Pattern
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;

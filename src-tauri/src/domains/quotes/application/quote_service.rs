@@ -9,6 +9,7 @@
 //! architecture (ADR-002): business logic belongs in the **application**
 //! layer, while SQL and persistence stay in **infrastructure**.
 
+/// ADR-001: Application Layer
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::infrastructure::quote_validation;

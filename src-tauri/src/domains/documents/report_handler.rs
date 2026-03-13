@@ -155,6 +155,7 @@ impl ReportRepository {
 
 // ── IPC Commands ─────────────────────────────────────────────────────────────
 
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn reports_get_capabilities(

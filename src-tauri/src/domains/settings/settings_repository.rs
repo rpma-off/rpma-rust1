@@ -1,5 +1,6 @@
 //! Settings repository for global application settings.
 
+/// ADR-005: Repository Pattern
 use crate::shared::ipc::errors::AppError;
 use crate::domains::settings::models::{
     AppSettings, GeneralSettings, SecuritySettings, NotificationSettings,

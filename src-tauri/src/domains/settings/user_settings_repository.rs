@@ -1,5 +1,6 @@
 //! Repository for user-specific settings.
 
+/// ADR-005: Repository Pattern
 use std::sync::Arc;
 use rusqlite::params;
 use tracing::{error, info, warn};

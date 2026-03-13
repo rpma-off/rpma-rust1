@@ -2,6 +2,7 @@
 //!
 //! Provides consistent database access patterns for TaskHistory entities.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::tasks::domain::models::task::TaskHistory;
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};

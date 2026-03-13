@@ -10,6 +10,7 @@ use crate::resolve_context;
 use super::models::*;
 use super::facade::SettingsFacade;
 
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_user_settings(
