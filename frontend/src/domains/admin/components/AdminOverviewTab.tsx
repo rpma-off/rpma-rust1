@@ -18,17 +18,20 @@ import {
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { RecentActivity, SystemStats } from '@/domains/admin';
 
+interface DashboardStats {
+  tasks?: unknown;
+  clients?: unknown;
+  users?: unknown;
+  sync?: unknown;
+}
+
 interface AdminOverviewTabProps {
   stats: SystemStats;
   recentActivities: RecentActivity[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dashboardStats: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  WorkflowExecutionDashboard?: React.ComponentType<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  QualityAssuranceDashboard?: React.ComponentType<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  PhotoDocumentationDashboard?: React.ComponentType<any>;
+  dashboardStats: DashboardStats | null;
+  WorkflowExecutionDashboard?: React.ComponentType<{ taskStats: unknown }>;
+  QualityAssuranceDashboard?: React.ComponentType<{ clientStats: unknown; userStats: unknown }>;
+  PhotoDocumentationDashboard?: React.ComponentType<{ syncStats: unknown }>;
 }
 
 function getActivityIcon(type: RecentActivity['type']) {

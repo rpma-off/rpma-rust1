@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Save, X } from 'lucide-react';
 
 interface DesktopFormProps {
-  schema: z.ZodSchema<Record<string, unknown>>;
+  schema: z.ZodType<Record<string, unknown>, Record<string, unknown>>;
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   children: (form: ReturnType<typeof useForm<Record<string, unknown>>>) => React.ReactNode;
   submitLabel?: string;
@@ -24,8 +24,7 @@ export function DesktopForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<Record<string, unknown>>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema as any),
+    resolver: zodResolver(schema),
   });
 
   const handleSubmit = useCallback(async (data: Record<string, unknown>) => {
