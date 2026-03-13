@@ -10,6 +10,7 @@ import AppNavigation from '@/app/AppNavigation';
 import { GlobalErrorBoundary, SkipLink } from '@/shared/ui';
 import { structuredLogger as logger, CorrelationContext, LogDomain } from '@/shared/utils';
 import { useMenuEvents } from '@/shared/hooks/useMenuEvents';
+import { useTauriEvent } from '@/shared/hooks/useTauriEvent';
 import { ThemeProvider } from '@/shared/ui/theme-provider';
 import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 import { useAuth, useAuthRedirect, useAdminBootstrapCheck } from '@/domains/auth';
@@ -51,6 +52,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Initialize menu event listeners for authenticated users
   useMenuEvents();
+
+  // Subscribe to backend domain events and invalidate relevant query caches
+  useTauriEvent();
 
   // Initialize logging system
   useEffect(() => {

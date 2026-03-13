@@ -281,6 +281,16 @@ pub enum DomainEvent {
         metadata: Option<serde_json::Value>,
     },
 
+    // Notification Events
+    NotificationReceived {
+        id: String,
+        notification_id: String,
+        user_id: String,
+        message: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+
     // Quote Events
     QuoteAccepted {
         id: String,
@@ -362,6 +372,7 @@ impl DomainEvent {
             DomainEvent::SystemError { .. } => "SystemError",
             DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
             DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
+            DomainEvent::NotificationReceived { .. } => "NotificationReceived",
             DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
             DomainEvent::QuoteRejected { .. } => "QuoteRejected",
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
@@ -399,6 +410,7 @@ impl DomainEvent {
             DomainEvent::SystemError { timestamp, .. } => *timestamp,
             DomainEvent::SystemMaintenance { timestamp, .. } => *timestamp,
             DomainEvent::PerformanceAlert { timestamp, .. } => *timestamp,
+            DomainEvent::NotificationReceived { timestamp, .. } => *timestamp,
             DomainEvent::QuoteAccepted { timestamp, .. } => *timestamp,
             DomainEvent::QuoteRejected { timestamp, .. } => *timestamp,
             DomainEvent::QuoteConverted { timestamp, .. } => *timestamp,
