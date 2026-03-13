@@ -5,7 +5,6 @@ use crate::domains::users::application::{
 };
 use crate::domains::users::{UsersCommand, UsersDomainResponse, UsersFacade, UsersServices};
 use crate::shared::app_state::AppState;
-use crate::shared::context::{AuthContext, RequestContext};
 use crate::resolve_context;
 use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
@@ -99,7 +98,10 @@ pub async fn bootstrap_first_admin(
     }
 }
 
-/// Check if any admin users exist in the system
+/// Check if any admin users exist in the system.
+///
+/// This is a pre-authentication bootstrap check — no session is required.
+/// It calls the user service directly without a request context.
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn has_admins(
@@ -107,35 +109,10 @@ pub async fn has_admins(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<bool>, AppError> {
     let corr = crate::commands::init_correlation_context(&correlation_id, None);
-    let facade = UsersFacade::new();
-    let services = UsersServices {
-        account_manager: state.auth_service.clone()
-            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
-        user_service: state.user_service.clone(),
-    };
-    let ctx = RequestContext::new(
-        AuthContext {
-            user_id: "system".to_string(),
-            role: crate::shared::contracts::auth::UserRole::Admin,
-            session_id: "system-session".to_string(),
-            username: "system".to_string(),
-            email: "system@localhost".to_string(),
-        },
-        corr.clone(),
-    );
     debug!("Checking if admin users exist");
-    let response = facade
-        .execute(UsersCommand::HasAdmins, &ctx, &services)
-        .await?;
-    match response {
-        UsersDomainResponse::HasAdmins(has_admin) => {
-            debug!("Admin check completed: has_admins={}", has_admin);
-            Ok(ApiResponse::success(has_admin).with_correlation_id(Some(corr)))
-        }
-        _ => Err(AppError::Internal(
-            "Unexpected users facade response".to_string(),
-        )),
-    }
+    let has_admin = state.user_service.has_admins().await?;
+    debug!("Admin check completed: has_admins={}", has_admin);
+    Ok(ApiResponse::success(has_admin).with_correlation_id(Some(corr)))
 }
 
 /// TODO: document
@@ -149,10 +126,12 @@ pub async fn get_users(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+
     let limit = Some(page_size);
     let offset = Some((page - 1) * page_size);
 
-    match execute_user_action(UserAction::List { limit, offset }, correlation_id, state).await? {
+    match execute_user_action(UserAction::List { limit, offset }, &ctx, state).await? {
         UserResponse::List(users) => Ok(serde_json::json!({
             "users": users.data,
             "total": users.data.len(),
@@ -171,8 +150,9 @@ pub async fn create_user(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, AppError> {
-    match execute_user_action(UserAction::Create { data: user_data }, correlation_id, state).await?
-    {
+    let ctx = resolve_context!(&state, &correlation_id);
+
+    match execute_user_action(UserAction::Create { data: user_data }, &ctx, state).await? {
         UserResponse::Created(user) => Ok(serde_json::json!(user)),
         _ => Err(AppError::Internal("Failed to create user".to_string())),
     }
@@ -187,12 +167,14 @@ pub async fn update_user(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<serde_json::Value, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+
     match execute_user_action(
         UserAction::Update {
             id: user_id,
             data: user_data,
         },
-        correlation_id,
+        &ctx,
         state,
     )
     .await?
@@ -211,6 +193,10 @@ pub async fn update_user_status(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<(), AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+
+    // Construct a partial update carrying only the status flag.
+    // All other fields are left as None so they are not overwritten.
     let update_data = UpdateUserRequest {
         email: None,
         first_name: None,
@@ -224,7 +210,7 @@ pub async fn update_user_status(
             id: user_id,
             data: update_data,
         },
-        correlation_id,
+        &ctx,
         state,
     )
     .await?
@@ -244,7 +230,9 @@ pub async fn delete_user(
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<(), AppError> {
-    match execute_user_action(UserAction::Delete { id: user_id }, correlation_id, state).await? {
+    let ctx = resolve_context!(&state, &correlation_id);
+
+    match execute_user_action(UserAction::Delete { id: user_id }, &ctx, state).await? {
         UserResponse::Deleted => Ok(()),
         _ => Err(AppError::Internal("Failed to delete user".to_string())),
     }
@@ -252,16 +240,24 @@ pub async fn delete_user(
 
 async fn execute_user_action(
     action: UserAction,
-    correlation_id: Option<String>,
+    ctx: &crate::shared::context::RequestContext,
     state: AppState<'_>,
 ) -> Result<UserResponse, AppError> {
-    let request = UserCrudRequest {
-        action,
-        correlation_id,
+    let facade = UsersFacade::new();
+    let services = UsersServices {
+        account_manager: state.auth_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
+        user_service: state.user_service.clone(),
     };
 
-    let response = user_crud(request, state).await?;
-    response
-        .data
-        .ok_or_else(|| AppError::Internal("Missing user CRUD response payload".to_string()))
+    let domain_response = facade
+        .execute(UsersCommand::Crud(action), ctx, &services)
+        .await?;
+
+    match domain_response {
+        UsersDomainResponse::Crud(payload) => Ok(payload),
+        _ => Err(AppError::Internal(
+            "Unexpected users facade response".to_string(),
+        )),
+    }
 }

@@ -38,7 +38,7 @@ impl TaskRulesRepository {
     }
 
     /// Get maximum tasks per user from settings
-    fn get_max_tasks_per_user(&self) -> Result<i32, String> {
+    pub fn get_max_tasks_per_user(&self) -> Result<i32, String> {
         self.settings
             .get_max_tasks_per_user()
             .map_err(|e| format!("Failed to get settings: {}", e))

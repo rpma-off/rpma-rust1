@@ -243,4 +243,66 @@ impl InterventionService {
             },
         )
     }
+
+    /// Compute aggregate statistics for a given technician (or all technicians when `None`).
+    ///
+    /// Counts total, completed and in-progress interventions from the database.
+    /// Extracted from the IPC layer per ADR-018.
+    pub fn get_stats_by_technician(
+        &self,
+        technician_id: Option<&str>,
+    ) -> InterventionResult<InterventionAggregateStats> {
+        use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+
+        let (interventions, _) =
+            self.data
+                .list_interventions(None, technician_id, None, None)?;
+
+        let total = interventions.len() as u64;
+        let completed = interventions
+            .iter()
+            .filter(|i| i.status == InterventionStatus::Completed)
+            .count() as u64;
+        let in_progress = interventions
+            .iter()
+            .filter(|i| i.status == InterventionStatus::InProgress)
+            .count() as u64;
+
+        Ok(InterventionAggregateStats {
+            total_interventions: total,
+            completed_interventions: completed,
+            in_progress_interventions: in_progress,
+            average_completion_time: None,
+        })
+    }
+
+    /// Apply the same update payload to each intervention in `ids`.
+    ///
+    /// Returns the number of successfully updated interventions.
+    /// Extracted from the IPC layer per ADR-018.
+    pub fn bulk_update_interventions(
+        &self,
+        ids: &[String],
+        updates: serde_json::Value,
+    ) -> InterventionResult<usize> {
+        let mut updated = 0usize;
+        for id in ids {
+            match self.data.update_intervention(id, updates.clone()) {
+                Ok(_) => updated += 1,
+                Err(e) => {
+                    tracing::warn!(intervention_id = %id, error = %e, "bulk_update: skipping failed intervention update");
+                }
+            }
+        }
+        Ok(updated)
+    }
+}
+
+/// Aggregate statistics returned by [`InterventionService::get_stats_by_technician`].
+#[derive(Debug, serde::Serialize)]
+pub struct InterventionAggregateStats {
+    pub total_interventions: u64,
+    pub completed_interventions: u64,
+    pub in_progress_interventions: u64,
+    pub average_completion_time: Option<f64>,
 }
