@@ -8,6 +8,23 @@ use crate::domains::inventory::infrastructure::material::{
 };
 use crate::domains::inventory::InventoryFacade;
 
+fn seed_user(db: &Database, user_id: &str) {
+    let now = chrono::Utc::now().timestamp_millis();
+    db.execute(
+        "INSERT OR IGNORE INTO users (id, email, username, password_hash, full_name, role, created_at, updated_at, is_active)
+         VALUES (?, ?, ?, 'hash', ?, 'admin', ?, ?, 1)",
+        rusqlite::params![
+            user_id,
+            format!("{}@test.local", user_id),
+            user_id,
+            user_id,
+            now,
+            now
+        ],
+    )
+    .expect("seed user");
+}
+
 #[tokio::test]
 async fn create_and_list_materials_round_trip() {
     let db = Arc::new(
@@ -15,6 +32,7 @@ async fn create_and_list_materials_round_trip() {
             .await
             .expect("create in-memory database"),
     );
+    seed_user(&db, "test_user");
     let material_service = Arc::new(MaterialService::new((*db).clone()));
     let facade = InventoryFacade::new(db, material_service.clone());
 
@@ -65,6 +83,7 @@ async fn stats_reflect_created_materials() {
             .await
             .expect("create in-memory database"),
     );
+    seed_user(&db, "test_user");
     let material_service = Arc::new(MaterialService::new((*db).clone()));
     let facade = InventoryFacade::new(db, material_service.clone());
 
@@ -148,6 +167,7 @@ async fn low_stock_response_contract_is_strict_and_null_free() {
             .await
             .expect("create in-memory database"),
     );
+    seed_user(&db, "tester");
     let material_service = Arc::new(MaterialService::new((*db).clone()));
 
     // Material A: min_stock=10, current_stock=0 → low stock (shortage=10)
@@ -280,6 +300,7 @@ async fn stats_low_stock_count_matches_get_low_stock_materials() {
             .await
             .expect("create in-memory database"),
     );
+    seed_user(&db, "tester");
     let material_service = Arc::new(MaterialService::new((*db).clone()));
     let facade = InventoryFacade::new(db, material_service.clone());
 

@@ -85,8 +85,45 @@ fn create_intervention_rejects_invalid_gps_coordinates() {
         result.is_err(),
         "create_intervention must fail when GPS latitude is out of range"
     );
+    let err = result.unwrap_err();
+    // create_intervention() wraps BusinessRule via with_transaction → Database variant
     assert!(
-        matches!(result.unwrap_err(), InterventionError::BusinessRule(_)),
-        "error must be a BusinessRule (domain invariant violation)"
+        matches!(err, InterventionError::Database(_)),
+        "error must propagate as Database (create_intervention wraps BusinessRule via with_transaction)"
     );
+}
+
+/// Regression: the `intervention_workflow` IPC command must accept a payload that
+/// contains fields beyond those defined in `application::contracts::StartInterventionRequest`
+/// (e.g. `address`, `ppf_zones`, `film_type` from the TS-exported infra type).
+/// Previously `#[serde(deny_unknown_fields)]` caused a hard rejection for any
+/// unknown field, preventing the workflow from starting at all.
+#[test]
+fn test_start_intervention_request_ignores_unknown_fields() {
+    use crate::domains::interventions::application::contracts::StartInterventionRequest as ContractsRequest;
+
+    let json = serde_json::json!({
+        "task_id": "task-abc-123",
+        "intervention_type": "ppf",
+        "priority": "medium",
+        "description": null,
+        "estimated_duration_minutes": 120,
+        // extra fields sent by the frontend (from the infra TS-exported type)
+        "address": "123 Main St",
+        "ppf_zones": ["hood", "bumper"],
+        "film_type": "standard",
+        "weather_condition": "sunny",
+        "work_location": "outdoor"
+    });
+
+    let result: Result<ContractsRequest, _> = serde_json::from_value(json);
+    assert!(
+        result.is_ok(),
+        "StartInterventionRequest must accept extra fields sent by the frontend; error: {:?}",
+        result.err()
+    );
+    let req = result.unwrap();
+    assert_eq!(req.task_id, "task-abc-123");
+    assert_eq!(req.intervention_type, "ppf");
+    assert_eq!(req.priority, "medium");
 }

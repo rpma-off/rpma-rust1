@@ -329,12 +329,16 @@ impl QuoteRepository {
         tax_total: i64,
         total: i64,
     ) -> RepoResult<()> {
-        self.db
+        let rows = self.db
             .execute(
                 "UPDATE quotes SET subtotal = ?, tax_total = ?, total = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
                 params![subtotal, tax_total, total, id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update quote totals: {}", e)))?;
+
+        if rows == 0 {
+            return Err(RepoError::NotFound(format!("Quote {} not found or deleted", id)));
+        }
 
         self.invalidate_cache(id);
         Ok(())

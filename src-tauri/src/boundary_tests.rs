@@ -21,9 +21,7 @@ fn all_domain_facades_accessible_within_crate() {
     let _ = std::any::type_name::<crate::domains::tasks::TasksFacade>();
     let _ = std::any::type_name::<crate::domains::interventions::InterventionsFacade>();
     let _ = std::any::type_name::<crate::domains::inventory::InventoryFacade>();
-    let _ = std::any::type_name::<crate::domains::notifications::NotificationsFacade>();
-    let _ = std::any::type_name::<crate::domains::settings::SettingsFacade>();
-    let _ = std::any::type_name::<crate::domains::sync::SyncFacade>();
+    let _ = std::any::type_name::<crate::domains::documents::DocumentsFacade>();
 }
 
 /// Verify domain model types are accessible within the crate (pub(crate)).
@@ -58,7 +56,7 @@ fn infrastructure_accessible_within_crate() {
 #[test]
 fn application_layers_accessible_within_crate() {
     use crate::domains::auth::application::SignupRequest;
-    use crate::domains::notifications::application::contracts::SendNotificationRequest;
+    use crate::domains::notifications::SendNotificationRequest;
 
     let _ = std::any::type_name::<SignupRequest>();
     let _ = std::any::type_name::<SendNotificationRequest>();

@@ -14,5 +14,6 @@ pub(super) const MATERIAL_COLUMNS: &str = r#"
     is_active, is_discontinued,
     storage_location, warehouse_id,
     created_at, updated_at, created_by, updated_by,
+    deleted_at, deleted_by,
     synced, last_synced_at
 "#;

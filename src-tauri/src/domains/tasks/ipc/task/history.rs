@@ -8,6 +8,7 @@ use tracing::{debug, info};
 
 /// TODO: document
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetTaskHistoryRequest {
     pub task_id: String,
     #[serde(default)]

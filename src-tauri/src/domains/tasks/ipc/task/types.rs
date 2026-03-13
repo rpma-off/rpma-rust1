@@ -9,6 +9,7 @@ use std::fmt::Debug;
 
 /// Task CRUD request (dispatched by action enum)
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct TaskCrudRequest {
     pub action: crate::commands::TaskAction,
     #[serde(default)]
@@ -17,6 +18,7 @@ pub struct TaskCrudRequest {
 
 /// Request for editing a task
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct EditTaskRequest {
     pub task_id: String,
     pub data: crate::domains::tasks::domain::models::task::UpdateTaskRequest,
@@ -26,6 +28,7 @@ pub struct EditTaskRequest {
 
 /// Request for adding a note to a task
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct AddTaskNoteRequest {
     pub task_id: String,
     pub note: String,
@@ -35,6 +38,7 @@ pub struct AddTaskNoteRequest {
 
 /// Request for sending a message related to a task
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct SendTaskMessageRequest {
     pub task_id: String,
     pub message: String,
@@ -45,6 +49,7 @@ pub struct SendTaskMessageRequest {
 
 /// Request for delaying/rescheduling a task
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct DelayTaskRequest {
     pub task_id: String,
     pub new_scheduled_date: String, // New scheduled date
@@ -57,6 +62,7 @@ pub struct DelayTaskRequest {
 
 /// Request for reporting an issue with a task
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ReportTaskIssueRequest {
     pub task_id: String,
     pub issue_type: String,
@@ -68,6 +74,7 @@ pub struct ReportTaskIssueRequest {
 
 /// Request for exporting tasks to CSV
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ExportTasksCsvRequest {
     pub filter: Option<TaskFilter>,
     pub include_client_data: Option<bool>,
@@ -77,6 +84,7 @@ pub struct ExportTasksCsvRequest {
 
 /// Request for bulk importing tasks
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ImportTasksBulkRequest {
     pub csv_data: String,
     pub update_existing: Option<bool>,

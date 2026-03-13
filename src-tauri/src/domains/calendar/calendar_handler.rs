@@ -840,6 +840,11 @@ impl CalendarService {
         if new_date.trim().is_empty() {
             return Err(AppError::Validation("new_date is required".to_string()));
         }
+        if chrono::NaiveDate::parse_from_str(new_date.trim(), "%Y-%m-%d").is_err() {
+            return Err(AppError::Validation(
+                "new_date must be in YYYY-MM-DD format".to_string(),
+            ));
+        }
         self.repo.upsert_schedule(
             &task_id,
             &new_date,

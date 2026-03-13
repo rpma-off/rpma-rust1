@@ -3,9 +3,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
-import { useDashboardPage } from '@/domains/auth';
 
 const CalendarDashboard = dynamic(
   () => import('@/domains/calendar').then((mod) => mod.CalendarDashboard),
@@ -13,16 +11,6 @@ const CalendarDashboard = dynamic(
 );
 
 export default function DashboardPage() {
-  const { authLoading, t } = useDashboardPage();
-
-  if (authLoading) {
-    return (
-      <PageShell>
-        <LoadingState message={t('common.loading')} />
-      </PageShell>
-    );
-  }
-
   return (
     <ErrorBoundary>
       {/* Hauteur = 100vh moins la navbar (64px) pour éviter le scroll de page */}

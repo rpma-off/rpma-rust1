@@ -154,11 +154,10 @@ export default function InspectionStepPage() {
 
   const checklistCount = CHECKLIST_ITEMS.filter((item) => checklist[item.id]).length;
   const checklistTotal = CHECKLIST_ITEMS.length;
-  const requiredPhotos = 4;
   const defectsCount = defects.length;
-  const canValidate = checklistCount === checklistTotal && photos.length >= requiredPhotos;
+  const canValidate = checklistCount === checklistTotal;
 
-  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length}/${requiredPhotos} photos · ${defectsCount} ${
+  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length} photo${photos.length !== 1 ? 's' : ''} · ${defectsCount} ${
     defectsCount > 1 ? 'défauts' : 'défaut'
   }`;
 
@@ -350,7 +349,7 @@ export default function InspectionStepPage() {
               stepId="inspection"
               type="before"
               photos={photos}
-              minPhotos={requiredPhotos}
+              minPhotos={0}
               requiredLabels={['Face', 'Capot', 'Ailes', 'Pare-choc']}
               onChange={setPhotos}
               title="📷 Photos Avant Pose"

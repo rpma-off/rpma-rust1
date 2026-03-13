@@ -1362,3 +1362,73 @@ export function validateClientStatistics(data: unknown): data is import('@/lib/b
 export function validateTaskListResponse(data: unknown): data is import('@/lib/backend').TaskListResponse {
   return TaskListResponseSchema.safeParse(data).success;
 }
+
+// ---------------------------------------------------------------------------
+// Quote schemas
+// ---------------------------------------------------------------------------
+
+const QuoteItemSchema = z.object({
+  id: z.string(),
+  quote_id: z.string(),
+  kind: z.enum(['labor', 'material', 'service', 'discount']),
+  label: z.string(),
+  description: z.string().nullable(),
+  qty: z.number(),
+  unit_price: z.number(),
+  tax_rate: z.number().nullable(),
+  material_id: z.string().nullable(),
+  position: z.number(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export const QuoteSchema = z.object({
+  id: z.string(),
+  quote_number: z.string(),
+  client_id: z.string(),
+  task_id: z.string().nullable(),
+  status: z.enum(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted', 'changes_requested']),
+  valid_until: z.string().nullable(),
+  description: z.string().nullable(),
+  notes: z.string().nullable(),
+  terms: z.string().nullable(),
+  subtotal: z.number(),
+  tax_total: z.number(),
+  total: z.number(),
+  discount_type: z.string().nullable(),
+  discount_value: z.number().nullable(),
+  discount_amount: z.number().nullable(),
+  vehicle_plate: z.string().nullable(),
+  vehicle_make: z.string().nullable(),
+  vehicle_model: z.string().nullable(),
+  vehicle_year: z.string().nullable(),
+  vehicle_vin: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  created_by: z.string().nullable(),
+  items: z.array(QuoteItemSchema),
+});
+
+export const QuoteListResponseSchema = z.object({
+  data: z.array(QuoteSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+
+const QuoteAcceptResponseSchema = z.object({
+  quote: QuoteSchema,
+  task_created: z.object({ task_id: z.string() }).nullable(),
+});
+
+export function validateQuote(data: unknown): import('@/types/quote.types').Quote {
+  return QuoteSchema.parse(data) as unknown as import('@/types/quote.types').Quote;
+}
+
+export function validateQuoteList(data: unknown): import('@/types/quote.types').QuoteListResponse {
+  return QuoteListResponseSchema.parse(data) as unknown as import('@/types/quote.types').QuoteListResponse;
+}
+
+export function validateQuoteAcceptResponse(data: unknown): import('@/types/quote.types').QuoteAcceptResponse {
+  return QuoteAcceptResponseSchema.parse(data) as unknown as import('@/types/quote.types').QuoteAcceptResponse;
+}

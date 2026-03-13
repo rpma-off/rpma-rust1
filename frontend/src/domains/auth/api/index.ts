@@ -28,10 +28,6 @@ export { useSignupForm } from '../hooks/useSignupForm';
 export { useLoginForm } from '../hooks/useLoginForm';
 /** TODO: document */
 export { useBootstrapAdminPage } from '../hooks/useBootstrapAdminPage';
-/** TODO: document */
-export { useDashboardPage } from '../hooks/useDashboardPage';
-/** TODO: document */
-export { useHomePage } from '../hooks/useHomePage';
 
 /** TODO: document */
 export type {

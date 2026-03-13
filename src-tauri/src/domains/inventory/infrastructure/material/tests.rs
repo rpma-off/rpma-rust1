@@ -86,6 +86,22 @@ fn test_inventory_movement_summary_with_date_range_empty_db() {
 
 // ── Regression: BUG-1 — soft-deleted materials must be hidden from readers ────
 
+fn seed_user(db: &crate::db::Database, user_id: &str) {
+    let now = chrono::Utc::now().timestamp_millis();
+    db.execute(
+        "INSERT OR IGNORE INTO users (id, email, username, password_hash, full_name, role, created_at, updated_at, is_active)
+         VALUES (?, ?, ?, 'hash', ?, 'admin', ?, ?, 1)",
+        rusqlite::params![
+            user_id,
+            format!("{}@test.local", user_id),
+            user_id,
+            user_id,
+            now,
+            now
+        ],
+    ).expect("seed user");
+}
+
 fn make_test_material_request(sku: &str, name: &str) -> types::CreateMaterialRequest {
     use crate::domains::inventory::domain::models::material::{MaterialType, UnitOfMeasure};
     types::CreateMaterialRequest {
@@ -121,6 +137,7 @@ fn make_test_material_request(sku: &str, name: &str) -> types::CreateMaterialReq
 #[test]
 fn test_soft_deleted_material_not_returned_by_id() {
     let test_db = TestDatabase::new().expect("Failed to create test database");
+    seed_user(&test_db.db(), "user-test");
     let service = MaterialService::new((*test_db.db()).clone());
     let user_id = "user-test".to_string();
 
@@ -146,6 +163,7 @@ fn test_soft_deleted_material_not_returned_by_id() {
 #[test]
 fn test_soft_deleted_material_not_in_list() {
     let test_db = TestDatabase::new().expect("Failed to create test database");
+    seed_user(&test_db.db(), "user-test");
     let service = MaterialService::new((*test_db.db()).clone());
     let user_id = "user-test".to_string();
 
@@ -175,6 +193,7 @@ fn test_soft_deleted_material_not_in_list() {
 #[test]
 fn test_stats_exclude_soft_deleted_material() {
     let test_db = TestDatabase::new().expect("Failed to create test database");
+    seed_user(&test_db.db(), "user-test");
     let service = MaterialService::new((*test_db.db()).clone());
     let user_id = "user-test".to_string();
 
@@ -210,6 +229,7 @@ fn test_adjustment_zero_quantity_rejected() {
     };
 
     let test_db = TestDatabase::new().expect("Failed to create test database");
+    seed_user(&test_db.db(), "user-test");
     let service = MaterialService::new((*test_db.db()).clone());
     let user_id = "user-test".to_string();
 

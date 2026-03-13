@@ -13,10 +13,6 @@ export * from './defaults';
 
 export { ProfileSettingsTab } from '../components/ProfileSettingsTab';
 export { PreferencesTab } from '../components/PreferencesTab';
-export { SecurityTab } from '../components/SecurityTab';
-export { PerformanceTab } from '../components/PerformanceTab';
-export { AccessibilityTab } from '../components/AccessibilityTab';
-export { NotificationsTab } from '../components/NotificationsTab';
 export { OrganizationSettingsTab } from '../components/OrganizationSettingsTab';
 export { default as SettingsPageContent } from '../components/SettingsPageContent';
 

@@ -257,13 +257,18 @@ export async function safeInvoke<T>(
       data = validator ? validator(result as JsonValue) : result as T;
     }
 
-    // Log successful response
-    logger.info(LogDomain.API, `IPC call completed: ${command}`, {
+    // Log successful response — warn on slow commands (>2 s)
+    const logPayload = {
       command,
       correlation_id: effectiveCorrelationId,
       duration_ms: Math.round(duration),
       response_type: Array.isArray(data) ? `Array(${data.length})` : typeof data,
-    });
+    };
+    if (duration > 2000) {
+      logger.warn(LogDomain.API, `Slow IPC call: ${command}`, { ...logPayload, slow_ipc: true });
+    } else {
+      logger.info(LogDomain.API, `IPC call completed: ${command}`, logPayload);
+    }
 
     // Record metric
     recordMetric({

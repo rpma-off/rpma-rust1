@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useMutationCounter } from '@/lib/data-freshness';
+import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { ClientWithTasks, CustomerType } from '@/lib/backend';
+import { useMutationCounter } from '@/lib/data-freshness';
 import { LogDomain } from '@/lib/logging/types';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { normalizeError } from '@/types/utility.types';
@@ -75,27 +76,11 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
     ...initialFilters
   });
 
-  const [clients, setClients] = useState<ClientWithTasks[]>([]);
-  const [stats, setStats] = useState<ClientStats | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingStats, setLoadingStats] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [pagination, setPagination] = useState<{
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-  } | null>(null);
-
-  const fetchClients = useCallback(async () => {
-    if (!user?.token) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
+  const clientsQuery = useQuery({
+    queryKey: ['clients', 'list', filters, limitTasks, clientsMutations],
+    queryFn: async () => {
+      if (!user?.token) throw new Error('Not authenticated');
       logInfo('Fetching clients with tasks', { filters });
-
       const response = await clientService.getClientsWithTasks(user.token, {
         page: filters.page,
         limit: filters.limit,
@@ -106,105 +91,72 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
       }, limitTasks);
 
       if (response.success && response.data) {
-        setClients(response.data.data);
-        setPagination({
-          page: response.data.pagination.page,
-          limit: response.data.pagination.limit,
-          total: Number(response.data.pagination.total),
-          total_pages: response.data.pagination.total_pages
-        });
-      } else {
-        throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch clients');
+        logInfo('Clients fetched successfully', { count: response.data.data.length || 0 });
+        return response.data;
       }
+      const errorMsg = typeof response.error === 'string' ? response.error : response.error?.message || 'Failed to fetch clients';
+      throw new Error(errorMsg);
+    },
+    enabled: autoFetch && !!user?.token,
+  });
 
-      logInfo('Clients fetched successfully', {
-        count: response.data?.data.length || 0
-      });
-
-    } catch (error: unknown) {
-      const normalizedError = normalizeError(error);
-      logError('Failed to fetch clients', normalizedError);
-      setError(normalizedError);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.token, filters, limitTasks, logInfo, logError]);
-
-  const fetchStats = useCallback(async () => {
-    if (!user?.token) return;
-
-    try {
-      setLoadingStats(true);
-
+  const statsQuery = useQuery({
+    queryKey: ['clients', 'stats', clientsMutations],
+    queryFn: async () => {
+      if (!user?.token) throw new Error('Not authenticated');
       const response = await clientService.getClientStats(user.token);
-
       if (response.success && response.data) {
-        setStats(response.data);
-      } else {
-        throw new Error(typeof response.error === 'string' ? response.error : 'Failed to fetch client stats');
+        logInfo('Client stats fetched successfully');
+        return response.data;
       }
-
-      logInfo('Client stats fetched successfully');
-
-    } catch (error: unknown) {
-      const normalizedError = normalizeError(error);
-      logError('Failed to fetch client stats', normalizedError);
-    } finally {
-      setLoadingStats(false);
-    }
-  }, [user?.token, logInfo, logError]);
+      const errorMsg = typeof response.error === 'string' ? response.error : response.error?.message || 'Failed to fetch client stats';
+      throw new Error(errorMsg);
+    },
+    enabled: autoFetch && !!user?.token,
+  });
 
   const updateFilters = useCallback((newFilters: Partial<ClientFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1 when filters change
+    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
   }, []);
 
   const goToPage = useCallback((page: number) => {
     setFilters(prev => ({ ...prev, page }));
   }, []);
 
-  const refetch = useCallback(async () => {
-    await fetchClients();
-  }, [fetchClients]);
+  const clientsData = clientsQuery.data?.data || [];
+  const paginationData = clientsQuery.data?.pagination ? {
+    page: clientsQuery.data.pagination.page,
+    limit: clientsQuery.data.pagination.limit,
+    total: Number(clientsQuery.data.pagination.total),
+    total_pages: clientsQuery.data.pagination.total_pages
+  } : null;
 
-  const refetchStats = useCallback(async () => {
-    await fetchStats();
-  }, [fetchStats]);
+  const hasNextPage = paginationData ? paginationData.page < paginationData.total_pages : false;
+  const hasPreviousPage = paginationData ? paginationData.page > 1 : false;
 
-  // Auto-fetch on mount and when filters change
-  useEffect(() => {
-    if (autoFetch) {
-      fetchClients();
-    }
-  }, [fetchClients, autoFetch, clientsMutations]);
-
-  // Fetch stats on mount
-  useEffect(() => {
-    if (autoFetch) {
-      fetchStats();
-    }
-  }, [fetchStats, autoFetch]);
-
-  const hasNextPage = pagination ? pagination.page < pagination.total_pages : false;
-  const hasPreviousPage = pagination ? pagination.page > 1 : false;
+  const error = clientsQuery.error ? normalizeError(clientsQuery.error) : null;
+  if (error && !clientsQuery.isFetching) {
+    logError('Failed to fetch clients', error);
+  }
 
   return {
     // Data
-    clients,
-    stats,
+    clients: clientsData,
+    stats: statsQuery.data || null,
 
     // Loading states
-    loading,
-    loadingStats,
+    loading: clientsQuery.isLoading,
+    loadingStats: statsQuery.isLoading,
 
     // Error states
     error,
 
     // Pagination
-    pagination,
+    pagination: paginationData,
 
     // Actions
-    refetch,
-    refetchStats,
+    refetch: async () => { await clientsQuery.refetch(); },
+    refetchStats: async () => { await statsQuery.refetch(); },
     updateFilters,
     goToPage,
 

@@ -3,6 +3,7 @@ use ts_rs::TS;
 
 /// TODO: document
 #[derive(TS, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct CreateUserRequest {
     pub email: String,
     pub first_name: String,
@@ -13,6 +14,7 @@ pub struct CreateUserRequest {
 
 /// TODO: document
 #[derive(TS, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct UpdateUserRequest {
     pub email: Option<String>,
     pub first_name: Option<String>,

@@ -1,16 +1,10 @@
 export { NotificationsProvider, useNotificationsContext } from './api/NotificationsProvider';
-export { useMessages, useMessageTemplates, useNotificationPreferences } from './api/useMessages';
-export { MessageComposer } from './components/MessageComposer';
-export { MessageInbox } from './components/MessageInbox';
-export { NotificationPreferences } from './components/NotificationPreferences';
 export { NotificationBell } from './components/NotificationBell';
 export { NotificationPanel } from './components/NotificationPanel';
 export { NotificationInitializer } from './components/NotificationInitializer';
 export { useNotificationStore } from './stores/notificationStore';
 export { useNotificationUpdates } from './hooks/useNotificationUpdates';
-export { useMessagesPage } from './hooks/useMessagesPage';
 export { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from './services/notificationActions';
 export { notificationService, NotificationService } from './server';
-export type { Message, MessageTemplate, MessageQuery, MessageListResponse, SendMessageRequest, UpdateNotificationPreferencesRequest, NotificationPreferences as NotificationPreferencesType, UseMessagesResult } from './api/types';
 export type { Notification } from './api/notificationTypes';
 export type { GetNotificationsResponse, SuccessResponse, CreateNotificationRequest } from './api/notificationTypes';

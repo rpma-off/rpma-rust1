@@ -24,6 +24,24 @@ fn setup_service() -> (QuoteService, Arc<Database>) {
     (service, db)
 }
 
+async fn setup_service_async() -> (QuoteService, Arc<Database>) {
+    let db = Arc::new(Database::new_in_memory().await.expect("create in-memory db"));
+    let cache = Arc::new(Cache::new(100));
+    let repo = Arc::new(QuoteRepository::new(db.clone(), cache));
+    let event_bus = Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
+    let service = QuoteService::new(repo, db.clone(), event_bus);
+
+    let now = chrono::Utc::now().timestamp_millis();
+    db.execute(
+        r#"INSERT INTO clients (id, name, email, customer_type, total_tasks, active_tasks, completed_tasks, created_at, updated_at, synced)
+           VALUES ('test-client', 'Test Client', 'test@example.com', 'individual', 0, 0, 0, ?, ?, 0)"#,
+        rusqlite::params![now, now],
+    )
+    .expect("insert test client");
+
+    (service, db)
+}
+
 fn make_quote_req(client_id: &str) -> CreateQuoteRequest {
     CreateQuoteRequest {
         client_id: client_id.to_string(),
@@ -121,7 +139,7 @@ fn test_create_quote_with_missing_client_returns_validation() {
 
     let result = service.create_quote(req, "test-user");
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Client introuvable"));
+    assert!(result.unwrap_err().contains("introuvable"));
 }
 
 #[test]
@@ -169,9 +187,9 @@ fn test_update_forbidden_when_not_draft() {
     assert!(result.unwrap_err().contains("draft"));
 }
 
-#[test]
-fn test_mark_accepted_from_sent_succeeds() {
-    let (service, _db) = setup_service();
+#[tokio::test]
+async fn test_mark_accepted_from_sent_succeeds() {
+    let (service, _db) = setup_service_async().await;
 
     let req = make_quote_req("test-client");
     let quote = service.create_quote(req, "test-user").unwrap();
@@ -209,9 +227,9 @@ fn test_status_transitions() {
     );
 }
 
-#[test]
-fn test_mark_rejected_from_sent_succeeds() {
-    let (service, _db) = setup_service();
+#[tokio::test]
+async fn test_mark_rejected_from_sent_succeeds() {
+    let (service, _db) = setup_service_async().await;
 
     let req = make_quote_req("test-client");
     let quote = service.create_quote(req, "test-user").unwrap();
@@ -283,9 +301,9 @@ fn test_mark_expired_from_draft_succeeds() {
     assert_eq!(expired.status, QuoteStatus::Expired);
 }
 
-#[test]
-fn test_mark_expired_from_accepted_fails() {
-    let (service, _db) = setup_service();
+#[tokio::test]
+async fn test_mark_expired_from_accepted_fails() {
+    let (service, _db) = setup_service_async().await;
 
     let req = make_quote_req("test-client");
     let quote = service.create_quote(req, "test-user").unwrap();
@@ -676,9 +694,9 @@ fn test_create_quote_and_items_are_atomic() {
 /// Regression: `convert_to_task` must update both `task_id` and `status` in a
 /// single atomic transaction.  After a successful call both fields must reflect
 /// the new values.
-#[test]
-fn test_convert_to_task_is_atomic() {
-    let (service, db) = setup_service();
+#[tokio::test]
+async fn test_convert_to_task_is_atomic() {
+    let (service, db) = setup_service_async().await;
 
     // Create a quote and advance it to Accepted.
     let req = make_quote_req("test-client");
@@ -691,6 +709,15 @@ fn test_convert_to_task_is_atomic() {
 
     let task_id = "task-uuid-001";
     let task_number = "T-00001";
+    // Seed the task row so the FK constraint on quotes.task_id is satisfied.
+    {
+        let now = chrono::Utc::now().timestamp_millis();
+        db.execute(
+            r#"INSERT INTO tasks (id, task_number, title, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, priority, created_at, updated_at, synced)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"#,
+            rusqlite::params![task_id, task_number, "Seed task", "AA-000-AA", "Model X", r#"["front"]"#, "2025-01-01", "draft", "medium", now, now],
+        ).expect("seed task row");
+    }
     let result = service
         .convert_to_task(&quote.id, task_id, task_number)
         .unwrap();

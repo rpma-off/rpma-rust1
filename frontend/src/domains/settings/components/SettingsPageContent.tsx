@@ -5,9 +5,6 @@ import dynamic from 'next/dynamic';
 import {
   User,
   Bell,
-  Shield,
-  Zap,
-  Eye,
   HelpCircle,
   Menu,
   Settings
@@ -33,24 +30,7 @@ const PreferencesTab = dynamic(() => import('./PreferencesTab').then(mod => ({ d
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-const SecurityTab = dynamic(() => import('./SecurityTab').then(mod => ({ default: mod.SecurityTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-});
-
-const PerformanceTab = dynamic(() => import('./PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-});
-
-const AccessibilityTab = dynamic(() => import('./AccessibilityTab').then(mod => ({ default: mod.AccessibilityTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-});
-
-const NotificationsTab = dynamic(() => import('./NotificationsTab').then(mod => ({ default: mod.NotificationsTab })), {
-  loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
-});
-
 // Tab configuration
-// Tab configuration will use translations
 const getTabConfig = (t: (key: string, params?: Record<string, string | number>) => string) => [
   {
     id: 'profile',
@@ -60,26 +40,6 @@ const getTabConfig = (t: (key: string, params?: Record<string, string | number>)
   {
     id: 'preferences',
     label: t('settings.preferences'),
-    icon: Bell
-  },
-  {
-    id: 'security',
-    label: t('settings.security'),
-    icon: Shield
-  },
-  {
-    id: 'performance',
-    label: t('analytics.performance'),
-    icon: Zap
-  },
-  {
-    id: 'accessibility',
-    label: t('settings.accessibility'),
-    icon: Eye
-  },
-  {
-    id: 'notifications',
-    label: t('settings.notifications'),
     icon: Bell
   }
 ];
@@ -132,10 +92,6 @@ export default function SettingsPageContent() {
             break;
           case '1':
           case '2':
-          case '3':
-          case '4':
-          case '5':
-          case '6':
             event.preventDefault();
             newIndex = parseInt(event.key) - 1;
             if (newIndex < tabConfig.length) {
@@ -199,7 +155,7 @@ export default function SettingsPageContent() {
               <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
                 <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
                 <span>+</span>
-                <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-6</kbd>
+                <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-2</kbd>
                 <span>{t('common.navigation').toLowerCase()}</span>
               </div>
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted/10">
@@ -242,10 +198,6 @@ export default function SettingsPageContent() {
                          <span className="text-muted-foreground text-sm">
                            {activeTab === 'profile' && '1'}
                            {activeTab === 'preferences' && '2'}
-                           {activeTab === 'security' && '3'}
-                           {activeTab === 'performance' && '4'}
-                           {activeTab === 'accessibility' && '5'}
-                           {activeTab === 'notifications' && '6'}
                          </span>
                        </Button>
                      </SheetTrigger>
@@ -286,7 +238,7 @@ export default function SettingsPageContent() {
                        </div>
                        <div className="mt-6 pt-4 border-t border-[hsl(var(--rpma-border))]">
                          <p className="text-xs text-muted-foreground text-center">
-                           Utilisez Ctrl+1-6 pour naviguer rapidement (desktop)
+                           Utilisez Ctrl+1-2 pour naviguer rapidement (desktop)
                          </p>
                        </div>
                      </SheetContent>
@@ -328,30 +280,6 @@ export default function SettingsPageContent() {
                  <TabsContent value="preferences" className="mt-0" forceMount>
                    <Suspense fallback={<LoadingState message="Chargement des préférences..." />}>
                       <PreferencesTab user={user ?? undefined} profile={profile ?? undefined} />
-                   </Suspense>
-                 </TabsContent>
-
-                 <TabsContent value="security" className="mt-0" forceMount>
-                   <Suspense fallback={<LoadingState message="Chargement de la sécurité..." />}>
-                      <SecurityTab user={user ?? undefined} profile={profile ?? undefined} />
-                   </Suspense>
-                 </TabsContent>
-
-                 <TabsContent value="performance" className="mt-0" forceMount>
-                   <Suspense fallback={<LoadingState message="Chargement des performances..." />}>
-                      <PerformanceTab user={user ?? undefined} profile={profile ?? undefined} />
-                   </Suspense>
-                 </TabsContent>
-
-                 <TabsContent value="accessibility" className="mt-0" forceMount>
-                   <Suspense fallback={<LoadingState message="Chargement de l'accessibilité..." />}>
-                      <AccessibilityTab user={user ?? undefined} profile={profile ?? undefined} />
-                   </Suspense>
-                 </TabsContent>
-
-                 <TabsContent value="notifications" className="mt-0" forceMount>
-                   <Suspense fallback={<LoadingState message="Chargement des notifications..." />}>
-                      <NotificationsTab user={user ?? undefined} profile={profile ?? undefined} />
                    </Suspense>
                  </TabsContent>
                </div>

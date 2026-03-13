@@ -36,6 +36,6 @@ export { default as ErrorFallback } from './ErrorFallback';
 
 export { DesktopTable, type Column } from './DesktopTable';
 export { DesktopForm } from '../forms/DesktopForm';
-export { EntitySyncIndicator } from '../../domains/sync/components';
+export { EntitySyncIndicator } from './EntitySyncIndicator';
 export * from './resizable';
 export * from './button-group';

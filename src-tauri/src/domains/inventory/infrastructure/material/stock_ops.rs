@@ -272,13 +272,12 @@ impl super::MaterialService {
         }
 
         // Validate quantity against transaction type.
-        // - Adjustment sets stock to an absolute value: qty must be >= 0.
-        // - All other types are movements: qty must be > 0.
+        // - Adjustment and all other types are movements: qty must be > 0.
         match request.transaction_type {
             InventoryTransactionType::Adjustment => {
-                if request.quantity < 0.0 {
+                if request.quantity <= 0.0 {
                     return Err(MaterialError::Validation(
-                        "Adjustment quantity cannot be negative".to_string(),
+                        "Adjustment quantity must be greater than 0".to_string(),
                     ));
                 }
             }

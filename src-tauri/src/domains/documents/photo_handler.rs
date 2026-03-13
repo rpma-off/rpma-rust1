@@ -26,6 +26,7 @@ use super::report_export as report_export_service;
 
 /// Photo metadata update request
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct PhotoMetadataUpdate {
     pub title: Option<Option<String>>,
     pub description: Option<Option<String>>,
@@ -37,6 +38,7 @@ pub struct PhotoMetadataUpdate {
 
 /// Request to store a new photo
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct StorePhotoRequest {
     pub intervention_id: String,
     pub step_id: Option<String>,
@@ -61,6 +63,7 @@ pub struct StorePhotoResponse {
 
 /// Request to retrieve photos
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct GetPhotosRequest {
     pub intervention_id: Option<String>,
     pub step_id: Option<String>,

@@ -113,10 +113,9 @@ export default function FinalizationStepPage() {
 
   const checklistCount = FINAL_CHECKLIST.filter((item) => checklist[item.id]).length;
   const checklistTotal = FINAL_CHECKLIST.length;
-  const requiredPhotos = 3;
-  const canValidate = checklistCount === checklistTotal && photos.length >= requiredPhotos;
+  const canValidate = checklistCount === checklistTotal;
 
-  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length}/${requiredPhotos} photos`;
+  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
 
   const stepLabel = `ÉTAPE 4 / ${steps.length || 4}`;
   const completedBadges = steps
@@ -233,7 +232,7 @@ export default function FinalizationStepPage() {
                 stepId="finalization"
                 type="after"
                 photos={photos}
-                minPhotos={requiredPhotos}
+                minPhotos={0}
                 onChange={setPhotos}
                 title="📷 Photos de finalisation"
                 hint="Vue avant · latérales · arrière"

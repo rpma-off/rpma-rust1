@@ -1,26 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useHomePage } from '@/domains/auth';
 
 const CalendarDashboard = dynamic(
   () => import('@/domains/calendar').then((module) => module.CalendarDashboard)
 );
 
 export default function Home() {
-  const { loading } = useHomePage();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[hsl(var(--rpma-surface))]">
       <CalendarDashboard />

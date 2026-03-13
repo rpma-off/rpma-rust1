@@ -1007,7 +1007,9 @@ impl MessageService {
             error!("Failed to save message: {}", e);
             AppError::Database("Failed to save message".to_string())
         })?;
-        info!("Message {} sent successfully", saved.id);
+        // NOTE: message is queued (status: "pending") — no actual delivery channel is implemented yet.
+        // Email/SMS/push delivery is not yet supported; this only persists the message.
+        info!("Message {} queued for delivery (status: pending)", saved.id);
         Ok(saved)
     }
 

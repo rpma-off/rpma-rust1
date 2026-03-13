@@ -1128,7 +1128,7 @@ mod tests {
             name: "Entreprise ABC".to_string(),
             email: Some("abc@corp.com".to_string()),
             phone: Some("+33700000000".to_string()),
-            customer_type: crate::domains::clients::domain::models::client::CustomerType::Business,
+            customer_type: crate::domains::clients::client_handler::CustomerType::Business,
             address_street: None,
             address_city: None,
             address_state: None,

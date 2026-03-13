@@ -10,6 +10,7 @@ pub use crate::domains::auth::application::SignupRequest;
 
 /// TODO: document
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct LoginRequest {
     pub email: String,
     pub password: String,

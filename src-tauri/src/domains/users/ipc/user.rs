@@ -13,6 +13,7 @@ use tracing::{debug, info, instrument};
 
 /// TODO: document
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct BootstrapFirstAdminRequest {
     pub user_id: String,
     #[serde(default)]
@@ -21,6 +22,7 @@ pub struct BootstrapFirstAdminRequest {
 
 /// User request structure
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct UserCrudRequest {
     pub action: UserAction,
     #[serde(default)]

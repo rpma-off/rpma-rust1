@@ -883,6 +883,21 @@ mod tests {
     use crate::shared::contracts::common::TimestampString;
     use crate::test_utils::TestDatabase;
 
+    fn seed_intervention(db: &crate::db::Database, intervention_id: &str) {
+        let now = chrono::Utc::now().timestamp_millis();
+        let task_id = format!("task-for-{}", intervention_id);
+        db.execute(
+            "INSERT OR IGNORE INTO tasks (id, task_number, title, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, priority, created_at, updated_at, synced)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+            rusqlite::params![task_id, "T-seed", "Seed task", "AA-000-AA", "Model X", r#"["front"]"#, "2025-01-01", "draft", "medium", now, now],
+        ).expect("seed task");
+        db.execute(
+            "INSERT OR IGNORE INTO interventions (id, task_id, status, vehicle_plate, created_at, updated_at, synced)
+             VALUES (?, ?, 'pending', 'TEST-00', ?, ?, 0)",
+            rusqlite::params![intervention_id, task_id, now, now],
+        ).expect("seed intervention");
+    }
+
     fn build_step(intervention_id: &str, step_number: i32) -> InterventionStep {
         let mut step = InterventionStep::new(
             intervention_id.to_string(),
@@ -908,6 +923,7 @@ mod tests {
     fn save_step_with_tx_persists_extended_fields() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
         let db = test_db.db();
+        seed_intervention(&db, "intervention-1");
         let repository = InterventionRepository::new(db.clone());
         let step = build_step("intervention-1", 1);
 
@@ -950,6 +966,7 @@ mod tests {
     fn get_intervention_steps_returns_step_data_fields() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
         let db = test_db.db();
+        seed_intervention(&db, "intervention-2");
         let repository = InterventionRepository::new(db);
 
         let step_1 = build_step("intervention-2", 1);

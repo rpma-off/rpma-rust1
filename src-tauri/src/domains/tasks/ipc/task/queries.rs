@@ -14,6 +14,7 @@ use tracing::{debug, info};
 
 /// Request for getting tasks with clients
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetTasksWithClientsRequest {
     pub filter: Option<TaskFilter>,
     pub page: Option<u32>,
@@ -24,6 +25,7 @@ pub struct GetTasksWithClientsRequest {
 
 /// Request for getting task statistics
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetTaskStatisticsRequest {
     pub filter: Option<TaskFilter>,
     #[serde(default)]
@@ -32,6 +34,7 @@ pub struct GetTaskStatisticsRequest {
 
 /// Request for getting completion rate
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetCompletionRateRequest {
     pub filter: Option<TaskFilter>,
     #[serde(default)]
@@ -40,6 +43,7 @@ pub struct GetCompletionRateRequest {
 
 /// Request for getting average duration by status
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetAverageDurationByStatusRequest {
     pub filter: Option<TaskFilter>,
     #[serde(default)]
@@ -48,6 +52,7 @@ pub struct GetAverageDurationByStatusRequest {
 
 /// Request for getting priority distribution
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetPriorityDistributionRequest {
     pub filter: Option<TaskFilter>,
     #[serde(default)]
@@ -56,6 +61,7 @@ pub struct GetPriorityDistributionRequest {
 
 /// Request for getting user assigned tasks
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct GetUserAssignedTasksRequest {
     pub user_id: Option<String>, // If None, uses the authenticated user
     pub filter: Option<TaskFilter>,

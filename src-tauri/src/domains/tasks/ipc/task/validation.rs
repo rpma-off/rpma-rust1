@@ -13,6 +13,7 @@ use tracing::{debug, info};
 
 /// Request for checking task assignment eligibility
 #[derive(serde::Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct CheckTaskAssignmentRequest {
     pub task_id: String,
     pub user_id: String,
@@ -22,6 +23,7 @@ pub struct CheckTaskAssignmentRequest {
 
 /// Request for checking task availability
 #[derive(serde::Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct CheckTaskAvailabilityRequest {
     pub task_id: String,
     #[serde(default)]
@@ -30,6 +32,7 @@ pub struct CheckTaskAvailabilityRequest {
 
 /// Request for validating task assignment changes
 #[derive(serde::Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ValidateTaskAssignmentChangeRequest {
     pub task_id: String,
     pub old_user_id: Option<String>,

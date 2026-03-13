@@ -10,7 +10,7 @@ export type { InterventionReport };
 export const reportsIpc = {
   generate: async (interventionId: string) => {
     const result = await safeInvoke<InterventionReport>(IPC_COMMANDS.REPORT_GENERATE, {
-      interventionId,
+      intervention_id: interventionId,
     });
     invalidatePattern('report:');
     signalMutation('reports');
@@ -19,12 +19,12 @@ export const reportsIpc = {
 
   get: (reportId: string) =>
     safeInvoke<InterventionReport | null>(IPC_COMMANDS.REPORT_GET, {
-      reportId,
+      report_id: reportId,
     }),
 
   getByIntervention: (interventionId: string) =>
     safeInvoke<InterventionReport | null>(IPC_COMMANDS.REPORT_GET_BY_INTERVENTION, {
-      interventionId,
+      intervention_id: interventionId,
     }),
 
   list: (limit?: number, offset?: number) =>

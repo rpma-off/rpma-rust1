@@ -59,6 +59,7 @@ pub struct StartInterventionRequest {
 
 /// Request structure for finalizing an intervention
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct FinalizeInterventionRequest {
     pub intervention_id: String,
     pub collected_data: Option<serde_json::Value>,

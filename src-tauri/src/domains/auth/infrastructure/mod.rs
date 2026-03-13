@@ -1,4 +1,3 @@
-pub(crate) mod alerting;
 pub(crate) mod auth;
 pub(crate) mod rate_limiter;
 pub(crate) mod session;

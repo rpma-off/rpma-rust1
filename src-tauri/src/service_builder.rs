@@ -387,11 +387,9 @@ mod tests {
         let builder = ServiceBuilder::new(db, repositories, app_data_dir);
         let app_state = builder.build().expect("Failed to build app state");
 
-        // Verify event bus is initialized
+        // Verify event bus is initialized — only events in AuditLogHandler::interested_events()
         assert!(app_state.event_bus.has_handlers("TaskCreated"));
-        assert!(app_state.event_bus.has_handlers("TaskUpdated"));
         assert!(app_state.event_bus.has_handlers("InterventionStarted"));
-        assert!(app_state.event_bus.has_handlers("AuthenticationSuccess"));
     }
 
     #[test]

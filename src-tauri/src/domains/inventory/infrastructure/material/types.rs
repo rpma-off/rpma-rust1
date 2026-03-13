@@ -6,6 +6,7 @@ use crate::domains::inventory::domain::models::material::{
 
 /// Request to create a new material.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CreateMaterialRequest {
     pub sku: String,
     pub name: String,
@@ -37,6 +38,7 @@ pub struct CreateMaterialRequest {
 
 /// Request to update material stock.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct UpdateStockRequest {
     pub material_id: String,
     pub quantity_change: f64,
@@ -46,6 +48,7 @@ pub struct UpdateStockRequest {
 
 /// Request to record material consumption.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct RecordConsumptionRequest {
     pub intervention_id: String,
     pub material_id: String,
@@ -61,6 +64,7 @@ pub struct RecordConsumptionRequest {
 
 /// Request to create a material category.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CreateMaterialCategoryRequest {
     pub name: String,
     pub code: Option<String>,
@@ -72,6 +76,7 @@ pub struct CreateMaterialCategoryRequest {
 
 /// Request to create a supplier.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CreateSupplierRequest {
     pub name: String,
     pub code: Option<String>,
@@ -98,6 +103,7 @@ pub struct CreateSupplierRequest {
 
 /// Request to create an inventory transaction.
 #[derive(Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CreateInventoryTransactionRequest {
     pub material_id: String,
     pub transaction_type: InventoryTransactionType,

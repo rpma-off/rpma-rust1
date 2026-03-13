@@ -3,15 +3,6 @@
  */
 
 export { NotificationsProvider, useNotificationsContext } from './NotificationsProvider';
-/** TODO: document */
-export { useMessages, useMessageTemplates, useNotificationPreferences } from './useMessages';
-
-/** TODO: document */
-export { MessageComposer } from '../components/MessageComposer';
-/** TODO: document */
-export { MessageInbox } from '../components/MessageInbox';
-/** TODO: document */
-export { NotificationPreferences } from '../components/NotificationPreferences';
 
 /** TODO: document */
 export { NotificationBell } from '../components/NotificationBell';
@@ -24,8 +15,6 @@ export { NotificationInitializer } from '../components/NotificationInitializer';
 export { useNotificationStore } from '../stores/notificationStore';
 /** TODO: document */
 export { useNotificationUpdates } from '../hooks/useNotificationUpdates';
-/** TODO: document */
-export { useMessagesPage } from '../hooks/useMessagesPage';
 
 /** TODO: document */
 export { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../services/notificationActions';
@@ -33,18 +22,5 @@ export { getNotifications, markNotificationRead, markAllNotificationsRead, delet
 /** TODO: document */
 export { notificationService, NotificationService } from '../server';
 
-/** TODO: document */
-export type {
-  Message,
-  MessageTemplate,
-  MessageQuery,
-  MessageListResponse,
-  SendMessageRequest,
-  UpdateNotificationPreferencesRequest,
-  NotificationPreferences as NotificationPreferencesType,
-  UseMessagesResult,
-} from './types';
-
 export type { Notification } from './notificationTypes';
 export type { GetNotificationsResponse, SuccessResponse, CreateNotificationRequest } from './notificationTypes';
-

@@ -13,5 +13,5 @@ export const dashboardIpc = {
       clients?: { total?: number; active?: number };
       users?: { total?: number; active?: number; admins?: number; technicians?: number };
       sync?: { status?: string; pending_operations?: number; completed_operations?: number }
-    }>(IPC_COMMANDS.DASHBOARD_GET_STATS, { timeRange }),
+    }>(IPC_COMMANDS.DASHBOARD_GET_STATS, { time_range: timeRange }),
 };

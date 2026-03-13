@@ -3,9 +3,11 @@ import { signalMutation } from '@/lib/data-freshness';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { validateClient, validateClientListResponse } from '@/lib/validation/backend-type-guards';
 import type {
-  Client,
   CreateClientRequest,
   UpdateClientRequest,
+} from '@/lib/validation/ipc-schemas';
+import type {
+  Client,
   ClientListResponse,
   ClientStatistics,
   ClientWithTasks,
@@ -159,6 +161,18 @@ function unwrapTaggedArray<T>(value: JsonValue, expectedType: string, context: s
   if (Array.isArray(value)) {
     return value as T[];
   }
+  
+  // Handle case where extractAndValidate already stripped the 'type' field,
+  // leaving an object like { data: [...] }
+  if (
+    value !== null && 
+    typeof value === 'object' && 
+    'data' in value && 
+    Array.isArray((value as Record<string, unknown>).data)
+  ) {
+    return (value as Record<string, unknown>).data as T[];
+  }
+
   const data = unwrapTaggedObject(value, expectedType, context);
   if (!Array.isArray(data)) {
     throw new Error(`Invalid ${context} response: expected array payload`);

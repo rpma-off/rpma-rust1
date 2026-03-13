@@ -47,6 +47,21 @@ mod tests {
     use crate::shared::logging::{LogDomain, RPMARequestLogger};
     use crate::test_utils::TestDatabase;
 
+    fn seed_intervention(db: &crate::db::Database, intervention_id: &str) {
+        let now = chrono::Utc::now().timestamp_millis();
+        let task_id = format!("task-for-{}", intervention_id);
+        db.execute(
+            "INSERT OR IGNORE INTO tasks (id, task_number, title, vehicle_plate, vehicle_model, ppf_zones, scheduled_date, status, priority, created_at, updated_at, synced)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
+            rusqlite::params![task_id, "T-seed", "Seed task", "AA-000-AA", "Model X", r#"["front"]"#, "2025-01-01", "draft", "medium", now, now],
+        ).expect("seed task");
+        db.execute(
+            "INSERT OR IGNORE INTO interventions (id, task_id, status, vehicle_plate, created_at, updated_at, synced)
+             VALUES (?, ?, 'pending', 'TEST-00', ?, ?, 0)",
+            rusqlite::params![intervention_id, task_id, now, now],
+        ).expect("seed intervention");
+    }
+
     fn test_logger() -> RPMARequestLogger {
         RPMARequestLogger::new("test-correlation".to_string(), None, LogDomain::Task)
     }
@@ -132,6 +147,7 @@ mod tests {
     #[test]
     fn test_save_step_progress_mirrors_collected_data_to_step_data() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
+        seed_intervention(&test_db.db(), "intervention-1");
         let service = InterventionWorkflowService::new(test_db.db());
         let step = InterventionStep::new(
             "intervention-1".to_string(),
@@ -173,6 +189,7 @@ mod tests {
     #[test]
     fn test_save_step_progress_keeps_completed_status() {
         let test_db = TestDatabase::new().expect("Failed to create test database");
+        seed_intervention(&test_db.db(), "intervention-1");
         let service = InterventionWorkflowService::new(test_db.db());
         let mut step = InterventionStep::new(
             "intervention-1".to_string(),

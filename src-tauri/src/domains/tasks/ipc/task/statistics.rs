@@ -11,6 +11,7 @@ use tracing::{debug, info};
 
 /// Request for getting task statistics summary
 #[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct TaskStatisticsRequest {
     pub filter: Option<TaskFilter>,
     #[serde(default)]

@@ -1,5 +1,5 @@
 use crate::db::Database;
-use crate::domains::documents::infrastructure::photo::{PhotoService, PhotoStorageSettings};
+use crate::domains::documents::{PhotoService, PhotoStorageSettings};
 use crate::domains::documents::DocumentsFacade;
 use std::sync::Arc;
 

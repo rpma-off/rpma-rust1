@@ -165,16 +165,14 @@ export function useInstallationStep() {
 
   const canValidateZone = activeZone
     ? zoneChecklistComplete(activeZone) &&
-      typeof activeZone.quality_score === 'number' &&
-      (activeZone.photos?.length ?? 0) >= 1
+      typeof activeZone.quality_score === 'number'
     : false;
 
   const canValidate =
     zones.length > 0 &&
     zones.every((zone) => zone.status === 'completed') &&
     zones.every((zone) => zoneChecklistComplete(zone)) &&
-    zones.every((zone) => typeof zone.quality_score === 'number') &&
-    zones.every((zone) => (zone.photos?.length ?? 0) >= 1);
+    zones.every((zone) => typeof zone.quality_score === 'number');
 
   const summaryText = `${completedZones}/${zones.length || 1} zones · ${zonesWithPhotos}/${zones.length || 1} photos`;
 
