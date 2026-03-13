@@ -106,7 +106,7 @@ export const ScheduleStep: React.FC<FormStepProps> = ({
 
       const [hours, minutes] = startTime.split(":").map(Number);
       const startDate = new Date();
-      startDate.setHours(hours, minutes, 0, 0);
+      startDate.setHours(hours ?? 0, minutes ?? 0, 0, 0);
 
       // Add estimated duration
       const endDate = new Date(startDate.getTime() + estimatedDuration * 60000);

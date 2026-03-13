@@ -76,8 +76,8 @@ export const trapFocus = (container: HTMLElement): (() => void) => {
     return () => {};
   }
 
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
+  const firstElement = focusableElements[0]!;
+  const lastElement = focusableElements[focusableElements.length - 1]!;
 
   const handleTabKey = (event: KeyboardEvent) => {
     if (event.key !== 'Tab') return;
@@ -247,7 +247,7 @@ export const addKeyboardNavigation = (
         currentIndex = loop 
           ? (currentIndex + 1) % focusableElements.length
           : Math.min(currentIndex + 1, focusableElements.length - 1);
-        focusableElements[currentIndex].focus();
+        focusableElements[currentIndex]!.focus();
         break;
 
       case prevKey:
@@ -255,19 +255,19 @@ export const addKeyboardNavigation = (
         currentIndex = loop 
           ? (currentIndex - 1 + focusableElements.length) % focusableElements.length
           : Math.max(currentIndex - 1, 0);
-        focusableElements[currentIndex].focus();
+        focusableElements[currentIndex]!.focus();
         break;
 
       case 'Home':
         event.preventDefault();
         currentIndex = 0;
-        focusableElements[currentIndex].focus();
+        focusableElements[currentIndex]!.focus();
         break;
 
       case 'End':
         event.preventDefault();
         currentIndex = focusableElements.length - 1;
-        focusableElements[currentIndex].focus();
+        focusableElements[currentIndex]!.focus();
         break;
 
       case 'Enter':

@@ -108,13 +108,15 @@ export function DesktopTable<T extends Record<string, unknown>>({
       case 'Enter':
         if (focusedRowIndex >= 0 && focusedRowIndex < filteredAndSortedData.length) {
           event.preventDefault();
-          handleRowClick(filteredAndSortedData[focusedRowIndex], focusedRowIndex);
+          const enterRow = filteredAndSortedData[focusedRowIndex];
+          if (enterRow !== undefined) handleRowClick(enterRow, focusedRowIndex);
         }
         break;
       case ' ':
         if (focusedRowIndex >= 0 && focusedRowIndex < filteredAndSortedData.length && onRowSelect) {
           event.preventDefault();
-          handleRowSelect(filteredAndSortedData[focusedRowIndex]);
+          const spaceRow = filteredAndSortedData[focusedRowIndex];
+          if (spaceRow !== undefined) handleRowSelect(spaceRow);
         }
         break;
     }

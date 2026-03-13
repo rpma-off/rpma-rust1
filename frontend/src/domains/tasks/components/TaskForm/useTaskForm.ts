@@ -296,7 +296,9 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
       if (timeError) {
         errors.scheduled_time = timeError;
       } else {
-        const [hours, minutes] = formData.scheduled_time.split(':').map(Number);
+        const timeParts = formData.scheduled_time.split(':').map(Number);
+        const hours = timeParts[0] ?? 0;
+        const minutes = timeParts[1] ?? 0;
         if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
           errors.scheduled_time = 'Invalid time format';
         }

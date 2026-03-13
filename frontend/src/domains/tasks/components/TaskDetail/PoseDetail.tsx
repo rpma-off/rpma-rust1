@@ -177,7 +177,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
     const merged = baseItems.map(item => (
       overrides[item.id] !== undefined
-        ? { ...item, is_completed: overrides[item.id] }
+        ? { ...item, is_completed: overrides[item.id] ?? false }
         : item
     ));
     setChecklistItems(merged);

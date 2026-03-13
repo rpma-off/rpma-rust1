@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (nameParts.length < 2) {
       return NextResponse.json({ error: 'Full name must include both first and last name', code: 'INVALID_NAME' }, { status: 400 });
     }
-    const first_name = nameParts[0];
+    const first_name = nameParts[0] ?? '';
     const last_name = nameParts.slice(1).join(' ');
 
     logger.info(LogContext.AUTH, 'Creating new user account', { email, role, first_name, last_name });

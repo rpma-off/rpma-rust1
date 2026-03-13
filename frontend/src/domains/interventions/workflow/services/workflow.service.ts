@@ -130,7 +130,7 @@ function parseInterventionCandidate(payload: unknown): Intervention | null {
     const typed = record as { type?: string; intervention?: Intervention | null; interventions?: Intervention[] };
     if (typed.type === 'ActiveRetrieved' && typed.intervention) return typed.intervention;
     if (typed.type === 'ActiveByTask' && typed.interventions && typed.interventions.length > 0) {
-      return typed.interventions[0];
+      return typed.interventions[0] ?? null;
     }
   }
 

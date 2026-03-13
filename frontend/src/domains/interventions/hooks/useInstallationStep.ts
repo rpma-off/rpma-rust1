@@ -25,12 +25,12 @@ const ZONE_PRESETS: Record<string, { name: string; area: string; film: string }>
 };
 
 const DEFAULT_ZONES = [
-  { id: 'hood', ...ZONE_PRESETS.hood },
-  { id: 'left_fender', ...ZONE_PRESETS.left_fender },
-  { id: 'right_fender', ...ZONE_PRESETS.right_fender },
-  { id: 'bumper', ...ZONE_PRESETS.bumper },
-  { id: 'mirrors', ...ZONE_PRESETS.mirrors },
-  { id: 'sills', ...ZONE_PRESETS.sills },
+  { id: 'hood', ...ZONE_PRESETS['hood']! },
+  { id: 'left_fender', ...ZONE_PRESETS['left_fender']! },
+  { id: 'right_fender', ...ZONE_PRESETS['right_fender']! },
+  { id: 'bumper', ...ZONE_PRESETS['bumper']! },
+  { id: 'mirrors', ...ZONE_PRESETS['mirrors']! },
+  { id: 'sills', ...ZONE_PRESETS['sills']! },
 ];
 
 export type ZoneDraft = {

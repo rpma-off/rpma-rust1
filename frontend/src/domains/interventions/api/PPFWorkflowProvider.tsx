@@ -156,14 +156,14 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
            } else if ('interventions' in result) {
              const listResult = result as { interventions?: Intervention[] };
              if (listResult.interventions && listResult.interventions.length > 0) {
-               intervention = listResult.interventions[0];
+               intervention = listResult.interventions[0] ?? null;
              }
            } else if ('type' in result) {
              const typedResult = result as { type: string; intervention?: Intervention; interventions?: Intervention[] };
              if (typedResult.type === 'ActiveRetrieved' && typedResult.intervention) {
                intervention = typedResult.intervention;
              } else if (typedResult.type === 'ActiveByTask' && typedResult.interventions && typedResult.interventions.length > 0) {
-               intervention = typedResult.interventions[0];
+               intervention = typedResult.interventions[0] ?? null;
              }
            }
          }

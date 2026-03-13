@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       
       // Process each chunk
       for (let index = 0; index < chunks.length; index++) {
-        const chunk = chunks[index];
+        const chunk = chunks[index] ?? [];
         console.info(`Processing chunk ${index + 1}/${chunks.length}`);
         
         try {

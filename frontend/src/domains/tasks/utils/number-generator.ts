@@ -30,7 +30,7 @@ export const parseTaskNumber = (taskNumber: string): { timestamp: number; random
   if (!match) return null;
 
   return {
-    timestamp: parseInt(match[1]),
-    random: parseInt(match[2]),
+    timestamp: parseInt(match[1] ?? ''),
+    random: parseInt(match[2] ?? ''),
   };
 };

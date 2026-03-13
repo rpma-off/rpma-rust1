@@ -240,6 +240,7 @@ export function ClientList({
           >
             {virtualizer.getVirtualItems().map((virtualItem) => {
               const client = filteredClients[virtualItem.index];
+              if (!client) return null;
               return (
                 <div
                   key={client.id}

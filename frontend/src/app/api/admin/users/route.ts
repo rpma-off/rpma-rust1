@@ -69,7 +69,7 @@ export const POST = withAuth(async (request: NextRequestWithUser, _context?: unk
     if (nameParts.length < 2) {
       return NextResponse.json({ error: 'Full name must include both first and last name', code: 'INVALID_NAME' }, { status: 400 });
     }
-    const first_name = nameParts[0];
+    const first_name = nameParts[0] ?? '';
     const last_name = nameParts.slice(1).join(' ');
 
     const result = await userService.createUser({ email, password, first_name, last_name, role }, request.token);

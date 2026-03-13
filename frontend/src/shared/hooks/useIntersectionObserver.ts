@@ -28,7 +28,8 @@ export const useIntersectionObserver = (
   } = options;
 
   const handleIntersection = useCallback((entries: IntersectionObserverEntry[]) => {
-    const [entry] = entries;
+    const entry = entries[0];
+    if (!entry) return;
     setIsIntersecting(entry.isIntersecting);
     setIsVisible(entry.isIntersecting);
     setEntry(entry);

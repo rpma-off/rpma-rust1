@@ -135,7 +135,8 @@ export function useTaskDetailPage() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
         if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
+          const firstVisible = visible[0];
+          if (firstVisible) setActiveSection(firstVisible.target.id);
         }
       },
       {

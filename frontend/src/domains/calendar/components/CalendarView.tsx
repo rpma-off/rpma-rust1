@@ -1,6 +1,7 @@
 import React from 'react';
 import { toast } from 'sonner';
 import { DragDropContext } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import type { CalendarTask } from '@/lib/backend';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useCalendar } from '../hooks/useCalendar';
@@ -41,8 +42,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setCurrentDate(new Date());
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleTaskDrop = async (result: any) => {
+  const handleTaskDrop = async (result: DropResult) => {
     if (!result.destination || !onTaskReschedule) return;
 
     const { draggableId: taskId, destination } = result;
@@ -54,7 +54,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     if (droppableId.startsWith('day-')) {
       const parts = droppableId.split('-');
       if (parts.length >= 3) {
-        newDate = parts[1];
+        newDate = parts[1] ?? '';
         if (parts.length >= 4 && parts[2] === 'slot') {
           newStartTime = parts[3];
         }
@@ -111,7 +111,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <WeekView
             {...commonProps}
             className="h-full"
-            onTaskDrop={onTaskReschedule ? handleTaskDrop : undefined}
+            onTaskDrop={onTaskReschedule}
           />
         );
       case 'day':
@@ -119,7 +119,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <DayView
             {...commonProps}
             className="h-full"
-            onTaskDrop={onTaskReschedule ? handleTaskDrop : undefined}
+            onTaskDrop={onTaskReschedule}
           />
         );
       case 'agenda':

@@ -115,17 +115,21 @@ export function TaskStepperBand({
                   </div>
                 </div>
 
-                {stepIndex < steps.length - 1 && (
+                {stepIndex < steps.length - 1 && (() => {
+                  const nextStep = steps[stepIndex + 1];
+                  if (!nextStep) return null;
+                  return (
                   <div
                     className={cn(
                       'hidden lg:block h-0.5 flex-1 mx-1 rounded-full transition-all duration-300',
-                      isDone && steps[stepIndex + 1].status === 'completed' && 'bg-emerald-600',
-                      isDone && steps[stepIndex + 1].status !== 'completed' && 'bg-gradient-to-r from-emerald-600 to-[hsl(var(--rpma-border))]',
-                      !isDone && steps[stepIndex + 1].status === 'in_progress' && 'bg-gradient-to-r from-[hsl(var(--rpma-border))] to-blue-500',
-                      !isDone && steps[stepIndex + 1].status === 'pending' && 'bg-[hsl(var(--rpma-border))]'
+                      isDone && nextStep.status === 'completed' && 'bg-emerald-600',
+                      isDone && nextStep.status !== 'completed' && 'bg-gradient-to-r from-emerald-600 to-[hsl(var(--rpma-border))]',
+                      !isDone && nextStep.status === 'in_progress' && 'bg-gradient-to-r from-[hsl(var(--rpma-border))] to-blue-500',
+                      !isDone && nextStep.status === 'pending' && 'bg-[hsl(var(--rpma-border))]'
                     )}
                   />
-                )}
+                  );
+                })()}
               </React.Fragment>
             );
           })}

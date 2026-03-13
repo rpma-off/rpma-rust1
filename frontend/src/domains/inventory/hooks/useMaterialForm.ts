@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { JsonValue } from '@/types/json';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
-import type { MaterialType, UnitOfMeasure } from '../api/types';
+import type { Material, MaterialType, UnitOfMeasure } from '../api/types';
 import type { CreateMaterialRequest } from '../server';
 
 // Must stay in sync with the Rust UnitOfMeasure enum in src-tauri/src/models
@@ -50,7 +50,7 @@ interface MaterialFormData {
   is_active: boolean;
 }
 
-export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
+export function useMaterialForm(initialMaterial?: Material | null) {
   const { user } = useAuth();
   const [formData, setFormData] = useState<MaterialFormData>({
     sku: '',
@@ -88,33 +88,33 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
   useEffect(() => {
     if (initialMaterial) {
       setFormData({
-        sku: (initialMaterial.sku as string) || '',
-        name: (initialMaterial.name as string) || '',
-        description: (initialMaterial.description as string) || '',
-        material_type: (initialMaterial.material_type as MaterialType) || 'ppf_film',
-        category: (initialMaterial.category as string) || '',
-        subcategory: (initialMaterial.subcategory as string) || '',
-        category_id: initialMaterial.category_id as string | undefined,
-        brand: (initialMaterial.brand as string) || '',
-        model: (initialMaterial.model as string) || '',
+        sku: initialMaterial.sku || '',
+        name: initialMaterial.name || '',
+        description: initialMaterial.description || '',
+        material_type: initialMaterial.material_type || 'ppf_film',
+        category: initialMaterial.category || '',
+        subcategory: initialMaterial.subcategory || '',
+        category_id: initialMaterial.category_id,
+        brand: initialMaterial.brand || '',
+        model: initialMaterial.model || '',
         specifications: initialMaterial.specifications as JsonValue | undefined,
-        unit_of_measure: (initialMaterial.unit_of_measure as UnitOfMeasure) || 'piece',
-        current_stock: (initialMaterial.current_stock as number | undefined) ?? 0,
-        minimum_stock: initialMaterial.minimum_stock as number | undefined,
-        maximum_stock: initialMaterial.maximum_stock as number | undefined,
-        reorder_point: initialMaterial.reorder_point as number | undefined,
-        unit_cost: initialMaterial.unit_cost as number | undefined,
-        currency: (initialMaterial.currency as string) || 'EUR',
-        supplier_id: initialMaterial.supplier_id as string | undefined,
-        supplier_name: initialMaterial.supplier_name as string | undefined,
-        supplier_sku: initialMaterial.supplier_sku as string | undefined,
-        quality_grade: initialMaterial.quality_grade as string | undefined,
-        certification: initialMaterial.certification as string | undefined,
-        expiry_date: initialMaterial.expiry_date as string | undefined,
-        batch_number: initialMaterial.batch_number as string | undefined,
-        storage_location: initialMaterial.storage_location as string | undefined,
-        warehouse_id: initialMaterial.warehouse_id as string | undefined,
-        is_active: (initialMaterial.is_active as boolean) ?? true,
+        unit_of_measure: initialMaterial.unit_of_measure || 'piece',
+        current_stock: initialMaterial.current_stock ?? 0,
+        minimum_stock: initialMaterial.minimum_stock,
+        maximum_stock: initialMaterial.maximum_stock,
+        reorder_point: initialMaterial.reorder_point,
+        unit_cost: initialMaterial.unit_cost,
+        currency: initialMaterial.currency || 'EUR',
+        supplier_id: initialMaterial.supplier_id,
+        supplier_name: initialMaterial.supplier_name,
+        supplier_sku: initialMaterial.supplier_sku,
+        quality_grade: initialMaterial.quality_grade,
+        certification: initialMaterial.certification,
+        expiry_date: initialMaterial.expiry_date,
+        batch_number: initialMaterial.batch_number,
+        storage_location: initialMaterial.storage_location,
+        warehouse_id: initialMaterial.warehouse_id,
+        is_active: initialMaterial.is_active ?? true,
       });
     }
   }, [initialMaterial]);
@@ -163,7 +163,7 @@ export function useMaterialForm(initialMaterial?: Record<string, unknown>) {
       });
 
       if (initialMaterial) {
-        const materialId = typeof initialMaterial.id === 'string' ? initialMaterial.id : '';
+        const materialId = initialMaterial.id;
         if (!materialId) {
           setError('Invalid material id');
           return false;

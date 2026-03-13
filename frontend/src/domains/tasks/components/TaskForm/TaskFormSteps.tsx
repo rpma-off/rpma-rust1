@@ -36,7 +36,7 @@ export const useTaskFormSteps = ({
     const currentIndex = stepsConfig.findIndex(s => s.id === currentStep);
     if (currentIndex < stepsConfig.length - 1) {
       const nextStep = stepsConfig[currentIndex + 1];
-      if (canProceedToNextStep(currentStep)) {
+      if (nextStep && canProceedToNextStep(currentStep)) {
         setCurrentStep(nextStep.id);
         setFormErrors({});
         onStepComplete?.(currentStep);
@@ -48,7 +48,7 @@ export const useTaskFormSteps = ({
     const currentIndex = stepsConfig.findIndex(s => s.id === currentStep);
     if (currentIndex > 0) {
       const prevStep = stepsConfig[currentIndex - 1];
-      setCurrentStep(prevStep.id);
+      if (prevStep) setCurrentStep(prevStep.id);
       setFormErrors({});
     }
   }, [currentStep, stepsConfig, setCurrentStep, setFormErrors]);

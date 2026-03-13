@@ -225,9 +225,11 @@ export const SwipeableItem: React.FC<SwipeableItemProps> = ({
     const threshold = 80;
 
     if (offset > threshold && leftActions.length > 0) {
-      leftActions[0].onClick();
+      const firstLeft = leftActions[0];
+      if (firstLeft) firstLeft.onClick();
     } else if (offset < -threshold && rightActions.length > 0) {
-      rightActions[0].onClick();
+      const firstRight = rightActions[0];
+      if (firstRight) firstRight.onClick();
     }
 
     setOffset(0);

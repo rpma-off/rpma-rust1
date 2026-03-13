@@ -34,7 +34,9 @@ export function QuoteLaborSection({
   const updateLabor = useCallback(
     (index: number, field: keyof QuoteLaborInput, value: string | number) => {
       const updated = [...laborItems];
-      const labor = { ...updated[index], [field]: value };
+      const existing = updated[index];
+      if (!existing) return;
+      const labor = { ...existing, [field]: value };
 
       // Recalculate total when hours or rate changes
       if (field === 'hours' || field === 'rate') {

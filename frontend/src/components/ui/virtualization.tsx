@@ -141,6 +141,7 @@ export const LazyComponent: React.FC<LazyComponentProps> = ({
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (!entry) return;
         if (entry.isIntersecting) {
           setIsVisible(true);
           setHasLoaded(true);
@@ -191,6 +192,7 @@ export function useInfiniteScroll<T>(
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (!entry) return;
         if (entry.isIntersecting && hasMore && !isLoading) {
           loadMore();
         }

@@ -51,7 +51,7 @@ export async function DELETE(
       if (photoUrl) {
         // Extract the file path from the URL for storage deletion
         const urlParts = photoUrl.split('/');
-        const fileName = urlParts[urlParts.length - 1];
+        const fileName = urlParts[urlParts.length - 1] ?? '';
         const { error: storageError } = await supabase.storage
           .from('photos')
           .remove([fileName]);

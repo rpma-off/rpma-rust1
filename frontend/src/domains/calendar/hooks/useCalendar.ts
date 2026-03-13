@@ -54,8 +54,8 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         const start = new Date(year, month, 1);
         const end = new Date(year, month + 1, 0);
         return {
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
+          start: start.toISOString().split('T')[0] ?? '',
+          end: end.toISOString().split('T')[0] ?? '',
         };
       }
       case 'week': {
@@ -64,16 +64,16 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
         return {
-          start: startOfWeek.toISOString().split('T')[0],
-          end: endOfWeek.toISOString().split('T')[0],
+          start: startOfWeek.toISOString().split('T')[0] ?? '',
+          end: endOfWeek.toISOString().split('T')[0] ?? '',
         };
       }
       case 'day': {
         const start = new Date(year, month, day);
         const end = new Date(year, month, day);
         return {
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
+          start: start.toISOString().split('T')[0] ?? '',
+          end: end.toISOString().split('T')[0] ?? '',
         };
       }
       case 'agenda': {
@@ -81,14 +81,14 @@ export function useCalendar(initialDate?: Date, initialViewMode?: CalendarViewMo
         const end = new Date(date);
         end.setDate(date.getDate() + 30); // 30-day range for agenda
         return {
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
+          start: start.toISOString().split('T')[0] ?? '',
+          end: end.toISOString().split('T')[0] ?? '',
         };
       }
       default:
         return {
-          start: date.toISOString().split('T')[0],
-          end: date.toISOString().split('T')[0],
+          start: date.toISOString().split('T')[0] ?? '',
+          end: date.toISOString().split('T')[0] ?? '',
         };
     }
   }, []);

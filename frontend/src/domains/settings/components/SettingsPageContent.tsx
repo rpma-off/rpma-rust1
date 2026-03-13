@@ -95,13 +95,14 @@ export default function SettingsPageContent() {
             event.preventDefault();
             newIndex = parseInt(event.key) - 1;
             if (newIndex < tabConfig.length) {
-              if (tabConfig[newIndex]) {
+              const tab = tabConfig[newIndex];
+              if (tab) {
                 logUserAction('Tab navigation via keyboard shortcut', {
                   fromTab: activeTab,
-                  toTab: tabConfig[newIndex].id,
+                  toTab: tab.id,
                   shortcut: `Ctrl+${event.key}`
                 });
-                setActiveTab(tabConfig[newIndex].id);
+                setActiveTab(tab.id);
               } else {
                 console.warn('Invalid tab index:', newIndex);
               }
@@ -109,13 +110,14 @@ export default function SettingsPageContent() {
             return;
         }
 
-        if (newIndex !== tabIndex && tabConfig[newIndex]) {
+        const nextTab = tabConfig[newIndex];
+        if (newIndex !== tabIndex && nextTab) {
           logUserAction('Tab navigation via keyboard', {
             fromTab: activeTab,
-            toTab: tabConfig[newIndex]?.id,
+            toTab: nextTab.id,
             direction: event.key === 'ArrowLeft' ? 'previous' : 'next'
           });
-          setActiveTab(tabConfig[newIndex]?.id);
+          setActiveTab(nextTab.id);
         } else if (newIndex !== tabIndex) {
           console.warn('Invalid tab index:', newIndex);
         }

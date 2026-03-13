@@ -89,7 +89,7 @@ export default function TaskManager() {
         description: data.description || '',
         client_id: data.client_id,
         priority: data.priority,
-        scheduled_date: data.scheduled_date || new Date().toISOString().split('T')[0],
+        scheduled_date: data.scheduled_date || (new Date().toISOString().split('T')[0] ?? ''),
         status: 'draft' as const,
         vehicle_plate: 'UNKNOWN', // Required field
         vehicle_model: 'UNKNOWN', // Required field
