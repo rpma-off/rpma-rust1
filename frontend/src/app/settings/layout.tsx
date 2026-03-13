@@ -1,3 +1,8 @@
+// VIOLATION: This layout is a Client Component ('use client') with `useEffect`
+// hooks that run on every render caused by navigation. `getTabConfig` is
+// recreated inline on every render — move it outside the component or wrap
+// with `useMemo` to stabilise the reference and prevent unnecessary
+// re-renders of child components that receive it as a prop.
 'use client';
 
 import React, { useEffect } from 'react';

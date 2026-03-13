@@ -2,7 +2,7 @@ import { Skeleton, SkeletonTable } from '@/components/ui/skeleton';
 
 export default function TasksLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="tasks-loading">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-6 w-32" />
