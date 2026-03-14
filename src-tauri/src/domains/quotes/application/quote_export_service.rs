@@ -10,7 +10,7 @@ use crate::commands::AppError;
 use crate::domains::quotes::application::QuoteConvertToTaskRequest;
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::QuotesFacade;
-use crate::domains::tasks::infrastructure::task::TaskService;
+use crate::shared::services::cross_domain::TaskService;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 

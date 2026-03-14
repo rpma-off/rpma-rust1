@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use crate::commands::AppError;
-use crate::domains::clients::client_handler::ClientService;
+use crate::shared::services::cross_domain::ClientService;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{TaskQuery, TaskStatus, TaskPriority, SortOrder};
 use crate::domains::tasks::infrastructure::task::TaskService;
