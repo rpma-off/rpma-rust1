@@ -20,9 +20,27 @@ export const DayView: React.FC<DayViewProps> = ({
   onTaskDrop,
   className = '',
 }) => {
-  const dayTasks = useMemo(() => {
+  const { tasksBySlot, unscheduledTasks } = useMemo(() => {
     const dateString = format(currentDate, 'yyyy-MM-dd');
-    return tasks.filter(task => task.scheduled_date === dateString);
+    const filtered = tasks.filter(task => task.scheduled_date === dateString);
+    
+    const bySlot: Record<string, CalendarTask[]> = {};
+    const unscheduled: CalendarTask[] = [];
+    
+    filtered.forEach(task => {
+      if (task.start_time) {
+        const slot = bySlot[task.start_time];
+        if (!slot) {
+          bySlot[task.start_time] = [task];
+        } else {
+          slot.push(task);
+        }
+      } else {
+        unscheduled.push(task);
+      }
+    });
+
+    return { dayTasks: filtered, tasksBySlot: bySlot, unscheduledTasks: unscheduled };
   }, [tasks, currentDate]);
 
   const timeSlots = useMemo(() => {
@@ -100,8 +118,7 @@ export const DayView: React.FC<DayViewProps> = ({
                     backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
                   }}
                 >
-                  {dayTasks
-                    .filter(task => task.start_time === timeSlot)
+                  {(tasksBySlot[timeSlot] || [])
                     .map((task, index) => (
                       <Draggable
                         key={task.id}
@@ -155,8 +172,7 @@ export const DayView: React.FC<DayViewProps> = ({
                 backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
               }}
             >
-              {dayTasks
-                .filter(task => !task.start_time)
+              {unscheduledTasks
                 .map((task, index) => (
                   <Draggable
                     key={task.id}
