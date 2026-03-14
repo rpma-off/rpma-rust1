@@ -3,9 +3,9 @@ use std::sync::Arc;
 use chrono::Utc;
 use rpma_ppf_intervention::db::Database;
 use rpma_ppf_intervention::shared::services::cross_domain::{
-    ActionResult, AdvanceStepRequest, AuditEventType, AuditService, CreateTaskRequest,
+    ActionResult, AdvanceStepRequest, AuditEventType, AuditService, AuthService, CreateTaskRequest,
     FinalizeInterventionRequest, InterventionService, StartInterventionRequest, TaskService,
-    TaskStatus,
+    TaskStatus, UserRole,
 };
 
 async fn setup_db() -> Arc<Database> {
@@ -21,16 +21,31 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
     let task_service = TaskService::new(db.clone());
     let intervention_service = InterventionService::new(db.clone());
 
+    // Create a real user so FK constraints on technician_id/created_by are satisfied.
+    let auth = AuthService::new(db.as_ref().clone()).expect("auth service");
+    auth.init().expect("init auth");
+    let tester = auth
+        .create_account(
+            "tester@rpma.test",
+            "tester",
+            "Test",
+            "User",
+            UserRole::Admin,
+            "SecurePass123!",
+        )
+        .expect("create tester user");
+    let tester_id = tester.id.clone();
+
     let task = task_service
         .create_task_async(
             CreateTaskRequest {
                 vehicle_plate: "LIFECYCLE-001".to_string(),
                 vehicle_model: "Model X".to_string(),
                 ppf_zones: vec!["hood".to_string(), "door_left".to_string()],
-                scheduled_date: Utc::now().to_rfc3339(),
+                scheduled_date: Utc::now().format("%Y-%m-%d").to_string(),
                 external_id: None,
                 status: Some(TaskStatus::Pending),
-                technician_id: Some("tech-lifecycle".to_string()),
+                technician_id: Some(tester_id.clone()),
                 start_time: None,
                 end_time: None,
                 checklist_completed: Some(false),
@@ -51,14 +66,14 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
                 workflow_id: None,
                 task_number: None,
                 creator_id: None,
-                created_by: Some("tester".to_string()),
+                created_by: Some(tester_id.clone()),
                 description: None,
                 priority: None,
                 client_id: None,
                 estimated_duration: Some(90),
                 tags: None,
             },
-            "tester",
+            tester_id.as_str(),
         )
         .await
         .expect("create task");
@@ -73,12 +88,12 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
                 film_type: "premium".to_string(),
                 film_brand: Some("TestBrand".to_string()),
                 film_model: None,
-                weather_condition: "clear".to_string(),
-                lighting_condition: "good".to_string(),
-                work_location: "shop".to_string(),
+                weather_condition: "sunny".to_string(),
+                lighting_condition: "natural".to_string(),
+                work_location: "indoor".to_string(),
                 temperature: None,
                 humidity: None,
-                technician_id: "tech-lifecycle".to_string(),
+                technician_id: tester_id.clone(),
                 assistant_ids: None,
                 scheduled_start: Utc::now().to_rfc3339(),
                 estimated_duration: 90,
@@ -88,7 +103,7 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
                 customer_requirements: None,
                 special_instructions: None,
             },
-            "tester",
+            tester_id.as_str(),
             "it-lifecycle",
         )
         .expect("start intervention");
@@ -96,7 +111,7 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
     audit
         .log_intervention_event::<serde_json::Value, serde_json::Value>(
             AuditEventType::InterventionStarted,
-            "tester",
+            tester_id.as_str(),
             &started.intervention.id,
             "Intervention started for lifecycle flow",
             None,
@@ -118,7 +133,7 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
                     issues: None,
                 },
                 "it-lifecycle",
-                Some("tester"),
+                Some(tester_id.as_str()),
             )
             .await
             .expect("advance step");
@@ -137,14 +152,14 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
                 customer_comments: Some("Great".to_string()),
             },
             "it-lifecycle",
-            Some("tester"),
+            Some(tester_id.as_str()),
         )
         .expect("finalize intervention");
 
     audit
         .log_intervention_event::<serde_json::Value, serde_json::Value>(
             AuditEventType::InterventionCompleted,
-            "tester",
+            tester_id.as_str(),
             &started.intervention.id,
             "Intervention finalized for lifecycle flow",
             None,
@@ -163,7 +178,7 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
 
     let completed_steps: i64 = db
         .query_single_value(
-            "SELECT COUNT(*) FROM intervention_steps WHERE intervention_id = ?1 AND status = 'completed'",
+            "SELECT COUNT(*) FROM intervention_steps WHERE intervention_id = ?1 AND step_status = 'completed'",
             [started.intervention.id.clone()],
         )
         .expect("completed steps");

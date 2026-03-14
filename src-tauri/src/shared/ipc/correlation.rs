@@ -21,7 +21,7 @@ use crate::shared::logging::correlation::{self, CorrelationContext};
 /// The correlation_id that was set (either from input or newly generated)
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// #[tauri::command]
 /// pub async fn my_command(
 ///     request: MyRequest,
@@ -29,14 +29,14 @@ use crate::shared::logging::correlation::{self, CorrelationContext};
 /// ) -> Result<ApiResponse<MyResponse>, AppError> {
 ///     // Set correlation context at the start
 ///     let correlation_id = init_correlation_context(&request.correlation_id, None);
-///     
+///
 ///     // ... authenticate user ...
 ///     let ctx = resolve_context!(&state, &request.correlation_id);
 ///     let user = ctx.auth;
-///     
+///
 ///     // Update context with user_id after authentication
 ///     update_correlation_context_user(&user.user_id);
-///     
+///
 ///     // ... rest of command logic ...
 /// }
 /// ```
@@ -60,7 +60,7 @@ pub fn init_correlation_context(correlation_id: &Option<String>, user_id: Option
 /// * `user_id` - The authenticated user's ID
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// let ctx = resolve_context!(&state, &correlation_id);
 /// let user = ctx.auth;
 /// update_correlation_context_user(&user.user_id);
@@ -127,7 +127,7 @@ pub fn error_with_correlation<T>(error: AppError) -> Result<ApiResponse<T>, AppE
 /// Result with ApiResponse that includes correlation_id
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// #[tauri::command]
 /// pub async fn my_command(
 ///     request: MyRequest,

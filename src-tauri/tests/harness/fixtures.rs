@@ -66,7 +66,7 @@ pub fn task_fixture(plate: &str) -> CreateTaskRequest {
         vehicle_plate: plate.to_string(),
         vehicle_model: "Test Model".to_string(),
         ppf_zones: vec!["hood".to_string()],
-        scheduled_date: chrono::Utc::now().to_rfc3339(),
+        scheduled_date: chrono::Utc::now().format("%Y-%m-%d").to_string(),
         external_id: None,
         status: Some(TaskStatus::Pending),
         technician_id: None,

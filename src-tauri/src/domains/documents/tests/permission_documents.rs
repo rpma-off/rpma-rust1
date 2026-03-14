@@ -6,12 +6,13 @@ use std::sync::Arc;
 #[tokio::test]
 async fn documents_facade_debug_output() {
     let db = Database::new_in_memory().await.expect("in-memory database");
+    let facade_db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
     let service = Arc::new(PhotoService::new(db, &settings).expect("photo service"));
-    let facade = DocumentsFacade::new(service);
+    let facade = DocumentsFacade::new(service, facade_db);
     let debug = format!("{:?}", facade);
     assert!(debug.contains("DocumentsFacade"));
 }
@@ -19,12 +20,13 @@ async fn documents_facade_debug_output() {
 #[tokio::test]
 async fn documents_facade_service_is_shared_reference() {
     let db = Database::new_in_memory().await.expect("in-memory database");
+    let facade_db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
     let service = Arc::new(PhotoService::new(db, &settings).expect("photo service"));
-    let facade = DocumentsFacade::new(service);
+    let facade = DocumentsFacade::new(service, facade_db);
     let svc1 = facade.photo_service();
     let svc2 = facade.photo_service();
     assert!(Arc::ptr_eq(svc1, svc2));

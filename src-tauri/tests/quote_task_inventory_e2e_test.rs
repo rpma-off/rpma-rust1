@@ -4,13 +4,14 @@ use chrono::Utc;
 use rpma_ppf_intervention::db::Database;
 use rpma_ppf_intervention::shared::repositories::Repositories;
 use rpma_ppf_intervention::shared::services::cross_domain::{
-    ActionResult, AdvanceStepRequest, AuditEventType, AuditService, CreateClientRequest,
-    CreateMaterialRequest, CreateQuoteItemRequest, CreateQuoteRequest, CreateTaskRequest,
-    CustomerType, FinalizeInterventionRequest, InterventionService, MaterialService, MaterialType,
-    QuoteItemKind, QuoteService, QuoteStatus, RecordConsumptionRequest, StartInterventionRequest,
-    TaskService, TaskStatus, UnitOfMeasure, UpdateStockRequest,
+    ActionResult, AdvanceStepRequest, AuditEventType, AuditService, AuthService, ClientService,
+    CreateClientRequest, CreateMaterialRequest, CreateQuoteItemRequest, CreateQuoteRequest,
+    CreateTaskRequest, CustomerType, FinalizeInterventionRequest, InterventionService,
+    MaterialService, MaterialType, QuoteItemKind, QuoteService, QuoteStatus,
+    RecordConsumptionRequest, StartInterventionRequest, TaskService, TaskStatus, UnitOfMeasure,
+    UpdateStockRequest, UserRole,
 };
-use rpma_ppf_intervention::shared::services::event_system::InMemoryEventBus;
+use rpma_ppf_intervention::shared::services::event_bus::InMemoryEventBus;
 
 async fn setup_db() -> Arc<Database> {
     Arc::new(Database::new_in_memory().await.expect("in-memory db"))
@@ -32,10 +33,25 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     let audit = AuditService::new(db.clone());
     audit.init().expect("init audit");
 
-    let client = repos
-        .client
-        .create(
-            &CreateClientRequest {
+    // Seed a real user so FK constraints on created_by/updated_by are satisfied.
+    let auth = AuthService::new(db.as_ref().clone()).expect("auth service");
+    auth.init().expect("init auth");
+    let tester = auth
+        .create_account(
+            "tester@rpma.test",
+            "tester",
+            "Test",
+            "User",
+            UserRole::Admin,
+            "SecurePass123!",
+        )
+        .expect("create tester user");
+    let tester_id = tester.id.clone();
+
+    let client_service = ClientService::new(repos.client.clone());
+    let client = client_service
+        .create_client(
+            CreateClientRequest {
                 name: "Quote Inventory Client".to_string(),
                 email: Some("quote-client@example.com".to_string()),
                 phone: None,
@@ -51,7 +67,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 notes: None,
                 tags: None,
             },
-            Some("tester"),
+            tester_id.as_str(),
         )
         .await
         .expect("create client");
@@ -70,6 +86,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 model: None,
                 specifications: None,
                 unit_of_measure: UnitOfMeasure::Meter,
+                current_stock: None,
                 minimum_stock: Some(0.0),
                 maximum_stock: Some(100.0),
                 reorder_point: Some(2.0),
@@ -85,16 +102,16 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 storage_location: Some("A1".to_string()),
                 warehouse_id: None,
             },
-            Some("tester".to_string()),
+            Some(tester_id.clone()),
         )
         .expect("create material");
 
     material_service
         .update_stock(UpdateStockRequest {
-            material_id: material.id.clone().expect("material id"),
+            material_id: material.id.clone(),
             quantity_change: 10.0,
             reason: "Seed stock".to_string(),
-            recorded_by: Some("tester".to_string()),
+            recorded_by: Some(tester_id.clone()),
         })
         .expect("seed stock");
 
@@ -118,36 +135,25 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                     qty: 1.0,
                     unit_price: 300,
                     tax_rate: Some(20.0),
-                    material_id: material.id.clone(),
+                    material_id: Some(material.id.clone()),
                     position: Some(1),
                 }],
             },
-            "tester",
+            tester_id.as_str(),
         )
         .expect("create quote");
 
-    quote_service
-        .mark_sent(&quote.id)
-        .expect("mark quote sent");
-    quote_service
-        .mark_accepted(&quote.id, "tester")
-        .expect("mark quote accepted");
-    let conversion = quote_service
-        .convert_to_task(&quote.id, "task-from-quote", "TSK-Q2T-001")
-        .expect("convert quote");
-
-    assert_eq!(conversion.quote.status, QuoteStatus::Converted);
-
+    // Create the task first so the FK in quotes.task_id is satisfied.
     let task = task_service
         .create_task_async(
             CreateTaskRequest {
                 vehicle_plate: "QUOTE-INV-1".to_string(),
                 vehicle_model: "A4".to_string(),
                 ppf_zones: vec!["hood".to_string()],
-                scheduled_date: Utc::now().to_rfc3339(),
+                scheduled_date: Utc::now().format("%Y-%m-%d").to_string(),
                 external_id: None,
                 status: Some(TaskStatus::Pending),
-                technician_id: Some("tech-quote".to_string()),
+                technician_id: None,
                 start_time: None,
                 end_time: None,
                 checklist_completed: Some(false),
@@ -168,17 +174,29 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 workflow_id: None,
                 task_number: Some("TSK-Q2T-001".to_string()),
                 creator_id: None,
-                created_by: Some("tester".to_string()),
+                created_by: Some(tester_id.clone()),
                 description: None,
                 priority: None,
                 client_id: Some(client.id.clone()),
                 estimated_duration: Some(60),
                 tags: None,
             },
-            "tester",
+            tester_id.as_str(),
         )
         .await
         .expect("create task");
+
+    quote_service
+        .mark_sent(&quote.id)
+        .expect("mark quote sent");
+    quote_service
+        .mark_accepted(&quote.id, tester_id.as_str())
+        .expect("mark quote accepted");
+    let conversion = quote_service
+        .convert_to_task(&quote.id, &task.id, "TSK-Q2T-001")
+        .expect("convert quote");
+
+    assert_eq!(conversion.quote.status, QuoteStatus::Converted);
 
     let started = intervention_service
         .start_intervention(
@@ -190,12 +208,12 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 film_type: "premium".to_string(),
                 film_brand: None,
                 film_model: None,
-                weather_condition: "clear".to_string(),
-                lighting_condition: "good".to_string(),
-                work_location: "shop".to_string(),
+                weather_condition: "sunny".to_string(),
+                lighting_condition: "natural".to_string(),
+                work_location: "indoor".to_string(),
                 temperature: None,
                 humidity: None,
-                technician_id: "tech-quote".to_string(),
+                technician_id: tester_id.clone(),
                 assistant_ids: None,
                 scheduled_start: Utc::now().to_rfc3339(),
                 estimated_duration: 60,
@@ -205,7 +223,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 customer_requirements: None,
                 special_instructions: None,
             },
-            "tester",
+            tester_id.as_str(),
             "it-q2t",
         )
         .expect("start intervention");
@@ -213,7 +231,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     material_service
         .record_consumption(RecordConsumptionRequest {
             intervention_id: started.intervention.id.clone(),
-            material_id: material.id.clone().expect("material id"),
+            material_id: material.id.clone(),
             step_id: started.steps.first().map(|s| s.id.clone()),
             step_number: started.steps.first().map(|s| s.step_number),
             quantity_used: 2.0,
@@ -221,7 +239,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
             waste_reason: None,
             batch_used: None,
             quality_notes: None,
-            recorded_by: Some("tester".to_string()),
+            recorded_by: Some(tester_id.clone()),
         })
         .expect("record consumption");
 
@@ -238,7 +256,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                     issues: None,
                 },
                 "it-q2t",
-                Some("tester"),
+                Some(tester_id.as_str()),
             )
             .await
             .expect("advance");
@@ -257,14 +275,14 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 customer_comments: None,
             },
             "it-q2t",
-            Some("tester"),
+            Some(tester_id.as_str()),
         )
         .expect("finalize");
 
     audit
         .log_task_event::<serde_json::Value, serde_json::Value>(
             AuditEventType::TaskCreated,
-            "tester",
+            tester_id.as_str(),
             &task.id,
             "Task created from quote conversion flow",
             None,
@@ -275,7 +293,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     audit
         .log_intervention_event::<serde_json::Value, serde_json::Value>(
             AuditEventType::InterventionCompleted,
-            "tester",
+            tester_id.as_str(),
             &started.intervention.id,
             "Intervention finalized with material consumption",
             None,
@@ -287,12 +305,12 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     let quote_task_id: Option<String> = db
         .query_single_value("SELECT task_id FROM quotes WHERE id = ?1", [quote.id.clone()])
         .expect("quote task id");
-    assert_eq!(quote_task_id, Some("task-from-quote".to_string()));
+    assert_eq!(quote_task_id, Some(task.id.clone()));
 
     let tx_count: i64 = db
         .query_single_value(
             "SELECT COUNT(*) FROM inventory_transactions WHERE material_id = ?1",
-            [material.id.expect("material id")],
+            [material.id.clone()],
         )
         .expect("inventory transactions");
     assert!(tx_count > 0, "expected inventory transaction from consumption");

@@ -7,12 +7,13 @@ use std::sync::Arc;
 #[tokio::test]
 async fn validate_photo_extension_rejects_invalid_extension() {
     let db = Database::new_in_memory().await.expect("in-memory database");
+    let facade_db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
     let service = Arc::new(PhotoService::new(db, &settings).expect("photo service"));
-    let facade = DocumentsFacade::new(service);
+    let facade = DocumentsFacade::new(service, facade_db);
     let err = facade.validate_photo_extension("document.pdf").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
@@ -20,12 +21,13 @@ async fn validate_photo_extension_rejects_invalid_extension() {
 #[tokio::test]
 async fn validate_photo_extension_rejects_no_extension() {
     let db = Database::new_in_memory().await.expect("in-memory database");
+    let facade_db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let settings = PhotoStorageSettings {
         local_storage_path: Some("/tmp/test-photos".to_string()),
         ..Default::default()
     };
     let service = Arc::new(PhotoService::new(db, &settings).expect("photo service"));
-    let facade = DocumentsFacade::new(service);
+    let facade = DocumentsFacade::new(service, facade_db);
     let err = facade.validate_photo_extension("noextension").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }

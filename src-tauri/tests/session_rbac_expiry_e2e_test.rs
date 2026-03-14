@@ -6,7 +6,7 @@ use rpma_ppf_intervention::shared::services::cross_domain::{
     ActionResult, AuditEventType, AuditService, AuthService, CreateQuoteRequest, QuotesFacade,
     QuoteService, UserRole,
 };
-use rpma_ppf_intervention::shared::services::event_system::InMemoryEventBus;
+use rpma_ppf_intervention::shared::services::event_bus::InMemoryEventBus;
 
 async fn setup_db() -> Arc<Database> {
     Arc::new(Database::new_in_memory().await.expect("in-memory db"))
@@ -51,7 +51,7 @@ async fn session_creation_rbac_enforcement_and_expiry_are_enforced() {
             &viewer.id,
             "viewer_login",
             Some("127.0.0.1"),
-            Some("session created".to_string()),
+            Some("session created"),
             ActionResult::Success,
         )
         .expect("audit login");
@@ -87,8 +87,8 @@ async fn session_creation_rbac_enforcement_and_expiry_are_enforced() {
             &viewer.id,
             "quote_create_denied",
             Some("127.0.0.1"),
-            Some("viewer denied quote creation".to_string()),
-            ActionResult::Failed("forbidden".to_string()),
+            Some("viewer denied quote creation"),
+            ActionResult::Failure,
         )
         .expect("audit deny");
 
@@ -110,18 +110,20 @@ async fn session_creation_rbac_enforcement_and_expiry_are_enforced() {
             &viewer.id,
             "expired_session_cleanup",
             Some("127.0.0.1"),
-            Some("expired session removed".to_string()),
+            Some("expired session removed"),
             ActionResult::Success,
         )
         .expect("audit expiry");
 
-    let security_history = audit
-        .get_resource_history("security", "viewer_login", Some(20))
-        .expect("security history");
+    // log_security_event stores with resource_id=None, so query the DB directly.
+    let auth_event_count: i64 = db
+        .query_single_value(
+            "SELECT COUNT(*) FROM audit_events WHERE user_id = ?1 AND event_type = 'AuthenticationSuccess'",
+            [viewer.id.as_str()],
+        )
+        .expect("security history query");
     assert!(
-        security_history
-            .iter()
-            .any(|e| e.event_type == AuditEventType::AuthenticationSuccess),
+        auth_event_count > 0,
         "expected authentication audit entry"
     );
 }

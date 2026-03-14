@@ -2,6 +2,10 @@
 import type { UserRole } from "./UserRole";
 
 /**
- * TODO: document
+ * Local user account — entity with behaviour.
+ *
+ * Security-sensitive fields (`password_hash`, `salt`) are excluded from
+ * serialisation via `#[serde(skip_serializing)]` so they are never sent
+ * to the frontend.
  */
-export type UserAccount = { id: string, email: string, username: string, first_name: string, last_name: string, role: UserRole, password_hash: string, salt: string | null, phone: string | null, is_active: boolean, last_login: bigint | null, login_count: number, preferences: string | null, synced: boolean, last_synced_at: string | null, created_at: string, updated_at: string, };
+export type UserAccount = { id: string, email: string, username: string, first_name: string, last_name: string, role: UserRole, phone: string | null, is_active: boolean, last_login: bigint | null, login_count: number, preferences: string | null, synced: boolean, last_synced_at: string | null, created_at: string, updated_at: string, };

@@ -407,6 +407,8 @@ impl AuditService {
                     "ClientUpdated" => AuditEventType::ClientUpdated,
                     "InterventionCreated" => AuditEventType::InterventionCreated,
                     "InterventionUpdated" => AuditEventType::InterventionUpdated,
+                    "InterventionStarted" => AuditEventType::InterventionStarted,
+                    "InterventionCompleted" => AuditEventType::InterventionCompleted,
                     "SecurityViolation" => AuditEventType::SecurityViolation,
                     "SuspiciousActivity" => AuditEventType::SuspiciousActivity,
                     _ => AuditEventType::SystemError, // Default for unknown types

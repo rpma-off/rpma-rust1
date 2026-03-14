@@ -52,7 +52,7 @@ We implement a four-layer architecture within each domain module:
 
 ### Dependency Rule
 
-```
+```text
 IPC → Application → Domain ← Infrastructure
                       ↓
                   (no external deps)
@@ -80,7 +80,7 @@ Dependencies flowinward. Domain layer has no dependencies on any other layer.
 
 ### IPC Layer
 
-```rust
+```rust,ignore
 // src-tauri/src/domains/tasks/ipc/task.rs
 #[tauri::command]
 pub async fn task_crud(
@@ -97,7 +97,7 @@ pub async fn task_crud(
 
 ### Application Layer
 
-```rust
+```rust,ignore
 // src-tauri/src/domains/tasks/application/task_service.rs
 pub async fn create_task(&self, request: CreateTaskRequest, ctx: &RequestContext) -> AppResult<Task> {
     // RBAC check using context
@@ -114,7 +114,7 @@ pub async fn create_task(&self, request: CreateTaskRequest, ctx: &RequestContext
 
 ### Domain Layer
 
-```rust
+```rust,ignore
 // src-tauri/src/domains/tasks/domain/models/task.rs
 pub struct Task {
     pub id: String,
@@ -136,7 +136,7 @@ impl Task {
 
 ### Infrastructure Layer
 
-```rust
+```rust,ignore
 // src-tauri/src/domains/tasks/infrastructure/task_repository.rs
 impl TaskRepository for SqliteTaskRepository {
     fn save(&self, task: &Task) -> Result<(), RepositoryError> {

@@ -384,8 +384,9 @@ fn main() {
                 db.clone(),
                 repositories.clone(),
                 app_dir.clone(),
-            )
-            .with_app_handle(app.handle().clone());
+            );
+            #[cfg(not(test))]
+            let service_builder = service_builder.with_app_handle(app.handle().clone());
             let app_state = service_builder
                 .build()
                 .map_err(|e| format!("Failed to build services: {e}"))?;
