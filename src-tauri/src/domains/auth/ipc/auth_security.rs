@@ -1,9 +1,18 @@
 //! Session management commands
+//!
+//! ADR-018: Thin IPC layer — business logic delegated to
+//! [`AuthSecurityService`](crate::domains::auth::application::auth_security_service::AuthSecurityService).
 
 use crate::commands::{ApiResponse, AppError, AppState};
+use crate::domains::auth::application::auth_security_service::AuthSecurityService;
 use crate::shared::contracts::auth::UserRole;
 use crate::resolve_context;
 use tracing::{error, info, instrument};
+
+/// Construct a per-request [`AuthSecurityService`] from shared application state.
+fn security_service(state: &AppState<'_>) -> AuthSecurityService {
+    AuthSecurityService::new(state.session_service.clone())
+}
 
 /// Get active sessions for the current user
 /// ADR-018: Thin IPC layer
@@ -28,6 +37,7 @@ pub async fn get_active_sessions(
 }
 
 /// Revoke a specific session
+/// ADR-018: Thin IPC layer — ownership & revocation delegated to AuthSecurityService
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn revoke_session(
@@ -37,34 +47,18 @@ pub async fn revoke_session(
 ) -> Result<ApiResponse<String>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
 
-    if let Some(session) = state.session_service.validate_session(&session_id).await? {
-        if session.user_id != ctx.auth.user_id && ctx.auth.role != UserRole::Admin {
-            return Err(AppError::Authorization(
-                "You can only revoke your own sessions".to_string(),
-            ));
-        }
+    let is_current_session = security_service(&state)
+        .revoke_session(&session_id, &ctx)
+        .await?;
 
-        state
-            .session_service
-            .revoke_session(&session_id)
-            .await
-            .map_err(|e| {
-                error!(error = %e, session_id = %session_id, "Failed to revoke session");
-                AppError::Internal("Failed to revoke session".to_string())
-            })?;
-
-        if session_id == ctx.auth.session_id {
-            state.session_store.clear();
-        }
-
-        info!(session_id = %session_id, user_id = %ctx.auth.user_id, "Session revoked");
-        Ok(
-            ApiResponse::success("Session revoked successfully".to_string())
-                .with_correlation_id(Some(ctx.correlation_id)),
-        )
-    } else {
-        Err(AppError::NotFound("Session not found".to_string()))
+    if is_current_session {
+        state.session_store.clear();
     }
+
+    Ok(
+        ApiResponse::success("Session revoked successfully".to_string())
+            .with_correlation_id(Some(ctx.correlation_id)),
+    )
 }
 
 /// Revoke all sessions except the current one
@@ -90,6 +84,7 @@ pub async fn revoke_all_sessions_except_current(
 }
 
 /// Update session timeout configuration (admin only)
+/// ADR-018: Thin IPC layer — validation delegated to AuthSecurityService
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn update_session_timeout(
@@ -99,27 +94,11 @@ pub async fn update_session_timeout(
 ) -> Result<ApiResponse<String>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
 
-    if timeout_minutes == 0 {
-        return Err(AppError::Validation(
-            "Timeout must be greater than 0 minutes".to_string(),
-        ));
-    }
+    let message = security_service(&state)
+        .update_timeout(timeout_minutes)
+        .await?;
 
-    state
-        .session_service
-        .update_session_timeout(timeout_minutes)
-        .await
-        .map_err(|e| {
-            error!(error = %e, timeout_minutes = timeout_minutes, "Failed to update session timeout");
-            AppError::Internal("Failed to update session timeout".to_string())
-        })?;
-
-    info!(timeout_minutes = timeout_minutes, "Session timeout updated");
-    Ok(ApiResponse::success(format!(
-        "Session timeout updated to {} minutes",
-        timeout_minutes
-    ))
-    .with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(message).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Get session timeout configuration

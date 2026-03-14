@@ -115,7 +115,11 @@ impl UserSession {
     }
 }
 
-/// TODO: document
+/// Local user account — entity with behaviour.
+///
+/// Security-sensitive fields (`password_hash`, `salt`) are excluded from
+/// serialisation via `#[serde(skip_serializing)]` so they are never sent
+/// to the frontend.
 #[derive(Clone, Serialize, Deserialize, Debug, TS)]
 #[ts(export)]
 pub struct UserAccount {
@@ -125,7 +129,11 @@ pub struct UserAccount {
     pub first_name: String,
     pub last_name: String,
     pub role: UserRole,
+    #[serde(skip_serializing)]
+    #[ts(skip)]
     pub password_hash: String,
+    #[serde(skip_serializing)]
+    #[ts(skip)]
     pub salt: Option<String>,
     pub phone: Option<String>,
     pub is_active: bool,

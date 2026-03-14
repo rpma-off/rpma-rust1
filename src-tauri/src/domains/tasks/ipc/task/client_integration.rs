@@ -1,15 +1,16 @@
 //! Task-client relationship management
 //!
-//! This module handles operations that involve task and client interactions.
+//! ADR-018: Thin IPC layer — business logic delegated to
+//! [`TaskClientService`](crate::domains::tasks::application::services::task_client_service::TaskClientService).
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::application::services::task_policy_service;
+use crate::domains::tasks::application::services::task_client_service::TaskClientService;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 
 use crate::resolve_context;
 use serde::Deserialize;
-use tracing::{debug, info};
+use tracing::debug;
 
 /// Request for getting tasks with detailed client information
 #[derive(Deserialize, Debug)]
@@ -30,10 +31,16 @@ pub struct TaskWithClientDetails {
     pub client_contact: Option<String>,
     pub client_region: Option<String>,
     pub client_priority: Option<String>,
-    pub relationship_status: String, // "active", "inactive", "suspended", etc.
+    pub relationship_status: String,
+}
+
+/// Construct a per-request [`TaskClientService`] from shared application state.
+fn client_service(state: &AppState<'_>) -> TaskClientService {
+    TaskClientService::new(state.task_service.clone(), state.client_service.clone())
 }
 
 /// Get tasks with comprehensive client information
+/// ADR-018: Thin IPC layer — delegated to TaskClientService
 #[tracing::instrument(skip(state))]
 pub async fn get_tasks_with_client_details(
     request: TasksWithClientsRequest,
@@ -42,150 +49,33 @@ pub async fn get_tasks_with_client_details(
     let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Getting tasks with detailed client information");
 
-    // Apply role-based access control
-    let mut filter = request.filter.unwrap_or_default();
-    filter.apply_role_scope(&ctx.auth.role, &ctx.auth.user_id);
-
-    // Set pagination defaults
-    let page = request.page.unwrap_or(1).max(1);
-    let limit = request.limit.unwrap_or(50).min(200);
-    let offset = (page - 1) * limit;
-
-    // Get tasks with client information
-    let query = crate::domains::tasks::domain::models::task::TaskQuery {
-        page: Some(((offset / limit) + 1) as i32),
-        limit: Some(limit as i32),
-        status: filter.status.as_ref().and_then(|s| match s.as_str() {
-            "pending" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Pending),
-            "in_progress" => {
-                Some(crate::domains::tasks::domain::models::task::TaskStatus::InProgress)
-            }
-            "completed" => Some(crate::domains::tasks::domain::models::task::TaskStatus::Completed),
-            _ => None,
-        }),
-        technician_id: filter.assigned_to.clone(),
-        client_id: filter.client_id.clone(),
-        priority: filter.priority.as_ref().and_then(|p| match p.as_str() {
-            "low" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Low),
-            "medium" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Medium),
-            "high" => Some(crate::domains::tasks::domain::models::task::TaskPriority::High),
-            "urgent" => Some(crate::domains::tasks::domain::models::task::TaskPriority::Urgent),
-            _ => None,
-        }),
-        search: None,
-        from_date: filter.date_from.map(|dt| dt.to_rfc3339()),
-        to_date: filter.date_to.map(|dt| dt.to_rfc3339()),
-        sort_by: "created_at".to_string(),
-        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
-    };
-
-    let tasks_with_clients = state
-        .task_service
-        .get_tasks_with_clients(query)
-        .map_err(|e| {
-            debug!("Failed to get tasks with client details: {}", e);
-            AppError::db_sanitized("get_tasks_with_clients", &e)
-        })?;
-
-    // Convert to enhanced response format
-    let mut enhanced_tasks = Vec::new();
-
-    for task_with_client in &tasks_with_clients.data {
-        // Get additional client information
-        let client_details = if request.include_client_details.unwrap_or(false) {
-            state
-                .client_service
-                .get_client_async(
-                    &task_with_client
-                        .task
-                        .client_id
-                        .as_ref()
-                        .unwrap_or(&"".to_string()),
-                )
-                .await
-                .ok()
-                .flatten()
-        } else {
-            None
-        };
-
-        let relationship_status = task_policy_service::relationship_status_from_task_status(
-            &task_with_client.task.status,
-        );
-
-        let enhanced_task = TaskWithClientDetails {
-            task: task_with_client.task.clone(),
-            client_name: task_with_client
-                .client_info
-                .as_ref()
-                .map(|c| c.name.clone())
-                .unwrap_or_default(),
-            client_contact: client_details.as_ref().and_then(|c| c.email.clone()),
-            client_region: client_details
-                .as_ref()
-                .and_then(|c| c.address_state.clone()),
-            client_priority: Some("standard".to_string()), // Default priority
-            relationship_status,
-        };
-
-        enhanced_tasks.push(enhanced_task);
-    }
-
-    info!(
-        "Retrieved {} tasks with client details",
-        enhanced_tasks.len()
-    );
+    let enhanced_tasks = client_service(&state)
+        .get_tasks_with_client_details(
+            request.filter,
+            request.include_client_details.unwrap_or(false),
+            request.page,
+            request.limit,
+            &ctx,
+        )
+        .await?;
 
     Ok(ApiResponse::success(enhanced_tasks).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
 /// Validate task-client relationship
+/// ADR-018: Thin IPC layer — delegated to TaskClientService
 pub async fn validate_task_client_relationship(
     task_id: &str,
     client_id: &str,
     state: &AppState<'_>,
 ) -> Result<(), AppError> {
-    debug!(
-        "Validating task-client relationship for task {} and client {}",
-        task_id, client_id
-    );
-
-    // Get task
-    let task = state
-        .task_service
-        .get_task_async(task_id)
+    client_service(state)
+        .validate_task_client_relationship(task_id, client_id)
         .await
-        .map_err(|e| {
-            debug!("Task not found: {}", e);
-            AppError::NotFound(format!("Task not found: {}", task_id))
-        })?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", task_id)))?;
-
-    // Verify client association
-    if task.client_id.as_ref() != Some(&client_id.to_string()) {
-        return Err(AppError::Validation(format!(
-            "Task {} is not associated with client {}",
-            task_id, client_id
-        )));
-    }
-
-    // Verify client exists and is active
-    let _client = state
-        .client_service
-        .get_client_async(client_id)
-        .await
-        .map_err(|e| {
-            debug!("Client not found: {}", e);
-            AppError::NotFound(format!("Client not found: {}", client_id))
-        })?;
-
-    // Simplified - assuming client exists means they're active
-    // Could be enhanced with actual status checking
-
-    Ok(())
 }
 
 /// Get client task summary
+/// ADR-018: Thin IPC layer — permission check delegated to TaskClientService
 #[tracing::instrument(skip(state))]
 pub async fn get_client_task_summary(
     client_id: &str,
@@ -195,21 +85,8 @@ pub async fn get_client_task_summary(
     let ctx = resolve_context!(state, &correlation_id);
     debug!("Getting task summary for client {}", client_id);
 
-    // Check permissions - only Admin and Supervisor can view client data
-    // (Technician and Viewer have restricted access)
-    let can_view_client_data = matches!(
-        ctx.auth.role,
-        crate::shared::contracts::auth::UserRole::Admin
-            | crate::shared::contracts::auth::UserRole::Supervisor
-    );
+    TaskClientService::check_client_data_permission(&ctx.auth.role)?;
 
-    if !can_view_client_data {
-        return Err(AppError::Authorization(
-            "Not authorized to view client data".to_string(),
-        ));
-    }
-
-    // Get client task summary
     let summary = state
         .client_service
         .get_client_task_summary(client_id)
@@ -218,8 +95,6 @@ pub async fn get_client_task_summary(
             debug!("Failed to get client task summary: {}", e);
             AppError::db_sanitized("get_client_task_summary", &e)
         })?;
-
-    info!("Retrieved task summary for client {}", client_id);
 
     Ok(ApiResponse::success(summary).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

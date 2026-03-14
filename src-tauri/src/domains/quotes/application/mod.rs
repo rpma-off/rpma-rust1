@@ -5,6 +5,7 @@
 
 mod contracts;
 mod quote_events;
+pub(crate) mod quote_export_service;
 pub(crate) mod quote_service;
 // quote_task_creation module removed: cross-domain SQL (tasks table) violated ADR-001/ADR-004.
 mod quote_totals;

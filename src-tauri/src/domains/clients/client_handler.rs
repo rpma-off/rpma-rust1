@@ -1458,10 +1458,11 @@ impl ClientStatisticsService {
             .map_err(|e| format!("Failed to get active clients: {}", e))?;
         let inactive_clients = total_clients - active_clients;
         let start_of_month = Utc::now()
-            .with_day(1).unwrap()
-            .with_hour(0).unwrap()
-            .with_minute(0).unwrap()
-            .with_second(0).unwrap()
+            .with_day(1)
+            .and_then(|dt| dt.with_hour(0))
+            .and_then(|dt| dt.with_minute(0))
+            .and_then(|dt| dt.with_second(0))
+            .ok_or_else(|| "Failed to calculate start of month".to_string())?
             .timestamp_millis();
         let new_clients_this_month: i32 = self
             .db

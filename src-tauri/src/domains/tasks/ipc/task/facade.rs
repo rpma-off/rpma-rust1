@@ -14,8 +14,7 @@ use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::Task;
 use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
 use crate::resolve_context;
-use crate::shared::services::validation::ValidationService;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 // Re-export all request/response types so callers see no change.
 pub use super::types::{
@@ -204,6 +203,7 @@ pub fn enforce_technician_field_restrictions(
 }
 
 /// Task CRUD command handler
+/// ADR-018: Thin IPC layer — delegates to TaskCommandService
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn task_crud(
@@ -221,48 +221,17 @@ pub async fn task_crud(
             let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "create");
 
-            let validator = ValidationService::new();
-            let validated_action = validator
-                .validate_task_action(crate::commands::TaskAction::Create { data })
-                .await
-                .map_err(|e| {
-                    warn!("Task validation failed: {}", e);
-                    AppError::Validation(format!("Task validation failed: {}", e))
-                })?;
+            let task = svc.create_task(&ctx, data).await?;
 
-            if let crate::commands::TaskAction::Create {
-                data: validated_data,
-            } = validated_action
-            {
-                let task = state
-                    .task_service
-                    .create_task_async(validated_data, &ctx.auth.user_id)
-                    .await
-                    .map_err(|e| {
-                        error!("Task creation failed: {}", e);
-                        AppError::db_sanitized("tasks.create", e)
-                    })?;
-
-                svc.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
-                    .await;
-
-                Ok(
-                    ApiResponse::success(crate::commands::TaskResponse::Created(task))
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
-                )
-            } else {
-                Err(AppError::Validation(
-                    "Invalid task action after validation".to_string(),
-                ))
-            }
+            Ok(
+                ApiResponse::success(crate::commands::TaskResponse::Created(task))
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         crate::commands::TaskAction::Get { id } => {
             let ctx = resolve_context!(&state, &correlation_id);
-            let task = state.task_service.get_task_async(&id).await.map_err(|e| {
-                error!("Task retrieval failed: {}", e);
-                AppError::db_sanitized("tasks.get", e)
-            })?;
-            match task {
+
+            match svc.get_task(&id).await? {
                 Some(task) => Ok(
                     ApiResponse::success(crate::commands::TaskResponse::Found(task))
                         .with_correlation_id(Some(ctx.correlation_id.clone())),
@@ -277,64 +246,19 @@ pub async fn task_crud(
             let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "update");
 
-            let status_updated = data.status.is_some();
+            let task = svc.update_task_crud(&ctx, id, data).await?;
 
-            let validator = ValidationService::new();
-            let validated_action = validator
-                .validate_task_action(crate::commands::TaskAction::Update {
-                    id: id.clone(),
-                    data: data.clone(),
-                })
-                .await
-                .map_err(|e| {
-                    warn!("Task validation failed: {}", e);
-                    AppError::Validation(format!("Task validation failed: {}", e))
-                })?;
-
-            if let crate::commands::TaskAction::Update {
-                id: _,
-                data: validated_data,
-            } = validated_action
-            {
-                let task = state
-                    .task_service
-                    .update_task_async(validated_data, &ctx.auth.user_id)
-                    .await
-                    .map_err(|e| {
-                        error!("Task update failed: {}", e);
-                        AppError::db_sanitized("tasks.update", e)
-                    })?;
-
-                svc.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
-                    .await;
-
-                if status_updated {
-                    svc.notify_status_change(&task, &ctx.auth.user_id, &ctx.correlation_id)
-                        .await;
-                }
-
-                Ok(
-                    ApiResponse::success(crate::commands::TaskResponse::Updated(task))
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
-                )
-            } else {
-                Err(AppError::Validation(
-                    "Invalid task action after validation".to_string(),
-                ))
-            }
+            Ok(
+                ApiResponse::success(crate::commands::TaskResponse::Updated(task))
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         crate::commands::TaskAction::Delete { id } => {
             let ctx = resolve_context!(&state, &correlation_id);
             check_task_permission!(&ctx.auth.role, "delete");
 
-            state
-                .task_service
-                .delete_task_async(&id, &ctx.auth.user_id)
-                .await
-                .map_err(|e| {
-                    error!("Task deletion failed: {}", e);
-                    AppError::db_sanitized("tasks.delete", e)
-                })?;
+            svc.delete_task(&ctx, &id).await?;
+
             Ok(ApiResponse::success(crate::commands::TaskResponse::Deleted)
                 .with_correlation_id(Some(ctx.correlation_id.clone())))
         }

@@ -773,16 +773,17 @@ impl CalendarService {
 
         let technician_id = self.repo.get_technician_for_task(&task_id)?;
 
-        if technician_id.is_none() {
-            return Ok(ConflictDetection {
-                has_conflict: false,
-                conflict_type: None,
-                conflicting_tasks: vec![],
-                message: None,
-            });
-        }
-
-        let tech_id = technician_id.unwrap();
+        let tech_id = match technician_id {
+            Some(id) => id,
+            None => {
+                return Ok(ConflictDetection {
+                    has_conflict: false,
+                    conflict_type: None,
+                    conflicting_tasks: vec![],
+                    message: None,
+                });
+            }
+        };
         let conflicts = self.repo.find_conflicting_tasks(
             &tech_id,
             &new_date,

@@ -13,7 +13,7 @@ use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
+    CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
@@ -443,6 +443,133 @@ impl TaskCommandService {
 
         info!("Task {} updated successfully", task_id);
         Ok(updated_task)
+    }
+
+    // ------------------------------------------------------------------
+    // task_crud orchestration (extracted from facade.rs — ADR-018)
+    // ------------------------------------------------------------------
+
+    /// Validate and create a task, sending assignment notification afterward.
+    #[instrument(skip(self, ctx, data))]
+    pub async fn create_task(
+        &self,
+        ctx: &RequestContext,
+        data: CreateTaskRequest,
+    ) -> Result<Task, AppError> {
+        let validator = crate::shared::services::validation::ValidationService::new();
+        let validated_action = validator
+            .validate_task_action(crate::commands::TaskAction::Create { data })
+            .await
+            .map_err(|e| {
+                warn!("Task validation failed: {}", e);
+                AppError::Validation(format!("Task validation failed: {}", e))
+            })?;
+
+        let validated_data = match validated_action {
+            crate::commands::TaskAction::Create { data: d } => d,
+            _ => {
+                return Err(AppError::Validation(
+                    "Invalid task action after validation".to_string(),
+                ))
+            }
+        };
+
+        let task = self
+            .task_service
+            .create_task_async(validated_data, &ctx.auth.user_id)
+            .await
+            .map_err(|e| {
+                error!("Task creation failed: {}", e);
+                AppError::db_sanitized("tasks.create", e)
+            })?;
+
+        self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
+            .await;
+
+        info!(task_id = %task.id, "Task created");
+        Ok(task)
+    }
+
+    /// Retrieve a single task by ID.
+    #[instrument(skip(self))]
+    pub async fn get_task(&self, task_id: &str) -> Result<Option<Task>, AppError> {
+        self.task_service
+            .get_task_async(task_id)
+            .await
+            .map_err(|e| {
+                error!("Task retrieval failed: {}", e);
+                AppError::db_sanitized("tasks.get", e)
+            })
+    }
+
+    /// Validate and update a task, sending notifications afterward.
+    #[instrument(skip(self, ctx, data))]
+    pub async fn update_task_crud(
+        &self,
+        ctx: &RequestContext,
+        id: String,
+        data: UpdateTaskRequest,
+    ) -> Result<Task, AppError> {
+        let status_updated = data.status.is_some();
+
+        let validator = crate::shared::services::validation::ValidationService::new();
+        let validated_action = validator
+            .validate_task_action(crate::commands::TaskAction::Update {
+                id: id.clone(),
+                data: data.clone(),
+            })
+            .await
+            .map_err(|e| {
+                warn!("Task validation failed: {}", e);
+                AppError::Validation(format!("Task validation failed: {}", e))
+            })?;
+
+        let validated_data = match validated_action {
+            crate::commands::TaskAction::Update { data: d, .. } => d,
+            _ => {
+                return Err(AppError::Validation(
+                    "Invalid task action after validation".to_string(),
+                ))
+            }
+        };
+
+        let task = self
+            .task_service
+            .update_task_async(validated_data, &ctx.auth.user_id)
+            .await
+            .map_err(|e| {
+                error!("Task update failed: {}", e);
+                AppError::db_sanitized("tasks.update", e)
+            })?;
+
+        self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
+            .await;
+
+        if status_updated {
+            self.notify_status_change(&task, &ctx.auth.user_id, &ctx.correlation_id)
+                .await;
+        }
+
+        info!(task_id = %task.id, "Task updated");
+        Ok(task)
+    }
+
+    /// Delete a task by ID.
+    #[instrument(skip(self, ctx))]
+    pub async fn delete_task(
+        &self,
+        ctx: &RequestContext,
+        task_id: &str,
+    ) -> Result<(), AppError> {
+        self.task_service
+            .delete_task_async(task_id, &ctx.auth.user_id)
+            .await
+            .map_err(|e| {
+                error!("Task deletion failed: {}", e);
+                AppError::db_sanitized("tasks.delete", e)
+            })?;
+        info!(task_id = %task_id, "Task deleted");
+        Ok(())
     }
 
     // ------------------------------------------------------------------
