@@ -755,9 +755,9 @@ fn intervention_status_badge(status: &InterventionStatus) -> String {
 }
 
 fn intervention_type_label(
-    itype: &crate::domains::interventions::domain::models::intervention::InterventionType,
+    itype: &crate::shared::services::cross_domain::InterventionType,
 ) -> String {
-    use crate::domains::interventions::domain::models::intervention::InterventionType;
+    use crate::shared::services::cross_domain::InterventionType;
     match itype {
         InterventionType::Ppf => "PPF (Protection Film)".to_string(),
         InterventionType::Ceramic => "Ceramique".to_string(),
@@ -895,7 +895,7 @@ mod tests {
             technician_id: Some("tech-001".to_string()),
             technician_name: Some("Jean Dupont".to_string()),
             intervention_type:
-                crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
+                crate::shared::services::cross_domain::InterventionType::Ppf,
             current_step: 4,
             completion_percentage: 100.0,
             estimated_duration: Some(120),
@@ -941,7 +941,7 @@ mod tests {
     }
 
     fn build_test_steps() -> Vec<InterventionStep> {
-        use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
+        use crate::shared::services::cross_domain::{StepStatus, StepType};
 
         let mut inspection = InterventionStep::new(
             "test-intervention-001".to_string(),
@@ -1128,7 +1128,7 @@ mod tests {
             name: "Entreprise ABC".to_string(),
             email: Some("abc@corp.com".to_string()),
             phone: Some("+33700000000".to_string()),
-            customer_type: crate::domains::clients::client_handler::CustomerType::Business,
+            customer_type: crate::shared::services::cross_domain::CustomerType::Business,
             address_street: None,
             address_city: None,
             address_state: None,

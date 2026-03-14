@@ -8,7 +8,7 @@
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
-use crate::domains::settings::SettingsRepository;
+use crate::shared::services::cross_domain::SettingsRepository;
 use rusqlite::params;
 use std::sync::Arc;
 

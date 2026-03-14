@@ -785,7 +785,7 @@ mod tests {
             technician_id: Some("tech-001".to_string()),
             technician_name: Some("Jean Dupont".to_string()),
             intervention_type:
-                crate::domains::interventions::domain::models::intervention::InterventionType::Ppf,
+                crate::shared::services::cross_domain::InterventionType::Ppf,
             current_step: 4,
             completion_percentage: 100.0,
             estimated_duration: Some(120),
@@ -832,7 +832,7 @@ mod tests {
 
     /// Build a set of 4 workflow steps (Inspection, Preparation, Installation, Finalisation).
     fn build_test_steps() -> Vec<InterventionStep> {
-        use crate::domains::interventions::domain::models::step::{StepStatus, StepType};
+        use crate::shared::services::cross_domain::{StepStatus, StepType};
 
         let mut inspection = InterventionStep::new(
             "test-intervention-001".to_string(),
@@ -1077,7 +1077,7 @@ mod tests {
             "test-intervention-001".to_string(),
             1,
             "Preparation".to_string(),
-            crate::domains::interventions::domain::models::step::StepType::Preparation,
+            crate::shared::services::cross_domain::StepType::Preparation,
         );
 
         let report = InterventionPdfReport::new(
