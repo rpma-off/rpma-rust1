@@ -83,6 +83,10 @@ path = "tests/quote_task_inventory_e2e_test.rs"
 name = "session_rbac_expiry_e2e_test"
 path = "tests/session_rbac_expiry_e2e_test.rs"
 
+[[test]]
+name = "harness_smoke_test"
+path = "tests/harness_smoke_test.rs"
+
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }
 
