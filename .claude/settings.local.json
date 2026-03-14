@@ -22,7 +22,8 @@
       "Bash(grep -r \"deleted_at\" d:/rpma-rust/src-tauri/migrations/*.sql)",
       "Bash(cargo check --all)",
       "Bash(node scripts/validate-migration-system.js)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(cargo test:*)"
     ]
   }
 }

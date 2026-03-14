@@ -51,16 +51,18 @@ export function ClientList({
   const parentRef = React.useRef<HTMLDivElement>(null);
 
   // Filter clients based on search and type
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = !searchQuery ||
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.company_name?.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredClients = React.useMemo(() => {
+    return clients.filter(client => {
+      const matchesSearch = !searchQuery ||
+        client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        client.company_name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesType = filterType === 'all' || client.customer_type === filterType;
+      const matchesType = filterType === 'all' || client.customer_type === filterType;
 
-    return matchesSearch && matchesType;
-  });
+      return matchesSearch && matchesType;
+    });
+  }, [clients, searchQuery, filterType]);
 
   const virtualizer = useVirtualizer({
     count: filteredClients.length,
@@ -69,7 +71,7 @@ export function ClientList({
     overscan: 5,
   });
 
-  const handleClientSelect = (client: Client) => {
+  const handleClientSelect = React.useCallback((client: Client) => {
     if (selectable && onSelectionChange) {
       const isSelected = selectedClients.includes(client.id);
       if (isSelected) {
@@ -80,7 +82,7 @@ export function ClientList({
     } else if (onClientSelect) {
       onClientSelect(client);
     }
-  };
+  }, [selectable, onSelectionChange, selectedClients, onClientSelect]);
 
   if (loading) {
     return (

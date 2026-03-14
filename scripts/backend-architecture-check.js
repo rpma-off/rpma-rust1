@@ -128,18 +128,33 @@ function checkSqlInDomainOrApp(file, lines, domain, layer) {
   }
 }
 
-/** 3. Detect cross-domain imports that are not explicitly allowed. */
+/** 3. Detect cross-domain imports that are not explicitly allowed.
+ *     Also audits same-domain absolute-path imports (ADR-002/ADR-003:
+ *     prefer relative paths such as `super::` over full `crate::domains::`
+ *     paths within the same domain). */
 function checkCrossDomainImports(file, lines, fromDomain, layer) {
   if (layer === 'tests') return; // test helpers are allowed to cross domains
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Match: use crate::domains::<other_domain>::
+    // Match: use crate::domains::<domain>::
     const match = line.match(/use\s+crate::domains::([a-z_]+)::/);
     if (!match) continue;
 
     const toDomain = match[1];
-    if (toDomain === fromDomain) continue; // same domain, OK
+    if (toDomain === fromDomain) {
+      // [ADR-002/ADR-003] Same-domain absolute-path import — audit-mode warning.
+      // Relative paths (e.g. `super::`, `self::`) make intra-domain
+      // dependencies explicit to the module graph and cannot be mistaken
+      // for cross-domain references.
+      addWarning(
+        `[ADR-002/ADR-003] Same-domain absolute import (prefer relative path) in ${layer}/:\n` +
+        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+        `  ${line.trim()}\n` +
+        `  → Replace \`crate::domains::${fromDomain}::\` with a relative path (e.g. \`super::\`)`
+      );
+      continue;
+    }
 
     if (!isCrossDomainAllowed(fromDomain, toDomain, layer)) {
       addError(

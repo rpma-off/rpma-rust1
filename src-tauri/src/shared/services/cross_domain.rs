@@ -19,6 +19,7 @@ pub use crate::domains::clients::client_handler::ClientStat;
 pub use crate::domains::clients::client_handler::{CreateClientRequest, CustomerType};
 
 // Settings domain
+pub use crate::domains::settings::settings_repository::SettingsRepository;
 
 // Calendar domain
 pub use crate::domains::calendar::calendar_handler::CalendarService;
@@ -42,9 +43,11 @@ pub use crate::domains::documents::Photo;
 
 // Intervention types
 pub use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus,
+    Intervention, InterventionStatus, InterventionType,
 };
-pub use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
+pub use crate::domains::interventions::domain::models::step::{
+    InterventionStep, StepStatus, StepType,
+};
 
 // Inventory types
 pub use crate::domains::inventory::domain::models::material::MaterialConsumption;

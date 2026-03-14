@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { ipcClient } from '@/lib/ipc';
 import { taskKeys } from '@/lib/query-keys';
-import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +24,7 @@ import {
   getStatusVariant,
   formatDateShort,
 } from '@/domains/tasks/utils/task-presentation';
+import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 
 interface TaskListTableProps {
   tasks: TaskWithDetails[];
@@ -60,7 +60,16 @@ export const TaskListTable = React.memo(({
     });
   }, [queryClient, user?.token]);
 
-  const columns = [
+  type TableColumn = {
+    key: string;
+    header: string;
+    width?: number;
+    sortable?: boolean;
+    className?: string;
+    render?: (value: unknown, item: TaskWithDetails, index: number) => React.ReactNode;
+  };
+
+  const columns = React.useMemo<TableColumn[]>(() => [
     {
       key: 'title',
       header: 'Tâche',
@@ -221,7 +230,7 @@ export const TaskListTable = React.memo(({
         </div>
       ),
     },
-  ];
+  ], [formatDate, getStatusLabel, onDelete, onEdit, onView]);
 
   return (
     <VirtualizedTable

@@ -7,8 +7,7 @@ pub mod infrastructure;
 pub mod logging;
 pub mod shared;
 
-#[cfg(test)]
-mod service_builder;
+pub mod service_builder;
 pub mod models {
     pub mod client {
         pub use crate::domains::clients::client_handler::{

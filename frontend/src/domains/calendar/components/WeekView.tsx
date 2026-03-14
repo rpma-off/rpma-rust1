@@ -31,6 +31,22 @@ export const WeekView: React.FC<WeekViewProps> = ({
       const dateString = format(date, 'yyyy-MM-dd');
       const dayTasks = tasks.filter(task => task.scheduled_date === dateString);
 
+      const tasksBySlot: Record<string, CalendarTask[]> = {};
+      const unscheduledTasks: CalendarTask[] = [];
+
+      dayTasks.forEach(task => {
+        if (task.start_time) {
+          const slot = tasksBySlot[task.start_time];
+          if (!slot) {
+            tasksBySlot[task.start_time] = [task];
+          } else {
+            slot.push(task);
+          }
+        } else {
+          unscheduledTasks.push(task);
+        }
+      });
+
       weekDays.push({
         date,
         dateString,
@@ -38,6 +54,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
         dayNumber: date.getDate(),
         isToday: date.toDateString() === new Date().toDateString(),
         tasks: dayTasks,
+        tasksBySlot,
+        unscheduledTasks,
       });
     }
 
@@ -135,9 +153,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                           backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
                         }}
                       >
-                        {day.tasks
-                          .filter(task => task.start_time === timeSlot)
-                          .map((task, taskIndex) => (
+                        {(day.tasksBySlot[timeSlot] || []).map((task, taskIndex) => (
                             <Draggable
                               key={task.id}
                               draggableId={task.id}
@@ -201,9 +217,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         backgroundColor: snapshot.isDraggingOver ? designTokens.colors.surface : '',
                       }}
                     >
-                      {day.tasks
-                        .filter(task => !task.start_time)
-                        .map((task, taskIndex) => (
+                      {day.unscheduledTasks.map((task, taskIndex) => (
                           <Draggable
                             key={task.id}
                             draggableId={task.id}

@@ -1,11 +1,11 @@
-AGENTS.md
-
 ## Stack
 
 * Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, shadcn/ui.
 * Backend: Rust + Tauri.
 * Database: SQLite with WAL mode.
 * Types: Rust models exported to TypeScript via ts-rs. Generated files live in `frontend/src/types/` and must not be edited manually.
+
+---
 
 ## Project structure
 
@@ -51,22 +51,31 @@ rpma-rust/
 ├── Makefile
 ├── package.json
 └── Cargo.toml
-
 ```
+
+---
 
 ## Commands
 
-Use the real command surfaces below; do not invent a root `npm run test` shortcut.
+Use the real command surfaces below; do not invent shortcuts.
 
 * **App / dev:** `npm run dev`, `npm run dev:types`, `npm run frontend:dev`
 * **Frontend checks:** `npm run frontend:lint`, `npm run frontend:type-check`, `cd frontend && npm run test:ci`, `cd frontend && npm run test:e2e`
-* **Backend checks:** `npm run backend:check`, `npm run backend:clippy`, `npm run backend:fmt`, `make test`, `cd src-tauri && cargo test --test <target>`
+* **Backend checks:** `npm run backend:check`, `npm run backend:clippy`, `npm run backend:fmt`
+* **Backend tests (all):** `make test`
+* **Backend tests (harness):** `cd src-tauri && cargo test --test integration -- --nocapture`
+* **Backend tests (domain):** `cd src-tauri && cargo test <domain> -- --nocapture`
+* **Backend tests (permissions):** `cd src-tauri && cargo test permission -- --nocapture`
+* **Backend tests (full gate):** `npm run backend:check && cd src-tauri && cargo test --test integration`
 * **Types:** `npm run types:sync`, `npm run types:validate`, `npm run types:drift-check`, `npm run types:watch`
 * **Database / migrations:** `node scripts/validate-migration-system.js`, `node scripts/detect-schema-drift.js`, `npm run backend:migration:fresh-db-test`
 
+---
+
 ## Mindset
-Make it work → Make it right → Make it fast.
-Correctness first. Clarity second. Performance third.
+
+Make it work → Make it right → Make it fast.  
+Correctness first. Clarity second. Performance third.  
 Write boring, predictable, deletable code. The best solution is often less code, not more.
 
 ---
@@ -95,8 +104,8 @@ Direct imports from another domain's internals are **forbidden**.
 - Use `?`, `map_err`, typed errors (`thiserror` for domain errors, `anyhow` at IPC boundary only)
 - Every IPC command **must** call `resolve_context!` as its first line:
   ```rust
-  let ctx = resolve_context!(&state, &correlation_id);              // authenticated
-  let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin); // role-gated
+  let ctx = resolve_context!(&state, &correlation_id);                   // authenticated
+  let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);  // role-gated
   ```
 - **No raw session token** may ever reach a service or repository — pass `RequestContext` only
 - All input validation goes through `shared/services/validation/` — never inline ad-hoc validation
@@ -106,7 +115,7 @@ Direct imports from another domain's internals are **forbidden**.
 
 Use newtypes to communicate intent:
 ```rust
-// Bad: fn process(id: u64, active: bool) -> String
+// Bad:  fn process(id: u64, active: bool) -> String
 // Good: fn process(user_id: UserId, status: UserStatus) -> Result<Report, ProcessError>
 ```
 
@@ -129,15 +138,98 @@ Use newtypes to communicate intent:
 
 Every change requires tests. No exceptions.
 
-| Change | Required |
+| Change | Required tests |
 |---|---|
 | New feature | Success path + validation failure + permission failure |
-| Bug fix | Regression (proves bug existed + fix works) |
+| Bug fix | Regression test (proves bug existed + fix works) |
 | New IPC command | Success + auth failure + validation failure |
 | New RBAC rule | Authorized success + unauthorized failure per affected role |
 
-Test files per domain: `unit_*.rs` · `integration_*.rs` · `validation_*.rs` · `permission_*.rs`
-Naming: `test_<function>_<scenario>_<expected_result>`
+Test files per domain: `unit_*.rs` · `integration_*.rs` · `validation_*.rs` · `permission_*.rs`  
+Naming convention: `test_<function>_<scenario>_<expected_result>`
+
+### Required test runs per change scope
+
+| Scope of change | Command to run before declaring done |
+|---|---|
+| Single domain touched | `cd src-tauri && cargo test <domain> -- --nocapture` |
+| Shared / cross-domain change | `cd src-tauri && cargo test --test integration -- --nocapture` |
+| Migration added | `npm run backend:migration:fresh-db-test` then `cargo test --test integration` |
+| RBAC / auth change | `cd src-tauri && cargo test permission -- --nocapture` |
+| Any backend change | `make test` as final check before task is complete |
+
+### A task is NOT complete if
+
+- Any test fails
+- A new feature has no tests covering the required scenarios above
+- The harness panics or fails to compile
+- A failing test was suppressed, commented out, or deleted instead of fixed
+
+If a test failure cannot be resolved within the current task scope,
+you **must** explicitly say so and add a `// TODO(issue-XXX): <reason>` marker.
+
+### Test harness — Usage rules
+
+All backend integration tests use the shared harness in `src-tauri/tests/harness/`.
+
+**Never** instantiate a raw database or build a fake `RequestContext` directly in a test body —
+always go through `TestApp::new()` or `TestApp::seeded()`.
+
+```rust
+// ✅ Correct
+let app = TestApp::seeded().await;
+let ctx = app.admin_ctx();
+let result = some_service.create(request, &ctx).await;
+assert!(result.is_ok());
+
+// ❌ Wrong — never bypass the harness
+let db = Arc::new(Database::new_in_memory().unwrap());
+let ctx = RequestContext { auth: fake_auth(), correlation_id: "x".into() };
+```
+
+---
+
+## Test Harness — Architecture
+
+The harness lives in `src-tauri/tests/harness/` and exposes:
+
+```
+tests/
+└── harness/
+    ├── mod.rs        — public re-exports
+    ├── app.rs        — TestApp struct and constructors
+    ├── db.rs         — in-memory SQLite with migrations applied
+    ├── auth.rs       — RequestContext builders per role
+    └── fixtures.rs   — deterministic seed data (users, client, task)
+```
+
+**Public API:**
+
+| Symbol | Description |
+|---|---|
+| `TestApp::new()` | Empty DB with all migrations applied |
+| `TestApp::seeded()` | DB with one seeded client + task; use when a test needs pre-existing data |
+| `app.admin_ctx()` | `RequestContext` for Admin role |
+| `app.technician_ctx()` | `RequestContext` for Technician role |
+| `app.supervisor_ctx()` | `RequestContext` for Supervisor role |
+| `app.viewer_ctx()` | `RequestContext` for Viewer role |
+| `app.ctx_for_role(role)` | `RequestContext` for any arbitrary role |
+| `app.inject_session(role)` | Inject session into store (required before calling IPC handlers) |
+| `app.clear_session()` | Remove session from store (simulate unauthenticated caller) |
+| `app.db` | `Arc<Database>` for direct SQL assertions |
+| `fixtures::client_fixture(name)` | Minimal valid `CreateClientRequest` |
+| `fixtures::task_fixture(plate)` | Minimal valid `CreateTaskRequest` |
+| `fixtures::unique_id()` | Random UUID string for stable test IDs |
+
+**Hard constraints:**
+
+- Tests run without Tauri UI startup — no `AppHandle`, no event loop
+- Each `TestApp` instance gets its own isolated in-memory SQLite — no shared state between tests
+- `RequestContext` is always used in service-layer tests — never raw session tokens (ADR-006)
+- WAL mode is **not** enabled for in-memory databases (SQLite incompatibility)
+- `foreign_keys = ON` and other production-compatible PRAGMAs are applied
+- Fixture IDs are deterministic UUIDs — assertions remain stable across runs
+- All timestamps use `chrono::Utc::now().timestamp_millis()` (ADR-012)
 
 ---
 
@@ -148,12 +240,15 @@ Naming: `test_<function>_<scenario>_<expected_result>`
 - No optimization without profiling (`cargo flamegraph`, `criterion`, React DevTools Profiler)
 - Every file touched must be left cleaner: remove dead code, improve naming, simplify logic
 
+---
+
 ## When unsure
 
 If a requirement is ambiguous or conflicts with architecture rules, choose the most conservative compliant option and explicitly say so.
 
-when unsure check docs:
+When unsure, check docs:
 
 * `docs/README.md`
 * `docs/adr/`
+```
 
