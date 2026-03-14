@@ -149,9 +149,9 @@ async fn two_test_apps_are_isolated() {
     // Insert a task directly into app1's database.
     app1.db
         .execute(
-            "INSERT INTO tasks (id, title, vehicle_plate, vehicle_model, ppf_zones, \
+            "INSERT INTO tasks (id, task_number, title, vehicle_plate, vehicle_model, ppf_zones, \
              scheduled_date, status, created_at, updated_at) \
-             VALUES ('isolation-test-id','Isolation task','ISO-1','Model','[\"hood\"]', \
+             VALUES ('isolation-test-id','TSK-ISO-001','Isolation task','ISO-1','Model','[\"hood\"]', \
              '2025-01-01T00:00:00Z','pending', \
              strftime('%s','now')*1000, strftime('%s','now')*1000)",
             [],
