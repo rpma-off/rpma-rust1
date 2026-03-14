@@ -1,3 +1,4 @@
+/// ADR-005: Repository Pattern
 use std::collections::HashSet;
 use std::sync::Arc;
 

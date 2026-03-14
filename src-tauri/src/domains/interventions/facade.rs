@@ -731,4 +731,32 @@ impl InterventionsFacade {
             }
         }
     }
+
+    /// Enforce that the caller is an Admin or Supervisor for management operations.
+    pub fn ensure_management_access(&self, ctx: &RequestContext) -> Result<(), AppError> {
+        if !matches!(ctx.auth.role, UserRole::Admin | UserRole::Supervisor) {
+            return Err(AppError::Authorization(
+                "Not authorized to perform management operations".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Enforce that the caller may view statistics for the given technician.
+    ///
+    /// A Technician may only view their own stats; Admin and Supervisor may view any.
+    pub fn check_stats_access(
+        &self,
+        ctx: &RequestContext,
+        target_technician_id: &str,
+    ) -> Result<(), AppError> {
+        if target_technician_id != ctx.auth.user_id
+            && !matches!(ctx.auth.role, UserRole::Admin | UserRole::Supervisor)
+        {
+            return Err(AppError::Authorization(
+                "Not authorized to view these statistics".to_string(),
+            ));
+        }
+        Ok(())
+    }
 }

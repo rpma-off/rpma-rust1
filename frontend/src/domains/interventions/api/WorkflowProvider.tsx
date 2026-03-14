@@ -23,7 +23,7 @@ import {
   safeString,
   isNonNullObject
 } from '@/types/type-utils';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { getWorkflowServiceInstance } from '../services/workflow-service-adapter';
 
 // Interface for step data updates
@@ -572,12 +572,14 @@ export function WorkflowProvider({
   // Navigation methods
   const isFirstStep = useMemo(() => {
     if (!currentStep || !steps.length) return false;
-    return steps[0].id === currentStep.id;
+    const firstStep = steps[0];
+    return firstStep?.id === currentStep.id;
   }, [currentStep, steps]);
 
   const isLastStep = useMemo(() => {
     if (!currentStep || !steps.length) return false;
-    return steps[steps.length - 1].id === currentStep.id;
+    const lastStep = steps[steps.length - 1];
+    return lastStep?.id === currentStep.id;
   }, [currentStep, steps]);
 
   const goToNextStep = useCallback(() => {
@@ -586,7 +588,7 @@ export function WorkflowProvider({
     const currentIndex = getCurrentStepIndex();
     if (currentIndex < steps.length - 1) {
       const nextStep = steps[currentIndex + 1];
-      goToStep(nextStep.id);
+      if (nextStep) goToStep(nextStep.id);
     }
   }, [currentStep, isLastStep, getCurrentStepIndex, steps, goToStep]);
 
@@ -596,7 +598,7 @@ export function WorkflowProvider({
     const currentIndex = getCurrentStepIndex();
     if (currentIndex > 0) {
       const prevStep = steps[currentIndex - 1];
-      goToStep(prevStep.id);
+      if (prevStep) goToStep(prevStep.id);
     }
   }, [currentStep, isFirstStep, getCurrentStepIndex, steps, goToStep]);
 
@@ -608,7 +610,7 @@ export function WorkflowProvider({
         status,
         updated_at: new Date().toISOString(),
         ...data
-      }
+      } as TaskWorkflowProgress,
     }));
   }, []);
 

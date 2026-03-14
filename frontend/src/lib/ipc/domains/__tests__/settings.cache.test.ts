@@ -62,7 +62,7 @@ describe('settingsOperations cache behavior', () => {
 
     await settingsOperations.revokeSession('session-1');
     expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.REVOKE_SESSION, {
-      sessionId: 'session-1',
+      session_id: 'session-1',
     });
   });
 });

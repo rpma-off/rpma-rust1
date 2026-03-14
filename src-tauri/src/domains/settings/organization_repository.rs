@@ -1,5 +1,6 @@
 //! Organization repository for database operations
 
+/// ADR-005: Repository Pattern
 use std::sync::Arc;
 use rusqlite::params;
 use tracing::{debug, error, info};

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ipcClient } from '@/shared/utils';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export interface SystemStats {
   totalUsers: number;

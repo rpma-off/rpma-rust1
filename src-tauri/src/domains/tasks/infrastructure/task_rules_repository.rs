@@ -4,6 +4,7 @@
 //! and conflict detection. Named "repository" because it queries the database
 //! to enforce business rules (not pure validation).
 
+/// ADR-005: Repository Pattern
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
@@ -38,7 +39,7 @@ impl TaskRulesRepository {
     }
 
     /// Get maximum tasks per user from settings
-    fn get_max_tasks_per_user(&self) -> Result<i32, String> {
+    pub fn get_max_tasks_per_user(&self) -> Result<i32, String> {
         self.settings
             .get_max_tasks_per_user()
             .map_err(|e| format!("Failed to get settings: {}", e))

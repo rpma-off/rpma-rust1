@@ -1,4 +1,5 @@
 import type { Client } from '@/types/client.types';
+// ❌ CROSS-DOMAIN IMPORT
 import { clientIpc } from '@/domains/clients';
 
 /**

@@ -8,7 +8,7 @@ import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, AlertDialog, 
 import { TaskStatus, TaskWithDetails } from '@/shared/types';
 import { getUserFullName } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useTasks } from '../hooks/useTasks';
 import { taskService } from '../services/task.service';
 import { TaskChecklist } from './TaskChecklist';

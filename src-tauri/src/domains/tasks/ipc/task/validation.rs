@@ -42,6 +42,7 @@ pub struct ValidateTaskAssignmentChangeRequest {
 }
 
 /// Check task assignment eligibility
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn check_task_assignment(
@@ -61,10 +62,9 @@ pub async fn check_task_assignment(
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     let max_tasks_per_user = state
-        .settings_repository
+        .task_service
         .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))?
-        as usize;
+        .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
 
     let facade = TasksFacade::new(
         state.task_service.clone(),
@@ -133,10 +133,9 @@ pub async fn validate_task_assignment_change(
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
     let max_tasks_per_user = state
-        .settings_repository
+        .task_service
         .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))?
-        as usize;
+        .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
 
     let facade = TasksFacade::new(
         state.task_service.clone(),

@@ -248,10 +248,10 @@ export async function checkPasswordCompromised(password: string): Promise<{
     // Check if hash suffix exists in response
     for (const line of lines) {
       const [hashSuffix, count] = line.split(':');
-      if (hashSuffix.trim().toUpperCase() === suffix) {
+      if (hashSuffix && hashSuffix.trim().toUpperCase() === suffix) {
         return {
           isCompromised: true,
-          occurrences: parseInt(count.trim(), 10)
+          occurrences: parseInt((count ?? '').trim(), 10)
         };
       }
     }

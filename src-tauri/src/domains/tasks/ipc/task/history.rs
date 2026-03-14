@@ -16,6 +16,7 @@ pub struct GetTaskHistoryRequest {
 }
 
 /// TODO: document
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn get_task_history(

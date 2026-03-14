@@ -19,12 +19,12 @@ import {
   VirtualizedTable,
 } from '@/shared/ui/facade';
 import { getUserFullName } from '@/shared/utils';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { getTaskDisplayTitle, getTaskDisplayStatus } from '@/domains/tasks/utils/display';
 import {
   getStatusVariant,
   formatDateShort,
 } from '@/domains/tasks/utils/task-presentation';
-import { useAuth } from '@/domains/auth';
 
 interface TaskListTableProps {
   tasks: TaskWithDetails[];

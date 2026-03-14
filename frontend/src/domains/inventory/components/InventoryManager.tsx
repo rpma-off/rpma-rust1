@@ -145,14 +145,14 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'sku',
       header: 'SKU',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <span className="font-mono text-sm">{material.sku}</span>
       ),
     },
     {
       key: 'name',
       header: 'Nom',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <div className="max-w-[200px]">
           <div className="font-medium truncate">{material.name}</div>
           {material.brand && (
@@ -164,7 +164,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'type',
       header: 'Type',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <Badge variant="outline" className="capitalize">
           {material.material_type.replace('_', ' ')}
         </Badge>
@@ -173,7 +173,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'stock',
       header: 'Niveau de stock',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <div className="min-w-[120px]">
           <StockLevelIndicator material={material} />
         </div>
@@ -182,7 +182,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'unit_cost',
       header: 'CoÃ»t unitaire',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <div>
           {material.unit_cost ? (
             formatCurrency(material.unit_cost, material.currency)
@@ -195,7 +195,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'location',
       header: 'Emplacement',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <div className="max-w-[100px]">
           {material.storage_location ? (
             <span className="text-sm truncate">{material.storage_location}</span>
@@ -208,7 +208,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'status',
       header: 'Statut',
-      render: (material: Material) => {
+      render: (_value: unknown, material: Material) => {
         const getStatusIcon = () => {
           if (material.is_expired) return <XCircle className="h-4 w-4" />;
           if (material.is_low_stock) return <AlertTriangle className="h-4 w-4" />;
@@ -236,7 +236,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     {
       key: 'actions',
       header: 'Actions',
-      render: (material: Material) => (
+      render: (_value: unknown, material: Material) => (
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"

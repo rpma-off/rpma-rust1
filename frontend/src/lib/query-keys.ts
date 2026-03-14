@@ -27,3 +27,9 @@ export const reportKeys = {
   byIntervention: (interventionId: string) => ['report', 'byIntervention', interventionId],
   preview: (interventionId: string) => ['report-preview', interventionId],
 };
+
+export const notificationKeys = {
+  all: ['notifications'],
+  lists: () => [...notificationKeys.all, 'list'],
+  byId: (notificationId: string) => [...notificationKeys.all, notificationId],
+};

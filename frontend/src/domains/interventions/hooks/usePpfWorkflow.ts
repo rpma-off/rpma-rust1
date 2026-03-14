@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { interventionKeys } from '@/lib/query-keys';
 import type { InterventionStep, JsonValue, StepType } from '@/lib/backend';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { usePPFWorkflow } from '../api/PPFWorkflowProvider';
 import { ppfWorkflowIpc } from '../ipc/ppfWorkflow.ipc';
 import { getFirstAllowedPPFStepId } from '../utils/ppf-workflow';

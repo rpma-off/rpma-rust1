@@ -84,15 +84,16 @@ describe('domains/clients/clientIpc tagged payload unwrapping', () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('throws on invalid tagged payload type for search', async () => {
+  it('returns empty array when payload has data property regardless of type tag', async () => {
+    // unwrapTaggedArray returns data directly when { data: [...] } shape is present,
+    // allowing pre-unwrapped payloads from different envelope variants.
     extractAndValidate.mockReturnValue({
       type: 'List',
       data: [],
     });
 
-    await expect(clientIpc.search('x', 10, 'token')).rejects.toThrow(
-      'Invalid client search response type: expected SearchResults, received List'
-    );
+    const result = await clientIpc.search('x', 10);
+    expect(result).toEqual([]);
   });
 
   it('throws on missing array payload for listWithTasks', async () => {

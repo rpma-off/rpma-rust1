@@ -10,7 +10,7 @@ import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { LowStockMaterial, InventoryMovementSummary } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
 
 export function InventoryReports() {

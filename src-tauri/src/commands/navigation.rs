@@ -67,6 +67,7 @@ lazy_static! {
 }
 
 /// Update current navigation path
+/// ADR-018: Thin IPC layer
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn navigation_update(

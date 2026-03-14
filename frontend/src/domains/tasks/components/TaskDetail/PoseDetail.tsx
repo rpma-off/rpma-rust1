@@ -14,9 +14,11 @@ import { useIntersectionObserver } from '@/shared/hooks/useIntersectionObserver'
 import { Skeleton, Button, ErrorFallback } from '@/shared/ui';
 import { convertTimestamps, cn, convertNullsToUndefined } from '@/shared/utils';
 import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus, JsonValue } from '@/shared/types';
+// ❌ CROSS-DOMAIN IMPORT
+import { useAuth } from '@/shared/hooks/useAuth';
 import { InterventionWorkflowService } from '@/domains/interventions';
+// ❌ CROSS-DOMAIN IMPORT
 import { useInterventionData } from '@/domains/interventions';
-import { useAuth } from '@/domains/auth';
 import { taskService } from '../../services/task.service';
 import { taskIpc } from '../../ipc/task.ipc';
 import { ChecklistProgress } from '../TaskInfo/ChecklistProgress';
@@ -175,7 +177,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
     const merged = baseItems.map(item => (
       overrides[item.id] !== undefined
-        ? { ...item, is_completed: overrides[item.id] }
+        ? { ...item, is_completed: overrides[item.id] ?? false }
         : item
     ));
     setChecklistItems(merged);

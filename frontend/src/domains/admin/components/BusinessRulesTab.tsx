@@ -155,6 +155,7 @@ export function BusinessRulesTab() {
           { label: 'Catégories', value: new Set(businessRules.map((rule) => rule.category)).size, icon: Settings, style: 'purple' },
         ].map((stat, index) => {
           const styles = STAT_STYLES[stat.style];
+          if (!styles) return null;
           return (
             <Card key={index} className="border border-[hsl(var(--rpma-border))] shadow-sm">
               <CardContent className="p-4">

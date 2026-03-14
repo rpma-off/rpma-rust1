@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useOrganization, useUpdateOrganization } from '../api/useOrganization';
 
 interface OrganizationFormData {
@@ -154,7 +154,7 @@ export function OrganizationSettingsTab() {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          const base64 = result.split(',')[1];
+          const base64 = result.split(',')[1] ?? '';
           resolve(base64);
         };
         reader.onerror = () => reject(new Error('Échec de la lecture du fichier'));

@@ -2,7 +2,7 @@
 import { interventionKeys } from '@/lib/query-keys';
 import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { interventionsIpc } from '../ipc/interventions.ipc';
 
 interface InterventionStep {

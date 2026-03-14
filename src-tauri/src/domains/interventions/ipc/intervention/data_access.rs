@@ -14,6 +14,7 @@ use crate::resolve_context;
 use tracing::{error, info, instrument};
 
 /// Get a specific intervention by ID
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state), fields(user_id))]
 pub async fn intervention_get(

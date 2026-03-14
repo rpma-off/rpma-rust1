@@ -6,7 +6,7 @@ import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
 import type { Client, ClientWithTasks } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService } from '../server';
 import { computeClientStats } from '../utils/client-stats';
 import { useClients } from './useClients';

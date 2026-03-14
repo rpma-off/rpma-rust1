@@ -8,8 +8,9 @@ import type {
   QuotePartInput,
   QuoteLaborInput,
 } from '@/shared/types';
-import { clientIpc, useClients } from '@/domains/clients';
-import { useAuth } from '@/domains/auth';
+import { useClients } from '@/shared/hooks/useClients';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { clientIpc,   } from '@/domains/clients';
 import { useCreateQuote } from './useQuotes';
 
 export function useNewQuotePage() {

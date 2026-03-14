@@ -11,6 +11,7 @@ import {
 } from '@/lib/validation/api-schemas';
 import type { TaskWithDetails } from '@/types/task.types';
 import type { ServiceResponse } from '@/types/unified.types';
+// ❌ CROSS-DOMAIN IMPORT
 import { interventionsIpc } from '@/domains/interventions';
 import { taskIpc } from '../ipc/task.ipc';
 import {

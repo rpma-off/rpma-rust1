@@ -20,6 +20,38 @@ jest.mock('@tauri-apps/api', () => ({
   emit: jest.fn(),
 }));
 
+// Global mock for useAuth — components import from @/shared/hooks/useAuth
+jest.mock('@/shared/hooks/useAuth', () => ({
+  useAuth: jest.fn(() => ({
+    user: {
+      id: 'test-user',
+      user_id: 'test-user',
+      username: 'testuser',
+      email: 'test@example.com',
+      role: 'admin' as const,
+      token: 'mock-token',
+      refresh_token: null,
+      expires_at: new Date(Date.now() + 3600000).toISOString(),
+      last_activity: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      device_info: null,
+      ip_address: null,
+      user_agent: null,
+      location: null,
+      two_factor_verified: false,
+      session_timeout_minutes: null,
+    },
+    profile: null,
+    session: null,
+    loading: false,
+    isAuthenticating: false,
+    signIn: jest.fn(),
+    signUp: jest.fn(),
+    signOut: jest.fn(),
+    refreshProfile: jest.fn(),
+  })),
+}));
+
 Object.defineProperty(window, '__TAURI__', {
   value: { invoke: jest.fn().mockResolvedValue(null) },
   writable: true,

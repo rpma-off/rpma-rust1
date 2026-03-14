@@ -31,7 +31,7 @@ const mockUseAuth = jest.fn(() => ({
   user: { id: 'user-123', token: 'mock-token' },
 }));
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 

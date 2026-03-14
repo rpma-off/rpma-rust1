@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInterventionData } from '../api/useInterventionData';
 import { interventionsIpc } from '../ipc/interventions.ipc';
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => ({
     session: { token: 'test-token' },
   }),

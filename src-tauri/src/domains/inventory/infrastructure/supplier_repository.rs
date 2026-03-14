@@ -1,5 +1,6 @@
 //! Supplier repository — CRUD for `suppliers` table.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::inventory::domain::models::material::Supplier;
 use rusqlite::params;

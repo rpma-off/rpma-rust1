@@ -1,7 +1,8 @@
 // Configuration service
 import { ipcClient } from '@/lib/ipc/client';
 import { AuthSecureStorage as _AuthSecureStorage } from '@/lib/secureStorage';
-import type { JsonValue, JsonObject as _JsonObject } from '@/types/json';
+import type { JsonValue, JsonObject } from '@/types/json';
+import type { AppSettings } from '@/lib/backend';
 import type { Configuration, BusinessRule } from './types';
 
 export interface ServiceResponse<T> {
@@ -9,6 +10,21 @@ export interface ServiceResponse<T> {
   data?: T;
   error?: string;
   status?: number;
+}
+
+export interface SystemStatus {
+  status: 'healthy' | 'degraded' | 'down';
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors?: string[];
+}
+
+export interface ConfigurationHistory {
+  id: string;
+  timestamp: string;
+  change: string;
 }
 
 function ok<T>(data: T): ServiceResponse<T> {
@@ -75,19 +91,19 @@ export const configurationService = {
     return fail(new Error('Not found'), 'Configuration not found');
   },
 
-  async createSystemConfiguration(config: any): Promise<ServiceResponse<Configuration>> {
+  async createSystemConfiguration(config: Record<string, unknown>): Promise<ServiceResponse<Configuration>> {
     try {
-      await ipcClient.settings.updateGeneralSettings(config);
-      return ok({ id: config.key, ...config });
+      await ipcClient.settings.updateGeneralSettings(config as JsonObject);
+      return ok({ id: String(config['key'] ?? ''), key: String(config['key'] ?? ''), value: config, category: 'general' });
     } catch (error) {
       return fail(error, 'Failed to create configuration');
     }
   },
 
-  async updateSystemConfiguration(id: string, config: any): Promise<ServiceResponse<Configuration>> {
+  async updateSystemConfiguration(id: string, config: Record<string, unknown>): Promise<ServiceResponse<Configuration>> {
     try {
-      await ipcClient.settings.updateGeneralSettings({ [id]: config.value });
-      return ok({ id, ...config });
+      await ipcClient.settings.updateGeneralSettings({ [id]: config['value'] as JsonValue | undefined });
+      return ok({ id, key: id, value: config['value'], category: 'general' });
     } catch (error) {
       return fail(error, 'Failed to update configuration');
     }
@@ -102,20 +118,20 @@ export const configurationService = {
     }
   },
 
-  async getConfigurationHistory(_type?: string, _id?: string, _limit?: number): Promise<ServiceResponse<any[]>> {
+  async getConfigurationHistory(_type?: string, _id?: string, _limit?: number): Promise<ServiceResponse<ConfigurationHistory[]>> {
     return ok([]);
   },
 
-  async getBusinessHoursConfig(): Promise<ServiceResponse<any>> {
+  async getBusinessHoursConfig(): Promise<ServiceResponse<JsonObject>> {
     try {
-      const settings = await ipcClient.settings.getAppSettings();
-      return ok((settings as any)?.business_hours || {});
+      const settings = await ipcClient.settings.getAppSettings() as AppSettings | null;
+      return ok((settings?.business_hours ?? {}) as JsonObject);
     } catch (error) {
       return fail(error, 'Failed to get business hours');
     }
   },
 
-  async updateBusinessHoursConfig(hours: any): Promise<ServiceResponse<any>> {
+  async updateBusinessHoursConfig(hours: JsonObject): Promise<ServiceResponse<JsonObject>> {
     try {
       await ipcClient.settings.updateBusinessHours(hours);
       return ok(hours);
@@ -124,11 +140,11 @@ export const configurationService = {
     }
   },
 
-  async getSystemStatus(): Promise<ServiceResponse<any>> {
+  async getSystemStatus(): Promise<ServiceResponse<SystemStatus>> {
     return ok({ status: 'healthy' });
   },
 
-  async validateConfiguration(_config: any): Promise<ServiceResponse<any>> {
+  async validateConfiguration(_config: unknown): Promise<ServiceResponse<ValidationResult>> {
     return ok({ valid: true });
   },
 

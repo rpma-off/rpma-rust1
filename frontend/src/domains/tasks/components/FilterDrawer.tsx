@@ -20,6 +20,7 @@ import {
   CollapsibleTrigger,
   CollapsibleContent,
 } from '@/components/ui/collapsible';
+// ❌ CROSS-DOMAIN IMPORT
 import { useCalendarStore } from '@/domains/calendar';
 
 interface FilterDrawerProps {

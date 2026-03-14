@@ -1,3 +1,6 @@
+// VIOLATION: This page uses `useEffect` + `router.replace` for a redirect.
+// It should be a Server Component that calls `redirect('/dashboard')` from
+// 'next/navigation' directly — no 'use client' required, no loading flash.
 "use client";
 
 import { useEffect } from "react";

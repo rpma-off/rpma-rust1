@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { taskGateway } from '../api/taskGateway';
 import type { TaskFormData } from '../components/TaskForm/types';
 import type { Task } from '../api/types';

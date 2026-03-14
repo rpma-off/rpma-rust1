@@ -30,7 +30,9 @@ export function QuotePartsSection({
   const updatePart = useCallback(
     (index: number, field: keyof QuotePartInput, value: string | number) => {
       const updated = [...parts];
-      const part = { ...updated[index], [field]: value };
+      const existing = updated[index];
+      if (!existing) return;
+      const part = { ...existing, [field]: value };
 
       // Recalculate total when quantity or unit price changes
       if (field === 'quantity' || field === 'unit_price') {

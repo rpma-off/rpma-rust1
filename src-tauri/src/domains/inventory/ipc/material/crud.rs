@@ -12,6 +12,7 @@ use tracing::{error, info, instrument};
 use crate::shared::ipc::IntoDomainError;
 
 /// Create a new material
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, request), fields(user_id))]
 pub async fn material_create(

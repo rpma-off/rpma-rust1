@@ -5,7 +5,7 @@ import { computeQuoteStats } from '@/shared/types';
 import type { QuoteStatus } from '@/shared/types';
 import type { Quote } from '@/types/quote.types';
 import type { Client } from '@/types/client.types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { fetchClientMap } from '../services/quote-client-enrichment.service';
 import { useQuotesList } from './useQuotes';
 

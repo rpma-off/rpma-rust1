@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ipcClient } from '@/lib/ipc';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import type { UserAccount, UseUsersResult } from './types';
 
 export function useUsers(limit: number = 50, offset: number = 0): UseUsersResult {

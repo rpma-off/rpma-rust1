@@ -4,6 +4,7 @@
 //! must update both `material_consumption` and `materials.current_stock` inside a
 //! single DB transaction.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::domains::inventory::domain::models::material::MaterialConsumption;
 use rusqlite::params;

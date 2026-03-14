@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useIpcClient } from '@/lib/ipc/client';
 import type { UserSettings } from '@/lib/backend';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export function useSettings() {
   const { user } = useAuth();

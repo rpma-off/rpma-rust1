@@ -16,7 +16,7 @@ jest.mock('next/navigation', () => ({
   }),
 }));
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 

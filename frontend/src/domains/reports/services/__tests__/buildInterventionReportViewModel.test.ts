@@ -1,3 +1,4 @@
+// ❌ CROSS-DOMAIN IMPORT
 import type { Intervention, InterventionStep } from '@/domains/interventions';
 import { buildInterventionReportViewModel } from '../buildInterventionReportViewModel';
 import { PLACEHOLDERS } from '../report-view-model.types';

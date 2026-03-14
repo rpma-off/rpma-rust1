@@ -19,6 +19,7 @@ pub struct LoginRequest {
 }
 
 /// Login command
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, request), fields(email = %request.email))]
 pub async fn auth_login(

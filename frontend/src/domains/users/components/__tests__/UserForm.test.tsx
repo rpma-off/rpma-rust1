@@ -26,11 +26,8 @@ const mockUseAuth = jest.fn(() => ({
   user: { token: 'mock-token' },
 }));
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
-  AuthContext: {
-    Provider: ({ children }: { children: React.ReactNode }) => children,
-  },
 }));
 
 const mockUsersCreate = ipcClient.users.create as jest.MockedFunction<typeof ipcClient.users.create>;

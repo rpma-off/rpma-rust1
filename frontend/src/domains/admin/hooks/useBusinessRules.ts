@@ -15,7 +15,7 @@ import { LogDomain } from '@/shared/utils';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
 import type { BusinessRule, RuleCondition, RuleAction, BusinessRuleCategory } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export function useBusinessRules() {
   const [businessRules, setBusinessRules] = useState<BusinessRule[]>([]);

@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+// ❌ CROSS-DOMAIN IMPORT
 import { PPF_ZONES } from '@/domains/tasks';
 import { useConvertQuoteToTask } from '../hooks/useQuotes';
 

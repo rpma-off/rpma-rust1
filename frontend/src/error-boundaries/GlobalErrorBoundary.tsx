@@ -281,7 +281,7 @@ export const GlobalErrorBoundary: React.FC<GlobalErrorBoundaryProps> = ({
           sessionInfo: {
             sessionStorage: Object.keys(sessionStorage),
             localStorage: Object.keys(localStorage),
-            cookies: document.cookie.split(';').map(c => c.split('=')[0].trim())
+            cookies: document.cookie.split(';').map(c => (c.split('=')[0] ?? '').trim())
           },
           performance: {
             memory: tryToJsonValue(safeGet(performance as unknown as Record<string, unknown>, 'memory')) ?? null,

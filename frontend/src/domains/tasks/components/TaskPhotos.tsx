@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 
 interface TaskPhotosProps {

@@ -139,6 +139,7 @@ export const getFirstAllowedPPFStepId = (
 
   for (let index = 0; index < ordered.length; index += 1) {
     const step = ordered[index];
+    if (!step) continue;
     const prev = ordered[index - 1];
     const prevCompleted = index === 0 ? true : prev?.status === 'completed';
 

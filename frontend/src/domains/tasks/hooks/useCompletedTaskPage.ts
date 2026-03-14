@@ -8,6 +8,7 @@ import type { MaterialConsumption } from '@/shared/types/inventory.types';
 import type { Intervention } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks';
 import type { TaskWithDetails } from '@/types/task.types';
+import { useAuth } from '@/shared/hooks/useAuth';
 import {
   PPF_STEP_CONFIG,
   buildStepExportPayload,
@@ -16,9 +17,10 @@ import {
   useInterventionData,
   useWorkflowStepData,
 } from '@/domains/interventions';
+// ❌ CROSS-DOMAIN IMPORT
 import { downloadJsonFile } from '@/domains/interventions';
+// ❌ CROSS-DOMAIN IMPORT
 import { inventoryIpc } from '@/domains/inventory';
-import { useAuth } from '@/domains/auth';
 import { printCompletedInterventionReport, saveCompletedInterventionReport } from '../services/completed-task-report.service';
 import { taskGateway } from '../api/taskGateway';
 import { useCustomerDisplayName, useCustomerInfo } from './useNormalizedTask';

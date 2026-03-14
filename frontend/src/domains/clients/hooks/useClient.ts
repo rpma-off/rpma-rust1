@@ -3,7 +3,7 @@ import type { Client } from '@/lib/backend';
 import { LogDomain } from '@/lib/logging/types';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { normalizeError } from '@/types/utility.types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService } from '../services';
 
 export interface UseClientOptions {

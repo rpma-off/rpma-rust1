@@ -10,11 +10,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { LoadingSpinner } from '@/components/ui/loading';
 import { useMaterialForm } from '../hooks/useMaterialForm';
-import type { MaterialType, UnitOfMeasure } from '../api/types';
+import type { Material, MaterialType, UnitOfMeasure } from '../api/types';
 
 interface MaterialFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  material?: any;
+  material?: Material | null;
   onClose: () => void;
 }
 

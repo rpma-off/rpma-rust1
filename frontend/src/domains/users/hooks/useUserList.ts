@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { convertTimestamps } from '@/lib/types';
 import { logger, LogContext } from '@/shared/utils';
 import type { UserAccount } from '@/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { userService } from '../services';
 
 export interface UseUserListReturn {

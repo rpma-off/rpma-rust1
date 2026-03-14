@@ -9,8 +9,7 @@ interface Column<T> {
   header: string;
   width?: number;
   sortable?: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  render?: (value: any, item: T, index: number) => React.ReactNode;
+  render?: (value: unknown, item: T, index: number) => React.ReactNode;
   className?: string;
 }
 
@@ -28,8 +27,7 @@ interface VirtualizedTableProps<T> {
   onSelectionChange?: (selectedRows: Set<number>) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function VirtualizedTable<T extends Record<string, any>>({
+export function VirtualizedTable<T extends object>({
   data,
   columns,
   height = 400,
@@ -54,8 +52,8 @@ export function VirtualizedTable<T extends Record<string, any>>({
     if (!sortConfig || !sortConfig.key) return data;
 
     return [...data].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = String((a as Record<string, unknown>)[sortConfig.key] ?? '');
+      const bValue = String((b as Record<string, unknown>)[sortConfig.key] ?? '');
 
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -232,7 +230,7 @@ export function VirtualizedTable<T extends Record<string, any>>({
 
             return (
               <div
-                key={item?.id ?? virtualRow.key}
+                key={String((item as { id?: unknown }).id ?? virtualRow.key)}
                 style={{
                   position: 'absolute',
                   top: 0,

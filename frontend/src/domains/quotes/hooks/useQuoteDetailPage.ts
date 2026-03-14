@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import type { CreateQuoteItemRequest, QuoteItemKind } from '@/shared/types';
 import { useToast } from '@/components/ui/use-toast';
 import type { ConvertQuoteToTaskResponse } from '@/types/quote.types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import {
   useDeleteQuote,

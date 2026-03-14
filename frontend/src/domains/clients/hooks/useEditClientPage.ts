@@ -5,7 +5,7 @@ import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { Client, UpdateClientDTO } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService } from '../server';
 
 interface UseEditClientPageOptions {

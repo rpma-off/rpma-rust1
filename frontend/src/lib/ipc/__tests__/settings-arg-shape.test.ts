@@ -70,7 +70,7 @@ describe('ipcClient.settings IPC argument shapes', () => {
 
     await ipcClient.settings.revokeSession('session-1');
     expect(safeInvoke).toHaveBeenCalledWith('revoke_session', {
-      sessionId: 'session-1',
+      session_id: 'session-1',
     });
 
     await ipcClient.settings.revokeAllSessionsExceptCurrent();
@@ -81,7 +81,7 @@ describe('ipcClient.settings IPC argument shapes', () => {
 
     await ipcClient.settings.updateSessionTimeout(240);
     expect(safeInvoke).toHaveBeenCalledWith('update_session_timeout', {
-      timeoutMinutes: 240,
+      timeout_minutes: 240,
     });
 
     await ipcClient.settings.getSessionTimeoutConfig();

@@ -12,7 +12,7 @@ import { LogDomain } from '@/lib/logging/types';
 import { Task, Client } from '@/types';
 import { DesktopForm, DesktopTable, type Column, EntitySyncIndicator } from '@/shared/ui';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 // Validation schema for task creation/editing
 const taskSchema = z.object({
@@ -89,7 +89,7 @@ export default function TaskManager() {
         description: data.description || '',
         client_id: data.client_id,
         priority: data.priority,
-        scheduled_date: data.scheduled_date || new Date().toISOString().split('T')[0],
+        scheduled_date: data.scheduled_date || (new Date().toISOString().split('T')[0] ?? ''),
         status: 'draft' as const,
         vehicle_plate: 'UNKNOWN', // Required field
         vehicle_model: 'UNKNOWN', // Required field

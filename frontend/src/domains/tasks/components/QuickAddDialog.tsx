@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+// ❌ CROSS-DOMAIN IMPORT
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useCalendarStore } from '@/domains/calendar';
-import { useAuth } from '@/domains/auth';
 import { taskService } from '../server';
 
 interface QuickAddDialogProps {

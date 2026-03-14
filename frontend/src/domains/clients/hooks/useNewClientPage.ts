@@ -7,7 +7,7 @@ import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
 import type { CreateClientDTO } from '@/shared/types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService } from '../server';
 
 export function useNewClientPage() {

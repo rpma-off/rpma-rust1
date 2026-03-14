@@ -36,6 +36,7 @@ fn cmd_service(state: &AppState<'_>) -> TaskCommandService {
 }
 
 /// Add a timestamped note to a task.
+/// ADR-018: Thin IPC layer
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn add_task_note(

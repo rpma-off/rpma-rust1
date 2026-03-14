@@ -35,14 +35,14 @@ jest.mock('@/components/ui/virtualized-table', () => ({
     columns,
   }: {
     data: Array<Record<string, unknown>>;
-    columns: Array<{ key: string; render?: (item: Record<string, unknown>) => React.ReactNode }>;
+    columns: Array<{ key: string; render?: (_value: unknown, item: Record<string, unknown>, index: number) => React.ReactNode }>;
   }) => (
     <div>
       {data.map((item, index) => (
         <div key={String(item.id ?? index)} data-testid="inventory-row">
           {columns.map((column) => (
             <div key={column.key}>
-              {column.render ? column.render(item) : String(item[column.key] ?? '')}
+              {column.render ? column.render(item[column.key], item, index) : String(item[column.key] ?? '')}
             </div>
           ))}
         </div>

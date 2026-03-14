@@ -1,6 +1,7 @@
 //! Inventory domain test modules.
 
 pub mod integration_inventory;
+pub mod inventory_ipc_test;
 pub mod permission_inventory;
 pub mod unit_inventory;
 pub mod validation_inventory;

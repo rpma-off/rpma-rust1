@@ -2,6 +2,7 @@
 //!
 //! Provides consistent database access patterns for Task entities.
 
+/// ADR-005: Repository Pattern
 use crate::db::{Database, FromSqlRow, QueryBuilder};
 use crate::domains::tasks::domain::models::task::{
     PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,

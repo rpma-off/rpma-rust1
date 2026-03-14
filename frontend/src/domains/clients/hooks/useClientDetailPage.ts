@@ -5,7 +5,7 @@ import { LogDomain } from '@/lib/logging/types';
 import { ClientWithTasks, Task } from '@/shared/types';
 import { convertTimestamps } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService } from '../server';
 
 interface UseClientDetailPageOptions {

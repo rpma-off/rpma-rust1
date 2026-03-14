@@ -6,8 +6,8 @@ import type {
   UpdateQuoteAttachmentRequest,
 } from '@/types/quote.types';
 import { normalizeError } from '@/types/utility.types';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
-import { useAuth } from '@/domains/auth';
 
 // --- useQuoteAttachments ---
 

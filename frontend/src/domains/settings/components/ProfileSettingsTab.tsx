@@ -279,7 +279,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
         reader.onload = () => {
           const result = reader.result as string;
           // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-          const base64 = result.split(',')[1];
+          const base64 = result.split(',')[1] ?? '';
           resolve(base64);
         };
         reader.onerror = () => reject(new Error('Failed to read file'));

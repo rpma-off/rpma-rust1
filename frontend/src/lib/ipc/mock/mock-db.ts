@@ -444,7 +444,7 @@ function syncInterventionProgress(interventionId: string): void {
   const progress = buildProgress(interventionId, steps);
   const index = state.interventions.findIndex(intervention => intervention.id === interventionId);
   if (index === -1) return;
-  const current = state.interventions[index];
+  const current = state.interventions[index]!;
   state.interventions[index] = {
     ...current,
     current_step: progress.completed_steps,
@@ -452,7 +452,7 @@ function syncInterventionProgress(interventionId: string): void {
     status: progress.status,
     completed_at: progress.status === 'completed' ? nowIso() : current.completed_at,
     updated_at: nowIso()
-  };
+  } as MockIntervention;
 }
 
 state = createState(defaultFixtures);
@@ -641,14 +641,15 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           if (index === -1) return { type: 'NotFound' };
 
           const data = (action.data || {}) as AnyRecord;
+          const existingUser = state.users[index]!;
           state.users[index] = {
-            ...state.users[index],
-            email: data.email ?? state.users[index].email,
-            first_name: data.first_name ?? state.users[index].first_name,
-            last_name: data.last_name ?? state.users[index].last_name,
-            role: data.role ?? state.users[index].role
+            ...existingUser,
+            email: data.email ?? existingUser.email,
+            first_name: data.first_name ?? existingUser.first_name,
+            last_name: data.last_name ?? existingUser.last_name,
+            role: data.role ?? existingUser.role
           };
-          return toUserAccount(state.users[index]);
+          return toUserAccount(state.users[index]!);
         }
         case 'Delete': {
           state.users = state.users.filter(u => u.id !== action.id);
@@ -899,7 +900,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
               : step
           );
           state.interventions[index] = {
-            ...state.interventions[index],
+            ...state.interventions[index]!,
             status: 'completed',
             completion_percentage: 100,
             current_step: state.interventionSteps.filter(s => s.intervention_id === data.intervention_id).length,
@@ -939,7 +940,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           const stepIndex = state.interventionSteps.findIndex(step => step.id === action.step_id);
           if (stepIndex === -1) return { type: 'NotFound' };
           const now = nowIso();
-          const step = state.interventionSteps[stepIndex];
+          const step = state.interventionSteps[stepIndex]!;
           const nextPhotos = action.photos ?? step.photo_urls ?? [];
           const updatedStep = {
             ...step,
@@ -958,13 +959,13 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           );
           let nextStep: MockInterventionStep | null = null;
           if (nextStepIndex !== -1) {
-            const next = state.interventionSteps[nextStepIndex];
+            const next = state.interventionSteps[nextStepIndex]!;
             nextStep = {
               ...next,
               step_status: next.step_status === 'pending' ? 'in_progress' : next.step_status,
               started_at: next.started_at ?? now,
               updated_at: now
-            };
+            } as MockInterventionStep;
             state.interventionSteps[nextStepIndex] = nextStep;
           }
           syncInterventionProgress(step.intervention_id);
@@ -975,7 +976,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           const stepIndex = state.interventionSteps.findIndex(step => step.id === action.step_id);
           if (stepIndex === -1) return { type: 'NotFound' };
           const now = nowIso();
-          const step = state.interventionSteps[stepIndex];
+          const step = state.interventionSteps[stepIndex]!;
           const nextPhotos = action.photos ?? step.photo_urls ?? [];
           const updatedStep = {
             ...step,
@@ -986,7 +987,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
             required_photos_completed: nextPhotos.length >= step.min_photos_required,
             updated_at: now
           };
-          state.interventionSteps[stepIndex] = updatedStep;
+          state.interventionSteps[stepIndex] = updatedStep as MockInterventionStep;
           return { type: 'StepProgressSaved', step: updatedStep };
         }
         case 'GetStep': {
@@ -1022,7 +1023,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       const stepIndex = state.interventionSteps.findIndex(step => step.id === request.step_id);
       if (stepIndex === -1) return null;
       const now = nowIso();
-      const step = state.interventionSteps[stepIndex];
+      const step = state.interventionSteps[stepIndex]!;
       const nextPhotos = request.photos ?? step.photo_urls ?? [];
       const updatedStep = {
         ...step,
@@ -1033,7 +1034,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
         required_photos_completed: nextPhotos.length >= step.min_photos_required,
         updated_at: now
       };
-      state.interventionSteps[stepIndex] = updatedStep;
+      state.interventionSteps[stepIndex] = updatedStep as MockInterventionStep;
       return updatedStep;
     }
     case 'material_list': {
@@ -1133,19 +1134,19 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       const request = (args?.request ?? {}) as AnyRecord;
       const index = state.materials.findIndex(m => m.id === request.material_id);
       if (index === -1) throw new Error('Material not found');
-      const existing = state.materials[index];
+      const existing = state.materials[index]!;
       const newStock = (existing.current_stock ?? 0) + Number(request.quantity || 0);
       state.materials[index] = normalizeMaterial({ ...existing, current_stock: newStock, updated_at: nowIso() });
-      return state.materials[index];
+      return state.materials[index]!;
     }
     case 'material_adjust_stock': {
       const request = (args?.request ?? {}) as AnyRecord;
       const index = state.materials.findIndex(m => m.id === request.material_id);
       if (index === -1) throw new Error('Material not found');
-      const existing = state.materials[index];
+      const existing = state.materials[index]!;
       const newStock = Number(request.new_stock ?? existing.current_stock ?? 0);
       state.materials[index] = normalizeMaterial({ ...existing, current_stock: newStock, updated_at: nowIso() });
-      return state.materials[index];
+      return state.materials[index]!;
     }
     case 'material_record_consumption': {
       const request = (args?.request ?? {}) as AnyRecord;

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { PerformanceConfig, PerformanceCategory, CreatePerformanceConfigDTO } from '@/shared/types';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 const DEFAULT_FORM_DATA: CreatePerformanceConfigDTO = {
   category: 'caching' as PerformanceCategory,

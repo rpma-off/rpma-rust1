@@ -4,6 +4,7 @@
 //! following the bounded context architecture rule that SQL must live
 //! in infrastructure / db layers only.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use chrono::{DateTime, Utc};
 

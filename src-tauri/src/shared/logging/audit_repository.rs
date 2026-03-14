@@ -2,6 +2,7 @@
 //!
 //! Provides consistent database access patterns for AuditLog entities.
 
+/// ADR-005: Repository Pattern
 use crate::db::Database;
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};

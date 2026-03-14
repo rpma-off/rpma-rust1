@@ -2,7 +2,7 @@ import React from 'react';
 import { Camera, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { ipcClient } from '@/lib/ipc';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { TaskPhotos } from './TaskPhotos';
 
 interface TaskAttachmentsProps {

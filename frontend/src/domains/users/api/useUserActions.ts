@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { ipcClient } from '@/lib/ipc';
 import type { UpdateUserRequest, UserAccount } from '@/lib/backend';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import type { UseUserActionsResult } from './types';
 
 export function useUserActions(): UseUserActionsResult {

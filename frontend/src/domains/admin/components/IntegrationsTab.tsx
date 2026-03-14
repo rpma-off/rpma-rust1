@@ -21,7 +21,7 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { IntegrationConfig, IntegrationType, IntegrationStatus } from '@/shared/types';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { IntegrationCard } from './IntegrationCard';
 
 export function IntegrationsTab() {

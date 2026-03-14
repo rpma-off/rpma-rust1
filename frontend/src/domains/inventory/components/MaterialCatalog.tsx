@@ -28,7 +28,7 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { ErrorState } from '@/shared/ui/layout/ErrorState';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { VirtualizedTable } from '@/components/ui/virtualized-table';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useMaterials } from '../hooks/useMaterials';
 import type { Material, MaterialType } from '../api/types';
 import { useInventory } from '../hooks/useInventory';

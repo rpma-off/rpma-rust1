@@ -6,6 +6,7 @@ use crate::resolve_context;
 use tracing::{error, info, instrument};
 
 /// Get active sessions for the current user
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn get_active_sessions(

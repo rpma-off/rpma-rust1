@@ -4,7 +4,8 @@ import { CreateTaskRequest } from '@/lib/backend';
 import { ipcClient } from '@/lib/ipc';
 import { handleError } from '@/lib/utils/error-handler';
 import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
+// ❌ CROSS-DOMAIN IMPORT
 import { ClientCreationService } from '@/domains/clients';
 import { generateTaskTitle } from '../../utils/display';
 

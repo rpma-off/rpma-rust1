@@ -72,9 +72,12 @@ export function computeQuoteTotals(
   // 4. Tax per-item, then scale proportionally if a discount was applied
   let rawTax = 0;
   for (let i = 0; i < items.length; i++) {
-    const rate = items[i].tax_rate;
+    const item = items[i];
+    const lineTotal = lineTotals[i];
+    if (!item || lineTotal === undefined) continue;
+    const rate = item.tax_rate;
     if (rate) {
-      rawTax += Math.round(lineTotals[i] * (rate / 100));
+      rawTax += Math.round(lineTotal * (rate / 100));
     }
   }
 

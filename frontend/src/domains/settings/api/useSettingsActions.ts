@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useIpcClient } from '@/lib/ipc/client';
 import type { JsonObject } from '@/types/json';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 const DEFAULT_PREFERENCES = {
   theme: 'system',

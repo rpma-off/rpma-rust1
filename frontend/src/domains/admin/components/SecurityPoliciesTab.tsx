@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecurityPolicy, SecurityPolicyType } from '@/shared/types';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export function SecurityPoliciesTab() {
   const [securityPolicies, setSecurityPolicies] = useState<SecurityPolicy[]>([]);

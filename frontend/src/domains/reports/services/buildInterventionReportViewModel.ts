@@ -1,3 +1,4 @@
+// ❌ CROSS-DOMAIN IMPORT
 import type { Intervention, InterventionStep } from '@/domains/interventions';
 import type { InterventionReport } from '../ipc/reports.ipc';
 import { PLACEHOLDERS, type InterventionReportViewModel, type ReportStepViewModel } from './report-view-model.types';

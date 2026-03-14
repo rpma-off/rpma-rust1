@@ -444,6 +444,17 @@ impl TaskService {
             .map_err(convert_to_app_error)
     }
 
+    /// Get the maximum number of tasks allowed per user from settings.
+    ///
+    /// Delegates to the task rules repository so callers in the application layer
+    /// do not need to reach into the settings domain directly.
+    pub fn get_max_tasks_per_user(&self) -> AppResult<usize> {
+        self.validation
+            .get_max_tasks_per_user()
+            .map(|v| v as usize)
+            .map_err(convert_to_app_error)
+    }
+
     /// Validate status transition
     ///
     /// Delegates to the centralized validation logic in task_validation module.

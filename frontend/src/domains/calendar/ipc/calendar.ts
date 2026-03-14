@@ -83,8 +83,8 @@ export async function rescheduleTask(
 
 export function createDateRange(startDate: Date | string, endDate: Date | string): CalendarDateRange {
   return {
-    start_date: startDate instanceof Date ? startDate.toISOString().split('T')[0] : startDate,
-    end_date: endDate instanceof Date ? endDate.toISOString().split('T')[0] : endDate,
+    start_date: startDate instanceof Date ? startDate.toISOString().split('T')[0] ?? '' : startDate,
+    end_date: endDate instanceof Date ? endDate.toISOString().split('T')[0] ?? '' : endDate,
   };
 }
 

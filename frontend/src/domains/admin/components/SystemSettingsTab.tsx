@@ -36,7 +36,7 @@ import { LogDomain } from '@/shared/utils';
 import { SystemConfiguration, BusinessHoursConfig } from '@/shared/types';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue, JsonObject } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 const ConfigurationSkeleton = () => (
   <div className="space-y-4">

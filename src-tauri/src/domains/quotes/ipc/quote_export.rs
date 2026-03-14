@@ -9,6 +9,7 @@ use crate::resolve_context;
 use crate::domains::quotes::application::{QuoteConvertToTaskRequest, QuoteGetRequest};
 
 /// TODO: document
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn quote_export_pdf(

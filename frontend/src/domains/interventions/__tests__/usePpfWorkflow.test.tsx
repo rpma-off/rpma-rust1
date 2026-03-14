@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePpfWorkflow } from '../hooks/usePpfWorkflow';
 import { ppfWorkflowIpc } from '../ipc/ppfWorkflow.ipc';
 
-jest.mock('@/domains/auth', () => ({
+jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => ({
     session: { token: 'session-token' },
   }),

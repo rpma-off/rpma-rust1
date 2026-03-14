@@ -1,4 +1,6 @@
+// ❌ CROSS-DOMAIN IMPORT
 export { configurationService } from '@/domains/settings';
+// ❌ CROSS-DOMAIN IMPORT
 export type { Configuration, BusinessRule } from '@/domains/settings';
 
 export interface BusinessRuleFiltersData {

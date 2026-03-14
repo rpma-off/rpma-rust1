@@ -1,5 +1,5 @@
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useTaskState } from './useTaskState';
 import { useTaskActions } from './useTaskActions';
 import { useTaskSync } from './useTaskSync';

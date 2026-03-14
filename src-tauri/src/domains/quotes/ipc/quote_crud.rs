@@ -12,6 +12,7 @@ use crate::domains::quotes::application::{
 };
 
 /// TODO: document
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, request), fields(correlation_id = tracing::field::Empty, user_id = tracing::field::Empty))]
 pub async fn quote_create(

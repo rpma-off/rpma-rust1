@@ -23,6 +23,7 @@ fn workflow_ctx(
 }
 
 /// TODO: document
+/// ADR-018: Thin IPC layer
 #[tauri::command]
 #[instrument(skip(state, request), fields(task_id = %request.task_id, user_id))]
 pub async fn intervention_start(

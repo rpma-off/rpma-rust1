@@ -131,7 +131,7 @@ export function PhotoUpload({
 
       if (invalidTypeFiles.length > 0) {
         const fileNames = invalidTypeFiles.map(f => f.name).join(', ');
-        const allowedTypesStr = allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ');
+        const allowedTypesStr = allowedTypes.map(t => (t.split('/')[1] ?? '').toUpperCase()).join(', ');
         const error = `Invalid file types: ${fileNames}. Allowed formats: ${allowedTypesStr}.`;
         setUploadError(error);
         onUploadError?.(error);

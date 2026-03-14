@@ -1,3 +1,6 @@
+mod facade;
+pub use facade::DocumentsFacade;
+
 pub mod models;
 pub mod report_handler;
 pub mod photo_handler;
@@ -13,7 +16,7 @@ pub use report_handler::*;
 pub use photo_handler::{
     document_delete_photo, document_get_photo, document_get_photo_data, document_get_photos,
     document_store_photo, document_update_photo_metadata, export_intervention_report,
-    save_intervention_report, DocumentsCommand, DocumentsFacade, DocumentsResponse,
+    save_intervention_report, DocumentsCommand, DocumentsResponse,
     DocumentsServices, PhotoError, PhotoMetadataUpdate, PhotoResult, PhotoService, PhotoStats,
     PhotoStorageSettings, StorageProvider, StorePhotoRequest, StorePhotoResponse,
 };

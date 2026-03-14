@@ -5,7 +5,8 @@ import { TaskPriority, TaskStatus } from '@/lib/backend';
 import { phone } from '@/lib/utils/phone';
 import { interventionKeys, taskKeys } from '@/lib/query-keys';
 import { TaskWithDetails } from '@/types/task.types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
+// ❌ CROSS-DOMAIN IMPORT
 import { InterventionWorkflowService } from '@/domains/interventions';
 import { taskService } from '../../services';
 import { createNotesUpdate, createPriorityUpdate, createStatusUpdate } from './task-updates';

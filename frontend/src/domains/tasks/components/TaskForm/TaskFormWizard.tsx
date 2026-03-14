@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { X } from 'lucide-react';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useTaskForm } from './useTaskForm';
 import { FormStep, TaskFormProps, ENHANCED_STEPS as STEPS_CONFIG } from './types';
 import { TaskFormHeader } from './TaskFormHeader';

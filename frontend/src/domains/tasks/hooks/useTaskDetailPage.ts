@@ -3,8 +3,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/shared/hooks';
 import { bigintToNumber, handleError, LogDomain } from '@/shared/utils';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { taskGateway } from '@/domains/tasks/api/taskGateway';
+// ❌ CROSS-DOMAIN IMPORT
 import { InterventionWorkflowService } from '@/domains/interventions';
 import type { TaskWithDetails } from '@/domains/tasks/api/types';
 
@@ -134,7 +135,8 @@ export function useTaskDetailPage() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
 
         if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
+          const firstVisible = visible[0];
+          if (firstVisible) setActiveSection(firstVisible.target.id);
         }
       },
       {

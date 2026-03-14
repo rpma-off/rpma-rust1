@@ -3,11 +3,12 @@ import { useRouter } from 'next/navigation';
 import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import { enhancedToast, logger } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { taskGateway } from '@/domains/tasks/api/taskGateway';
 import { useTasks } from '@/domains/tasks/api/useTasks';
 import { mapTaskErrorToUserMessage } from '@/domains/tasks/utils/task-presentation';
 import { downloadTasksCsv, importTasksFromCsv } from '@/domains/tasks/services/task-csv.service';
-import { useAuth } from '@/domains/auth';
+// ❌ CROSS-DOMAIN IMPORT
 import { technicianService } from '@/domains/users';
 
 export function useTasksPage() {

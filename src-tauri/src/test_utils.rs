@@ -309,6 +309,45 @@ macro_rules! test_intervention {
     }};
 }
 
+/// Build a full `AppStateType` backed by an in-memory SQLite database.
+///
+/// Uses `ServiceBuilder` so every service — including `session_store` — is wired
+/// correctly.  Suitable for IPC contract tests that need the complete application
+/// context without a live Tauri runtime.
+pub async fn build_test_app_state() -> crate::shared::app_state::AppStateType {
+    let db = std::sync::Arc::new(
+        crate::db::Database::new_in_memory()
+            .await
+            .expect("in-memory db for IPC test"),
+    );
+    let repos = std::sync::Arc::new(
+        crate::shared::repositories::Repositories::new(db.clone(), 64).await,
+    );
+    crate::service_builder::ServiceBuilder::new(db, repos, std::env::temp_dir())
+        .build()
+        .expect("ServiceBuilder::build in IPC test")
+}
+
+/// Create a fake [`UserSession`] for the given role.
+///
+/// The session never expires (year 2099) so it is safe to use in tests without
+/// worrying about timing.
+pub fn make_test_session(
+    role: crate::shared::contracts::auth::UserRole,
+) -> crate::shared::contracts::auth::UserSession {
+    crate::shared::contracts::auth::UserSession {
+        id: format!("test-session-{role:?}"),
+        user_id: "test-user-01".to_string(),
+        username: "testuser".to_string(),
+        email: "test@example.com".to_string(),
+        role,
+        token: "test-token".to_string(),
+        expires_at: "2099-12-31T23:59:59Z".to_string(),
+        last_activity: chrono::Utc::now().to_rfc3339(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+    }
+}
+
 /// Assert that two results match
 pub fn assert_result_eq<T: PartialEq + std::fmt::Debug>(
     result1: &Result<T, String>,

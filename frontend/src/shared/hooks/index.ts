@@ -7,3 +7,4 @@ export { useAutoSave, useBeforeUnloadSave } from './useAutoSave';
 export { useIntersectionObserver, useLazyImage, useLazyComponent, useInfiniteScroll, useScrollAnimation } from './useIntersectionObserver';
 export { useVirtualScrolling } from './useVirtualScrolling';
 export { useFilterState } from './useFilterState';
+export { useTauriEvent } from './useTauriEvent';

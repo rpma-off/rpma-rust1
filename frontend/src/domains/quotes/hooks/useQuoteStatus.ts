@@ -3,7 +3,7 @@ import type {
   Quote,
   QuoteAcceptResponse,
 } from '@/types/quote.types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 
 export function useQuoteStatus() {

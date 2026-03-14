@@ -1,3 +1,6 @@
+mod facade;
+pub use facade::SettingsFacade;
+
 pub mod models;
 pub mod settings_repository;
 pub mod user_settings_repository;

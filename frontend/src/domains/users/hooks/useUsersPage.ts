@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { UserAccount } from '@/shared/types';
-import { useAuth } from '@/domains/auth';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useUserList } from '../hooks/useUserList';
 
 export function useUsersPage() {
