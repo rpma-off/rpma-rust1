@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthSecureStorage } from '@/lib/secureStorage';
-import { interventionKeys } from '@/lib/query-keys';
+import { interventionKeys, taskKeys } from '@/lib/query-keys';
 import { logger } from '@/lib/logging';
 import { LogDomain } from '@/lib/logging/types';
 import type {
@@ -74,6 +74,8 @@ export function useInterventionActions({
 
       queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId || '') });
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
     onError: (err: Error) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to create intervention', err, { task_id: taskId });
@@ -143,7 +145,7 @@ export function useInterventionActions({
         } : null);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['intervention', taskId] });
+      queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
     },
     onError: (err: Error, variables) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to advance step', err, {
@@ -187,6 +189,8 @@ export function useInterventionActions({
       onInterventionUpdate?.(mapBackendInterventionToFrontend(backendIntervention, taskId ?? ''));
       queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId || '') });
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
     onError: (err: Error, variables) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to finalize intervention', err, {

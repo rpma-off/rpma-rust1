@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useCallback, ReactNode } fro
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ipcClient } from '@/lib/ipc';
-import { interventionKeys } from '@/lib/query-keys';
+import { interventionKeys, taskKeys } from '@/lib/query-keys';
 import type { Intervention, InterventionStep, Task } from '@/lib/backend';
 import type { StepType } from '@/lib/StepType';
 import { useAuth } from '@/shared/hooks/useAuth';
@@ -250,7 +250,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
 
   // Get task data for ppf_zones
   const { data: taskData, isLoading: taskLoading, error: taskError } = useQuery({
-    queryKey: ['task', taskId],
+    queryKey: taskKeys.byId(taskId),
     queryFn: async (): Promise<Task | null> => {
       if (!session?.token || !taskId) return null;
       const result = await ipcClient.tasks.get(taskId);
@@ -397,7 +397,8 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
       toast.success('Intervention finalisée avec succès');
     },
     onError: (error) => {

@@ -42,7 +42,9 @@ export const interventionsIpc = {
       const workflowResponse = result as unknown as { type: string; intervention: Intervention; steps: InterventionStep[] };
       if (workflowResponse.type === 'Started') {
         invalidatePattern('intervention:');
+        invalidatePattern('task:');
         signalMutation('interventions');
+        signalMutation('tasks');
         return validateStartInterventionResponse(workflowResponse);
       }
     }
@@ -119,7 +121,9 @@ export const interventionsIpc = {
       };
       if (progressResponse.type === 'StepAdvanced') {
         invalidatePattern('intervention:');
+        invalidatePattern('task:');
         signalMutation('interventions');
+        signalMutation('tasks');
         return progressResponse;
       }
     }
@@ -218,7 +222,9 @@ export const interventionsIpc = {
       };
       if (workflowResponse.type === 'Finalized') {
         invalidatePattern('intervention:');
+        invalidatePattern('task:');
         signalMutation('interventions');
+        signalMutation('tasks');
         return workflowResponse;
       }
     }
