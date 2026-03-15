@@ -17,7 +17,7 @@ export interface UseAdminUserManagementReturn {
   setShowAddModal: (show: boolean) => void;
   loadUsers: () => Promise<void>;
   addUser: (userData: CreateUserRequest) => Promise<void>;
-  deleteUser: (userId: string, confirmMessage: string) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
   updateUserStatus: (userId: string, isActive: boolean) => Promise<void>;
 }
 
@@ -62,12 +62,8 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     }
   }, [user?.token, loadUsers]);
 
-  const deleteUser = useCallback(async (userId: string, confirmMessage: string) => {
+  const deleteUser = useCallback(async (userId: string) => {
     if (!user?.token) return;
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
 
     try {
       await ipcClient.users.delete(userId);

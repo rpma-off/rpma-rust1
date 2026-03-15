@@ -33,7 +33,7 @@ export function useAdminPage() {
   }, [activeTab, loadUsers]);
 
   const handleDeleteUser = (userId: string) => {
-    adminUserManagement.deleteUser(userId, t('users.confirmDelete'));
+    adminUserManagement.deleteUser(userId);
   };
 
   return {
