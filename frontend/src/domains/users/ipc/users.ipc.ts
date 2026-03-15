@@ -55,7 +55,7 @@ export const userIpc = {
   changeRole: async (userId: string, newRole: string): Promise<void> => {
     return safeInvoke<void>(IPC_COMMANDS.USER_CRUD, {
       request: {
-        action: { ChangeRole: { id: userId, new_role: newRole } },
+        action: { action: 'ChangeRole', id: userId, new_role: newRole },
       }
     });
   },
@@ -71,7 +71,7 @@ export const userIpc = {
   changePassword: async (userId: string, newPassword: string): Promise<void> => {
     return safeInvoke<void>(IPC_COMMANDS.USER_CRUD, {
       request: {
-        action: { ChangePassword: { id: userId, new_password: newPassword } },
+        action: { action: 'ChangePassword', id: userId, new_password: newPassword },
       }
     });
   },
@@ -79,7 +79,7 @@ export const userIpc = {
   banUser: async (userId: string): Promise<JsonValue> => {
     return safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
-        action: { Ban: { id: userId } },
+        action: { action: 'Ban', id: userId },
       }
     });
   },
@@ -87,7 +87,7 @@ export const userIpc = {
   unbanUser: async (userId: string): Promise<JsonValue> => {
     return safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
-        action: { Unban: { id: userId } },
+        action: { action: 'Unban', id: userId },
       }
     });
   },

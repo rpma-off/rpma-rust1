@@ -7,7 +7,6 @@ import {
   Users,
   BarChart3,
   Server,
-  Lock,
   UserCheck,
   Activity,
   Search,
@@ -33,11 +32,6 @@ import {
   AdminUsersTab,
   AdminSystemTab,
 } from '@/domains/admin';
-
-const SecurityDashboard = dynamic(
-  () => import('@/domains/admin').then((mod) => ({ default: mod.SecurityDashboard })),
-  { loading: () => <LoadingState />, ssr: false }
-);
 
 const AddUserModal = dynamic(
   () => import('@/domains/admin').then((mod) => ({ default: mod.AddUserModal })),
@@ -192,10 +186,6 @@ export default function StaffPage() {
               <Server className="h-4 w-4 mr-2" />
               {t('common.system')}
             </TabsTrigger>
-            <TabsTrigger value="security" data-variant="underline">
-              <Lock className="h-4 w-4 mr-2" />
-              {t('settings.security')}
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -222,10 +212,6 @@ export default function StaffPage() {
 
           <TabsContent value="system" className="space-y-6">
             <AdminSystemTab stats={stats} />
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <SecurityDashboard />
           </TabsContent>
         </Tabs>
 
