@@ -1,116 +1,64 @@
-﻿You are a senior software architect and repository analysis engine.
+﻿Analyze my existing codebase and generate the following complete documentation in Markdown format. Use the source code, file structure, dependencies, and patterns used to create accurate and detailed documentation.
+## Documents to create:
 
-Your task is to generate architecture documentation directly from the codebase.
+### 1. README.md
+- Project overview based on code analysis
+- Identified technical stack (frameworks, libraries, database)
+- Detected architecture (monolith, microservices, etc.)
+- Setup instructions derived from config files
+- Available scripts (package.json, Makefile, etc.)
 
-The repository contains Rust services, TypeScript frontend/backend modules, and Architecture Decision Records (ADRs).
+### 2. REQUIREMENTS.md
+- Existing features identified in the code
+- User stories deduced from controllers/routes/components
+- Data models analyzed
+- Third-party integrations detected (APIs, services)
+- Technical constraints observed
+### 3. API.md
+- Endpoints extracted from the code (routes, controllers)
+- HTTP methods used
+- Authentication middleware detected
+- Validation schemas found
+- Response format based on models
 
-You must infer the real architecture from the implementation.
+### 4. DATABASE.md
+- Database schema based on models/migrations
+- Relationships between identified entities
+- Indexes and constraints detected
+- Existing migrations analyzed
 
-IMPORTANT RULES
+### 5. ARCHITECTURE.md
+- Documented folder structure
+- Architectural patterns identified (MVC, Clean Architecture, etc.)
+- Application layers detected
+- Data flows observed in the code
+- Dependencies between modules
 
-1. Scan the entire repository before generating documentation.
-2. Derive architecture from code, not assumptions.
-3. Use ADRs as the source of truth for architectural decisions.
-4. If documentation already exists, update it instead of duplicating it.
-5. Every document must contain a valid frontmatter block.
+### 6. DEPLOYMENT.md
+- Existing deployment configuration (Docker, CI/CD)
+- Environment variables used
+- Build/deployment scripts found
+- External services configured
 
-Frontmatter format:
+### 7. DESIGN.md (if applicable)
+- Identified UI components
+- Styles/CSS/themes used
+- Template/view structure
+- Assets and graphic resources
 
----
+### 8. USER-FLOWS.md
+- User journeys deduced from routes/pages
+- Identified interface states
+- Error handling implemented
+- Observed business workflows
+## Specific instructions:
+- Be precise and factual, basing your comments solely on what exists in the code
+- Use concrete examples taken from the source code
+- Identify any gaps or inconsistencies
+- Suggest improvements where relevant
+- Format correctly in Markdown with clear sections
+- Include ASCII art diagrams where necessary
 
-title: "<Document title>"
-summary: "<Short explanation>"
-read_when:
+Start by analyzing the entire structure of the project, then generate each document in detail.
 
-* <When this doc should be read>
-
----
-
-REPOSITORY ANALYSIS
-
-You must analyze:
-
-RUST
-
-• services
-• modules
-• domain boundaries
-• database access
-• IPC / commands
-• transaction boundaries
-• error types
-• domain events
-
-TYPESCRIPT
-
-• frontend architecture
-• hooks and services
-• IPC calls
-• state management
-• API calls
-• user flows
-
-ADR DOCUMENTS
-
-Find ADR files and extract:
-
-• architecture decisions
-• constraints
-• rules developers must follow
-
-Link ADR decisions to the code where they are implemented.
-
-DOCUMENTATION TO GENERATE
-
-Create documentation -important things for a AGENT AI to know about our codebase. each file should not be more than 300 lines. 
-
-
-CODE ANALYSIS TASKS
-
-While scanning the repository:
-
-Detect modules and services.
-
-Example:
-
-Rust modules in:
-src/
-crates/
-services/
-
-TypeScript modules in:
-frontend/
-web/
-ui/
-app/
-
-Extract:
-
-• module names
-• service responsibilities
-• boundaries between modules
-• communication patterns
-
-ADR ALIGNMENT
-
-For every ADR found:
-
-1. Extract the decision.
-2. Identify the code implementing that decision.
-3. Link ADR → code references.
-
-If an ADR decision is not implemented in code, mention it as a possible drift.
-
-OUTPUT FORMAT
-
-Generate a patch that:
-
-• creates missing docs
-• updates outdated docs
-• adds cross references between code and ADRs
-• ensures all documents follow the frontmatter format
-
-Do not output explanations.
-
-Only output the repository patch.
 
