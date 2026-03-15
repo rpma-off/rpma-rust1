@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronRight, MessageSquare, Users, Package, Workflow, Settings, Activity, Trash2, X, LogOut, User, Shield, HelpCircle, Building2 } from 'lucide-react';
+import { ChevronRight, Users, Package, Workflow, Settings, Activity, Trash2, X, LogOut, User, Shield, HelpCircle, Building2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,7 +20,6 @@ interface NavItem {
 }
 
 const mainItems: NavItem[] = [
-  { href: '/messages', label: 'Centre de messages', icon: <MessageSquare className="h-5 w-5" /> },
   { href: '/staff', label: 'Employés/Ressources', icon: <Users className="h-5 w-5" /> },
   { href: '/inventory', label: 'Inventaire', icon: <Package className="h-5 w-5" /> },
   { href: '/configuration', label: 'Intégrations', icon: <Workflow className="h-5 w-5" /> },
@@ -247,8 +246,7 @@ export function DrawerSidebar({ isOpen, onToggle }: { isOpen: boolean; onToggle:
             isActive(item.href)
               ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
               : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
-            item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
-            item.label === 'Centre de messages' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
+            item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground'
           );
 
             const activeBar = isActive(item.href) ? (
@@ -368,9 +366,8 @@ export function DrawerSidebarMobile({ isOpen, onClose }: { isOpen: boolean; onCl
               isActive(item.href)
                 ? 'bg-[hsl(var(--rpma-surface))] text-foreground font-semibold'
                 : 'text-muted-foreground hover:bg-muted/20 hover:text-foreground',
-              item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground',
-              item.label === 'Centre de messages' && 'border border-border/60 justify-center gap-2 font-medium text-foreground'
-            );
+            item.disabled && 'opacity-50 cursor-not-allowed hover:bg-transparent hover:text-muted-foreground'
+          );
 
             const activeBar = isActive(item.href) ? (
               <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[hsl(var(--rpma-teal))]" />
