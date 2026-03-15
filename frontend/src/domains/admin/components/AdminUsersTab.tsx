@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   CheckCircle,
   Plus,
@@ -19,6 +19,7 @@ import {
   Input,
   LoadingState,
 } from '@/shared/ui/facade';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface AdminUser {
@@ -54,9 +55,25 @@ export function AdminUsersTab({
   onDeleteUser,
 }: AdminUsersTabProps) {
   const { t } = useTranslation();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+
+  const requestDeleteUser = useCallback((user: AdminUser) => {
+    setUserToDelete(user);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (userToDelete) {
+      onDeleteUser(userToDelete.id);
+      setUserToDelete(null);
+      setDeleteConfirmOpen(false);
+    }
+  }, [userToDelete, onDeleteUser]);
 
   return (
-    <Card className="border-[hsl(var(--rpma-border))] bg-white">
+    <>
+      <Card className="border-[hsl(var(--rpma-border))] bg-white">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-foreground">{t('admin.userManagement')}</CardTitle>
@@ -145,7 +162,7 @@ export function AdminUsersTab({
                          <Button
                            variant="outline"
                            size="sm"
-                           onClick={() => onDeleteUser(user.id)}
+                           onClick={() => requestDeleteUser(user)}
                            className="border-red-500/60 text-red-400 hover:bg-red-500/20"
                          >
                            <Trash2 className="h-4 w-4" />
@@ -159,5 +176,20 @@ export function AdminUsersTab({
          </div>
       </CardContent>
     </Card>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(open) => {
+          setDeleteConfirmOpen(open);
+          if (!open) setUserToDelete(null);
+        }}
+        title={t('users.deleteUser')}
+        description={t('users.confirmDelete')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+      />
+    </>
   );
 }

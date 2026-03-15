@@ -97,14 +97,13 @@ describe('useAdminPage', () => {
     });
   });
 
-  it('delegates deletion to the user management hook with a translated confirmation message', () => {
+  it('delegates deletion to the user management hook without confirmation in the hook', () => {
     const { result } = renderHook(() => useAdminPage());
 
     act(() => {
       result.current.handleDeleteUser('user-42');
     });
 
-    expect(mockT).toHaveBeenCalledWith('users.confirmDelete');
-    expect(mockDeleteUser).toHaveBeenCalledWith('user-42', 'translated:users.confirmDelete');
+    expect(mockDeleteUser).toHaveBeenCalledWith('user-42');
   });
 });
