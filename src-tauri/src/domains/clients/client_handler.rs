@@ -1322,7 +1322,10 @@ impl ClientService {
         })
     }
 
-    // Async aliases kept for backward compatibility with existing callers
+    // ── Async aliases ─────────────────────────────────────────────────────────
+    // These are thin forwarders kept for backward compatibility with
+    // `task_client_service.rs` and existing test helpers.
+    // New call-sites should call the base methods directly.
     pub async fn create_client_async(&self, req: CreateClientRequest, user_id: &str) -> Result<Client, String> { self.create_client(req, user_id).await }
     pub async fn get_clients_async(&self, query: ClientQuery) -> Result<ClientListResponse, String> { self.get_clients(query).await }
     pub async fn get_client_async(&self, id: &str) -> Result<Option<Client>, String> { self.get_client(id).await }
@@ -1617,6 +1620,46 @@ impl ClientsFacade {
 }
 
 // ── IPC Handler ───────────────────────────────────────────────────────────────
+//
+// Boundary: everything below this line is thin IPC glue — no business logic.
+// The handler dispatches actions, calls `ClientsFacade`, and returns `ApiResponse`.
+// Any new operation belongs in `ClientService` or `ClientsFacade`, not here.
+
+/// Combine a `Client` with its resolved task list.
+///
+/// Centralises field mapping so that adding/removing a field on `Client`
+/// only requires a change in one place instead of two separate match arms.
+pub(crate) fn client_into_client_with_tasks(client: Client, tasks: Vec<Task>) -> ClientWithTasks {
+    ClientWithTasks {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        customer_type: client.customer_type,
+        address_street: client.address_street,
+        address_city: client.address_city,
+        address_state: client.address_state,
+        address_zip: client.address_zip,
+        address_country: client.address_country,
+        tax_id: client.tax_id,
+        company_name: client.company_name,
+        contact_person: client.contact_person,
+        notes: client.notes,
+        tags: client.tags,
+        total_tasks: client.total_tasks,
+        active_tasks: client.active_tasks,
+        completed_tasks: client.completed_tasks,
+        last_task_date: client.last_task_date,
+        created_at: client.created_at,
+        updated_at: client.updated_at,
+        created_by: client.created_by,
+        deleted_at: client.deleted_at,
+        deleted_by: client.deleted_by,
+        synced: client.synced,
+        last_synced_at: client.last_synced_at,
+        tasks: Some(tasks),
+    }
+}
 
 /// Client CRUD operations
 /// ADR-018: Thin IPC layer
@@ -1738,20 +1781,7 @@ async fn handle_client_with_tasks_retrieval(
             let tasks_response = task_service.get_tasks_async(task_query).await
                 .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-            let client_with_tasks = ClientWithTasks {
-                id: client.id, name: client.name, email: client.email, phone: client.phone,
-                customer_type: client.customer_type, address_street: client.address_street,
-                address_city: client.address_city, address_state: client.address_state,
-                address_zip: client.address_zip, address_country: client.address_country,
-                tax_id: client.tax_id, company_name: client.company_name,
-                contact_person: client.contact_person, notes: client.notes, tags: client.tags,
-                total_tasks: client.total_tasks, active_tasks: client.active_tasks,
-                completed_tasks: client.completed_tasks, last_task_date: client.last_task_date,
-                created_at: client.created_at, updated_at: client.updated_at,
-                created_by: client.created_by, deleted_at: client.deleted_at,
-                deleted_by: client.deleted_by, synced: client.synced,
-                last_synced_at: client.last_synced_at, tasks: Some(tasks),
-            };
+            let client_with_tasks = client_into_client_with_tasks(client, tasks);
             Ok(ApiResponse::success(ClientResponse::FoundWithTasks(client_with_tasks)).with_correlation_id(correlation_id))
         }
         None => { warn!("Client {} not found", id); Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id)) }
@@ -1818,20 +1848,7 @@ async fn handle_client_listing_with_tasks(
         let tasks_response = task_service.get_tasks_async(task_query).await
             .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-        clients_with_tasks.push(ClientWithTasks {
-            id: client.id, name: client.name, email: client.email, phone: client.phone,
-            customer_type: client.customer_type, address_street: client.address_street,
-            address_city: client.address_city, address_state: client.address_state,
-            address_zip: client.address_zip, address_country: client.address_country,
-            tax_id: client.tax_id, company_name: client.company_name,
-            contact_person: client.contact_person, notes: client.notes, tags: client.tags,
-            total_tasks: client.total_tasks, active_tasks: client.active_tasks,
-            completed_tasks: client.completed_tasks, last_task_date: client.last_task_date,
-            created_at: client.created_at, updated_at: client.updated_at,
-            created_by: client.created_by, deleted_at: client.deleted_at,
-            deleted_by: client.deleted_by, synced: client.synced,
-            last_synced_at: client.last_synced_at, tasks: Some(tasks),
-        });
+        clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
     }
     Ok(ApiResponse::success(ClientResponse::ListWithTasks { data: clients_with_tasks }).with_correlation_id(correlation_id))
 }

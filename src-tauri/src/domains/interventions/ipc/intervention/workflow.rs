@@ -155,22 +155,7 @@ pub async fn intervention_workflow(
     let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    let command = match action {
-        InterventionWorkflowAction::Start { data } => {
-            InterventionsCommand::WorkflowStart { request: data }
-        }
-        InterventionWorkflowAction::Get { id } => InterventionsCommand::WorkflowGet { id },
-        InterventionWorkflowAction::GetActiveByTask { task_id } => {
-            InterventionsCommand::WorkflowGetActiveByTask { task_id }
-        }
-        InterventionWorkflowAction::Update { id, data } => {
-            InterventionsCommand::WorkflowUpdate { id, data }
-        }
-        InterventionWorkflowAction::Delete { id } => InterventionsCommand::WorkflowDelete { id },
-        InterventionWorkflowAction::Finalize { data } => {
-            InterventionsCommand::WorkflowFinalize { request: data }
-        }
-    };
+    let command = InterventionsCommand::from(action);
 
     match facade
         .execute(command, &ctx, state.task_service.as_ref())

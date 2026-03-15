@@ -66,8 +66,8 @@ use rpma_ppf_intervention::domains::tasks::domain::models::status::{
 };
 use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
-    CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory,
-    TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
+    BulkImportResponse, CreateTaskRequest, DeleteTaskRequest, PaginationInfo, SortOrder, Task,
+    TaskHistory, TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
     TaskWithDetails, UpdateTaskRequest,
 };
 use rpma_ppf_intervention::shared::contracts::auth::{UserAccount, UserRole, UserSession};
@@ -395,6 +395,10 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &TaskStatistics::export_to_string().expect("Failed to export TaskStatistics type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &BulkImportResponse::export_to_string().expect("Failed to export BulkImportResponse type"),
     );
     type_definitions.push_str("\n\n");
 
@@ -969,6 +973,7 @@ fn main() {
         "PaginatedResult",
         "CacheStats",
         "TaskStatistics",
+        "BulkImportResponse",
         "Photo",
         "PhotoType",
         "PhotoCategory",

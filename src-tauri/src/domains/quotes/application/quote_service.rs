@@ -1,9 +1,9 @@
 //! Quote application service — business logic for quote (devis) management.
 //!
-//! This service handles CRUD operations, status transitions, and
-//! attachment management.  Financial calculations (totals, discounts)
-//! live in [`super::quote_totals`], domain event emission in
-//! [`super::quote_events`].
+//! This service handles CRUD operations and status transitions.
+//! Financial calculations (totals, discounts) live in [`super::quote_totals`],
+//! domain event emission in [`super::quote_events`], and attachment
+//! operations in [`super::quote_attachment_service`].
 //!
 //! Extracted from `infrastructure/quote.rs` to comply with the layered
 //! architecture (ADR-002): business logic belongs in the **application**
@@ -33,6 +33,22 @@ impl QuoteService {
             repo,
             event_bus,
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    /// Fetch a quote by ID with consistent error handling.
+    ///
+    /// Centralises the `find_by_id + map_err + ok_or_else` boilerplate that
+    /// every mutating method needs.  Error text is intentionally generic —
+    /// callers add context via their own status-check messages.
+    fn fetch_quote(&self, id: &str) -> Result<Quote, String> {
+        self.repo
+            .find_by_id(id)
+            .map_err(Self::map_repo_error)?
+            .ok_or_else(|| "Quote not found".to_string())
     }
 
     // ------------------------------------------------------------------
@@ -140,11 +156,7 @@ impl QuoteService {
 
     /// Update a quote (Draft only).
     pub fn update_quote(&self, id: &str, req: UpdateQuoteRequest) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Only draft quotes can be edited".to_string());
@@ -161,19 +173,12 @@ impl QuoteService {
         // Recalculate totals after updating discount
         self.recalculate_totals(id)?;
 
-        self.repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after update".to_string())
+        self.fetch_quote(id)
     }
 
     /// Soft-delete a quote (Draft only).
     pub fn delete_quote(&self, id: &str) -> Result<bool, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Only draft quotes can be deleted".to_string());
@@ -184,11 +189,7 @@ impl QuoteService {
 
     /// Duplicate a quote: create a new Draft with copies of all items.
     pub fn duplicate_quote(&self, id: &str, user_id: &str) -> Result<Quote, String> {
-        let source = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let source = self.fetch_quote(id)?;
 
         let now = Utc::now().timestamp_millis();
         let new_id = crate::shared::utils::uuid::generate_uuid_string();
@@ -254,11 +255,7 @@ impl QuoteService {
         // Recalculate totals (discount re-applied)
         self.recalculate_totals(&new_id)?;
 
-        let result = self
-            .repo
-            .find_by_id(&new_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis dupliqué introuvable.".to_string())?;
+        let result = self.fetch_quote(&new_id)?;
 
         info!(source_id = %id, new_id = %new_id, "Quote duplicated: {}", result.quote_number);
         Ok(result)
@@ -272,11 +269,7 @@ impl QuoteService {
     pub fn add_item(&self, quote_id: &str, req: CreateQuoteItemRequest) -> Result<Quote, String> {
         req.validate()?;
 
-        let quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Items can only be added to draft quotes".to_string());
@@ -303,10 +296,7 @@ impl QuoteService {
         self.repo.add_item(&item).map_err(Self::map_repo_error)?;
         self.recalculate_totals(quote_id)?;
 
-        self.repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after item add".to_string())
+        self.fetch_quote(quote_id)
     }
 
     /// Update a quote item (Draft only).
@@ -316,11 +306,7 @@ impl QuoteService {
         item_id: &str,
         req: UpdateQuoteItemRequest,
     ) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Items can only be updated on draft quotes".to_string());
@@ -332,19 +318,12 @@ impl QuoteService {
 
         self.recalculate_totals(quote_id)?;
 
-        self.repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after item update".to_string())
+        self.fetch_quote(quote_id)
     }
 
     /// Delete a quote item (Draft only).
     pub fn delete_item(&self, quote_id: &str, item_id: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err("Items can only be deleted from draft quotes".to_string());
@@ -356,10 +335,7 @@ impl QuoteService {
 
         self.recalculate_totals(quote_id)?;
 
-        self.repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after item delete".to_string())
+        self.fetch_quote(quote_id)
     }
 
     // ------------------------------------------------------------------
@@ -369,11 +345,7 @@ impl QuoteService {
     /// Mark a quote as sent (Draft → Sent).
     /// Requires at least one item and a non-zero total.
     pub fn mark_sent(&self, id: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
             return Err(format!(
@@ -398,10 +370,7 @@ impl QuoteService {
 
         info!(quote_id = %id, "Quote marked as sent");
 
-        self.repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after status update".to_string())
+        self.fetch_quote(id)
     }
 
     /// Mark a quote as accepted (Sent → Accepted).
@@ -413,11 +382,7 @@ impl QuoteService {
         id: &str,
         accepted_by: &str,
     ) -> Result<QuoteAcceptResponse, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Sent {
             return Err(format!(
@@ -435,11 +400,7 @@ impl QuoteService {
             warn!(quote_id = %id, error = %e, "Failed to emit QuoteAccepted event");
         }
 
-        let updated_quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after acceptance".to_string())?;
+        let updated_quote = self.fetch_quote(id)?;
 
         info!(quote_id = %id, accepted_by = %accepted_by, "Quote accepted");
 
@@ -454,11 +415,7 @@ impl QuoteService {
     /// Rejection is only allowed from `Sent` status (once the quote has been
     /// presented to the customer).  Draft quotes can simply be deleted.
     pub fn mark_rejected(&self, id: &str, rejected_by: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         // Only allow rejection from Sent status
         if quote.status != QuoteStatus::Sent {
@@ -474,11 +431,7 @@ impl QuoteService {
 
         info!(quote_id = %id, rejected_by = %rejected_by, "Quote rejected");
 
-        let updated_quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after rejection".to_string())?;
+        let updated_quote = self.fetch_quote(id)?;
 
         // Emit QuoteRejected event
         if let Err(e) = self.emit_quote_rejected(&updated_quote, rejected_by, None) {
@@ -493,11 +446,7 @@ impl QuoteService {
     /// Can be triggered manually (Admin) or automatically when `valid_until`
     /// is in the past.
     pub fn mark_expired(&self, id: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
             return Err(format!(
@@ -512,21 +461,14 @@ impl QuoteService {
 
         info!(quote_id = %id, "Quote marked as expired");
 
-        self.repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Quote not found after expiry".to_string())
+        self.fetch_quote(id)
     }
 
     /// Mark a quote as changes_requested (Sent → ChangesRequested).
     ///
     /// Signals that the customer has reviewed the quote and requested changes.
     pub fn mark_changes_requested(&self, id: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Sent {
             return Err(format!(
@@ -541,21 +483,14 @@ impl QuoteService {
 
         info!(quote_id = %id, "Quote marked as changes_requested");
 
-        self.repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable après mise à jour du statut".to_string())
+        self.fetch_quote(id)
     }
 
     /// Reopen a quote (ChangesRequested | Rejected → Draft).
     ///
     /// Allows revising a quote that was rejected or needs changes.
     pub fn reopen(&self, id: &str) -> Result<Quote, String> {
-        let quote = self
-            .repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable".to_string())?;
+        let quote = self.fetch_quote(id)?;
 
         if !matches!(
             quote.status,
@@ -573,10 +508,7 @@ impl QuoteService {
 
         info!(quote_id = %id, "Quote reopened as draft");
 
-        self.repo
-            .find_by_id(id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable après réouverture".to_string())
+        self.fetch_quote(id)
     }
 
     // ------------------------------------------------------------------
@@ -597,11 +529,7 @@ impl QuoteService {
         task_id: &str,
         task_number: &str,
     ) -> Result<ConvertQuoteToTaskResponse, String> {
-        let quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable".to_string())?;
+        let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Accepted {
             return Err(format!(
@@ -622,11 +550,7 @@ impl QuoteService {
             warn!(quote_id = %quote_id, error = %e, "Failed to emit QuoteConverted event");
         }
 
-        let updated_quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(Self::map_repo_error)?
-            .ok_or_else(|| "Devis introuvable après conversion".to_string())?;
+        let updated_quote = self.fetch_quote(quote_id)?;
 
         info!(quote_id = %quote_id, task_id = %task_id, "Quote converted to task");
 
@@ -637,117 +561,6 @@ impl QuoteService {
         })
     }
 
-    // ------------------------------------------------------------------
-    // Attachments
-    // ------------------------------------------------------------------
-
-    /// Get all attachments for a quote.
-    pub fn get_attachments(&self, quote_id: &str) -> Result<Vec<QuoteAttachment>, String> {
-        self.repo
-            .find_attachments_by_quote_id(quote_id)
-            .map_err(|e| e.to_string())
-    }
-
-    /// Get a single attachment by its ID.
-    pub fn get_attachment(&self, attachment_id: &str) -> Result<Option<QuoteAttachment>, String> {
-        self.repo
-            .find_attachment_by_id(attachment_id)
-            .map_err(|e| e.to_string())
-    }
-
-    /// Create a new attachment for a quote.
-    pub fn create_attachment(
-        &self,
-        quote_id: &str,
-        req: CreateQuoteAttachmentRequest,
-        user_id: &str,
-    ) -> Result<QuoteAttachment, String> {
-        req.validate()?;
-
-        let _quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Quote not found".to_string())?;
-
-        quote_validation::validate_attachment_file(&req)?;
-
-        let attachment_id = self
-            .repo
-            .create_attachment(quote_id, &req, Some(user_id))
-            .map_err(|e| e.to_string())?;
-
-        let attachment = self
-            .repo
-            .find_attachment_by_id(&attachment_id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Attachment not found after creation".to_string())?;
-
-        info!(
-            quote_id = %quote_id,
-            attachment_id = %attachment_id,
-            file_name = %req.file_name,
-            "Attachment created"
-        );
-
-        Ok(attachment)
-    }
-
-    /// Update an attachment.
-    pub fn update_attachment(
-        &self,
-        quote_id: &str,
-        attachment_id: &str,
-        req: UpdateQuoteAttachmentRequest,
-    ) -> Result<QuoteAttachment, String> {
-        let _quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Quote not found".to_string())?;
-
-        self.repo
-            .update_attachment(attachment_id, quote_id, &req)
-            .map_err(|e| e.to_string())?;
-
-        let attachment = self
-            .repo
-            .find_attachment_by_id(attachment_id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Attachment not found after update".to_string())?;
-
-        info!(
-            quote_id = %quote_id,
-            attachment_id = %attachment_id,
-            "Attachment updated"
-        );
-
-        Ok(attachment)
-    }
-
-    /// Delete an attachment.
-    pub fn delete_attachment(&self, quote_id: &str, attachment_id: &str) -> Result<bool, String> {
-        let _quote = self
-            .repo
-            .find_by_id(quote_id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| "Quote not found".to_string())?;
-
-        let deleted = self
-            .repo
-            .delete_attachment(attachment_id, quote_id)
-            .map_err(|e| e.to_string())?;
-
-        if deleted {
-            info!(
-                quote_id = %quote_id,
-                attachment_id = %attachment_id,
-                "Attachment deleted"
-            );
-        }
-
-        Ok(deleted)
-    }
 }
 
 #[cfg(test)]

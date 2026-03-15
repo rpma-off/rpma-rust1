@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useId, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useId, useMemo } from 'react';
 import { Check, ChevronsUpDown, Plus, User, AlertCircle } from 'lucide-react';
 import { KeyboardNavigation } from '@/lib/accessibility.ts';
 import { cn } from '@/lib/utils';
-import { Client } from '@/lib/backend';
-import { AuthSecureStorage } from '@/lib/secureStorage';
-import { ipcClient } from '@/lib/ipc';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useClientSearch, useClientById } from '../hooks/useClientSearch';
 
 interface ClientSelectorProps {
   value?: string;
@@ -28,94 +26,26 @@ export function ClientSelector({
   className
 }: ClientSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClientCache, setSelectedClientCache] = useState<Client | null>(null);
-  const [selectedInvalid, setSelectedInvalid] = useState(false);
-  const onValueChangeRef = useRef(onValueChange);
-  useEffect(() => { onValueChangeRef.current = onValueChange; }, [onValueChange]);
 
+  const { data: clients = [], isLoading: loading } = useClientSearch(searchQuery);
   const safeClients = useMemo(() => Array.isArray(clients) ? clients : [], [clients]);
-  const selectedClient = safeClients.find(client => client.id === value) ?? selectedClientCache;
 
-  const fetchClients = useCallback(async (query: string = '') => {
-    try {
-      setLoading(true);
-      const session = await AuthSecureStorage.getSession();
-      if (!session.token) {
-        throw new Error('Authentication required');
-      }
-      const result = await ipcClient.clients.list({
-        page: 1,
-        limit: query.trim() ? 20 : 100,
-        search: query.trim() || undefined,
-        sort_by: 'name',
-        sort_order: 'asc',
-      });
-      setClients(Array.isArray(result.data) ? result.data : []);
-    } catch (error) {
-      console.error('Error fetching clients:', error);
-      setClients([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Resolve the pre-selected client when it is not in the search results.
+  const foundInList = safeClients.find(c => c.id === value);
+  const { data: fetchedById } = useClientById(!foundInList ? value : undefined);
 
-  // When value is set but not found in the list, fetch the client by ID
-  useEffect(() => {
-    if (!value) {
-      setSelectedClientCache(null);
-      setSelectedInvalid(false);
-      return;
-    }
-    const foundInList = safeClients.find(c => c.id === value);
-    if (foundInList) {
-      setSelectedClientCache(foundInList);
-      setSelectedInvalid(false);
-      return;
-    }
-    if (loading) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const session = await AuthSecureStorage.getSession();
-        if (!session.token) return;
-        const client = await ipcClient.clients.get(value);
-        if (cancelled) return;
-        if (client) {
-          setSelectedClientCache(client);
-          setSelectedInvalid(false);
-        } else {
-          setSelectedClientCache(null);
-          setSelectedInvalid(true);
-          // Clear the invalid selection so the parent knows
-          onValueChangeRef.current(undefined);
-        }
-      } catch {
-        if (!cancelled) {
-          setSelectedClientCache(null);
-          setSelectedInvalid(false);
-        }
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [value, loading, safeClients]);
-
-  useEffect(() => {
-    fetchClients(searchQuery);
-  }, [searchQuery, fetchClients]);
+  const selectedClient = foundInList ?? fetchedById ?? null;
+  // Mark the selection invalid when the ID was explicitly requested but
+  // the backend returned null (unknown/deleted client).
+  const selectedInvalid = !!value && !loading && fetchedById === null && !foundInList;
 
   const handleSelect = (clientId: string) => {
-    setSelectedInvalid(false);
     onValueChange(clientId === value ? undefined : clientId);
     setOpen(false);
   };
 
   const handleCreateNew = () => {
-    // Open new client form in a new tab or modal
     window.open('/clients/new', '_blank');
   };
 
@@ -125,7 +55,6 @@ export function ClientSelector({
   const labelId = `client-selector-label-${uniqueId}`;
   const listboxId = `client-selector-listbox-${uniqueId}`;
 
-  // Keyboard navigation for dropdown
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Escape') {
       setOpen(false);
@@ -215,7 +144,6 @@ export function ClientSelector({
                   aria-selected={value === client.id}
                   data-highlighted={value === client.id ? "true" : "false"}
                   onKeyDown={(e) => {
-                    // Handle keyboard navigation
                     if (KeyboardNavigation.isActivationKey(e.key)) {
                       handleSelect(client.id);
                       e.preventDefault();
@@ -251,4 +179,3 @@ export function ClientSelector({
     </Popover>
   );
 }
-

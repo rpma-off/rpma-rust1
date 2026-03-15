@@ -13,11 +13,11 @@ use crate::commands::AppError;
 use crate::shared::services::cross_domain::CalendarService;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
+    BulkImportResponse, CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus,
+    UpdateTaskRequest,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
-use crate::domains::tasks::ipc::task::types::BulkImportResponse;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::TasksFacade;
 use crate::shared::context::RequestContext;
@@ -30,11 +30,11 @@ use crate::shared::services::event_bus::{event_factory, EventPublisher, InMemory
 /// high-level operations that combine validation, persistence, and
 /// side-effects (e.g. notification sending).
 pub struct TaskCommandService {
-    task_service: Arc<TaskService>,
-    task_import_service: Arc<TaskImportService>,
-    notification_sender: Arc<dyn NotificationSender>,
-    calendar_service: Arc<CalendarService>,
-    event_bus: Arc<InMemoryEventBus>,
+    pub(super) task_service: Arc<TaskService>,
+    pub(super) task_import_service: Arc<TaskImportService>,
+    pub(super) notification_sender: Arc<dyn NotificationSender>,
+    pub(super) calendar_service: Arc<CalendarService>,
+    pub(super) event_bus: Arc<InMemoryEventBus>,
 }
 
 impl TaskCommandService {
@@ -102,6 +102,12 @@ impl TaskCommandService {
 
     /// Validate a task-scoped message and route it through the notification
     /// service.
+    ///
+    /// # Boundary note
+    /// `ctx.correlation_id` is the single authoritative trace ID for this
+    /// request.  Do NOT add a separate `correlation_id` parameter here; doing
+    /// so risks callers supplying a different value and silently splitting the
+    /// trace (ADR-016).
     #[instrument(skip(self, ctx, raw_body), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
     pub async fn send_message(
         &self,
@@ -109,7 +115,6 @@ impl TaskCommandService {
         task_id: &str,
         raw_body: &str,
         raw_message_type: Option<&str>,
-        correlation_id: Option<String>,
     ) -> Result<String, AppError> {
         let body = raw_body.trim();
         if body.is_empty() {
@@ -156,7 +161,7 @@ impl TaskCommandService {
                 task.client_id.clone(),
                 Some("normal".to_string()),
                 None,
-                correlation_id,
+                Some(ctx.correlation_id.clone()),
             )
             .await?;
 
@@ -169,6 +174,10 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, persist a task issue, and optionally escalate.
+    ///
+    /// # Boundary note
+    /// Use `ctx.correlation_id` for trace continuity.  The parameter was
+    /// removed to prevent trace-splitting (see `send_message` note above).
     #[instrument(skip(self, ctx, raw_description), fields(user_id = %ctx.auth.user_id, task_id = %task_id, issue_type = %raw_issue_type))]
     pub async fn report_issue(
         &self,
@@ -177,7 +186,6 @@ impl TaskCommandService {
         raw_issue_type: &str,
         raw_description: &str,
         raw_severity: Option<&str>,
-        correlation_id: Option<String>,
     ) -> Result<String, AppError> {
         let issue_type = raw_issue_type.trim();
         let description = raw_description.trim();
@@ -217,7 +225,7 @@ impl TaskCommandService {
                     task.client_id.clone(),
                     Some("high".to_string()),
                     None,
-                    correlation_id,
+                    Some(ctx.correlation_id.clone()),
                 )
                 .await
             {
@@ -594,77 +602,6 @@ impl TaskCommandService {
             })?;
         info!(task_id = %task_id, correlation_id = %ctx.correlation_id, "Task deleted");
         Ok(())
-    }
-
-    // ------------------------------------------------------------------
-    // task_crud helpers - notification side-effects
-    // ------------------------------------------------------------------
-
-    /// Send an in-app notification when a task is assigned to a technician
-    /// other than the current user.
-    #[instrument(skip(self), fields(task_id = %task.id, user_id = %current_user_id))]
-    pub async fn notify_assignment(
-        &self,
-        task: &Task,
-        current_user_id: &str,
-        correlation_id: &str,
-    ) {
-        if let Some(technician_id) = &task.technician_id {
-            if technician_id != current_user_id {
-                if let Err(e) = self
-                    .notification_sender
-                    .send_message_raw(
-                        "in_app".to_string(),
-                        Some(technician_id.clone()),
-                        None,
-                        None,
-                        Some(format!("Nouvelle tache assignee: {}", task.title)),
-                        format!("La tache '{}' vous a ete assignee.", task.title),
-                        Some(task.id.clone()),
-                        task.client_id.clone(),
-                        Some("normal".to_string()),
-                        None,
-                        Some(correlation_id.to_string()),
-                    )
-                    .await
-                {
-                    error!("Failed to create task assignment notification: {}", e);
-                }
-            }
-        }
-    }
-
-    /// Send an in-app notification when a task's status changes.
-    #[instrument(skip(self), fields(task_id = %task.id, user_id = %current_user_id))]
-    pub async fn notify_status_change(
-        &self,
-        task: &Task,
-        current_user_id: &str,
-        correlation_id: &str,
-    ) {
-        let status = task.status.to_string();
-        if let Err(e) = self
-            .notification_sender
-            .send_message_raw(
-                "in_app".to_string(),
-                Some(current_user_id.to_string()),
-                None,
-                None,
-                Some(format!("Statut de tache mis a jour: {}", task.title)),
-                format!(
-                    "Le statut de la tache '{}' est maintenant '{}'.",
-                    task.title, status
-                ),
-                Some(task.id.clone()),
-                task.client_id.clone(),
-                Some("normal".to_string()),
-                None,
-                Some(correlation_id.to_string()),
-            )
-            .await
-        {
-            error!("Failed to create task update notification: {}", e);
-        }
     }
 
     // ------------------------------------------------------------------

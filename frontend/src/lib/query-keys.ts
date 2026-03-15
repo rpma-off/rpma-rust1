@@ -14,6 +14,7 @@ export const taskKeys = {
   all: ['tasks'],
   lists: () => [...taskKeys.all, 'list'],
   byId: (taskId: string) => [...taskKeys.all, taskId],
+  history: (taskId: string) => [...taskKeys.all, taskId, 'history'],
 };
 
 export const quoteKeys = {
@@ -32,6 +33,12 @@ export const notificationKeys = {
   all: ['notifications'],
   lists: () => [...notificationKeys.all, 'list'],
   byId: (notificationId: string) => [...notificationKeys.all, notificationId],
+};
+
+export const clientKeys = {
+  all: ['clients'],
+  list: () => [...clientKeys.all, 'list'],
+  stats: () => [...clientKeys.all, 'stats'],
 };
 
 export const inventoryKeys = {

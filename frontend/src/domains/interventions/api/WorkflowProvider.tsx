@@ -109,6 +109,8 @@ export function WorkflowProvider({
   initialWorkflow?: PPFInterventionData | null;
 }) {
   const { user } = useAuth();
+
+  // ── State ──────────────────────────────────────────────────────────────────
   const [workflow, setWorkflow] = useState<WorkflowExecution | null>(null);
   const [steps, setSteps] = useState<WorkflowExecutionStep[]>([]);
   const [currentStep, setCurrentStep] = useState<WorkflowExecutionStep | null>(null);
@@ -116,6 +118,7 @@ export function WorkflowProvider({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
 
+  // ── Service ────────────────────────────────────────────────────────────────
   // Use lazy import to avoid circular dependency between interventions and tasks domains
   const workflowServiceRef = useRef<ReturnType<typeof getWorkflowServiceInstance> | null>(null);
 
@@ -171,7 +174,7 @@ export function WorkflowProvider({
     if (!user) return;
     
     try {
-      console.info('ðŸ” WorkflowContext: Loading workflow for task:', taskId);
+      console.info('[WorkflowContext] Loading workflow for task:', taskId);
       // Guard: if the same task is currently loading, skip duplicate call
       if (loadInProgressRef.current === taskId) {
         return;
@@ -183,19 +186,19 @@ export function WorkflowProvider({
       const workflowData = await workflowService.getWorkflowByTaskId(taskId);
       
       if (workflowData) {
-        console.info('âœ… WorkflowContext: Workflow loaded:', workflowData);
+        console.info('[WorkflowContext] Workflow loaded:', workflowData);
         setWorkflow(workflowData);
         
         // Load steps for this workflow
         const stepsData = await workflowService.getWorkflowSteps(workflowData.id);
         setSteps(stepsData || []);
       } else {
-        console.info('âš ï¸ WorkflowContext: No workflow found for task:', taskId);
+        console.info('[WorkflowContext] No workflow found for task:', taskId);
         setWorkflow(null);
         setSteps([]);
       }
     } catch (error: unknown) {
-      console.error('âŒ WorkflowContext: Error loading workflow:', error);
+      console.error('[WorkflowContext] Error loading workflow:', error);
       setError(normalizeError(error));
     } finally {
       setIsLoading(false);
@@ -204,10 +207,11 @@ export function WorkflowProvider({
     }
   }, [user, workflowService]);
 
+  // ── Effects ───────────────────────────────────────────────────────────────
   // Load workflow when component mounts or taskId changes, or use initialWorkflow
   useEffect(() => {
     if (initialWorkflow) {
-      console.info('âœ¨ WorkflowContext: Using initial workflow from props.');
+      console.info('[WorkflowContext] Using initial workflow from props.');
       setWorkflow(mapPPFInterventionToWorkflowExecution(initialWorkflow));
       setSteps(initialWorkflow.steps?.map(mapPpfStepToWorkflowExecutionStep) || []);
     } else if (taskId && user) {
@@ -257,6 +261,7 @@ export function WorkflowProvider({
     setProgress(progressMap);
   }, [progressMap]);
 
+  // ── Step handlers ─────────────────────────────────────────────────────────
   const startTiming = useCallback(async (stepId: string) => {
     if (!workflow || !user) return;
     
@@ -517,6 +522,7 @@ export function WorkflowProvider({
     }
   }, [workflow, user, workflowService, steps, currentStep]);
 
+  // ── Status helpers ────────────────────────────────────────────────────────
   // Status helper methods
   const isStepComplete = useCallback((stepId: string): boolean => {
     return progress[stepId]?.status === 'completed';

@@ -4,6 +4,7 @@
 //! contracts for external consumers.
 
 mod contracts;
+mod quote_attachment_service;
 mod quote_events;
 pub(crate) mod quote_export_service;
 pub(crate) mod quote_service;

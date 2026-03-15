@@ -38,15 +38,40 @@ export function useInterventionActions({
 }: UseInterventionActionsProps = {}) {
   const queryClient = useQueryClient();
 
+  // ── Session guard ───────────────────────────────────────────────────────────
+  //
+  // All mutations require an active authenticated session.  Centralise the
+  // check here so that each mutationFn does not duplicate the async
+  // getSession() call.  If the invariant breaks (token missing at mutation
+  // time) we surface a consistent error before any IPC call is made.
+  //
+  // Do NOT remove this helper or inline it per-mutation — that was the fragile
+  // pattern we replaced.
+  async function getRequiredSessionToken(): Promise<string> {
+    const session = await AuthSecureStorage.getSession();
+    if (!session?.token) {
+      throw new Error('Vous devez être connecté pour effectuer cette action');
+    }
+    return session.token;
+  }
+
+  // ── Cache helpers ───────────────────────────────────────────────────────────
+  //
+  // Guard against empty-string cache keys: `interventionKeys.byTask('')`
+  // produces a valid but wrong key that can pollute unrelated cache entries
+  // when taskId is undefined.
+  function invalidateInterventionCaches(resolvedTaskId: string) {
+    if (!resolvedTaskId) return;
+    queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(resolvedTaskId) });
+    queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(resolvedTaskId) });
+    queryClient.invalidateQueries({ queryKey: taskKeys.byId(resolvedTaskId) });
+    queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+  }
+
   // Create intervention mutation
   const createInterventionMutation = useMutation<InterventionCreationResponse, Error, StartInterventionDTO>({
     mutationFn: async (data: StartInterventionDTO) => {
-      const session = await AuthSecureStorage.getSession();
-      const sessionToken = session.token;
-
-      if (!sessionToken) {
-        throw new Error('Vous devez être connecté pour démarrer une intervention');
-      }
+      await getRequiredSessionToken();
 
       const result = await InterventionWorkflowService.startIntervention(data.taskId!, data);
 
@@ -72,10 +97,7 @@ export function useInterventionActions({
                     mappedSteps.find(s => s.step_number === responseData.intervention?.currentStep) ||
                     mappedSteps[0] || null);
 
-      queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      invalidateInterventionCaches(taskId ?? '');
     },
     onError: (err: Error) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to create intervention', err, { task_id: taskId });
@@ -91,12 +113,7 @@ export function useInterventionActions({
         throw new Error('Intervention ID is required');
       }
 
-      const session = await AuthSecureStorage.getSession();
-      const sessionToken = session.token;
-
-      if (!sessionToken) {
-        throw new Error('Vous devez être connecté pour avancer une étape');
-      }
+      await getRequiredSessionToken();
 
       const apiData = {
         intervention_id,
@@ -145,7 +162,9 @@ export function useInterventionActions({
         } : null);
       }
 
-      queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
+      if (taskId) {
+        queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId) });
+      }
     },
     onError: (err: Error, variables) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to advance step', err, {
@@ -160,12 +179,8 @@ export function useInterventionActions({
   const finalizeInterventionMutation = useMutation<InterventionFinalizationResponse, Error, FinalizeInterventionDTO>({
     mutationFn: async (data: FinalizeInterventionDTO) => {
       const intervention_id = data.interventionId || data.intervention_id;
-      const session = await AuthSecureStorage.getSession();
-      const sessionToken = session.token;
 
-      if (!sessionToken) {
-        throw new Error('Vous devez être connecté pour finaliser une intervention');
-      }
+      await getRequiredSessionToken();
 
       const apiData = {
         intervention_id,
@@ -187,10 +202,7 @@ export function useInterventionActions({
     onSuccess: (result) => {
       const backendIntervention = result.intervention as unknown as BackendIntervention;
       onInterventionUpdate?.(mapBackendInterventionToFrontend(backendIntervention, taskId ?? ''));
-      queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId || '') });
-      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      invalidateInterventionCaches(taskId ?? '');
     },
     onError: (err: Error, variables) => {
       logger.error(LogDomain.TASK, 'PPF Workflow: Failed to finalize intervention', err, {

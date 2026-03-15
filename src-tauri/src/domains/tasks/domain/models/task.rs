@@ -622,3 +622,14 @@ impl TaskHistory {
         }
     }
 }
+
+/// Response returned to the frontend after a bulk CSV import operation.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct BulkImportResponse {
+    pub total_processed: u32,
+    pub successful: u32,
+    pub failed: u32,
+    pub errors: Vec<String>,
+    pub duplicates_skipped: u32,
+}
