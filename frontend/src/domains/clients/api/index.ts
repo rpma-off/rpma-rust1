@@ -53,6 +53,7 @@ export type {
   Technician,
   UseClientsReturn,
   ClientFilters,
+  UseClientsOptions,
   UseClientReturn,
   UseClientStatsReturn,
 } from './types';

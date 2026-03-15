@@ -7,6 +7,6 @@ export type {
 
 export type { Technician } from '../server';
 
-export type { UseClientsReturn, ClientFilters } from '../hooks/useClients';
+export type { UseClientsReturn, ClientFilters, UseClientsOptions } from '../hooks/useClients';
 export type { UseClientReturn } from '../hooks/useClient';
 export type { UseClientStatsReturn } from '../hooks/useClientStats';

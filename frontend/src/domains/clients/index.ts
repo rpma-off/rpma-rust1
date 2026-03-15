@@ -15,4 +15,4 @@ export { ClientList } from './components/ClientList';
 export { ClientSelector } from './components/ClientSelector';
 export { ClientService, clientService, ClientCreationService, TechnicianService } from './server';
 export { clientIpc } from './ipc';
-export type { Client, ClientWithTasks, ClientStatistics, CustomerType, Technician, UseClientsReturn, ClientFilters, UseClientReturn, UseClientStatsReturn } from './api/types';
+export type { Client, ClientWithTasks, ClientStatistics, CustomerType, Technician, UseClientsReturn, ClientFilters, UseClientsOptions, UseClientReturn, UseClientStatsReturn } from './api/types';

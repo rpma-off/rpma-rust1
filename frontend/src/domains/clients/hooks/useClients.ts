@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { ClientWithTasks, CustomerType } from '@/lib/backend';
 import { useMutationCounter } from '@/lib/data-freshness';
+import { clientKeys } from '@/lib/query-keys';
 import { LogDomain } from '@/lib/logging/types';
 import { useLogger } from '@/shared/hooks/useLogger';
 import { normalizeError } from '@/types/utility.types';
@@ -77,7 +78,7 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
   });
 
   const clientsQuery = useQuery({
-    queryKey: ['clients', 'list', filters, limitTasks, clientsMutations],
+    queryKey: [...clientKeys.list(), filters, limitTasks, clientsMutations],
     queryFn: async () => {
       if (!user?.token) throw new Error('Not authenticated');
       logInfo('Fetching clients with tasks', { filters });
@@ -101,7 +102,7 @@ export const useClients = (options: UseClientsOptions = {}): UseClientsReturn =>
   });
 
   const statsQuery = useQuery({
-    queryKey: ['clients', 'stats', clientsMutations],
+    queryKey: [...clientKeys.stats(), clientsMutations],
     queryFn: async () => {
       if (!user?.token) throw new Error('Not authenticated');
       const response = await clientService.getClientStats(user.token);
