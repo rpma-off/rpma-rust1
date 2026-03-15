@@ -1,4 +1,5 @@
 import { Client } from '@/lib/backend';
+import { normalizeOptionalText } from '@/lib/utils/validation-utils';
 import { ClientService } from './client.service';
 
 export class ClientCreationService {
@@ -23,8 +24,8 @@ export class ClientCreationService {
       // Create new client
       const clientData = {
         name: customerData.name.trim(),
-        email: customerData.email?.trim(),
-        phone: customerData.phone?.replace(/\s/g, ''),
+        email: normalizeOptionalText(customerData.email) ?? undefined,
+        phone: customerData.phone?.replace(/\s/g, '') || undefined,
         customer_type: 'individual' as const
       };
 

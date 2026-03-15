@@ -16,33 +16,55 @@ export function useTaskActions(task: TaskWithDetails) {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  // ── Optimistic update helpers ─────────────────────────────────────────────
+  //
+  // All field-level task mutations use the same optimistic update pattern:
+  // 1. Cancel in-flight queries for this task
+  // 2. Apply the optimistic value immediately to the cache
+  // 3. Roll back on error
+  // 4. Re-fetch on settled
+  //
+  // `makeOptimisticMutationHandlers` captures that boilerplate once.
+  // Individual mutations only specify *what* to patch and *what to say* on error.
+  function makeOptimisticMutationHandlers<V>(opts: {
+    getOptimisticPatch: (value: V) => Record<string, unknown>;
+    errorToast: string;
+    errorLabel: string;
+  }) {
+    return {
+      onMutate: async (value: V) => {
+        await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
+        const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
+        queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
+          if (!old || typeof old !== 'object') return old;
+          return { ...(old as Record<string, unknown>), ...opts.getOptimisticPatch(value) };
+        });
+        return { previousTask };
+      },
+      onError: (error: Error, _value: V, context?: { previousTask: unknown }) => {
+        if (context?.previousTask !== undefined) {
+          queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
+        }
+        toast.error(opts.errorToast);
+        console.error(opts.errorLabel, error);
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
+      },
+    };
+  }
+
   const updateStatusMutation = useMutation({
     mutationFn: async (newStatus: TaskStatus) => {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createStatusUpdate(newStatus));
     },
-    onMutate: async (newStatus: TaskStatus) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
-      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
-      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
-        if (!old || typeof old !== 'object') return old;
-        return { ...(old as Record<string, unknown>), status: newStatus };
-      });
-      return { previousTask };
-    },
-    onSuccess: () => {
-      toast.success('Statut mis a jour avec succes');
-    },
-    onError: (error, _newStatus, context) => {
-      if (context?.previousTask !== undefined) {
-        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
-      }
-      toast.error('Erreur lors de la mise a jour du statut');
-      console.error('Status update error:', error);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
-    },
+    onSuccess: () => { toast.success('Statut mis a jour avec succes'); },
+    ...makeOptimisticMutationHandlers<TaskStatus>({
+      getOptimisticPatch: (s) => ({ status: s }),
+      errorToast: 'Erreur lors de la mise a jour du statut',
+      errorLabel: 'Status update error:',
+    }),
   });
 
   const updatePriorityMutation = useMutation({
@@ -50,28 +72,12 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createPriorityUpdate(newPriority));
     },
-    onMutate: async (newPriority: TaskPriority) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
-      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
-      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
-        if (!old || typeof old !== 'object') return old;
-        return { ...(old as Record<string, unknown>), priority: newPriority };
-      });
-      return { previousTask };
-    },
-    onSuccess: () => {
-      toast.success('Priorite mise a jour avec succes');
-    },
-    onError: (error, _newPriority, context) => {
-      if (context?.previousTask !== undefined) {
-        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
-      }
-      toast.error('Erreur lors de la mise a jour de la priorite');
-      console.error('Priority update error:', error);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
-    },
+    onSuccess: () => { toast.success('Priorite mise a jour avec succes'); },
+    ...makeOptimisticMutationHandlers<TaskPriority>({
+      getOptimisticPatch: (p) => ({ priority: p }),
+      errorToast: 'Erreur lors de la mise a jour de la priorite',
+      errorLabel: 'Priority update error:',
+    }),
   });
 
   const assignToMeMutation = useMutation({
@@ -79,31 +85,12 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.assignTask(task.id, user.id);
     },
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
-      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
-      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
-        if (!old || typeof old !== 'object') return old;
-        return {
-          ...(old as Record<string, unknown>),
-          technician_id: user?.id,
-        };
-      });
-      return { previousTask };
-    },
-    onSuccess: () => {
-      toast.success('Tache assignee avec succes');
-    },
-    onError: (error, _vars, context) => {
-      if (context?.previousTask !== undefined) {
-        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
-      }
-      toast.error('Erreur lors de l\'assignation');
-      console.error('Assignment error:', error);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
-    },
+    onSuccess: () => { toast.success('Tache assignee avec succes'); },
+    ...makeOptimisticMutationHandlers<void>({
+      getOptimisticPatch: () => ({ technician_id: user?.id }),
+      errorToast: 'Erreur lors de l\'assignation',
+      errorLabel: 'Assignment error:',
+    }),
   });
 
   const updateNotesMutation = useMutation({
@@ -111,28 +98,12 @@ export function useTaskActions(task: TaskWithDetails) {
       if (!user?.token) throw new Error('Utilisateur non authentifie');
       return await taskService.updateTask(task.id, createNotesUpdate(notes));
     },
-    onMutate: async (notes: string) => {
-      await queryClient.cancelQueries({ queryKey: taskKeys.byId(task.id) });
-      const previousTask = queryClient.getQueryData(taskKeys.byId(task.id));
-      queryClient.setQueryData(taskKeys.byId(task.id), (old: unknown) => {
-        if (!old || typeof old !== 'object') return old;
-        return { ...(old as Record<string, unknown>), notes };
-      });
-      return { previousTask };
-    },
-    onSuccess: () => {
-      toast.success('Notes mises a jour avec succes');
-    },
-    onError: (error, _notes, context) => {
-      if (context?.previousTask !== undefined) {
-        queryClient.setQueryData(taskKeys.byId(task.id), context.previousTask);
-      }
-      toast.error('Erreur lors de la mise a jour des notes');
-      console.error('Notes update error:', error);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
-    },
+    onSuccess: () => { toast.success('Notes mises a jour avec succes'); },
+    ...makeOptimisticMutationHandlers<string>({
+      getOptimisticPatch: (n) => ({ notes: n }),
+      errorToast: 'Erreur lors de la mise a jour des notes',
+      errorLabel: 'Notes update error:',
+    }),
   });
 
   const startInterventionMutation = useMutation({
