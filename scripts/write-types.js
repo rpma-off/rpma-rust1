@@ -10,6 +10,10 @@ let data = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => { data += chunk; });
 process.stdin.on('end', () => {
+  if (!data.trim()) {
+    process.stderr.write('❌ write-types.js received empty input — backend.ts NOT overwritten\n');
+    process.exit(1);
+  }
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, data);
   process.stderr.write(`✅ Types written to ${outputPath}\n`);
