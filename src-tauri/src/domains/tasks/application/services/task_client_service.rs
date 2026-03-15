@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use crate::commands::AppError;
-use crate::shared::services::cross_domain::ClientService;
+use crate::shared::contracts::client_ops::ClientResolver;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{TaskQuery, TaskStatus, TaskPriority, SortOrder};
 use crate::domains::tasks::infrastructure::task::TaskService;
@@ -20,11 +20,11 @@ use crate::shared::contracts::auth::UserRole;
 /// Orchestrates task-client integration queries and relationship operations.
 pub struct TaskClientService {
     task_service: Arc<TaskService>,
-    client_service: Arc<ClientService>,
+    client_service: Arc<dyn ClientResolver>,
 }
 
 impl TaskClientService {
-    pub fn new(task_service: Arc<TaskService>, client_service: Arc<ClientService>) -> Self {
+    pub fn new(task_service: Arc<TaskService>, client_service: Arc<dyn ClientResolver>) -> Self {
         Self {
             task_service,
             client_service,
@@ -84,7 +84,7 @@ impl TaskClientService {
 
         let empty_id = String::new();
         for task_with_client in &tasks_with_clients.data {
-            let client_details = if include_client_details {
+            let client_contact_info = if include_client_details {
                 let client_id = task_with_client
                     .task
                     .client_id
@@ -94,7 +94,7 @@ impl TaskClientService {
                     None
                 } else {
                     self.client_service
-                        .get_client_async(client_id)
+                        .get_client_contact(client_id)
                         .await
                         .ok()
                         .flatten()
@@ -114,8 +114,8 @@ impl TaskClientService {
                     .as_ref()
                     .map(|c| c.name.clone())
                     .unwrap_or_default(),
-                client_contact: client_details.as_ref().and_then(|c| c.email.clone()),
-                client_region: client_details.as_ref().and_then(|c| c.address_state.clone()),
+                client_contact: client_contact_info.as_ref().and_then(|c| c.email.clone()),
+                client_region: client_contact_info.as_ref().and_then(|c| c.address_state.clone()),
                 client_priority: Some("standard".to_string()),
                 relationship_status,
             });
@@ -156,14 +156,18 @@ impl TaskClientService {
             )));
         }
 
-        let _client = self
+        let exists = self
             .client_service
-            .get_client_async(client_id)
+            .client_exists(client_id)
             .await
             .map_err(|e| {
-                debug!("Client not found: {}", e);
+                debug!("Client lookup failed: {}", e);
                 AppError::NotFound(format!("Client not found: {}", client_id))
             })?;
+
+        if !exists {
+            return Err(AppError::NotFound(format!("Client not found: {}", client_id)));
+        }
 
         Ok(())
     }

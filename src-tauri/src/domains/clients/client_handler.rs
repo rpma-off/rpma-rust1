@@ -1335,6 +1335,27 @@ impl ClientService {
     pub async fn get_client_stats_async(&self) -> Result<ClientStats, String> { self.get_client_stats().await }
 }
 
+// ── ClientResolver contract implementation ───────────────────────────────────
+
+#[async_trait::async_trait]
+impl crate::shared::contracts::client_ops::ClientResolver for ClientService {
+    async fn get_client_contact(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::shared::contracts::client_ops::ClientContactInfo>, String> {
+        Ok(self.get_client_async(id).await?.map(|c| {
+            crate::shared::contracts::client_ops::ClientContactInfo {
+                email: c.email,
+                address_state: c.address_state,
+            }
+        }))
+    }
+
+    async fn client_exists(&self, id: &str) -> Result<bool, String> {
+        Ok(self.get_client_async(id).await?.is_some())
+    }
+}
+
 // ── Validation Service (used by tests) ───────────────────────────────────────
 
 /// Service for client validation operations

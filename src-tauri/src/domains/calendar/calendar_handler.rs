@@ -1330,6 +1330,22 @@ pub async fn calendar_schedule_task(
     }
 }
 
+// ── TaskScheduler contract implementation ────────────────────────────────────
+
+#[async_trait::async_trait]
+impl crate::shared::contracts::task_scheduler::TaskScheduler for CalendarService {
+    async fn schedule_task(
+        &self,
+        task_id: String,
+        new_date: String,
+        new_start: Option<String>,
+        new_end: Option<String>,
+        user_id: &str,
+    ) -> Result<(), crate::shared::ipc::errors::AppError> {
+        CalendarService::schedule_task(self, task_id, new_date, new_start, new_end, user_id).await
+    }
+}
+
 // ── Inline tests (migrated from infrastructure/calendar.rs) ──────────────────
 
 #[cfg(test)]

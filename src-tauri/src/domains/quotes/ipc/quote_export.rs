@@ -6,7 +6,7 @@
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::quotes::application::quote_export_service::QuoteExportService;
 use crate::domains::quotes::domain::models::quote::*;
-use tracing::{debug, instrument, Span};
+use tracing::{debug, error, instrument, Span};
 
 use crate::resolve_context;
 use crate::domains::quotes::application::{QuoteConvertToTaskRequest, QuoteGetRequest};
@@ -15,7 +15,6 @@ use crate::domains::quotes::application::{QuoteConvertToTaskRequest, QuoteGetReq
 fn export_service(state: &AppState<'_>) -> QuoteExportService {
     QuoteExportService::new(
         state.quote_service.clone(),
-        state.task_service.clone(),
         state.app_data_dir.clone(),
     )
 }
@@ -58,9 +57,23 @@ pub async fn quote_convert_to_task(
         tracing::field::display(ctx.user_id()),
     );
 
-    let result = export_service(&state)
-        .convert_to_task(&request, &ctx)
-        .await?;
+    let svc = export_service(&state);
+
+    // Step 1: build task request inside quotes domain.
+    let create_req = svc.build_task_request(&request, &ctx)?;
+
+    // Step 2: create the task — cross-domain call at the IPC/composition layer.
+    let task = state
+        .task_service
+        .create_task_async(create_req, ctx.user_id())
+        .await
+        .map_err(|e| {
+            error!(error = %e, "Failed to create task from quote");
+            AppError::Internal("Impossible de créer la tâche à partir du devis.".to_string())
+        })?;
+
+    // Step 3: record the quote→task link inside quotes domain.
+    let result = svc.record_task_conversion(&request, &task.id, &task.task_number, &ctx)?;
 
     Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

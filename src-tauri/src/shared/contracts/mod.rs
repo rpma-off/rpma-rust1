@@ -1,6 +1,9 @@
 ﻿pub mod auth;
+pub mod client_ops;
 pub mod common;
 pub mod notification;
+pub mod photo;
 pub mod prediction;
 pub mod task_assignment;
+pub mod task_scheduler;
 pub mod user_account;
