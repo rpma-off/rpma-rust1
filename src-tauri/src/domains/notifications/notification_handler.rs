@@ -6,6 +6,7 @@ use tracing::{error, info, instrument};
 use lazy_static::lazy_static;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use rusqlite::params;
 
 use crate::commands::{ApiResponse, AppError, AppState, init_correlation_context};
@@ -1244,7 +1245,8 @@ impl NotificationHelper {
 
 // ── IPC command structs ───────────────────────────────────────────────────────
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct UpdateNotificationConfigRequest {
     pub quiet_hours_start: Option<String>,
     pub quiet_hours_end: Option<String>,

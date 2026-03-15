@@ -11,6 +11,8 @@ export { useInterventionActions } from './useInterventionActions';
 /** TODO: document */
 export { useInstallationStep, ZONE_CHECKLIST } from '../hooks/useInstallationStep';
 /** TODO: document */
+export { useInterventionPhotos } from '../hooks/useInterventionPhotos';
+/** TODO: document */
 export { usePpfWorkflow } from '../hooks/usePpfWorkflow';
 
 /** TODO: document */

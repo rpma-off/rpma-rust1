@@ -13,10 +13,9 @@ use rpma_ppf_intervention::domains::clients::client_handler::{
     Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
     CreateClientRequest, CustomerType, UpdateClientRequest,
 };
-use rpma_ppf_intervention::domains::documents::domain::models::photo::{
-    Photo, PhotoCategory, PhotoType,
+use rpma_ppf_intervention::domains::documents::models::{
+    InterventionReport, InterventionReportResult, Photo, PhotoCategory, PhotoType, ReportCapabilities,
 };
-use rpma_ppf_intervention::domains::documents::domain::models::report_export::InterventionReportResult;
 use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
     BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
     InterventionStatus, InterventionType,
@@ -33,12 +32,10 @@ use rpma_ppf_intervention::domains::inventory::domain::models::material::{
 use rpma_ppf_intervention::domains::inventory::domain::models::material_ts::{
     InventoryTransactionTS, MaterialConsumptionTS, MaterialTS,
 };
-use rpma_ppf_intervention::domains::notifications::domain::models::message::{
+use rpma_ppf_intervention::domains::notifications::models::{
     Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus, MessageTemplate,
     MessageTemplateRequest, MessageType, NotificationPreferences, SendMessageRequest,
     UpdateNotificationPreferencesRequest,
-};
-use rpma_ppf_intervention::domains::notifications::domain::models::notification::{
     Notification, NotificationChannel, NotificationConfig, NotificationMessage,
     NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
     TemplateVariables,
@@ -49,16 +46,16 @@ use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
     QuoteExportResponse, QuoteItem, QuoteItemKind, QuoteListResponse, QuoteQuery, QuoteStatus,
     TaskCreatedInfo, UpdateQuoteAttachmentRequest, UpdateQuoteItemRequest, UpdateQuoteRequest,
 };
-use rpma_ppf_intervention::domains::reports::domain::models::intervention_report::InterventionReport;
-use rpma_ppf_intervention::domains::reports::domain::models::report_capabilities::ReportCapabilities;
-use rpma_ppf_intervention::domains::settings::domain::models::settings::{
+use rpma_ppf_intervention::domains::settings::{
     AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
     DiagnosticSettings, GeneralSettings, IntegrationSettings, NotificationSettings,
     PerformanceSettings, SecuritySettings, StorageSettings, SystemConfiguration,
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
+    CreateOrganizationRequest, OnboardingData, OnboardingStatus, Organization, OrganizationSetting,
+    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest,
 };
-use rpma_ppf_intervention::domains::sync::domain::models::sync::{
+use rpma_ppf_intervention::shared::contracts::sync::{
     EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
 };
 use rpma_ppf_intervention::domains::tasks::domain::models::status::{
@@ -75,11 +72,6 @@ use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
 };
 use rpma_ppf_intervention::shared::contracts::prediction::CompletionTimePrediction;
-
-use rpma_ppf_intervention::domains::settings::domain::models::organization::{
-    CreateOrganizationRequest, OnboardingData, OnboardingStatus, Organization, OrganizationSetting,
-    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest,
-};
 
 use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
 
@@ -1081,25 +1073,17 @@ fn main() {
         "UpdateOrganizationSettingsRequest",
     ];
 
-    // Post-process: remove import statements for types that are defined in this file
+    // Post-process: remove all relative `import type` statements.
+    // This is a single-file bundle — every type is defined here, so no
+    // cross-file imports are needed (and they would break because the
+    // individual `.ts` files don't exist alongside backend.ts).
+    let _ = exported_types; // keep the list for documentation; no longer used in matching
     let mut processed_definitions = String::new();
 
     for line in type_definitions.lines() {
-        let mut should_skip = false;
-
-        // Check if this line is an import for a type we're exporting
-        if line.starts_with("import type") {
-            for exported_type in &exported_types {
-                if line.contains(&format!("{{ {} }}", exported_type))
-                    && line.contains(&format!("\"./{}\"", exported_type))
-                {
-                    should_skip = true;
-                    break;
-                }
-            }
-        }
-
-        if !should_skip {
+        // Drop any line that is a relative ts-rs import: `import type { X } from "./X"`
+        let is_relative_import = line.starts_with("import type") && line.contains("from \"./");
+        if !is_relative_import {
             processed_definitions.push_str(line);
             processed_definitions.push('\n');
         }

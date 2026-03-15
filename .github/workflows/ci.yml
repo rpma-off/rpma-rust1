@@ -48,6 +48,13 @@ jobs:
         with:
           workspaces: src-tauri -> target
 
+      # Verify the type-export binary compiles with its feature flag.
+      # This catches import path regressions in export-types.rs before they
+      # silently break `npm run types:sync` and the downstream build.
+      - name: Check type-export binary
+        working-directory: src-tauri
+        run: cargo check --features export-types --bin export-types
+
       - name: Rust tests
         working-directory: src-tauri
         run: cargo test

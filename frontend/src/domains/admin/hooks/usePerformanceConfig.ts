@@ -87,6 +87,10 @@ export function usePerformanceConfig() {
     loadPerformanceConfigs();
   }, [loadPerformanceConfigs]);
 
+  const resetForm = () => {
+    setFormData({ ...DEFAULT_FORM_DATA });
+  };
+
   const savePerformanceConfig = async () => {
     setSaving(true);
     try {
@@ -165,10 +169,6 @@ export function usePerformanceConfig() {
       console.error('Error updating config status:', error);
       toast.error('Erreur lors de la mise à jour');
     }
-  };
-
-  const resetForm = () => {
-    setFormData({ ...DEFAULT_FORM_DATA });
   };
 
   const openEditDialog = (config: PerformanceConfig) => {

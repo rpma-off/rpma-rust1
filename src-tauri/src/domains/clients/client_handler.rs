@@ -45,6 +45,7 @@ impl std::fmt::Display for CustomerType {
 
 /// Main Client entity
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(rename = "Client")]
 pub struct ClientModel {
     pub id: String,
     pub name: String,
@@ -1333,6 +1334,27 @@ impl ClientService {
     pub async fn delete_client_async(&self, id: &str, user_id: &str) -> Result<(), String> { self.delete_client(id, user_id).await }
     pub async fn search_clients_async(&self, query: &str, page: i32, limit: i32) -> Result<Vec<Client>, String> { self.search_clients(query, page, limit).await }
     pub async fn get_client_stats_async(&self) -> Result<ClientStats, String> { self.get_client_stats().await }
+}
+
+// ── ClientResolver contract implementation ───────────────────────────────────
+
+#[async_trait::async_trait]
+impl crate::shared::contracts::client_ops::ClientResolver for ClientService {
+    async fn get_client_contact(
+        &self,
+        id: &str,
+    ) -> Result<Option<crate::shared::contracts::client_ops::ClientContactInfo>, String> {
+        Ok(self.get_client_async(id).await?.map(|c| {
+            crate::shared::contracts::client_ops::ClientContactInfo {
+                email: c.email,
+                address_state: c.address_state,
+            }
+        }))
+    }
+
+    async fn client_exists(&self, id: &str) -> Result<bool, String> {
+        Ok(self.get_client_async(id).await?.is_some())
+    }
 }
 
 // ── Validation Service (used by tests) ───────────────────────────────────────

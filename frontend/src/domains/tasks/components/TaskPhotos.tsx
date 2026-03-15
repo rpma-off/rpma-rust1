@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils';
-import { useInterventionPhotos } from '@/domains/interventions/hooks/useInterventionPhotos';
+import { useInterventionPhotos } from '@/domains/interventions';
 
 
 interface TaskPhotosProps {

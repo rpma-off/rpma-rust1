@@ -36,7 +36,11 @@ pub struct TaskWithClientDetails {
 
 /// Construct a per-request [`TaskClientService`] from shared application state.
 fn client_service(state: &AppState<'_>) -> TaskClientService {
-    TaskClientService::new(state.task_service.clone(), state.client_service.clone())
+    TaskClientService::new(
+        state.task_service.clone(),
+        state.client_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::client_ops::ClientResolver>,
+    )
 }
 
 /// Get tasks with comprehensive client information

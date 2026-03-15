@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
+import { taskKeys } from '@/lib/query-keys';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { taskGateway } from '../api/taskGateway';
 import type { TaskHistoryEntry } from '../api/types';
-import { taskKeys } from '@/lib/query-keys';
 
 /**
  * Hook to fetch task history

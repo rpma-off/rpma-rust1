@@ -10,26 +10,23 @@ use crate::commands::AppError;
 use crate::domains::quotes::application::QuoteConvertToTaskRequest;
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::QuotesFacade;
-use crate::shared::services::cross_domain::{CreateTaskRequest, TaskService};
+use crate::shared::services::cross_domain::CreateTaskRequest;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 
 /// Orchestrates quote export (PDF) and quote→task conversion.
 pub struct QuoteExportService {
     quote_service: Arc<crate::domains::quotes::application::quote_service::QuoteService>,
-    task_service: Arc<TaskService>,
     app_data_dir: std::path::PathBuf,
 }
 
 impl QuoteExportService {
     pub fn new(
         quote_service: Arc<crate::domains::quotes::application::quote_service::QuoteService>,
-        task_service: Arc<TaskService>,
         app_data_dir: std::path::PathBuf,
     ) -> Self {
         Self {
             quote_service,
-            task_service,
             app_data_dir,
         }
     }
@@ -73,12 +70,15 @@ impl QuoteExportService {
         })
     }
 
-    /// Convert an accepted quote to a task (cross-domain orchestration).
-    pub async fn convert_to_task(
+    /// Build the task creation request from a quote (step 1 of quote→task).
+    ///
+    /// The caller (IPC layer) creates the task via `TaskService`, then calls
+    /// [`Self::record_task_conversion`] with the resulting IDs.
+    pub fn build_task_request(
         &self,
         request: &QuoteConvertToTaskRequest,
         ctx: &RequestContext,
-    ) -> Result<ConvertQuoteToTaskResponse, AppError> {
+    ) -> Result<CreateTaskRequest, AppError> {
         let facade = QuotesFacade::new(self.quote_service.clone());
         let quote = self.fetch_quote(&facade, &ctx.auth.role, &request.quote_id)?;
 
@@ -88,7 +88,7 @@ impl QuoteExportService {
             .clone()
             .unwrap_or_else(|| vec!["Full Body".to_string()]);
 
-        let create_task_req = CreateTaskRequest {
+        Ok(CreateTaskRequest {
             vehicle_plate: request.vehicle_plate.clone(),
             vehicle_model: request.vehicle_model.clone(),
             ppf_zones,
@@ -122,22 +122,20 @@ impl QuoteExportService {
             priority: None,
             estimated_duration: None,
             tags: None,
-        };
+        })
+    }
 
-
-        let task = self
-            .task_service
-            .create_task_async(create_task_req, ctx.user_id())
-            .await
-            .map_err(|e| {
-                error!(error = %e, "Failed to create task from quote");
-                AppError::Internal(
-                    "Impossible de créer la tâche à partir du devis.".to_string(),
-                )
-            })?;
-
+    /// Record the quote→task link after the task has been created (step 2 of quote→task).
+    pub fn record_task_conversion(
+        &self,
+        request: &QuoteConvertToTaskRequest,
+        task_id: &str,
+        task_number: &str,
+        ctx: &RequestContext,
+    ) -> Result<ConvertQuoteToTaskResponse, AppError> {
+        let facade = QuotesFacade::new(self.quote_service.clone());
         let response = facade
-            .convert_to_task(&ctx.auth.role, &request.quote_id, &task.id, &task.task_number)
+            .convert_to_task(&ctx.auth.role, &request.quote_id, task_id, task_number)
             .map_err(|e| {
                 error!(error = %e, quote_id = %request.quote_id, "Failed to convert quote to task");
                 e
@@ -145,7 +143,7 @@ impl QuoteExportService {
 
         info!(
             quote_id = %request.quote_id,
-            task_id = %task.id,
+            task_id = %task_id,
             "Quote converted to task successfully"
         );
 

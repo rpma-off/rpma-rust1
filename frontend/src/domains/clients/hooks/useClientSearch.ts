@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { clientIpc } from '../ipc';
 import { useMutationCounter } from '@/lib/data-freshness';
 import { clientKeys } from '@/lib/query-keys';
 import type { Client } from '@/lib/backend';
+import { clientIpc } from '../ipc';
 
 /**
  * Search clients by query string using TanStack Query.

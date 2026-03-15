@@ -8,7 +8,6 @@
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
-use crate::shared::services::cross_domain::SettingsRepository;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -28,21 +27,23 @@ pub fn allowed_transitions(current: &TaskStatus) -> Vec<TaskStatus> {
 #[derive(Debug)]
 pub struct TaskRulesRepository {
     db: Arc<Database>,
-    settings: SettingsRepository,
 }
 
 impl TaskRulesRepository {
     /// Create a new TaskRulesRepository instance
     pub fn new(db: Arc<Database>) -> Self {
-        let settings = SettingsRepository::new(db.clone());
-        Self { db, settings }
+        Self { db }
     }
 
-    /// Get maximum tasks per user from settings
+    /// Get maximum tasks per user from settings (queries application_settings table directly).
     pub fn get_max_tasks_per_user(&self) -> Result<i32, String> {
-        self.settings
-            .get_max_tasks_per_user()
-            .map_err(|e| format!("Failed to get settings: {}", e))
+        let conn = self.db.get_connection().map_err(|e| e.to_string())?;
+        let result: Result<i32, _> = conn.query_row(
+            "SELECT value FROM application_settings WHERE key = 'max_tasks_per_user'",
+            [],
+            |row| row.get(0),
+        );
+        Ok(result.unwrap_or(10))
     }
 
     /// Check if a user can be assigned to a task

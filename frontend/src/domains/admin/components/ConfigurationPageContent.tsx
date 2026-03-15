@@ -42,8 +42,12 @@ const SecurityPoliciesTab = dynamic(() => import('../components/SecurityPolicies
 const IntegrationsTab = dynamic(() => import('../components/IntegrationsTab').then(mod => ({ default: mod.IntegrationsTab })), {
   loading: () => <LoadingState />
 });
-import { PerformanceTab } from '../components/PerformanceTab';
-import { MonitoringTab } from '../components/MonitoringTab';
+const PerformanceTab = dynamic(() => import('../components/PerformanceTab').then(mod => ({ default: mod.PerformanceTab })), {
+  loading: () => <LoadingState />
+});
+const MonitoringTab = dynamic(() => import('../components/MonitoringTab').then(mod => ({ default: mod.MonitoringTab })), {
+  loading: () => <LoadingState />
+});
 
 // Tab configuration
 const tabConfig = [

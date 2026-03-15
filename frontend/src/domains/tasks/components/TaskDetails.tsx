@@ -7,7 +7,7 @@ import { TaskStatus, TaskWithDetails } from '@/shared/types';
 import { getUserFullName } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { useInterventionData } from '@/domains/interventions/hooks/useInterventionData';
+import { useInterventionData } from '@/domains/interventions';
 import { useTaskMutations } from '../hooks/useTaskMutations';
 import { useTaskHistory } from '../hooks/useTaskHistory';
 import { TaskChecklist } from './TaskChecklist';

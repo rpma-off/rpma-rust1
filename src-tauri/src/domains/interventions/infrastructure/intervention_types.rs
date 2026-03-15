@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
 
-pub type InterventionPhoto = crate::shared::services::cross_domain::Photo;
+pub use crate::shared::contracts::photo::Photo as InterventionPhoto;
 
 /// Request to start a new intervention
 #[derive(Debug, Clone, Deserialize, TS)]

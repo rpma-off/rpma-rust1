@@ -10,7 +10,7 @@ use std::sync::Arc;
 use tracing::{error, info, instrument, warn};
 
 use crate::commands::AppError;
-use crate::shared::services::cross_domain::CalendarService;
+use crate::shared::contracts::task_scheduler::TaskScheduler;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     BulkImportResponse, CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus,
@@ -33,7 +33,7 @@ pub struct TaskCommandService {
     pub(super) task_service: Arc<TaskService>,
     pub(super) task_import_service: Arc<TaskImportService>,
     pub(super) notification_sender: Arc<dyn NotificationSender>,
-    pub(super) calendar_service: Arc<CalendarService>,
+    pub(super) calendar_service: Arc<dyn TaskScheduler>,
     pub(super) event_bus: Arc<InMemoryEventBus>,
 }
 
@@ -45,7 +45,7 @@ impl TaskCommandService {
         task_service: Arc<TaskService>,
         task_import_service: Arc<TaskImportService>,
         notification_sender: Arc<dyn NotificationSender>,
-        calendar_service: Arc<CalendarService>,
+        calendar_service: Arc<dyn TaskScheduler>,
         event_bus: Arc<InMemoryEventBus>,
     ) -> Self {
         Self {

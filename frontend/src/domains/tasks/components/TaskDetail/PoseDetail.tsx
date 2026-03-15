@@ -9,8 +9,7 @@ import { Skeleton, ErrorFallback } from '@/shared/ui';
 import { convertTimestamps, cn, convertNullsToUndefined } from '@/shared/utils';
 import { TaskWithDetails, TaskDisplay, ChecklistItem, TaskStatus } from '@/shared/types';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { useInterventionData } from '@/domains/interventions/api';
-import { useInterventionActions } from '@/domains/interventions/hooks/useInterventionActions';
+import { useInterventionData, useInterventionActions } from '@/domains/interventions';
 import { useTaskMutations } from '../../hooks/useTaskMutations';
 import { ChecklistProgress } from '../TaskInfo/ChecklistProgress';
 

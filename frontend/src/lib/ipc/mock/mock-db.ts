@@ -157,8 +157,6 @@ function toUserAccount(user: MockUser): UserAccount {
     first_name: user.first_name,
     last_name: user.last_name,
     role: user.role,
-    password_hash: 'mock-hash',
-    salt: null,
     phone: null,
     is_active: true,
     last_login: null,
