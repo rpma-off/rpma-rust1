@@ -5,7 +5,23 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { TaskWithDetails } from '@/shared/types';
 import { taskService } from '../../services/task.service';
+import { taskIpc } from '../../ipc/task.ipc';
 import { TaskDetails } from '../TaskDetails';
+
+// Mock taskIpc — component uses useTaskMutations → taskIpc.update, not taskService
+jest.mock('../../ipc/task.ipc', () => ({
+  taskIpc: {
+    update: jest.fn(),
+    delete: jest.fn(),
+    list: jest.fn(),
+    get: jest.fn(),
+    create: jest.fn(),
+    editTask: jest.fn(),
+    reportTaskIssue: jest.fn(),
+    delayTask: jest.fn(),
+    sendTaskMessage: jest.fn(),
+  },
+}));
 
 // Mock dependencies
 jest.mock('../../services/task.service', () => {
@@ -53,7 +69,9 @@ jest.mock('../TaskHistory', () => ({
   ),
 }));
 
-const mockUpdateTask = taskService.updateTask as jest.MockedFunction<typeof taskService.updateTask>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _mockTaskService = taskService; // kept to avoid removing the mock above
+const mockUpdateTask = taskIpc.update as jest.MockedFunction<typeof taskIpc.update>;
 
 // Mock session data
 const mockSession = {
@@ -165,7 +183,8 @@ describe('TaskDetails', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUpdateTask.mockResolvedValue({} as Record<string, unknown>);
+    mockUpdateTask.mockResolvedValue({});
+    (taskIpc.delete as jest.MockedFunction<typeof taskIpc.delete>).mockResolvedValue(undefined);
     mockUseAuth.mockReturnValue({ user: { id: 'user-123', token: 'mock-token' } });
   });
 
