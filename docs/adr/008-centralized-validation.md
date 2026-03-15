@@ -1,3 +1,13 @@
+---
+title: "ADR-008: Centralized Validation Service"
+summary: "All input validation goes through a centralized validation service. No inline ad-hoc validation in handlers, services, or repositories."
+domain: "validation"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-008: Centralized Validation Service
 
 ## Status

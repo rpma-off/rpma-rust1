@@ -1,3 +1,13 @@
+---
+title: "ADR-014: TanStack Query for Server State"
+summary: "All backend state is managed with TanStack Query (React Query). Zustand is used only for UI-only state. Never use `useState + useEffect` for server data."
+domain: "state"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-014: TanStack Query for Server State
 
 ## Status

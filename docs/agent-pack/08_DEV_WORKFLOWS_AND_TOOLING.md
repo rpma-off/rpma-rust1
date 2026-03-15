@@ -1,36 +1,52 @@
+---
+title: "Development Workflows and Tooling"
+summary: "Essential commands, scripts, and verification steps for developers."
+read_when:
+  - "Setting up the development environment"
+  - "Preparing a pull request"
+  - "Automating repetitive tasks"
+---
+
 # 08. DEV WORKFLOWS AND TOOLING
 
-This guide covers the commands and scripts used during the development lifecycle.
+RPMA v2 provides a robust set of tools for development and verification.
 
-## Core Development Commands
+## Core Commands
 
+### Application
+- `npm run dev`: Full app development (Tauri + Next.js).
+- `npm run dev:types`: App dev with automatic type watch/sync.
+- `npm run frontend:dev`: Next.js only (browser mode).
 
-- **Run App (Dev)**: `npm run dev` (Starts Tauri dev environment with hot reloading).
-- **Frontend Only**: `npm run frontend:dev` (Runs Next.js in the browser).
-- **Type Sync**: `npm run types:sync` (Exports Rust models to TS). **Run this after changing any Rust struct used in IPC.**
+### Types & Contracts
+- `npm run types:sync`: Manual sync of Rust types to TS.
+- `npm run types:validate`: Check for drift between Rust and TS.
 
-## Verification & Testing
+### Database
+- `npm run backend:migration:fresh-db-test`: Test migrations on a fresh DB.
+- `node scripts/detect-schema-drift.js`: Check if code matches DB schema.
 
-- **Full Backend Suite**: `make test` (Runs all Rust unit and integration tests).
-- **Frontend Lint**: `npm run frontend:lint`.
-- **Frontend Type Check**: `npm run frontend:type-check`.
-- **Frontend Unit Tests**: `cd frontend && npm run test:ci`.
-- **Integration Tests (Harness)**: `cd src-tauri && cargo test --test integration`.
-* **Backend tests (domain):** `cd src-tauri && cargo test <domain> -- --nocapture`
+## Verification Gate (Before Commit)
 
-## Useful Scripts (`scripts/`)
-- `validate-migration-system.js`: Ensures migrations are consistent and applied correctly.
-- `detect-schema-drift.js`: Compares local DB schema with migrations.
-- `backend-architecture-check.js`: Validates the four-layer rule in Rust source.
-- `generate-docs-index.js`: Rebuilds the documentation TOC.
+Always run these checks to ensure quality:
 
-## Release Process
-- **Build**: Managed by GitHub Actions (`.github/workflows/build.yml`).
-- **Artifacts**: Produces installers for Windows (MSI/EXE) and potentially other platforms.
-- **Changelog**: Generated based on conventional commit messages.
+1. **Rust**: `npm run backend:check` and `npm run backend:clippy`.
+2. **Frontend**: `npm run frontend:lint` and `npm run frontend:type-check`.
+3. **Tests**: `make test` (backend) and `cd frontend && npm run test:ci`.
 
-## "If You Change X, You Must Run Y" Checklist
-- **Change Rust IPC Model** → `npm run types:sync`.
-- **Add DB Migration** → `npm run backend:migration:fresh-db-test`.
-- **Modify IPC Signature** → Update both `src-tauri/src/domains/*/ipc/` and `frontend/src/domains/*/ipc/`.
-- **Change Tailwind Config** → The dev server should reload automatically.
+## Makefile
+Centralized task runner for common operations:
+- `make test`: Run all tests.
+- `make build`: Full production build.
+- `make clean`: Clear target and node_modules.
+
+## CI/CD Pipeline
+GitHub Actions (`.github/workflows/`) handles:
+- **CI**: Runs all linting, typing, and tests on every PR.
+- **Build**: Creates production installers for Windows on release.
+
+## Troubleshooting
+- **Type errors?** Run `npm run types:sync`.
+- **Database locked?** Restart the dev process; check for orphaned processes.
+- **Next.js issues?** Clear `.next` folder and restart.
+- **Rust compile slow?** Ensure `target` folder is excluded from antivirus.

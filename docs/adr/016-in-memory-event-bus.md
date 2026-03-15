@@ -1,3 +1,13 @@
+---
+title: "ADR-016: In-Memory Event Bus for Decoupled Coordination"
+summary: "Uses an in-memory publish/subscribe event bus for reactive, decoupled coordination between domains. Events are dispatched asynchronously and handlers are isolated from failures."
+domain: "events"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-016: In-Memory Event Bus for Decoupled Coordination
 
 ## Status

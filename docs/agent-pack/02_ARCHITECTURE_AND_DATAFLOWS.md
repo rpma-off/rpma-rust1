@@ -1,29 +1,58 @@
+---
+title: "Architecture and Dataflows"
+summary: "Detailed explanation of the four-layer architecture and how data moves through the system."
+read_when:
+  - "Implementing new IPC commands"
+  - "Tracing data from frontend to backend"
+  - "Understanding layer boundaries"
+---
+
 # 02. ARCHITECTURE AND DATAFLOWS
 
-RPMA v2 follows a strict four-layer architecture as defined in **ADR-001**.
+RPMA v2 follows a strict four-layer architecture (**ADR-001**) to ensure separation of concerns and testability.
 
 ## Layered Architecture (Backend)
-1. **IPC Layer**: Thin command handlers in `src-tauri/src/domains/*/ipc/`. Handles request/response serialization and authentication.
-2. **Application Layer**: Orchestration and use cases in `src-tauri/src/domains/*/application/`. Validates business rules and coordinates services.
-3. **Domain Layer**: Pure business logic and entities in `src-tauri/src/domains/*/domain/`. No dependencies on other layers.
-4. **Infrastructure Layer**: Data access (Repositories) and external integrations in `src-tauri/src/domains/*/infrastructure/`.
 
-## Data Flow: Task Creation
-1. **Frontend**: User fills out a form in `TaskForm.tsx`.
-2. **Frontend IPC**: `taskIpc.create(data)` is called, which invokes the `task_crud` Tauri command.
-3. **Backend IPC**: `domains::tasks::ipc::task::task_crud` receives the request and calls `resolve_context!`.
-4. **Backend Application**: `TaskService::create_task` validates the request and calls the repository.
-5. **Backend Infrastructure**: `TaskRepository::insert` executes SQL against SQLite.
-6. **Backend Event Bus**: A `TaskCreated` event is published to the `EventBus` (ADR-016).
-7. **Frontend Response**: The IPC response returns the new `Task` object; React Query invalidates the `tasks` cache.
+Each domain in `src-tauri/src/domains/` is structured as:
 
-## Intervention Workflow Data Flow
-1. **Start**: `intervention_start` command creates an `Intervention` record linked to a `Task`.
-2. **Progress**: Technician advances through steps via `intervention_advance_step`.
-3. **Consumption**: Inventory levels are decremented via `material_record_consumption` as work is performed.
-4. **Finalization**: `intervention_finalize` marks the task as completed and generates a PDF report.
+1. **IPC Layer** (`ipc/`)
+   - Thin handlers with `#[tauri::command]`.
+   - Must call `resolve_context!` first (**ADR-006**).
+   - Delegates to Application layer.
 
-## Offline-First & Event Bus
-- **In-Memory Event Bus**: Used for cross-domain communication within the Rust backend (ADR-016).
-- **Local SQLite**: The source of truth is always the local database. Sync mechanisms (if present) are handled as background services.
-- **Correlation IDs**: Every request carries a `correlation_id` (ADR-020) for end-to-end tracing from frontend logs to backend database operations.
+2. **Application Layer** (`application/`)
+   - Orchestration, use cases, and transaction boundaries.
+   - Enforces RBAC via `RequestContext`.
+   - Coordinates services and repositories.
+
+3. **Domain Layer** (`domain/`)
+   - Pure business logic, entities, and value objects.
+   - **Zero dependencies** on other layers or frameworks.
+   - Implementation of domain-specific validation.
+
+4. **Infrastructure Layer** (`infrastructure/`)
+   - Repository implementations (**ADR-005**) and external adapters.
+   - SQL queries using SQLite.
+
+## Data Flow: Example (Task Creation)
+
+1. **Frontend**: `TaskForm.tsx` collects data.
+2. **Frontend IPC**: `taskIpc.create(data)` (in `frontend/src/domains/tasks/ipc/`) calls `invoke`.
+3. **Backend IPC**: `tasks::ipc::task::task_crud` resolves context and calls the facade/service.
+4. **Backend Application**: `TaskService::create_task` validates and calls the repository.
+5. **Backend Infrastructure**: `SqliteTaskRepository` inserts into SQLite.
+6. **Backend Event Bus**: `TaskCreated` event published to `EventBus` (**ADR-016**).
+7. **Frontend Response**: IPC returns `ApiResponse<Task>`; TanStack Query invalidates 'tasks' pattern.
+
+## Core Communication Patterns
+
+- **Synchronous**: Direct IPC calls from Frontend to Backend.
+- **Asynchronous (Cross-Domain)**: In-memory `EventBus` (**ADR-016**) using domain events (**ADR-017**).
+- **Correlation IDs**: `correlation_id` passed in every request for tracing (**ADR-020**).
+
+## Dependency Rules
+
+- **Inner layers** cannot depend on **outer layers**.
+- **Domain Layer** is the heart and has no dependencies.
+- **Cross-domain** calls MUST go through `shared/services/cross_domain.rs` or the `EventBus`.
+- Direct imports from another domain's internals are **FORBIDDEN**.

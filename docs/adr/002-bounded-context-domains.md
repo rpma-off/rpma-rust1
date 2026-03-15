@@ -1,3 +1,13 @@
+---
+title: "ADR-002: Bounded Context Domains"
+summary: "Organizes code into domain modules (auth, users, tasks, interventions, clients, quotes, inventory, etc.) with explicit boundaries and no direct cross-domain imports."
+domain: "architecture"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-002: Bounded Context Domains
 
 ## Status

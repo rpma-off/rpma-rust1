@@ -1,3 +1,13 @@
+---
+title: "ADR-019: Error Handling at Boundary with thiserror and anyhow"
+summary: "Domain and infrastructure layers use typed errors with `thiserror`. The IPC boundary converts to `AppError` using `anyhow` for flexible error messages. Services never panic."
+domain: "boundaries"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-019: Error Handling at Boundary with thiserror and anyhow
 
 ## Status

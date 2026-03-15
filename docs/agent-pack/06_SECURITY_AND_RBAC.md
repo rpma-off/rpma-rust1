@@ -1,36 +1,51 @@
+---
+title: "Security and RBAC"
+summary: "Authentication flow, role-based access control, and data protection rules."
+read_when:
+  - "Implementing role-gated features"
+  - "Reviewing security controls"
+  - "Adding new user roles"
+---
+
 # 06. SECURITY AND RBAC
 
-Security in RPMA v2 is built around a centralized **Role-Based Access Control (RBAC)** system enforced at the IPC boundary.
+RPMA v2 uses a strict identity and access management system (**ADR-007**).
 
-## Roles Hierarchy (ADR-007)
-- **Admin**: Full access to all data, settings, system diagnostics, and user management.
-- **Supervisor**: Can manage tasks, clients, and quotes. Cannot access system settings or audit logs.
-- **Technician**: Can manage their own assigned tasks and execute interventions.
-- **Viewer**: Read-only access to specific dashboards and reports.
+## Roles Hierarchy
+1. **Admin**: System configuration, user management, full access.
+2. **Supervisor**: Management of tasks, clients, and inventory.
+3. **Technician**: Execution of assigned interventions.
+4. **Viewer**: Read-only access to dashboards.
 
-## Enforcement Mechanism
-Every backend command uses the `resolve_context!` macro to verify the user's role before proceeding:
+## Enforcement: resolve_context! (**ADR-006**)
+
+Authentication and RBAC are enforced at the IPC boundary.
 ```rust
-// Only Admins can run this
+// Basic authentication (any role)
+let ctx = resolve_context!(&state, &correlation_id);
+
+// Role-gated authentication
 let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-
-// Technicians and above can run this
-let ctx = resolve_context!(&state, &correlation_id, UserRole::Technician);
 ```
-If the check fails, an `AppError::Unauthorized` is returned, which the frontend handles by showing a permission error.
 
-## Authentication Flow
-1. **Login**: User provides credentials via `auth_login`.
-2. **Session**: On success, a `UserSession` is created in memory (backend state).
-3. **Validation**: Subsequent requests include a session identifier (managed by Tauri's internal state).
-4. **Expiry**: Sessions expire after a period of inactivity (configurable in security settings).
+## RequestContext Flow
+- Raw session tokens are **forbidden** beyond the IPC layer.
+- `RequestContext` contains `AuthContext` (user_id, role) and `correlation_id`.
+- Every service method must accept `&RequestContext`.
 
 ## Data Protection
-- **Local DB Encryption**: The SQLite database can be encrypted using a key provided via the `RPMA_DB_KEY` environment variable.
-- **Input Validation**: All data entering the backend is validated against domain-specific rules (ADR-008).
-- **Audit Logs**: Critical actions (deletions, role changes) are logged with the acting user's ID and a timestamp.
+- **Database**: Local SQLite with optional encryption.
+- **PII**: Scoped access via RBAC rules.
+- **Input Sanitization**: Handled by centralized validation (**ADR-008**).
+- **Soft Delete**: `deleted_at` prevents accidental data loss and provides an audit trail (**ADR-011**).
 
-## Security Practices
-- **No Raw Tokens**: Services and Repositories never see raw session tokens; they receive a `RequestContext`.
-- **Newtypes**: Intent-revealing types like `UserId` and `TaskId` are used to prevent accidental ID swapping (IDOR prevention).
-- **Thin IPC**: The IPC layer does no business logic; it only handles auth and delegation.
+## Authentication Flow
+1. **Frontend**: Calls `auth_login` with credentials.
+2. **Backend**: Validates credentials against `users` table, creates a session in memory.
+3. **Frontend**: Stores session state (Tauri handles the cookie/header).
+4. **Subsequent Calls**: Backend `resolve_context!` verifies session validity.
+
+## Security Constraints
+- No hardcoded secrets.
+- No logging of passwords or PII.
+- All critical state transitions (e.g., Task Status) must be validated in the Domain layer.

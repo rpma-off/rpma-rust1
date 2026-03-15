@@ -1,37 +1,60 @@
+---
+title: "Backend Guide"
+summary: "Rust development standards, domain patterns, and system architecture."
+read_when:
+  - "Implementing new backend features"
+  - "Writing Rust services or repositories"
+  - "Adding new IPC commands"
+---
+
 # 04. BACKEND GUIDE
 
-The backend is written in **Rust** and managed by **Tauri**. It is located in the `src-tauri/` directory.
+The backend is a **Rust** application managed by **Tauri**, located in `src-tauri/`.
 
-## Directory Structure (`src-tauri/src/`)
-- `commands/`: System-wide and cross-domain IPC command modules.
-- `domains/`: Bounded contexts following the four-layer rule.
-  - `[domain]/ipc/`: Command entry points (thin layer).
-  - `[domain]/application/`: Use cases and orchestration.
-  - `[domain]/domain/`: Pure business rules and entities.
-  - `[domain]/infrastructure/`: Repositories and SQL.
-- `shared/`: Errors, auth middleware, event bus, and utilities.
-- `db/`: Database connection, migrations, and pooling logic.
-- `main.rs`: Application entry point and command registration.
+## Architecture: The Four-Layer Rule
 
-## Implementing a New Command
-1. **Define the Model**: Create/update the entity in `domain/models/` and ensure it derives `TS` for export.
-2. **Infrastructure**: Add repository methods in `infrastructure/` to handle SQL.
-3. **Application**: Add a service method in `application/` to coordinate the action and validation.
-4. **IPC**: Create a thin handler in `ipc/` that calls `resolve_context!` and the service.
-5. **Register**: Add the command to `tauri::generate_handler![]` in `main.rs`.
+Every domain in `src-tauri/src/domains/` MUST follow (**ADR-001**):
+`IPC → Application → Domain ← Infrastructure`
 
-## Error Handling
-- Use the custom `AppError` type defined in `shared/ipc/errors.rs`.
-- Return `Result<ApiResponse<T>, AppError>` from all IPC commands.
-- Use `?` and `map_err` to propagate and convert errors.
-
-## Authorization & Security
-Every IPC command MUST call `resolve_context!` as its first line to ensure the caller is authenticated and has the required role.
+### 1. IPC Layer (`ipc/`)
+Entry points for Tauri commands.
 ```rust
-let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
+#[tauri::command]
+pub async fn my_command(state: State<'_, AppState>, correlation_id: Option<String>) -> AppResult<ApiResponse<T>> {
+    let ctx = resolve_context!(&state, &correlation_id); // Mandatory!
+    let service = MyService::new(&state);
+    service.do_something(&ctx).await.map(ApiResponse::success)
+}
 ```
 
-## Logging & Tracing
-- Use the `tracing` crate for instrumentation.
-- Commands should be annotated with `#[tracing::instrument(skip(state))]`.
-- Include `correlation_id` in logs to trace requests across the system.
+### 2. Application Layer (`application/`)
+Coordination and auth enforcement. Use `RequestContext` for all identity decisions (**ADR-006**).
+
+### 3. Domain Layer (`domain/`)
+Pure logic. No SQL, no IPC, no frameworks. Entities and business rules only.
+
+### 4. Infrastructure Layer (`infrastructure/`)
+Repository implementations (**ADR-005**) using SQLite.
+
+## Error Handling (**ADR-019**)
+- Use `AppError` enum for all expected failures.
+- `thiserror` for internal errors; `anyhow` ONLY at the IPC boundary if needed.
+- No `unwrap()` or `expect()` in production code.
+
+## Security & Auth
+- **Centralized Auth**: `resolve_context!` macro handles session validation and RBAC.
+- **RequestContext**: flows through the system; raw tokens never leave the IPC layer.
+
+## Database & Persistence
+- **Migrations**: Numbered SQL files in `migrations/` (**ADR-010**).
+- **WAL Mode**: Enabled by default for performance (**ADR-009**).
+- **Repository Pattern**: Abstract data access to keep business logic testable.
+
+## Cross-Domain Coordination
+- **Event Bus**: `shared/services/event_bus.rs` for reactive logic (**ADR-016**).
+- **Facade**: Domains export a Facade for controlled cross-domain access.
+
+## Coding Standards
+- Use **Newtypes** (e.g., `TaskId(String)`) for type safety.
+- All IPC types must derive `TS` and `export` for frontend sync.
+- Follow `clippy` and `rustfmt` rules.

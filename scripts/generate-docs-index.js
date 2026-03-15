@@ -15,22 +15,25 @@ const path = require('path');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DOCS_DIR = path.join(ROOT_DIR, 'docs');
 const ADR_DIR = path.join(DOCS_DIR, 'adr');
+const AGENT_PACK_DIR = path.join(DOCS_DIR, 'agent-pack');
 
 function extractFrontmatter(content) {
-  if (!content.startsWith('---')) {
+  // Handle UTF-8 BOM and trim
+  const trimmedContent = content.trimStart();
+  if (!trimmedContent.startsWith('---')) {
     return null;
   }
   
-  const endIdx = content.indexOf('---', 3);
+  const endIdx = trimmedContent.indexOf('---', 3);
   if (endIdx === -1) {
     return null;
   }
   
-  const frontmatterStr = content.substring(3, endIdx).trim();
+  const frontmatterStr = trimmedContent.substring(3, endIdx).trim();
   const frontmatter = {};
   
   // Simple YAML parsing
-  const lines = frontmatterStr.split('\n');
+  const lines = frontmatterStr.split(/\r?\n/);
   let currentKey = null;
   let currentValue = [];
   
@@ -38,20 +41,29 @@ function extractFrontmatter(content) {
     const keyMatch = line.match(/^(\w+):\s*(.*)$/);
     if (keyMatch) {
       if (currentKey) {
-        frontmatter[currentKey] = currentValue.length === 1 ? currentValue[0] : currentValue;
+        frontmatter[currentKey] = currentValue.length === 1 ? currentValue[0] : (currentValue.length === 0 ? '' : currentValue);
       }
       currentKey = keyMatch[1];
-      currentValue = keyMatch[2] ? [keyMatch[2]] : [];
+      let val = keyMatch[2] ? keyMatch[2].trim() : '';
+      // Remove surrounding quotes if present
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.substring(1, val.length - 1);
+      }
+      currentValue = val ? [val] : [];
     } else if (line.match(/^\s*[-*]\s+(.*)$/)) {
       const listMatch = line.match(/^\s*[-*]\s+(.*)$/);
-      currentValue.push(listMatch[1]);
+      let val = listMatch[1].trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.substring(1, val.length - 1);
+      }
+      currentValue.push(val);
     } else if (currentKey && line.trim()) {
       currentValue.push(line.trim());
     }
   }
   
   if (currentKey) {
-    frontmatter[currentKey] = currentValue.length === 1 ? currentValue[0] : currentValue;
+    frontmatter[currentKey] = currentValue.length === 1 ? currentValue[0] : (currentValue.length === 0 ? '' : currentValue);
   }
   
   return frontmatter;
@@ -79,6 +91,31 @@ function getDocFiles() {
     });
 }
 
+function getAgentPackFiles() {
+  if (!fs.existsSync(AGENT_PACK_DIR)) return [];
+  
+  return fs.readdirSync(AGENT_PACK_DIR)
+    .filter(f => f.endsWith('.md'))
+    .sort()
+    .map(f => {
+      const fullPath = path.join(AGENT_PACK_DIR, f);
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      const frontmatter = extractFrontmatter(content);
+      
+      return {
+        filename: f,
+        path: `./agent-pack/${f}`,
+        title: frontmatter?.title || f.replace('.md', ''),
+        summary: frontmatter?.summary || '',
+        readWhen: Array.isArray(frontmatter?.read_when) 
+          ? frontmatter.read_when 
+          : frontmatter?.read_when 
+            ? [frontmatter.read_when] 
+            : []
+      };
+    });
+}
+
 function getADRFiles() {
   return fs.readdirSync(ADR_DIR)
     .filter(f => f.match(/^\d+-.*\.md$/) && f !== 'README.md')
@@ -94,13 +131,19 @@ function getADRFiles() {
         number: parseInt(f.split('-')[0], 10),
         title: frontmatter?.title || f.replace('.md', ''),
         domain: frontmatter?.domain || 'general',
-        status: frontmatter?.status || 'accepted'
+        status: frontmatter?.status || 'accepted',
+        readWhen: Array.isArray(frontmatter?.read_when) 
+          ? frontmatter.read_when 
+          : frontmatter?.read_when 
+            ? [frontmatter.read_when] 
+            : []
       };
     });
 }
 
 function generateReadme() {
   const docs = getDocFiles();
+  const agentPack = getAgentPackFiles();
   const adrs = getADRFiles();
   
   const today = new Date().toISOString().split('T')[0];
@@ -114,6 +157,14 @@ Auto-generated index of architecture documentation. Run \`node scripts/generate-
 | Document | Summary |
 |----------|---------|
 ${docs.map(d => `| [${d.title}](${d.path}) | ${d.summary} |`).join('\n')}
+
+## Agent Knowledge Base
+
+Fundamental guides for developers and AI agents.
+
+| Guide | Summary |
+|-------|---------|
+${agentPack.map(g => `| [${g.title}](${g.path}) | ${g.summary} |`).join('\n')}
 
 ## Architecture Decision Records
 
@@ -157,7 +208,8 @@ ${adrs.filter(a => ['boundaries', 'events', 'validation', 'observability'].inclu
 
   // Group by read_when scenarios
   const scenarios = {};
-  for (const doc of docs) {
+  const allDocs = [...docs, ...agentPack, ...adrs];
+  for (const doc of allDocs) {
     for (const scenario of doc.readWhen) {
       if (!scenarios[scenario]) {
         scenarios[scenario] = [];

@@ -1,31 +1,51 @@
+---
+title: "Database and Migrations"
+summary: "SQLite configuration, migration system, and data access patterns."
+read_when:
+  - "Adding new database tables or columns"
+  - "Troubleshooting database performance"
+  - "Writing SQL migrations"
+---
+
 # 07. DATABASE AND MIGRATIONS
 
-RPMA v2 uses an embedded **SQLite** database, optimized for high performance and reliability.
+RPMA v2 uses **SQLite** as its primary data store, optimized for reliability and desktop performance.
 
-## SQLite Configuration
-- **WAL Mode**: Write-Ahead Logging is enabled for improved concurrency (ADR-009).
-- **PRAGMAs**: Optimized with `foreign_keys = ON`, `journal_size_limit`, and `busy_timeout`.
-- **Connection Pooling**: Managed by `r2d2` or a similar pooler in the backend infrastructure.
-- **Path**: The database file (`rpma.db`) is stored in the application data directory.
+## SQLite Configuration (**ADR-009**)
+- **WAL Mode**: Enabled for concurrent reads and writes.
+- **Foreign Keys**: Enforced (`PRAGMA foreign_keys = ON`).
+- **Busy Timeout**: Set to 5000ms to handle locks gracefully.
+- **Journaling**: `journal_size_limit` applied to prevent disk bloat.
 
-## Migrations (ADR-010)
-Migrations are handled as numbered SQL files in `src-tauri/migrations/`.
-- **Discovery**: The backend automatically detects and applies missing migrations on startup.
-- **Versioning**: The `schema_version` table tracks the current state of the database.
-- **Constraints**: Migrations must be idempotent and should include `IF NOT EXISTS` where appropriate.
+## Migration System (**ADR-010**)
+Migrations are numbered SQL files in `src-tauri/migrations/`.
+Example: `001_initial_schema.sql`, `002_add_clients.sql`.
 
-## Adding a Migration
-1. **Create File**: Add a new `.sql` file in `src-tauri/migrations/` (e.g., `015_add_notes_to_tasks.sql`).
-2. **Write SQL**: Include both `UP` logic (standard SQL).
-3. **Test**: Run `npm run backend:migration:fresh-db-test` to ensure the migration applies cleanly to a fresh DB.
-4. **Validate**: Run existing integration tests to ensure no regressions.
+### Rules for Migrations
+- **Numbered**: Must follow a strict sequential prefix.
+- **Idempotent**: Use `IF NOT EXISTS` where possible.
+- **Embedded**: Migrations are compiled into the binary and applied on startup.
 
-## Database Maintenance
-- **Vacuum**: Can be triggered manually via `vacuum_database` or scheduled periodically.
-- **Checkpoints**: WAL checkpoints are run periodically to prevent log file bloat.
-- **Integrity**: `PRAGMA integrity_check` is run during system diagnostics.
+## Repository Pattern (**ADR-005**)
+All database access MUST go through the Infrastructure layer repositories.
+- **Trait Definition**: In `domain/repositories/` (or `infrastructure/mod.rs`).
+- **Implementation**: In `infrastructure/sqlite_<name>.rs`.
 
-## Troubleshooting
-- **Migration Failure**: Check `tauri.log` for SQL syntax errors.
-- **Locked Database**: Ensure no other process is holding a long-running transaction (though WAL mode mitigates this).
-- **Schema Drift**: Use `node scripts/detect-schema-drift.js` to compare the actual DB schema against the source of truth.
+## Common Tasks
+
+### Adding a Migration
+1. Create `src-tauri/migrations/NNN_description.sql`.
+2. Run `npm run backend:migration:fresh-db-test`.
+3. Verify schema with `node scripts/detect-schema-drift.js`.
+
+### Handling Soft Deletes (**ADR-011**)
+Repositories must filter for `deleted_at IS NULL` by default unless explicitly requested otherwise.
+
+### Timestamp Standard (**ADR-012**)
+All timestamps must be stored as **Unix Milliseconds** (BigInt/i64).
+Use `chrono::Utc::now().timestamp_millis()`.
+
+## Constraints
+- No raw SQL in Application or Domain layers.
+- Avoid complex joins; prefer domain logic or simple queries.
+- Large BLOBs should be stored in the filesystem, with paths in DB.

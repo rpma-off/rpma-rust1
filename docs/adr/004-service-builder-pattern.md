@@ -1,3 +1,13 @@
+---
+title: "ADR-004: Centralized Service Builder Pattern"
+summary: "`ServiceBuilder` creates all application services with explicit, documented dependency order in a single `build()` method, preventing circular dependencies and ensuring consistent initialization."
+domain: "architecture"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-004: Centralized Service Builder Pattern
 
 ## Status
