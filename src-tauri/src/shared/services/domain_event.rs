@@ -192,17 +192,6 @@ pub enum DomainEvent {
         timestamp: DateTime<Utc>,
         metadata: Option<serde_json::Value>,
     },
-    QuoteConvertedToTask {
-        id: String,
-        quote_id: String,
-        quote_number: String,
-        task_id: String,
-        converted_by: String,
-        converted_at_ms: i64,
-        timestamp: DateTime<Utc>,
-        metadata: Option<serde_json::Value>,
-    },
-
     // User Events
     UserCreated {
         id: String,
@@ -378,7 +367,6 @@ impl DomainEvent {
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
             DomainEvent::QuoteShared { .. } => "QuoteShared",
             DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
-            DomainEvent::QuoteConvertedToTask { .. } => "QuoteConvertedToTask",
         }
     }
 
@@ -416,7 +404,6 @@ impl DomainEvent {
             DomainEvent::QuoteConverted { timestamp, .. } => *timestamp,
             DomainEvent::QuoteShared { timestamp, .. } => *timestamp,
             DomainEvent::QuoteCustomerResponded { timestamp, .. } => *timestamp,
-            DomainEvent::QuoteConvertedToTask { timestamp, .. } => *timestamp,
         }
     }
 }

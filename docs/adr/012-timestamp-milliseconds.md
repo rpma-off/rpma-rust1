@@ -1,3 +1,13 @@
+---
+title: "ADR-012: Timestamp as Milliseconds"
+summary: "All timestamps in the database and API are stored and transmitted as Unix timestamps in **milliseconds** (i64), not seconds, not ISO 8601 strings."
+domain: "types"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-012: Timestamp as Milliseconds
 
 ## Status

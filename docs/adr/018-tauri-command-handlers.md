@@ -1,3 +1,13 @@
+---
+title: "ADR-018: Tauri Command Handlers (Thin IPC Layer)"
+summary: "All Tauri command handlers (`#[tauri::command]`) are thin wrappers that authenticate via `resolve_context!`, delegate to application services, and never contain business logic."
+domain: "ipc"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-018: Tauri Command Handlers (Thin IPC Layer)
 
 ## Status

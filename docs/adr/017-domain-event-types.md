@@ -1,3 +1,13 @@
+---
+title: "ADR-017: Domain Event Types and Factory Pattern"
+summary: "Domain events use a structured enum (`DomainEvent`) with factory functions for consistent event creation. Each event includes correlation IDs, timestamps, and optional metadata."
+domain: "events"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-017: Domain Event Types and Factory Pattern
 
 ## Status

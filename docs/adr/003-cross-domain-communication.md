@@ -1,3 +1,13 @@
+---
+title: "ADR-003: Cross-Domain Communication Channels"
+summary: "Uses exactly three channels for cross-domain communication: shared contracts (types), cross_domain services (composition layer), and event bus (reactive coordination)."
+domain: "architecture"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-003: Cross-Domain Communication Channels
 
 ## Status

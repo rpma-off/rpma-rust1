@@ -10,9 +10,8 @@ import {
   CreateWorkflowExecutionDTO,
   StartTimingDTO,
   SignatureDTO,
-  WorkflowExecutionStatus
 } from '@/types/workflow.types';
-import { PPFInterventionData, VehicleInfo as _VehicleInfo } from '@/types/ppf-intervention';
+import { PPFInterventionData } from '@/types/ppf-intervention';
 import type {
   JsonRecord,
   UnknownRecord,
@@ -25,6 +24,10 @@ import {
 } from '@/types/type-utils';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { getWorkflowServiceInstance } from '../services/workflow-service-adapter';
+import {
+  mapPpfStepToWorkflowExecutionStep,
+  mapPPFInterventionToWorkflowExecution,
+} from './workflow-mapping';
 
 // Interface for step data updates
 interface StepData {
@@ -126,49 +129,9 @@ export function WorkflowProvider({
     workflowServiceRef.current = getWorkflowServiceInstance();
   }
   const workflowService = workflowServiceRef.current;
-  const mapPpfStepToWorkflowExecutionStep = useCallback((step: NonNullable<PPFInterventionData['steps']>[number]): WorkflowExecutionStep => ({
-    id: step.id,
-    workflowExecutionId: step.intervention_id || step.interventionId || '',
-    stepId: step.id,
-    stepOrder: step.step_number || step.stepNumber || 0,
-    status: (step.status || 'pending') as WorkflowStepStatus,
-    startedAt: step.started_at || step.startedAt || null,
-    completedAt: step.completed_at || step.completedAt || null,
-    durationSeconds: step.duration_seconds || 0,
-    notes: step.description || undefined,
-    photos: step.photos?.map(p => p.url) || [],
-    checklistCompletion: (step.collected_data as Record<string, unknown>) || {},
-    startedBy: step.approved_by || null,
-    completedBy: step.approved_by || null,
-    createdAt: step.created_at || '',
-    updatedAt: step.updated_at || '',
-    data: (step.collected_data as Record<string, unknown>) || {},
-  }), []);
-
   // Prevent duplicate loads in StrictMode/dev due to double-invoked effects
   const loadInProgressRef = useRef<string | null>(null);
   const lastLoadedTaskRef = useRef<string | null>(null);
-
-  // Helper to map PPFInterventionData to WorkflowExecution
-  const mapPPFInterventionToWorkflowExecution = useCallback((ppfIntervention: PPFInterventionData): WorkflowExecution => {
-    const mappedSteps = (ppfIntervention.steps || []).map(mapPpfStepToWorkflowExecutionStep);
-    const currentStep = mappedSteps.find(step => step.status === 'in_progress') || null;
-    return {
-      id: ppfIntervention.id,
-      workflowId: ppfIntervention.id, // Use intervention ID as workflow ID
-      taskId: ppfIntervention.taskId,
-      templateId: 'ppf-workflow-template',
-      status: ppfIntervention.status as unknown as WorkflowExecutionStatus,
-      currentStepId: currentStep?.id || mappedSteps.find(step => step.status !== 'completed')?.id || null,
-      steps: mappedSteps,
-      startedAt: ppfIntervention.actual_start || ppfIntervention.scheduled_start || '',
-      completedAt: ppfIntervention.intervention_completed_at || undefined,
-      createdBy: ppfIntervention.created_by || '',
-      updatedBy: ppfIntervention.created_by || '', // Use created_by as fallback
-      createdAt: ppfIntervention.created_at || '',
-      updatedAt: ppfIntervention.updated_at || ''
-    };
-  }, [mapPpfStepToWorkflowExecutionStep]);
 
   const loadWorkflow = useCallback(async (taskId: string) => {
     if (!user) return;
@@ -220,9 +183,11 @@ export function WorkflowProvider({
         loadWorkflow(taskId);
       }
     }
+    // mapPPFInterventionToWorkflowExecution and mapPpfStepToWorkflowExecutionStep are
+    // pure module-level functions — they are stable and do not belong in deps.
     // We intentionally exclude `steps` from deps to avoid infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId, user, loadWorkflow, initialWorkflow, mapPPFInterventionToWorkflowExecution, mapPpfStepToWorkflowExecutionStep]);
+  }, [taskId, user, loadWorkflow, initialWorkflow]);
 
   // Update current step when workflow changes
   useEffect(() => {

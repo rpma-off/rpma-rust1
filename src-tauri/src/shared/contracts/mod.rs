@@ -1,6 +1,7 @@
 ﻿pub mod auth;
 pub mod client_ops;
 pub mod common;
+pub mod events;
 pub mod notification;
 pub mod photo;
 pub mod prediction;

@@ -31,4 +31,5 @@
 pub mod app;
 pub mod auth;
 pub mod db;
+pub mod event_capture;
 pub mod fixtures;

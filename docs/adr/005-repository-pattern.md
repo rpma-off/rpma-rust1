@@ -1,3 +1,13 @@
+---
+title: "ADR-005: Repository Pattern for Data Access"
+summary: "All database access goes through repository interfaces. Domain and application layers never see SQL or database connections directly."
+domain: "persistence"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-005: Repository Pattern for Data Access
 
 ## Status

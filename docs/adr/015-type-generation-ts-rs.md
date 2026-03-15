@@ -1,3 +1,13 @@
+---
+title: "ADR-015: Type Generation via ts-rs"
+summary: "TypeScript types are auto-generated from Rust types using the `ts-rs` crate. The `frontend/src/types/` directory is generated code and must never be manually edited."
+domain: "types"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-015: Type Generation via ts-rs
 
 ## Status

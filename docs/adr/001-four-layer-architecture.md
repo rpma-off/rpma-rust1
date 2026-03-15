@@ -1,3 +1,13 @@
+---
+title: "ADR-001: Four-Layer Architecture Pattern"
+summary: "Implements strict IPC → Application → Domain → Infrastructure layer separation for all domain code in the RPMA backend."
+domain: "architecture"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-001: Four-Layer Architecture Pattern
 
 ## Status

@@ -102,6 +102,12 @@ path = "tests/harness_smoke_test.rs"
 name = "integration"
 path = "tests/integration.rs"
 
+# Domain invariant tests — service-layer enforcement of all business rules
+# Commande : cd src-tauri && cargo test --test domain_invariants -- --nocapture
+[[test]]
+name = "domain_invariants"
+path = "tests/domain_invariants.rs"
+
 
 [build-dependencies]
 tauri-build = { version = "2.0", features = [] }

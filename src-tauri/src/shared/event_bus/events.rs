@@ -1,15 +1,8 @@
-//! Domain event DTOs.
+//! Cross-domain event contract re-exports.
 //!
-//! Event structs are **owned** by their respective bounded contexts (see
-//! `domains/*/domain/events.rs`). This module re-exports them so that
-//! existing consumers that import from `shared::event_bus` continue to
-//! compile without changes.
+//! Only structs that are *actually consumed across bounded-context boundaries*
+//! are re-exported here.  Domain-internal event helpers stay in their own
+//! `domains/*/domain/events.rs` files.
 
+pub use crate::shared::contracts::events::InterventionFinalized;
 pub use crate::shared::services::domain_event::DomainEvent;
-
-// Re-export from owning domains for backward compatibility.
-pub use crate::domains::interventions::domain::events::InterventionFinalized;
-pub use crate::domains::inventory::domain::events::MaterialConsumed;
-pub use crate::domains::quotes::domain::events::{
-    QuoteConvertedToTask, QuoteCustomerResponded, QuoteShared,
-};

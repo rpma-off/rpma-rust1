@@ -1,3 +1,13 @@
+---
+title: "ADR-013: IPC Wrapper Pattern for Frontend"
+summary: "The frontend never calls Tauri's `invoke` directly. All IPC communication goes through typed domain wrapper functions in `frontend/src/domains/*/ipc/`."
+domain: "ipc"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-013: IPC Wrapper Pattern for Frontend
 
 ## Status

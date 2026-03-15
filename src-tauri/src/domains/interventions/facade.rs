@@ -10,8 +10,11 @@ use crate::domains::interventions::infrastructure::intervention_types::{
     SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
 };
 use crate::shared::contracts::auth::UserRole;
+use crate::shared::contracts::common::now as now_ms;
+use crate::shared::contracts::events::InterventionFinalized;
 use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::context::RequestContext;
+use crate::shared::event_bus::publish_event;
 use crate::shared::ipc::errors::AppError;
 use chrono::Utc;
 
@@ -606,6 +609,26 @@ impl InterventionsFacade {
                     .map_err(|e| {
                         AppError::Database(format!("Failed to finalize intervention: {e}"))
                     })?;
+                // Emit here (application layer) — infrastructure must not publish events.
+                let completed_at_ms = response
+                    .intervention
+                    .completed_at
+                    .inner()
+                    .unwrap_or_else(now_ms);
+                let technician_id = response
+                    .intervention
+                    .technician_id
+                    .clone()
+                    .unwrap_or_else(|| ctx.user_id().to_string());
+                publish_event(
+                    InterventionFinalized {
+                        intervention_id: response.intervention.id.clone(),
+                        task_id: response.intervention.task_id.clone(),
+                        technician_id,
+                        completed_at_ms,
+                    }
+                    .into(),
+                );
                 Ok(InterventionsResponse::Finalized(response))
             }
             InterventionsCommand::WorkflowStart { request } => {

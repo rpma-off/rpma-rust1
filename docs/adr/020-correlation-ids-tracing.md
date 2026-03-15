@@ -1,3 +1,13 @@
+---
+title: "ADR-020: Correlation IDs for Distributed Tracing"
+summary: "Every IPC command receives an optional correlation ID that propagates through the entire call stack via thread-local storage, enabling distributed tracing across services."
+domain: "observability"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-020: Correlation IDs for Distributed Tracing
 
 ## Status

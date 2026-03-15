@@ -5,6 +5,14 @@
 //! source of truth** consumed by the PDF template; no business logic or
 //! data merging should happen inside the renderer.
 
+pub mod builders;
+pub mod extractors;
+pub mod formatters;
+
+pub use builders::*;
+pub use extractors::*;
+pub use formatters::*;
+
 use crate::shared::contracts::common::*;
 use crate::shared::services::cross_domain::{
     Client, Intervention, InterventionStatus, InterventionStep, MaterialConsumption, Photo,
@@ -12,13 +20,12 @@ use crate::shared::services::cross_domain::{
 };
 use chrono::Utc;
 use serde::Serialize;
-use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
-// View‑model structs
+// View-model structs
 // ---------------------------------------------------------------------------
 
-/// Top‑level report view model consumed by the PDF template.
+/// Top-level report view model consumed by the PDF template.
 #[derive(Debug, Clone, Serialize)]
 pub struct ReportViewModel {
     pub meta: ReportMeta,
@@ -199,21 +206,12 @@ pub struct ReportDisplay {
 }
 
 // ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const NOT_SPECIFIED: &str = "Non renseigne";
-const NO_OBSERVATION: &str = "Aucune observation";
-const NOT_EVALUATED: &str = "Non evalue";
-const NO_DATA: &str = "Aucune donnee";
-
-// ---------------------------------------------------------------------------
-// Builder
+// Builder — main entry point
 // ---------------------------------------------------------------------------
 
 /// Build a complete `ReportViewModel` from raw intervention data.
 ///
-/// This is the **single entry point** that fuses top‑level `steps` (the
+/// This is the **single entry point** that fuses top-level `steps` (the
 /// canonical list) with the intervention data and normalises every field so
 /// that the PDF template can render without any further logic.
 pub fn build_intervention_report_view_model(
@@ -223,6 +221,12 @@ pub fn build_intervention_report_view_model(
     materials: &[MaterialConsumption],
     client: Option<&Client>,
 ) -> ReportViewModel {
+    use formatters::{
+        film_type_label, intervention_status_badge, intervention_status_label,
+        intervention_type_label, lighting_label, location_label, timestamp_string_display,
+        weather_label, NOT_EVALUATED, NO_DATA, NO_OBSERVATION, NOT_SPECIFIED,
+    };
+
     let now = Utc::now();
 
     // --- Meta ---
@@ -368,11 +372,11 @@ pub fn build_intervention_report_view_model(
     // --- Steps ---
     let report_steps: Vec<ReportStep> = steps
         .iter()
-        .map(|step| build_report_step(step, photos))
+        .map(|step| builders::build_report_step(step, photos))
         .collect();
 
     // --- Quality ---
-    let quality = build_quality_section(intervention, &report_steps);
+    let quality = builders::build_quality_section(intervention, &report_steps);
 
     // --- Customer validation ---
     let customer_validation = ReportCustomerValidation {
@@ -388,7 +392,7 @@ pub fn build_intervention_report_view_model(
     };
 
     // --- Photos ---
-    let report_photos = build_photos_section(photos, steps);
+    let report_photos = builders::build_photos_section(photos, steps);
 
     // --- Display placeholders ---
     let display = ReportDisplay {
@@ -411,457 +415,6 @@ pub fn build_intervention_report_view_model(
         photos: report_photos,
         display,
     }
-}
-
-// ---------------------------------------------------------------------------
-// Step builder
-// ---------------------------------------------------------------------------
-
-fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> ReportStep {
-    let step_photos: usize = photos
-        .iter()
-        .filter(|p| {
-            p.step_id.as_deref() == Some(&step.id) || p.step_number == Some(step.step_number)
-        })
-        .count();
-
-    let effective_photo_count = if step_photos > 0 {
-        step_photos as i32
-    } else {
-        step.photo_count
-    };
-
-    // Extract structured data from collected_data / step_data
-    let effective_data = step.collected_data.as_ref().or(step.step_data.as_ref());
-
-    let checklist = extract_checklist(effective_data);
-    let defects = extract_string_array(effective_data, "defects");
-    let environment = extract_key_values(effective_data, "environment");
-    let zones = extract_zones(effective_data);
-    let quality_scores = extract_key_values(effective_data, "quality_scores");
-    let measurements_from_data = extract_key_values(effective_data, "measurements");
-
-    // Also check step.measurements JSON
-    let measurements_from_step = step
-        .measurements
-        .as_ref()
-        .map(|m| json_to_key_values(m))
-        .unwrap_or_default();
-
-    let mut all_measurements = measurements_from_data;
-    all_measurements.extend(measurements_from_step);
-
-    // Validation data
-    let validation_data = step
-        .validation_data
-        .as_ref()
-        .map(|v| json_to_key_values(v))
-        .unwrap_or_default();
-
-    // Build observations list (merge step.observations + observations from collected_data)
-    let mut observations = step.observations.clone().unwrap_or_default();
-    let data_observations = extract_string_array(effective_data, "observations");
-    for obs in data_observations {
-        if !observations.contains(&obs) {
-            observations.push(obs);
-        }
-    }
-
-    // Quality score: prefer validation_score, fall back to quality_scores average
-    let quality_score_str = if let Some(score) = step.validation_score {
-        format!("{}/100", score)
-    } else if !quality_scores.is_empty() {
-        let scores_display: Vec<String> = quality_scores
-            .iter()
-            .map(|kv| format!("{}: {}", kv.key, kv.value))
-            .collect();
-        scores_display.join(", ")
-    } else {
-        NOT_EVALUATED.to_string()
-    };
-
-    ReportStep {
-        id: step.id.clone(),
-        title: step.title.clone().unwrap_or_else(|| step.step_name.clone()),
-        number: step.step_number,
-        status: step_status_label(&step.step_status),
-        status_badge: step_status_badge(&step.step_status),
-        started_at: timestamp_string_display(&step.started_at),
-        completed_at: timestamp_string_display(&step.completed_at),
-        duration: step
-            .duration_seconds
-            .map(|d| format_duration_seconds(d))
-            .unwrap_or_else(|| NOT_SPECIFIED.to_string()),
-        photo_count: effective_photo_count,
-        notes: step
-            .notes
-            .clone()
-            .unwrap_or_else(|| NO_OBSERVATION.to_string()),
-        checklist,
-        defects,
-        observations,
-        measurements: all_measurements,
-        environment,
-        zones,
-        quality_score: quality_score_str,
-        validation_data,
-        approval_data: ReportApproval {
-            approved_by: step
-                .approved_by
-                .clone()
-                .unwrap_or_else(|| NOT_SPECIFIED.to_string()),
-            approved_at: timestamp_string_display(&step.approved_at),
-            rejection_reason: step.rejection_reason.clone().unwrap_or_default(),
-        },
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Quality section builder
-// ---------------------------------------------------------------------------
-
-fn build_quality_section(
-    intervention: &Intervention,
-    report_steps: &[ReportStep],
-) -> ReportQuality {
-    let global_score = intervention
-        .quality_score
-        .map(|s| format!("{}/100", s))
-        .unwrap_or_else(|| NOT_EVALUATED.to_string());
-
-    let checkpoints: Vec<ReportQualityCheckpoint> = report_steps
-        .iter()
-        .filter(|s| s.quality_score != NOT_EVALUATED)
-        .map(|s| ReportQualityCheckpoint {
-            step_name: s.title.clone(),
-            step_status: s.status.clone(),
-            score: s.quality_score.clone(),
-        })
-        .collect();
-
-    let final_observations = intervention.final_observations.clone().unwrap_or_default();
-
-    ReportQuality {
-        global_quality_score: global_score,
-        checkpoints,
-        final_observations,
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Photos section builder
-// ---------------------------------------------------------------------------
-
-fn build_photos_section(photos: &[Photo], steps: &[InterventionStep]) -> ReportPhotos {
-    // Group by step
-    let mut step_map: HashMap<String, usize> = HashMap::new();
-    for step in steps {
-        step_map.insert(step.step_name.clone(), 0);
-    }
-    for photo in photos {
-        if let Some(step_num) = photo.step_number {
-            if let Some(step) = steps.iter().find(|s| s.step_number == step_num) {
-                *step_map.entry(step.step_name.clone()).or_insert(0) += 1;
-            }
-        } else if let Some(step_id) = &photo.step_id {
-            if let Some(step) = steps.iter().find(|s| &s.id == step_id) {
-                *step_map.entry(step.step_name.clone()).or_insert(0) += 1;
-            }
-        }
-    }
-    let grouped_by_step: Vec<ReportPhotoGroup> = step_map
-        .into_iter()
-        .map(|(label, count)| ReportPhotoGroup { label, count })
-        .collect();
-
-    // Group by category
-    let mut cat_map: HashMap<String, usize> = HashMap::new();
-    for photo in photos {
-        let cat = photo
-            .photo_category
-            .as_ref()
-            .map(|c| format!("{:?}", c))
-            .unwrap_or_else(|| "Non categorise".to_string());
-        *cat_map.entry(cat).or_insert(0) += 1;
-    }
-    let grouped_by_category: Vec<ReportPhotoGroup> = cat_map
-        .into_iter()
-        .map(|(label, count)| ReportPhotoGroup { label, count })
-        .collect();
-
-    ReportPhotos {
-        total_count: photos.len(),
-        grouped_by_step,
-        grouped_by_category,
-    }
-}
-
-// ---------------------------------------------------------------------------
-// JSON extraction helpers
-// ---------------------------------------------------------------------------
-
-fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportChecklistItem> {
-    let Some(data) = data else {
-        return Vec::new();
-    };
-    let Some(obj) = data.get("checklist") else {
-        return Vec::new();
-    };
-    match obj {
-        serde_json::Value::Object(map) => map
-            .iter()
-            .map(|(k, v)| ReportChecklistItem {
-                label: humanize_key(k),
-                checked: v.as_bool().unwrap_or(false),
-            })
-            .collect(),
-        serde_json::Value::Array(arr) => arr
-            .iter()
-            .filter_map(|item| {
-                item.as_str().map(|s| ReportChecklistItem {
-                    label: s.to_string(),
-                    checked: true,
-                })
-            })
-            .collect(),
-        _ => Vec::new(),
-    }
-}
-
-fn extract_string_array(data: Option<&serde_json::Value>, key: &str) -> Vec<String> {
-    let Some(data) = data else {
-        return Vec::new();
-    };
-    let Some(arr) = data.get(key) else {
-        return Vec::new();
-    };
-    match arr {
-        serde_json::Value::Array(items) => items
-            .iter()
-            .filter_map(|v| match v {
-                serde_json::Value::String(s) => Some(s.clone()),
-                other if !other.is_null() => Some(other.to_string()),
-                _ => None,
-            })
-            .collect(),
-        serde_json::Value::String(s) => vec![s.clone()],
-        _ => Vec::new(),
-    }
-}
-
-fn extract_key_values(data: Option<&serde_json::Value>, key: &str) -> Vec<ReportKeyValue> {
-    let Some(data) = data else {
-        return Vec::new();
-    };
-    let Some(value) = data.get(key) else {
-        return Vec::new();
-    };
-    json_to_key_values(value)
-}
-
-fn extract_zones(data: Option<&serde_json::Value>) -> Vec<String> {
-    // Try "zones" first, then "installation_zones"
-    let mut result = extract_string_array(data, "zones");
-    if result.is_empty() {
-        result = extract_string_array(data, "installation_zones");
-    }
-    result
-}
-
-fn json_to_key_values(value: &serde_json::Value) -> Vec<ReportKeyValue> {
-    match value {
-        serde_json::Value::Object(obj) => obj
-            .iter()
-            .filter(|(_, v)| !v.is_null())
-            .map(|(k, v)| ReportKeyValue {
-                key: humanize_key(k),
-                value: json_value_display(v),
-            })
-            .collect(),
-        serde_json::Value::Null => Vec::new(),
-        _ => Vec::new(),
-    }
-}
-
-fn json_value_display(value: &serde_json::Value) -> String {
-    match value {
-        serde_json::Value::String(s) => s.clone(),
-        serde_json::Value::Bool(b) => {
-            if *b {
-                "Oui".to_string()
-            } else {
-                "Non".to_string()
-            }
-        }
-        serde_json::Value::Number(n) => n.to_string(),
-        serde_json::Value::Null => "-".to_string(),
-        serde_json::Value::Array(arr) => arr
-            .iter()
-            .map(|v| json_value_display(v))
-            .collect::<Vec<_>>()
-            .join(", "),
-        serde_json::Value::Object(_) => {
-            // Flatten nested objects
-            let kvs = json_to_key_values(value);
-            kvs.iter()
-                .map(|kv| format!("{}: {}", kv.key, kv.value))
-                .collect::<Vec<_>>()
-                .join(", ")
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Label / formatting helpers
-// ---------------------------------------------------------------------------
-
-/// TODO: document
-pub fn humanize_key(key: &str) -> String {
-    key.replace('_', " ")
-        .replace('-', " ")
-        .split_whitespace()
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                Some(c) => {
-                    let upper: String = c.to_uppercase().collect();
-                    format!("{}{}", upper, chars.as_str())
-                }
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-fn intervention_status_label(status: &InterventionStatus) -> String {
-    match status {
-        InterventionStatus::Completed => "Terminee".to_string(),
-        InterventionStatus::InProgress => "En cours".to_string(),
-        InterventionStatus::Pending => "En attente".to_string(),
-        InterventionStatus::Paused => "En pause".to_string(),
-        InterventionStatus::Cancelled => "Annulee".to_string(),
-    }
-}
-
-fn intervention_status_badge(status: &InterventionStatus) -> String {
-    match status {
-        InterventionStatus::Completed => "[OK]".to_string(),
-        InterventionStatus::InProgress => "[..]".to_string(),
-        InterventionStatus::Pending => "[..]".to_string(),
-        InterventionStatus::Paused => "[||]".to_string(),
-        InterventionStatus::Cancelled => "[X]".to_string(),
-    }
-}
-
-fn intervention_type_label(
-    itype: &crate::shared::services::cross_domain::InterventionType,
-) -> String {
-    use crate::shared::services::cross_domain::InterventionType;
-    match itype {
-        InterventionType::Ppf => "PPF (Protection Film)".to_string(),
-        InterventionType::Ceramic => "Ceramique".to_string(),
-        InterventionType::Detailing => "Detailing".to_string(),
-        InterventionType::Other => "Autre".to_string(),
-    }
-}
-
-/// TODO: document
-pub fn step_status_label(status: &StepStatus) -> String {
-    match status {
-        StepStatus::Completed => "Termine".to_string(),
-        StepStatus::InProgress => "En cours".to_string(),
-        StepStatus::Pending => "En attente".to_string(),
-        StepStatus::Paused => "En pause".to_string(),
-        StepStatus::Failed => "Echec".to_string(),
-        StepStatus::Skipped => "Ignore".to_string(),
-        StepStatus::Rework => "Retravail".to_string(),
-    }
-}
-
-/// TODO: document
-pub fn step_status_badge(status: &StepStatus) -> String {
-    match status {
-        StepStatus::Completed => "[OK]".to_string(),
-        StepStatus::InProgress => "[..]".to_string(),
-        StepStatus::Pending => "[..]".to_string(),
-        StepStatus::Paused => "[||]".to_string(),
-        StepStatus::Failed => "[X]".to_string(),
-        StepStatus::Skipped => "[>>]".to_string(),
-        StepStatus::Rework => "[RW]".to_string(),
-    }
-}
-
-fn weather_label(w: &WeatherCondition) -> String {
-    match w {
-        WeatherCondition::Sunny => "Ensoleille".to_string(),
-        WeatherCondition::Cloudy => "Nuageux".to_string(),
-        WeatherCondition::Rainy => "Pluvieux".to_string(),
-        WeatherCondition::Windy => "Venteux".to_string(),
-        WeatherCondition::Foggy => "Brumeux".to_string(),
-        WeatherCondition::Other => "Autre".to_string(),
-    }
-}
-
-fn lighting_label(l: &LightingCondition) -> String {
-    match l {
-        LightingCondition::Natural => "Naturel".to_string(),
-        LightingCondition::Artificial => "Artificiel".to_string(),
-        LightingCondition::Mixed => "Mixte".to_string(),
-    }
-}
-
-fn location_label(l: &WorkLocation) -> String {
-    match l {
-        WorkLocation::Indoor => "Interieur".to_string(),
-        WorkLocation::Outdoor => "Exterieur".to_string(),
-        WorkLocation::SemiCovered => "Semi-couvert".to_string(),
-    }
-}
-
-fn film_type_label(f: &FilmType) -> String {
-    match f {
-        FilmType::Standard => "Standard".to_string(),
-        FilmType::Premium => "Premium".to_string(),
-        FilmType::Matte => "Mat".to_string(),
-        FilmType::Colored => "Colore".to_string(),
-    }
-}
-
-fn timestamp_string_display(ts: &TimestampString) -> String {
-    match ts.0 {
-        Some(millis) => {
-            let dt = chrono::DateTime::from_timestamp_millis(millis)
-                .or_else(|| chrono::DateTime::from_timestamp(millis, 0));
-            match dt {
-                Some(d) => d.format("%d/%m/%Y %H:%M").to_string(),
-                None => NOT_SPECIFIED.to_string(),
-            }
-        }
-        None => NOT_SPECIFIED.to_string(),
-    }
-}
-
-fn format_duration_seconds(seconds: i32) -> String {
-    if seconds < 60 {
-        format!("{} sec", seconds)
-    } else if seconds < 3600 {
-        format!("{} min", seconds / 60)
-    } else {
-        let hours = seconds / 3600;
-        let mins = (seconds % 3600) / 60;
-        if mins > 0 {
-            format!("{}h {:02}min", hours, mins)
-        } else {
-            format!("{}h", hours)
-        }
-    }
-}
-
-/// Convert score (0-100) to star rating string
-pub fn score_to_stars(score: i32) -> String {
-    let stars = (score as f32 / 20.0).round() as i32;
-    "*".repeat(stars as usize)
 }
 
 // ---------------------------------------------------------------------------
@@ -894,8 +447,7 @@ mod tests {
             client_phone: Some("+33612345678".to_string()),
             technician_id: Some("tech-001".to_string()),
             technician_name: Some("Jean Dupont".to_string()),
-            intervention_type:
-                crate::shared::services::cross_domain::InterventionType::Ppf,
+            intervention_type: crate::shared::services::cross_domain::InterventionType::Ppf,
             current_step: 4,
             completion_percentage: 100.0,
             estimated_duration: Some(120),
@@ -1102,12 +654,18 @@ mod tests {
 
         assert_eq!(vm.summary.technician_name, "Non assigne");
         assert!(!vm.customer_validation.signature_present);
-        assert_eq!(vm.customer_validation.satisfaction, NOT_EVALUATED);
-        assert_eq!(vm.quality.global_quality_score, NOT_EVALUATED);
-        assert_eq!(vm.work_conditions.weather, NOT_SPECIFIED);
-        assert_eq!(vm.materials.film_type, NOT_SPECIFIED);
-        assert_eq!(vm.summary.estimated_duration, NOT_SPECIFIED);
-        assert_eq!(vm.summary.actual_duration, NOT_SPECIFIED);
+        assert_eq!(
+            vm.customer_validation.satisfaction,
+            formatters::NOT_EVALUATED
+        );
+        assert_eq!(
+            vm.quality.global_quality_score,
+            formatters::NOT_EVALUATED
+        );
+        assert_eq!(vm.work_conditions.weather, formatters::NOT_SPECIFIED);
+        assert_eq!(vm.materials.film_type, formatters::NOT_SPECIFIED);
+        assert_eq!(vm.summary.estimated_duration, formatters::NOT_SPECIFIED);
+        assert_eq!(vm.summary.actual_duration, formatters::NOT_SPECIFIED);
     }
 
     #[test]
@@ -1151,7 +709,8 @@ mod tests {
             synced: false,
             last_synced_at: None,
         };
-        let vm = build_intervention_report_view_model(&intervention, &[], &[], &[], Some(&client));
+        let vm =
+            build_intervention_report_view_model(&intervention, &[], &[], &[], Some(&client));
 
         assert_eq!(vm.client.name, "Entreprise ABC");
         assert_eq!(vm.client.email, "abc@corp.com");
@@ -1248,10 +807,10 @@ mod tests {
 
     #[test]
     fn test_format_duration_seconds_function() {
-        assert_eq!(format_duration_seconds(30), "30 sec");
-        assert_eq!(format_duration_seconds(600), "10 min");
-        assert_eq!(format_duration_seconds(3600), "1h");
-        assert_eq!(format_duration_seconds(3900), "1h 05min");
+        assert_eq!(formatters::format_duration_seconds(30), "30 sec");
+        assert_eq!(formatters::format_duration_seconds(600), "10 min");
+        assert_eq!(formatters::format_duration_seconds(3600), "1h");
+        assert_eq!(formatters::format_duration_seconds(3900), "1h 05min");
     }
 
     #[test]

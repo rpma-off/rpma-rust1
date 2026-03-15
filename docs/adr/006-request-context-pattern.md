@@ -1,3 +1,13 @@
+---
+title: "ADR-006: RequestContext Pattern for Authentication Flow"
+summary: "Session tokens never reach services or repositories. All authentication and authorization happens at the IPC boundary via `resolve_context!` macro, returning a `RequestContext` that flows through the application and domain layers."
+domain: "auth"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-006: RequestContext Pattern for Authentication Flow
 
 ## Status

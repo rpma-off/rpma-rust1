@@ -1,3 +1,13 @@
+---
+title: "ADR-009: SQLite with WAL Mode for Persistence"
+summary: "Uses SQLite as the primary database with Write-Ahead Logging (WAL) mode for concurrent read/write access, connection pooling, and optimized pragmas for desktop application performance."
+domain: "persistence"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-009: SQLite with WAL Mode for Persistence
 
 ## Status

@@ -1,3 +1,13 @@
+---
+title: "ADR-007: Role-Based Access Control Hierarchy"
+summary: "Implements a role hierarchy (Admin > Supervisor > Technician > Viewer) with permission cascading, where higher roles inherit permissions from lower roles."
+domain: "auth"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-007: Role-Based Access Control Hierarchy
 
 ## Status

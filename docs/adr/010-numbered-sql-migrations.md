@@ -1,3 +1,13 @@
+---
+title: "ADR-010: Numbered SQL Migrations with Rust Data Migrations"
+summary: "Database schema changes use numbered SQL files in `migrations/` directory. Complex data transformations use Rust-based migrations embedded in the application."
+domain: "migrations"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-010: Numbered SQL Migrations with Rust Data Migrations
 
 ## Status

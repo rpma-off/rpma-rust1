@@ -1,3 +1,13 @@
+---
+title: "ADR-011: Soft Delete Pattern"
+summary: "All entities use `deleted_at` timestamps for soft deletion instead of hard deletes. Records are never physically removed, only marked as deleted."
+domain: "persistence"
+status: "accepted"
+read_when:
+  - "Designing new features"
+  - "Reviewing architectural decisions"
+---
+
 # ADR-011: Soft Delete Pattern
 
 ## Status
