@@ -142,11 +142,12 @@ impl UsersFacade {
                 let response = match action {
                     UserAction::Create { data } => {
                         let role = self.parse_role(&data.role)?;
+                        let username = Self::derive_username_from_email(&data.email);
                         let user = services
                             .account_manager
                             .create_account(
                                 &data.email,
-                                &data.email,
+                                &username,
                                 &data.first_name,
                                 &data.last_name,
                                 role,
@@ -260,5 +261,29 @@ impl UsersFacade {
                 Ok(UsersDomainResponse::HasAdmins(has_admin))
             }
         }
+    }
+
+    /// Derive a validator-compliant username from an email address.
+    /// Takes the local-part (before `@`), replaces forbidden chars with `_`,
+    /// trims leading/trailing `_`/`-`, and ensures the result is 3–50 chars.
+    pub(crate) fn derive_username_from_email(email: &str) -> String {
+        let local = email.split('@').next().unwrap_or(email);
+
+        let sanitized: String = local
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' { c } else { '_' })
+            .collect();
+
+        let trimmed = sanitized
+            .trim_matches(|c: char| c == '_' || c == '-')
+            .to_string();
+
+        let result = if trimmed.len() < 3 {
+            format!("u_{}", trimmed)
+        } else {
+            trimmed
+        };
+
+        result.chars().take(50).collect()
     }
 }
