@@ -18,6 +18,13 @@ import type { JsonObject, JsonValue } from '@/types/json';
 import { handleInvoke, resetDb } from './mock-db';
 import { installMockControls } from './mock-controls';
 
+/** Represents a photo file passed to the mock photo upload handler. */
+interface PhotoUploadFile {
+  name: string;
+  mimeType: string;
+  bytes: ArrayLike<number>;
+}
+
 const mockSafeInvoke = <T>(command: string, args?: JsonObject) =>
   handleInvoke(command, args) as Promise<T>;
 
@@ -74,8 +81,8 @@ export const ipcClient = {
     sendTaskMessage: (taskId: string, message: string, messageType: string) => mockSafeInvoke('send_task_message', { request: { task_id: taskId, message, message_type: messageType } }),
     delayTask: (taskId: string, newDate: string, reason: string) => mockSafeInvoke('delay_task', { request: { task_id: taskId, new_scheduled_date: newDate, reason } }),
     reportTaskIssue: (taskId: string, issueType: string, severity: string, description: string) => mockSafeInvoke('report_task_issue', { request: { task_id: taskId, issue_type: issueType, severity, description } }),
-    exportTasksCsv: (options: any) => mockSafeInvoke<string>('export_tasks_csv', { request: options }),
-    importTasksBulk: (options: any) => mockSafeInvoke('import_tasks_bulk', { request: options })
+    exportTasksCsv: (options: JsonObject) => mockSafeInvoke<string>('export_tasks_csv', { request: options }),
+    importTasksBulk: (options: JsonObject) => mockSafeInvoke('import_tasks_bulk', { request: options })
   },
   intervention: {
     getActiveByTask: (taskId: string) =>
@@ -96,24 +103,24 @@ export const ipcClient = {
       mockSafeInvoke('intervention_workflow', { action: { action: 'GetActiveByTask', task_id: taskId } }),
     getLatestByTask: (taskId: string) =>
       mockSafeInvoke('intervention_get_latest_by_task', { taskId }),
-    advanceStep: (stepData: any) =>
+    advanceStep: (stepData: JsonObject) =>
       mockSafeInvoke('intervention_progress', { action: { action: 'AdvanceStep', ...stepData } }),
     getStep: (stepId: string) =>
       mockSafeInvoke('intervention_get_step', { step_id: stepId }),
     getProgress: (interventionId: string) =>
       mockSafeInvoke('intervention_progress', { action: { action: 'Get', intervention_id: interventionId } }),
-    saveStepProgress: (stepData: any) =>
+    saveStepProgress: (stepData: JsonObject) =>
       mockSafeInvoke('intervention_progress', { action: { action: 'SaveStepProgress', ...stepData } }),
     updateWorkflow: (id: string, data: JsonObject) =>
       mockSafeInvoke('intervention_workflow', { action: { action: 'Update', id, data } }),
-    finalize: (data: any) =>
+    finalize: (data: JsonObject) =>
       mockSafeInvoke('intervention_workflow', { action: { action: 'Finalize', data } }),
-    list: (filters: any) =>
+    list: (filters: JsonObject) =>
       mockSafeInvoke('intervention_management', { request: { action: { List: { filters } } } }),
   },
   notifications: {
-    initialize: (config: any) => mockSafeInvoke('initialize_notification_service', { config }),
-    send: (request: any) => mockSafeInvoke('send_notification', { request }),
+    initialize: (config: JsonObject) => mockSafeInvoke('initialize_notification_service', { config }),
+    send: (request: JsonObject) => mockSafeInvoke('send_notification', { request }),
     getStatus: () => mockSafeInvoke('get_notification_status', {}),
     getRecentActivities: () => mockSafeInvoke<JsonValue[]>('get_recent_activities', {}),
   },
@@ -172,13 +179,13 @@ export const ipcClient = {
     getStats: (timeRange?: string) => mockSafeInvoke('dashboard_get_stats', { timeRange }),
   },
   users: {
-    create: (data: any): Promise<JsonValue> =>
+    create: (data: JsonObject): Promise<JsonValue> =>
       mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Create', data } } }),
     get: (id: string): Promise<JsonValue> =>
       mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Get', id } } }),
     list: (limit: number, offset: number): Promise<UserListResponse> =>
-      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'List', limit, offset } } }).then(r => r as any),
-    update: (id: string, data: any): Promise<JsonValue> =>
+      mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'List', limit, offset } } }).then(r => r as UserListResponse),
+    update: (id: string, data: JsonObject): Promise<JsonValue> =>
       mockSafeInvoke<JsonValue>('user_crud', { request: { action: { action: 'Update', id, data } } }),
     delete: (id: string): Promise<void> =>
       mockSafeInvoke<void>('user_crud', { request: { action: { action: 'Delete', id } } }),
@@ -217,32 +224,32 @@ export const ipcClient = {
   calendar: {
     getEvents: (startDate: string, endDate: string, technicianId?: string) => mockSafeInvoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId }),
     getEventById: (id: string) => mockSafeInvoke('get_event_by_id', { request: { id } }),
-    createEvent: (eventData: any) => mockSafeInvoke('create_event', { request: { event_data: eventData } }),
-    updateEvent: (id: string, eventData: any) => mockSafeInvoke('update_event', { request: { id, event_data: eventData } }),
+    createEvent: (eventData: JsonObject) => mockSafeInvoke('create_event', { request: { event_data: eventData } }),
+    updateEvent: (id: string, eventData: JsonObject) => mockSafeInvoke('update_event', { request: { id, event_data: eventData } }),
     deleteEvent: (id: string) => mockSafeInvoke('delete_event', { request: { id } }),
     getEventsForTechnician: (technicianId: string) => mockSafeInvoke('get_events_for_technician', { request: { technician_id: technicianId } }),
     getEventsForTask: (taskId: string) => mockSafeInvoke('get_events_for_task', { request: { task_id: taskId } }),
   },
   photos: {
     list: (interventionId: string) => mockSafeInvoke('document_get_photos', { request: { intervention_id: interventionId } }),
-    upload: (interventionId: string, file: any, photoType: string) => mockSafeInvoke('document_store_photo', { request: { intervention_id: interventionId, file_name: file.name, mime_type: file.mimeType, photo_type: photoType }, image_data: Array.from(file.bytes) as number[] }),
+    upload: (interventionId: string, file: PhotoUploadFile, photoType: string) => mockSafeInvoke('document_store_photo', { request: { intervention_id: interventionId, file_name: file.name, mime_type: file.mimeType, photo_type: photoType }, image_data: Array.from(file.bytes) as number[] }),
     delete: (photoId: string) => mockSafeInvoke('document_delete_photo', { photo_id: photoId }),
   },
   material: {
-    list: (query: any) => mockSafeInvoke('material_list', query),
-    create: (data: any) => mockSafeInvoke('material_create', { request: data }),
-    update: (id: string, data: any) => mockSafeInvoke('material_update', { id, request: data }),
+    list: (query: JsonObject) => mockSafeInvoke('material_list', query),
+    create: (data: JsonObject) => mockSafeInvoke('material_create', { request: data }),
+    update: (id: string, data: JsonObject) => mockSafeInvoke('material_update', { id, request: data }),
     get: (id: string) => mockSafeInvoke('material_get', { id }),
     delete: (id: string) => mockSafeInvoke('material_delete', { id }),
-    updateStock: (data: any) => mockSafeInvoke('material_update_stock', { request: data }),
-    adjustStock: (data: any) => mockSafeInvoke('material_adjust_stock', { request: data }),
-    recordConsumption: (data: any) => mockSafeInvoke('material_record_consumption', { request: data }),
-    getConsumptionHistory: (materialId: string, query: any) => mockSafeInvoke('material_get_consumption_history', { material_id: materialId, ...query }),
-    createInventoryTransaction: (data: any) => mockSafeInvoke('material_create_inventory_transaction', { request: data }),
-    getTransactionHistory: (materialId: string, query: any) => mockSafeInvoke('material_get_transaction_history', { material_id: materialId, ...query }),
-    createCategory: (data: any) => mockSafeInvoke('material_create_category', { request: data }),
+    updateStock: (data: JsonObject) => mockSafeInvoke('material_update_stock', { request: data }),
+    adjustStock: (data: JsonObject) => mockSafeInvoke('material_adjust_stock', { request: data }),
+    recordConsumption: (data: JsonObject) => mockSafeInvoke('material_record_consumption', { request: data }),
+    getConsumptionHistory: (materialId: string, query: JsonObject) => mockSafeInvoke('material_get_consumption_history', { material_id: materialId, ...query }),
+    createInventoryTransaction: (data: JsonObject) => mockSafeInvoke('material_create_inventory_transaction', { request: data }),
+    getTransactionHistory: (materialId: string, query: JsonObject) => mockSafeInvoke('material_get_transaction_history', { material_id: materialId, ...query }),
+    createCategory: (data: JsonObject) => mockSafeInvoke('material_create_category', { request: data }),
     listCategories: () => mockSafeInvoke('material_list_categories', {}),
-    createSupplier: (data: any) => mockSafeInvoke('material_create_supplier', { request: data }),
+    createSupplier: (data: JsonObject) => mockSafeInvoke('material_create_supplier', { request: data }),
     listSuppliers: () => mockSafeInvoke('material_list_suppliers', {}),
     getStats: () => mockSafeInvoke('material_get_stats', {}),
     getLowStockMaterials: () => mockSafeInvoke('material_get_low_stock_materials', {}),

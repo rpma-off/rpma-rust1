@@ -201,7 +201,7 @@ export function useInterventionActions({
   });
 
   // Save step progress mutation
-  const saveStepProgressMutation = useMutation<any, Error, { stepId: string; collectedData: any; notes?: string; photos?: string[] }>({
+  const saveStepProgressMutation = useMutation<unknown, Error, { stepId: string; collectedData: unknown; notes?: string; photos?: string[] }>({
     mutationFn: async ({ stepId, collectedData, notes, photos }) => {
       const result = await InterventionWorkflowService.saveStepProgress(stepId, collectedData, notes, photos);
       if (!result.success) {

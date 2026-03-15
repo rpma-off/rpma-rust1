@@ -202,7 +202,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
       setChecklistItems(updatedItems);
 
       if (interventionData && interventionData.steps) {
-        const currentStep = interventionData.steps.find((step: any) =>
+        const currentStep = interventionData.steps.find((step) =>
           step.collected_data && (step.collected_data.checklist || step.collected_data.qc_checklist)
         );
 
@@ -216,7 +216,7 @@ const PoseDetail: React.FC<PoseDetailProps> = ({
 
           await saveStepProgressMutation.mutateAsync({
             stepId: currentStep.id,
-            collectedData: updatedCollectedData as any,
+            collectedData: updatedCollectedData,
             notes: currentStep.notes ?? undefined,
             photos: currentStep.photo_urls ?? undefined
           });

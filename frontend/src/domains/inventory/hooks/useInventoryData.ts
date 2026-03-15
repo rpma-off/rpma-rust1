@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventoryKeys } from '@/lib/query-keys';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { inventoryIpc } from '../ipc/inventory.ipc';
+import type { CreateSupplierRequest } from '../server';
 
 /**
  * Hook to fetch inventory reports data
@@ -80,7 +81,7 @@ export function useInventorySuppliers() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CreateSupplierRequest) => {
       if (!user?.token) throw new Error('User not authenticated');
       return await inventoryIpc.supplier.createSupplier(data);
     },
