@@ -75,6 +75,25 @@ const KNOWN_STRUCTURAL_CONFLICTS = new Set([
   // whereas quote.types.ts QuotePageStats has 8 fields; the domain's
   // computeQuoteStats function signature also differs.
   'QuotePageStats|frontend/src/domains/quotes/utils/quote-stats.ts',
+
+  // ServiceResponse in configurationService.ts is a lightweight internal helper
+  // { success, data?, error?, status? } whereas unified.types.ts ServiceResponse
+  // has required status, message?, and metadata? fields.
+  'ServiceResponse|frontend/src/domains/settings/api/configurationService.ts',
+
+  // SystemStatus in configurationService.ts uses 'degraded'/'down' variants
+  // whereas configuration.types.ts SystemStatus uses 'warning'/'error' variants.
+  'SystemStatus|frontend/src/domains/settings/api/configurationService.ts',
+
+  // ValidationResult in configurationService.ts has { valid: boolean, errors? }
+  // whereas unified.types.ts ValidationResult has { isValid, errors, warnings?, fieldErrors? }.
+  'ValidationResult|frontend/src/domains/settings/api/configurationService.ts',
+
+  // BusinessRule in settings/api/types.ts is a flat record (condition: string,
+  // action: string, priority: 'low'|'medium'|'high') whereas
+  // configuration.types.ts BusinessRule has nested conditions[]/actions[] and
+  // a numeric priority field.
+  'BusinessRule|frontend/src/domains/settings/api/types.ts',
 ]);
 
 // ---------------------------------------------------------------------------

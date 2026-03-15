@@ -7,6 +7,9 @@ use crate::domains::tasks::ipc::task_types::TaskFilter;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
+// Re-export the domain-layer response type so callers of this module see no change.
+pub use crate::domains::tasks::domain::models::task::BulkImportResponse;
+
 /// Task CRUD request (dispatched by action enum)
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -90,14 +93,4 @@ pub struct ImportTasksBulkRequest {
     pub update_existing: Option<bool>,
     #[serde(default)]
     pub correlation_id: Option<String>,
-}
-
-/// Response for bulk import operation
-#[derive(Serialize, Debug)]
-pub struct BulkImportResponse {
-    pub total_processed: u32,
-    pub successful: u32,
-    pub failed: u32,
-    pub errors: Vec<String>,
-    pub duplicates_skipped: u32,
 }
