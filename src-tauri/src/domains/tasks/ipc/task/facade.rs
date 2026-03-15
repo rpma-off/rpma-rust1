@@ -67,7 +67,6 @@ pub async fn send_task_message(
             &request.task_id,
             &request.message,
             request.message_type.as_deref(),
-            request.correlation_id.clone(),
         )
         .await?;
 
@@ -90,7 +89,6 @@ pub async fn report_task_issue(
             &request.issue_type,
             &request.description,
             request.severity.as_deref(),
-            request.correlation_id.clone(),
         )
         .await?;
 

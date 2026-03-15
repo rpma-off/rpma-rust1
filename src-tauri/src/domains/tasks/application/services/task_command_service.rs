@@ -102,6 +102,12 @@ impl TaskCommandService {
 
     /// Validate a task-scoped message and route it through the notification
     /// service.
+    ///
+    /// # Boundary note
+    /// `ctx.correlation_id` is the single authoritative trace ID for this
+    /// request.  Do NOT add a separate `correlation_id` parameter here; doing
+    /// so risks callers supplying a different value and silently splitting the
+    /// trace (ADR-016).
     #[instrument(skip(self, ctx, raw_body), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
     pub async fn send_message(
         &self,
@@ -109,7 +115,6 @@ impl TaskCommandService {
         task_id: &str,
         raw_body: &str,
         raw_message_type: Option<&str>,
-        correlation_id: Option<String>,
     ) -> Result<String, AppError> {
         let body = raw_body.trim();
         if body.is_empty() {
@@ -156,7 +161,7 @@ impl TaskCommandService {
                 task.client_id.clone(),
                 Some("normal".to_string()),
                 None,
-                correlation_id,
+                Some(ctx.correlation_id.clone()),
             )
             .await?;
 
@@ -169,6 +174,10 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate, format, persist a task issue, and optionally escalate.
+    ///
+    /// # Boundary note
+    /// Use `ctx.correlation_id` for trace continuity.  The parameter was
+    /// removed to prevent trace-splitting (see `send_message` note above).
     #[instrument(skip(self, ctx, raw_description), fields(user_id = %ctx.auth.user_id, task_id = %task_id, issue_type = %raw_issue_type))]
     pub async fn report_issue(
         &self,
@@ -177,7 +186,6 @@ impl TaskCommandService {
         raw_issue_type: &str,
         raw_description: &str,
         raw_severity: Option<&str>,
-        correlation_id: Option<String>,
     ) -> Result<String, AppError> {
         let issue_type = raw_issue_type.trim();
         let description = raw_description.trim();
@@ -217,7 +225,7 @@ impl TaskCommandService {
                     task.client_id.clone(),
                     Some("high".to_string()),
                     None,
-                    correlation_id,
+                    Some(ctx.correlation_id.clone()),
                 )
                 .await
             {

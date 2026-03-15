@@ -6,11 +6,28 @@ import type { JsonObject } from '@/types/json';
 import { taskIpc } from '../ipc/task.ipc';
 
 /**
- * Hook providing common task mutations with automatic cache invalidation
+ * Hook providing common task mutations with automatic cache invalidation.
+ *
+ * ## Mutation guide
+ * - `updateTask` — typed CRUD update via `task_crud` IPC action (prefer this)
+ * - `editTask`   — field-restricted update via the dedicated `edit_task` IPC
+ *                  command; used when the caller holds a raw `JsonObject`
+ *                  (e.g. form payloads not yet typed as UpdateTaskRequest)
+ *
+ * ## Auth invariant
+ * All mutations require an authenticated session.  The `requireToken` helper
+ * below enforces this once; do not duplicate the check in individual
+ * `mutationFn`s.
  */
 export function useTaskMutations() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  /** Throws a typed error if the session token is absent. */
+  function requireToken(): string {
+    if (!user?.token) throw new Error('Utilisateur non authentifié');
+    return user.token;
+  }
 
   const invalidateTask = (taskId: string) => {
     queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
@@ -19,28 +36,37 @@ export function useTaskMutations() {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, data }: { taskId: string; data: UpdateTaskRequest }) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.update(taskId, data);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] updateTask failed:', err);
+    },
   });
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.delete(taskId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] deleteTask failed:', err);
+    },
   });
 
   const editTaskMutation = useMutation({
     mutationFn: async ({ taskId, data }: { taskId: string; data: JsonObject }) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.editTask(taskId, data);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] editTask failed:', err);
+    },
   });
 
   const reportIssueMutation = useMutation({
@@ -55,10 +81,13 @@ export function useTaskMutations() {
       severity: string;
       description: string;
     }) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.reportTaskIssue(taskId, issueType, severity, description);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] reportIssue failed:', err);
+    },
   });
 
   const delayTaskMutation = useMutation({
@@ -71,10 +100,13 @@ export function useTaskMutations() {
       newDate: string;
       reason: string;
     }) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.delayTask(taskId, newDate, reason);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] delayTask failed:', err);
+    },
   });
 
   const sendMessageMutation = useMutation({
@@ -87,11 +119,13 @@ export function useTaskMutations() {
       message: string;
       messageType: string;
     }) => {
-      if (!user?.token) throw new Error('Utilisateur non authentifié');
+      requireToken();
       return taskIpc.sendTaskMessage(taskId, message, messageType);
     },
-    // No need to invalidate task cache for messages usually, but we could
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
+    onError: (err: unknown) => {
+      console.error('[useTaskMutations] sendMessage failed:', err);
+    },
   });
 
   return {
