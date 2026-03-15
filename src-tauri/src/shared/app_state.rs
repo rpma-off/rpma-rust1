@@ -35,6 +35,7 @@ pub struct AppStateType {
     pub cache_service: Arc<crate::shared::services::cache::CacheService>,
     pub event_bus: Arc<crate::shared::services::event_bus::InMemoryEventBus>,
     pub app_data_dir: std::path::PathBuf,
+    pub trash_service: Arc<crate::domains::trash::application::services::trash_service::TrashService>,
 }
 
 pub type AppState<'a> = State<'a, AppStateType>;

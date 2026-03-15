@@ -38,3 +38,4 @@ pub mod quotes;
 pub mod settings;
 pub mod tasks;
 pub mod users;
+pub mod trash;

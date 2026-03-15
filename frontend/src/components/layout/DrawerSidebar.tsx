@@ -26,7 +26,7 @@ const mainItems: NavItem[] = [
   { href: '/settings', label: 'Préférences', icon: <Settings className="h-5 w-5" /> },
   { href: '/tasks', label: 'Flux de travail', icon: <Workflow className="h-5 w-5" /> },
   { href: '/interventions', label: 'Activité', icon: <Activity className="h-5 w-5" /> },
-  { label: 'Corbeille', icon: <Trash2 className="h-5 w-5" />, disabled: true },
+  { href: '/trash', label: 'Corbeille', icon: <Trash2 className="h-5 w-5" /> },
 ];
 
 const settingsItem: NavItem = { href: '/settings', label: 'Paramètres', icon: <Settings className="h-5 w-5" /> };

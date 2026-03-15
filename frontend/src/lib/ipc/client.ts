@@ -24,6 +24,7 @@ import { systemOperations } from './domains/system';
 
 // Re-export necessary types that might be used by consumers of ipcClient
 // or used in the domain wrappers themselves.
+import { trashIpc } from "@/domains/trash/ipc";
 export * from './types';
 
 export const ipcClient = {
@@ -51,6 +52,7 @@ export const ipcClient = {
   quotes: quotesIpc,
   reports: reportsIpc,
   system: systemOperations,
+  trash: trashIpc,
 } as const;
 
 export type IpcClient = typeof ipcClient;

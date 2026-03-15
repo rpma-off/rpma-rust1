@@ -312,6 +312,24 @@ pub enum DomainEvent {
         timestamp: DateTime<Utc>,
         metadata: Option<serde_json::Value>,
     },
+
+    // Trash Events
+    EntityRestored {
+        id: String,
+        entity_id: String,
+        entity_type: String,
+        restored_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    EntityHardDeleted {
+        id: String,
+        entity_id: String,
+        entity_type: String,
+        deleted_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
 }
 
 /// Error severity levels
@@ -367,6 +385,8 @@ impl DomainEvent {
             DomainEvent::QuoteConverted { .. } => "QuoteConverted",
             DomainEvent::QuoteShared { .. } => "QuoteShared",
             DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
+            DomainEvent::EntityRestored { .. } => "EntityRestored",
+            DomainEvent::EntityHardDeleted { .. } => "EntityHardDeleted",
         }
     }
 
@@ -404,6 +424,8 @@ impl DomainEvent {
             DomainEvent::QuoteConverted { timestamp, .. } => *timestamp,
             DomainEvent::QuoteShared { timestamp, .. } => *timestamp,
             DomainEvent::QuoteCustomerResponded { timestamp, .. } => *timestamp,
+            DomainEvent::EntityRestored { timestamp, .. } => *timestamp,
+            DomainEvent::EntityHardDeleted { timestamp, .. } => *timestamp,
         }
     }
 }

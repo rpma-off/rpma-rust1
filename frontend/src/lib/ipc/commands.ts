@@ -243,4 +243,9 @@ export const IPC_COMMANDS = {
   SEND_STREAM_CHUNK: 'send_stream_chunk',
   GET_STREAM_DATA: 'get_stream_data',
   GET_IPC_STATS: 'get_ipc_stats',
+  // Trash commands
+  LIST_TRASH: 'list_trash',
+  RESTORE_ENTITY: 'restore_entity',
+  HARD_DELETE_ENTITY: 'hard_delete_entity',
+  EMPTY_TRASH: 'empty_trash',
 } as const;

@@ -72,3 +72,6 @@ pub use crate::domains::quotes::domain::models::quote::{
     ConvertQuoteToTaskResponse, CreateQuoteItemRequest, CreateQuoteRequest, QuoteAcceptResponse,
     QuoteItemKind, QuoteStatus, UpdateQuoteRequest, UpdateQuoteItemRequest,
 };
+
+// TODO(scaffold): Uncomment if TrashService needs cross-domain access (ADR-003)
+// pub use crate::domains::trash::application::services::trash_service::TrashService;

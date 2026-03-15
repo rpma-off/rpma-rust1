@@ -39,6 +39,7 @@
 //! 21. AuditLogHandler                <- AuditService + EventBus registration
 //! 22. InterventionFinalizedHandler   <- InventoryFacade + global EventBus registration
 //! 23. QuoteAcceptedHandler           <- InterventionWorkflowService + global EventBus registration
+    // TODO(scaffold): ("TrashService", &["Database"]),   // ← wire real deps
 //! 24. QuoteConvertedHandler          <- InterventionWorkflowService + global EventBus registration
 //!
 //! The graph is intentionally acyclic: every edge points from a root resource or an
@@ -336,6 +337,10 @@ impl ServiceBuilder {
         // - NotificationServiceHandler for push notifications
         // - AnalyticsHandler for metrics collection
 
+        let trash_service = Arc::new(
+            crate::domains::trash::application::services::trash_service::TrashService::new(self.db.clone()),
+        );
+
         // Build and return AppStateType
         Ok(AppStateType {
             db: self.db,
@@ -360,6 +365,7 @@ impl ServiceBuilder {
             cache_service,
             event_bus,
             app_data_dir: self.app_data_dir,
+            trash_service,
         })
     }
 }

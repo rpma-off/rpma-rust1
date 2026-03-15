@@ -270,6 +270,11 @@ fn main() {
             commands::log::send_log_to_frontend,
             commands::log::log_task_creation_debug,
             commands::log::log_client_creation_debug,
+            // ── Trash ──────────────────────────────────────────────────────────────
+            domains::trash::ipc::list_trash,
+            domains::trash::ipc::restore_entity,
+            domains::trash::ipc::hard_delete_entity,
+            domains::trash::ipc::empty_trash,
         ])
         .setup(|app| {
             info!("Initializing application setup");
