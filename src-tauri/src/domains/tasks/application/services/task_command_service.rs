@@ -13,11 +13,11 @@ use crate::commands::AppError;
 use crate::shared::services::cross_domain::CalendarService;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
+    BulkImportResponse, CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus,
+    UpdateTaskRequest,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
-use crate::domains::tasks::ipc::task::types::BulkImportResponse;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::TasksFacade;
 use crate::shared::context::RequestContext;
