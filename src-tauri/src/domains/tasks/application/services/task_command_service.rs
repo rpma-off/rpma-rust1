@@ -22,6 +22,7 @@ use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::TasksFacade;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::notification::NotificationSender;
+use crate::shared::services::event_bus::{event_factory, EventPublisher, InMemoryEventBus};
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.
 ///
@@ -33,21 +34,26 @@ pub struct TaskCommandService {
     task_import_service: Arc<TaskImportService>,
     notification_sender: Arc<dyn NotificationSender>,
     calendar_service: Arc<CalendarService>,
+    event_bus: Arc<InMemoryEventBus>,
 }
 
 impl TaskCommandService {
-    /// TODO: document
+    /// Construct a per-request service with access to the shared event bus so
+    /// that completed operations can emit `DomainEvent`s carrying the
+    /// request's `correlation_id`.
     pub fn new(
         task_service: Arc<TaskService>,
         task_import_service: Arc<TaskImportService>,
         notification_sender: Arc<dyn NotificationSender>,
         calendar_service: Arc<CalendarService>,
+        event_bus: Arc<InMemoryEventBus>,
     ) -> Self {
         Self {
             task_service,
             task_import_service,
             notification_sender,
             calendar_service,
+            event_bus,
         }
     }
 
@@ -448,7 +454,7 @@ impl TaskCommandService {
     // ------------------------------------------------------------------
 
     /// Validate and create a task, sending assignment notification afterward.
-    #[instrument(skip(self, ctx, data))]
+    #[instrument(skip(self, ctx, data), fields(user_id = %ctx.auth.user_id, correlation_id = %ctx.correlation_id))]
     pub async fn create_task(
         &self,
         ctx: &RequestContext,
@@ -459,7 +465,7 @@ impl TaskCommandService {
             .validate_task_action(crate::commands::TaskAction::Create { data })
             .await
             .map_err(|e| {
-                warn!("Task validation failed: {}", e);
+                warn!(correlation_id = %ctx.correlation_id, "Task validation failed: {}", e);
                 AppError::Validation(format!("Task validation failed: {}", e))
             })?;
 
@@ -477,14 +483,34 @@ impl TaskCommandService {
             .create_task_async(validated_data, &ctx.auth.user_id)
             .await
             .map_err(|e| {
-                error!("Task creation failed: {}", e);
+                error!(correlation_id = %ctx.correlation_id, "Task creation failed: {}", e);
                 AppError::db_sanitized("tasks.create", e)
             })?;
+
+        // Publish domain event so audit log and other handlers can trace this
+        // request via its correlation_id.  Publishing is non-fatal: the task
+        // is already persisted, so a transient bus failure must not roll it
+        // back (offline-first semantics, ADR-016).
+        let domain_event = event_factory::task_created_with_ctx(
+            task.id.clone(),
+            task.task_number.clone(),
+            task.title.clone(),
+            ctx.auth.user_id.clone(),
+            ctx.correlation_id.clone(),
+        );
+        if let Err(e) = self.event_bus.publish(domain_event) {
+            warn!(
+                correlation_id = %ctx.correlation_id,
+                task_id = %task.id,
+                "Failed to publish TaskCreated event: {}",
+                e
+            );
+        }
 
         self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
             .await;
 
-        info!(task_id = %task.id, "Task created");
+        info!(task_id = %task.id, correlation_id = %ctx.correlation_id, "Task created");
         Ok(task)
     }
 
@@ -501,7 +527,7 @@ impl TaskCommandService {
     }
 
     /// Validate and update a task, sending notifications afterward.
-    #[instrument(skip(self, ctx, data))]
+    #[instrument(skip(self, ctx, data), fields(user_id = %ctx.auth.user_id, correlation_id = %ctx.correlation_id))]
     pub async fn update_task_crud(
         &self,
         ctx: &RequestContext,
@@ -518,7 +544,7 @@ impl TaskCommandService {
             })
             .await
             .map_err(|e| {
-                warn!("Task validation failed: {}", e);
+                warn!(correlation_id = %ctx.correlation_id, "Task validation failed: {}", e);
                 AppError::Validation(format!("Task validation failed: {}", e))
             })?;
 
@@ -536,7 +562,7 @@ impl TaskCommandService {
             .update_task_async(validated_data, &ctx.auth.user_id)
             .await
             .map_err(|e| {
-                error!("Task update failed: {}", e);
+                error!(correlation_id = %ctx.correlation_id, "Task update failed: {}", e);
                 AppError::db_sanitized("tasks.update", e)
             })?;
 
@@ -548,12 +574,12 @@ impl TaskCommandService {
                 .await;
         }
 
-        info!(task_id = %task.id, "Task updated");
+        info!(task_id = %task.id, correlation_id = %ctx.correlation_id, "Task updated");
         Ok(task)
     }
 
     /// Delete a task by ID.
-    #[instrument(skip(self, ctx))]
+    #[instrument(skip(self, ctx), fields(user_id = %ctx.auth.user_id, correlation_id = %ctx.correlation_id))]
     pub async fn delete_task(
         &self,
         ctx: &RequestContext,
@@ -563,10 +589,10 @@ impl TaskCommandService {
             .delete_task_async(task_id, &ctx.auth.user_id)
             .await
             .map_err(|e| {
-                error!("Task deletion failed: {}", e);
+                error!(correlation_id = %ctx.correlation_id, "Task deletion failed: {}", e);
                 AppError::db_sanitized("tasks.delete", e)
             })?;
-        info!(task_id = %task_id, "Task deleted");
+        info!(task_id = %task_id, correlation_id = %ctx.correlation_id, "Task deleted");
         Ok(())
     }
 

@@ -239,7 +239,7 @@ pub mod event_factory {
     use super::*;
     use uuid::Uuid;
 
-    /// TODO: document
+    /// Create a TaskCreated event (no correlation context).
     pub fn task_created(
         task_id: String,
         title: String,
@@ -253,6 +253,30 @@ pub mod event_factory {
             user_id: assigned_to.unwrap_or_else(|| "system".to_string()),
             timestamp: Utc::now(),
             metadata: None,
+        }
+    }
+
+    /// Create a TaskCreated event that carries the request correlation ID in
+    /// its metadata so that audit log entries and other handlers can preserve
+    /// trace continuity across the IPC → service → event pipeline.
+    ///
+    /// Unlike [`task_created`], this variant requires explicit user and task
+    /// number fields so that the audit record is fully populated.
+    pub fn task_created_with_ctx(
+        task_id: String,
+        task_number: String,
+        title: String,
+        user_id: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::TaskCreated {
+            id: Uuid::new_v4().to_string(),
+            task_id,
+            task_number,
+            title,
+            user_id,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
         }
     }
 

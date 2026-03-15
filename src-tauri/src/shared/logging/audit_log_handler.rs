@@ -40,6 +40,7 @@ impl AuditLogHandler {
                 title,
                 user_id,
                 timestamp,
+                metadata,
                 ..
             } => AuditEvent {
                 id: id.clone(),
@@ -57,7 +58,14 @@ impl AuditLogHandler {
                 timestamp: *timestamp,
                 metadata: None,
                 session_id: None,
-                request_id: None,
+                // Preserve the originating request's correlation_id so that
+                // the audit record is searchable by the same ID used in IPC
+                // logs (trace continuity — ADR-020).
+                request_id: metadata
+                    .as_ref()
+                    .and_then(|m| m.get("correlation_id"))
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
             },
             DomainEvent::TaskAssigned {
                 id,
@@ -415,5 +423,57 @@ mod tests {
 
         // CountingHandler should still have been called
         assert_eq!(counter.load(Ordering::SeqCst), 1);
+    }
+
+    /// Verify that a TaskCreated event built with `task_created_with_ctx`
+    /// propagates the correlation_id into the audit entry's `request_id`
+    /// field (ADR-020 trace continuity).
+    #[tokio::test]
+    async fn test_task_created_with_ctx_preserves_correlation_id_in_audit() {
+        let (event_bus, audit_service) = setup_audit_handler().await;
+
+        let event = event_factory::task_created_with_ctx(
+            "task-corr-1".to_string(),
+            "task-corr-1".to_string(),
+            "Correlation Trace Task".to_string(),
+            "user-42".to_string(),
+            "req-test-corr-id".to_string(),
+        );
+        event_bus.dispatch(event).await.unwrap();
+
+        let history = audit_service
+            .get_resource_history("task", "task-corr-1", None)
+            .expect("query audit");
+        assert_eq!(history.len(), 1, "expected one audit entry");
+        assert_eq!(history[0].action, "CREATE_TASK");
+        assert_eq!(
+            history[0].request_id.as_deref(),
+            Some("req-test-corr-id"),
+            "correlation_id must flow into audit entry request_id"
+        );
+    }
+
+    /// Verify that a TaskCreated event built without a correlation_id
+    /// (legacy `task_created` factory) results in `request_id = None`.
+    #[tokio::test]
+    async fn test_task_created_without_ctx_request_id_is_none() {
+        let (event_bus, audit_service) = setup_audit_handler().await;
+
+        let event = event_factory::task_created(
+            "task-no-corr-1".to_string(),
+            "No Correlation Task".to_string(),
+            Some("user-1".to_string()),
+        );
+        event_bus.dispatch(event).await.unwrap();
+
+        let history = audit_service
+            .get_resource_history("task", "task-no-corr-1", None)
+            .expect("query audit");
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].action, "CREATE_TASK");
+        assert!(
+            history[0].request_id.is_none(),
+            "legacy event without correlation metadata should have no request_id"
+        );
     }
 }

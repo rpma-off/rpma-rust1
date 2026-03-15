@@ -31,6 +31,7 @@ fn cmd_service(state: &AppState<'_>) -> TaskCommandService {
         state.message_service.clone()
             as std::sync::Arc<dyn crate::shared::contracts::notification::NotificationSender>,
         state.calendar_service.clone(),
+        state.event_bus.clone(),
     )
 }
 
@@ -212,7 +213,11 @@ pub async fn task_crud(
 ) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
     let action = request.action;
     let correlation_id = request.correlation_id.clone();
-    info!("task_crud command received - action: {:?}", action);
+    info!(
+        correlation_id = %correlation_id.as_deref().unwrap_or("none"),
+        "task_crud command received - action: {:?}",
+        action
+    );
 
     let svc = cmd_service(&state);
 
