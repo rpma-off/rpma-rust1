@@ -12,6 +12,7 @@ import { CreateClientRequestSchema, UpdateClientRequestSchema } from '@/lib/vali
 import type { CreateClientDTO, ClientStats } from '@/types/client.types';
 import type { ServiceResponse, ApiResponse } from '@/types/unified.types';
 import { ApiError } from '@/types/unified.types';
+import { normalizeOptionalText } from '@/lib/utils/validation-utils';
 
 interface LegacyStatisticsResponse<T> {
   type: 'Statistics';
@@ -31,14 +32,6 @@ function isLegacyStatisticsResponse<T>(value: unknown): value is LegacyStatistic
 // Export types
 export type { ClientWithTasks, ClientStats };
 export type ClientWithStats = Client;
-
-const normalizeOptionalText = (value: unknown): string | null => {
-  if (typeof value !== 'string') {
-    return null;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
 
 const buildCreateRequest = (data: CreateClientDTO): CreateClientRequest => ({
   name: data.name.trim(),

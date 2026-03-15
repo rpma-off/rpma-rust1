@@ -126,6 +126,16 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   const queryClient = useQueryClient();
   const { session } = useAuth();
 
+  // ── Cache helpers ─────────────────────────────────────────────────────────
+  //
+  // Every PPF mutation must refresh the workflow view and the active
+  // intervention record.  Centralise the two always-invalidated keys here so
+  // that individual `onSuccess` handlers only add the extra keys that differ.
+  function invalidatePPFWorkflowCaches() {
+    queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
+    queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+  }
+
   // Get intervention for this task
   const { data: interventionData, isLoading: interventionLoading, error: interventionError } = useQuery({
     queryKey: interventionKeys.ppfIntervention(taskId),
@@ -323,8 +333,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
        return { success: true, stepId };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+      invalidatePPFWorkflowCaches();
       queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData?.intervention?.id || '') });
       toast.success('Avancé à l\'étape suivante');
     },
@@ -361,8 +370,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       return { success: true, stepId, savedStep };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+      invalidatePPFWorkflowCaches();
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
       toast.success('Étape terminée');
     },
@@ -394,8 +402,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+      invalidatePPFWorkflowCaches();
       queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
