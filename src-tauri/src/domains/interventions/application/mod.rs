@@ -6,6 +6,6 @@ pub mod quote_event_handlers;
 pub mod services;
 
 pub use contracts::{
-    FinalizeInterventionRequest, InterventionWorkflowAction, InterventionWorkflowResponse,
-    StartInterventionRequest,
+    FinalizeInterventionRequest, InterventionCreator, InterventionWorkflowAction,
+    InterventionWorkflowResponse, StartInterventionRequest,
 };

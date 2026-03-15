@@ -8,6 +8,7 @@ import { ROUTES } from '@/constants';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { PasswordValidationResult } from '../api/types';
 import { useAuth } from '../api/useAuth';
+import { isValidEmailFormat } from '@/lib/utils/validators';
 
 const logger = createLogger('useSignupForm');
 
@@ -50,7 +51,7 @@ export function useSignupForm() {
       return false;
     }
 
-    if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+    if (!isValidEmailFormat(formData.email)) {
       setError(t('errors.invalidEmail'));
       return false;
     }

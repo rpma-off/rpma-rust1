@@ -8,6 +8,7 @@
 use std::sync::Arc;
 
 use crate::db::Database;
+use crate::domains::interventions::application::contracts::InterventionCreator;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
 
@@ -31,6 +32,14 @@ impl InterventionWorkflowService {
             validation: WorkflowValidationService::new(db.clone()),
             db,
         }
+    }
+}
+
+impl InterventionCreator for InterventionWorkflowService {
+    fn create_from_quote(&self, task_id: &str, quote_id: &str) -> Result<(), String> {
+        self.start_intervention_from_quote(task_id, quote_id)
+            .map(|_| ())
+            .map_err(|e| e.to_string())
     }
 }
 

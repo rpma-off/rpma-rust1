@@ -5,16 +5,16 @@ use tracing::{info, warn};
 
 use crate::shared::event_bus::{DomainEvent, DomainEventHandler};
 
-use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
+use crate::domains::interventions::application::contracts::InterventionCreator;
 
 /// Handler for QuoteAccepted events
 pub struct QuoteAcceptedHandler {
-    service: Arc<InterventionWorkflowService>,
+    service: Arc<dyn InterventionCreator>,
 }
 
 impl QuoteAcceptedHandler {
     /// TODO: document
-    pub fn new(service: Arc<InterventionWorkflowService>) -> Self {
+    pub fn new(service: Arc<dyn InterventionCreator>) -> Self {
         Self { service }
     }
 }
@@ -56,12 +56,12 @@ impl DomainEventHandler for QuoteAcceptedHandler {
 
 /// Handler for QuoteConverted events
 pub struct QuoteConvertedHandler {
-    service: Arc<InterventionWorkflowService>,
+    service: Arc<dyn InterventionCreator>,
 }
 
 impl QuoteConvertedHandler {
     /// TODO: document
-    pub fn new(service: Arc<InterventionWorkflowService>) -> Self {
+    pub fn new(service: Arc<dyn InterventionCreator>) -> Self {
         Self { service }
     }
 }
@@ -92,7 +92,7 @@ impl DomainEventHandler for QuoteConvertedHandler {
             // Create intervention from the converted quote
             match self
                 .service
-                .start_intervention_from_quote(task_id, quote_id)
+                .create_from_quote(task_id, quote_id)
             {
                 Ok(_) => {
                     info!(

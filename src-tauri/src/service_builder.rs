@@ -313,12 +313,12 @@ impl ServiceBuilder {
 
         // Register Quote Event Handlers
         let quote_accepted_handler = crate::domains::interventions::application::quote_event_handlers::QuoteAcceptedHandler::new(
-            intervention_workflow_service.clone(),
+            intervention_workflow_service.clone() as Arc<dyn crate::domains::interventions::application::InterventionCreator>,
         );
         register_handler(Arc::new(quote_accepted_handler));
 
         let quote_converted_handler = crate::domains::interventions::application::quote_event_handlers::QuoteConvertedHandler::new(
-            intervention_workflow_service.clone(),
+            intervention_workflow_service.clone() as Arc<dyn crate::domains::interventions::application::InterventionCreator>,
         );
         register_handler(Arc::new(quote_converted_handler));
 
