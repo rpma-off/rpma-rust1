@@ -41,3 +41,6 @@ else
 
   echo "✓ No encoding corruption found."
 fi
+
+echo "Running ADR lint checks on staged files..."
+bash scripts/adr-lint.sh --staged
