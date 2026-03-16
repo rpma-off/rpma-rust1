@@ -11,7 +11,8 @@
 
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ---------------------------------------------------------------------------
 // Module-level store – persists across navigations within the same JS context
@@ -19,6 +20,7 @@ import { useSyncExternalStore } from 'react';
 
 const counters: Record<string, number> = {};
 const listeners = new Set<() => void>();
+const DOMAIN_MUTATION_EVENT = 'domain-mutation';
 
 function subscribe(callback: () => void): () => void {
   listeners.add(callback);
@@ -35,6 +37,10 @@ function subscribe(callback: () => void): () => void {
 export function signalMutation(entity: string): void {
   counters[entity] = (counters[entity] || 0) + 1;
   listeners.forEach((cb) => cb());
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(DOMAIN_MUTATION_EVENT, { detail: { domain: entity } }));
+  }
 }
 
 /** Read the current mutation counter for `entity`. */
@@ -56,6 +62,29 @@ export function useMutationCounter(entity: string): number {
     // mutations only happen on the client, so no server-side state exists.
     () => 0,
   );
+}
+
+export function useMutationSignal(): void {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleMutation = (event: Event) => {
+      const domain = (event as CustomEvent<{ domain?: string }>).detail?.domain;
+
+      if (typeof domain === 'string' && domain.length > 0) {
+        void queryClient.invalidateQueries({ queryKey: [domain] });
+      }
+    };
+
+    window.addEventListener(DOMAIN_MUTATION_EVENT, handleMutation as EventListener);
+    return () => {
+      window.removeEventListener(DOMAIN_MUTATION_EVENT, handleMutation as EventListener);
+    };
+  }, [queryClient]);
 }
 
 /** Reset all mutation counters. Useful for tests and development hot-reload cleanup. */

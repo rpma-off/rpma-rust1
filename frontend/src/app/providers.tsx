@@ -3,8 +3,14 @@
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { useMutationSignal } from '@/lib/data-freshness';
 import { AuthProvider } from '@/domains/auth';
 import { NotificationInitializer, NotificationPanel } from '@/domains/notifications';
+
+function MutationSignalListener() {
+  useMutationSignal();
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -30,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <MutationSignalListener />
       <AuthProvider>
         <NotificationInitializer />
         {children}

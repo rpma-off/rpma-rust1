@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { signalMutation } from '@/lib/data-freshness';
 import { useIpcClient } from '@/lib/ipc/client';
 import type { OnboardingData, OnboardingStatus } from '@/lib/backend';
 
@@ -29,6 +30,7 @@ export function useCompleteOnboarding() {
       } as OnboardingStatus);
       queryClient.setQueryData(['organization'], result);
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      signalMutation('organization');
     },
   });
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { signalMutation } from '@/lib/data-freshness';
 import { useIpcClient } from '@/lib/ipc/client';
 import type { UpdateOrganizationRequest, UpdateOrganizationSettingsRequest } from '@/lib/backend';
 
@@ -28,6 +29,7 @@ export function useUpdateOrganization(sessionToken: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      signalMutation('organization');
     },
   });
 }
@@ -43,6 +45,7 @@ export function useUploadLogo(sessionToken: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization'] });
+      signalMutation('organization');
     },
   });
 }
@@ -71,7 +74,7 @@ export function useUpdateOrganizationSettings(sessionToken: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization', 'settings'] });
+      signalMutation('organization');
     },
   });
 }
-
