@@ -479,6 +479,7 @@ impl TaskService {
     /// * `task_id` - The task to transition
     /// * `new_status` - The target status string
     /// * `reason` - Optional reason for the transition
+    /// * `changed_by` - User performing the transition (audit trail)
     ///
     /// # Returns
     /// * `Ok(Task)` - The updated task
@@ -488,6 +489,7 @@ impl TaskService {
         task_id: &str,
         new_status: &str,
         reason: Option<&str>,
+        changed_by: &str,
     ) -> AppResult<Task> {
         use crate::commands::AppError;
         use crate::domains::tasks::infrastructure::task_repository::TaskRepository;
@@ -512,7 +514,7 @@ impl TaskService {
             .map_err(|msg| AppError::TaskInvalidTransition(msg))?;
 
         // Delegate the database update to the repository
-        repo.update_status_with_history(task_id, &current_status, new_status, reason)
+        repo.update_status_with_history(task_id, &current_status, new_status, reason, changed_by)
             .map_err(|e| AppError::Database(e.to_string()))
     }
 

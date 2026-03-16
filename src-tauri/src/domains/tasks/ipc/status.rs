@@ -4,6 +4,8 @@ use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::domains::tasks::domain::models::task::Task;
 use crate::resolve_context;
+use crate::shared::services::event_bus::{event_factory, EventPublisher};
+use tracing::warn;
 
 /// Transition a task to a new status with validation.
 ///
@@ -19,7 +21,27 @@ pub async fn task_transition_status(
     let ctx = resolve_context!(&state, &request.correlation_id);
 
     // Viewers cannot change task status (status transitions are "update" operations).
-    check_task_permission!(&ctx.auth.role, "update");
+    if let Err(err) = (|| -> Result<(), AppError> {
+        check_task_permission!(&ctx.auth.role, "update");
+        Ok(())
+    })() {
+        warn!(
+            action = "DENY_TASK_STATUS_TRANSITION",
+            user_role = ?ctx.auth.role,
+            task_id = %request.task_id,
+            correlation_id = %ctx.correlation_id,
+            "Unauthorized task status transition attempt"
+        );
+        return Err(err);
+    }
+
+    let old_status = state
+        .task_service
+        .get_task_async(&request.task_id)
+        .await
+        .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?
+        .status;
 
     // For Technicians, verify they are assigned to this task.
     if ctx.auth.role == crate::shared::contracts::auth::UserRole::Technician {
@@ -37,7 +59,25 @@ pub async fn task_transition_status(
         &request.task_id,
         &request.new_status,
         request.reason.as_deref(),
+        &ctx.auth.user_id,
     )?;
+
+    let status_event = event_factory::task_status_changed_with_ctx(
+        task.id.clone(),
+        old_status.to_string(),
+        task.status.to_string(),
+        ctx.auth.user_id.clone(),
+        ctx.correlation_id.clone(),
+        request.reason.clone(),
+    );
+    if let Err(e) = state.event_bus.publish(status_event) {
+        warn!(
+            task_id = %task.id,
+            correlation_id = %ctx.correlation_id,
+            "Failed to publish TaskStatusChanged event from task_transition_status: {}",
+            e
+        );
+    }
 
     Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

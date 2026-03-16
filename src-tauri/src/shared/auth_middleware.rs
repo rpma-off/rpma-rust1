@@ -245,6 +245,12 @@ macro_rules! check_task_permission {
         if !$crate::shared::auth_middleware::AuthMiddleware::can_perform_task_operation(
             $user_role, $operation,
         ) {
+            tracing::warn!(
+                action = "DENY_TASK_OPERATION",
+                user_role = ?$user_role,
+                operation = $operation,
+                "Task operation denied by RBAC policy"
+            );
             return Err($crate::shared::ipc::AppError::Authorization(format!(
                 "Insufficient permissions to {} tasks",
                 $operation

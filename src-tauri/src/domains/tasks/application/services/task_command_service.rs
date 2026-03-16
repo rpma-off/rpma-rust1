@@ -10,7 +10,6 @@ use std::sync::Arc;
 use tracing::{error, info, instrument, warn};
 
 use crate::commands::AppError;
-use crate::shared::contracts::task_scheduler::TaskScheduler;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     BulkImportResponse, CreateTaskRequest, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus,
@@ -22,6 +21,7 @@ use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::domains::tasks::TasksFacade;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::notification::NotificationSender;
+use crate::shared::contracts::task_scheduler::TaskScheduler;
 use crate::shared::services::event_bus::{event_factory, EventPublisher, InMemoryEventBus};
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.
@@ -518,7 +518,12 @@ impl TaskCommandService {
         self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
             .await;
 
-        info!(task_id = %task.id, correlation_id = %ctx.correlation_id, "Task created");
+        info!(
+            action = "CREATE_TASK",
+            task_id = %task.id,
+            correlation_id = %ctx.correlation_id,
+            "Task created"
+        );
         Ok(task)
     }
 
@@ -542,6 +547,7 @@ impl TaskCommandService {
         id: String,
         data: UpdateTaskRequest,
     ) -> Result<Task, AppError> {
+        let existing_task = self.fetch_task(&id).await?;
         let status_updated = data.status.is_some();
 
         let validator = crate::shared::services::validation::ValidationService::new();
@@ -574,6 +580,41 @@ impl TaskCommandService {
                 AppError::db_sanitized("tasks.update", e)
             })?;
 
+        let changed_fields = Self::changed_fields_from_update_request(&data);
+        let updated_event = event_factory::task_updated_with_ctx(
+            task.id.clone(),
+            changed_fields,
+            ctx.auth.user_id.clone(),
+            ctx.correlation_id.clone(),
+        );
+        if let Err(e) = self.event_bus.publish(updated_event) {
+            warn!(
+                correlation_id = %ctx.correlation_id,
+                task_id = %task.id,
+                "Failed to publish TaskUpdated event: {}",
+                e
+            );
+        }
+
+        if status_updated && existing_task.status != task.status {
+            let status_event = event_factory::task_status_changed_with_ctx(
+                task.id.clone(),
+                existing_task.status.to_string(),
+                task.status.to_string(),
+                ctx.auth.user_id.clone(),
+                ctx.correlation_id.clone(),
+                None,
+            );
+            if let Err(e) = self.event_bus.publish(status_event) {
+                warn!(
+                    correlation_id = %ctx.correlation_id,
+                    task_id = %task.id,
+                    "Failed to publish TaskStatusChanged event: {}",
+                    e
+                );
+            }
+        }
+
         self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
             .await;
 
@@ -582,17 +623,19 @@ impl TaskCommandService {
                 .await;
         }
 
-        info!(task_id = %task.id, correlation_id = %ctx.correlation_id, "Task updated");
+        info!(
+            action = "UPDATE_TASK",
+            task_id = %task.id,
+            correlation_id = %ctx.correlation_id,
+            "Task updated"
+        );
         Ok(task)
     }
 
     /// Delete a task by ID.
     #[instrument(skip(self, ctx), fields(user_id = %ctx.auth.user_id, correlation_id = %ctx.correlation_id))]
-    pub async fn delete_task(
-        &self,
-        ctx: &RequestContext,
-        task_id: &str,
-    ) -> Result<(), AppError> {
+    pub async fn delete_task(&self, ctx: &RequestContext, task_id: &str) -> Result<(), AppError> {
+        let existing_task = self.fetch_task(task_id).await?;
         self.task_service
             .delete_task_async(task_id, &ctx.auth.user_id)
             .await
@@ -600,7 +643,28 @@ impl TaskCommandService {
                 error!(correlation_id = %ctx.correlation_id, "Task deletion failed: {}", e);
                 AppError::db_sanitized("tasks.delete", e)
             })?;
-        info!(task_id = %task_id, correlation_id = %ctx.correlation_id, "Task deleted");
+
+        let deleted_event = event_factory::task_deleted_with_ctx(
+            task_id.to_string(),
+            Some(existing_task.task_number),
+            ctx.auth.user_id.clone(),
+            ctx.correlation_id.clone(),
+        );
+        if let Err(e) = self.event_bus.publish(deleted_event) {
+            warn!(
+                correlation_id = %ctx.correlation_id,
+                task_id = %task_id,
+                "Failed to publish TaskDeleted event: {}",
+                e
+            );
+        }
+
+        info!(
+            action = "DELETE_TASK",
+            task_id = %task_id,
+            correlation_id = %ctx.correlation_id,
+            "Task deleted"
+        );
         Ok(())
     }
 
@@ -618,5 +682,42 @@ impl TaskCommandService {
 
     fn facade(&self) -> TasksFacade {
         TasksFacade::new(self.task_service.clone(), self.task_import_service.clone())
+    }
+
+    fn changed_fields_from_update_request(request: &UpdateTaskRequest) -> Vec<String> {
+        let mut changed = Vec::new();
+        macro_rules! track {
+            ($field:ident) => {
+                if request.$field.is_some() {
+                    changed.push(stringify!($field).to_string());
+                }
+            };
+        }
+
+        track!(title);
+        track!(description);
+        track!(priority);
+        track!(status);
+        track!(vehicle_plate);
+        track!(vehicle_model);
+        track!(vehicle_year);
+        track!(vehicle_make);
+        track!(vin);
+        track!(ppf_zones);
+        track!(custom_ppf_zones);
+        track!(client_id);
+        track!(customer_name);
+        track!(customer_email);
+        track!(customer_phone);
+        track!(customer_address);
+        track!(scheduled_date);
+        if request.estimated_duration.is_some() {
+            changed.push("estimated_duration".to_string());
+        }
+        track!(notes);
+        track!(tags);
+        track!(technician_id);
+
+        changed
     }
 }

@@ -113,6 +113,7 @@ impl TaskRepository {
         old_status: &str,
         new_status: &str,
         reason: Option<&str>,
+        changed_by: &str,
     ) -> RepoResult<Task> {
         let mut conn = self
             .db
@@ -132,9 +133,9 @@ impl TaskRepository {
         .map_err(|e| RepoError::Database(format!("Failed to update status: {}", e)))?;
 
         tx.execute(
-            "INSERT INTO task_history (task_id, old_status, new_status, reason, changed_at)
-             VALUES (?1, ?2, ?3, ?4, ?5)",
-            rusqlite::params![task_id, old_status, new_status, reason, now],
+            "INSERT INTO task_history (task_id, old_status, new_status, reason, changed_at, changed_by)
+             VALUES (?1, ?2, ?3, ?4, ?5, (SELECT id FROM users WHERE id = ?6))",
+            rusqlite::params![task_id, old_status, new_status, reason, now, changed_by],
         )
         .map_err(|e| RepoError::Database(format!("Failed to insert task history: {}", e)))?;
 

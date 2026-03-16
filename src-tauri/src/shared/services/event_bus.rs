@@ -294,6 +294,25 @@ pub mod event_factory {
         }
     }
 
+    /// Create a TaskUpdated event with actor + correlation context.
+    pub fn task_updated_with_ctx(
+        task_id: String,
+        changes: Vec<String>,
+        user_id: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::TaskUpdated {
+            id: Uuid::new_v4().to_string(),
+            task_id,
+            previous_state: None,
+            new_state: None,
+            changed_fields: changes,
+            user_id,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
+        }
+    }
+
     /// TODO: document
     pub fn task_status_changed(
         task_id: String,
@@ -308,6 +327,46 @@ pub mod event_factory {
             user_id: "system".to_string(),
             timestamp: Utc::now(),
             metadata: None,
+        }
+    }
+
+    /// Create a TaskStatusChanged event with actor + correlation context.
+    pub fn task_status_changed_with_ctx(
+        task_id: String,
+        old_status: String,
+        new_status: String,
+        user_id: String,
+        correlation_id: String,
+        reason: Option<String>,
+    ) -> DomainEvent {
+        DomainEvent::TaskStatusChanged {
+            id: Uuid::new_v4().to_string(),
+            task_id,
+            old_status,
+            new_status,
+            user_id,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({
+                "correlation_id": correlation_id,
+                "reason": reason
+            })),
+        }
+    }
+
+    /// Create a TaskDeleted event with actor + correlation context.
+    pub fn task_deleted_with_ctx(
+        task_id: String,
+        task_number: Option<String>,
+        deleted_by: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::TaskDeleted {
+            id: Uuid::new_v4().to_string(),
+            task_id,
+            task_number,
+            deleted_by,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
         }
     }
 

@@ -73,6 +73,7 @@ impl AuditLogHandler {
                 technician_id,
                 assigned_by,
                 timestamp,
+                metadata,
                 ..
             } => AuditEvent {
                 id: id.clone(),
@@ -90,7 +91,41 @@ impl AuditLogHandler {
                 timestamp: *timestamp,
                 metadata: None,
                 session_id: None,
-                request_id: None,
+                request_id: metadata
+                    .as_ref()
+                    .and_then(|m| m.get("correlation_id"))
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            },
+            DomainEvent::TaskUpdated {
+                id,
+                task_id,
+                changed_fields,
+                user_id,
+                timestamp,
+                metadata,
+                ..
+            } => AuditEvent {
+                id: id.clone(),
+                event_type: AuditEventType::TaskUpdated,
+                user_id: user_id.clone(),
+                action: "UPDATE_TASK".to_string(),
+                resource_id: Some(task_id.clone()),
+                resource_type: Some("task".to_string()),
+                description: format!("Task updated (fields: {})", changed_fields.join(", ")),
+                ip_address: None,
+                user_agent: None,
+                result: ActionResult::Success,
+                previous_state: None,
+                new_state: None,
+                timestamp: *timestamp,
+                metadata: None,
+                session_id: None,
+                request_id: metadata
+                    .as_ref()
+                    .and_then(|m| m.get("correlation_id"))
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
             },
             DomainEvent::TaskStatusChanged {
                 id,
@@ -99,7 +134,7 @@ impl AuditLogHandler {
                 new_status,
                 user_id,
                 timestamp,
-                ..
+                metadata,
             } => AuditEvent {
                 id: id.clone(),
                 event_type: AuditEventType::TaskStatusChanged,
@@ -116,7 +151,43 @@ impl AuditLogHandler {
                 timestamp: *timestamp,
                 metadata: None,
                 session_id: None,
-                request_id: None,
+                request_id: metadata
+                    .as_ref()
+                    .and_then(|m| m.get("correlation_id"))
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
+            },
+            DomainEvent::TaskDeleted {
+                id,
+                task_id,
+                task_number,
+                deleted_by,
+                timestamp,
+                metadata,
+            } => AuditEvent {
+                id: id.clone(),
+                event_type: AuditEventType::TaskDeleted,
+                user_id: deleted_by.clone(),
+                action: "DELETE_TASK".to_string(),
+                resource_id: Some(task_id.clone()),
+                resource_type: Some("task".to_string()),
+                description: match task_number {
+                    Some(number) => format!("Task deleted: {}", number),
+                    None => "Task deleted".to_string(),
+                },
+                ip_address: None,
+                user_agent: None,
+                result: ActionResult::Success,
+                previous_state: None,
+                new_state: None,
+                timestamp: *timestamp,
+                metadata: None,
+                session_id: None,
+                request_id: metadata
+                    .as_ref()
+                    .and_then(|m| m.get("correlation_id"))
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
             },
             DomainEvent::InterventionStarted {
                 id,
@@ -256,8 +327,10 @@ impl EventHandler for AuditLogHandler {
     fn interested_events(&self) -> Vec<&'static str> {
         vec![
             "TaskCreated",
+            "TaskUpdated",
             "TaskAssigned",
             "TaskStatusChanged",
+            "TaskDeleted",
             "InterventionStarted",
             "InterventionCompleted",
             "InterventionFinalized",
@@ -304,6 +377,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_task_updated_with_ctx_produces_audit_entry_with_request_id() {
+        let (event_bus, audit_service) = setup_audit_handler().await;
+
+        let event = event_factory::task_updated_with_ctx(
+            "task-audit-upd-1".to_string(),
+            vec!["title".to_string(), "priority".to_string()],
+            "user-7".to_string(),
+            "corr-upd-123".to_string(),
+        );
+        event_bus.dispatch(event).await.unwrap();
+
+        let history = audit_service
+            .get_resource_history("task", "task-audit-upd-1", None)
+            .expect("query audit");
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].action, "UPDATE_TASK");
+        assert_eq!(history[0].request_id.as_deref(), Some("corr-upd-123"));
+    }
+
+    #[tokio::test]
     async fn test_intervention_completed_produces_audit_entry() {
         let (event_bus, audit_service) = setup_audit_handler().await;
 
@@ -334,6 +427,26 @@ mod tests {
             .expect("query audit");
         assert_eq!(history.len(), 1);
         assert_eq!(history[0].action, "CONSUME_MATERIAL");
+    }
+
+    #[tokio::test]
+    async fn test_task_deleted_with_ctx_produces_audit_entry_with_request_id() {
+        let (event_bus, audit_service) = setup_audit_handler().await;
+
+        let event = event_factory::task_deleted_with_ctx(
+            "task-del-1".to_string(),
+            Some("TASK-0001".to_string()),
+            "admin-1".to_string(),
+            "corr-del-999".to_string(),
+        );
+        event_bus.dispatch(event).await.unwrap();
+
+        let history = audit_service
+            .get_resource_history("task", "task-del-1", None)
+            .expect("query audit");
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].action, "DELETE_TASK");
+        assert_eq!(history[0].request_id.as_deref(), Some("corr-del-999"));
     }
 
     /// Verify that a failing handler does not prevent other handlers from running

@@ -140,6 +140,23 @@ mod task_invariants {
     #[tokio::test]
     async fn test_status_transition_pending_to_in_progress_succeeds() {
         let app = TestApp::new().await;
+        let now = chrono::Utc::now().timestamp_millis();
+        app.db
+            .execute(
+                "INSERT OR IGNORE INTO users (id, email, username, password_hash, full_name, role, is_active, created_at, updated_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?7, ?8)",
+                rusqlite::params![
+                    "test-user-Admin",
+                    "test-admin@rpma.test",
+                    "test-admin",
+                    "test-password-hash",
+                    "Test Admin",
+                    "admin",
+                    now,
+                    now
+                ],
+            )
+            .expect("seed actor user for status transition history");
         let task = app
             .state
             .task_service
@@ -147,13 +164,29 @@ mod task_invariants {
             .await
             .expect("task creation must succeed");
 
-        let result = app
-            .state
-            .task_service
-            .transition_status(&task.id, "in_progress", None);
+        let result = app.state.task_service.transition_status(
+            &task.id,
+            "in_progress",
+            None,
+            "test-user-Admin",
+        );
 
-        assert!(result.is_ok(), "Pending→InProgress must be allowed; got: {:?}", result);
-        assert_eq!(result.unwrap().status, TaskStatus::InProgress);
+        assert!(
+            result.is_ok(),
+            "Pending→InProgress must be allowed; got: {:?}",
+            result
+        );
+        let updated = result.unwrap();
+        assert_eq!(updated.status, TaskStatus::InProgress);
+
+        let changed_by: String = app
+            .db
+            .query_single_value(
+                "SELECT changed_by FROM task_history WHERE task_id = ?1 ORDER BY changed_at DESC LIMIT 1",
+                [task.id.as_str()],
+            )
+            .expect("status transition should persist actor in task_history");
+        assert_eq!(changed_by, "test-user-Admin");
     }
 
     /// INVALID CASE — `Completed → InProgress` violates the state machine.
@@ -169,17 +202,17 @@ mod task_invariants {
 
         app.state
             .task_service
-            .transition_status(&task.id, "in_progress", None)
+            .transition_status(&task.id, "in_progress", None, "test-user-Admin")
             .expect("Pending→InProgress must succeed");
         app.state
             .task_service
-            .transition_status(&task.id, "completed", None)
+            .transition_status(&task.id, "completed", None, "test-user-Admin")
             .expect("InProgress→Completed must succeed");
 
         let err = app
             .state
             .task_service
-            .transition_status(&task.id, "in_progress", None)
+            .transition_status(&task.id, "in_progress", None, "test-user-Admin")
             .unwrap_err();
 
         assert!(
@@ -203,11 +236,14 @@ mod task_invariants {
         let err = app
             .state
             .task_service
-            .transition_status(&task.id, "pending", None)
+            .transition_status(&task.id, "pending", None, "test-user-Admin")
             .unwrap_err();
 
         assert!(
-            matches!(err, AppError::TaskInvalidTransition(_) | AppError::Validation(_)),
+            matches!(
+                err,
+                AppError::TaskInvalidTransition(_) | AppError::Validation(_)
+            ),
             "expected TaskInvalidTransition or Validation for same-status, got: {:?}",
             err
         );
@@ -226,17 +262,17 @@ mod task_invariants {
 
         app.state
             .task_service
-            .transition_status(&task.id, "in_progress", None)
+            .transition_status(&task.id, "in_progress", None, "test-user-Admin")
             .expect("Pending→InProgress");
         app.state
             .task_service
-            .transition_status(&task.id, "completed", None)
+            .transition_status(&task.id, "completed", None, "test-user-Admin")
             .expect("InProgress→Completed");
 
         let archived = app
             .state
             .task_service
-            .transition_status(&task.id, "archived", None)
+            .transition_status(&task.id, "archived", None, "test-user-Admin")
             .expect("Completed→Archived must be allowed");
 
         assert_eq!(archived.status, TaskStatus::Archived);
@@ -255,21 +291,21 @@ mod task_invariants {
 
         app.state
             .task_service
-            .transition_status(&task.id, "in_progress", None)
+            .transition_status(&task.id, "in_progress", None, "test-user-Admin")
             .expect("Pending→InProgress");
         app.state
             .task_service
-            .transition_status(&task.id, "completed", None)
+            .transition_status(&task.id, "completed", None, "test-user-Admin")
             .expect("InProgress→Completed");
         app.state
             .task_service
-            .transition_status(&task.id, "archived", None)
+            .transition_status(&task.id, "archived", None, "test-user-Admin")
             .expect("Completed→Archived");
 
         let err = app
             .state
             .task_service
-            .transition_status(&task.id, "pending", None)
+            .transition_status(&task.id, "pending", None, "test-user-Admin")
             .unwrap_err();
 
         assert!(
@@ -292,13 +328,13 @@ mod task_invariants {
 
         app.state
             .task_service
-            .transition_status(&task.id, "cancelled", None)
+            .transition_status(&task.id, "cancelled", None, "test-user-Admin")
             .expect("Pending→Cancelled must be allowed");
 
         let err = app
             .state
             .task_service
-            .transition_status(&task.id, "pending", None)
+            .transition_status(&task.id, "pending", None, "test-user-Admin")
             .unwrap_err();
 
         assert!(
@@ -606,11 +642,7 @@ mod quote_invariants {
             .create_quote(valid_quote_req(&client_id), "test-user")
             .expect("quote creation");
 
-        let err = app
-            .state
-            .quote_service
-            .mark_sent(&quote.id)
-            .unwrap_err();
+        let err = app.state.quote_service.mark_sent(&quote.id).unwrap_err();
 
         // Must complain about missing items or zero total
         assert!(
@@ -641,11 +673,7 @@ mod quote_invariants {
             .mark_sent(&quote.id)
             .expect("first mark_sent");
 
-        let err = app
-            .state
-            .quote_service
-            .mark_sent(&quote.id)
-            .unwrap_err();
+        let err = app.state.quote_service.mark_sent(&quote.id).unwrap_err();
 
         assert!(
             err.to_lowercase().contains("sent") || err.to_lowercase().contains("draft"),
@@ -871,11 +899,7 @@ mod quote_invariants {
             .mark_sent(&quote.id)
             .expect("mark_sent");
 
-        let err = app
-            .state
-            .quote_service
-            .delete_quote(&quote.id)
-            .unwrap_err();
+        let err = app.state.quote_service.delete_quote(&quote.id).unwrap_err();
 
         assert!(
             err.to_lowercase().contains("draft"),
@@ -945,10 +969,10 @@ mod quote_invariants {
             .mark_accepted(&quote.id, "test-user")
             .expect("mark_accepted");
 
-        let result = app
-            .state
-            .quote_service
-            .convert_to_task(&quote.id, &task.id, &task.task_number);
+        let result =
+            app.state
+                .quote_service
+                .convert_to_task(&quote.id, &task.id, &task.task_number);
 
         assert!(
             result.is_ok(),
@@ -1103,7 +1127,11 @@ mod inventory_invariants {
         };
 
         let result = app.state.inventory_service.update_stock(req);
-        assert!(result.is_ok(), "reduction to zero must be allowed: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "reduction to zero must be allowed: {:?}",
+            result
+        );
         assert_eq!(result.unwrap().current_stock, 0.0);
     }
 
@@ -1149,7 +1177,10 @@ mod inventory_invariants {
         };
 
         let result = app.state.inventory_service.update_stock(req);
-        assert!(result.is_err(), "negative delta on zero stock must be rejected");
+        assert!(
+            result.is_err(),
+            "negative delta on zero stock must be rejected"
+        );
     }
 
     /// PERSISTENCE — failed stock update leaves the DB stock value unchanged.
@@ -1206,7 +1237,8 @@ mod inventory_invariants {
 
         let err_msg = format!("{:?}", result.unwrap_err());
         assert!(
-            err_msg.to_lowercase().contains("not found") || err_msg.to_lowercase().contains("notfound"),
+            err_msg.to_lowercase().contains("not found")
+                || err_msg.to_lowercase().contains("notfound"),
             "expected NotFound error, got: {}",
             err_msg
         );
@@ -1300,7 +1332,11 @@ mod user_invariants {
             .change_role(&user_id, UserRole::Supervisor, "admin")
             .await;
 
-        assert!(result.is_ok(), "valid role change must succeed: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "valid role change must succeed: {:?}",
+            result
+        );
     }
 
     /// EDGE CASE — changing role of non-existent user returns an error.
@@ -1311,7 +1347,11 @@ mod user_invariants {
         let err = app
             .state
             .user_service
-            .change_role("00000000-0000-0000-0000-000000000000", UserRole::Viewer, "admin")
+            .change_role(
+                "00000000-0000-0000-0000-000000000000",
+                UserRole::Viewer,
+                "admin",
+            )
             .await
             .unwrap_err();
 

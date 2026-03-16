@@ -130,6 +130,35 @@ mod tests {
     }
 
     #[test]
+    fn test_update_status_with_history_persists_changed_by_actor() {
+        let test_db = test_db!();
+        let repo = TaskRepository::new(test_db.db());
+        let created = repo
+            .create(&test_task!(title: Some("Status Audit Task".to_string())))
+            .expect("Should create task");
+
+        let updated = repo
+            .update_status_with_history(
+                &created.id,
+                "draft",
+                "in_progress",
+                Some("work started"),
+                "supervisor-42",
+            )
+            .expect("Should transition status");
+        assert_eq!(updated.status, TaskStatus::InProgress);
+
+        let changed_by: String = test_db
+            .db
+            .query_single_value(
+                "SELECT changed_by FROM task_history WHERE task_id = ?1 ORDER BY changed_at DESC LIMIT 1",
+                rusqlite::params![created.id],
+            )
+            .expect("Should read changed_by from task_history");
+        assert_eq!(changed_by, "supervisor-42");
+    }
+
+    #[test]
     fn test_find_with_filters_status() {
         let repo = create_task_repository();
 

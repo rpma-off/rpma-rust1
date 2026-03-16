@@ -58,6 +58,14 @@ pub enum DomainEvent {
         timestamp: DateTime<Utc>,
         metadata: Option<serde_json::Value>,
     },
+    TaskDeleted {
+        id: String,
+        task_id: String,
+        task_number: Option<String>,
+        deleted_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
 
     // Client Events
     ClientCreated {
@@ -359,6 +367,7 @@ impl DomainEvent {
             DomainEvent::TaskAssigned { .. } => "TaskAssigned",
             DomainEvent::TaskStatusChanged { .. } => "TaskStatusChanged",
             DomainEvent::TaskCompleted { .. } => "TaskCompleted",
+            DomainEvent::TaskDeleted { .. } => "TaskDeleted",
             DomainEvent::ClientCreated { .. } => "ClientCreated",
             DomainEvent::ClientUpdated { .. } => "ClientUpdated",
             DomainEvent::ClientDeactivated { .. } => "ClientDeactivated",
@@ -398,6 +407,7 @@ impl DomainEvent {
             DomainEvent::TaskAssigned { timestamp, .. } => *timestamp,
             DomainEvent::TaskStatusChanged { timestamp, .. } => *timestamp,
             DomainEvent::TaskCompleted { timestamp, .. } => *timestamp,
+            DomainEvent::TaskDeleted { timestamp, .. } => *timestamp,
             DomainEvent::ClientCreated { timestamp, .. } => *timestamp,
             DomainEvent::ClientUpdated { timestamp, .. } => *timestamp,
             DomainEvent::ClientDeactivated { timestamp, .. } => *timestamp,
