@@ -14,7 +14,7 @@
     "lint": "eslint . --ext .ts,.tsx --max-warnings 10000",
     "type-check": "tsc --noEmit",
     "encoding:check": "node ../scripts/check-mojibake.js src",
-    "types:sync": "cd ../src-tauri && cargo run --features export-types --bin export-types | node ../scripts/write-types.js",
+    "types:sync": "(cd ../src-tauri && cargo run --features export-types --bin export-types | node ../scripts/write-types.js) && node ../scripts/record-types-sync.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
