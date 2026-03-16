@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatFileSize } from '@/lib/format';
 import { QuoteAttachment, AttachmentType } from '@/types/quote.types';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDateTimeCompact } from '@/shared/utils/date-formatters';
@@ -35,14 +36,6 @@ export function QuoteAttachmentsManager({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
-  };
 
   const getAttachmentIcon = (attachmentType: AttachmentType): string => {
     switch (attachmentType) {

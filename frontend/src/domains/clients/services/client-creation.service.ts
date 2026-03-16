@@ -1,5 +1,5 @@
 import { Client } from '@/lib/backend';
-import { normalizeOptionalText } from '@/lib/utils/validation-utils';
+import { normalizeOptionalText } from '@/lib/utils';
 import { ClientService } from './client.service';
 
 export class ClientCreationService {

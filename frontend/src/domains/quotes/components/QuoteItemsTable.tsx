@@ -1,8 +1,8 @@
 'use client';
 
 import { Trash2 } from 'lucide-react';
+import { formatCents } from '@/lib/format';
 import type { QuoteItem, QuoteItemKind } from '@/types/quote.types';
-import { formatCents } from '../utils/formatting';
 
 const KIND_LABELS: Record<QuoteItemKind, string> = {
   labor: "Main d'œuvre",

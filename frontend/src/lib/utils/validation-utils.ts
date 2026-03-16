@@ -24,22 +24,6 @@ export const createValidationResult = (
 });
 
 /**
- * Normalises an optional text field for IPC requests.
- *
- * - Trims leading/trailing whitespace
- * - Returns `null` for non-string inputs or empty strings after trimming
- *
- * Use this whenever a request field is `string | null` and the raw input may
- * be `undefined`, an empty string, or whitespace-only.  Centralising here
- * prevents divergent normalisation across domain services.
- */
-export const normalizeOptionalText = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-/**
  * Validates that a string field is not empty
  */
 export const validateRequired = (value: string, fieldName: string): string | null => {

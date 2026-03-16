@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCents } from '@/lib/format';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { PageHeader } from '@/shared/ui';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,7 +53,6 @@ import { FadeIn } from '@/shared/ui/animations/FadeIn';
 import { formatDate } from '@/shared/utils/date-formatters';
 import type { ActiveTab } from '../hooks/useQuoteDetailPage';
 import { useQuoteDetailPage } from '../hooks/useQuoteDetailPage';
-import { formatCents } from '../utils/formatting';
 import { QuoteWorkflowPanel } from './QuoteWorkflowPanel';
 import { QuoteStatusBadge } from './QuoteStatusBadge';
 import {

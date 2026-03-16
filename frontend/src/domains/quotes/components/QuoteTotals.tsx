@@ -1,6 +1,6 @@
 'use client';
 
-import { formatCents } from '../utils/formatting';
+import { formatCents } from '@/lib/format';
 
 export interface QuoteTotalsProps {
   subtotal: number;

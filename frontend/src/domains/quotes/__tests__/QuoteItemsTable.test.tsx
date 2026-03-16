@@ -44,13 +44,15 @@ describe('QuoteItemsTable', () => {
 
   it('formats price in euros from cents', () => {
     render(<QuoteItemsTable items={[makeItem({ unit_price: 15000 })]} />);
-    const prices = screen.getAllByText('150.00 €');
+    // French locale uses comma as decimal separator
+    const prices = screen.getAllByText(/150,00\s*€/);
     expect(prices.length).toBeGreaterThanOrEqual(1);
   });
 
   it('rounds line totals the same way as backend totals', () => {
     render(<QuoteItemsTable items={[makeItem({ qty: 1.5, unit_price: 333 })]} />);
-    expect(screen.getByText('5.00 €')).toBeInTheDocument();
+    // French locale uses comma as decimal separator
+    expect(screen.getByText(/5,00\s*€/)).toBeInTheDocument();
   });
 
   it('shows delete button when editable', () => {

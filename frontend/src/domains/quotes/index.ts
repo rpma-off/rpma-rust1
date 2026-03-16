@@ -46,7 +46,7 @@ export type {
 } from './components';
 export { computeQuoteStats } from './utils/quote-stats';
 export type { QuotePageStats } from '@/types/quote.types';
-export { formatCents } from './utils/formatting';
+export { formatCents } from '@/lib/format';
 export { useQuoteDetailPage } from './hooks/useQuoteDetailPage';
 export type { ActiveTab } from './hooks/useQuoteDetailPage';
 export { useQuotesPage } from './hooks/useQuotesPage';
@@ -68,7 +68,8 @@ export type {
   QuoteFiltersFormData,
 } from './schema/quoteSchema';
 
-export { compressImage, formatFileSize } from './utils/image-compression';
+export { compressImage } from './utils/image-compression';
+export { formatFileSize } from '@/lib/format';
 export type { CompressionOptions } from './utils/image-compression';
 
 export {

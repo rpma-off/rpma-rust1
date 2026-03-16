@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { compressImage, formatFileSize } from '../utils/image-compression';
+import { compressImage } from '../utils/image-compression';
+import { formatFileSize } from '@/lib/format';
 
 describe('compressImage', () => {
   beforeEach(() => {

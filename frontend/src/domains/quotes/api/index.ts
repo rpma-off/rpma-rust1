@@ -61,7 +61,7 @@ export { computeQuoteStats } from '../utils/quote-stats';
 export type { QuotePageStats } from '@/types/quote.types';
 
 /** TODO: document */
-export { formatCents } from '../utils/formatting';
+export { formatCents } from '@/lib/format';
 /** TODO: document */
 export { useQuoteDetailPage } from '../hooks/useQuoteDetailPage';
 /** TODO: document */

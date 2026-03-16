@@ -13,7 +13,6 @@ import { CreateClientRequestSchema, UpdateClientRequestSchema } from '@/lib/vali
 import type { CreateClientDTO, ClientStats } from '@/types/client.types';
 import type { ServiceResponse, ApiResponse } from '@/types/unified.types';
 import { ApiError } from '@/types/unified.types';
-import { normalizeOptionalText } from '@/lib/utils/validation-utils';
 
 interface LegacyStatisticsResponse<T> {
   type: 'Statistics';

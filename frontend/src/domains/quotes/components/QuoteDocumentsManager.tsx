@@ -10,11 +10,11 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { formatFileSize } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { QuoteAttachment } from '@/types/quote.types';
 import { useQuoteAttachments, useQuoteAttachmentActions } from '@/domains/quotes/hooks/useQuotes';
-import { formatFileSize } from '@/domains/quotes/utils/image-compression';
 
 interface QuoteDocumentsManagerProps {
   quoteId: string;
