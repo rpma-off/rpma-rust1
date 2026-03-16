@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { InlineLoading } from '@/components/ui/loading';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { useTaskMutations } from '../../hooks/useTaskMutations';
 
 interface ReportIssueModalProps {
@@ -127,18 +127,14 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={reportIssue.isPending || !description.trim()}
+            <SubmitButton
+              isPending={reportIssue.isPending}
+              pendingLabel="Signalement..."
+              disabled={!description.trim()}
               variant="destructive"
             >
-              {reportIssue.isPending ? (
-                <span className="inline-flex items-center gap-2">
-                  <InlineLoading size="sm" />
-                  Signalement...
-                </span>
-              ) : 'Signaler'}
-            </Button>
+              Signaler
+            </SubmitButton>
           </div>
         </form>
       </DialogContent>

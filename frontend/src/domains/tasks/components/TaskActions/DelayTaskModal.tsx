@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { InlineLoading } from '@/components/ui/loading';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { useTaskMutations } from '../../hooks/useTaskMutations';
 
 interface DelayTaskModalProps {
@@ -106,18 +106,14 @@ const DelayTaskModal: React.FC<DelayTaskModalProps> = ({ task, open, onOpenChang
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={delayTask.isPending || !newDate || !reason.trim()}
+            <SubmitButton
+              isPending={delayTask.isPending}
+              pendingLabel="Report en cours..."
+              disabled={!newDate || !reason.trim()}
               variant="default"
             >
-              {delayTask.isPending ? (
-                <span className="inline-flex items-center gap-2">
-                  <InlineLoading size="sm" />
-                  Report en cours...
-                </span>
-              ) : 'Confirmer le report'}
-            </Button>
+              Confirmer le report
+            </SubmitButton>
           </div>
         </form>
       </DialogContent>

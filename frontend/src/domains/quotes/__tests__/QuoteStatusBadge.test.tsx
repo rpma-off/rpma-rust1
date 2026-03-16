@@ -41,11 +41,11 @@ describe('QuoteStatusBadge', () => {
 
   it('applies accepted color class', () => {
     const { container } = render(<QuoteStatusBadge status="accepted" />);
-    expect(container.firstChild).toHaveClass('bg-green-100');
+    expect(container.firstChild).toHaveClass('bg-emerald-500/10');
   });
 
   it('applies rejected color class', () => {
     const { container } = render(<QuoteStatusBadge status="rejected" />);
-    expect(container.firstChild).toHaveClass('bg-red-100');
+    expect(container.firstChild).toHaveClass('bg-destructive/10');
   });
 });

@@ -1,6 +1,7 @@
 'use client';
 
 import { Users, UserPlus } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageHeader, HeaderActionButton } from '@/components/ui/page-header';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
@@ -41,6 +42,7 @@ export default function UsersPage() {
   }
 
   return (
+    <ErrorBoundary>
     <PageShell>
       <PageHeader
         title={t('users.title')}
@@ -69,6 +71,7 @@ export default function UsersPage() {
         />
       )}
     </PageShell>
+    </ErrorBoundary>
   );
 }
 

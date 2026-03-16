@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { InlineLoading } from '@/components/ui/loading';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { useTaskMutations } from '../../hooks/useTaskMutations';
 
 interface EditTaskModalProps {
@@ -226,18 +226,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, open, onOpenChange 
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={editTask.isPending || !title.trim()}
+            <SubmitButton
+              isPending={editTask.isPending}
+              pendingLabel="Mise à jour..."
+              disabled={!title.trim()}
               variant="default"
             >
-              {editTask.isPending ? (
-                <span className="inline-flex items-center gap-2">
-                  <InlineLoading size="sm" />
-                  Mise à jour...
-                </span>
-              ) : 'Mettre à jour'}
-            </Button>
+              Mettre à jour
+            </SubmitButton>
           </div>
         </form>
       </DialogContent>

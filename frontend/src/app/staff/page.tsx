@@ -23,6 +23,7 @@ import {
   TabsTrigger,
   Input,
 } from '@/shared/ui/facade';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { useAuth } from '@/domains/auth';
 import { useUsersPage } from '@/domains/users';
 import { UserList } from '@/domains/users';
@@ -226,6 +227,7 @@ export default function StaffPage() {
   }
 
   return (
+    <ErrorBoundary>
     <PageShell>
       <PageHeader
         title={t('nav.employeesResources')}
@@ -301,5 +303,6 @@ export default function StaffPage() {
         onRefresh={refetch}
       />
     </PageShell>
+    </ErrorBoundary>
   );
 }

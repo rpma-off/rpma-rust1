@@ -6,13 +6,13 @@ import type { QuoteStatus } from '@/types/quote.types';
 import { Badge } from '@/components/ui/badge';
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  sent: 'bg-blue-100 text-blue-800',
-  accepted: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  expired: 'bg-yellow-100 text-yellow-800',
-  converted: 'bg-purple-100 text-purple-800',
-  changes_requested: 'bg-orange-100 text-orange-800',
+  draft: 'bg-muted text-muted-foreground border-border/40',
+  sent: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+  accepted: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+  rejected: 'bg-destructive/10 text-destructive border-destructive/20',
+  expired: 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20',
+  converted: 'bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] border-[hsl(var(--rpma-teal))]/20',
+  changes_requested: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
 };
 
 const STATUS_ICONS: Record<QuoteStatus, React.ComponentType<{ className?: string }>> = {

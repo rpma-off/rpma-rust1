@@ -1,10 +1,28 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { UserAccount, UserRole } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useUserActions } from '../api/useUserActions';
+
+interface UserFormData {
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  password: string;
+  is_active: boolean;
+}
 
 interface UserFormProps {
   user?: UserAccount | null;
@@ -15,256 +33,205 @@ interface UserFormProps {
 export function UserForm({ user, onClose, onSuccess }: UserFormProps) {
   const { createUser, updateUser } = useUserActions();
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    id: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-    role: 'technician' as UserRole,
-    password: '',
-    is_active: true,
-  });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
   const isEditing = !!user;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<UserFormData>({
+    defaultValues: {
+      email: '',
+      first_name: '',
+      last_name: '',
+      role: 'technician',
+      password: '',
+      is_active: true,
+    },
+  });
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        id: user.id,
+      const validRoles: UserRole[] = ['admin', 'technician', 'supervisor', 'viewer'];
+      reset({
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        role: (user.role === 'admin' || user.role === 'technician' || user.role === 'supervisor' || user.role === 'viewer') ? user.role as UserRole : 'technician' as UserRole,
-        password: '', // Don't populate password for editing
+        role: validRoles.includes(user.role as UserRole) ? (user.role as UserRole) : 'technician',
+        password: '',
         is_active: user.is_active,
       });
     }
-  }, [user]);
+  }, [user, reset]);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email) {
-      newErrors.email = t('users.emailRequired');
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = t('users.invalidEmail');
-    }
-
-
-
-    if (!formData.first_name) {
-      newErrors.first_name = t('users.firstNameRequired');
-    }
-
-    if (!formData.last_name) {
-      newErrors.last_name = t('users.lastNameRequired');
-    }
-
-    if (!isEditing && !formData.password) {
-      newErrors.password = t('users.passwordRequired');
-    } else if (!isEditing && formData.password.length < 6) {
-      newErrors.password = t('users.passwordMinLength');
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: UserFormData) => {
     try {
-      setLoading(true);
-
       if (isEditing && user) {
-        // Update existing user
-        const success = await updateUser(formData.id, {
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role,
-          is_active: formData.is_active,
+        const success = await updateUser(user.id, {
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          role: data.role,
+          is_active: data.is_active,
         });
         if (!success) {
           toast.error(t('users.notAuthenticated'));
           return;
         }
       } else {
-        // Create new user
         const success = await createUser({
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          role: formData.role,
-          password: formData.password,
+          email: data.email,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          role: data.role,
+          password: data.password,
         });
         if (!success) {
           toast.error(t('users.notAuthenticated'));
           return;
         }
       }
-
       onSuccess();
       toast.success(isEditing ? t('users.userUpdated') : t('users.userCreated'));
     } catch (error) {
       toast.error(t('users.saveFailed') + (error instanceof Error ? error.message : ''));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border border-border w-96 shadow-lg rounded-md bg-background">
-        <div className="mt-3">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="w-96">
+        <DialogHeader>
+          <DialogTitle>
             {isEditing ? t('users.editUser') : t('users.createNewUser')}
-          </h3>
+          </DialogTitle>
+        </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label htmlFor="user-email" className="block text-sm font-medium text-foreground">
+              {t('users.email')}
+            </label>
+            <Input
+              id="user-email"
+              type="email"
+              aria-label={t('users.email')}
+              {...register('email', {
+                required: t('users.emailRequired'),
+                pattern: { value: /\S+@\S+\.\S+/, message: t('users.invalidEmail') },
+              })}
+              className={`mt-1 ${errors.email ? 'border-destructive focus:ring-destructive' : 'border-input'}`}
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="user-email" className="block text-sm font-medium text-foreground">
-                {t('users.email')}
+              <label htmlFor="user-first-name" className="block text-sm font-medium text-foreground">
+                {t('users.firstName')}
               </label>
-              <input
-                id="user-email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
-                  errors.email ? 'border-destructive focus:ring-destructive' : 'border-input'
-                }`}
+              <Input
+                id="user-first-name"
+                aria-label={t('users.firstName')}
+                {...register('first_name', { required: t('users.firstNameRequired') })}
+                className={`mt-1 ${errors.first_name ? 'border-destructive focus:ring-destructive' : 'border-input'}`}
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              {errors.first_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.first_name.message}</p>
               )}
             </div>
 
-
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="user-first-name" className="block text-sm font-medium text-foreground">
-                  {t('users.firstName')}
-                </label>
-                <input
-                  id="user-first-name"
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => handleInputChange('first_name', e.target.value)}
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
-                    errors.first_name ? 'border-destructive focus:ring-destructive' : 'border-input'
-                  }`}
-                />
-                {errors.first_name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="user-last-name" className="block text-sm font-medium text-foreground">
-                  {t('users.lastName')}
-                </label>
-                <input
-                  id="user-last-name"
-                  type="text"
-                  value={formData.last_name}
-                  onChange={(e) => handleInputChange('last_name', e.target.value)}
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
-                    errors.last_name ? 'border-destructive focus:ring-destructive' : 'border-input'
-                  }`}
-                />
-                {errors.last_name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
-                )}
-              </div>
-            </div>
-
             <div>
-              <label htmlFor="user-role" className="block text-sm font-medium text-gray-700">
-                {t('users.role')}
+              <label htmlFor="user-last-name" className="block text-sm font-medium text-foreground">
+                {t('users.lastName')}
               </label>
-              <select
-                id="user-role"
-                value={formData.role}
-                onChange={(e) => handleInputChange('role', e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="viewer">{t('users.roleViewer')}</option>
-                <option value="technician">{t('users.roleTechnician')}</option>
-                <option value="supervisor">{t('users.roleSupervisor')}</option>
-                <option value="admin">{t('users.roleAdmin')}</option>
-              </select>
+              <Input
+                id="user-last-name"
+                aria-label={t('users.lastName')}
+                {...register('last_name', { required: t('users.lastNameRequired') })}
+                className={`mt-1 ${errors.last_name ? 'border-destructive focus:ring-destructive' : 'border-input'}`}
+              />
+              {errors.last_name && (
+                <p className="mt-1 text-sm text-red-600">{errors.last_name.message}</p>
+              )}
             </div>
+          </div>
 
-            {!isEditing && (
-              <div>
-                <label htmlFor="user-password" className="block text-sm font-medium text-foreground">
-                  {t('auth.password')}
-                </label>
-                <input
-                  id="user-password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring ${
-                    errors.password ? 'border-destructive focus:ring-destructive' : 'border-input'
-                  }`}
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-                )}
-              </div>
-            )}
+          <div>
+            <label htmlFor="user-role" className="block text-sm font-medium text-foreground">
+              {t('users.role')}
+            </label>
+            <select
+              id="user-role"
+              aria-label={t('users.role')}
+              {...register('role')}
+              className="mt-1 block w-full px-3 py-2 border border-input rounded-md shadow-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+            >
+              <option value="viewer">{t('users.roleViewer')}</option>
+              <option value="technician">{t('users.roleTechnician')}</option>
+              <option value="supervisor">{t('users.roleSupervisor')}</option>
+              <option value="admin">{t('users.roleAdmin')}</option>
+            </select>
+          </div>
 
-            {isEditing && (
-              <div className="flex items-center">
-                <input
-                  id="is_active"
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                  className="h-4 w-4 text-primary focus:ring-ring border-input rounded"
-                />
-                <label htmlFor="is_active" className="ml-2 block text-sm text-foreground">
-                  {t('users.active')}
-                </label>
-              </div>
-            )}
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-foreground bg-background border border-input rounded-md hover:bg-[hsl(var(--rpma-teal))]/10 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50"
-              >
-                {loading ? t('users.saving') : (isEditing ? t('common.update') : t('common.create'))}
-              </button>
+          {!isEditing && (
+            <div>
+              <label htmlFor="user-password" className="block text-sm font-medium text-foreground">
+                {t('auth.password')}
+              </label>
+              <Input
+                id="user-password"
+                type="password"
+                aria-label={t('auth.password')}
+                {...register('password', {
+                  required: t('users.passwordRequired'),
+                  minLength: { value: 6, message: t('users.passwordMinLength') },
+                })}
+                className={`mt-1 ${errors.password ? 'border-destructive focus:ring-destructive' : 'border-input'}`}
+              />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+              )}
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
+          )}
+
+          {isEditing && (
+            <div className="flex items-center">
+              <input
+                id="is_active"
+                type="checkbox"
+                aria-label={t('users.active')}
+                {...register('is_active')}
+                className="h-4 w-4 text-primary focus:ring-ring border-input rounded"
+              />
+              <label htmlFor="is_active" className="ml-2 block text-sm text-foreground">
+                {t('users.active')}
+              </label>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-input text-foreground hover:bg-[hsl(var(--rpma-teal))]/10"
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              loading={isSubmitting}
+            >
+              {isSubmitting ? t('users.saving') : (isEditing ? t('common.update') : t('common.create'))}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

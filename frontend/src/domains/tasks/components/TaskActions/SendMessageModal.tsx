@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { InlineLoading } from '@/components/ui/loading';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { useTaskMutations } from '../../hooks/useTaskMutations';
 
 interface SendMessageModalProps {
@@ -99,18 +99,14 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ task, open, onOpenC
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              disabled={sendMessage.isPending || !message.trim()}
+            <SubmitButton
+              isPending={sendMessage.isPending}
+              pendingLabel="Envoi..."
+              disabled={!message.trim()}
               variant="default"
             >
-              {sendMessage.isPending ? (
-                <span className="inline-flex items-center gap-2">
-                  <InlineLoading size="sm" />
-                  Envoi...
-                </span>
-              ) : 'Envoyer'}
-            </Button>
+              Envoyer
+            </SubmitButton>
           </div>
         </form>
       </DialogContent>

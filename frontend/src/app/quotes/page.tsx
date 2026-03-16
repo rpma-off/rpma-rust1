@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Plus, FileText, Search, TrendingUp, TrendingDown } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +54,7 @@ export default function QuotesPage() {
   } = useQuotesPage();
 
   return (
+    <ErrorBoundary>
     <PageShell>
       <FadeIn>
         <PageHeader
@@ -142,5 +144,6 @@ export default function QuotesPage() {
         )}
       </FadeIn>
     </PageShell>
+    </ErrorBoundary>
   );
 }

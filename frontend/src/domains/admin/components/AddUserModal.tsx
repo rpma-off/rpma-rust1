@@ -1,5 +1,12 @@
 import React from 'react';
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Button,
   Input,
 } from '@/shared/ui/facade';
@@ -15,9 +22,11 @@ export function AddUserModal({ onClose, onAddUser }: AddUserModalProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-semibold text-foreground mb-4">{t('users.createUser')}</h3>
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('users.createUser')}</DialogTitle>
+        </DialogHeader>
         <form onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.target as HTMLFormElement);
@@ -30,14 +39,13 @@ export function AddUserModal({ onClose, onAddUser }: AddUserModalProps) {
           };
           onAddUser(userData);
         }}>
-          <div className="space-y-4">
+          <div className="space-y-4 py-2">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1">{t('users.email')}</label>
               <Input
                 name="email"
                 type="email"
                 required
-                className=""
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -46,7 +54,6 @@ export function AddUserModal({ onClose, onAddUser }: AddUserModalProps) {
                 <Input
                   name="firstName"
                   required
-                  className=""
                 />
               </div>
               <div>
@@ -54,7 +61,6 @@ export function AddUserModal({ onClose, onAddUser }: AddUserModalProps) {
                 <Input
                   name="lastName"
                   required
-                  className=""
                 />
               </div>
             </div>
@@ -77,28 +83,27 @@ export function AddUserModal({ onClose, onAddUser }: AddUserModalProps) {
                 name="password"
                 type="password"
                 required
-                className=""
               />
             </div>
           </div>
-          <div className="flex gap-3 mt-6">
+          <DialogFooter className="mt-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 border-border/60 text-muted-foreground hover:bg-border/20"
+              className="border-border/60 text-muted-foreground hover:bg-border/20"
             >
               {t('common.cancel')}
             </Button>
             <Button
               type="submit"
-              className="flex-1 font-medium"
+              className="font-medium"
             >
               {t('common.add')}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

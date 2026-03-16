@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 
@@ -15,6 +16,7 @@ const InventoryLayout = dynamic(
 
 export default function InventoryPage() {
   return (
+    <ErrorBoundary>
     <PageShell>
       <Suspense fallback={<LoadingState />}>
         <InventoryDashboard />
@@ -23,6 +25,7 @@ export default function InventoryPage() {
         <InventoryLayout />
       </Suspense>
     </PageShell>
+    </ErrorBoundary>
   );
 }
 

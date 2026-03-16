@@ -111,8 +111,8 @@ mod tests {
     /// initialised.  In that state the event is silently dropped (with a
     /// tracing::warn) — this test verifies the call completes without
     /// unwinding.
-    #[test]
-    fn test_publish_event_before_init_does_not_panic() {
+    #[tokio::test]
+    async fn test_publish_event_before_init_does_not_panic() {
         // The OnceLock may or may not already be set by a prior test.
         // Either way, calling `publish_event` must never panic.
         let event = DomainEvent::TaskCreated {

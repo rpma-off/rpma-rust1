@@ -7,6 +7,7 @@ import { ClientCardSkeleton } from '@/components/ui/skeleton';
 import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-components';
 import { EmptyState } from '@/components/ui';
 import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { ClientCard } from '@/domains/clients';
 import { useClientsPage, ClientWithTasks } from '@/domains/clients';
@@ -34,6 +35,7 @@ export default function ClientsPage() {
   } = useClientsPage();
 
   return (
+    <ErrorBoundary>
     <PageShell>
       {/* Header */}
       <PageHeader
@@ -219,7 +221,6 @@ export default function ClientsPage() {
         </div>
       )}
     </PageShell>
+    </ErrorBoundary>
   );
 }
-
-

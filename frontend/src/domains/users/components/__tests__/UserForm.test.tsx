@@ -340,8 +340,8 @@ describe('UserForm', () => {
       // Submit form
       fireEvent.click(screen.getByText('Create'));
 
-      expect(screen.getByText('Saving...')).toBeInTheDocument();
-      expect(screen.getByText('Saving...')).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Saving/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Saving/ })).toBeDisabled();
     });
 
     it('disables submit button during loading', async () => {
@@ -361,7 +361,7 @@ describe('UserForm', () => {
       fireEvent.click(screen.getByText('Create'));
 
       await waitFor(() => {
-        expect(screen.getByText('Saving...')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /Saving/ })).toBeDisabled();
       });
     });
   });
