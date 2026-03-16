@@ -157,7 +157,7 @@ impl Default for ClientQuery {
 }
 
 /// Client list response with pagination
-// TODO: run npm run types:sync (`frontend/src/types/index.ts` is missing `statistics`).
+// TODO: run npm run types:sync (`frontend/src/types/index.ts` is missing the `statistics: ClientStatistics` field).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientListResponse {
     pub data: Vec<Client>,
@@ -166,7 +166,9 @@ pub struct ClientListResponse {
 }
 
 /// Client statistics (TS-exported, used in IPC responses)
-// TODO: run npm run types:sync (`frontend/src/types/api.ts` still uses `active_clients` instead of the current statistics fields).
+// TODO: run npm run types:sync.
+// `frontend/src/types/api.ts` still uses `active_clients` instead of
+// `individual_clients`, `business_clients`, and `clients_with_tasks`.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientStatistics {
     pub total_clients: i64,

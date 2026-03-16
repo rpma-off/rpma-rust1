@@ -399,7 +399,11 @@ pub struct CreateTaskRequest {
 }
 
 /// Request for updating a task
-// TODO: run npm run types:sync (`frontend/src/types/task.types.ts` is missing several current update fields and still includes `assigned_at`/`actual_duration`).
+// TODO: run npm run types:sync.
+// `frontend/src/types/task.types.ts` is missing `vehicle_plate`,
+// `vehicle_model`, `vehicle_year`, `vehicle_make`, `custom_ppf_zones`,
+// `client_id`, `customer_*`, `external_id`, `template_id`, and `workflow_id`,
+// and still includes stale `assigned_at`/`actual_duration`.
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 pub struct UpdateTaskRequest {
     pub id: Option<String>,
@@ -442,7 +446,10 @@ pub struct DeleteTaskRequest {
 }
 
 /// Query parameters for task listing
-// TODO: run npm run types:sync (`frontend/src/types/task.types.ts` still exposes legacy query fields like `assignedTo`/`vehicleId` instead of the current backend filters).
+// TODO: run npm run types:sync.
+// `frontend/src/types/task.types.ts` still exposes legacy
+// `assignedTo`/`vehicleId`/`startDate`/`endDate` instead of
+// `technician_id`/`client_id`/`from_date`/`to_date`.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskQuery {
     pub page: Option<i32>,
@@ -494,7 +501,7 @@ pub struct PaginationInfo {
 }
 
 /// Task statistics
-// TODO: run npm run types:sync (`frontend/src/types/index.ts` is missing the newer task statistic counters).
+// TODO: run npm run types:sync (`frontend/src/types/index.ts` is missing `on_hold_tasks`, `pending_tasks`, `invalid_tasks`, `archived_tasks`, `failed_tasks`, `overdue_tasks`, `assigned_tasks`, and `paused_tasks`).
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskStatistics {
     #[ts(type = "number")]

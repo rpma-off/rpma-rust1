@@ -7,7 +7,7 @@ use std::fmt;
 use ts_rs::TS;
 
 /// A simplified session stored as a UUID in SQLite (no JWT, no 2FA).
-// TODO: run npm run types:sync (`frontend/src/types/api.ts` is missing `id` and still includes `refresh_token`).
+// TODO: run npm run types:sync (`frontend/src/types/api.ts` is missing `id` and still includes stale `refresh_token`).
 #[derive(Clone, Serialize, Deserialize, Debug, TS)]
 pub struct UserSession {
     pub id: String, // UUID — also the session token
