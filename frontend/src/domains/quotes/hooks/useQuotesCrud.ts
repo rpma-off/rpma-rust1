@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { PAGINATION } from '@/lib/constants';
 import { useMutationCounter } from '@/lib/data-freshness';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 import type { JsonObject } from '@/types/json';
 import type {
   Quote,
@@ -9,8 +12,6 @@ import type {
   UpdateQuoteRequest,
 } from '@/types/quote.types';
 import { normalizeError } from '@/types/utility.types';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 
 // --- useQuotesList ---
 
@@ -26,7 +27,7 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
 
   const [filters, setFilters] = useState<QuoteFilters>({
     page: 1,
-    limit: 20,
+    limit: PAGINATION.DEFAULT_PAGE_SIZE,
     sort_by: 'created_at',
     sort_order: 'desc',
     ...initialFilters,

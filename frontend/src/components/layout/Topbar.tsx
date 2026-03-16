@@ -6,6 +6,7 @@ import { Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-r
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { NotificationBell } from '@/domains/notifications';
+import { ROUTES } from '@/constants/routes';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -17,18 +18,18 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
   const { t } = useTranslation();
 
   const navTabs = [
-    { key: 'calendar', label: t('nav.schedule'), href: '/dashboard', enabled: true, icon: <CalendarDays className="h-4 w-4" /> },
-    { key: 'jobs', label: t('nav.tasks'), href: '/tasks', enabled: true, icon: <Wrench className="h-4 w-4" /> },
-    { key: 'proposals', label: t('nav.proposals'), href: '/quotes', enabled: true, icon: <FileText className="h-4 w-4" /> },
-    { key: 'customers', label: t('nav.clients'), href: '/clients', enabled: true, icon: <Users className="h-4 w-4" /> },
+    { key: 'calendar', label: t('nav.schedule'), href: ROUTES.DASHBOARD, enabled: true, icon: <CalendarDays className="h-4 w-4" /> },
+    { key: 'jobs', label: t('nav.tasks'), href: ROUTES.TASKS, enabled: true, icon: <Wrench className="h-4 w-4" /> },
+    { key: 'proposals', label: t('nav.proposals'), href: ROUTES.QUOTES, enabled: true, icon: <FileText className="h-4 w-4" /> },
+    { key: 'customers', label: t('nav.clients'), href: ROUTES.CLIENTS, enabled: true, icon: <Users className="h-4 w-4" /> },
   ];
   const pathname = usePathname();
 
   const activeTab = (() => {
-    if (pathname === '/dashboard') return 'calendar';
-    if (pathname.startsWith('/tasks') || pathname.startsWith('/interventions')) return 'jobs';
-    if (pathname.startsWith('/quotes')) return 'proposals';
-    if (pathname.startsWith('/clients')) return 'customers';
+    if (pathname === ROUTES.DASHBOARD) return 'calendar';
+    if (pathname.startsWith(ROUTES.TASKS) || pathname.startsWith('/interventions')) return 'jobs';
+    if (pathname.startsWith(ROUTES.QUOTES)) return 'proposals';
+    if (pathname.startsWith(ROUTES.CLIENTS)) return 'customers';
     return 'calendar';
   })();
 

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { listen } from '@tauri-apps/api/event';
+import { ROUTES } from '@/constants/routes';
 
 export function useMenuEvents() {
   const router = useRouter();
@@ -25,11 +26,11 @@ export function useMenuEvents() {
         unlistenNav = await listen<string>('menu-navigate', (event) => {
           const view = event.payload;
           const pathMap: Record<string, string> = {
-            dashboard: '/dashboard',
-            tasks: '/tasks',
-            clients: '/clients',
-            calendar: '/calendar',
-            settings: '/configuration',
+            dashboard: ROUTES.DASHBOARD,
+            tasks: ROUTES.TASKS,
+            clients: ROUTES.CLIENTS,
+            calendar: ROUTES.CALENDAR,
+            settings: ROUTES.CONFIGURATION,
           };
           const path = pathMap[view];
           if (path) {

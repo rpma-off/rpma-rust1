@@ -1,6 +1,7 @@
 // Technician service
 import { ipcClient } from '@/lib/ipc';
 import { AuthSecureStorage } from '@/lib/secureStorage';
+import { ROLES } from '@/lib/constants';
 
 export interface Technician {
   id: string;
@@ -44,7 +45,7 @@ export class TechnicianService {
 
       const users = (result.data || []) as Array<Record<string, unknown>>;
       return users
-        .filter(u => u.role === 'technician' || u.role === 'Technician')
+        .filter(u => u.role === ROLES.TECHNICIAN)
         .map(u => this.mapUserToTechnician(u));
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Failed to fetch technicians');

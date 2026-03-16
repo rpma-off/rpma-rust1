@@ -202,7 +202,7 @@ impl UsersFacade {
                     UserAction::List { limit, offset } => {
                         let users = services
                             .account_manager
-                            .list_users(Some(limit.unwrap_or(50)), Some(offset.unwrap_or(0)))
+                            .list_users(Some(limit.unwrap_or(crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32)), Some(offset.unwrap_or(0)))
                             .map_err(|e| {
                                 AppError::Database(format!("User listing failed: {}", e))
                             })?;

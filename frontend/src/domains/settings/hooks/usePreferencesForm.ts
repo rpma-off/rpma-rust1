@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { LogDomain } from '@/lib/logging/types';
+import { TIMING } from '@/lib/constants';
 import { ipcClient } from '@/lib/ipc';
 import {
   UserSession,
@@ -49,7 +50,7 @@ export function usePreferencesForm(user?: UserSession) {
         reduce_motion: false,
         screen_reader: false,
         auto_refresh: true,
-        refresh_interval: 60,
+        refresh_interval: TIMING.DEFAULT_REFRESH_INTERVAL_SECS,
       },
       notifications: {
         email_enabled: true,

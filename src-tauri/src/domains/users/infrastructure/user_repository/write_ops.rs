@@ -1,5 +1,6 @@
 //! Write operations for `UserRepository`.
 
+use crate::domains::users::domain::models::user::UserRole;
 use crate::shared::repositories::base::{RepoError, RepoResult};
 use rusqlite::params;
 use tracing::{debug, info, instrument, warn};
@@ -47,8 +48,8 @@ impl super::UserRepository {
 
         let admin_count: i64 = tx
             .query_row(
-                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND deleted_at IS NULL",
-                [],
+                "SELECT COUNT(*) FROM users WHERE role = ? AND deleted_at IS NULL",
+                params![UserRole::Admin.to_string()],
                 |row| row.get(0),
             )
             .map_err(|e| RepoError::Database(format!("Failed to count admins: {}", e)))?;
@@ -85,8 +86,8 @@ impl super::UserRepository {
 
         let rows_affected = tx
             .execute(
-                "UPDATE users SET role = 'admin', updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
-                params![user_id],
+                "UPDATE users SET role = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                params![UserRole::Admin.to_string(), user_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update user role: {}", e)))?;
 
@@ -97,8 +98,8 @@ impl super::UserRepository {
 
         tx.execute(
             "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, timestamp)
-             VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', (unixepoch() * 1000))",
-            params![user_id, user_email, user_id],
+             VALUES (?, ?, 'bootstrap_admin', 'user', ?, ?, ?, (unixepoch() * 1000))",
+            params![user_id, user_email, user_id, UserRole::Viewer.to_string(), UserRole::Admin.to_string()],
         )
         .map_err(|e| RepoError::Database(format!("Failed to create audit log: {}", e)))?;
 
@@ -117,8 +118,8 @@ impl super::UserRepository {
         let rows_affected = self
             .db
             .execute(
-                "UPDATE users SET role = 'admin', updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
-                params![user_id],
+                "UPDATE users SET role = ?, updated_at = (unixepoch() * 1000) WHERE id = ? AND deleted_at IS NULL",
+                params![UserRole::Admin.to_string(), user_id],
             )
             .map_err(|e| RepoError::Database(format!("Failed to update user role: {}", e)))?;
 

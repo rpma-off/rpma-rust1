@@ -3,6 +3,7 @@
 //! This module handles task statistics calculations and reporting.
 
 use crate::db::Database;
+use crate::domains::tasks::domain::models::task::TaskStatus;
 
 use rusqlite::params;
 use serde::Serialize;
@@ -44,28 +45,44 @@ impl TaskStatisticsService {
     pub fn get_task_statistics(&self) -> Result<TaskStatistics, String> {
         debug!("TaskStatisticsService: calculating task statistics");
 
-        let sql = r#"
+        // SAFETY: format! uses only TaskStatus::to_string() values — no user input.
+        let sql = format!(
+            r#"
             SELECT
                 COUNT(*) as total,
-                SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft,
-                SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) as scheduled,
-                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
-                SUM(CASE WHEN status = 'on_hold' THEN 1 ELSE 0 END) as on_hold,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                SUM(CASE WHEN status = 'invalid' THEN 1 ELSE 0 END) as invalid,
-                SUM(CASE WHEN status = 'archived' THEN 1 ELSE 0 END) as archived,
-                SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
-                SUM(CASE WHEN status = 'overdue' THEN 1 ELSE 0 END) as overdue,
-                SUM(CASE WHEN status = 'assigned' THEN 1 ELSE 0 END) as assigned,
-                SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused
+                SUM(CASE WHEN status = '{draft}' THEN 1 ELSE 0 END) as draft,
+                SUM(CASE WHEN status = '{scheduled}' THEN 1 ELSE 0 END) as scheduled,
+                SUM(CASE WHEN status = '{in_progress}' THEN 1 ELSE 0 END) as in_progress,
+                SUM(CASE WHEN status = '{completed}' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = '{cancelled}' THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN status = '{on_hold}' THEN 1 ELSE 0 END) as on_hold,
+                SUM(CASE WHEN status = '{pending}' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = '{invalid}' THEN 1 ELSE 0 END) as invalid,
+                SUM(CASE WHEN status = '{archived}' THEN 1 ELSE 0 END) as archived,
+                SUM(CASE WHEN status = '{failed}' THEN 1 ELSE 0 END) as failed,
+                SUM(CASE WHEN status = '{overdue}' THEN 1 ELSE 0 END) as overdue,
+                SUM(CASE WHEN status = '{assigned}' THEN 1 ELSE 0 END) as assigned,
+                SUM(CASE WHEN status = '{paused}' THEN 1 ELSE 0 END) as paused
             FROM tasks WHERE deleted_at IS NULL
-        "#;
+            "#,
+            draft = TaskStatus::Draft.to_string(),
+            scheduled = TaskStatus::Scheduled.to_string(),
+            in_progress = TaskStatus::InProgress.to_string(),
+            completed = TaskStatus::Completed.to_string(),
+            cancelled = TaskStatus::Cancelled.to_string(),
+            on_hold = TaskStatus::OnHold.to_string(),
+            pending = TaskStatus::Pending.to_string(),
+            invalid = TaskStatus::Invalid.to_string(),
+            archived = TaskStatus::Archived.to_string(),
+            failed = TaskStatus::Failed.to_string(),
+            overdue = TaskStatus::Overdue.to_string(),
+            assigned = TaskStatus::Assigned.to_string(),
+            paused = TaskStatus::Paused.to_string(),
+        );
 
         let result = self
             .db
-            .query_row_tuple(sql, [], |row| {
+            .query_row_tuple(&sql, [], |row| {
                 Ok((
                     row.get::<_, i64>(0)?,
                     row.get::<_, Option<i64>>(1)?.unwrap_or(0),

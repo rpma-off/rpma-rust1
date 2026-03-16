@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { ROLES } from '@/lib/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<EntityType>('Task');
   const emptyTrashMutation = useEmptyTrash();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === ROLES.ADMIN;
   
   const handleEmptyAll = async () => {
     await emptyTrashMutation.mutateAsync(undefined);

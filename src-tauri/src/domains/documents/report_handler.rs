@@ -293,6 +293,6 @@ pub async fn report_list(
 ) -> Result<ApiResponse<Vec<InterventionReport>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
-    let reports = facade.list_reports(limit.unwrap_or(50), offset.unwrap_or(0))?;
+    let reports = facade.list_reports(limit.unwrap_or(crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32), offset.unwrap_or(0))?;
     Ok(ApiResponse::success(reports).with_correlation_id(Some(ctx.correlation_id)))
 }

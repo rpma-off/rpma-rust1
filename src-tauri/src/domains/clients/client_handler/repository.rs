@@ -2,6 +2,7 @@
 
 use super::{Client, ClientOverviewStats, CustomerType};
 use crate::db::Database;
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
@@ -247,16 +248,24 @@ impl IClientRepository for ClientRepository {
     }
 
     async fn update_statistics(&self, client_id: &str) -> RepoResult<()> {
-        let _ = self
-            .db
-            .execute(
-                r#"UPDATE clients SET
+        // SAFETY: format! uses only TaskStatus::to_string() values — no user input.
+        let completed = TaskStatus::Completed.to_string();
+        let cancelled = TaskStatus::Cancelled.to_string();
+        let sql = format!(
+            r#"UPDATE clients SET
                     total_tasks = (SELECT COUNT(*) FROM tasks WHERE client_id = ? AND deleted_at IS NULL),
-                    active_tasks = (SELECT COUNT(*) FROM tasks WHERE client_id = ? AND status NOT IN ('completed', 'cancelled') AND deleted_at IS NULL),
-                    completed_tasks = (SELECT COUNT(*) FROM tasks WHERE client_id = ? AND status = 'completed' AND deleted_at IS NULL),
+                    active_tasks = (SELECT COUNT(*) FROM tasks WHERE client_id = ? AND status NOT IN ('{completed}', '{cancelled}') AND deleted_at IS NULL),
+                    completed_tasks = (SELECT COUNT(*) FROM tasks WHERE client_id = ? AND status = '{completed}' AND deleted_at IS NULL),
                     last_task_date = (SELECT MAX(completed_at) FROM tasks WHERE client_id = ? AND deleted_at IS NULL),
                     updated_at = (unixepoch() * 1000)
                 WHERE id = ?"#,
+            completed = completed,
+            cancelled = cancelled,
+        );
+        let _ = self
+            .db
+            .execute(
+                &sql,
                 params![client_id, client_id, client_id, client_id, client_id],
             )
             .map_err(|e| {

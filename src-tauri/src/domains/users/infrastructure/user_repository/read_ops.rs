@@ -154,8 +154,8 @@ impl super::UserRepository {
         let count: i64 = self
             .db
             .query_single_value(
-                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND deleted_at IS NULL",
-                [],
+                "SELECT COUNT(*) FROM users WHERE role = ? AND deleted_at IS NULL",
+                params![UserRole::Admin.to_string()],
             )
             .map_err(|e| RepoError::Database(format!("Failed to count admin users: {}", e)))?;
         Ok(count)

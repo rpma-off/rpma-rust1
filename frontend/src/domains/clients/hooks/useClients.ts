@@ -1,13 +1,14 @@
 import { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { PAGINATION } from '@/lib/constants';
 import type { ClientWithTasks, CustomerType } from '@/lib/backend';
 import { useMutationCounter } from '@/lib/data-freshness';
 import { clientKeys } from '@/lib/query-keys';
 import { LogDomain } from '@/lib/logging/types';
 import { useLogger } from '@/shared/hooks/useLogger';
-import { normalizeError } from '@/types/utility.types';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { clientService, type ClientStats } from '../services';
+import { normalizeError } from '@/types/utility.types';
 
 export interface ClientFilters {
   search?: string;
@@ -57,7 +58,7 @@ export interface UseClientsReturn {
 
 const DEFAULT_FILTERS: ClientFilters = {
   page: 1,
-  limit: 20,
+  limit: PAGINATION.DEFAULT_PAGE_SIZE,
   sort_by: 'created_at',
   sort_order: 'desc'
 };

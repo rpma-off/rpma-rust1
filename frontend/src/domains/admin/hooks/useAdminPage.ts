@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ROLES } from '@/lib/constants';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAdminDashboard } from './useAdminDashboard';
@@ -18,10 +19,10 @@ export function useAdminPage() {
   const { loadUsers } = adminUserManagement;
 
   const isAuthorized =
-    !!profile && (profile.role === 'admin' || profile.role === 'supervisor');
+    !!profile && (profile.role === ROLES.ADMIN || profile.role === ROLES.SUPERVISOR);
 
   useEffect(() => {
-    if (profile && profile.role !== 'admin' && profile.role !== 'supervisor') {
+    if (profile && profile.role !== ROLES.ADMIN && profile.role !== ROLES.SUPERVISOR) {
       router.push('/unauthorized');
     }
   }, [profile, router]);

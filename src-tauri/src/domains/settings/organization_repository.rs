@@ -8,6 +8,7 @@ use tracing::{debug, error, info};
 use crate::db::Database;
 use crate::db::FromSqlRow;
 use crate::commands::AppError;
+use crate::domains::users::domain::models::user::UserRole;
 use super::models::*;
 
 pub struct OrganizationRepository {
@@ -460,8 +461,8 @@ impl OrganizationRepository {
 
         let count: i64 = conn
             .query_row(
-                "SELECT COUNT(*) FROM users WHERE role = 'admin' AND is_active = 1",
-                [],
+                "SELECT COUNT(*) FROM users WHERE role = ? AND is_active = 1",
+                params![UserRole::Admin.to_string()],
                 |row| row.get(0),
             )
             .unwrap_or(0);

@@ -17,7 +17,7 @@ impl RateLimiterService {
         Self {
             db,
             max_attempts: 5,                         // Max 5 failed attempts
-            lockout_duration: Duration::minutes(15), // Lock for 15 minutes
+            lockout_duration: Duration::minutes(crate::shared::constants::RATE_LIMIT_LOCKOUT_MINUTES),
         }
     }
 

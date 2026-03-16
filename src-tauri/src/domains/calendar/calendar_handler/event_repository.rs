@@ -107,13 +107,7 @@ impl CalendarEventRepository {
         let tags_json = serde_json::to_string(&input.tags.unwrap_or_default())
             .map_err(|e| RepoError::Database(format!("Failed to serialize tags: {}", e)))?;
 
-        let event_type_str = match input.event_type.unwrap_or(EventType::Meeting) {
-            EventType::Meeting => "meeting",
-            EventType::Appointment => "appointment",
-            EventType::Task => "task",
-            EventType::Reminder => "reminder",
-            EventType::Other => "other",
-        };
+        let event_type_str = input.event_type.unwrap_or(EventType::Meeting).to_string();
 
         let params_vec: Vec<rusqlite::types::Value> = vec![
             id.clone().into(),
@@ -122,8 +116,8 @@ impl CalendarEventRepository {
             input.start_datetime.into(),
             input.end_datetime.into(),
             (input.all_day.unwrap_or(false) as i32).into(),
-            input.timezone.unwrap_or_else(|| "UTC".to_string()).into(),
-            event_type_str.to_string().into(),
+            input.timezone.unwrap_or_else(|| crate::shared::constants::DEFAULT_TIMEZONE.to_string()).into(),
+            event_type_str.into(),
             input.category.into(),
             input.task_id.into(),
             input.client_id.into(),
@@ -136,7 +130,7 @@ impl CalendarEventRepository {
             None::<String>.into(),
             None::<String>.into(),
             reminders_json.into(),
-            "confirmed".to_string().into(),
+            EventStatus::Confirmed.to_string().into(),
             input.color.into(),
             tags_json.into(),
             input.notes.into(),
@@ -198,15 +192,8 @@ impl CalendarEventRepository {
             params_vec.push(timezone.clone().into());
         }
         if let Some(event_type) = &input.event_type {
-            let s = match event_type {
-                EventType::Meeting => "meeting",
-                EventType::Appointment => "appointment",
-                EventType::Task => "task",
-                EventType::Reminder => "reminder",
-                EventType::Other => "other",
-            };
             sql.push_str(", event_type = ?");
-            params_vec.push(s.to_string().into());
+            params_vec.push(event_type.to_string().into());
         }
         if let Some(category) = &input.category {
             sql.push_str(", category = ?");
@@ -240,13 +227,8 @@ impl CalendarEventRepository {
             params_vec.push(j.into());
         }
         if let Some(status) = &input.status {
-            let s = match status {
-                EventStatus::Confirmed => "confirmed",
-                EventStatus::Tentative => "tentative",
-                EventStatus::Cancelled => "cancelled",
-            };
             sql.push_str(", status = ?");
-            params_vec.push(s.to_string().into());
+            params_vec.push(status.to_string().into());
         }
         if let Some(reminders) = &input.reminders {
             let j = serde_json::to_string(reminders).map_err(|e| {

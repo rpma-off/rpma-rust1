@@ -12,6 +12,7 @@ use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus, InterventionType,
 };
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
@@ -565,8 +566,8 @@ impl InterventionDataService {
                     intervention_id, task_id
                 );
                 self.db.get_connection()?.execute(
-                    "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft' WHERE id = ?",
-                    params![task_id],
+                    "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = ? WHERE id = ?",
+                    params![TaskStatus::Draft.to_string(), task_id],
                 )?;
                 return Ok(());
             }

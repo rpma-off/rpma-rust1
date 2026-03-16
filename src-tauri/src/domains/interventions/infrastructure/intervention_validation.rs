@@ -151,8 +151,8 @@ impl InterventionValidationService {
         match chrono::DateTime::parse_from_rfc3339(scheduled_start) {
             Ok(dt) => {
                 let now = chrono::Utc::now();
-                // Allow up to 5 minutes in the past for immediate starts
-                let five_minutes_ago = now - chrono::Duration::minutes(5);
+                // Allow up to MAX_PAST_START_MINUTES in the past for immediate starts
+                let five_minutes_ago = now - chrono::Duration::minutes(crate::shared::constants::MAX_PAST_START_MINUTES);
                 if dt < five_minutes_ago {
                     return Err(InterventionError::Validation(
                         "Scheduled start time cannot be more than 5 minutes in the past"

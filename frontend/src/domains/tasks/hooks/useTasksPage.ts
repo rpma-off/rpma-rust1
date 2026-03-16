@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { PAGINATION } from '@/lib/constants';
 import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import { enhancedToast, logger } from '@/shared/utils';
 import { useTranslation } from '@/shared/hooks';
@@ -35,7 +36,7 @@ export function useTasksPage() {
     status: statusFilter !== 'all' ? statusFilter as TaskStatus : undefined,
     search: searchTerm,
     assignedTo: technicianFilter !== 'all' ? technicianFilter : undefined,
-    pageSize: 20,
+    pageSize: PAGINATION.DEFAULT_PAGE_SIZE,
     autoFetch: true
   });
 

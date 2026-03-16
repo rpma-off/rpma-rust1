@@ -225,6 +225,18 @@ impl FromStr for EventType {
     }
 }
 
+impl std::fmt::Display for EventType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventType::Meeting => write!(f, "meeting"),
+            EventType::Appointment => write!(f, "appointment"),
+            EventType::Task => write!(f, "task"),
+            EventType::Reminder => write!(f, "reminder"),
+            EventType::Other => write!(f, "other"),
+        }
+    }
+}
+
 impl FromStr for EventStatus {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -233,6 +245,16 @@ impl FromStr for EventStatus {
             "tentative" => Ok(EventStatus::Tentative),
             "cancelled" => Ok(EventStatus::Cancelled),
             _ => Err(format!("Unknown event status: {}", s)),
+        }
+    }
+}
+
+impl std::fmt::Display for EventStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EventStatus::Confirmed => write!(f, "confirmed"),
+            EventStatus::Tentative => write!(f, "tentative"),
+            EventStatus::Cancelled => write!(f, "cancelled"),
         }
     }
 }

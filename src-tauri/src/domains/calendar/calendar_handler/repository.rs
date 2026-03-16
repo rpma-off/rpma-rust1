@@ -4,6 +4,7 @@ use super::*;
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::calendar::models::*;
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use std::sync::Arc;
 
 /// Repository for calendar-related database operations (tasks + scheduling).
@@ -127,12 +128,17 @@ impl CalendarRepository {
             .get_connection()
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        let mut sql = String::from(
+        // SAFETY: format! uses only TaskStatus::to_string() values — no user input.
+        let completed = TaskStatus::Completed.to_string();
+        let cancelled = TaskStatus::Cancelled.to_string();
+        let mut sql = format!(
             "SELECT * FROM calendar_tasks \
              WHERE technician_id = ?1 \
              AND scheduled_date = ?2 \
              AND id != ?3 \
-             AND status NOT IN ('completed', 'cancelled')",
+             AND status NOT IN ('{completed}', '{cancelled}')",
+            completed = completed,
+            cancelled = cancelled,
         );
 
         if new_start.is_some() && new_end.is_some() {

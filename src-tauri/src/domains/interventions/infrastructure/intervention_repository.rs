@@ -1,8 +1,11 @@
 /// ADR-005: Repository Pattern
 use crate::db::InterventionResult;
 use crate::db::{Database, InterventionError};
-use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::intervention::{
+    Intervention, InterventionStatus,
+};
 use crate::domains::interventions::domain::models::step::InterventionStep;
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::sync::Arc;
 use tracing::debug;
@@ -736,8 +739,8 @@ impl InterventionRepository {
     pub fn reset_task_workflow_state(&self, task_id: &str) -> Result<(), String> {
         let conn = self.db.get_connection()?;
         conn.execute(
-            "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft', started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
-            rusqlite::params![task_id]
+            "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = ?, started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
+            rusqlite::params![TaskStatus::Draft.to_string(), task_id]
         ).map_err(|e| e.to_string())?;
         Ok(())
     }
@@ -828,12 +831,12 @@ impl InterventionRepository {
 
         let archived_count = conn
             .execute(
-                "UPDATE interventions 
+                "UPDATE interventions
              SET status = 'archived', updated_at = ?
-             WHERE status = 'completed' 
+             WHERE status = ?
              AND completed_at < ?
              AND status != 'archived'",
-                rusqlite::params![chrono::Utc::now().timestamp_millis(), cutoff_timestamp],
+                rusqlite::params![chrono::Utc::now().timestamp_millis(), InterventionStatus::Completed.to_string(), cutoff_timestamp],
             )
             .map_err(|e| {
                 InterventionError::Database(format!("Failed to archive old interventions: {}", e))

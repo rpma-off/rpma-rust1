@@ -4,6 +4,7 @@
 
 use crate::db::InterventionError;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::interventions::domain::models::step::StepStatus;
 use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_types::{
@@ -223,8 +224,8 @@ impl super::InterventionWorkflowService {
             Ok(conn) => {
                 if let Err(e) = conn
                     .execute(
-                        "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = 'draft', started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
-                        rusqlite::params![task_id],
+                        "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = ?, started_at = NULL WHERE id = ? AND workflow_id IS NOT NULL",
+                        rusqlite::params![TaskStatus::Draft.to_string(), task_id],
                     )
                     .map_err(|db_err| db_err.to_string())
                 {
@@ -364,8 +365,8 @@ impl super::InterventionWorkflowService {
 
                 let now = crate::shared::contracts::common::now();
                 tx.execute(
-                    "UPDATE tasks SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
-                    rusqlite::params![now, now, task_id],
+                    "UPDATE tasks SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?",
+                    rusqlite::params![TaskStatus::Completed.to_string(), now, now, task_id],
                 )
                 .map_err(|e| format!("Failed to update task status: {}", e))?;
 

@@ -1,6 +1,7 @@
 // frontend/src/lib/logging/logger.ts
 // Main logger implementation with correlation ID support
 
+import { TIMING } from '@/lib/constants';
 import {
   LogLayer,
   LogDomain,
@@ -25,7 +26,7 @@ export class RPMAFrontendLogger {
       enable_local_storage: true,
       max_local_storage_entries: 1000,
       batch_size: 10,
-      flush_interval_ms: 5000,
+      flush_interval_ms: TIMING.LOG_FLUSH_INTERVAL_MS,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
       ...config
     };

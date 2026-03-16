@@ -3,6 +3,11 @@ import type { InterventionProgress } from "./InterventionProgress";
 import type { InterventionStep } from "./InterventionStep";
 
 /**
- * TODO: document
+ * Discriminated-union response for intervention progress/step IPC commands.
+ *
+ * Variants correspond to the action requested:
+ * - `Retrieved` — current progress and all steps for an intervention
+ * - `StepAdvanced` — result after advancing to the next step
+ * - `StepProgressSaved` — confirmation that step progress was persisted
  */
 export type InterventionProgressResponse = { "type": "Retrieved", progress: InterventionProgress, steps: Array<InterventionStep>, } | { "type": "StepAdvanced", step: InterventionStep, next_step: InterventionStep | null, progress_percentage: number, requirements_completed: Array<string>, } | { "type": "StepProgressSaved", step: InterventionStep, };

@@ -3,6 +3,12 @@ import type { Intervention } from "./Intervention";
 import type { InterventionStats } from "./InterventionStats";
 
 /**
- * TODO: document
+ * Discriminated-union response for intervention management IPC commands.
+ *
+ * Variants correspond to the action requested:
+ * - `List` — paginated list of interventions matching the query
+ * - `Stats` — aggregate statistics, optionally scoped to a technician
+ * - `ByTask` — all interventions belonging to a specific task
+ * - `BulkUpdated` — confirmation that a bulk-update operation completed
  */
 export type InterventionManagementResponse = { "type": "List", interventions: Array<Intervention>, total: bigint, page: number, limit: number, } | { "type": "Stats", stats: InterventionStats, } | { "type": "ByTask", interventions: Array<Intervention>, } | { "type": "BulkUpdated", updated_count: number, message: string, };

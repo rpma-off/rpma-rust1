@@ -273,7 +273,7 @@ impl QuoteRepository {
         };
 
         let page = query.page.unwrap_or(1).max(1);
-        let limit = query.limit.unwrap_or(20).max(1).min(100);
+        let limit = query.limit.unwrap_or(crate::shared::constants::DEFAULT_PAGE_SIZE as i32).max(1).min(100);
         let offset = (page - 1) * limit;
 
         let sql = format!(
@@ -368,8 +368,9 @@ impl QuoteRepository {
         sets.push("updated_at = (unixepoch() * 1000)");
         params_vec.push(id.to_string().into());
 
+        params_vec.push(QuoteStatus::Draft.to_string().into());
         let sql = format!(
-            "UPDATE quotes SET {} WHERE id = ? AND status = 'draft' AND deleted_at IS NULL",
+            "UPDATE quotes SET {} WHERE id = ? AND status = ? AND deleted_at IS NULL",
             sets.join(", ")
         );
 
@@ -397,8 +398,8 @@ impl QuoteRepository {
         let rows = self
             .db
             .execute(
-                "UPDATE quotes SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND status = 'draft' AND deleted_at IS NULL",
-                params![id],
+                "UPDATE quotes SET deleted_at = (unixepoch() * 1000), updated_at = (unixepoch() * 1000) WHERE id = ? AND status = ? AND deleted_at IS NULL",
+                params![id, QuoteStatus::Draft.to_string()],
             )
             .map_err(|e| RepoError::Database(format!("Failed to soft-delete quote: {}", e)))?;
 

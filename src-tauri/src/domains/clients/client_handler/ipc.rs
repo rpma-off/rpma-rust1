@@ -141,7 +141,7 @@ pub async fn client_crud(
     let clients_facade = ClientsFacade::new(client_service.clone());
     let task_service = state.task_service.clone();
     let result = tokio::time::timeout(
-        std::time::Duration::from_secs(30),
+        std::time::Duration::from_secs(crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS),
         async {
             match validated_action {
                 crate::commands::ClientAction::Create { data } => handle_client_creation(&clients_facade, data, ctx.user_id(), Some(correlation_id.clone())).await,
@@ -159,7 +159,7 @@ pub async fn client_crud(
     match result {
         Ok(response) => response,
         Err(_) => {
-            error!("Client CRUD operation timed out after 30 seconds");
+            error!("Client CRUD operation timed out after {} seconds", crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS);
             Err(AppError::Database(
                 "Client operation timed out - database may be locked. Please try again.".to_string(),
             ))

@@ -6,6 +6,10 @@
 use crate::db::InterventionResult;
 use crate::domains::interventions::domain::models::intervention::Intervention;
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
+use crate::shared::constants::{
+    WORKFLOW_DURATION_FINAL_CHECK_SECS, WORKFLOW_DURATION_INSPECTION_SECS,
+    WORKFLOW_DURATION_REPAIR_SECS,
+};
 use async_trait::async_trait;
 
 /// Configuration for a single workflow step
@@ -186,7 +190,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(900), // 15 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_INSPECTION_SECS),
                 description: Some("Thorough vehicle inspection before PPF application".to_string()),
                 quality_checkpoints: Some(vec![
                     "Surface cleanliness verified".to_string(),
@@ -201,7 +205,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 8,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(1800), // 30 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_REPAIR_SECS),
                 description: Some("Surface preparation and film cutting".to_string()),
                 quality_checkpoints: Some(vec![
                     "Vehicle cleaned and decontaminated".to_string(),
@@ -232,7 +236,7 @@ impl WorkflowStrategy for StandardPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(900), // 15 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_INSPECTION_SECS),
                 description: Some("Final inspection and quality control".to_string()),
                 quality_checkpoints: Some(vec![
                     "Final quality inspection passed".to_string(),
@@ -314,7 +318,7 @@ impl WorkflowStrategy for ExpressPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 6,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(300), // 5 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_FINAL_CHECK_SECS),
                 description: Some("Quick inspection for express PPF application".to_string()),
                 quality_checkpoints: Some(vec![
                     "Target areas identified".to_string(),
@@ -328,7 +332,7 @@ impl WorkflowStrategy for ExpressPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 10,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(1800), // 30 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_REPAIR_SECS),
                 description: Some("Express PPF film installation".to_string()),
                 quality_checkpoints: Some(vec![
                     "Film applied correctly".to_string(),
@@ -342,7 +346,7 @@ impl WorkflowStrategy for ExpressPPFStrategy {
                 min_photos_required: 0,
                 max_photos_allowed: 6,
                 is_mandatory: true,
-                estimated_duration_seconds: Some(300), // 5 minutes
+                estimated_duration_seconds: Some(WORKFLOW_DURATION_FINAL_CHECK_SECS),
                 description: Some("Express final quality check".to_string()),
                 quality_checkpoints: Some(vec![
                     "Final inspection complete".to_string(),

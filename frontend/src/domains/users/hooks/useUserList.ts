@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { convertTimestamps } from '@/lib/types';
+import { PAGINATION } from '@/lib/constants';
 import { logger, LogContext } from '@/shared/utils';
 import type { UserAccount } from '@/types';
 import { useAuth } from '@/shared/hooks/useAuth';
@@ -17,7 +18,7 @@ export interface UseUserListReturn {
 /**
  * Load the full user list with automatic timestamp conversion.
  */
-export function useUserList(limit = 50, offset = 0): UseUserListReturn {
+export function useUserList(limit = PAGINATION.USER_LIST_SIZE, offset = 0): UseUserListReturn {
   const { user } = useAuth();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
