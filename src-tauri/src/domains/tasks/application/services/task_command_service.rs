@@ -22,6 +22,7 @@ use crate::shared::context::RequestContext;
 use crate::shared::contracts::notification::NotificationSender;
 use crate::shared::contracts::task_scheduler::TaskScheduler;
 use crate::shared::services::event_bus::InMemoryEventBus;
+use crate::shared::services::validation::ValidationService;
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.
 ///
@@ -68,16 +69,15 @@ impl TaskCommandService {
         task_id: &str,
         raw_note: &str,
     ) -> Result<String, AppError> {
-        let note = raw_note.trim();
-        if note.is_empty() {
-            return Err(AppError::Validation("Note cannot be empty".to_string()));
-        }
+        let note = ValidationService::new()
+            .validate_required_trimmed(raw_note, "Note cannot be empty")
+            .map_err(|err| AppError::Validation(err.to_string()))?;
 
         let task = self.fetch_task(task_id).await?;
         task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
 
         let facade = self.facade();
-        let note_entry = facade.format_note_entry(&ctx.auth.user_id, note);
+        let note_entry = facade.format_note_entry(&ctx.auth.user_id, &note);
         let updated_notes = facade.append_note(task.notes.as_deref(), &note_entry);
 
         let update_request = UpdateTaskRequest {
@@ -115,10 +115,9 @@ impl TaskCommandService {
         raw_body: &str,
         raw_message_type: Option<&str>,
     ) -> Result<String, AppError> {
-        let body = raw_body.trim();
-        if body.is_empty() {
-            return Err(AppError::Validation("Message cannot be empty".to_string()));
-        }
+        let body = ValidationService::new()
+            .validate_required_trimmed(raw_body, "Message cannot be empty")
+            .map_err(|err| AppError::Validation(err.to_string()))?;
 
         let task = self.fetch_task(task_id).await?;
         task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
@@ -155,7 +154,7 @@ impl TaskCommandService {
                 recipient_email,
                 recipient_phone,
                 Some(format!("Task {} update", task.task_number)),
-                body.to_string(),
+                body,
                 Some(task.id.clone()),
                 task.client_id.clone(),
                 Some("normal".to_string()),

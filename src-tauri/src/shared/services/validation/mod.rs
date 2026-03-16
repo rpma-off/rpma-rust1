@@ -25,6 +25,8 @@ mod tests;
 /// TODO: document
 #[derive(Error, Debug)]
 pub enum ValidationError {
+    #[error("{0}")]
+    Message(String),
     #[error("Invalid email format: {0}")]
     InvalidEmail(String),
     #[error("Password too weak: {0}")]

@@ -7,6 +7,7 @@ use crate::domains::tasks::domain::models::task::{
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
 use crate::shared::ipc::errors::AppError;
+use crate::shared::services::validation::ValidationService;
 
 /// Facade for the Tasks bounded context.
 ///
@@ -54,26 +55,22 @@ impl TasksFacade {
 
     /// Validate that a task note is non-empty and within acceptable length.
     pub fn validate_note(&self, note: &str) -> Result<String, AppError> {
-        let trimmed = note.trim();
-        if trimmed.is_empty() {
-            return Err(AppError::Validation(
-                "Task note cannot be empty".to_string(),
-            ));
-        }
-        if trimmed.len() > 5000 {
-            return Err(AppError::Validation(
-                "Task note exceeds maximum length of 5000 characters".to_string(),
-            ));
-        }
-        Ok(trimmed.to_string())
+        ValidationService::new()
+            .validate_required_trimmed_with_max_length(
+                note,
+                "Task note cannot be empty",
+                5000,
+                "Task note exceeds maximum length of 5000 characters",
+            )
+            .map_err(|err| AppError::Validation(err.to_string()))
     }
 
     /// Validate that a task ID is present and well-formed.
     pub fn validate_task_id(&self, task_id: &str) -> Result<(), AppError> {
-        if task_id.trim().is_empty() {
-            return Err(AppError::Validation("task_id is required".to_string()));
-        }
-        Ok(())
+        ValidationService::new()
+            .validate_required_trimmed(task_id, "task_id is required")
+            .map(|_| ())
+            .map_err(|err| AppError::Validation(err.to_string()))
     }
 
     /// Append a new entry to an existing task notes string.

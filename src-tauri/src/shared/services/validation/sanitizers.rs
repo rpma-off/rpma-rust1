@@ -3,6 +3,55 @@
 use super::ValidationError;
 
 impl super::ValidationService {
+    /// Validate a required string field and return its trimmed value.
+    pub fn validate_required_trimmed(
+        &self,
+        input: &str,
+        error_message: &str,
+    ) -> Result<String, ValidationError> {
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            return Err(ValidationError::Message(error_message.to_string()));
+        }
+
+        Ok(trimmed.to_string())
+    }
+
+    /// Validate a required string field and enforce a maximum length while
+    /// preserving the caller's user-facing messages.
+    pub fn validate_required_trimmed_with_max_length(
+        &self,
+        input: &str,
+        empty_message: &str,
+        max_length: usize,
+        too_long_message: &str,
+    ) -> Result<String, ValidationError> {
+        let trimmed = self.validate_required_trimmed(input, empty_message)?;
+
+        if trimmed.len() > max_length {
+            return Err(ValidationError::Message(too_long_message.to_string()));
+        }
+
+        Ok(trimmed)
+    }
+
+    /// Validate a required date string in `YYYY-MM-DD` format while
+    /// preserving the caller's user-facing messages.
+    pub fn validate_required_date_format(
+        &self,
+        input: &str,
+        empty_message: &str,
+        invalid_format_message: &str,
+    ) -> Result<String, ValidationError> {
+        let trimmed = self.validate_required_trimmed(input, empty_message)?;
+
+        if chrono::NaiveDate::parse_from_str(&trimmed, "%Y-%m-%d").is_err() {
+            return Err(ValidationError::Message(invalid_format_message.to_string()));
+        }
+
+        Ok(trimmed)
+    }
+
     /// Sanitize string input (remove potentially dangerous characters)
     pub fn sanitize_string(&self, input: &str) -> Result<String, ValidationError> {
         // Check for potentially dangerous characters

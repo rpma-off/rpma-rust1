@@ -65,4 +65,66 @@ mod tests {
         assert!(validator.validate_name("J", "First name").is_err());
         assert!(validator.validate_name("John123", "First name").is_err());
     }
+
+    #[test]
+    fn test_validate_required_trimmed_preserves_exact_message() {
+        let validator = ValidationService::new();
+
+        let err = validator
+            .validate_required_trimmed("   ", "task_id is required")
+            .unwrap_err();
+
+        assert_eq!(err.to_string(), "task_id is required");
+    }
+
+    #[test]
+    fn test_validate_required_trimmed_with_max_length_preserves_exact_messages() {
+        let validator = ValidationService::new();
+
+        let empty_err = validator
+            .validate_required_trimmed_with_max_length(
+                "   ",
+                "Title cannot be empty",
+                10,
+                "Title must be 10 characters or less",
+            )
+            .unwrap_err();
+        assert_eq!(empty_err.to_string(), "Title cannot be empty");
+
+        let long_err = validator
+            .validate_required_trimmed_with_max_length(
+                "01234567890",
+                "Title cannot be empty",
+                10,
+                "Title must be 10 characters or less",
+            )
+            .unwrap_err();
+        assert_eq!(long_err.to_string(), "Title must be 10 characters or less");
+    }
+
+    #[test]
+    fn test_validate_required_date_format_preserves_exact_messages() {
+        let validator = ValidationService::new();
+
+        let empty_err = validator
+            .validate_required_date_format(
+                "",
+                "new_date is required",
+                "new_date must be in YYYY-MM-DD format",
+            )
+            .unwrap_err();
+        assert_eq!(empty_err.to_string(), "new_date is required");
+
+        let invalid_err = validator
+            .validate_required_date_format(
+                "06/01/2024",
+                "new_date is required",
+                "new_date must be in YYYY-MM-DD format",
+            )
+            .unwrap_err();
+        assert_eq!(
+            invalid_err.to_string(),
+            "new_date must be in YYYY-MM-DD format"
+        );
+    }
 }

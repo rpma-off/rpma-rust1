@@ -66,7 +66,7 @@ async fn validate_task_id_rejects_empty() {
     let import_svc = Arc::new(TaskImportService::new(db));
     let facade = TasksFacade::new(task_svc, import_svc);
     let err = facade.validate_task_id("").unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "task_id is required"));
 }
 
 #[tokio::test]
@@ -76,7 +76,7 @@ async fn validate_note_rejects_empty() {
     let import_svc = Arc::new(TaskImportService::new(db));
     let facade = TasksFacade::new(task_svc, import_svc);
     let err = facade.validate_note("").unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "Task note cannot be empty"));
 }
 
 #[tokio::test]
@@ -87,5 +87,9 @@ async fn validate_note_rejects_too_long() {
     let facade = TasksFacade::new(task_svc, import_svc);
     let long_note = "x".repeat(5001);
     let err = facade.validate_note(&long_note).unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(
+        err,
+        AppError::Validation(ref msg)
+            if msg == "Task note exceeds maximum length of 5000 characters"
+    ));
 }

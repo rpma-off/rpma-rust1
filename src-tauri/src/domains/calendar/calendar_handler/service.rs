@@ -5,6 +5,7 @@ use super::*;
 use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::calendar::models::*;
+use crate::shared::services::validation::ValidationService;
 use std::sync::Arc;
 
 /// Business logic for calendar scheduling and conflict detection.
@@ -36,12 +37,13 @@ impl CalendarService {
         new_start: Option<String>,
         new_end: Option<String>,
     ) -> Result<ConflictDetection, AppError> {
-        if task_id.trim().is_empty() {
-            return Err(AppError::Validation("task_id is required".to_string()));
-        }
-        if new_date.trim().is_empty() {
-            return Err(AppError::Validation("new_date is required".to_string()));
-        }
+        let validator = ValidationService::new();
+        let task_id = validator
+            .validate_required_trimmed(&task_id, "task_id is required")
+            .map_err(|err| AppError::Validation(err.to_string()))?;
+        let new_date = validator
+            .validate_required_trimmed(&new_date, "new_date is required")
+            .map_err(|err| AppError::Validation(err.to_string()))?;
 
         let technician_id = self.repo.get_technician_for_task(&task_id)?;
 
@@ -107,17 +109,17 @@ impl CalendarService {
         new_end: Option<String>,
         user_id: &str,
     ) -> Result<(), AppError> {
-        if task_id.trim().is_empty() {
-            return Err(AppError::Validation("task_id is required".to_string()));
-        }
-        if new_date.trim().is_empty() {
-            return Err(AppError::Validation("new_date is required".to_string()));
-        }
-        if chrono::NaiveDate::parse_from_str(new_date.trim(), "%Y-%m-%d").is_err() {
-            return Err(AppError::Validation(
-                "new_date must be in YYYY-MM-DD format".to_string(),
-            ));
-        }
+        let validator = ValidationService::new();
+        let task_id = validator
+            .validate_required_trimmed(&task_id, "task_id is required")
+            .map_err(|err| AppError::Validation(err.to_string()))?;
+        let new_date = validator
+            .validate_required_date_format(
+                &new_date,
+                "new_date is required",
+                "new_date must be in YYYY-MM-DD format",
+            )
+            .map_err(|err| AppError::Validation(err.to_string()))?;
         self.repo.upsert_schedule(
             &task_id,
             &new_date,

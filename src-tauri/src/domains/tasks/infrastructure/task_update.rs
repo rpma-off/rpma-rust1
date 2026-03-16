@@ -12,6 +12,7 @@ use crate::domains::tasks::infrastructure::task_constants::{
 use crate::domains::tasks::infrastructure::task_rules_repository::{
     validate_status_transition, TaskRulesRepository,
 };
+use crate::shared::services::validation::ValidationService;
 use chrono::Utc;
 use rusqlite::params;
 use std::sync::Arc;
@@ -37,10 +38,12 @@ impl TaskUpdateService {
         user_id: &str,
     ) -> Result<Task, AppError> {
         // Ensure id is present
-        let _id = req
-            .id
-            .as_ref()
-            .ok_or_else(|| "Task ID is required for update".to_string())?;
+        let _id = ValidationService::new()
+            .validate_required_trimmed(
+                req.id.as_deref().unwrap_or_default(),
+                "Task ID is required for update",
+            )
+            .map_err(|err| AppError::Validation(err.to_string()))?;
 
         let db = self.db.clone();
 
@@ -86,16 +89,14 @@ impl TaskUpdateService {
     /// Apply title updates with validation
     fn apply_title_updates(task: &mut Task, req: &UpdateTaskRequest) -> Result<(), AppError> {
         if let Some(title) = &req.title {
-            if title.trim().is_empty() {
-                return Err(AppError::Validation("Title cannot be empty".to_string()));
-            }
-            if title.len() > MAX_TITLE_LENGTH {
-                return Err(AppError::Validation(format!(
-                    "Title must be {} characters or less",
-                    MAX_TITLE_LENGTH
-                )));
-            }
-            task.title = title.clone();
+            task.title = ValidationService::new()
+                .validate_required_trimmed_with_max_length(
+                    title,
+                    "Title cannot be empty",
+                    MAX_TITLE_LENGTH,
+                    &format!("Title must be {} characters or less", MAX_TITLE_LENGTH),
+                )
+                .map_err(|err| AppError::Validation(err.to_string()))?;
         }
         Ok(())
     }
@@ -437,13 +438,15 @@ impl TaskUpdateService {
         req: UpdateTaskRequest,
         user_id: &str,
     ) -> Result<Task, AppError> {
-        let task_id = req
-            .id
-            .as_ref()
-            .ok_or_else(|| AppError::Validation("Task ID is required for update".to_string()))?;
+        let task_id = ValidationService::new()
+            .validate_required_trimmed(
+                req.id.as_deref().unwrap_or_default(),
+                "Task ID is required for update",
+            )
+            .map_err(|err| AppError::Validation(err.to_string()))?;
 
         let mut task = self
-            .get_task_sync(task_id)?
+            .get_task_sync(&task_id)?
             .ok_or_else(|| format!("Task with id {} not found", task_id))?;
 
         self.check_task_ownership(&task, user_id)?;

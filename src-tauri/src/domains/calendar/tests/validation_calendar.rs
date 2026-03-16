@@ -46,7 +46,7 @@ async fn schedule_task_rejects_empty_task_id() {
         )
         .await
         .unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "task_id is required"));
 }
 
 #[tokio::test]
@@ -57,7 +57,7 @@ async fn schedule_task_rejects_empty_new_date() {
         .schedule_task("task-1".to_string(), "".to_string(), None, None, "user1")
         .await
         .unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "new_date is required"));
 }
 
 #[tokio::test]
@@ -74,7 +74,10 @@ async fn schedule_task_rejects_invalid_date_format() {
         )
         .await
         .unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(
+        err,
+        AppError::Validation(ref msg) if msg == "new_date must be in YYYY-MM-DD format"
+    ));
 }
 
 #[tokio::test]
@@ -85,7 +88,7 @@ async fn check_conflicts_rejects_empty_task_id() {
         .check_conflicts("".to_string(), "2024-06-01".to_string(), None, None)
         .await
         .unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "task_id is required"));
 }
 
 #[tokio::test]
@@ -96,5 +99,5 @@ async fn check_conflicts_rejects_empty_date() {
         .check_conflicts("task-1".to_string(), "".to_string(), None, None)
         .await
         .unwrap_err();
-    assert!(matches!(err, AppError::Validation(_)));
+    assert!(matches!(err, AppError::Validation(ref msg) if msg == "new_date is required"));
 }
