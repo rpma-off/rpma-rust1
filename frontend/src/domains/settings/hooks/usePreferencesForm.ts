@@ -26,7 +26,7 @@ export function usePreferencesForm(user?: UserSession) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const { settings, loading: isLoading, error: settingsError } = useSettings();
+  const { settings, loading: settingsLoading, error: settingsError } = useSettings();
 
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.USER,
@@ -180,7 +180,7 @@ export function usePreferencesForm(user?: UserSession) {
 
   return {
     form,
-    isLoading,
+    isLoading: settingsLoading,
     isSaving,
     saveSuccess,
     saveError,

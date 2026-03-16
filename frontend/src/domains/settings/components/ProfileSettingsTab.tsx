@@ -81,7 +81,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       return;
     }
 
-    if (!settingsQueryError) {
+    if (typeof settingsQueryError !== 'string') {
       return;
     }
 
@@ -101,6 +101,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
     }
 
     setSettingsError('Failed to load settings. Some features may not work correctly.');
+    setUsingDefaultSettings(false);
   }, [defaultUserSettings, logError, logInfo, settings, settingsQueryError, user?.user_id]);
 
   // Update form when profile data changes

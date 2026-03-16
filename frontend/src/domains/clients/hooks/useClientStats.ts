@@ -58,7 +58,11 @@ export const useClientStats = (options: UseClientStatsOptions = {}): UseClientSt
     enabled: autoFetch && !!token,
     retry: false,
     refetchInterval: refreshInterval && autoFetch
-      ? () => (document.visibilityState === 'visible' ? refreshInterval : false)
+      ? () => (
+        typeof document !== 'undefined' && document.visibilityState === 'visible'
+          ? refreshInterval
+          : false
+      )
       : false,
   });
 

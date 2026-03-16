@@ -18,6 +18,11 @@ import type {
   RecordConsumptionRequest,
   InventoryQuery,
 } from '../ipc/inventory-request.types';
+import {
+  AUTH_ERROR_MESSAGE,
+  PERMISSION_ERROR_MESSAGE,
+  getInventoryAuthError,
+} from './inventory-query-auth';
 
 export type {
   CreateMaterialRequest,
@@ -25,9 +30,6 @@ export type {
   RecordConsumptionRequest,
   InventoryQuery,
 };
-
-const AUTH_ERROR_MESSAGE = 'Authentication required';
-const PERMISSION_ERROR_MESSAGE = 'Insufficient permissions for inventory access';
 
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -70,11 +72,7 @@ export function useInventory(query?: InventoryQuery) {
     [normalizedQuery],
   );
 
-  const authError = !sessionToken
-    ? AUTH_ERROR_MESSAGE
-    : !hasInventoryAccess
-      ? PERMISSION_ERROR_MESSAGE
-      : null;
+  const authError = getInventoryAuthError(sessionToken, hasInventoryAccess);
 
   const dashboardQuery = useQuery({
     queryKey: inventoryKeys.dashboard(),
