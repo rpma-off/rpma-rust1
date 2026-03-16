@@ -26,6 +26,12 @@ export function useInterventionReport({ interventionId }: UseInterventionReportO
     queryKey: reportKeys.byIntervention(interventionId ?? ''),
     queryFn: () => reportsIpc.getByIntervention(interventionId!),
     enabled: !!interventionId,
+    retry: (failureCount, error) => {
+      const msg = (error as Error)?.message ?? '';
+      if (msg.includes('invalid args') || msg.includes('missing required key')) return false;
+      return failureCount < 2;
+    },
+    retryDelay: 0,
     select: (data) => data ?? null,
     staleTime: 5 * 60 * 1000,
   });

@@ -27,6 +27,14 @@ export function useInterventionReportPreview(
   const query = useQuery({
     queryKey: reportKeys.preview(interventionId ?? ''),
     enabled: !!interventionId && !!token,
+    retry: (failureCount, error) => {
+      const msg = (error as Error)?.message ?? '';
+      // Tauri arg validation errors are not transient — never retry
+      if (msg.includes('invalid args') || msg.includes('missing required key')) return false;
+      // Default to 2 retries for other errors in production
+      return failureCount < 2;
+    },
+    retryDelay: 0,
     queryFn: async () => {
       const [intervention, progressResult, report] = await Promise.all([
         interventionsIpc.get(interventionId!),
