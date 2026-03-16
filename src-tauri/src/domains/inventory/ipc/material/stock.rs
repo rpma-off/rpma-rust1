@@ -95,7 +95,7 @@ pub async fn material_record_consumption(
         ..request
     };
 
-    match service.record_consumption(adjusted_request) {
+    match service.record_consumption(adjusted_request, &ctx.auth.role) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
             Ok(ApiResponse::success(consumption).with_correlation_id(Some(ctx.correlation_id.clone())))

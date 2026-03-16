@@ -95,7 +95,7 @@ pub async fn update_session_timeout(
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
 
     let message = security_service(&state)
-        .update_timeout(timeout_minutes)
+        .update_timeout(timeout_minutes, &ctx)
         .await?;
 
     Ok(ApiResponse::success(message).with_correlation_id(Some(ctx.correlation_id)))

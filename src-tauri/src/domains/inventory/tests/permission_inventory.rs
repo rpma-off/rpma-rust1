@@ -21,7 +21,7 @@ async fn update_stock_with_nonexistent_material_returns_error() {
         quantity_change: 5.0,
         reason: "test".to_string(),
         recorded_by: Some("test_user".to_string()),
-    });
+    }, &UserRole::Admin);
 
     assert!(result.is_err());
 }

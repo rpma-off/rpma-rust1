@@ -13,6 +13,7 @@
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::infrastructure::quote_validation;
+use crate::shared::contracts::auth::UserRole;
 use chrono::Utc;
 use std::sync::Arc;
 use tracing::{info, warn};
@@ -39,6 +40,27 @@ impl QuoteService {
     // Helpers
     // ------------------------------------------------------------------
 
+    /// Enforce quote-level RBAC.
+    ///
+    /// | Operation          | Viewer | Technician | Supervisor | Admin |
+    /// |--------------------|--------|------------|------------|-------|
+    /// | create / update    |   ❌   |    ❌      |    ✅      |  ✅   |
+    /// | delete             |   ❌   |    ❌      |    ❌      |  ✅   |
+    pub(super) fn check_quote_permission(role: &UserRole, operation: &str) -> Result<(), String> {
+        let allowed = match operation {
+            "create" | "update" | "duplicate" => {
+                matches!(role, UserRole::Admin | UserRole::Supervisor)
+            }
+            "delete" => matches!(role, UserRole::Admin),
+            _ => false,
+        };
+        if !allowed {
+            Err(format!("Insufficient permissions to {} quotes", operation))
+        } else {
+            Ok(())
+        }
+    }
+
     /// Fetch a quote by ID with consistent error handling.
     ///
     /// Centralises the `find_by_id + map_err + ok_or_else` boilerplate that
@@ -59,7 +81,8 @@ impl QuoteService {
     // ------------------------------------------------------------------
 
     /// Create a new quote.
-    pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str) -> Result<Quote, String> {
+    pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "create")?;
         req.validate()?;
 
         let now = Utc::now().timestamp_millis();
@@ -158,7 +181,8 @@ impl QuoteService {
     }
 
     /// Update a quote (Draft only).
-    pub fn update_quote(&self, id: &str, req: UpdateQuoteRequest) -> Result<Quote, String> {
+    pub fn update_quote(&self, id: &str, req: UpdateQuoteRequest, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
@@ -180,7 +204,8 @@ impl QuoteService {
     }
 
     /// Soft-delete a quote (Draft only).
-    pub fn delete_quote(&self, id: &str) -> Result<bool, String> {
+    pub fn delete_quote(&self, id: &str, role: &UserRole) -> Result<bool, String> {
+        Self::check_quote_permission(role, "delete")?;
         let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
@@ -191,7 +216,8 @@ impl QuoteService {
     }
 
     /// Duplicate a quote: create a new Draft with copies of all items.
-    pub fn duplicate_quote(&self, id: &str, user_id: &str) -> Result<Quote, String> {
+    pub fn duplicate_quote(&self, id: &str, user_id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "duplicate")?;
         let source = self.fetch_quote(id)?;
 
         let now = Utc::now().timestamp_millis();
@@ -269,7 +295,8 @@ impl QuoteService {
     // ------------------------------------------------------------------
 
     /// Add an item to a quote (Draft only).
-    pub fn add_item(&self, quote_id: &str, req: CreateQuoteItemRequest) -> Result<Quote, String> {
+    pub fn add_item(&self, quote_id: &str, req: CreateQuoteItemRequest, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         req.validate()?;
 
         let quote = self.fetch_quote(quote_id)?;
@@ -308,7 +335,9 @@ impl QuoteService {
         quote_id: &str,
         item_id: &str,
         req: UpdateQuoteItemRequest,
+        role: &UserRole,
     ) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Draft {
@@ -325,7 +354,8 @@ impl QuoteService {
     }
 
     /// Delete a quote item (Draft only).
-    pub fn delete_item(&self, quote_id: &str, item_id: &str) -> Result<Quote, String> {
+    pub fn delete_item(&self, quote_id: &str, item_id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Draft {

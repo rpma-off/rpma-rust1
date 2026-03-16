@@ -11,6 +11,7 @@
 use tracing::{info, warn};
 
 use crate::domains::quotes::domain::models::quote::*;
+use crate::shared::contracts::auth::UserRole;
 
 use super::quote_service::QuoteService;
 
@@ -21,7 +22,8 @@ impl QuoteService {
 
     /// Mark a quote as sent (Draft → Sent).
     /// Requires at least one item and a non-zero total.
-    pub fn mark_sent(&self, id: &str) -> Result<Quote, String> {
+    pub fn mark_sent(&self, id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Draft {
@@ -58,7 +60,9 @@ impl QuoteService {
         &self,
         id: &str,
         accepted_by: &str,
+        role: &UserRole,
     ) -> Result<QuoteAcceptResponse, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Sent {
@@ -91,7 +95,8 @@ impl QuoteService {
     ///
     /// Rejection is only allowed from `Sent` status (once the quote has been
     /// presented to the customer).  Draft quotes can simply be deleted.
-    pub fn mark_rejected(&self, id: &str, rejected_by: &str) -> Result<Quote, String> {
+    pub fn mark_rejected(&self, id: &str, rejected_by: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         // Only allow rejection from Sent status
@@ -122,7 +127,8 @@ impl QuoteService {
     ///
     /// Can be triggered manually (Admin) or automatically when `valid_until`
     /// is in the past.
-    pub fn mark_expired(&self, id: &str) -> Result<Quote, String> {
+    pub fn mark_expired(&self, id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "delete")?;
         let quote = self.fetch_quote(id)?;
 
         if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
@@ -144,7 +150,8 @@ impl QuoteService {
     /// Mark a quote as changes_requested (Sent → ChangesRequested).
     ///
     /// Signals that the customer has reviewed the quote and requested changes.
-    pub fn mark_changes_requested(&self, id: &str) -> Result<Quote, String> {
+    pub fn mark_changes_requested(&self, id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         if quote.status != QuoteStatus::Sent {
@@ -166,7 +173,8 @@ impl QuoteService {
     /// Reopen a quote (ChangesRequested | Rejected → Draft).
     ///
     /// Allows revising a quote that was rejected or needs changes.
-    pub fn reopen(&self, id: &str) -> Result<Quote, String> {
+    pub fn reopen(&self, id: &str, role: &UserRole) -> Result<Quote, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
         if !matches!(
@@ -205,7 +213,9 @@ impl QuoteService {
         quote_id: &str,
         task_id: &str,
         task_number: &str,
+        role: &UserRole,
     ) -> Result<ConvertQuoteToTaskResponse, String> {
+        Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
         if quote.status != QuoteStatus::Accepted {

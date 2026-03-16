@@ -73,7 +73,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "create")?;
         self.quote_service
-            .create_quote(data, user_id)
+            .create_quote(data, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -102,7 +102,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .update_quote(id, data)
+            .update_quote(id, data, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -110,7 +110,7 @@ impl QuotesFacade {
     pub fn delete(&self, role: &UserRole, id: &str) -> Result<bool, AppError> {
         self.check_permission(role, "delete")?;
         self.quote_service
-            .delete_quote(id)
+            .delete_quote(id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -118,7 +118,7 @@ impl QuotesFacade {
     pub fn duplicate(&self, role: &UserRole, id: &str, user_id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "duplicate")?;
         self.quote_service
-            .duplicate_quote(id, user_id)
+            .duplicate_quote(id, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -131,7 +131,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .add_item(quote_id, item)
+            .add_item(quote_id, item, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -145,7 +145,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .update_item(quote_id, item_id, data)
+            .update_item(quote_id, item_id, data, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -158,7 +158,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .delete_item(quote_id, item_id)
+            .delete_item(quote_id, item_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -166,7 +166,7 @@ impl QuotesFacade {
     pub fn mark_sent(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_sent(id)
+            .mark_sent(id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -179,7 +179,7 @@ impl QuotesFacade {
     ) -> Result<QuoteAcceptResponse, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_accepted(id, user_id)
+            .mark_accepted(id, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -192,7 +192,7 @@ impl QuotesFacade {
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_rejected(id, user_id)
+            .mark_rejected(id, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -200,7 +200,7 @@ impl QuotesFacade {
     pub fn mark_expired(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "expire")?;
         self.quote_service
-            .mark_expired(id)
+            .mark_expired(id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -208,7 +208,7 @@ impl QuotesFacade {
     pub fn mark_changes_requested(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .mark_changes_requested(id)
+            .mark_changes_requested(id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -216,7 +216,7 @@ impl QuotesFacade {
     pub fn reopen(&self, role: &UserRole, id: &str) -> Result<Quote, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .reopen(id)
+            .reopen(id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -230,7 +230,7 @@ impl QuotesFacade {
     ) -> Result<ConvertQuoteToTaskResponse, AppError> {
         self.check_permission(role, "status")?;
         self.quote_service
-            .convert_to_task(quote_id, task_id, task_number)
+            .convert_to_task(quote_id, task_id, task_number, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -256,7 +256,7 @@ impl QuotesFacade {
     ) -> Result<QuoteAttachment, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .create_attachment(quote_id, data, user_id)
+            .create_attachment(quote_id, data, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -270,7 +270,7 @@ impl QuotesFacade {
     ) -> Result<QuoteAttachment, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .update_attachment(quote_id, attachment_id, data)
+            .update_attachment(quote_id, attachment_id, data, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
@@ -283,7 +283,7 @@ impl QuotesFacade {
     ) -> Result<bool, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .delete_attachment(quote_id, attachment_id)
+            .delete_attachment(quote_id, attachment_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 

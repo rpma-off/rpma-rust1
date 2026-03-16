@@ -1,6 +1,7 @@
 use crate::domains::inventory::domain::models::material::{
     InventoryStats, Material, MaterialConsumption, MaterialStats,
 };
+use crate::shared::contracts::auth::UserRole;
 use crate::shared::error::AppError;
 
 use crate::domains::inventory::application::{RecordConsumptionRequest, UpdateStockRequest};
@@ -22,16 +23,18 @@ pub fn list_materials(
 pub fn update_stock(
     service: &InventoryFacade,
     request: UpdateStockRequest,
+    role: &UserRole,
 ) -> Result<Material, AppError> {
-    service.update_stock(request)
+    service.update_stock(request, role)
 }
 
 /// TODO: document
 pub fn record_consumption(
     service: &InventoryFacade,
     request: RecordConsumptionRequest,
+    role: &UserRole,
 ) -> Result<MaterialConsumption, AppError> {
-    service.record_consumption(request)
+    service.record_consumption(request, role)
 }
 
 /// TODO: document

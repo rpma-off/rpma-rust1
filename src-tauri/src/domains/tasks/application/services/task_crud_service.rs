@@ -8,6 +8,7 @@ use tracing::{error, info, instrument, warn};
 
 use crate::commands::{AppError, TaskAction};
 use crate::domains::tasks::domain::models::task::{CreateTaskRequest, Task, UpdateTaskRequest};
+use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::context::RequestContext;
 use crate::shared::services::event_bus::{event_factory, EventPublisher};
 use crate::shared::services::validation::ValidationService;
@@ -22,6 +23,12 @@ impl TaskCommandService {
         ctx: &RequestContext,
         data: CreateTaskRequest,
     ) -> Result<Task, AppError> {
+        if !AuthMiddleware::can_perform_task_operation(&ctx.auth.role, "create") {
+            return Err(AppError::Authorization(
+                "Insufficient permissions to create tasks".to_string(),
+            ));
+        }
+
         let validator = ValidationService::new();
         let validated_action = validator
             .validate_task_action(TaskAction::Create { data })
@@ -87,6 +94,12 @@ impl TaskCommandService {
         id: String,
         data: UpdateTaskRequest,
     ) -> Result<Task, AppError> {
+        if !AuthMiddleware::can_perform_task_operation(&ctx.auth.role, "update") {
+            return Err(AppError::Authorization(
+                "Insufficient permissions to update tasks".to_string(),
+            ));
+        }
+
         let existing_task = self.fetch_task(&id).await?;
         let status_updated = data.status.is_some();
 
@@ -178,6 +191,12 @@ impl TaskCommandService {
     /// Delete a task by ID.
     #[instrument(skip(self, ctx), fields(user_id = %ctx.auth.user_id, correlation_id = %ctx.correlation_id))]
     pub async fn delete_task(&self, ctx: &RequestContext, task_id: &str) -> Result<(), AppError> {
+        if !AuthMiddleware::can_perform_task_operation(&ctx.auth.role, "delete") {
+            return Err(AppError::Authorization(
+                "Insufficient permissions to delete tasks".to_string(),
+            ));
+        }
+
         let existing_task = self.fetch_task(task_id).await?;
         self.task_service
             .delete_task_async(task_id, &ctx.auth.user_id)

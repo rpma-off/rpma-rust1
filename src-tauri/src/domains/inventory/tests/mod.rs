@@ -83,7 +83,7 @@ fn update_stock_validates_invariants() {
         quantity_change: -10.0,
         reason: "Overdraw".to_string(),
         recorded_by: Some("test_user".to_string()),
-    });
+    }, &crate::shared::contracts::auth::UserRole::Admin);
 
     assert!(result.is_err());
 }

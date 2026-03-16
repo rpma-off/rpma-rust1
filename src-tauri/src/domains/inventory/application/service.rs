@@ -15,6 +15,8 @@ use crate::domains::inventory::domain::material::{
 use super::errors::{InventoryError, InventoryResult};
 use super::input::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
+use crate::shared::auth_middleware::AuthMiddleware;
+use crate::shared::contracts::auth::UserRole;
 
 /// TODO: document
 #[derive(Debug)]
@@ -93,7 +95,13 @@ impl InventoryService {
 
     /// TODO: document
     #[instrument(skip(self))]
-    pub fn update_stock(&self, request: UpdateStockRequest) -> InventoryResult<Material> {
+    pub fn update_stock(&self, request: UpdateStockRequest, role: &UserRole) -> InventoryResult<Material> {
+        if !AuthMiddleware::can_perform_task_operation(role, "update") {
+            return Err(InventoryError::Authorization(
+                "Insufficient permissions to update stock".to_string(),
+            ));
+        }
+
         let material = self
             .gateway
             .get_material(&request.material_id)
@@ -115,7 +123,14 @@ impl InventoryService {
     pub fn record_consumption(
         &self,
         request: RecordConsumptionRequest,
+        role: &UserRole,
     ) -> InventoryResult<MaterialConsumption> {
+        if !AuthMiddleware::can_perform_task_operation(role, "update") {
+            return Err(InventoryError::Authorization(
+                "Insufficient permissions to record consumption".to_string(),
+            ));
+        }
+
         let material = self
             .gateway
             .get_material(&request.material_id)

@@ -61,7 +61,14 @@ impl AuthSecurityService {
     pub async fn update_timeout(
         &self,
         timeout_minutes: u32,
+        ctx: &RequestContext,
     ) -> Result<String, AppError> {
+        if ctx.auth.role != UserRole::Admin {
+            return Err(AppError::Authorization(
+                "Insufficient permissions to update session timeout".to_string(),
+            ));
+        }
+
         if timeout_minutes == 0 {
             return Err(AppError::Validation(
                 "Timeout must be greater than 0 minutes".to_string(),

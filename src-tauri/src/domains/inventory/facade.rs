@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::domains::inventory::domain::models::material::{
     InventoryDashboardData, InventoryStats, Material, MaterialConsumption, MaterialStats,
 };
+use crate::shared::contracts::auth::UserRole;
 use crate::shared::db::Database;
 use crate::shared::error::AppError;
 use crate::shared::event_bus::DomainEventHandler;
@@ -47,9 +48,9 @@ impl InventoryFacade {
     }
 
     /// TODO: document
-    pub fn update_stock(&self, request: UpdateStockRequest) -> Result<Material, AppError> {
+    pub fn update_stock(&self, request: UpdateStockRequest, role: &UserRole) -> Result<Material, AppError> {
         self.service
-            .update_stock(request)
+            .update_stock(request, role)
             .map_err(|err| map_inventory_error("update_stock", err))
     }
 
@@ -57,9 +58,10 @@ impl InventoryFacade {
     pub fn record_consumption(
         &self,
         request: RecordConsumptionRequest,
+        role: &UserRole,
     ) -> Result<MaterialConsumption, AppError> {
         self.service
-            .record_consumption(request)
+            .record_consumption(request, role)
             .map_err(|err| map_inventory_error("record_consumption", err))
     }
 

@@ -12,6 +12,7 @@ use crate::domains::quotes::domain::models::quote::{
     CreateQuoteAttachmentRequest, QuoteAttachment, UpdateQuoteAttachmentRequest,
 };
 use crate::domains::quotes::infrastructure::quote_validation;
+use crate::shared::contracts::auth::UserRole;
 
 use super::quote_service::QuoteService;
 
@@ -36,7 +37,9 @@ impl QuoteService {
         quote_id: &str,
         req: CreateQuoteAttachmentRequest,
         user_id: &str,
+        role: &UserRole,
     ) -> Result<QuoteAttachment, String> {
+        Self::check_quote_permission(role, "update")?;
         req.validate()?;
 
         let _quote = self
@@ -74,7 +77,9 @@ impl QuoteService {
         quote_id: &str,
         attachment_id: &str,
         req: UpdateQuoteAttachmentRequest,
+        role: &UserRole,
     ) -> Result<QuoteAttachment, String> {
+        Self::check_quote_permission(role, "update")?;
         let _quote = self
             .repo
             .find_by_id(quote_id)
@@ -101,7 +106,8 @@ impl QuoteService {
     }
 
     /// Delete an attachment.
-    pub fn delete_attachment(&self, quote_id: &str, attachment_id: &str) -> Result<bool, String> {
+    pub fn delete_attachment(&self, quote_id: &str, attachment_id: &str, role: &UserRole) -> Result<bool, String> {
+        Self::check_quote_permission(role, "update")?;
         let _quote = self
             .repo
             .find_by_id(quote_id)
