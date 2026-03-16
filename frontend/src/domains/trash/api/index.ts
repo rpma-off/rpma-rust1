@@ -17,6 +17,7 @@ const affectedDomainSignals: Partial<Record<EntityType, string[]>> = {
   Photo: ['interventions'],
   Rapport: ['reports'],
 };
+const allAffectedDomains = [...new Set(Object.values(affectedDomainSignals).flat())];
 
 function signalAffectedDomains(entityType?: EntityType) {
   if (entityType) {
@@ -24,7 +25,7 @@ function signalAffectedDomains(entityType?: EntityType) {
     return;
   }
 
-  new Set(Object.values(affectedDomainSignals).flat()).forEach(signalMutation);
+  allAffectedDomains.forEach(signalMutation);
 }
 
 export function useTrashList(entityType: EntityType, limit: number = 100, offset: number = 0) {

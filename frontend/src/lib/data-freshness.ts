@@ -22,6 +22,17 @@ const counters: Record<string, number> = {};
 const listeners = new Set<() => void>();
 const DOMAIN_MUTATION_EVENT = 'domain-mutation';
 
+function getMutationDomain(event: Event): string | null {
+  if (!(event instanceof CustomEvent)) {
+    return null;
+  }
+
+  const detail = event.detail as { domain?: unknown } | null;
+  return typeof detail?.domain === 'string' && detail.domain.length > 0
+    ? detail.domain
+    : null;
+}
+
 function subscribe(callback: () => void): () => void {
   listeners.add(callback);
   return () => {
@@ -73,9 +84,9 @@ export function useMutationSignal(): void {
     }
 
     const handleMutation = (event: Event) => {
-      const domain = (event as CustomEvent<{ domain?: string }>).detail?.domain;
+      const domain = getMutationDomain(event);
 
-      if (typeof domain === 'string' && domain.length > 0) {
+      if (domain) {
         void queryClient.invalidateQueries({ queryKey: [domain] });
       }
     };
