@@ -2,7 +2,7 @@
 
 use crate::db::Database;
 use crate::domains::trash::domain::models::trash::{DeletedItem, EntityType};
-use crate::shared::ipc::AppError;
+use crate::shared::error::AppError;
 use rusqlite::params;
 use std::sync::Arc;
 

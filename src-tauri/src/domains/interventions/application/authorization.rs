@@ -5,7 +5,7 @@
 
 use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::{UserRole, UserSession};
-use crate::shared::ipc::AppError;
+use crate::shared::error::AppError;
 
 /// Ensure the session has at least Technician permissions for intervention workflows.
 ///

@@ -1,6 +1,6 @@
 use crate::domains::users::application::UserAction;
 use crate::shared::contracts::auth::{UserRole, UserSession};
-use crate::shared::ipc::errors::AppError;
+use crate::shared::error::AppError;
 
 /// TODO: document
 #[derive(Debug, Clone, Copy, Default)]

@@ -2,7 +2,7 @@ use crate::db::Database;
 use crate::domains::trash::domain::models::trash::{DeletedItem, EntityType};
 use crate::domains::trash::infrastructure::trash_repository::TrashRepository;
 use crate::shared::context::RequestContext;
-use crate::shared::ipc::AppError;
+use crate::shared::error::AppError;
 use crate::shared::services::domain_event::DomainEvent;
 use crate::shared::event_bus::publish_event;
 use chrono::Utc;

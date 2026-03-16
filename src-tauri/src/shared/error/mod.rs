@@ -1,7 +1,9 @@
-//! Shared error mapping helpers for bounded contexts.
+//! Shared error types and mapping helpers for bounded contexts.
 #![allow(dead_code)]
 
-pub use crate::shared::ipc::errors::{AppError, AppResult};
+mod app_error;
+
+pub use app_error::{AppError, AppResult};
 
 pub(crate) fn map_validation(message: impl Into<String>) -> AppError {
     AppError::Validation(message.into())

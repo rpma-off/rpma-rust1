@@ -1,4 +1,4 @@
-use crate::shared::ipc::errors::AppError;
+use crate::shared::error::AppError;
 
 /// TODO: document
 #[derive(Debug, Clone, Copy, Default)]
