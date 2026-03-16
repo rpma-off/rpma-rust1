@@ -468,6 +468,101 @@ pub mod event_factory {
             metadata: None,
         }
     }
+
+    /// Create a QuoteAccepted event.
+    pub fn quote_accepted(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        accepted_by: String,
+        task_id: Option<String>,
+        metadata: Option<serde_json::Value>,
+    ) -> DomainEvent {
+        DomainEvent::QuoteAccepted {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            accepted_by,
+            task_id,
+            timestamp: Utc::now(),
+            metadata,
+        }
+    }
+
+    /// Create a QuoteRejected event.
+    pub fn quote_rejected(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        rejected_by: String,
+        reason: Option<String>,
+    ) -> DomainEvent {
+        DomainEvent::QuoteRejected {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            rejected_by,
+            reason,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a QuoteConverted event.
+    pub fn quote_converted(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        task_id: String,
+        task_number: String,
+        converted_by: String,
+    ) -> DomainEvent {
+        DomainEvent::QuoteConverted {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            task_id,
+            task_number,
+            converted_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create an EntityRestored event.
+    pub fn entity_restored(
+        entity_id: String,
+        entity_type: String,
+        restored_by: String,
+    ) -> DomainEvent {
+        DomainEvent::EntityRestored {
+            id: Uuid::new_v4().to_string(),
+            entity_id,
+            entity_type,
+            restored_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create an EntityHardDeleted event.
+    pub fn entity_hard_deleted(
+        entity_id: String,
+        entity_type: String,
+        deleted_by: String,
+    ) -> DomainEvent {
+        DomainEvent::EntityHardDeleted {
+            id: Uuid::new_v4().to_string(),
+            entity_id,
+            entity_type,
+            deleted_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -613,6 +708,77 @@ mod tests {
             "m²".to_string(),
         );
         assert_eq!(material_consumed.event_type(), "MaterialConsumed");
+
+        let quote_accepted = event_factory::quote_accepted(
+            "quote-1".to_string(),
+            "Q-001".to_string(),
+            "client-1".to_string(),
+            "user-1".to_string(),
+            Some("task-1".to_string()),
+            Some(serde_json::json!({ "error": "none" })),
+        );
+        assert_eq!(quote_accepted.event_type(), "QuoteAccepted");
+
+        let quote_rejected = event_factory::quote_rejected(
+            "quote-2".to_string(),
+            "Q-002".to_string(),
+            "client-2".to_string(),
+            "user-2".to_string(),
+            Some("too expensive".to_string()),
+        );
+        assert_eq!(quote_rejected.event_type(), "QuoteRejected");
+
+        let quote_converted = event_factory::quote_converted(
+            "quote-3".to_string(),
+            "Q-003".to_string(),
+            "client-3".to_string(),
+            "task-3".to_string(),
+            "T-003".to_string(),
+            "user-3".to_string(),
+        );
+        assert_eq!(quote_converted.event_type(), "QuoteConverted");
+
+        let entity_restored = event_factory::entity_restored(
+            "entity-1".to_string(),
+            "Task".to_string(),
+            "user-4".to_string(),
+        );
+        assert_eq!(entity_restored.event_type(), "EntityRestored");
+
+        let entity_hard_deleted = event_factory::entity_hard_deleted(
+            "entity-2".to_string(),
+            "Quote".to_string(),
+            "user-5".to_string(),
+        );
+        assert_eq!(entity_hard_deleted.event_type(), "EntityHardDeleted");
+    }
+
+    #[test]
+    fn test_quote_accepted_factory_preserves_optional_task_id_and_metadata() {
+        let event = event_factory::quote_accepted(
+            "quote-1".to_string(),
+            "Q-001".to_string(),
+            "client-1".to_string(),
+            "user-1".to_string(),
+            Some("task-1".to_string()),
+            Some(serde_json::json!({ "error": "validation" })),
+        );
+
+        match event {
+            DomainEvent::QuoteAccepted {
+                task_id, metadata, ..
+            } => {
+                assert_eq!(task_id.as_deref(), Some("task-1"));
+                assert_eq!(
+                    metadata
+                        .as_ref()
+                        .and_then(|value| value.get("error"))
+                        .and_then(|value| value.as_str()),
+                    Some("validation")
+                );
+            }
+            other => panic!("expected QuoteAccepted event, got {}", other.event_type()),
+        }
     }
 
     #[test]

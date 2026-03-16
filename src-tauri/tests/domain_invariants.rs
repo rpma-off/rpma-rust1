@@ -411,7 +411,7 @@ mod task_invariants {
 mod quote_invariants {
     use rpma_ppf_intervention::shared::services::cross_domain::{
         CreateClientRequest, CreateQuoteItemRequest, CreateQuoteRequest, CustomerType,
-        QuoteItemKind, QuoteStatus, UpdateQuoteRequest,
+        QuoteItemKind, QuoteStatus, UpdateQuoteRequest, UserRole,
     };
 
     use crate::harness::app::TestApp;
@@ -480,10 +480,11 @@ mod quote_invariants {
         let app = TestApp::new().await;
         let client_id = create_client(&app).await;
 
-        let result = app
-            .state
-            .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user");
+        let result = app.state.quote_service.create_quote(
+            valid_quote_req(&client_id),
+            "test-user",
+            &UserRole::Admin,
+        );
 
         assert!(result.is_ok(), "expected Ok, got: {:?}", result);
         assert_eq!(result.unwrap().status, QuoteStatus::Draft);
@@ -497,7 +498,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(""), "test-user")
+            .create_quote(valid_quote_req(""), "test-user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -515,7 +516,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .create_quote(valid_quote_req("   "), "test-user")
+            .create_quote(valid_quote_req("   "), "test-user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -535,7 +536,7 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation must succeed");
 
         let mut bad_item = labour_item();
@@ -544,7 +545,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .add_item(&quote.id, bad_item)
+            .add_item(&quote.id, bad_item, &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -562,7 +563,7 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation must succeed");
 
         let mut bad_item = labour_item();
@@ -571,7 +572,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .add_item(&quote.id, bad_item)
+            .add_item(&quote.id, bad_item, &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -589,7 +590,7 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation must succeed");
 
         let mut bad_item = labour_item();
@@ -598,7 +599,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .add_item(&quote.id, bad_item)
+            .add_item(&quote.id, bad_item, &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -618,14 +619,17 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
 
-        let result = app.state.quote_service.mark_sent(&quote.id);
+        let result = app
+            .state
+            .quote_service
+            .mark_sent(&quote.id, &UserRole::Admin);
 
         assert!(result.is_ok(), "expected Ok, got: {:?}", result);
         assert_eq!(result.unwrap().status, QuoteStatus::Sent);
@@ -639,10 +643,14 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
-        let err = app.state.quote_service.mark_sent(&quote.id).unwrap_err();
+        let err = app
+            .state
+            .quote_service
+            .mark_sent(&quote.id, &UserRole::Admin)
+            .unwrap_err();
 
         // Must complain about missing items or zero total
         assert!(
@@ -662,18 +670,22 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("first mark_sent");
 
-        let err = app.state.quote_service.mark_sent(&quote.id).unwrap_err();
+        let err = app
+            .state
+            .quote_service
+            .mark_sent(&quote.id, &UserRole::Admin)
+            .unwrap_err();
 
         assert!(
             err.to_lowercase().contains("sent") || err.to_lowercase().contains("draft"),
@@ -692,21 +704,21 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
 
-        let result = app
-            .state
-            .quote_service
-            .mark_accepted(&quote.id, "test-user");
+        let result =
+            app.state
+                .quote_service
+                .mark_accepted(&quote.id, "test-user", &UserRole::Admin);
 
         assert!(result.is_ok(), "expected Ok, got: {:?}", result);
         assert_eq!(result.unwrap().quote.status, QuoteStatus::Accepted);
@@ -720,13 +732,13 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
         let err = app
             .state
             .quote_service
-            .mark_accepted(&quote.id, "test-user")
+            .mark_accepted(&quote.id, "test-user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -744,21 +756,21 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
 
-        let result = app
-            .state
-            .quote_service
-            .mark_rejected(&quote.id, "test-user");
+        let result =
+            app.state
+                .quote_service
+                .mark_rejected(&quote.id, "test-user", &UserRole::Admin);
 
         assert!(result.is_ok(), "expected Ok, got: {:?}", result);
         assert_eq!(result.unwrap().status, QuoteStatus::Rejected);
@@ -772,13 +784,13 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
         let err = app
             .state
             .quote_service
-            .mark_rejected(&quote.id, "test-user")
+            .mark_rejected(&quote.id, "test-user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -798,7 +810,7 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
         let update = UpdateQuoteRequest {
@@ -815,7 +827,10 @@ mod quote_invariants {
             vehicle_vin: None,
         };
 
-        let result = app.state.quote_service.update_quote(&quote.id, update);
+        let result = app
+            .state
+            .quote_service
+            .update_quote(&quote.id, update, &UserRole::Admin);
         assert!(result.is_ok(), "Draft update must succeed: {:?}", result);
     }
 
@@ -827,15 +842,15 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
 
         let update = UpdateQuoteRequest {
@@ -855,7 +870,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .update_quote(&quote.id, update)
+            .update_quote(&quote.id, update, &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -873,10 +888,13 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
-        let result = app.state.quote_service.delete_quote(&quote.id);
+        let result = app
+            .state
+            .quote_service
+            .delete_quote(&quote.id, &UserRole::Admin);
         assert!(result.is_ok(), "Draft delete must succeed: {:?}", result);
     }
 
@@ -888,18 +906,22 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
 
-        let err = app.state.quote_service.delete_quote(&quote.id).unwrap_err();
+        let err = app
+            .state
+            .quote_service
+            .delete_quote(&quote.id, &UserRole::Admin)
+            .unwrap_err();
 
         assert!(
             err.to_lowercase().contains("draft"),
@@ -918,13 +940,13 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
 
         let err = app
             .state
             .quote_service
-            .convert_to_task(&quote.id, "fake-task-id", "TSK-999")
+            .convert_to_task(&quote.id, "fake-task-id", "TSK-999", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -954,25 +976,27 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
         app.state
             .quote_service
-            .mark_accepted(&quote.id, "test-user")
+            .mark_accepted(&quote.id, "test-user", &UserRole::Admin)
             .expect("mark_accepted");
 
-        let result =
-            app.state
-                .quote_service
-                .convert_to_task(&quote.id, &task.id, &task.task_number);
+        let result = app.state.quote_service.convert_to_task(
+            &quote.id,
+            &task.id,
+            &task.task_number,
+            &UserRole::Admin,
+        );
 
         assert!(
             result.is_ok(),
@@ -990,15 +1014,15 @@ mod quote_invariants {
         let quote = app
             .state
             .quote_service
-            .create_quote(valid_quote_req(&client_id), "test-user")
+            .create_quote(valid_quote_req(&client_id), "test-user", &UserRole::Admin)
             .expect("quote creation");
         app.state
             .quote_service
-            .add_item(&quote.id, labour_item())
+            .add_item(&quote.id, labour_item(), &UserRole::Admin)
             .expect("add item");
         app.state
             .quote_service
-            .mark_sent(&quote.id)
+            .mark_sent(&quote.id, &UserRole::Admin)
             .expect("mark_sent");
 
         let count_before: i64 = app
@@ -1006,7 +1030,10 @@ mod quote_invariants {
             .query_single_value("SELECT COUNT(*) FROM quotes WHERE deleted_at IS NULL", [])
             .expect("count quotes");
 
-        let _ = app.state.quote_service.delete_quote(&quote.id);
+        let _ = app
+            .state
+            .quote_service
+            .delete_quote(&quote.id, &UserRole::Admin);
 
         let count_after: i64 = app
             .db
@@ -1024,7 +1051,7 @@ mod quote_invariants {
 
 mod inventory_invariants {
     use rpma_ppf_intervention::shared::services::cross_domain::{
-        CreateMaterialRequest, MaterialType, UnitOfMeasure, UpdateStockRequest,
+        CreateMaterialRequest, MaterialType, UnitOfMeasure, UpdateStockRequest, UserRole,
     };
 
     use crate::harness::app::TestApp;
@@ -1105,7 +1132,10 @@ mod inventory_invariants {
             recorded_by: Some(uid.clone()),
         };
 
-        let result = app.state.inventory_service.update_stock(req);
+        let result = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
         assert!(result.is_ok(), "positive delta must succeed: {:?}", result);
 
         let updated = result.unwrap();
@@ -1126,7 +1156,10 @@ mod inventory_invariants {
             recorded_by: Some(uid.clone()),
         };
 
-        let result = app.state.inventory_service.update_stock(req);
+        let result = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
         assert!(
             result.is_ok(),
             "reduction to zero must be allowed: {:?}",
@@ -1149,7 +1182,10 @@ mod inventory_invariants {
             recorded_by: None,
         };
 
-        let result = app.state.inventory_service.update_stock(req);
+        let result = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
         assert!(result.is_err(), "negative-stock delta must be rejected");
 
         let err_msg = format!("{:?}", result.unwrap_err());
@@ -1176,7 +1212,10 @@ mod inventory_invariants {
             recorded_by: None,
         };
 
-        let result = app.state.inventory_service.update_stock(req);
+        let result = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
         assert!(
             result.is_err(),
             "negative delta on zero stock must be rejected"
@@ -1204,7 +1243,10 @@ mod inventory_invariants {
             reason: "test".to_string(),
             recorded_by: None,
         };
-        let _ = app.state.inventory_service.update_stock(req);
+        let _ = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
 
         let stock_after: f64 = app
             .db
@@ -1232,7 +1274,10 @@ mod inventory_invariants {
             recorded_by: None,
         };
 
-        let result = app.state.inventory_service.update_stock(req);
+        let result = app
+            .state
+            .inventory_service
+            .update_stock(req, &UserRole::Admin);
         assert!(result.is_err(), "unknown material must return an error");
 
         let err_msg = format!("{:?}", result.unwrap_err());

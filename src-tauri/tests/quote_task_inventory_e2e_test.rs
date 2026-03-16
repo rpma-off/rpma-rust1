@@ -22,10 +22,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     let db = setup_db().await;
     let repos = Repositories::new(db.clone(), 64).await;
 
-    let quote_service = QuoteService::new(
-        repos.quote.clone(),
-        Arc::new(InMemoryEventBus::new()),
-    );
+    let quote_service = QuoteService::new(repos.quote.clone(), Arc::new(InMemoryEventBus::new()));
     let task_service = TaskService::new(db.clone());
     let intervention_service = InterventionService::new(db.clone());
     let material_service = MaterialService::new(db.as_ref().clone());
@@ -46,6 +43,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
         )
         .expect("create tester user");
     let tester_id = tester.id.clone();
+    let admin_role = UserRole::Admin;
 
     let client_service = ClientService::new(repos.client.clone());
     let client = client_service
@@ -100,8 +98,8 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 batch_number: None,
                 storage_location: Some("A1".to_string()),
                 warehouse_id: None,
-            is_active: None,
-            is_discontinued: None,
+                is_active: None,
+                is_discontinued: None,
             },
             Some(tester_id.clone()),
         )
@@ -141,6 +139,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
                 }],
             },
             tester_id.as_str(),
+            &admin_role,
         )
         .expect("create quote");
 
@@ -188,13 +187,13 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
         .expect("create task");
 
     quote_service
-        .mark_sent(&quote.id)
+        .mark_sent(&quote.id, &admin_role)
         .expect("mark quote sent");
     quote_service
-        .mark_accepted(&quote.id, tester_id.as_str())
+        .mark_accepted(&quote.id, tester_id.as_str(), &admin_role)
         .expect("mark quote accepted");
     let conversion = quote_service
-        .convert_to_task(&quote.id, &task.id, "TSK-Q2T-001")
+        .convert_to_task(&quote.id, &task.id, "TSK-Q2T-001", &admin_role)
         .expect("convert quote");
 
     assert_eq!(conversion.quote.status, QuoteStatus::Converted);
@@ -304,7 +303,10 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
         .expect("audit intervention");
 
     let quote_task_id: Option<String> = db
-        .query_single_value("SELECT task_id FROM quotes WHERE id = ?1", [quote.id.clone()])
+        .query_single_value(
+            "SELECT task_id FROM quotes WHERE id = ?1",
+            [quote.id.clone()],
+        )
         .expect("quote task id");
     assert_eq!(quote_task_id, Some(task.id.clone()));
 
@@ -314,7 +316,10 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
             [material.id.clone()],
         )
         .expect("inventory transactions");
-    assert!(tx_count > 0, "expected inventory transaction from consumption");
+    assert!(
+        tx_count > 0,
+        "expected inventory transaction from consumption"
+    );
 
     let quote_audit = audit
         .get_resource_history("task", &task.id, Some(10))

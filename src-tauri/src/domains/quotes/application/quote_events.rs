@@ -5,7 +5,6 @@
 //! the in-memory event bus (ADR-004).
 
 use crate::domains::quotes::domain::models::quote::Quote;
-use chrono::Utc;
 
 use super::quote_service::QuoteService;
 
@@ -21,20 +20,17 @@ impl QuoteService {
         accepted_by: &str,
         error_message: Option<String>,
     ) -> Result<(), String> {
-        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::event_factory;
         use crate::shared::services::event_bus::EventPublisher;
 
-        let event = DomainEvent::QuoteAccepted {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            quote_id: quote.id.clone(),
-            quote_number: quote.quote_number.clone(),
-            client_id: quote.client_id.clone(),
-            // Corrected: use the accepting user, not the quote creator
-            accepted_by: accepted_by.to_string(),
-            task_id: quote.task_id.clone(),
-            timestamp: Utc::now(),
-            metadata: error_message.map(|e| serde_json::json!({ "error": e })),
-        };
+        let event = event_factory::quote_accepted(
+            quote.id.clone(),
+            quote.quote_number.clone(),
+            quote.client_id.clone(),
+            accepted_by.to_string(),
+            quote.task_id.clone(),
+            error_message.map(|e| serde_json::json!({ "error": e })),
+        );
 
         self.event_bus
             .publish(event)
@@ -48,19 +44,16 @@ impl QuoteService {
         rejected_by: &str,
         reason: Option<String>,
     ) -> Result<(), String> {
-        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::event_factory;
         use crate::shared::services::event_bus::EventPublisher;
 
-        let event = DomainEvent::QuoteRejected {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            quote_id: quote.id.clone(),
-            quote_number: quote.quote_number.clone(),
-            client_id: quote.client_id.clone(),
-            rejected_by: rejected_by.to_string(),
+        let event = event_factory::quote_rejected(
+            quote.id.clone(),
+            quote.quote_number.clone(),
+            quote.client_id.clone(),
+            rejected_by.to_string(),
             reason,
-            timestamp: Utc::now(),
-            metadata: None,
-        };
+        );
 
         self.event_bus
             .publish(event)
@@ -74,23 +67,20 @@ impl QuoteService {
         task_id: &str,
         task_number: &str,
     ) -> Result<(), String> {
-        use crate::shared::services::domain_event::DomainEvent;
+        use crate::shared::services::event_bus::event_factory;
         use crate::shared::services::event_bus::EventPublisher;
 
-        let event = DomainEvent::QuoteConverted {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            quote_id: quote.id.clone(),
-            quote_number: quote.quote_number.clone(),
-            client_id: quote.client_id.clone(),
-            task_id: task_id.to_string(),
-            task_number: task_number.to_string(),
-            converted_by: quote
+        let event = event_factory::quote_converted(
+            quote.id.clone(),
+            quote.quote_number.clone(),
+            quote.client_id.clone(),
+            task_id.to_string(),
+            task_number.to_string(),
+            quote
                 .created_by
                 .clone()
                 .unwrap_or_else(|| "system".to_string()),
-            timestamp: Utc::now(),
-            metadata: None,
-        };
+        );
 
         self.event_bus
             .publish(event)
