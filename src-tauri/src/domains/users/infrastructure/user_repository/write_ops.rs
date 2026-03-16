@@ -96,6 +96,13 @@ impl super::UserRepository {
             return Err(RepoError::NotFound("User not found".to_string()));
         }
 
+        // Propagate role change to active sessions so restore_session returns admin immediately
+        tx.execute(
+            "UPDATE sessions SET role = ? WHERE user_id = ? AND expires_at > (unixepoch() * 1000)",
+            params![UserRole::Admin.to_string(), user_id],
+        )
+        .map_err(|e| RepoError::Database(format!("Failed to update sessions role: {}", e)))?;
+
         tx.execute(
             "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, timestamp)
              VALUES (?, ?, 'bootstrap_admin', 'user', ?, ?, ?, (unixepoch() * 1000))",

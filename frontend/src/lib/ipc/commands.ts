@@ -160,6 +160,7 @@ export const IPC_COMMANDS = {
 
   // System commands
   HEALTH_CHECK: 'health_check',
+  SYSTEM_HEALTH_CHECK: 'system_health_check',
   DIAGNOSE_DATABASE: 'diagnose_database',
   GET_DATABASE_STATS: 'get_database_stats',
   GET_DATABASE_STATUS: 'get_database_status',

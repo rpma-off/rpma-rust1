@@ -78,7 +78,7 @@ use crate::resolve_context;
 #[allow(unused_imports)]
 pub use system::{
     diagnose_database, force_wal_checkpoint, get_app_info, get_database_stats, get_device_info,
-    health_check,
+    health_check, system_health_check,
 };
 
 use crate::domains::clients::client_handler::{Client, ClientWithTasks};

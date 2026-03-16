@@ -246,6 +246,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.user, loadProfile]);
 
+  const refreshSession = useCallback(async () => {
+    if (!state.user?.token) return;
+    try {
+      const fresh = await authIpc.validateSession(state.user.token);
+      if (fresh) {
+        setState(prev => ({ ...prev, user: fresh }));
+        await AuthSecureStorage.storeSession(fresh.token, fresh as unknown as Record<string, unknown>);
+      }
+    } catch (error) {
+      logger.error(LogContext.AUTH, 'Session refresh failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [state.user?.token]);
+
   const value = useMemo<AuthContextType>(() => ({
     user: state.user,
     profile: state.profile,
@@ -257,7 +272,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     refreshProfile,
-  }), [state.user, state.profile, state.loading, state.isAuthenticating, state.isHydrating, signIn, signUp, signOut, refreshProfile]);
+    refreshSession,
+  }), [state.user, state.profile, state.loading, state.isAuthenticating, state.isHydrating, signIn, signUp, signOut, refreshProfile, refreshSession]);
 
   return (
     <AuthContext.Provider value={value}>

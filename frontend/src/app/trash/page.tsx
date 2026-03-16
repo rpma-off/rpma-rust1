@@ -6,6 +6,9 @@ import { ROLES } from '@/lib/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageShell } from '@/shared/ui/layout/PageShell';
 import { TrashCategoryTab } from '@/domains/trash/components/TrashCategoryTab';
 import { EmptyTrashDialog } from '@/domains/trash/components/EmptyTrashDialog';
 import { useEmptyTrash } from '@/domains/trash/api';
@@ -32,34 +35,42 @@ export default function Page() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Corbeille</h1>
-        {isAdmin && (
-          <EmptyTrashDialog onConfirm={handleEmptyAll}>
-            <Button variant="destructive" disabled={emptyTrashMutation.isPending}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Vider toute la corbeille
-            </Button>
-          </EmptyTrashDialog>
-        )}
-      </div>
+    <ErrorBoundary>
+      <PageShell>
+        <PageHeader
+          title="Corbeille"
+          subtitle="Gérez et restaurez les éléments supprimés"
+          icon={<Trash2 className="h-6 w-6 sm:h-8 sm:w-8 text-[hsl(var(--rpma-teal))]" />}
+          actions={
+            isAdmin ? (
+              <EmptyTrashDialog onConfirm={handleEmptyAll}>
+                <Button variant="destructive" disabled={emptyTrashMutation.isPending}>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Vider toute la corbeille
+                </Button>
+              </EmptyTrashDialog>
+            ) : undefined
+          }
+        />
 
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as EntityType)}>
-        <TabsList className="mb-4 flex flex-wrap gap-2 h-auto p-1">
-          {CATEGORIES.map((cat) => (
-            <TabsTrigger key={cat.value} value={cat.value} className="px-4 py-2">
-              {cat.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        {CATEGORIES.map((cat) => (
-          <TabsContent key={cat.value} value={cat.value}>
-            <TrashCategoryTab entityType={cat.value} isAdmin={isAdmin} />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+        <div className="rpma-shell p-6 mt-6">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as EntityType)}>
+            <TabsList className="mb-6 flex flex-wrap gap-2 h-auto p-1">
+              {CATEGORIES.map((cat) => (
+                <TabsTrigger key={cat.value} value={cat.value} className="px-4 py-2">
+                  {cat.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            
+            {CATEGORIES.map((cat) => (
+              <TabsContent key={cat.value} value={cat.value}>
+                <TrashCategoryTab entityType={cat.value} isAdmin={isAdmin} />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </PageShell>
+    </ErrorBoundary>
   );
 }

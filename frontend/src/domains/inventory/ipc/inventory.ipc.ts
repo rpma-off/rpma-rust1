@@ -36,12 +36,12 @@ export const inventoryIpc = {
 
   getInterventionConsumption: (interventionId: string): Promise<MaterialConsumption[]> =>
     safeInvoke<MaterialConsumption[]>(IPC_COMMANDS.MATERIAL_GET_INTERVENTION_CONSUMPTION, {
-      intervention_id: interventionId,
+      interventionId,
     }),
 
   getInterventionSummary: (interventionId: string): Promise<InterventionMaterialSummary> =>
     safeInvoke<InterventionMaterialSummary>(IPC_COMMANDS.MATERIAL_GET_INTERVENTION_SUMMARY, {
-      intervention_id: interventionId,
+      interventionId,
     }),
 
   getMaterialStats: (): Promise<MaterialStats> =>

@@ -3,8 +3,11 @@
 use crate::commands::{AppState, UserRole};
 use crate::resolve_context;
 use crate::shared::ipc::AppError;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use serde::Serialize;
 use std::process::Command;
+use std::time::Duration;
 use tracing;
 
 #[derive(Serialize)]
@@ -13,6 +16,52 @@ pub struct DeviceInfo {
     pub platform: String,
     pub arch: String,
     pub id: Option<String>,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq)]
+pub struct HealthStatus {
+    pub db: bool,
+    pub version: &'static str,
+}
+
+fn database_unavailable_error() -> AppError {
+    AppError::Internal("Database unavailable".into())
+}
+
+fn build_health_status(is_database_available: bool) -> Result<HealthStatus, AppError> {
+    if is_database_available {
+        Ok(HealthStatus {
+            db: true,
+            version: env!("CARGO_PKG_VERSION"),
+        })
+    } else {
+        Err(database_unavailable_error())
+    }
+}
+
+async fn check_database_health(
+    pool: Pool<SqliteConnectionManager>,
+) -> Result<HealthStatus, AppError> {
+    tokio::time::timeout(
+        Duration::from_secs(2),
+        tokio::task::spawn_blocking(move || -> Result<(), AppError> {
+            let conn = pool.get().map_err(|_| database_unavailable_error())?;
+            let db_status: i64 = conn
+                .query_row("SELECT 1", [], |row| row.get(0))
+                .map_err(|_| database_unavailable_error())?;
+
+            if db_status == 1 {
+                Ok(())
+            } else {
+                Err(database_unavailable_error())
+            }
+        }),
+    )
+    .await
+    .map_err(|_| database_unavailable_error())?
+    .map_err(|_| database_unavailable_error())??;
+
+    build_health_status(true)
 }
 
 /// Get device information for fingerprinting
@@ -233,6 +282,16 @@ pub async fn health_check(
     .map_err(|e| format!("Task join error: {}", e))?
 }
 
+#[tracing::instrument(skip_all)]
+#[tauri::command]
+pub async fn system_health_check(
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<HealthStatus, AppError> {
+    let _ctx = resolve_context!(&state, &correlation_id);
+    check_database_health(state.db.pool().clone()).await
+}
+
 /// Get database statistics
 #[tracing::instrument(skip_all)]
 #[tauri::command]
@@ -287,4 +346,38 @@ pub async fn get_app_info(correlation_id: Option<String>) -> Result<serde_json::
     info.insert("arch".to_string(), std::env::consts::ARCH.to_string());
 
     Ok(serde_json::to_value(info).map_err(|e| format!("Serialization error: {}", e))?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_check_database_health_returns_ok_for_queryable_pool() {
+        let database = crate::db::Database::new_in_memory()
+            .await
+            .expect("in-memory database");
+
+        let result = check_database_health(database.pool().clone())
+            .await
+            .expect("health check should succeed");
+
+        assert_eq!(
+            result,
+            HealthStatus {
+                db: true,
+                version: env!("CARGO_PKG_VERSION"),
+            }
+        );
+    }
+
+    #[test]
+    fn test_build_health_status_returns_internal_error_when_database_is_unavailable() {
+        let result = build_health_status(false);
+
+        assert!(matches!(
+            result,
+            Err(AppError::Internal(message)) if message == "Database unavailable"
+        ));
+    }
 }

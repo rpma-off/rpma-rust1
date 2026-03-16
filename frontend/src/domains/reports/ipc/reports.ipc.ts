@@ -10,7 +10,7 @@ export type { InterventionReport };
 export const reportsIpc = {
   generate: async (interventionId: string) => {
     const result = await safeInvoke<InterventionReport>(IPC_COMMANDS.REPORT_GENERATE, {
-      intervention_id: interventionId,
+      interventionId,
     });
     invalidatePattern('report:');
     signalMutation('reports');
@@ -19,13 +19,17 @@ export const reportsIpc = {
 
   get: (reportId: string) =>
     safeInvoke<InterventionReport | null>(IPC_COMMANDS.REPORT_GET, {
-      report_id: reportId,
+      reportId,
     }),
 
-  getByIntervention: (interventionId: string) =>
-    safeInvoke<InterventionReport | null>(IPC_COMMANDS.REPORT_GET_BY_INTERVENTION, {
-      intervention_id: interventionId,
-    }),
+  getByIntervention: (interventionId: string) => {
+    if (!interventionId) {
+      return Promise.reject(new Error('getByIntervention: interventionId is required'));
+    }
+    return safeInvoke<InterventionReport | null>(IPC_COMMANDS.REPORT_GET_BY_INTERVENTION, {
+      interventionId,
+    });
+  },
 
   list: (limit?: number, offset?: number) =>
     safeInvoke<InterventionReport[]>(IPC_COMMANDS.REPORT_LIST, {

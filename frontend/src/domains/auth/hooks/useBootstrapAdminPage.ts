@@ -11,7 +11,7 @@ import { useAuth } from '../api/useAuth';
 
 export function useBootstrapAdminPage() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const router = useRouter();
 
   const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
@@ -33,10 +33,11 @@ export function useBootstrapAdminPage() {
   const bootstrapMutation = useMutation({
     mutationFn: ({ userId }: { userId: string }) =>
       authBootstrap.bootstrapFirstAdmin(userId),
-    onSuccess: () => {
-      toast.success('Administrateur créé avec succès. Redirection en cours...');
+    onSuccess: async () => {
       logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', { user_id: user?.user_id });
-      setTimeout(() => router.push('/dashboard'), 3000);
+      await refreshSession();
+      toast.success('Administrateur créé avec succès. Redirection en cours...');
+      router.push('/dashboard');
     },
     onError: (error) => {
       const message =

@@ -1224,6 +1224,9 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
     case 'health_check': {
       return 'ok';
     }
+    case 'system_health_check': {
+      return { db: true, version: '0.1.0' };
+    }
     default:
       return null;
   }

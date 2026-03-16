@@ -68,6 +68,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string, profile: Partial<UserAccount>) => Promise<AuthResponse<UserSession>>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshSession: () => Promise<void>;
 }
 
 /**

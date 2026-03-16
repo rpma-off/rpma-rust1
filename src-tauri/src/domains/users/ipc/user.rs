@@ -91,6 +91,11 @@ pub async fn bootstrap_first_admin(
     match response {
         UsersDomainResponse::BootstrapMessage(message) => {
             info!("Bootstrap completed for user: {}", user_id);
+            // Update the in-memory session store so RBAC reflects admin role immediately
+            if let Ok(mut session) = state.session_store.get() {
+                session.role = crate::domains::auth::domain::models::auth::UserRole::Admin;
+                state.session_store.set(session);
+            }
             Ok(ApiResponse::success(message).with_correlation_id(Some(ctx.correlation_id)))
         }
         _ => Err(AppError::Internal(

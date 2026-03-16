@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import localFont from "next/font/local";
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { GlobalHealthBanner } from '@/lib/GlobalHealthBanner';
 import { Providers } from '@/app/providers';
 import "./globals.css";
 import AppNavigation from '@/app/AppNavigation';
@@ -94,6 +95,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isAuthPending = authLoading || isAuthenticating;
   const shouldShowLoading = !isPublicRoute && (isAuthPending || !user);
   const isUnauthenticatedProtectedRoute = !isAuthPending && !user && !isPublicRoute;
+  const shouldEnableHealthCheck = Boolean(user) && !isPublicRoute && !isAuthPending;
   const redirectLoadingClassName = 'min-h-screen bg-background px-4 sm:px-6 lg:px-8 py-6';
   const loadingClassName = isUnauthenticatedProtectedRoute
     ? redirectLoadingClassName
@@ -105,9 +107,12 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AppNavigation showNavigationWhileLoading={isAuthPending && !isPublicRoute}>
-      {content}
-    </AppNavigation>
+    <>
+      <GlobalHealthBanner enabled={shouldEnableHealthCheck} />
+      <AppNavigation showNavigationWhileLoading={isAuthPending && !isPublicRoute}>
+        {content}
+      </AppNavigation>
+    </>
   );
 }
 

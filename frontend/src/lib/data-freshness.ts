@@ -87,6 +87,11 @@ export function useMutationSignal(): void {
       const domain = getMutationDomain(event);
 
       if (domain) {
+        // Prevent generic mutation signals from invalidating all report queries globally,
+        // as reports should only be fetched/invalidated for specific interventions.
+        if (domain === 'report' || domain === 'reports') {
+          return;
+        }
         void queryClient.invalidateQueries({ queryKey: [domain] });
       }
     };

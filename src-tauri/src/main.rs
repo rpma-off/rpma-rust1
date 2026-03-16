@@ -67,6 +67,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             // ── System / Database ────────────────────────────────────────
             commands::system::health_check,
+            commands::system::system_health_check,
             commands::system::diagnose_database,
             commands::system::get_database_stats,
             commands::system::get_app_info,
