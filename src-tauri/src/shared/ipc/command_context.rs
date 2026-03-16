@@ -2,7 +2,7 @@
 
 use crate::shared::contracts::auth::UserSession;
 
-/// TODO: document
+/// Session and correlation data propagated from IPC handlers into domain facades.
 #[derive(Debug, Clone)]
 pub struct CommandContext {
     pub session: UserSession,
@@ -10,7 +10,7 @@ pub struct CommandContext {
 }
 
 impl CommandContext {
-    /// TODO: document
+    /// Creates a command context from the caller's session and a correlation identifier.
     pub fn new(session: UserSession, correlation_id: String) -> Self {
         Self {
             session,

@@ -2,6 +2,6 @@
 import type { UnitOfMeasure } from "./UnitOfMeasure";
 
 /**
- * TODO: document
+ * Material whose available stock is at or below its reorder threshold.
  */
 export type LowStockMaterial = { material_id: string, sku: string, name: string, unit_of_measure: UnitOfMeasure, current_stock: number, reserved_stock: number, available_stock: number, minimum_stock: number, effective_threshold: number, shortage_quantity: number, };

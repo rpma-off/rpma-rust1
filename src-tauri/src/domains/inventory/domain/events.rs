@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::shared::services::domain_event::DomainEvent;
 
-/// TODO: document
+/// Record of material consumed during a single intervention.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MaterialConsumed {
     pub material_id: String,

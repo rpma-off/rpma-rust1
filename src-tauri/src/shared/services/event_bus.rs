@@ -280,7 +280,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates a `TaskUpdated` event attributed to the system user.
     pub fn task_updated(task_id: String, changes: Vec<String>) -> DomainEvent {
         DomainEvent::TaskUpdated {
             id: Uuid::new_v4().to_string(),
@@ -313,7 +313,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates a `TaskStatusChanged` event attributed to the system user.
     pub fn task_status_changed(
         task_id: String,
         old_status: String,
@@ -370,7 +370,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates a `TaskAssigned` event for the given technician.
     pub fn task_assigned(task_id: String, assigned_to: String) -> DomainEvent {
         DomainEvent::TaskAssigned {
             id: Uuid::new_v4().to_string(),
@@ -383,7 +383,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates an `AuthenticationFailed` event with an optional user identifier.
     pub fn authentication_failed(user_id: Option<String>, reason: String) -> DomainEvent {
         DomainEvent::AuthenticationFailed {
             id: Uuid::new_v4().to_string(),
@@ -394,7 +394,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates an `AuthenticationSuccess` event for the given user.
     pub fn authentication_success(user_id: String) -> DomainEvent {
         DomainEvent::AuthenticationSuccess {
             id: Uuid::new_v4().to_string(),
@@ -404,7 +404,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates an `InterventionStarted` event linking intervention to task.
     pub fn intervention_started(intervention_id: String, task_id: String) -> DomainEvent {
         DomainEvent::InterventionStarted {
             id: Uuid::new_v4().to_string(),
@@ -417,7 +417,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates an `InterventionCompleted` event with default quality fields.
     pub fn intervention_completed(intervention_id: String) -> DomainEvent {
         DomainEvent::InterventionCompleted {
             id: Uuid::new_v4().to_string(),
@@ -432,7 +432,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates an `InterventionFinalized` event with completion timestamp.
     pub fn intervention_finalized(
         intervention_id: String,
         task_id: String,
@@ -450,7 +450,7 @@ pub mod event_factory {
         }
     }
 
-    /// TODO: document
+    /// Creates a `MaterialConsumed` event for inventory tracking.
     pub fn material_consumed(
         material_id: String,
         intervention_id: String,

@@ -2,12 +2,12 @@ use crate::domains::users::application::UserAction;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::error::AppError;
 
-/// TODO: document
+/// Role-based access policy for user management actions.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct UserAccessPolicy;
 
 impl UserAccessPolicy {
-    /// TODO: document
+    /// Maps a user action to its required permission string.
     pub fn required_permission(action: &UserAction) -> &'static str {
         match action {
             UserAction::Create { .. } => "create",
@@ -21,7 +21,7 @@ impl UserAccessPolicy {
         }
     }
 
-    /// TODO: document
+    /// Extracts the target user ID from the action, if applicable.
     pub fn target_user_id<'a>(action: &'a UserAction) -> Option<&'a str> {
         match action {
             UserAction::Get { id }
@@ -35,7 +35,7 @@ impl UserAccessPolicy {
         }
     }
 
-    /// TODO: document
+    /// Enforces role-specific authorization rules for the given action.
     pub fn ensure_role_specific_rules(
         current_user: &UserSession,
         action: &UserAction,

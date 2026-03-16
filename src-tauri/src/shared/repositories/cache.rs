@@ -145,24 +145,24 @@ pub struct CacheKeyBuilder {
 }
 
 impl CacheKeyBuilder {
-    /// TODO: document
+    /// Creates a key builder with the given entity prefix.
     pub fn new(prefix: &str) -> Self {
         Self {
             prefix: prefix.to_string(),
         }
     }
 
-    /// TODO: document
+    /// Builds a cache key for a single entity by its identifier.
     pub fn id(&self, id: &str) -> String {
         format!("{}:{}", self.prefix, id)
     }
 
-    /// TODO: document
+    /// Builds a cache key for a query result identified by multiple parts.
     pub fn query(&self, parts: &[&str]) -> String {
         format!("{}:query:{}", self.prefix, parts.join(":"))
     }
 
-    /// TODO: document
+    /// Builds a cache key for a filtered list result.
     pub fn list(&self, filters: &[&str]) -> String {
         format!("{}:list:{}", self.prefix, filters.join(":"))
     }

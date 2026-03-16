@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-/// TODO: document
+/// Domain-level errors for inventory stock and unit validation.
 #[derive(Debug, Error)]
 pub enum InventoryDomainError {
     #[error("Invalid stock change: {0}")]

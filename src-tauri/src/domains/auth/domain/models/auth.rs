@@ -20,7 +20,7 @@ pub struct UserSession {
     pub created_at: String,    // RFC3339
 }
 
-/// TODO: document
+/// RBAC role assigned to every user account. Determines IPC-level access.
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, TS)]
 pub enum UserRole {
     #[serde(rename = "admin")]
@@ -77,7 +77,7 @@ impl Default for SessionTimeoutConfig {
 }
 
 impl UserSession {
-    /// TODO: document
+    /// Creates a new session with the given expiry and records current timestamps.
     pub fn new(
         user_id: String,
         username: String,
@@ -101,7 +101,7 @@ impl UserSession {
         }
     }
 
-    /// TODO: document
+    /// Returns `true` if the session's `expires_at` is in the past.
     pub fn is_expired(&self) -> bool {
         match DateTime::parse_from_rfc3339(&self.expires_at) {
             Ok(expires_at) => Utc::now() > expires_at.with_timezone(&Utc),
@@ -109,7 +109,7 @@ impl UserSession {
         }
     }
 
-    /// TODO: document
+    /// Refreshes `last_activity` to the current time.
     pub fn update_activity(&mut self) {
         self.last_activity = Utc::now().to_rfc3339();
     }
@@ -155,7 +155,7 @@ pub struct UserAccount {
 }
 
 impl UserAccount {
-    /// TODO: document
+    /// Creates a new active account with a generated UUID and current timestamps.
     pub fn new(
         email: String,
         username: String,
@@ -186,7 +186,7 @@ impl UserAccount {
         }
     }
 
-    /// TODO: document
+    /// Bumps `last_login`, increments `login_count`, and refreshes `updated_at`.
     pub fn update_last_login(&mut self) {
         self.last_login = Some(now());
         self.login_count += 1;

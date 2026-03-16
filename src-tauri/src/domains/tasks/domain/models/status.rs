@@ -5,18 +5,18 @@ pub use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::tasks::domain::services::task_state_machine::validate_status_transition;
 
 impl TaskStatus {
-    /// TODO: document
+    /// Returns `true` if the state machine allows a transition to `new_status`.
     pub fn can_transition_to(&self, new_status: &TaskStatus) -> bool {
         validate_status_transition(self, new_status).is_ok()
     }
 
-    /// TODO: document
+    /// Parses a status string, returning `None` for unknown values.
     pub fn from_str(s: &str) -> Option<Self> {
         // Delegate parsing to TaskStatus's FromStr implementation.
         s.parse().ok()
     }
 
-    /// TODO: document
+    /// Returns the canonical snake_case string for this status variant.
     pub fn to_str(&self) -> &'static str {
         match self {
             TaskStatus::Draft => "draft",
@@ -36,7 +36,7 @@ impl TaskStatus {
     }
 }
 
-/// TODO: document
+/// Request payload for transitioning a task to a new status.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct StatusTransitionRequest {
@@ -47,7 +47,7 @@ pub struct StatusTransitionRequest {
     pub correlation_id: Option<String>,
 }
 
-/// TODO: document
+/// Counts of tasks grouped by workflow status, used for dashboard widgets.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
 pub struct StatusDistribution {

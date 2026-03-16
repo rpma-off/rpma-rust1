@@ -1,11 +1,11 @@
 use crate::shared::error::AppError;
 
-/// TODO: document
+/// Policy that maps raw authentication errors to user-safe messages.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AuthErrorPolicy;
 
 impl AuthErrorPolicy {
-    /// TODO: document
+    /// Converts a raw login error into a sanitised authentication error.
     pub fn authentication_error(raw_error: &str) -> AppError {
         if raw_error.contains("Invalid email or password") {
             AppError::Authentication("Email ou mot de passe incorrect".to_string())
@@ -18,7 +18,7 @@ impl AuthErrorPolicy {
         }
     }
 
-    /// TODO: document
+    /// Converts a raw signup error into a validation or sanitised database error.
     pub fn signup_error(raw_error: &str) -> AppError {
         match raw_error {
             "Email is required"

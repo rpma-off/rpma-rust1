@@ -119,7 +119,7 @@ pub struct RepositoryBuilder {
 }
 
 impl RepositoryBuilder {
-    /// TODO: document
+    /// Creates a new builder with default cache size of 1000 entries.
     pub fn new() -> Self {
         Self {
             db: None,
@@ -127,19 +127,19 @@ impl RepositoryBuilder {
         }
     }
 
-    /// TODO: document
+    /// Sets the database connection for the repository collection.
     pub fn with_database(mut self, db: Arc<Database>) -> Self {
         self.db = Some(db);
         self
     }
 
-    /// TODO: document
+    /// Overrides the default cache capacity.
     pub fn with_cache_size(mut self, size: usize) -> Self {
         self.cache_size = size;
         self
     }
 
-    /// TODO: document
+    /// Builds the repository collection. Fails if no database has been set.
     pub async fn build(self) -> Result<Repositories, String> {
         let db = self.db.ok_or_else(|| "Database not provided".to_string())?;
 

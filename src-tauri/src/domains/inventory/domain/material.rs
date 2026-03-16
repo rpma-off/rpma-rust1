@@ -16,22 +16,22 @@ pub const DEFAULT_LOW_STOCK_THRESHOLD: f64 = 0.0;
 /// `is_low_stock_with_policy` remain correct if a column is added later.
 pub const DEFAULT_RESERVED_STOCK: f64 = 0.0;
 
-/// TODO: document
+/// Returns the effective low-stock threshold, falling back to the global default.
 pub fn effective_threshold(minimum_stock: Option<f64>) -> f64 {
     minimum_stock.unwrap_or(DEFAULT_LOW_STOCK_THRESHOLD)
 }
 
-/// TODO: document
+/// Returns the effective reserved stock, falling back to the global default.
 pub fn effective_reserved_stock(reserved_stock: Option<f64>) -> f64 {
     reserved_stock.unwrap_or(DEFAULT_RESERVED_STOCK)
 }
 
-/// TODO: document
+/// Computes available stock by subtracting reserved stock from the current level.
 pub fn available_stock(current_stock: f64, reserved_stock: Option<f64>) -> f64 {
     current_stock - effective_reserved_stock(reserved_stock)
 }
 
-/// TODO: document
+/// Returns `true` when available stock is at or below the effective threshold.
 pub fn is_low_stock_with_policy(
     current_stock: f64,
     minimum_stock: Option<f64>,
@@ -40,7 +40,7 @@ pub fn is_low_stock_with_policy(
     available_stock(current_stock, reserved_stock) <= effective_threshold(minimum_stock)
 }
 
-/// TODO: document
+/// Validates a stock delta. Returns the resulting stock or an error if it would go negative.
 pub fn validate_stock_change(current_stock: f64, delta: f64) -> InventoryDomainResult<f64> {
     if !current_stock.is_finite() || !delta.is_finite() {
         return Err(InventoryDomainError::InvalidStock(
@@ -59,7 +59,7 @@ pub fn validate_stock_change(current_stock: f64, delta: f64) -> InventoryDomainR
     Ok(new_stock)
 }
 
-/// TODO: document
+/// Validates that the unit of measure is a known variant.
 pub fn validate_unit_of_measure(unit: &UnitOfMeasure) -> InventoryDomainResult<()> {
     match unit {
         UnitOfMeasure::Piece

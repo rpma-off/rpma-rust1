@@ -8,7 +8,7 @@ use crate::shared::error::{AppError, AppResult};
 pub type DbConn = crate::db::PooledConn;
 pub type DbTx<'a> = rusqlite::Transaction<'a>;
 
-/// TODO: document
+/// Acquires a pooled connection and executes `f` within it.
 pub fn with_db_connection<T, F>(db: &crate::db::Database, f: F) -> AppResult<T>
 where
     F: FnOnce(&DbConn) -> AppResult<T>,
@@ -19,7 +19,7 @@ where
     f(&conn)
 }
 
-/// TODO: document
+/// Opens a transaction, executes `f`, and commits on success or rolls back on error.
 pub fn with_db_transaction<T, F>(db: &crate::db::Database, f: F) -> AppResult<T>
 where
     F: FnOnce(&DbTx<'_>) -> AppResult<T>,

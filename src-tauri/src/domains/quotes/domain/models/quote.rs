@@ -250,7 +250,7 @@ pub struct CreateQuoteRequest {
 }
 
 impl CreateQuoteRequest {
-    /// TODO: document
+    /// Validates that a client is set and all embedded items are valid.
     pub fn validate(&self) -> Result<(), String> {
         if self.client_id.trim().is_empty() {
             return Err("Client ID is required".to_string());
@@ -292,7 +292,7 @@ pub struct CreateQuoteItemRequest {
 }
 
 impl CreateQuoteItemRequest {
-    /// TODO: document
+    /// Validates label is non-empty and quantity is positive.
     pub fn validate(&self) -> Result<(), String> {
         if self.label.trim().is_empty() {
             return Err("Item label is required".to_string());
@@ -408,7 +408,7 @@ pub struct CreateQuoteAttachmentRequest {
 }
 
 impl CreateQuoteAttachmentRequest {
-    /// TODO: document
+    /// Validates required file metadata fields are non-empty and file size is positive.
     pub fn validate(&self) -> Result<(), String> {
         if self.file_name.trim().is_empty() {
             return Err("File name is required".to_string());

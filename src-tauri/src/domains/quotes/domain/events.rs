@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::shared::services::domain_event::DomainEvent;
 
-/// TODO: document
+/// Event emitted when a quote is shared with a customer.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteShared {
     pub quote_id: String,
@@ -14,7 +14,7 @@ pub struct QuoteShared {
     pub shared_at_ms: i64,
 }
 
-/// TODO: document
+/// Event emitted when a customer responds to a shared quote.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteCustomerResponded {
     pub quote_id: String,

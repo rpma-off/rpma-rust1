@@ -3,7 +3,7 @@
 use crate::shared::contracts::common::*;
 use serde::{Deserialize, Serialize};
 
-/// TODO: document
+/// RBAC role for the users domain. Serialized as lowercase strings.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum UserRole {
@@ -39,7 +39,7 @@ impl std::fmt::Display for UserRole {
     }
 }
 
-/// TODO: document
+/// Core user entity. Password hash is excluded from serialization.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: String,

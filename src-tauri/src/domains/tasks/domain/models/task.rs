@@ -526,7 +526,7 @@ pub struct TaskStatistics {
 
 /// Validation implementation for CreateTaskRequest
 impl CreateTaskRequest {
-    /// TODO: document
+    /// Validates all required and optional fields. Returns first error found.
     pub fn validate(&self) -> Result<(), String> {
         // Validate required fields
         if self.vehicle_plate.trim().is_empty() {
@@ -603,7 +603,7 @@ pub struct TaskHistory {
 }
 
 impl TaskHistory {
-    /// TODO: document
+    /// Creates a new history entry with a generated UUID and current timestamp.
     pub fn new(
         task_id: String,
         old_status: Option<String>,

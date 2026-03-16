@@ -5,11 +5,11 @@ use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::AppResult;
 
-/// TODO: document
+/// Thin authentication helper used by IPC adapters to resolve a `RequestContext`.
 pub struct AuthGuard;
 
 impl AuthGuard {
-    /// TODO: document
+    /// Resolves a `RequestContext` for any authenticated user regardless of role.
     pub fn require_authenticated(
         state: &AppState<'_>,
         correlation_id: &Option<String>,
@@ -17,7 +17,7 @@ impl AuthGuard {
         crate::shared::context::session_resolver::resolve_request_context(state, None, correlation_id)
     }
 
-    /// TODO: document
+    /// Resolves a `RequestContext` and verifies the caller holds the given role.
     pub fn require_role(
         state: &AppState<'_>,
         required_role: UserRole,

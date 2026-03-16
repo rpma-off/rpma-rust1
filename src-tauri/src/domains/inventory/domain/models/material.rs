@@ -261,7 +261,7 @@ impl Material {
     }
 }
 
-/// TODO: document
+/// Material whose available stock is at or below its reorder threshold.
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
 #[ts(export)]
 pub struct LowStockMaterial {
@@ -295,7 +295,7 @@ impl FromSqlRow for LowStockMaterial {
     }
 }
 
-/// TODO: document
+/// Paginated response containing low-stock materials and total count.
 #[derive(Debug, Clone, Serialize, Deserialize, ts_rs::TS)]
 #[ts(export)]
 pub struct LowStockMaterialsResponse {

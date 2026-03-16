@@ -2,6 +2,6 @@
 import type { LowStockMaterial } from "./LowStockMaterial";
 
 /**
- * TODO: document
+ * Paginated response containing low-stock materials and total count.
  */
 export type LowStockMaterialsResponse = { items: Array<LowStockMaterial>, total: number, };
