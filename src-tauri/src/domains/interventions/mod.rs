@@ -6,6 +6,9 @@ pub mod domain;
 #[cfg(not(feature = "export-types"))]
 pub(crate) mod domain;
 pub(crate) mod infrastructure;
+#[cfg(feature = "export-types")]
+pub mod ipc;
+#[cfg(not(feature = "export-types"))]
 pub(crate) mod ipc;
 #[cfg(test)]
 pub(crate) mod tests;
@@ -17,3 +20,11 @@ pub use infrastructure::intervention_types::{
     InterventionWithDetails, SaveStepProgressRequest, SaveStepProgressResponse,
     StartInterventionRequest, StartInterventionResponse, StepRequirement,
 };
+
+#[cfg(feature = "export-types")]
+pub use ipc::intervention::relationships::{
+    InterventionManagementResponse, InterventionStats, TechnicianInterventionStats,
+};
+
+#[cfg(feature = "export-types")]
+pub use ipc::intervention::queries::InterventionProgressResponse;

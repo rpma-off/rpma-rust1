@@ -42,8 +42,6 @@ export type {
   QuoteLaborInput,
 } from '@/types/quote.types';
 
-export { computeQuoteStats } from '@/types/quote.types';
-
 export type {
   ConfigurationItem,
   ConfigurationCategory,

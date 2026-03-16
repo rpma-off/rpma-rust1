@@ -256,6 +256,134 @@ export const ServiceResponseSchema = <T extends z.ZodType>(dataSchema: T) => z.o
   status: z.number().optional(),
 });
 
+// ─── Quote domain ────────────────────────────────────────────────────────────
+
+export const QuoteStatusSchema = z.enum([
+  'draft', 'sent', 'accepted', 'rejected', 'expired', 'converted', 'changes_requested',
+]);
+
+export const CreateQuoteRequestSchema = z.object({
+  client_id: z.string().min(1, 'Client is required'),
+  task_id: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  terms: z.string().nullable().optional(),
+  valid_until: z.string().nullable().optional(),
+  vehicle_plate: z.string().nullable().optional(),
+  vehicle_make: z.string().nullable().optional(),
+  vehicle_model: z.string().nullable().optional(),
+  vehicle_year: z.string().nullable().optional(),
+  vehicle_vin: z.string().nullable().optional(),
+});
+
+export const UpdateQuoteRequestSchema = CreateQuoteRequestSchema.partial().extend({
+  id: z.string().min(1, 'Quote id is required'),
+  status: QuoteStatusSchema.optional(),
+});
+
+export const QuoteItemSchema = z.object({
+  id: z.string(),
+  quote_id: z.string(),
+  kind: z.enum(['labor', 'material', 'service', 'discount']),
+  description: z.string(),
+  quantity: z.number(),
+  unit_price: z.number(),
+  tax_rate: z.number().nullable(),
+  total: z.number(),
+  sort_order: z.number().nullable().optional(),
+});
+
+export const QuoteSchema = z.object({
+  id: z.string(),
+  quote_number: z.string(),
+  client_id: z.string(),
+  task_id: z.string().nullable(),
+  status: QuoteStatusSchema,
+  valid_until: z.string().nullable(),
+  description: z.string().nullable(),
+  notes: z.string().nullable(),
+  terms: z.string().nullable(),
+  subtotal: z.number(),
+  tax_total: z.number(),
+  total: z.number(),
+  discount_type: z.string().nullable(),
+  discount_value: z.number().nullable(),
+  discount_amount: z.number().nullable(),
+  vehicle_plate: z.string().nullable(),
+  vehicle_make: z.string().nullable(),
+  vehicle_model: z.string().nullable(),
+  vehicle_year: z.string().nullable(),
+  vehicle_vin: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  created_by: z.string().nullable(),
+  items: z.array(QuoteItemSchema),
+});
+
+export const QuoteListResponseSchema = z.object({
+  data: z.array(QuoteSchema),
+  total: z.number(),
+  page: z.number().optional(),
+  limit: z.number().optional(),
+});
+
+// ─── User domain ─────────────────────────────────────────────────────────────
+
+export const UserRoleSchema = z.enum(['Admin', 'Supervisor', 'Technician', 'Viewer', 'Manager']);
+
+export const CreateUserRequestSchema = z.object({
+  email: z.string().email('Valid email required'),
+  first_name: z.string().min(1, 'First name required'),
+  last_name: z.string().min(1, 'Last name required'),
+  role: UserRoleSchema,
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export const UpdateUserRequestSchema = z.object({
+  email: z.string().email().optional(),
+  first_name: z.string().min(1).optional(),
+  last_name: z.string().min(1).optional(),
+  role: UserRoleSchema.optional(),
+  is_active: z.boolean().optional(),
+});
+
+// ─── Intervention IPC response schemas ───────────────────────────────────────
+
+export const TechnicianInterventionStatsSchema = z.object({
+  technician_id: z.string(),
+  technician_name: z.string(),
+  total_interventions: z.number(),
+  completed_interventions: z.number(),
+  average_rating: z.number().nullable(),
+});
+
+export const InterventionStatsSchema = z.object({
+  total_interventions: z.number(),
+  completed_interventions: z.number(),
+  in_progress_interventions: z.number(),
+  average_completion_time: z.number().nullable(),
+  technician_stats: z.array(TechnicianInterventionStatsSchema),
+});
+
+export const InterventionManagementResponseSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('List'), interventions: z.array(z.unknown()), total: z.number(), page: z.number(), limit: z.number() }),
+  z.object({ type: z.literal('Stats'), stats: InterventionStatsSchema }),
+  z.object({ type: z.literal('ByTask'), interventions: z.array(z.unknown()) }),
+  z.object({ type: z.literal('BulkUpdated'), updated_count: z.number(), message: z.string() }),
+]);
+
+export const InterventionProgressResponseSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('Retrieved'), progress: z.unknown(), steps: z.array(z.unknown()) }),
+  z.object({
+    type: z.literal('StepAdvanced'),
+    step: z.unknown(),
+    next_step: z.unknown().nullable(),
+    progress_percentage: z.number(),
+    requirements_completed: z.array(z.string()),
+  }),
+  z.object({ type: z.literal('StepProgressSaved'), step: z.unknown() }),
+]);
+
 /**
  * Type exports
  */
@@ -273,6 +401,20 @@ export type UpdateClientRequest = z.infer<typeof UpdateClientRequestSchema>;
 export type ClientQuery = z.infer<typeof ClientQuerySchema>;
 export type ClientAction = z.infer<typeof ClientActionSchema>;
 export type ClientCrudRequest = z.infer<typeof ClientCrudRequestSchema>;
+
+export type QuoteStatus = z.infer<typeof QuoteStatusSchema>;
+export type CreateQuoteRequest = z.infer<typeof CreateQuoteRequestSchema>;
+export type UpdateQuoteRequest = z.infer<typeof UpdateQuoteRequestSchema>;
+export type QuoteListResponse = z.infer<typeof QuoteListResponseSchema>;
+
+export type UserRole = z.infer<typeof UserRoleSchema>;
+export type CreateUserRequest = z.infer<typeof CreateUserRequestSchema>;
+export type UpdateUserRequest = z.infer<typeof UpdateUserRequestSchema>;
+
+export type TechnicianInterventionStats = z.infer<typeof TechnicianInterventionStatsSchema>;
+export type InterventionStats = z.infer<typeof InterventionStatsSchema>;
+export type InterventionManagementResponse = z.infer<typeof InterventionManagementResponseSchema>;
+export type InterventionProgressResponse = z.infer<typeof InterventionProgressResponseSchema>;
 
 export type ApiResponse<T extends z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>> = 
   z.infer<ReturnType<typeof ApiResponseSchema<T>>>;

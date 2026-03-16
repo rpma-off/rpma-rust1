@@ -9,6 +9,7 @@ use crate::domains::interventions::{
 use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use ts_rs::TS;
 
 fn default_collected_data() -> serde_json::Value {
     serde_json::Value::Null
@@ -51,8 +52,14 @@ pub enum InterventionProgressAction {
     },
 }
 
-/// TODO: document
-#[derive(Serialize)]
+/// Discriminated-union response for intervention progress/step IPC commands.
+///
+/// Variants correspond to the action requested:
+/// - `Retrieved` — current progress and all steps for an intervention
+/// - `StepAdvanced` — result after advancing to the next step
+/// - `StepProgressSaved` — confirmation that step progress was persisted
+#[derive(Serialize, TS)]
+#[ts(export)]
 #[serde(tag = "type")]
 pub enum InterventionProgressResponse {
     Retrieved {

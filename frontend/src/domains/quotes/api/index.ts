@@ -58,7 +58,7 @@ export type {
 /** TODO: document */
 export { computeQuoteStats } from '../utils/quote-stats';
 /** TODO: document */
-export type { QuotePageStats } from '../utils/quote-stats';
+export type { QuotePageStats } from '@/types/quote.types';
 
 /** TODO: document */
 export { formatCents } from '../utils/formatting';

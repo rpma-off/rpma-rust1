@@ -10,6 +10,7 @@ use crate::domains::interventions::{InterventionsFacade, InterventionsCommand, I
 use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
+use ts_rs::TS;
 
 /// TODO: document
 #[derive(Deserialize, Debug)]
@@ -33,8 +34,15 @@ pub enum InterventionManagementAction {
     },
 }
 
-/// TODO: document
-#[derive(Serialize)]
+/// Discriminated-union response for intervention management IPC commands.
+///
+/// Variants correspond to the action requested:
+/// - `List` — paginated list of interventions matching the query
+/// - `Stats` — aggregate statistics, optionally scoped to a technician
+/// - `ByTask` — all interventions belonging to a specific task
+/// - `BulkUpdated` — confirmation that a bulk-update operation completed
+#[derive(Serialize, TS)]
+#[ts(export)]
 #[serde(tag = "type")]
 pub enum InterventionManagementResponse {
     List {
@@ -58,7 +66,8 @@ pub enum InterventionManagementResponse {
 }
 
 /// Intervention aggregate statistics (IPC response type).
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[ts(export)]
 pub struct InterventionStats {
     pub total_interventions: u64,
     pub completed_interventions: u64,
@@ -67,8 +76,9 @@ pub struct InterventionStats {
     pub technician_stats: Vec<TechnicianInterventionStats>,
 }
 
-/// TODO: document
-#[derive(Serialize)]
+/// Per-technician breakdown within `InterventionStats`.
+#[derive(Serialize, TS)]
+#[ts(export)]
 pub struct TechnicianInterventionStats {
     pub technician_id: String,
     pub technician_name: String,

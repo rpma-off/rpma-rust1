@@ -93,7 +93,14 @@ use rpma_ppf_intervention::domains::notifications::UpdateNotificationConfigReque
 use rpma_ppf_intervention::domains::users::CreateUserRequest;
 use rpma_ppf_intervention::domains::users::UpdateUserRequest;
 use rpma_ppf_intervention::domains::users::UserListResponse;
-use rpma_ppf_intervention::shared::ipc::response::ApiError;
+use rpma_ppf_intervention::domains::users::UserResponse;
+use rpma_ppf_intervention::shared::ipc::response::{ApiError, ApiResponse};
+
+// Import intervention IPC response types
+use rpma_ppf_intervention::domains::interventions::{
+    InterventionManagementResponse, InterventionProgressResponse, InterventionStats,
+    TechnicianInterventionStats,
+};
 
 fn main() {
     use std::fs;
@@ -124,6 +131,11 @@ fn main() {
     type_definitions.push_str("// Error types\n");
     type_definitions
         .push_str(&ApiError::export_to_string().expect("Failed to export ApiError type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &ApiResponse::<serde_json::Value>::export_to_string()
+            .expect("Failed to export ApiResponse type"),
+    );
     type_definitions.push_str("\n");
     type_definitions.push_str("\n\n");
 
@@ -624,6 +636,26 @@ fn main() {
     type_definitions
         .push_str(&StepStatus::export_to_string().expect("Failed to export StepStatus type"));
     type_definitions.push_str("\n");
+    // IPC response types for intervention management and progress
+    type_definitions.push_str("// Intervention IPC response types\n");
+    type_definitions.push_str(
+        &TechnicianInterventionStats::export_to_string()
+            .expect("Failed to export TechnicianInterventionStats type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&InterventionStats::export_to_string().expect("Failed to export InterventionStats type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionManagementResponse::export_to_string()
+            .expect("Failed to export InterventionManagementResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionProgressResponse::export_to_string()
+            .expect("Failed to export InterventionProgressResponse type"),
+    );
+    type_definitions.push_str("\n");
     // Domain: notifications
     type_definitions.push_str("// @domain:notifications\n");
     type_definitions
@@ -734,6 +766,9 @@ fn main() {
     type_definitions.push_str(
         &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&UserResponse::export_to_string().expect("Failed to export UserResponse type"));
     type_definitions.push_str("\n\n");
 
     // Domain: tasks (status types)
@@ -1020,6 +1055,7 @@ fn main() {
         "UpdateUserRequest",
         "UserAction",
         "UserListResponse",
+        "UserResponse",
         "StatusDistribution",
         "StatusTransitionRequest",
         "UserSettings",
@@ -1071,6 +1107,13 @@ fn main() {
         "OnboardingData",
         "OrganizationSetting",
         "UpdateOrganizationSettingsRequest",
+        // Intervention IPC response types
+        "TechnicianInterventionStats",
+        "InterventionStats",
+        "InterventionManagementResponse",
+        "InterventionProgressResponse",
+        // Shared IPC envelope
+        "ApiResponse",
     ];
 
     // Post-process: remove all relative `import type` statements.

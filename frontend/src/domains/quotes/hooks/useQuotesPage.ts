@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { computeQuoteStats } from '@/shared/types';
+import { computeQuoteStats } from '../utils/quote-stats';
 import type { QuoteStatus } from '@/shared/types';
 import type { Quote } from '@/types/quote.types';
 import type { Client } from '@/types/client.types';

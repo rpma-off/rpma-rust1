@@ -45,7 +45,7 @@ export type {
   QuoteWorkflowPanelProps,
 } from './components';
 export { computeQuoteStats } from './utils/quote-stats';
-export type { QuotePageStats } from './utils/quote-stats';
+export type { QuotePageStats } from '@/types/quote.types';
 export { formatCents } from './utils/formatting';
 export { useQuoteDetailPage } from './hooks/useQuoteDetailPage';
 export type { ActiveTab } from './hooks/useQuoteDetailPage';
