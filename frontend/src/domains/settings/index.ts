@@ -6,6 +6,7 @@ export { useOnboardingStatus, useCompleteOnboarding, useNeedsOnboarding } from '
 export { useOnboardingCheck } from './hooks/useOnboardingCheck';
 export { ProfileSettingsTab } from './components/ProfileSettingsTab';
 export { PreferencesTab } from './components/PreferencesTab';
+export { SecurityTab } from './components/SecurityTab';
 export { OrganizationSettingsTab } from './components/OrganizationSettingsTab';
 export { default as SettingsPageContent } from './components/SettingsPageContent';
 export type { Configuration, BusinessRule, UserSettings, UpdatePreferencesRequest, UpdateNotificationsRequest, UpdateAccessibilityRequest, UpdatePerformanceRequest, UpdateProfileRequest, ChangePasswordRequest, UseSettingsResult, UseSettingsActionsResult } from './api/types';

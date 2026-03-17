@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useAuth } from '@/domains/auth';
 
-const OrganizationSettingsTab = dynamic(
-  () => import('@/domains/settings').then(mod => ({ default: mod.OrganizationSettingsTab })),
-  { loading: () => <LoadingState message="Chargement des paramètres de l'organisation..." /> }
+const PerformanceTab = dynamic(
+  () => import('@/domains/admin').then(mod => ({ default: mod.PerformanceTab })),
+  { loading: () => <LoadingState /> }
 );
 
-export default function OrganizationSettingsPage() {
+export default function PerformancePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -24,8 +24,8 @@ export default function OrganizationSettingsPage() {
   if (loading || user?.role !== 'admin') return null;
 
   return (
-    <Suspense fallback={<LoadingState message="Chargement des paramètres de l'organisation..." />}>
-      <OrganizationSettingsTab />
+    <Suspense fallback={<LoadingState message="Chargement des performances..." />}>
+      <PerformanceTab />
     </Suspense>
   );
 }

@@ -1,8 +1,3 @@
-// VIOLATION: This layout is a Client Component ('use client') with `useEffect`
-// hooks that run on every render caused by navigation. `getTabConfig` is
-// recreated inline on every render — move it outside the component or wrap
-// with `useMemo` to stabilise the reference and prevent unnecessary
-// re-renders of child components that receive it as a prop.
 'use client';
 
 import React, { useEffect } from 'react';
@@ -12,11 +7,17 @@ import {
   User,
   Bell,
   Shield,
-  Zap,
-  Eye,
+  Building2,
   HelpCircle,
   Menu,
-  Settings
+  Settings,
+  Workflow,
+  Globe,
+  Zap,
+  Activity,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,44 +30,31 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { PageHeader } from '@/components/ui/page-header';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/domains/auth';
+import { useSystemHealth } from '@/domains/admin';
 
-const getTabConfig = (t: (key: string, params?: Record<string, string | number>) => string) => [
-  {
-    id: 'profile',
-    label: t('nav.profile'),
-    icon: User,
-    href: '/settings/profile'
-  },
-  {
-    id: 'preferences',
-    label: t('settings.preferences'),
-    icon: Bell,
-    href: '/settings/preferences'
-  },
-  {
-    id: 'security',
-    label: t('settings.security'),
-    icon: Shield,
-    href: '/settings/security'
-  },
-  {
-    id: 'performance',
-    label: t('analytics.performance'),
-    icon: Zap,
-    href: '/settings/performance'
-  },
-  {
-    id: 'accessibility',
-    label: t('settings.accessibility'),
-    icon: Eye,
-    href: '/settings/accessibility'
-  },
-  {
-    id: 'notifications',
-    label: t('settings.notifications'),
-    icon: Bell,
-    href: '/settings/notifications'
-  }
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  href: string;
+  adminOnly?: boolean;
+  isConfig?: boolean;
+}
+
+const getUserTabs = (t: (key: string) => string): TabConfig[] => [
+  { id: 'profile',      label: t('nav.profile'),           icon: User,      href: '/settings/profile' },
+  { id: 'preferences',  label: t('settings.preferences'),  icon: Bell,      href: '/settings/preferences' },
+  { id: 'security',     label: t('settings.security'),     icon: Shield,    href: '/settings/security' },
+  { id: 'organization', label: 'Atelier',                  icon: Building2, href: '/settings/organization', adminOnly: true },
+];
+
+const getConfigTabs = (): TabConfig[] => [
+  { id: 'system',             label: 'Système',        icon: Settings,  href: '/settings/system',             adminOnly: true, isConfig: true },
+  { id: 'business',           label: 'Règles',          icon: Workflow,  href: '/settings/business',           adminOnly: true, isConfig: true },
+  { id: 'security-policies',  label: 'Sécu. Système',  icon: Shield,    href: '/settings/security-policies',  adminOnly: true, isConfig: true },
+  { id: 'integrations',       label: 'Intégrations',   icon: Globe,     href: '/settings/integrations',       adminOnly: true, isConfig: true },
+  { id: 'performance',        label: 'Performance',    icon: Zap,       href: '/settings/performance',        adminOnly: true, isConfig: true },
+  { id: 'monitoring',         label: 'Monitoring',     icon: Activity,  href: '/settings/monitoring',         adminOnly: true, isConfig: true },
 ];
 
 interface SettingsLayoutProps {
@@ -75,51 +63,75 @@ interface SettingsLayoutProps {
 
 export default function SettingsLayout({ children }: SettingsLayoutProps) {
   const { t } = useTranslation();
-  const tabConfig = getTabConfig(t);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, loading: _authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
+  const userTabs = getUserTabs(t).filter(tab => !tab.adminOnly || isAdmin);
+  const configTabs = isAdmin ? getConfigTabs() : [];
+  const allTabs = [...userTabs, ...configTabs];
+
+  const { systemStatus, refreshing: isRefreshing, refresh } = useSystemHealth({
+    pollInterval: isAdmin ? 30000 : 0,
+    autoStart: isAdmin,
+  });
 
   const { logInfo, logUserAction, logPerformance } = useLogger({
     context: LogDomain.USER,
     component: 'SettingsLayout',
-    enablePerformanceLogging: true
+    enablePerformanceLogging: true,
   });
 
-  const activeTab = tabConfig.find(tab => pathname === tab.href || pathname.startsWith(tab.href + '/'))?.id || 'profile';
+  const activeTab = allTabs.find(
+    tab => pathname === tab.href || pathname.startsWith(tab.href + '/')
+  )?.id ?? 'profile';
 
   useEffect(() => {
     const timer = logPerformance('Settings page load');
-    logInfo('Settings page loaded', {
-      activeTab,
-      pathname,
-      userId: user?.user_id,
-      hasProfile: !!profile
-    });
+    logInfo('Settings page loaded', { activeTab, pathname, userId: user?.user_id });
     timer();
-  }, [activeTab, pathname, logInfo, logPerformance, profile, user?.user_id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey) {
-        const tabIndex = parseInt(event.key) - 1;
-        if (tabIndex >= 0 && tabIndex < tabConfig.length && tabConfig[tabIndex]) {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      const num = parseInt(event.key);
+      if (!isNaN(num) && num >= 1 && num <= allTabs.length) {
+        const tab = allTabs[num - 1];
+        if (tab) {
           event.preventDefault();
           logUserAction('Tab navigation via keyboard shortcut', {
             fromTab: activeTab,
-            toTab: tabConfig[tabIndex].id,
-            shortcut: `Ctrl+${event.key}`
+            toTab: tab.id,
+            shortcut: `Ctrl+${event.key}`,
           });
-          router.push(tabConfig[tabIndex].href);
+          router.push(tab.href);
         }
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [logUserAction, activeTab, tabConfig, router]);
+  }, [logUserAction, activeTab, allTabs, router]);
 
-  if (_authLoading) {
+  const getStatusIcon = () => {
+    switch (systemStatus) {
+      case 'healthy': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'error':   return <AlertTriangle className="h-4 w-4 text-red-600" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (systemStatus) {
+      case 'healthy': return 'Système opérationnel';
+      case 'warning': return 'Avertissements détectés';
+      case 'error':   return 'Erreurs détectées';
+    }
+  };
+
+  if (authLoading) {
     return (
       <PageShell>
         <LoadingState message={t('common.loading')} />
@@ -135,10 +147,28 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
         icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <>
+            {isAdmin && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--rpma-surface))] rounded-[6px] border border-[hsl(var(--rpma-border))]">
+                  {getStatusIcon()}
+                  <span className="text-sm font-medium text-foreground">{getStatusText()}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refresh}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Actualiser</span>
+                </Button>
+              </>
+            )}
             <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
               <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
               <span>+</span>
-              <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-6</kbd>
+              <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">1-{allTabs.length}</kbd>
               <span>{t('common.navigation').toLowerCase()}</span>
             </div>
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-muted/10">
@@ -156,13 +186,12 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
             </div>
             <div>
               <CardTitle className="text-lg font-semibold text-foreground">{t('settings.title')}</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {t('settings.account')}
-              </CardDescription>
+              <CardDescription className="text-muted-foreground">{t('settings.account')}</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Mobile Navigation */}
           <div className="lg:hidden mb-4">
             <div className="bg-background/50 rounded-lg p-3 border border-border/30">
               <Sheet>
@@ -173,10 +202,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                   >
                     <div className="flex items-center">
                       <Menu className="h-4 w-4 mr-3" />
-                      <span>{tabConfig.find(tab => tab.id === activeTab)?.label || 'Navigation'}</span>
+                      <span>{allTabs.find(tab => tab.id === activeTab)?.label ?? 'Navigation'}</span>
                     </div>
                     <span className="text-muted-foreground text-sm">
-                      {tabConfig.findIndex(tab => tab.id === activeTab) + 1}
+                      {allTabs.findIndex(tab => tab.id === activeTab) + 1}
                     </span>
                   </Button>
                 </SheetTrigger>
@@ -184,42 +213,62 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                   <SheetHeader className="text-left">
                     <SheetTitle className="text-foreground flex items-center gap-2">
                       <Settings className="h-5 w-5" />
-                      Parametres
+                      Paramètres
                     </SheetTitle>
                     <SheetDescription className="text-muted-foreground">
-                      Choisissez une section a configurer
+                      Choisissez une section à configurer
                     </SheetDescription>
                   </SheetHeader>
                   <div className="grid grid-cols-1 gap-2 mt-6">
-                    {tabConfig.map((tab, index) => {
+                    {userTabs.map((tab, index) => {
                       const Icon = tab.icon;
-                      const isActive = activeTab === tab.id;
                       return (
                         <Link key={tab.id} href={tab.href}>
                           <Button
-                            variant={isActive ? "default" : "ghost"}
-                            className={cn(
-                              "justify-start h-12 w-full",
-                              isActive
-                                ? 'bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-border/20'
+                            variant={activeTab === tab.id ? 'default' : 'ghost'}
+                            className={cn('justify-start h-12 w-full', activeTab === tab.id
+                              ? 'bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-border/20'
                             )}
                           >
                             <div className="flex items-center justify-between w-full">
-                              <div className="flex items-center">
-                                <Icon className="h-4 w-4 mr-3" />
-                                {tab.label}
-                              </div>
+                              <div className="flex items-center"><Icon className="h-4 w-4 mr-3" />{tab.label}</div>
                               <span className="text-xs opacity-60">{index + 1}</span>
                             </div>
                           </Button>
                         </Link>
                       );
                     })}
+                    {isAdmin && configTabs.length > 0 && (
+                      <>
+                        <div className="border-t border-[hsl(var(--rpma-border))] my-2 pt-2">
+                          <p className="text-xs text-muted-foreground px-1 mb-2 font-medium uppercase tracking-wide">Configuration</p>
+                        </div>
+                        {configTabs.map((tab, index) => {
+                          const Icon = tab.icon;
+                          return (
+                            <Link key={tab.id} href={tab.href}>
+                              <Button
+                                variant={activeTab === tab.id ? 'default' : 'ghost'}
+                                className={cn('justify-start h-12 w-full', activeTab === tab.id
+                                  ? 'bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-border/20'
+                                )}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center"><Icon className="h-4 w-4 mr-3" />{tab.label}</div>
+                                  <span className="text-xs opacity-60">{userTabs.length + index + 1}</span>
+                                </div>
+                              </Button>
+                            </Link>
+                          );
+                        })}
+                      </>
+                    )}
                   </div>
                   <div className="mt-6 pt-4 border-t border-[hsl(var(--rpma-border))]">
                     <p className="text-xs text-muted-foreground text-center">
-                      Utilisez Ctrl+1-6 pour naviguer rapidement (desktop)
+                      Utilisez Ctrl+1-{allTabs.length} pour naviguer rapidement (desktop)
                     </p>
                   </div>
                 </SheetContent>
@@ -227,9 +276,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
             </div>
           </div>
 
+          {/* Desktop Navigation */}
           <div className="hidden lg:block bg-[hsl(var(--rpma-teal))] rounded-[10px] px-2">
-            <nav className="flex gap-2">
-              {tabConfig.map((tab, index) => {
+            <nav className="flex gap-2 items-center">
+              {userTabs.map((tab, index) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
@@ -237,10 +287,10 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                     key={tab.id}
                     href={tab.href}
                     className={cn(
-                      "flex items-center gap-2 font-medium relative h-12 px-4 uppercase tracking-wide text-xs transition-colors",
+                      'flex items-center gap-2 font-medium relative h-12 px-4 uppercase tracking-wide text-xs transition-colors',
                       isActive
-                        ? "text-white border-b-[3px] border-white"
-                        : "text-white/85 border-b-[3px] border-transparent hover:text-white"
+                        ? 'text-white border-b-[3px] border-white'
+                        : 'text-white/85 border-b-[3px] border-transparent hover:text-white'
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -251,6 +301,34 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
                   </Link>
                 );
               })}
+
+              {isAdmin && configTabs.length > 0 && (
+                <>
+                  <div className="h-6 w-px bg-white/30 mx-1" />
+                  {configTabs.map((tab, index) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <Link
+                        key={tab.id}
+                        href={tab.href}
+                        className={cn(
+                          'flex items-center gap-2 font-medium relative h-12 px-4 uppercase tracking-wide text-xs transition-colors',
+                          isActive
+                            ? 'text-white border-b-[3px] border-white'
+                            : 'text-white/85 border-b-[3px] border-transparent hover:text-white'
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{tab.label}</span>
+                        <span className="absolute -top-1 -right-1 text-xs bg-border/40 text-muted-foreground rounded-full w-4 h-4 flex items-center justify-center opacity-60">
+                          {userTabs.length + index + 1}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </>
+              )}
             </nav>
           </div>
 

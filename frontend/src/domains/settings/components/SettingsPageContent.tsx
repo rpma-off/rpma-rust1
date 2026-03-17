@@ -9,7 +9,14 @@ import {
   Building2,
   HelpCircle,
   Menu,
-  Settings
+  Settings,
+  Workflow,
+  Globe,
+  Activity,
+  Zap,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +29,7 @@ import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { PageHeader } from '@/components/ui/page-header';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useSystemHealth } from '@/domains/admin';
 
 // Lazy load tab components to reduce initial bundle size
 const ProfileSettingsTab = dynamic(() => import('./ProfileSettingsTab').then(mod => ({ default: mod.ProfileSettingsTab })), {
@@ -40,13 +48,41 @@ const OrganizationSettingsTab = dynamic(() => import('./OrganizationSettingsTab'
   loading: () => <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>
 });
 
-type TabId = 'profile' | 'preferences' | 'security' | 'organization';
+// Config tabs (admin-only) — imported through the admin domain's public API surface
+const SystemSettingsTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SystemSettingsTab })), {
+  loading: () => <LoadingState />
+});
+
+const BusinessRulesTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.BusinessRulesTab })), {
+  loading: () => <LoadingState />
+});
+
+const SecurityPoliciesTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.SecurityPoliciesTab })), {
+  loading: () => <LoadingState />
+});
+
+const IntegrationsTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.IntegrationsTab })), {
+  loading: () => <LoadingState />
+});
+
+const PerformanceTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.PerformanceTab })), {
+  loading: () => <LoadingState />
+});
+
+const MonitoringTabLazy = dynamic(() => import('@/domains/admin').then(mod => ({ default: mod.MonitoringTab })), {
+  loading: () => <LoadingState />
+});
+
+type TabId =
+  | 'profile' | 'preferences' | 'security' | 'organization'
+  | 'system' | 'business' | 'security-policies' | 'integrations' | 'performance' | 'monitoring';
 
 interface TabConfig {
   id: TabId;
   label: string;
   icon: React.ElementType;
   adminOnly?: boolean;
+  isConfig?: boolean;
 }
 
 const getTabConfig = (
@@ -58,6 +94,12 @@ const getTabConfig = (
     { id: 'preferences', label: t('settings.preferences'), icon: Bell },
     { id: 'security', label: 'Sécurité', icon: Shield },
     { id: 'organization', label: 'Atelier', icon: Building2, adminOnly: true },
+    { id: 'system', label: 'Système', icon: Settings, adminOnly: true, isConfig: true },
+    { id: 'business', label: 'Règles', icon: Workflow, adminOnly: true, isConfig: true },
+    { id: 'security-policies', label: 'Sécu. Système', icon: Shield, adminOnly: true, isConfig: true },
+    { id: 'integrations', label: 'Intégrations', icon: Globe, adminOnly: true, isConfig: true },
+    { id: 'performance', label: 'Performance', icon: Zap, adminOnly: true, isConfig: true },
+    { id: 'monitoring', label: 'Monitoring', icon: Activity, adminOnly: true, isConfig: true },
   ];
   return all.filter(tab => !tab.adminOnly || isAdmin);
 };
@@ -74,6 +116,11 @@ export default function SettingsPageContent() {
     context: LogDomain.USER,
     component: 'SettingsPage',
     enablePerformanceLogging: true
+  });
+
+  const { systemStatus, refreshing: isRefreshing, refresh } = useSystemHealth({
+    pollInterval: isAdmin ? 30000 : 0,
+    autoStart: isAdmin,
   });
 
   // Log page load (run once on mount only)
@@ -145,6 +192,30 @@ export default function SettingsPageContent() {
     setActiveTab(newTab as TabId);
   };
 
+  const handleRefresh = async () => {
+    const timer = logPerformance('Page refresh');
+    logUserAction('Page refresh initiated');
+    await refresh();
+    logInfo('Page refresh completed');
+    timer();
+  };
+
+  const getStatusIcon = () => {
+    switch (systemStatus) {
+      case 'healthy': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'error': return <AlertTriangle className="h-4 w-4 text-red-600" />;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (systemStatus) {
+      case 'healthy': return 'Système opérationnel';
+      case 'warning': return 'Avertissements détectés';
+      case 'error': return 'Erreurs détectées';
+    }
+  };
+
   if (_authLoading) {
     return (
       <PageShell>
@@ -154,6 +225,8 @@ export default function SettingsPageContent() {
   }
 
   const tabCount = tabConfig.length;
+  // Determine if the active tab is a config tab (to detect when separator splits)
+  const userOnlyTabs = tabConfig.filter(tab => !tab.isConfig);
 
   return (
     <PageShell>
@@ -164,6 +237,24 @@ export default function SettingsPageContent() {
         icon={<Settings className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />}
         actions={
           <>
+            {isAdmin && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--rpma-surface))] rounded-[6px] border border-[hsl(var(--rpma-border))]">
+                  {getStatusIcon()}
+                  <span className="text-sm font-medium text-foreground">{getStatusText()}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Actualiser</span>
+                </Button>
+              </>
+            )}
             <div className="hidden lg:flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
               <kbd className="px-1.5 py-0.5 text-xs bg-border/20 rounded">Ctrl</kbd>
               <span>+</span>
@@ -223,7 +314,7 @@ export default function SettingsPageContent() {
                       </SheetDescription>
                     </SheetHeader>
                     <div className="grid grid-cols-1 gap-2 mt-6">
-                      {tabConfig.map((tab, index) => {
+                      {userOnlyTabs.map((tab, index) => {
                         const Icon = tab.icon;
                         return (
                           <Button
@@ -246,6 +337,36 @@ export default function SettingsPageContent() {
                           </Button>
                         );
                       })}
+                      {isAdmin && (
+                        <>
+                          <div className="border-t border-[hsl(var(--rpma-border))] my-2 pt-2">
+                            <p className="text-xs text-muted-foreground px-1 mb-2 font-medium uppercase tracking-wide">Configuration</p>
+                          </div>
+                          {tabConfig.filter(tab => tab.isConfig).map((tab, index) => {
+                            const Icon = tab.icon;
+                            return (
+                              <Button
+                                key={tab.id}
+                                variant={activeTab === tab.id ? "default" : "ghost"}
+                                className={`justify-start h-12 ${
+                                  activeTab === tab.id
+                                    ? 'bg-[hsl(var(--rpma-teal))] text-black hover:bg-[hsl(var(--rpma-teal))]/90'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-border/20'
+                                }`}
+                                onClick={() => handleTabChange(tab.id)}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex items-center">
+                                    <Icon className="h-4 w-4 mr-3" />
+                                    {tab.label}
+                                  </div>
+                                  <span className="text-xs opacity-60">{userOnlyTabs.length + index + 1}</span>
+                                </div>
+                              </Button>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                     <div className="mt-6 pt-4 border-t border-[hsl(var(--rpma-border))]">
                       <p className="text-xs text-muted-foreground text-center">
@@ -260,7 +381,7 @@ export default function SettingsPageContent() {
             {/* Desktop Tabs List */}
             <div className="hidden lg:block bg-[hsl(var(--rpma-teal))] rounded-[10px] px-2">
               <TabsList data-variant="underline" className="w-full justify-start">
-                {tabConfig.map((tab, index) => {
+                {userOnlyTabs.map((tab, index) => {
                   const Icon = tab.icon;
                   return (
                     <TabsTrigger
@@ -277,6 +398,28 @@ export default function SettingsPageContent() {
                     </TabsTrigger>
                   );
                 })}
+                {isAdmin && (
+                  <>
+                    <div className="h-6 w-px bg-white/30 mx-1 self-center" />
+                    {tabConfig.filter(tab => tab.isConfig).map((tab, index) => {
+                      const Icon = tab.icon;
+                      return (
+                        <TabsTrigger
+                          key={tab.id}
+                          value={tab.id}
+                          data-variant="underline"
+                          className="flex items-center gap-2 font-medium relative"
+                        >
+                          <Icon className="h-4 w-4" />
+                          <span>{tab.label}</span>
+                          <span className="absolute -top-1 -right-1 text-xs bg-border/40 text-muted-foreground rounded-full w-4 h-4 flex items-center justify-center opacity-60">
+                            {userOnlyTabs.length + index + 1}
+                          </span>
+                        </TabsTrigger>
+                      );
+                    })}
+                  </>
+                )}
               </TabsList>
             </div>
 
@@ -310,6 +453,46 @@ export default function SettingsPageContent() {
                     <OrganizationSettingsTab />
                   </Suspense>
                 </TabsContent>
+              )}
+
+              {isAdmin && (
+                <>
+                  <TabsContent value="system" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement des paramètres système..." />}>
+                      <SystemSettingsTabLazy />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="business" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement des règles métier..." />}>
+                      <BusinessRulesTabLazy />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="security-policies" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement des politiques de sécurité..." />}>
+                      <SecurityPoliciesTabLazy />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="integrations" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement des intégrations..." />}>
+                      <IntegrationsTabLazy />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="performance" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement des performances..." />}>
+                      <PerformanceTabLazy />
+                    </Suspense>
+                  </TabsContent>
+
+                  <TabsContent value="monitoring" className="mt-0">
+                    <Suspense fallback={<LoadingState message="Chargement du monitoring..." />}>
+                      <MonitoringTabLazy />
+                    </Suspense>
+                  </TabsContent>
+                </>
               )}
             </div>
           </Tabs>
