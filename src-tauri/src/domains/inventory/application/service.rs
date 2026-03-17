@@ -14,7 +14,7 @@ use crate::domains::inventory::domain::material::{
 
 use super::errors::{InventoryError, InventoryResult};
 use super::input::{RecordConsumptionRequest, UpdateStockRequest};
-use crate::domains::inventory::infrastructure::{InventoryTransactionRepository, MaterialGateway};
+use crate::domains::inventory::infrastructure::MaterialGateway;
 use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
 
@@ -95,7 +95,11 @@ impl InventoryService {
 
     /// TODO: document
     #[instrument(skip(self))]
-    pub fn update_stock(&self, request: UpdateStockRequest, role: &UserRole) -> InventoryResult<Material> {
+    pub fn update_stock(
+        &self,
+        request: UpdateStockRequest,
+        role: &UserRole,
+    ) -> InventoryResult<Material> {
         if !AuthMiddleware::can_perform_task_operation(role, "update") {
             return Err(InventoryError::Authorization(
                 "Insufficient permissions to update stock".to_string(),
@@ -145,7 +149,6 @@ impl InventoryService {
             .record_consumption(request)
             .map_err(InventoryError::from)
     }
-
 }
 // TODO(ADR-001): handle_intervention_finalized has been moved to InterventionFinalizedHandler
 // in handlers.rs. InventoryService is now a pure CRUD/query service with no event-handling logic.

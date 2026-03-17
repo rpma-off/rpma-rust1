@@ -3,20 +3,20 @@
 //! Each handler authenticates the caller via `resolve_context!`, then
 //! delegates to `DocumentsFacade` for all repository operations.
 
-use std::sync::Arc;
-use chrono::{Utc, Datelike};
+use chrono::{Datelike, Utc};
 use rusqlite::params;
+use std::sync::Arc;
 use tracing::{debug, info, instrument};
 
-use crate::commands::{ApiResponse, AppError, AppState};
-use crate::db::Database;
-use crate::shared::contracts::auth::UserRole;
-use crate::resolve_context;
-use crate::shared::services::document_storage::DocumentStorageService;
+use super::facade::DocumentsFacade;
+use super::models::*;
 use super::report_export as report_export_service;
 use super::report_pdf::InterventionPdfReport;
-use super::models::*;
-use super::facade::DocumentsFacade;
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::db::Database;
+use crate::resolve_context;
+use crate::shared::contracts::auth::UserRole;
+use crate::shared::services::document_storage::DocumentStorageService;
 
 // ── Report Repository ───────────────────────────────────────────────────────
 
@@ -170,7 +170,7 @@ pub async fn reports_get_capabilities(
         status: "active".to_string(),
         available_exports: vec!["intervention_pdf".to_string(), "csv".to_string()],
     };
-    
+
     Ok(ApiResponse::success(capabilities).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -210,14 +210,13 @@ pub async fn report_generate(
     );
     let output_path = DocumentStorageService::get_document_path(&state.app_data_dir, &file_name);
 
-    let pdf_report =
-        InterventionPdfReport::new(
-            intervention_data.intervention.clone(),
-            intervention_data.workflow_steps.clone(),
-            intervention_data.photos.clone(),
-            Vec::new(),
-            intervention_data.client.clone(),
-        );
+    let pdf_report = InterventionPdfReport::new(
+        intervention_data.intervention.clone(),
+        intervention_data.workflow_steps.clone(),
+        intervention_data.photos.clone(),
+        Vec::new(),
+        intervention_data.client.clone(),
+    );
     pdf_report.generate(&output_path).await?;
 
     // 5. Get file size
@@ -293,6 +292,9 @@ pub async fn report_list(
 ) -> Result<ApiResponse<Vec<InterventionReport>>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
-    let reports = facade.list_reports(limit.unwrap_or(crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32), offset.unwrap_or(0))?;
+    let reports = facade.list_reports(
+        limit.unwrap_or(crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32),
+        offset.unwrap_or(0),
+    )?;
     Ok(ApiResponse::success(reports).with_correlation_id(Some(ctx.correlation_id)))
 }

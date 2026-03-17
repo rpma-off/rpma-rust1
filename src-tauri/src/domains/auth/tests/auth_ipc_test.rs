@@ -122,7 +122,10 @@ async fn test_resolve_context_expired_session_returns_authentication_error() {
     assert!(result.is_err());
     match result.unwrap_err() {
         AppError::Authentication(_) => {}
-        other => panic!("Expected Authentication for expired session, got: {:?}", other),
+        other => panic!(
+            "Expected Authentication for expired session, got: {:?}",
+            other
+        ),
     }
 }
 

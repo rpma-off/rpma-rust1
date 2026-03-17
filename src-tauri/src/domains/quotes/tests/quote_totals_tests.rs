@@ -1,7 +1,7 @@
 use super::*;
-use crate::shared::contracts::auth::UserRole;
 use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
+use crate::shared::contracts::auth::UserRole;
 use crate::shared::repositories::cache::Cache;
 use std::sync::Arc;
 
@@ -62,7 +62,9 @@ fn test_rounding_line_total() {
             position: Some(0),
         }],
     };
-    let quote = service.create_quote(req, "test-user", &UserRole::Admin).unwrap();
+    let quote = service
+        .create_quote(req, "test-user", &UserRole::Admin)
+        .unwrap();
     // 1.5 * 333 = 499.5 → rounds to 500
     assert_eq!(quote.subtotal, 500);
 }
@@ -83,7 +85,9 @@ fn test_percentage_discount_rounds_correctly() {
         vehicle_vin: None,
         items: vec![make_item_req(10001, 1.0, 0.0)],
     };
-    let quote = service.create_quote(req, "test-user", &UserRole::Admin).unwrap();
+    let quote = service
+        .create_quote(req, "test-user", &UserRole::Admin)
+        .unwrap();
     // Apply 10% discount: 10001 * 0.10 = 1000.1 → rounds to 1000
     let updated = service
         .update_quote(
@@ -124,7 +128,9 @@ fn test_fixed_discount_capped_at_subtotal() {
         vehicle_vin: None,
         items: vec![make_item_req(1000, 1.0, 0.0)],
     };
-    let quote = service.create_quote(req, "test-user", &UserRole::Admin).unwrap();
+    let quote = service
+        .create_quote(req, "test-user", &UserRole::Admin)
+        .unwrap();
     // discount_value > subtotal: capped at subtotal
     let updated = service
         .update_quote(
@@ -165,7 +171,9 @@ fn test_zero_items_all_totals_zero() {
         vehicle_vin: None,
         items: vec![],
     };
-    let quote = service.create_quote(req, "test-user", &UserRole::Admin).unwrap();
+    let quote = service
+        .create_quote(req, "test-user", &UserRole::Admin)
+        .unwrap();
     assert_eq!(quote.subtotal, 0);
     assert_eq!(quote.tax_total, 0);
     assert_eq!(quote.total, 0);

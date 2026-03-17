@@ -14,4 +14,3 @@ fn test_quote_command_symbols_exist() {
 fn test_quote_create_request_structure() {
     let _request_type = std::any::type_name::<QuoteCreateRequest>();
 }
-

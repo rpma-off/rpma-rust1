@@ -5,11 +5,11 @@ use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::QuotesFacade;
 use tracing::{debug, error, info, instrument};
 
-use crate::resolve_context;
 use crate::domains::quotes::application::{
     QuoteAttachmentCreateRequest, QuoteAttachmentDeleteRequest, QuoteAttachmentOpenRequest,
     QuoteAttachmentUpdateRequest, QuoteAttachmentsGetRequest,
 };
+use crate::resolve_context;
 
 /// TODO: document
 /// ADR-018: Thin IPC layer
@@ -124,11 +124,7 @@ pub async fn quote_attachment_delete(
     let correlation_id = ctx.correlation_id.clone();
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.delete_attachment(
-        &ctx.auth.role,
-        &request.quote_id,
-        &request.attachment_id,
-    ) {
+    match facade.delete_attachment(&ctx.auth.role, &request.quote_id, &request.attachment_id) {
         Ok(deleted) => {
             if deleted {
                 info!(

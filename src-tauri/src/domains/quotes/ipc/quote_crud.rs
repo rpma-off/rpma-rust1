@@ -5,11 +5,11 @@ use crate::domains::quotes::domain::models::quote::{Quote, QuoteListResponse};
 use crate::domains::quotes::QuotesFacade;
 use tracing::{debug, error, info, instrument, Span};
 
-use crate::resolve_context;
 use crate::domains::quotes::application::{
     QuoteCreateRequest, QuoteDeleteRequest, QuoteDuplicateRequest, QuoteGetRequest,
     QuoteListRequest, QuoteUpdateRequest,
 };
+use crate::resolve_context;
 
 /// TODO: document
 /// ADR-018: Thin IPC layer
@@ -26,10 +26,7 @@ pub async fn quote_create(
         "correlation_id",
         tracing::field::display(correlation_id.as_str()),
     );
-    Span::current().record(
-        "user_id",
-        tracing::field::display(ctx.user_id()),
-    );
+    Span::current().record("user_id", tracing::field::display(ctx.user_id()));
     let facade = QuotesFacade::new(state.quote_service.clone());
 
     match facade.create(&ctx.auth.role, request.data, ctx.user_id()) {
@@ -83,10 +80,7 @@ pub async fn quote_list(
     let correlation_id = ctx.correlation_id.clone();
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.list(
-        &ctx.auth.role,
-        &request.filters,
-    ) {
+    match facade.list(&ctx.auth.role, &request.filters) {
         Ok(response) => {
             Ok(ApiResponse::success(response).with_correlation_id(Some(correlation_id.clone())))
         }

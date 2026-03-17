@@ -44,7 +44,9 @@ fn serialize_user_account_omits_password_hash_and_salt() {
     };
 
     let value = serde_json::to_value(&account).expect("user account should serialize");
-    let object = value.as_object().expect("user account should serialize to an object");
+    let object = value
+        .as_object()
+        .expect("user account should serialize to an object");
 
     assert!(!object.contains_key("password_hash"));
     assert!(!object.contains_key("salt"));

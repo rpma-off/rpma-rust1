@@ -126,7 +126,15 @@ fn push_summary(out: &mut String, vm: &ReportViewModel) {
     section_open(out, "Résumé de l'intervention");
     out.push_str(r#"<div class="card"><table class="kv">"#);
     let completion = format!("{:.1}%", vm.summary.completion_percentage);
-    kv_row(out, "Statut", &format!("{} {}", badge_status(&vm.summary.status_badge), esc(&vm.summary.status)));
+    kv_row(
+        out,
+        "Statut",
+        &format!(
+            "{} {}",
+            badge_status(&vm.summary.status_badge),
+            esc(&vm.summary.status)
+        ),
+    );
     kv_row(out, "Technicien", &esc(&vm.summary.technician_name));
     kv_row(out, "Type", &esc(&vm.summary.intervention_type));
     kv_row(out, "Durée estimée", &esc(&vm.summary.estimated_duration));
@@ -154,7 +162,11 @@ fn push_client_vehicle(out: &mut String, vm: &ReportViewModel) {
     out.push_str(r#"<div class="sub-title">Véhicule</div>"#);
     out.push_str(r#"<table class="kv">"#);
     kv_row(out, "Plaque", &esc(&vm.vehicle.plate));
-    kv_row(out, "Marque / Modèle", &format!("{} {}", esc(&vm.vehicle.make), esc(&vm.vehicle.model)));
+    kv_row(
+        out,
+        "Marque / Modèle",
+        &format!("{} {}", esc(&vm.vehicle.make), esc(&vm.vehicle.model)),
+    );
     kv_row(out, "Année", &esc(&vm.vehicle.year));
     kv_row(out, "Couleur", &esc(&vm.vehicle.color));
     kv_row(out, "VIN", &esc(&vm.vehicle.vin));
@@ -166,9 +178,15 @@ fn push_client_vehicle(out: &mut String, vm: &ReportViewModel) {
 
 fn push_work_conditions(out: &mut String, vm: &ReportViewModel) {
     let wc = &vm.work_conditions;
-    if [&wc.weather, &wc.lighting, &wc.location, &wc.temperature, &wc.humidity]
-        .iter()
-        .all(|v| *v == &vm.display.placeholder_not_specified)
+    if [
+        &wc.weather,
+        &wc.lighting,
+        &wc.location,
+        &wc.temperature,
+        &wc.humidity,
+    ]
+    .iter()
+    .all(|v| *v == &vm.display.placeholder_not_specified)
     {
         return;
     }
@@ -309,7 +327,12 @@ fn push_step(out: &mut String, step: &ReportStep, placeholder_ns: &str) {
             out.push_str("<tr>");
             let name = if z.name.is_empty() { &z.id } else { &z.name };
             td(out, &esc(name));
-            td(out, &z.quality_score.map(|s| format!("{:.1} / 10", s)).unwrap_or_default());
+            td(
+                out,
+                &z.quality_score
+                    .map(|s| format!("{:.1} / 10", s))
+                    .unwrap_or_default(),
+            );
             td(out, &esc(&z.status));
             out.push_str("</tr>");
         }
@@ -391,7 +414,11 @@ fn push_customer_validation(out: &mut String, vm: &ReportViewModel) {
     } else {
         "Non signée"
     };
-    kv_row(out, "Satisfaction", &esc(&vm.customer_validation.satisfaction));
+    kv_row(
+        out,
+        "Satisfaction",
+        &esc(&vm.customer_validation.satisfaction),
+    );
     kv_row(out, "Signature", sig);
     kv_row(out, "Commentaires", &esc(&vm.customer_validation.comments));
     out.push_str("</table></div>\n");
@@ -422,10 +449,7 @@ fn section_close(out: &mut String) {
 }
 
 fn kv_row(out: &mut String, key: &str, value: &str) {
-    out.push_str(&format!(
-        "<tr><td>{}</td><td>{}</td></tr>",
-        key, value
-    ));
+    out.push_str(&format!("<tr><td>{}</td><td>{}</td></tr>", key, value));
 }
 
 fn td(out: &mut String, value: &str) {
@@ -450,10 +474,7 @@ fn badge_status(badge: &str) -> String {
 }
 
 fn badge_html(label: &str, css_type: &str) -> String {
-    format!(
-        r#"<span class="badge badge-{}">{}</span>"#,
-        css_type, label
-    )
+    format!(r#"<span class="badge badge-{}">{}</span>"#, css_type, label)
 }
 
 fn severity_badge(severity: &str) -> String {
@@ -489,13 +510,12 @@ fn esc(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::shared::services::cross_domain::{InterventionStatus, InterventionType};
     use crate::domains::documents::report_view_model::{
-        ReportApproval, ReportClient, ReportCustomerValidation, ReportDefect, ReportDisplay,
-        ReportKeyValue, ReportMaterials, ReportMeta, ReportPhotos, ReportQuality,
+        ReportApproval, ReportChecklistItem, ReportClient, ReportCustomerValidation, ReportDefect,
+        ReportDisplay, ReportKeyValue, ReportMaterials, ReportMeta, ReportPhotos, ReportQuality,
         ReportSummary, ReportVehicle, ReportViewModel, ReportWorkConditions, ReportZone,
-        ReportChecklistItem,
     };
+    use crate::shared::services::cross_domain::{InterventionStatus, InterventionType};
 
     fn minimal_vm() -> ReportViewModel {
         ReportViewModel {
@@ -569,7 +589,10 @@ mod tests {
     fn test_render_html_contains_header() {
         let vm = minimal_vm();
         let html = render_report_html(&vm);
-        assert!(html.contains("RAPPORT D'INTERVENTION PPF"), "missing report title");
+        assert!(
+            html.contains("RAPPORT D'INTERVENTION PPF"),
+            "missing report title"
+        );
         assert!(html.contains("RPMA"), "missing logo");
         assert!(html.contains("int-001"), "missing intervention id");
         assert!(html.contains("T-001"), "missing task number");
@@ -625,7 +648,10 @@ mod tests {
         let html = render_report_html(&vm);
         assert!(html.contains("trunk"), "zone missing");
         assert!(html.contains("scratch"), "type missing");
-        assert!(html.contains("HIGH") || html.contains("high"), "severity missing");
+        assert!(
+            html.contains("HIGH") || html.contains("high"),
+            "severity missing"
+        );
         assert!(html.contains("deep scratch"), "notes missing");
     }
 
@@ -669,7 +695,10 @@ mod tests {
 
     #[test]
     fn test_esc_html_characters() {
-        assert_eq!(esc("<script>alert('xss')</script>"), "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;");
+        assert_eq!(
+            esc("<script>alert('xss')</script>"),
+            "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;"
+        );
         assert_eq!(esc("AT&T"), "AT&amp;T");
     }
 }

@@ -39,7 +39,7 @@
 //! 21. AuditLogHandler                <- AuditService + EventBus registration
 //! 22. InterventionFinalizedHandler   <- InventoryFacade + global EventBus registration
 //! 23. QuoteAcceptedHandler           <- InterventionWorkflowService + global EventBus registration
-    // TODO(scaffold): ("TrashService", &["Database"]),   // ← wire real deps
+// TODO(scaffold): ("TrashService", &["Database"]),   // ← wire real deps
 //! 24. QuoteConvertedHandler          <- InterventionWorkflowService + global EventBus registration
 //!
 //! The graph is intentionally acyclic: every edge points from a root resource or an
@@ -49,12 +49,12 @@
 //! ```
 
 use crate::db::Database;
-use crate::shared::logging::audit_log_handler::AuditLogHandler;
-use crate::shared::logging::audit_service::AuditService;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::infrastructure::auth::session_store::SessionStore;
 use crate::shared::app_state::AppStateType;
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
+use crate::shared::logging::audit_log_handler::AuditLogHandler;
+use crate::shared::logging::audit_service::AuditService;
 use crate::shared::repositories::Repositories;
 use crate::shared::services::event_bus::InMemoryEventBus;
 #[cfg(test)]
@@ -188,11 +188,9 @@ impl ServiceBuilder {
         let task_service = Arc::new(
             crate::domains::tasks::infrastructure::task::TaskService::new(self.db.clone()),
         );
-        let client_service = Arc::new(
-            crate::domains::clients::client_handler::ClientService::new(
-                self.repositories.client.clone(),
-            ),
-        );
+        let client_service = Arc::new(crate::domains::clients::client_handler::ClientService::new(
+            self.repositories.client.clone(),
+        ));
         let intervention_service = Arc::new(
             crate::domains::interventions::infrastructure::intervention::InterventionService::new(
                 self.db.clone(),
@@ -203,9 +201,9 @@ impl ServiceBuilder {
                 self.db.clone(),
             ),
         );
-        let settings_repository = Arc::new(
-            crate::domains::settings::SettingsRepository::new(self.db.clone()),
-        );
+        let settings_repository = Arc::new(crate::domains::settings::SettingsRepository::new(
+            self.db.clone(),
+        ));
         let user_settings_repository = Arc::new(
             crate::domains::settings::UserSettingsRepository::new(self.db.clone()),
         );
@@ -254,12 +252,10 @@ impl ServiceBuilder {
             photo_storage_path = %photo_storage_path.display(),
             "Configured photo storage path"
         );
-        let photo_service = Arc::new(
-            crate::domains::documents::PhotoService::new(
-                db_instance.clone(),
-                &default_storage_settings,
-            )?,
-        );
+        let photo_service = Arc::new(crate::domains::documents::PhotoService::new(
+            db_instance.clone(),
+            &default_storage_settings,
+        )?);
 
         // Initialize Material Service (depends on DB)
         let material_service = Arc::new(
@@ -275,8 +271,7 @@ impl ServiceBuilder {
         ));
 
         // Quote service currently depends on the event_bus implementation.
-        let quote_event_bus =
-            Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
+        let quote_event_bus = Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
 
         // Initialize Event Bus (self-contained, thread-safe)
         let event_bus = Arc::new(InMemoryEventBus::new());
@@ -292,12 +287,10 @@ impl ServiceBuilder {
         );
 
         // Initialize Message Service (depends on MessageRepository and DB)
-        let message_service = Arc::new(
-            crate::domains::notifications::MessageService::new(
-                self.repositories.message.clone(),
-                self.db.clone(),
-            ),
-        );
+        let message_service = Arc::new(crate::domains::notifications::MessageService::new(
+            self.repositories.message.clone(),
+            self.db.clone(),
+        ));
 
         // Create async database wrapper
         let async_db = Arc::new(self.db.as_async());
@@ -327,8 +320,7 @@ impl ServiceBuilder {
         // Excluded from test builds to avoid linking WebView2 native DLLs.
         #[cfg(not(test))]
         if let Some(app_handle) = self.app_handle {
-            let tauri_emitter =
-                crate::shared::services::event_bus::TauriEmitter::new(app_handle);
+            let tauri_emitter = crate::shared::services::event_bus::TauriEmitter::new(app_handle);
             event_bus.register_handler(tauri_emitter);
         }
 
@@ -338,7 +330,9 @@ impl ServiceBuilder {
         // - AnalyticsHandler for metrics collection
 
         let trash_service = Arc::new(
-            crate::domains::trash::application::services::trash_service::TrashService::new(self.db.clone()),
+            crate::domains::trash::application::services::trash_service::TrashService::new(
+                self.db.clone(),
+            ),
         );
 
         // Build and return AppStateType

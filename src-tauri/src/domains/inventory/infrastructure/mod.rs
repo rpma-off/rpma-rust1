@@ -1,3 +1,4 @@
+pub(crate) mod inventory_row_mapping;
 pub(crate) mod inventory_transaction_repository;
 pub(crate) mod inventory_transaction_service;
 pub mod material;

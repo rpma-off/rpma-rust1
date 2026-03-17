@@ -74,9 +74,7 @@ async fn test_intervention_validate_id_empty_returns_validation_error() {
             .expect("in-memory db"),
     );
     let service = Arc::new(
-        crate::domains::interventions::infrastructure::intervention::InterventionService::new(
-            db,
-        ),
+        crate::domains::interventions::infrastructure::intervention::InterventionService::new(db),
     );
     let facade = InterventionsFacade::new(service);
 
@@ -96,9 +94,7 @@ async fn test_intervention_validate_id_whitespace_returns_validation_error() {
             .expect("in-memory db"),
     );
     let service = Arc::new(
-        crate::domains::interventions::infrastructure::intervention::InterventionService::new(
-            db,
-        ),
+        crate::domains::interventions::infrastructure::intervention::InterventionService::new(db),
     );
     let facade = InterventionsFacade::new(service);
 
@@ -118,9 +114,7 @@ async fn test_intervention_validate_task_id_empty_returns_validation_error() {
             .expect("in-memory db"),
     );
     let service = Arc::new(
-        crate::domains::interventions::infrastructure::intervention::InterventionService::new(
-            db,
-        ),
+        crate::domains::interventions::infrastructure::intervention::InterventionService::new(db),
     );
     let facade = InterventionsFacade::new(service);
 
@@ -142,9 +136,7 @@ async fn test_intervention_validate_task_id_valid_passes() {
             .expect("in-memory db"),
     );
     let service = Arc::new(
-        crate::domains::interventions::infrastructure::intervention::InterventionService::new(
-            db,
-        ),
+        crate::domains::interventions::infrastructure::intervention::InterventionService::new(db),
     );
     let facade = InterventionsFacade::new(service);
 

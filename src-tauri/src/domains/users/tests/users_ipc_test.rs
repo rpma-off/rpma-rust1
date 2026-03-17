@@ -80,7 +80,11 @@ async fn test_create_user_admin_role_succeeds() {
         "SecurePass123!",
     );
 
-    assert!(result.is_ok(), "Admin create_account should succeed: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Admin create_account should succeed: {:?}",
+        result
+    );
     let account = result.unwrap();
     assert!(!account.id.is_empty(), "user id must not be empty");
     assert_eq!(account.email, "newuser@example.com");
@@ -92,8 +96,8 @@ async fn test_create_user_invalid_email_returns_error() {
     let state = build_test_app_state().await;
     state.session_store.set(make_test_session(UserRole::Admin));
 
-    let ctx = resolve_request_context(&state, Some(UserRole::Admin), &None)
-        .expect("Admin should pass");
+    let ctx =
+        resolve_request_context(&state, Some(UserRole::Admin), &None).expect("Admin should pass");
 
     let result = state.auth_service.create_account(
         "not-an-email",
@@ -113,8 +117,8 @@ async fn test_create_user_weak_password_returns_error() {
     let state = build_test_app_state().await;
     state.session_store.set(make_test_session(UserRole::Admin));
 
-    let ctx = resolve_request_context(&state, Some(UserRole::Admin), &None)
-        .expect("Admin should pass");
+    let ctx =
+        resolve_request_context(&state, Some(UserRole::Admin), &None).expect("Admin should pass");
 
     let result = state.auth_service.create_account(
         "weakpass@example.com",

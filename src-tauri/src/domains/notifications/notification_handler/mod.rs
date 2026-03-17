@@ -1,29 +1,29 @@
 //! Unified notifications handler: repositories, services, helpers, and IPC commands.
 
-pub mod notification_service;
-pub mod notification_repository;
-pub mod template_repository;
-pub mod preferences_repository;
+pub mod helper;
 pub mod message_repository;
 pub mod message_service;
-pub mod helper;
+pub mod notification_repository;
+pub mod notification_service;
+pub mod preferences_repository;
+pub mod template_repository;
 
-pub use notification_service::*;
-pub use notification_repository::*;
-pub use template_repository::*;
-pub use preferences_repository::*;
+pub use helper::*;
 pub use message_repository::*;
 pub use message_service::*;
-pub use helper::*;
+pub use notification_repository::*;
+pub use notification_service::*;
+pub use preferences_repository::*;
+pub use template_repository::*;
 
+use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{error, info, instrument};
-use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::commands::{ApiResponse, AppError, AppState, init_correlation_context};
+use crate::commands::{init_correlation_context, ApiResponse, AppError, AppState};
 use crate::resolve_context;
 
 use super::models::*;
@@ -113,7 +113,9 @@ pub async fn message_mark_read(
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    notifications_facade(&state).mark_message_read(&message_id).await?;
+    notifications_facade(&state)
+        .mark_message_read(&message_id)
+        .await?;
     Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -140,7 +142,9 @@ pub async fn message_get_preferences(
     state: AppState<'_>,
 ) -> Result<ApiResponse<NotificationPreferences>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    let prefs = notifications_facade(&state).get_preferences(&user_id).await?;
+    let prefs = notifications_facade(&state)
+        .get_preferences(&user_id)
+        .await?;
     Ok(ApiResponse::success(prefs).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -169,7 +173,10 @@ pub async fn initialize_notification_service(
     let notification_config = NotificationConfig {
         quiet_hours_start: config.quiet_hours_start.clone(),
         quiet_hours_end: config.quiet_hours_end.clone(),
-        timezone: config.timezone.clone().unwrap_or_else(|| "Europe/Paris".to_string()),
+        timezone: config
+            .timezone
+            .clone()
+            .unwrap_or_else(|| "Europe/Paris".to_string()),
     };
     let service = NotificationService::new(notification_config);
     let mut global_service = NOTIFICATION_SERVICE.lock().await;
@@ -233,7 +240,8 @@ pub async fn mark_notification_read(
             e
         })?;
     info!(notification_id = %id, "Notification marked as read");
-    Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -251,7 +259,8 @@ pub async fn mark_all_notifications_read(
             e
         })?;
     info!(user_id = %ctx.auth.user_id, "All notifications marked as read");
-    Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -270,7 +279,8 @@ pub async fn delete_notification(
             e
         })?;
     info!(notification_id = %id, "Notification deleted");
-    Ok(ApiResponse::success(SuccessResponse { success: true }).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success(SuccessResponse { success: true })
+        .with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]

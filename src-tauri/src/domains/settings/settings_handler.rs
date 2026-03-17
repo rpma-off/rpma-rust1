@@ -5,11 +5,11 @@
 
 use tracing::{info, instrument};
 
-use crate::commands::{ApiResponse, AppError, AppState};
-use crate::shared::contracts::auth::UserRole;
-use crate::resolve_context;
-use super::models::*;
 use super::facade::SettingsFacade;
+use super::models::*;
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::resolve_context;
+use crate::shared::contracts::auth::UserRole;
 
 /// ADR-018: Thin IPC layer
 #[tauri::command]

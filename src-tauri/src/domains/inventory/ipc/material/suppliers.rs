@@ -27,7 +27,10 @@ pub async fn material_create_supplier(
     match service.create_supplier(request, Some(ctx.user_id().to_string())) {
         Ok(supplier) => {
             info!(supplier_id = %supplier.id, "Supplier created");
-            Ok(ApiResponse::success(supplier).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(supplier)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to create supplier");
@@ -56,7 +59,8 @@ pub async fn material_list_suppliers(
 
     match service.list_suppliers(active_only.unwrap_or(true), preferred_only, limit, offset) {
         Ok(suppliers) => {
-            Ok(ApiResponse::success(suppliers).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(suppliers)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list suppliers");

@@ -254,9 +254,9 @@ impl InterventionService {
     ) -> InterventionResult<InterventionAggregateStats> {
         use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 
-        let (interventions, _) =
-            self.data
-                .list_interventions(None, technician_id, None, None)?;
+        let (interventions, _) = self
+            .data
+            .list_interventions(None, technician_id, None, None)?;
 
         let total = interventions.len() as u64;
         let completed = interventions

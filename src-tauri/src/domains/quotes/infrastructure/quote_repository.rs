@@ -273,7 +273,11 @@ impl QuoteRepository {
         };
 
         let page = query.page.unwrap_or(1).max(1);
-        let limit = query.limit.unwrap_or(crate::shared::constants::DEFAULT_PAGE_SIZE as i32).max(1).min(100);
+        let limit = query
+            .limit
+            .unwrap_or(crate::shared::constants::DEFAULT_PAGE_SIZE as i32)
+            .max(1)
+            .min(100);
         let offset = (page - 1) * limit;
 
         let sql = format!(
@@ -456,7 +460,10 @@ impl QuoteRepository {
             .map_err(|e| RepoError::Database(format!("Failed to update quote totals: {}", e)))?;
 
         if rows == 0 {
-            return Err(RepoError::NotFound(format!("Quote {} not found or deleted", id)));
+            return Err(RepoError::NotFound(format!(
+                "Quote {} not found or deleted",
+                id
+            )));
         }
 
         self.invalidate_cache(id);

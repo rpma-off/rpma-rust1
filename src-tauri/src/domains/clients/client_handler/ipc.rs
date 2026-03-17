@@ -1,8 +1,8 @@
 //! Client IPC facade and Tauri command entry point.
 
 use super::{
-    Client, ClientQuery, ClientWithTasks, CreateClientRequest, UpdateClientRequest,
-    required_permission, sanitize_client_action,
+    required_permission, sanitize_client_action, Client, ClientQuery, ClientWithTasks,
+    CreateClientRequest, UpdateClientRequest,
 };
 use crate::commands::{ApiResponse, AppError, AppState, ClientResponse};
 use crate::shared::ipc::errors::AppError as IpcAppError;
@@ -144,24 +144,90 @@ pub async fn client_crud(
         std::time::Duration::from_secs(crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS),
         async {
             match validated_action {
-                crate::commands::ClientAction::Create { data } => handle_client_creation(&clients_facade, data, ctx.user_id(), Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::Get { id } => handle_client_retrieval(&clients_facade, &id, Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::GetWithTasks { id } => handle_client_with_tasks_retrieval(&clients_facade, task_service, &id, Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::Update { id, data } => handle_client_update(&clients_facade, &id, data, ctx.user_id(), Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::Delete { id } => handle_client_deletion(&clients_facade, &id, ctx.user_id(), Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::List { filters } => handle_client_listing(&clients_facade, filters, Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::ListWithTasks { filters, limit_tasks } => handle_client_listing_with_tasks(&clients_facade, task_service, filters, limit_tasks, Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::Search { query, limit } => handle_client_search(&clients_facade, &query, limit, Some(correlation_id.clone())).await,
-                crate::commands::ClientAction::Stats => handle_client_statistics(&clients_facade, Some(correlation_id.clone())).await,
+                crate::commands::ClientAction::Create { data } => {
+                    handle_client_creation(
+                        &clients_facade,
+                        data,
+                        ctx.user_id(),
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::Get { id } => {
+                    handle_client_retrieval(&clients_facade, &id, Some(correlation_id.clone()))
+                        .await
+                }
+                crate::commands::ClientAction::GetWithTasks { id } => {
+                    handle_client_with_tasks_retrieval(
+                        &clients_facade,
+                        task_service,
+                        &id,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::Update { id, data } => {
+                    handle_client_update(
+                        &clients_facade,
+                        &id,
+                        data,
+                        ctx.user_id(),
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::Delete { id } => {
+                    handle_client_deletion(
+                        &clients_facade,
+                        &id,
+                        ctx.user_id(),
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::List { filters } => {
+                    handle_client_listing(&clients_facade, filters, Some(correlation_id.clone()))
+                        .await
+                }
+                crate::commands::ClientAction::ListWithTasks {
+                    filters,
+                    limit_tasks,
+                } => {
+                    handle_client_listing_with_tasks(
+                        &clients_facade,
+                        task_service,
+                        filters,
+                        limit_tasks,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::Search { query, limit } => {
+                    handle_client_search(
+                        &clients_facade,
+                        &query,
+                        limit,
+                        Some(correlation_id.clone()),
+                    )
+                    .await
+                }
+                crate::commands::ClientAction::Stats => {
+                    handle_client_statistics(&clients_facade, Some(correlation_id.clone())).await
+                }
             }
         },
-    ).await;
+    )
+    .await;
     match result {
         Ok(response) => response,
         Err(_) => {
-            error!("Client CRUD operation timed out after {} seconds", crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS);
+            error!(
+                "Client CRUD operation timed out after {} seconds",
+                crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS
+            );
             Err(AppError::Database(
-                "Client operation timed out - database may be locked. Please try again.".to_string(),
+                "Client operation timed out - database may be locked. Please try again."
+                    .to_string(),
             ))
         }
     }
@@ -176,8 +242,14 @@ async fn handle_client_creation(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     info!("Creating new client");
-    let client = facade.client_service().create_client_async(data, user_id).await
-        .map_err(|e| { error!("Failed to create client: {}", e); facade.map_service_error("create_client", &e) })?;
+    let client = facade
+        .client_service()
+        .create_client_async(data, user_id)
+        .await
+        .map_err(|e| {
+            error!("Failed to create client: {}", e);
+            facade.map_service_error("create_client", &e)
+        })?;
     info!("Client created successfully with ID: {}", client.id);
     Ok(ApiResponse::success(ClientResponse::Created(client)).with_correlation_id(correlation_id))
 }
@@ -189,11 +261,23 @@ async fn handle_client_retrieval(
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     facade.validate_client_id(id)?;
     debug!("Retrieving client with ID: {}", id);
-    let client = facade.client_service().get_client_async(id).await
-        .map_err(|e| { error!("Failed to retrieve client {}: {}", id, e); facade.map_service_error("get_client", &e) })?;
+    let client = facade
+        .client_service()
+        .get_client_async(id)
+        .await
+        .map_err(|e| {
+            error!("Failed to retrieve client {}: {}", id, e);
+            facade.map_service_error("get_client", &e)
+        })?;
     match client {
-        Some(client) => Ok(ApiResponse::success(ClientResponse::Found(client)).with_correlation_id(correlation_id)),
-        None => { warn!("Client {} not found", id); Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id)) }
+        Some(client) => {
+            Ok(ApiResponse::success(ClientResponse::Found(client))
+                .with_correlation_id(correlation_id))
+        }
+        None => {
+            warn!("Client {} not found", id);
+            Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id))
+        }
     }
 }
 
@@ -204,7 +288,10 @@ async fn handle_client_with_tasks_retrieval(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     facade.validate_client_id(id)?;
-    let client = facade.client_service().get_client_async(id).await
+    let client = facade
+        .client_service()
+        .get_client_async(id)
+        .await
         .map_err(|e| facade.map_service_error("get_client", &e))?;
     match client {
         Some(client) => {
@@ -221,13 +308,21 @@ async fn handle_client_with_tasks_retrieval(
                 sort_by: "created_at".to_string(),
                 sort_order: SortOrder::Desc,
             };
-            let tasks_response = task_service.get_tasks_async(task_query).await
+            let tasks_response = task_service
+                .get_tasks_async(task_query)
+                .await
                 .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
             let client_with_tasks = client_into_client_with_tasks(client, tasks);
-            Ok(ApiResponse::success(ClientResponse::FoundWithTasks(client_with_tasks)).with_correlation_id(correlation_id))
+            Ok(
+                ApiResponse::success(ClientResponse::FoundWithTasks(client_with_tasks))
+                    .with_correlation_id(correlation_id),
+            )
         }
-        None => { warn!("Client {} not found", id); Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id)) }
+        None => {
+            warn!("Client {} not found", id);
+            Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id))
+        }
     }
 }
 
@@ -240,7 +335,10 @@ async fn handle_client_update(
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     facade.validate_client_id(id)?;
     info!("Updating client with ID: {}", id);
-    let client = facade.client_service().update_client_async(data, user_id).await
+    let client = facade
+        .client_service()
+        .update_client_async(data, user_id)
+        .await
         .map_err(|e| facade.map_service_error("update_client", &e))?;
     Ok(ApiResponse::success(ClientResponse::Updated(client)).with_correlation_id(correlation_id))
 }
@@ -253,7 +351,10 @@ async fn handle_client_deletion(
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     facade.validate_client_id(id)?;
     info!("Deleting client with ID: {}", id);
-    facade.client_service().delete_client_async(id, user_id).await
+    facade
+        .client_service()
+        .delete_client_async(id, user_id)
+        .await
         .map_err(|e| facade.map_service_error("delete_client", &e))?;
     Ok(ApiResponse::success(ClientResponse::Deleted).with_correlation_id(correlation_id))
 }
@@ -264,7 +365,10 @@ async fn handle_client_listing(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
     debug!("Listing clients with filters: {:?}", filters);
-    let clients = facade.client_service().get_clients_async(filters).await
+    let clients = facade
+        .client_service()
+        .get_clients_async(filters)
+        .await
         .map_err(|e| facade.map_service_error("list_clients", &e))?;
     Ok(ApiResponse::success(ClientResponse::List(clients)).with_correlation_id(correlation_id))
 }
@@ -276,24 +380,38 @@ async fn handle_client_listing_with_tasks(
     limit_tasks: Option<i32>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let clients = facade.client_service().get_clients_async(filters).await
+    let clients = facade
+        .client_service()
+        .get_clients_async(filters)
+        .await
         .map_err(|e| facade.map_service_error("list_clients", &e))?;
     let task_limit = limit_tasks.unwrap_or(5);
     let mut clients_with_tasks = Vec::new();
     for client in clients.data {
         let task_query = TaskQuery {
             client_id: Some(client.id.clone()),
-            page: Some(1), limit: Some(task_limit), status: None,
-            technician_id: None, priority: None, search: None,
-            from_date: None, to_date: None,
-            sort_by: "created_at".to_string(), sort_order: SortOrder::Desc,
+            page: Some(1),
+            limit: Some(task_limit),
+            status: None,
+            technician_id: None,
+            priority: None,
+            search: None,
+            from_date: None,
+            to_date: None,
+            sort_by: "created_at".to_string(),
+            sort_order: SortOrder::Desc,
         };
-        let tasks_response = task_service.get_tasks_async(task_query).await
+        let tasks_response = task_service
+            .get_tasks_async(task_query)
+            .await
             .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
         clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
     }
-    Ok(ApiResponse::success(ClientResponse::ListWithTasks { data: clients_with_tasks }).with_correlation_id(correlation_id))
+    Ok(ApiResponse::success(ClientResponse::ListWithTasks {
+        data: clients_with_tasks,
+    })
+    .with_correlation_id(correlation_id))
 }
 
 async fn handle_client_search(
@@ -302,16 +420,25 @@ async fn handle_client_search(
     limit: i32,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let clients = facade.client_service().search_clients_async(query, 1, limit).await
+    let clients = facade
+        .client_service()
+        .search_clients_async(query, 1, limit)
+        .await
         .map_err(|e| facade.map_service_error("search_clients", &e))?;
-    Ok(ApiResponse::success(ClientResponse::SearchResults { data: clients }).with_correlation_id(correlation_id))
+    Ok(
+        ApiResponse::success(ClientResponse::SearchResults { data: clients })
+            .with_correlation_id(correlation_id),
+    )
 }
 
 async fn handle_client_statistics(
     facade: &ClientsFacade,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let stats = facade.client_service().get_client_stats_async().await
+    let stats = facade
+        .client_service()
+        .get_client_stats_async()
+        .await
         .map_err(|e| facade.map_service_error("get_client_stats", &e))?;
     Ok(ApiResponse::success(ClientResponse::Stats(stats)).with_correlation_id(correlation_id))
 }

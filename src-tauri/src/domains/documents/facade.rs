@@ -7,14 +7,14 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::shared::ipc::errors::AppError;
 use crate::shared::contracts::auth::UserSession;
+use crate::shared::ipc::errors::AppError;
 
-use super::photo_handler::{
-    DocumentsCommand, DocumentsResponse, DocumentsServices, PhotoService,
-    DocumentsFacade as PhotoFacade,
-};
 use super::models::InterventionReport;
+use super::photo_handler::{
+    DocumentsCommand, DocumentsFacade as PhotoFacade, DocumentsResponse, DocumentsServices,
+    PhotoService,
+};
 
 /// Facade for the Documents bounded context.
 ///
@@ -77,7 +77,11 @@ impl DocumentsFacade {
     }
 
     /// List report records with pagination.
-    pub fn list_reports(&self, limit: i32, offset: i32) -> Result<Vec<InterventionReport>, AppError> {
+    pub fn list_reports(
+        &self,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<InterventionReport>, AppError> {
         super::report_handler::ReportRepository::new(self.db.clone()).list(limit, offset)
     }
 

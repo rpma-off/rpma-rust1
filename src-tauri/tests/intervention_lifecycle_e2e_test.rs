@@ -188,11 +188,12 @@ async fn intervention_lifecycle_start_advance_finalize_persists_and_audits() {
         .get_resource_history("intervention", &started.intervention.id, Some(20))
         .expect("audit history");
     assert!(
-        audit_entries.iter().any(|e| e.event_type == AuditEventType::InterventionStarted)
+        audit_entries
+            .iter()
+            .any(|e| e.event_type == AuditEventType::InterventionStarted)
             && audit_entries
                 .iter()
                 .any(|e| e.event_type == AuditEventType::InterventionCompleted),
         "expected start and completion audit entries"
     );
-
 }

@@ -172,9 +172,8 @@ pub async fn auth_validate_session(
     let session = match state.session_store.get() {
         Ok(s) => s,
         Err(_) => {
-            let token = session_token.ok_or_else(|| {
-                AppError::Authentication("Not authenticated".to_string())
-            })?;
+            let token = session_token
+                .ok_or_else(|| AppError::Authentication("Not authenticated".to_string()))?;
 
             debug!("Session not in memory, attempting to restore from database");
             let restored = security_service(&state).restore_session(&token).await?;

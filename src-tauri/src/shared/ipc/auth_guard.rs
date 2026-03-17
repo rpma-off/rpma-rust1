@@ -14,7 +14,11 @@ impl AuthGuard {
         state: &AppState<'_>,
         correlation_id: &Option<String>,
     ) -> AppResult<RequestContext> {
-        crate::shared::context::session_resolver::resolve_request_context(state, None, correlation_id)
+        crate::shared::context::session_resolver::resolve_request_context(
+            state,
+            None,
+            correlation_id,
+        )
     }
 
     /// Resolves a `RequestContext` and verifies the caller holds the given role.

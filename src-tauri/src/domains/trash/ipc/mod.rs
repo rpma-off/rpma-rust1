@@ -14,7 +14,10 @@ pub async fn list_trash(
     correlation_id: Option<String>,
 ) -> AppResult<Vec<DeletedItem>> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Supervisor);
-    state.trash_service.list_deleted(entity_type, limit, offset, &ctx).await
+    state
+        .trash_service
+        .list_deleted(entity_type, limit, offset, &ctx)
+        .await
 }
 
 #[tauri::command]

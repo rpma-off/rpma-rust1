@@ -116,7 +116,10 @@ impl CalendarEventRepository {
             input.start_datetime.into(),
             input.end_datetime.into(),
             (input.all_day.unwrap_or(false) as i32).into(),
-            input.timezone.unwrap_or_else(|| crate::shared::constants::DEFAULT_TIMEZONE.to_string()).into(),
+            input
+                .timezone
+                .unwrap_or_else(|| crate::shared::constants::DEFAULT_TIMEZONE.to_string())
+                .into(),
             event_type_str.into(),
             input.category.into(),
             input.task_id.into(),

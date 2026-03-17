@@ -106,7 +106,12 @@ impl QuoteService {
     }
 
     /// Delete an attachment.
-    pub fn delete_attachment(&self, quote_id: &str, attachment_id: &str, role: &UserRole) -> Result<bool, String> {
+    pub fn delete_attachment(
+        &self,
+        quote_id: &str,
+        attachment_id: &str,
+        role: &UserRole,
+    ) -> Result<bool, String> {
         Self::check_quote_permission(role, "update")?;
         let _quote = self
             .repo

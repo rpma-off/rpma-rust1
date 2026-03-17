@@ -95,7 +95,12 @@ impl QuoteService {
     ///
     /// Rejection is only allowed from `Sent` status (once the quote has been
     /// presented to the customer).  Draft quotes can simply be deleted.
-    pub fn mark_rejected(&self, id: &str, rejected_by: &str, role: &UserRole) -> Result<Quote, String> {
+    pub fn mark_rejected(
+        &self,
+        id: &str,
+        rejected_by: &str,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 

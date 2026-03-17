@@ -5,10 +5,10 @@ use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::QuotesFacade;
 use tracing::{debug, error, instrument};
 
-use crate::resolve_context;
 use crate::domains::quotes::application::{
     QuoteItemAddRequest, QuoteItemDeleteRequest, QuoteItemUpdateRequest,
 };
+use crate::resolve_context;
 
 /// TODO: document
 /// ADR-018: Thin IPC layer

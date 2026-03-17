@@ -3,8 +3,8 @@ use std::sync::Arc;
 use rpma_ppf_intervention::db::Database;
 use rpma_ppf_intervention::shared::repositories::Repositories;
 use rpma_ppf_intervention::shared::services::cross_domain::{
-    ActionResult, AuditEventType, AuditService, AuthService, CreateQuoteRequest, QuotesFacade,
-    QuoteService, UserRole,
+    ActionResult, AuditEventType, AuditService, AuthService, CreateQuoteRequest, QuoteService,
+    QuotesFacade, UserRole,
 };
 use rpma_ppf_intervention::shared::services::event_bus::InMemoryEventBus;
 
@@ -121,8 +121,5 @@ async fn session_creation_rbac_enforcement_and_expiry_are_enforced() {
             [viewer.id.as_str()],
         )
         .expect("security history query");
-    assert!(
-        auth_event_count > 0,
-        "expected authentication audit entry"
-    );
+    assert!(auth_event_count > 0, "expected authentication audit entry");
 }

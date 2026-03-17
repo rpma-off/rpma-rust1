@@ -90,10 +90,7 @@ impl DomainEventHandler for QuoteConvertedHandler {
             );
 
             // Create intervention from the converted quote
-            match self
-                .service
-                .create_from_quote(task_id, quote_id)
-            {
+            match self.service.create_from_quote(task_id, quote_id) {
                 Ok(_) => {
                     info!(
                         task_id = %task_id,

@@ -16,8 +16,10 @@ impl RateLimiterService {
     pub fn new(db: crate::db::Database) -> Self {
         Self {
             db,
-            max_attempts: 5,                         // Max 5 failed attempts
-            lockout_duration: Duration::minutes(crate::shared::constants::RATE_LIMIT_LOCKOUT_MINUTES),
+            max_attempts: 5, // Max 5 failed attempts
+            lockout_duration: Duration::minutes(
+                crate::shared::constants::RATE_LIMIT_LOCKOUT_MINUTES,
+            ),
         }
     }
 
@@ -71,7 +73,11 @@ impl RateLimiterService {
 
         let new_count = count + 1;
         let is_locked = new_count >= self.max_attempts as i32;
-        let lock_until = if is_locked { Some(now + self.lockout_duration) } else { None };
+        let lock_until = if is_locked {
+            Some(now + self.lockout_duration)
+        } else {
+            None
+        };
 
         conn.execute(
             "INSERT INTO login_attempts 
@@ -95,8 +101,11 @@ impl RateLimiterService {
     /// Clear failed attempts after successful login
     pub fn clear_failed_attempts(&self, identifier: &str) -> Result<(), String> {
         let conn = self.db.get_connection()?;
-        conn.execute("DELETE FROM login_attempts WHERE identifier = ?", [identifier])
-            .map_err(|e| format!("Failed to clear login attempts: {}", e))?;
+        conn.execute(
+            "DELETE FROM login_attempts WHERE identifier = ?",
+            [identifier],
+        )
+        .map_err(|e| format!("Failed to clear login attempts: {}", e))?;
         Ok(())
     }
 
@@ -104,7 +113,7 @@ impl RateLimiterService {
     pub fn get_remaining_attempts(&self, identifier: &str) -> Result<u32, String> {
         let conn = self.db.get_connection()?;
         let window_start = Utc::now() - Duration::minutes(15);
-        
+
         let count: i32 = conn.query_row(
             "SELECT COALESCE(SUM(attempt_count), 0) FROM login_attempts WHERE identifier = ? AND last_attempt > ?",
             params![identifier, window_start.to_rfc3339()],
@@ -173,8 +182,11 @@ impl RateLimiterService {
     pub fn cleanup_old_attempts(&self) -> Result<(), String> {
         let conn = self.db.get_connection()?;
         let cutoff_time = Utc::now() - Duration::days(1);
-        conn.execute("DELETE FROM login_attempts WHERE last_attempt < ?", [cutoff_time.to_rfc3339()])
-            .map_err(|e| format!("Failed to cleanup old login attempts: {}", e))?;
+        conn.execute(
+            "DELETE FROM login_attempts WHERE last_attempt < ?",
+            [cutoff_time.to_rfc3339()],
+        )
+        .map_err(|e| format!("Failed to cleanup old login attempts: {}", e))?;
         Ok(())
     }
 }

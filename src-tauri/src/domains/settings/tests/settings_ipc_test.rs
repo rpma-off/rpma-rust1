@@ -74,7 +74,10 @@ async fn test_update_general_settings_supervisor_rejected_returns_authorization_
     assert!(result.is_err());
     match result.unwrap_err() {
         AppError::Authorization(_) => {}
-        other => panic!("Expected Authorization for Supervisor on Admin gate, got: {:?}", other),
+        other => panic!(
+            "Expected Authorization for Supervisor on Admin gate, got: {:?}",
+            other
+        ),
     }
 }
 

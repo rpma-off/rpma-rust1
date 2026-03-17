@@ -31,10 +31,7 @@ pub(super) fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportC
     }
 }
 
-pub(super) fn extract_string_array(
-    data: Option<&serde_json::Value>,
-    key: &str,
-) -> Vec<String> {
+pub(super) fn extract_string_array(data: Option<&serde_json::Value>, key: &str) -> Vec<String> {
     let Some(data) = data else {
         return Vec::new();
     };

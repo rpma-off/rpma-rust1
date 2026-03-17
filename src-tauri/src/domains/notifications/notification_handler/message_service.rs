@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use async_trait::async_trait;
-use tracing::{error, info};
 use rusqlite::params;
+use std::sync::Arc;
+use tracing::{error, info};
 
-use crate::commands::{AppError};
+use crate::commands::AppError;
 use crate::db::Database;
 use crate::domains::notifications::models::{
     Message, MessageListResponse, MessageQuery, MessageStatus, MessageTemplate,
@@ -12,7 +12,7 @@ use crate::domains::notifications::models::{
 use crate::shared::contracts::notification::{NotificationSender, SentMessage};
 use crate::shared::repositories::base::Repository;
 
-use super::message_repository::{MessageRepository, MessageRepoQuery};
+use super::message_repository::{MessageRepoQuery, MessageRepository};
 
 #[derive(Clone)]
 pub struct MessageService {
@@ -41,7 +41,10 @@ impl MessageService {
             task_id: request.task_id.clone(),
             client_id: request.client_id.clone(),
             status: "pending".to_string(),
-            priority: request.priority.clone().unwrap_or_else(|| "normal".to_string()),
+            priority: request
+                .priority
+                .clone()
+                .unwrap_or_else(|| "normal".to_string()),
             scheduled_at: request.scheduled_at,
             sent_at: None,
             read_at: None,
@@ -76,15 +79,32 @@ impl MessageService {
         correlation_id: Option<String>,
     ) -> Result<Message, AppError> {
         self.send_message(&SendMessageRequest {
-            message_type, recipient_id, recipient_email, recipient_phone, subject, body,
-            template_id: None, task_id, client_id, priority, scheduled_at, correlation_id,
-        }).await
+            message_type,
+            recipient_id,
+            recipient_email,
+            recipient_phone,
+            subject,
+            body,
+            template_id: None,
+            task_id,
+            client_id,
+            priority,
+            scheduled_at,
+            correlation_id,
+        })
+        .await
     }
 
-    pub async fn get_messages(&self, query: &MessageQuery) -> Result<MessageListResponse, AppError> {
+    pub async fn get_messages(
+        &self,
+        query: &MessageQuery,
+    ) -> Result<MessageListResponse, AppError> {
         let repo_query = MessageRepoQuery {
             search: None,
-            message_type: query.message_type.as_deref().and_then(crate::domains::notifications::models::MessageType::from_str),
+            message_type: query
+                .message_type
+                .as_deref()
+                .and_then(crate::domains::notifications::models::MessageType::from_str),
             status: query.status.as_deref().and_then(MessageStatus::from_str),
             sender_id: query.sender_id.clone(),
             recipient_id: query.recipient_id.clone(),
@@ -108,19 +128,30 @@ impl MessageService {
         })? as i32;
         let offset = query.offset.unwrap_or(0);
         let has_more = (offset + messages.len() as i32) < total;
-        Ok(MessageListResponse { messages, total, has_more })
+        Ok(MessageListResponse {
+            messages,
+            total,
+            has_more,
+        })
     }
 
     pub async fn mark_read(&self, message_id: &str) -> Result<(), AppError> {
-        self.repository.update_status(message_id, MessageStatus::Read).await.map_err(|e| {
-            error!("Failed to mark message {} as read: {}", message_id, e);
-            AppError::Database("Failed to mark message as read".to_string())
-        })?;
+        self.repository
+            .update_status(message_id, MessageStatus::Read)
+            .await
+            .map_err(|e| {
+                error!("Failed to mark message {} as read: {}", message_id, e);
+                AppError::Database("Failed to mark message as read".to_string())
+            })?;
         info!("Message {} marked as read", message_id);
         Ok(())
     }
 
-    pub async fn get_templates(&self, category: Option<&str>, message_type: Option<&str>) -> Result<Vec<MessageTemplate>, AppError> {
+    pub async fn get_templates(
+        &self,
+        category: Option<&str>,
+        message_type: Option<&str>,
+    ) -> Result<Vec<MessageTemplate>, AppError> {
         let conn = self.db.get_connection().map_err(|e| {
             error!("Failed to get DB connection: {}", e);
             AppError::Database("Failed to get database connection".to_string())
@@ -136,7 +167,9 @@ impl MessageService {
             owned_params.push(msg_type.to_string());
         }
         sql.push_str(" ORDER BY name");
-        let mut stmt = conn.prepare(&sql).map_err(|e| AppError::Database(format!("Failed to query templates: {}", e)))?;
+        let mut stmt = conn
+            .prepare(&sql)
+            .map_err(|e| AppError::Database(format!("Failed to query templates: {}", e)))?;
         let templates = stmt
             .query_map(rusqlite::params_from_iter(owned_params), |row| {
                 Ok(MessageTemplate {
@@ -160,8 +193,14 @@ impl MessageService {
         Ok(templates)
     }
 
-    pub async fn get_preferences(&self, user_id: &str) -> Result<NotificationPreferences, AppError> {
-        let conn = self.db.get_connection().map_err(|e| AppError::Database(e.to_string()))?;
+    pub async fn get_preferences(
+        &self,
+        user_id: &str,
+    ) -> Result<NotificationPreferences, AppError> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| AppError::Database(e.to_string()))?;
         conn.query_row(
             "SELECT id, user_id, in_app_enabled, task_assigned, task_updated, task_completed, task_overdue, client_created, client_updated, system_alerts, maintenance_notifications, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, created_at, updated_at FROM notification_preferences WHERE user_id = ?",
             params![user_id],
@@ -187,14 +226,24 @@ impl MessageService {
         .map_err(|e| AppError::Database(format!("Failed to get preferences: {}", e)))
     }
 
-    pub async fn update_preferences(&self, user_id: &str, updates: &UpdateNotificationPreferencesRequest) -> Result<NotificationPreferences, AppError> {
-        let conn = self.db.get_connection().map_err(|e| AppError::Database(e.to_string()))?;
+    pub async fn update_preferences(
+        &self,
+        user_id: &str,
+        updates: &UpdateNotificationPreferencesRequest,
+    ) -> Result<NotificationPreferences, AppError> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| AppError::Database(e.to_string()))?;
         let mut sql = String::from("UPDATE notification_preferences SET updated_at = ?");
         let now = chrono::Utc::now().timestamp();
         let mut param_values: Vec<String> = vec![now.to_string()];
         macro_rules! maybe_field {
             ($field:expr, $col:literal) => {
-                if let Some(v) = $field { sql.push_str(concat!(", ", $col, " = ?")); param_values.push(v.to_string()); }
+                if let Some(v) = $field {
+                    sql.push_str(concat!(", ", $col, " = ?"));
+                    param_values.push(v.to_string());
+                }
             };
         }
         maybe_field!(updates.in_app_enabled, "in_app_enabled");
@@ -205,10 +254,19 @@ impl MessageService {
         maybe_field!(updates.client_created, "client_created");
         maybe_field!(updates.client_updated, "client_updated");
         maybe_field!(updates.system_alerts, "system_alerts");
-        maybe_field!(updates.maintenance_notifications, "maintenance_notifications");
+        maybe_field!(
+            updates.maintenance_notifications,
+            "maintenance_notifications"
+        );
         maybe_field!(updates.quiet_hours_enabled, "quiet_hours_enabled");
-        if let Some(ref v) = updates.quiet_hours_start { sql.push_str(", quiet_hours_start = ?"); param_values.push(v.clone()); }
-        if let Some(ref v) = updates.quiet_hours_end { sql.push_str(", quiet_hours_end = ?"); param_values.push(v.clone()); }
+        if let Some(ref v) = updates.quiet_hours_start {
+            sql.push_str(", quiet_hours_start = ?");
+            param_values.push(v.clone());
+        }
+        if let Some(ref v) = updates.quiet_hours_end {
+            sql.push_str(", quiet_hours_end = ?");
+            param_values.push(v.clone());
+        }
         sql.push_str(" WHERE user_id = ?");
         param_values.push(user_id.to_string());
         conn.execute(&sql, rusqlite::params_from_iter(param_values))
@@ -234,7 +292,21 @@ impl NotificationSender for MessageService {
         scheduled_at: Option<i64>,
         correlation_id: Option<String>,
     ) -> Result<SentMessage, AppError> {
-        let msg = self.send_message_raw(message_type, recipient_id, recipient_email, recipient_phone, subject, body, task_id, client_id, priority, scheduled_at, correlation_id).await?;
+        let msg = self
+            .send_message_raw(
+                message_type,
+                recipient_id,
+                recipient_email,
+                recipient_phone,
+                subject,
+                body,
+                task_id,
+                client_id,
+                priority,
+                scheduled_at,
+                correlation_id,
+            )
+            .await?;
         Ok(SentMessage { id: msg.id })
     }
 }

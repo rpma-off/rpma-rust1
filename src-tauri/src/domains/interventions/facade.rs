@@ -9,11 +9,11 @@ use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
     SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
 };
+use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::contracts::common::now as now_ms;
 use crate::shared::contracts::events::InterventionFinalized;
 use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
-use crate::shared::context::RequestContext;
 use crate::shared::event_bus::publish_event;
 use crate::shared::ipc::errors::AppError;
 use chrono::Utc;
@@ -308,11 +308,7 @@ impl InterventionsFacade {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
 
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
                 Ok(InterventionsResponse::Intervention(intervention))
             }
             InterventionsCommand::GetActiveByTask { task_id } => {
@@ -362,11 +358,7 @@ impl InterventionsFacade {
                     .ok_or_else(|| {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
                 let step = self
                     .intervention_service
                     .get_step(&step_id)
@@ -384,11 +376,7 @@ impl InterventionsFacade {
                     .ok_or_else(|| {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
                 let progress = self
                     .intervention_service
                     .get_progress(&intervention_id)
@@ -407,11 +395,7 @@ impl InterventionsFacade {
                     .ok_or_else(|| {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
                 let progress = self
                     .intervention_service
                     .get_progress(&intervention_id)
@@ -444,11 +428,7 @@ impl InterventionsFacade {
                     .ok_or_else(|| {
                         AppError::NotFound(format!("Intervention {} not found", intervention_id))
                     })?;
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
                 let response = self
                     .intervention_service
                     .advance_step(
@@ -502,11 +482,7 @@ impl InterventionsFacade {
                             resolved_intervention_id
                         ))
                     })?;
-                self.check_intervention_access(
-                    ctx.user_id(),
-                    &ctx.auth.role,
-                    &intervention,
-                )?;
+                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
 
                 let step = self
                     .intervention_service

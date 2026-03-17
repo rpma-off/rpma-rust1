@@ -1,13 +1,13 @@
 //! Repository for user-specific settings.
 
+use rusqlite::params;
 /// ADR-005: Repository Pattern
 use std::sync::Arc;
-use rusqlite::params;
 use tracing::{error, info, warn};
 
+use super::models::*;
 use crate::commands::AppError;
 use crate::db::Database;
-use super::models::*;
 
 pub struct UserSettingsRepository {
     db: Arc<Database>,
@@ -21,7 +21,10 @@ impl UserSettingsRepository {
     /// Get user settings by user ID
     pub fn get_user_settings(&self, user_id: &str) -> Result<UserSettings, AppError> {
         let conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get database connection for user {}: {}", user_id, e);
+            error!(
+                "Failed to get database connection for user {}: {}",
+                user_id, e
+            );
             AppError::Database("Database connection failed".to_string())
         })?;
 
@@ -132,13 +135,22 @@ impl UserSettingsRepository {
                 Ok(default_settings)
             }
             Err(e) => {
-                error!("Database error fetching user settings for {}: {}", user_id, e);
-                Err(AppError::Database("Failed to fetch user settings".to_string()))
+                error!(
+                    "Database error fetching user settings for {}: {}",
+                    user_id, e
+                );
+                Err(AppError::Database(
+                    "Failed to fetch user settings".to_string(),
+                ))
             }
         }
     }
 
-    pub fn save_user_settings(&self, user_id: &str, settings: &UserSettings) -> Result<(), AppError> {
+    pub fn save_user_settings(
+        &self,
+        user_id: &str,
+        settings: &UserSettings,
+    ) -> Result<(), AppError> {
         self.db.execute(
             "INSERT OR REPLACE INTO user_settings (
                 user_id, full_name, email, phone, avatar_url, notes,
@@ -200,7 +212,10 @@ impl UserSettingsRepository {
     }
 
     pub fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError> {
-        let conn = self.db.get_connection().map_err(|_| AppError::Database("Connection failed".to_string()))?;
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|_| AppError::Database("Connection failed".to_string()))?;
         let result = conn.query_row(
             "SELECT analytics_consent, marketing_consent, third_party_sharing, data_retention_period, consent_given_at, consent_version 
              FROM user_consent WHERE user_id = ?",

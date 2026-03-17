@@ -1,6 +1,6 @@
 //! Client statistics service — analytics and overview stats.
 
-use super::{IClientRepository, repository::ClientRepository};
+use super::{repository::ClientRepository, IClientRepository};
 use crate::db::Database;
 use crate::shared::repositories::cache::Cache;
 use serde::{Deserialize, Serialize};
@@ -52,8 +52,10 @@ impl ClientStatisticsService {
     }
 
     pub fn get_client_stats(&self) -> Result<ClientOverviewStats, String> {
-        futures::executor::block_on(IClientRepository::get_overview_stats(self.client_repo.as_ref()))
-            .map_err(|e| format!("Failed to get client stats: {}", e))
+        futures::executor::block_on(IClientRepository::get_overview_stats(
+            self.client_repo.as_ref(),
+        ))
+        .map_err(|e| format!("Failed to get client stats: {}", e))
     }
 
     pub fn get_client_activity_metrics(

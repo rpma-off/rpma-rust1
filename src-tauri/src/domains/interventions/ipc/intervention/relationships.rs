@@ -6,7 +6,9 @@
 //! - Operations involving interventions, tasks, and users
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{InterventionsFacade, InterventionsCommand, InterventionsResponse};
+use crate::domains::interventions::{
+    InterventionsCommand, InterventionsFacade, InterventionsResponse,
+};
 use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
@@ -255,4 +257,3 @@ pub async fn intervention_management(
         }
     }
 }
-

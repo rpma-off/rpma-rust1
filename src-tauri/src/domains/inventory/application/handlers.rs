@@ -109,7 +109,8 @@ impl DomainEventHandler for InterventionFinalizedHandler {
                 technician_id: technician_id.clone(),
                 completed_at_ms: *completed_at_ms,
             };
-            self.process_finalized(&payload).map_err(|e| e.to_string())?;
+            self.process_finalized(&payload)
+                .map_err(|e| e.to_string())?;
         }
         Ok(())
     }

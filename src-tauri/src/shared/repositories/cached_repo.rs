@@ -75,8 +75,7 @@ impl<R> CachedRepository<R> {
     /// Invalidate every cached entry that belongs to this repository's
     /// namespace (performs a prefix-based eviction).
     pub fn invalidate_all(&self) {
-        self.cache
-            .remove_by_prefix(&format!("{}:", self.namespace));
+        self.cache.remove_by_prefix(&format!("{}:", self.namespace));
     }
 }
 
@@ -114,8 +113,7 @@ where
         }
 
         let entities = self.inner.find_all().await?;
-        self.cache
-            .set(&cache_key, entities.clone(), self.read_ttl);
+        self.cache.set(&cache_key, entities.clone(), self.read_ttl);
 
         Ok(entities)
     }
@@ -218,7 +216,12 @@ mod tests {
 
     fn make_repo() -> CachedRepository<MockRepository> {
         let cache = Arc::new(Cache::new(100));
-        CachedRepository::new(MockRepository::new(), cache, "test", Duration::from_secs(60))
+        CachedRepository::new(
+            MockRepository::new(),
+            cache,
+            "test",
+            Duration::from_secs(60),
+        )
     }
 
     fn insert(repo: &CachedRepository<MockRepository>, entity: FakeEntity) {
@@ -230,7 +233,10 @@ mod tests {
     }
 
     fn fake(id: &str, value: &str) -> FakeEntity {
-        FakeEntity { id: id.to_string(), value: value.to_string() }
+        FakeEntity {
+            id: id.to_string(),
+            value: value.to_string(),
+        }
     }
 
     // ── find_by_id ────────────────────────────────────────────────────────────
@@ -288,9 +294,12 @@ mod tests {
         assert_eq!(repo.inner().calls(), 1);
 
         // Save a new entity — list cache must be invalidated
-        repo.save(FakeEntity { id: "new".to_string(), value: "new_val".to_string() })
-            .await
-            .unwrap();
+        repo.save(FakeEntity {
+            id: "new".to_string(),
+            value: "new_val".to_string(),
+        })
+        .await
+        .unwrap();
 
         // Next find_all must hit the DB
         let _ = repo.find_all().await.unwrap();

@@ -212,7 +212,10 @@ impl QueryPerformanceMonitor {
 
     /// Get performance statistics for all queries
     pub fn get_stats(&self) -> HashMap<String, QueryStats> {
-        self.query_stats.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.query_stats
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     /// Get slow queries (above threshold)
@@ -228,7 +231,10 @@ impl QueryPerformanceMonitor {
 
     /// Clear all statistics
     pub fn clear_stats(&self) {
-        self.query_stats.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.query_stats
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
     }
 }
 
@@ -303,7 +309,10 @@ impl LoadMonitor {
     }
 
     fn record_wait_time(&self, duration: std::time::Duration) {
-        let mut times = self.connection_wait_times.lock().unwrap_or_else(|e| e.into_inner());
+        let mut times = self
+            .connection_wait_times
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         times.push_back(duration);
         if times.len() > self.max_samples {
             times.pop_front();
@@ -311,7 +320,10 @@ impl LoadMonitor {
     }
 
     fn get_average_wait_time(&self) -> Option<std::time::Duration> {
-        let times = self.connection_wait_times.lock().unwrap_or_else(|e| e.into_inner());
+        let times = self
+            .connection_wait_times
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         if times.is_empty() {
             return None;
         }
@@ -345,7 +357,10 @@ impl DynamicPoolManager {
     }
 
     pub fn get_config(&self) -> PoolConfig {
-        self.current_config.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.current_config
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     pub fn record_connection_wait(&self, duration: std::time::Duration) {
@@ -353,7 +368,10 @@ impl DynamicPoolManager {
     }
 
     pub fn adjust_pool_size(&self) -> Option<PoolConfig> {
-        let mut config = self.current_config.lock().unwrap_or_else(|e| e.into_inner());
+        let mut config = self
+            .current_config
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         if self.load_monitor.should_increase_pool() && config.max_connections < 50 {
             // Increase pool size gradually

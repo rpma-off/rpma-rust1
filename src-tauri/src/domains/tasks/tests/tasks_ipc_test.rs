@@ -44,8 +44,8 @@ async fn test_task_create_happy_path_returns_task_with_id() {
     let state = build_test_app_state().await;
     state.session_store.set(make_test_session(UserRole::Admin));
 
-    let ctx = resolve_request_context(&state, None, &None)
-        .expect("context should resolve for admin");
+    let ctx =
+        resolve_request_context(&state, None, &None).expect("context should resolve for admin");
 
     let result = state
         .task_service
@@ -55,13 +55,18 @@ async fn test_task_create_happy_path_returns_task_with_id() {
     assert!(result.is_ok(), "create_task_async failed: {:?}", result);
     let task = result.unwrap();
     assert!(!task.id.is_empty(), "task id should not be empty");
-    assert!(!task.task_number.is_empty(), "task number should be generated");
+    assert!(
+        !task.task_number.is_empty(),
+        "task number should be generated"
+    );
 }
 
 #[tokio::test]
 async fn test_task_get_authenticated_returns_none_for_unknown_id() {
     let state = build_test_app_state().await;
-    state.session_store.set(make_test_session(UserRole::Technician));
+    state
+        .session_store
+        .set(make_test_session(UserRole::Technician));
 
     let ctx = resolve_request_context(&state, None, &None).expect("context resolve");
 
@@ -70,7 +75,10 @@ async fn test_task_get_authenticated_returns_none_for_unknown_id() {
         .get_task_async("non-existent-id-xyz")
         .await;
 
-    assert!(result.is_ok(), "get_task_async should not error on missing id");
+    assert!(
+        result.is_ok(),
+        "get_task_async should not error on missing id"
+    );
     assert!(result.unwrap().is_none(), "unknown id should return None");
     let _ = ctx; // context was resolved correctly
 }
@@ -126,7 +134,9 @@ async fn test_task_admin_only_command_rejects_viewer_session() {
 #[tokio::test]
 async fn test_task_admin_only_command_rejects_technician_session() {
     let state = build_test_app_state().await;
-    state.session_store.set(make_test_session(UserRole::Technician));
+    state
+        .session_store
+        .set(make_test_session(UserRole::Technician));
 
     let result = resolve_request_context(&state, Some(UserRole::Admin), &None);
 

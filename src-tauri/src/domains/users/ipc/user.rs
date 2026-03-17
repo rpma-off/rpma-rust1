@@ -4,8 +4,8 @@ use crate::domains::users::application::{
     CreateUserRequest, UpdateUserRequest, UserAction, UserResponse,
 };
 use crate::domains::users::{UsersCommand, UsersDomainResponse, UsersFacade, UsersServices};
-use crate::shared::app_state::AppState;
 use crate::resolve_context;
+use crate::shared::app_state::AppState;
 use crate::shared::ipc::{ApiResponse, AppError};
 use serde::Deserialize;
 use tracing::{debug, info, instrument};

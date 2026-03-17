@@ -16,23 +16,6 @@ pub struct InventoryTransactionRepository {
 }
 
 impl IInventoryTransactionRepository for InventoryTransactionRepository {
-    fn insert(
-        &self,
-        tx: &rusqlite::Transaction<'_>,
-        transaction: &InventoryTransaction,
-    ) -> Result<(), String> {
-        self.insert(tx, transaction)
-    }
-
-    fn references_exist_batch(
-        &self,
-        tx: &rusqlite::Transaction<'_>,
-        reference_type: &str,
-        reference_numbers: &[String],
-    ) -> Result<HashSet<String>, String> {
-        self.references_exist_batch(tx, reference_type, reference_numbers)
-    }
-
     fn upsert_intervention_consumptions(
         &self,
         reference_type: &str,
@@ -65,7 +48,6 @@ impl IInventoryTransactionRepository for InventoryTransactionRepository {
 }
 
 impl InventoryTransactionRepository {
-
     /// TODO: document
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }

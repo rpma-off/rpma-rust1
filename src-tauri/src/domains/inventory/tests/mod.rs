@@ -61,8 +61,8 @@ fn update_stock_validates_invariants() {
         batch_number: None,
         storage_location: Some("Test Shelf".to_string()),
         warehouse_id: None,
-    is_active: None,
-    is_discontinued: None,
+        is_active: None,
+        is_discontinued: None,
     };
 
     let material = material_service
@@ -78,12 +78,15 @@ fn update_stock_validates_invariants() {
         })
         .expect("seed stock");
 
-    let result = inventory_service.update_stock(UpdateStockRequest {
-        material_id: material.id.clone(),
-        quantity_change: -10.0,
-        reason: "Overdraw".to_string(),
-        recorded_by: Some("test_user".to_string()),
-    }, &crate::shared::contracts::auth::UserRole::Admin);
+    let result = inventory_service.update_stock(
+        UpdateStockRequest {
+            material_id: material.id.clone(),
+            quantity_change: -10.0,
+            reason: "Overdraw".to_string(),
+            recorded_by: Some("test_user".to_string()),
+        },
+        &crate::shared::contracts::auth::UserRole::Admin,
+    );
 
     assert!(result.is_err());
 }

@@ -1,9 +1,11 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use rusqlite::params;
+use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::notifications::models::{NotificationChannel, NotificationTemplate, NotificationType};
+use crate::domains::notifications::models::{
+    NotificationChannel, NotificationTemplate, NotificationType,
+};
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 
@@ -62,7 +64,15 @@ impl NotificationTemplateQuery {
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
         let sort_by = crate::shared::repositories::base::validate_sort_column(
             self.sort_by.as_deref().unwrap_or("created_at"),
-            &["created_at", "updated_at", "name", "message_type", "channel", "category", "is_active"],
+            &[
+                "created_at",
+                "updated_at",
+                "name",
+                "message_type",
+                "channel",
+                "category",
+                "is_active",
+            ],
         )?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
@@ -84,11 +94,20 @@ pub struct NotificationTemplateRepository {
 
 impl NotificationTemplateRepository {
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
-        Self { db, cache, cache_key_builder: CacheKeyBuilder::new("notification_template") }
+        Self {
+            db,
+            cache,
+            cache_key_builder: CacheKeyBuilder::new("notification_template"),
+        }
     }
 
-    pub async fn find_by_type(&self, notification_type: NotificationType) -> RepoResult<Vec<NotificationTemplate>> {
-        let cache_key = self.cache_key_builder.list(&["type", &notification_type.to_string()]);
+    pub async fn find_by_type(
+        &self,
+        notification_type: NotificationType,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
+        let cache_key = self
+            .cache_key_builder
+            .list(&["type", &notification_type.to_string()]);
         if let Some(t) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(t);
         }
@@ -102,8 +121,13 @@ impl NotificationTemplateRepository {
         Ok(templates)
     }
 
-    pub async fn find_by_channel(&self, channel: NotificationChannel) -> RepoResult<Vec<NotificationTemplate>> {
-        let cache_key = self.cache_key_builder.list(&["channel", &channel.to_string()]);
+    pub async fn find_by_channel(
+        &self,
+        channel: NotificationChannel,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
+        let cache_key = self
+            .cache_key_builder
+            .list(&["channel", &channel.to_string()]);
         if let Some(t) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(t);
         }
@@ -122,7 +146,8 @@ impl NotificationTemplateRepository {
         if let Some(t) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(t);
         }
-        let templates = self.db
+        let templates = self
+            .db
             .query_as::<NotificationTemplate>(
                 "SELECT * FROM message_templates WHERE is_active = 1 ORDER BY name ASC LIMIT 500",
                 [],
@@ -132,12 +157,16 @@ impl NotificationTemplateRepository {
         Ok(templates)
     }
 
-    pub async fn find_by_category(&self, category: String) -> RepoResult<Vec<NotificationTemplate>> {
+    pub async fn find_by_category(
+        &self,
+        category: String,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
         let cache_key = self.cache_key_builder.list(&["category", &category]);
         if let Some(t) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(t);
         }
-        let templates = self.db
+        let templates = self
+            .db
             .query_as::<NotificationTemplate>(
                 "SELECT * FROM message_templates WHERE category = ? ORDER BY name ASC LIMIT 500",
                 params![category],
@@ -150,30 +179,46 @@ impl NotificationTemplateRepository {
     pub async fn activate(&self, template_id: String) -> RepoResult<NotificationTemplate> {
         let now = chrono::Utc::now().timestamp_millis();
         self.db
-            .execute("UPDATE message_templates SET is_active = 1, updated_at = ? WHERE id = ?", params![now, template_id])
+            .execute(
+                "UPDATE message_templates SET is_active = 1, updated_at = ? WHERE id = ?",
+                params![now, template_id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to activate: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&template_id));
         self.cache.clear();
-        self.find_by_id(template_id).await?.ok_or_else(|| RepoError::NotFound("Template not found".to_string()))
+        self.find_by_id(template_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Template not found".to_string()))
     }
 
     pub async fn deactivate(&self, template_id: String) -> RepoResult<NotificationTemplate> {
         let now = chrono::Utc::now().timestamp_millis();
         self.db
-            .execute("UPDATE message_templates SET is_active = 0, updated_at = ? WHERE id = ?", params![now, template_id])
+            .execute(
+                "UPDATE message_templates SET is_active = 0, updated_at = ? WHERE id = ?",
+                params![now, template_id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to deactivate: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&template_id));
         self.cache.clear();
-        self.find_by_id(template_id).await?.ok_or_else(|| RepoError::NotFound("Template not found".to_string()))
+        self.find_by_id(template_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Template not found".to_string()))
     }
 
-    pub async fn search(&self, query: NotificationTemplateQuery) -> RepoResult<Vec<NotificationTemplate>> {
+    pub async fn search(
+        &self,
+        query: NotificationTemplateQuery,
+    ) -> RepoResult<Vec<NotificationTemplate>> {
         let (where_clause, where_params) = query.build_where_clause();
-        let order_by = query.build_order_by_clause().unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
+        let order_by = query
+            .build_order_by_clause()
+            .unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
         let limit_offset = query.build_limit_offset();
         let sql = format!(
             "SELECT * FROM message_templates {} {} {}",
-            where_clause, order_by,
+            where_clause,
+            order_by,
             if let Some((limit, offset)) = limit_offset {
                 match offset {
                     Some(offset) => format!("LIMIT {} OFFSET {}", limit, offset),
@@ -190,7 +235,10 @@ impl NotificationTemplateRepository {
 
     pub async fn count(&self, query: NotificationTemplateQuery) -> RepoResult<i64> {
         let (where_clause, where_params) = query.build_where_clause();
-        let sql = format!("SELECT COUNT(*) as count FROM message_templates {}", where_clause);
+        let sql = format!(
+            "SELECT COUNT(*) as count FROM message_templates {}",
+            where_clause
+        );
         self.db
             .query_single_value::<i64>(&sql, rusqlite::params_from_iter(where_params))
             .map_err(|e| RepoError::Database(format!("Failed to count: {}", e)))
@@ -208,8 +256,12 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
         if let Some(t) = self.cache.get::<NotificationTemplate>(&cache_key) {
             return Ok(Some(t));
         }
-        let template = self.db
-            .query_single_as::<NotificationTemplate>("SELECT * FROM message_templates WHERE id = ?", params![id])
+        let template = self
+            .db
+            .query_single_as::<NotificationTemplate>(
+                "SELECT * FROM message_templates WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to find template: {}", e)))?;
         if let Some(ref t) = template {
             self.cache.set(&cache_key, t.clone(), ttl::LONG);
@@ -222,7 +274,8 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
         if let Some(t) = self.cache.get::<Vec<NotificationTemplate>>(&cache_key) {
             return Ok(t);
         }
-        let templates = self.db
+        let templates = self
+            .db
             .query_as::<NotificationTemplate>(
                 "SELECT * FROM message_templates ORDER BY created_at DESC LIMIT 1000",
                 [],
@@ -250,11 +303,14 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
         }
         self.cache.remove(&self.cache_key_builder.id(&entity.id));
         self.cache.clear();
-        self.find_by_id(entity.id).await?.ok_or_else(|| RepoError::NotFound("Template not found after save".to_string()))
+        self.find_by_id(entity.id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Template not found after save".to_string()))
     }
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
-        let result = self.db
+        let result = self
+            .db
             .execute("DELETE FROM message_templates WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to delete template: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&id));
@@ -263,8 +319,12 @@ impl Repository<NotificationTemplate, String> for NotificationTemplateRepository
     }
 
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
-        let count = self.db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM message_templates WHERE id = ?", params![id])
+        let count = self
+            .db
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM message_templates WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to check existence: {}", e)))?;
         Ok(count > 0)
     }

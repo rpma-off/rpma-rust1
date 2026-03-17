@@ -5,16 +5,17 @@ use ts_rs::TS;
 
 // Import models from canonical domain paths
 use rpma_ppf_intervention::domains::calendar::models::{
-    CalendarDateRange, CalendarFilter, CalendarTask, CalendarTaskPriority, CalendarTaskStatus,
-    CalendarEvent, CreateEventInput, EventParticipant, EventStatus, EventType, ParticipantStatus,
-    UpdateEventInput, ConflictDetection,
+    CalendarDateRange, CalendarEvent, CalendarFilter, CalendarTask, CalendarTaskPriority,
+    CalendarTaskStatus, ConflictDetection, CreateEventInput, EventParticipant, EventStatus,
+    EventType, ParticipantStatus, UpdateEventInput,
 };
 use rpma_ppf_intervention::domains::clients::client_handler::{
     Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
     CreateClientRequest, CustomerType, UpdateClientRequest,
 };
 use rpma_ppf_intervention::domains::documents::models::{
-    InterventionReport, InterventionReportResult, Photo, PhotoCategory, PhotoType, ReportCapabilities,
+    InterventionReport, InterventionReportResult, Photo, PhotoCategory, PhotoType,
+    ReportCapabilities,
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
     BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
@@ -34,11 +35,10 @@ use rpma_ppf_intervention::domains::inventory::domain::models::material_ts::{
 };
 use rpma_ppf_intervention::domains::notifications::models::{
     Message, MessageListResponse, MessagePriority, MessageQuery, MessageStatus, MessageTemplate,
-    MessageTemplateRequest, MessageType, NotificationPreferences, SendMessageRequest,
+    MessageTemplateRequest, MessageType, Notification, NotificationChannel, NotificationConfig,
+    NotificationMessage, NotificationPreferences, NotificationPriority, NotificationStatus,
+    NotificationTemplate, NotificationType, SendMessageRequest, TemplateVariables,
     UpdateNotificationPreferencesRequest,
-    Notification, NotificationChannel, NotificationConfig, NotificationMessage,
-    NotificationPriority, NotificationStatus, NotificationTemplate, NotificationType,
-    TemplateVariables,
 };
 use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
     AttachmentType, ConvertQuoteToTaskResponse, CreateQuoteAttachmentRequest,
@@ -47,16 +47,13 @@ use rpma_ppf_intervention::domains::quotes::domain::models::quote::{
     TaskCreatedInfo, UpdateQuoteAttachmentRequest, UpdateQuoteItemRequest, UpdateQuoteRequest,
 };
 use rpma_ppf_intervention::domains::settings::{
-    AppSettings, AppearanceSettings, BackupSettings, DataManagementSettings, DatabaseSettings,
-    DiagnosticSettings, GeneralSettings, IntegrationSettings, NotificationSettings,
-    PerformanceSettings, SecuritySettings, StorageSettings, SystemConfiguration,
+    AppSettings, AppearanceSettings, BackupSettings, CreateOrganizationRequest,
+    DataManagementSettings, DatabaseSettings, DiagnosticSettings, GeneralSettings,
+    IntegrationSettings, NotificationSettings, OnboardingData, OnboardingStatus, Organization,
+    OrganizationSetting, PerformanceSettings, SecuritySettings, StorageSettings,
+    SystemConfiguration, UpdateOrganizationRequest, UpdateOrganizationSettingsRequest,
     UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
     UserProfileSettings, UserSecuritySettings, UserSettings,
-    CreateOrganizationRequest, OnboardingData, OnboardingStatus, Organization, OrganizationSetting,
-    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest,
-};
-use rpma_ppf_intervention::shared::contracts::sync::{
-    EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
 };
 use rpma_ppf_intervention::domains::tasks::domain::models::status::{
     StatusDistribution, StatusTransitionRequest,
@@ -72,6 +69,9 @@ use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
 };
 use rpma_ppf_intervention::shared::contracts::prediction::CompletionTimePrediction;
+use rpma_ppf_intervention::shared::contracts::sync::{
+    EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
+};
 
 use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
 
@@ -638,8 +638,9 @@ fn main() {
             .expect("Failed to export TechnicianInterventionStats type"),
     );
     type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&InterventionStats::export_to_string().expect("Failed to export InterventionStats type"));
+    type_definitions.push_str(
+        &InterventionStats::export_to_string().expect("Failed to export InterventionStats type"),
+    );
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &InterventionManagementResponse::export_to_string()

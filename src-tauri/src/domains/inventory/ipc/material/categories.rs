@@ -27,7 +27,10 @@ pub async fn material_create_category(
     match service.create_material_category(request, Some(ctx.user_id().to_string())) {
         Ok(category) => {
             info!(category_id = %category.id, "Material category created");
-            Ok(ApiResponse::success(category).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(category)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to create material category");
@@ -55,7 +58,8 @@ pub async fn material_list_categories(
 
     match service.list_material_categories(active_only.unwrap_or(true), limit, offset) {
         Ok(categories) => {
-            Ok(ApiResponse::success(categories).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(categories)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list material categories");

@@ -89,8 +89,7 @@ impl ClientRepoQuery {
     }
 
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by =
-            Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
+        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
         let sort_order = match self.sort_order.as_deref() {
             Some(order) if order.eq_ignore_ascii_case("asc") => "ASC",
             Some(order) if order.eq_ignore_ascii_case("desc") => "DESC",
@@ -193,7 +192,10 @@ impl IClientRepository for ClientRepository {
         if let Some(client) = self.cache.get::<Client>(&cache_key) {
             return Ok(Some(client));
         }
-        let sql = format!("{} WHERE email = ? AND deleted_at IS NULL LIMIT 1", CLIENT_SELECT);
+        let sql = format!(
+            "{} WHERE email = ? AND deleted_at IS NULL LIMIT 1",
+            CLIENT_SELECT
+        );
         let client = self
             .db
             .query_single_as::<Client>(&sql, params![email])
@@ -368,13 +370,17 @@ impl IClientRepository for ClientRepository {
                 params![start_of_month],
             )
             .unwrap_or(0);
-        let conn = self.db.get_connection()
+        let conn = self
+            .db
+            .get_connection()
             .map_err(|e| RepoError::Database(format!("Failed to get connection: {}", e)))?;
         let mut stmt = conn
             .prepare("SELECT customer_type, COUNT(*) as count FROM clients WHERE deleted_at IS NULL GROUP BY customer_type")
             .map_err(|e| RepoError::Database(format!("Failed to prepare statement: {}", e)))?;
         let type_stats: Vec<(String, i32)> = stmt
-            .query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?)))
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+            })
             .map_err(|e| RepoError::Database(format!("Failed to execute query: {}", e)))?
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| RepoError::Database(format!("Failed to collect results: {}", e)))?;
@@ -485,11 +491,22 @@ impl Repository<Client, String> for ClientRepository {
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                         (unixepoch() * 1000), (unixepoch() * 1000), ?)"#,
                     params![
-                        entity.id, entity.name, entity.email, entity.phone,
-                        entity.customer_type.to_string(), entity.address_street, entity.address_city,
-                        entity.address_state, entity.address_zip, entity.address_country,
-                        entity.tax_id, entity.company_name, entity.contact_person,
-                        entity.notes, entity.tags, entity.created_by,
+                        entity.id,
+                        entity.name,
+                        entity.email,
+                        entity.phone,
+                        entity.customer_type.to_string(),
+                        entity.address_street,
+                        entity.address_city,
+                        entity.address_state,
+                        entity.address_zip,
+                        entity.address_country,
+                        entity.tax_id,
+                        entity.company_name,
+                        entity.contact_person,
+                        entity.notes,
+                        entity.tags,
+                        entity.created_by,
                     ],
                 )
                 .map_err(|e| RepoError::Database(format!("Failed to create client: {}", e)));

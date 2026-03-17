@@ -8,10 +8,8 @@
 //!
 //! Also tests a real happy-path `create_material` against an in-memory DB.
 
-use crate::domains::inventory::infrastructure::material::{
-    CreateMaterialRequest, MaterialService,
-};
 use crate::domains::inventory::domain::models::material::{MaterialType, UnitOfMeasure};
+use crate::domains::inventory::infrastructure::material::{CreateMaterialRequest, MaterialService};
 use crate::shared::context::session_resolver::resolve_request_context;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
@@ -60,8 +58,10 @@ fn test_material_create_happy_path_returns_material_with_id() {
     let test_db = TestDatabase::new().expect("test db");
     let material_service = MaterialService::new((*test_db.db()).clone());
 
-    let result = material_service
-        .create_material(valid_material_request("IPC-MAT-001"), Some("test_user".to_string()));
+    let result = material_service.create_material(
+        valid_material_request("IPC-MAT-001"),
+        Some("test_user".to_string()),
+    );
 
     assert!(result.is_ok(), "create_material failed: {:?}", result);
     let material = result.unwrap();
@@ -120,13 +120,22 @@ fn test_material_create_empty_sku_auto_generates_sku() {
     let test_db = TestDatabase::new().expect("test db");
     let material_service = MaterialService::new((*test_db.db()).clone());
 
-    let result = material_service
-        .create_material(valid_material_request(""), Some("test_user".to_string()));
+    let result =
+        material_service.create_material(valid_material_request(""), Some("test_user".to_string()));
 
-    assert!(result.is_ok(), "empty SKU should be auto-generated, not rejected");
+    assert!(
+        result.is_ok(),
+        "empty SKU should be auto-generated, not rejected"
+    );
     let material = result.unwrap();
-    assert!(!material.sku.is_empty(), "auto-generated SKU must not be empty");
-    assert!(material.sku.starts_with("SKU-"), "auto-generated SKU must start with 'SKU-'");
+    assert!(
+        !material.sku.is_empty(),
+        "auto-generated SKU must not be empty"
+    );
+    assert!(
+        material.sku.starts_with("SKU-"),
+        "auto-generated SKU must start with 'SKU-'"
+    );
 }
 
 #[test]
@@ -149,12 +158,17 @@ fn test_material_create_duplicate_sku_returns_error() {
 
     // First insert must succeed.
     material_service
-        .create_material(valid_material_request("IPC-DUP-001"), Some("test_user".to_string()))
+        .create_material(
+            valid_material_request("IPC-DUP-001"),
+            Some("test_user".to_string()),
+        )
         .expect("first insert");
 
     // Second insert with same SKU must fail.
-    let result = material_service
-        .create_material(valid_material_request("IPC-DUP-001"), Some("test_user".to_string()));
+    let result = material_service.create_material(
+        valid_material_request("IPC-DUP-001"),
+        Some("test_user".to_string()),
+    );
 
     assert!(result.is_err(), "duplicate SKU should be rejected");
 }

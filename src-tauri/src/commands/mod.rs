@@ -16,8 +16,8 @@ pub mod user {
     };
 }
 pub mod client {
-    pub use crate::domains::clients::client_handler::ClientCrudRequest;
     pub use crate::domains::clients::client_handler::client_crud;
+    pub use crate::domains::clients::client_handler::ClientCrudRequest;
 }
 pub mod auth {
     use crate::shared::app_state::AppState;
@@ -36,8 +36,8 @@ pub mod auth {
         pub correlation_id: Option<String>,
     }
 
-/// ADR-018: Thin IPC layer
-#[tracing::instrument(skip(_state))]
+    /// ADR-018: Thin IPC layer
+    #[tracing::instrument(skip(_state))]
     #[tauri::command]
     pub async fn auth_refresh_token(
         _request: RefreshTokenRequest,
@@ -67,12 +67,12 @@ pub mod quote {
     pub use crate::domains::quotes::ipc::quote::quote_create;
 }
 
+use crate::resolve_context;
 pub use crate::shared::app_state::{AppState, AppStateType};
 pub use crate::shared::contracts::auth::UserRole;
 pub use crate::shared::ipc::response::ApiResponse;
 pub use correlation_helpers::*;
 pub use errors::{AppError, AppResult};
-use crate::resolve_context;
 
 // Re-export system commands
 #[allow(unused_imports)]
@@ -168,10 +168,7 @@ pub enum ClientResponse {
 }
 
 /// Internal user CRUD handler
-pub async fn user_crud(
-    action: UserAction,
-    state: AppState<'_>,
-) -> Result<UserResponse, AppError> {
+pub async fn user_crud(action: UserAction, state: AppState<'_>) -> Result<UserResponse, AppError> {
     let request = crate::domains::users::ipc::user::UserCrudRequest {
         action,
         correlation_id: None,

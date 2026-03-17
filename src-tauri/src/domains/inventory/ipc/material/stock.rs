@@ -34,7 +34,10 @@ pub async fn material_update_stock(
     match service.update_stock(adjusted_request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock updated");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(material)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to update material stock");
@@ -66,7 +69,10 @@ pub async fn material_adjust_stock(
     match service.update_stock(adjusted_request) {
         Ok(material) => {
             info!(material_id = %material.id, "Material stock adjusted");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(material)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to adjust material stock");
@@ -98,7 +104,8 @@ pub async fn material_record_consumption(
     match service.record_consumption(adjusted_request, &ctx.auth.role) {
         Ok(consumption) => {
             info!(consumption_id = %consumption.id, "Material consumption recorded");
-            Ok(ApiResponse::success(consumption).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(consumption)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to record material consumption");
@@ -123,9 +130,8 @@ pub async fn material_get_intervention_consumption(
     let service = state.material_service.clone();
 
     match service.get_intervention_consumption(&intervention_id) {
-        Ok(consumptions) => Ok(
-            ApiResponse::success(consumptions).with_correlation_id(Some(ctx.correlation_id.clone()))
-        ),
+        Ok(consumptions) => Ok(ApiResponse::success(consumptions)
+            .with_correlation_id(Some(ctx.correlation_id.clone()))),
         Err(e) => {
             error!(error = %e, intervention_id = %intervention_id, "Failed to get intervention consumption");
             Err(e.into_app_error())
@@ -205,7 +211,8 @@ pub async fn material_create_inventory_transaction(
     match service.create_inventory_transaction(request, ctx.user_id()) {
         Ok(transaction) => {
             info!(transaction_id = %transaction.id, "Inventory transaction created");
-            Ok(ApiResponse::success(transaction).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(transaction)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to create inventory transaction");
@@ -232,9 +239,8 @@ pub async fn material_get_transaction_history(
     let service = state.material_service.clone();
 
     match service.list_inventory_transactions_by_material(&material_id, None, limit, offset) {
-        Ok(transactions) => Ok(
-            ApiResponse::success(transactions).with_correlation_id(Some(ctx.correlation_id.clone()))
-        ),
+        Ok(transactions) => Ok(ApiResponse::success(transactions)
+            .with_correlation_id(Some(ctx.correlation_id.clone()))),
         Err(e) => {
             error!(error = %e, material_id = %material_id, "Failed to get transaction history");
             Err(e.into_app_error())

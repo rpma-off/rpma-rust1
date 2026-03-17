@@ -153,5 +153,6 @@ pub async fn validate_task_assignment_change(
         request.task_id
     );
 
-    Ok(ApiResponse::success(validation_result).with_correlation_id(Some(ctx.correlation_id.clone())))
+    Ok(ApiResponse::success(validation_result)
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
 }

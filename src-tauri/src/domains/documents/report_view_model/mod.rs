@@ -250,7 +250,7 @@ pub fn build_intervention_report_view_model(
     use formatters::{
         film_type_label, intervention_status_badge, intervention_status_label,
         intervention_type_label, lighting_label, location_label, timestamp_string_display,
-        weather_label, NOT_EVALUATED, NO_DATA, NO_OBSERVATION, NOT_SPECIFIED,
+        weather_label, NOT_EVALUATED, NOT_SPECIFIED, NO_DATA, NO_OBSERVATION,
     };
 
     let now = Utc::now();
@@ -702,10 +702,7 @@ mod tests {
             vm.customer_validation.satisfaction,
             formatters::NOT_EVALUATED
         );
-        assert_eq!(
-            vm.quality.global_quality_score,
-            formatters::NOT_EVALUATED
-        );
+        assert_eq!(vm.quality.global_quality_score, formatters::NOT_EVALUATED);
         assert_eq!(vm.work_conditions.weather, formatters::NOT_SPECIFIED);
         assert_eq!(vm.materials.film_type, formatters::NOT_SPECIFIED);
         assert_eq!(vm.summary.estimated_duration, formatters::NOT_SPECIFIED);
@@ -753,8 +750,7 @@ mod tests {
             synced: false,
             last_synced_at: None,
         };
-        let vm =
-            build_intervention_report_view_model(&intervention, &[], &[], &[], Some(&client));
+        let vm = build_intervention_report_view_model(&intervention, &[], &[], &[], Some(&client));
 
         assert_eq!(vm.client.name, "Entreprise ABC");
         assert_eq!(vm.client.email, "abc@corp.com");
@@ -786,8 +782,7 @@ mod tests {
         let mut s3 = InterventionStep::new("i".into(), 3, "S3".into(), StepType::Installation);
         s3.step_status = StepStatus::Completed;
 
-        let vm =
-            build_intervention_report_view_model(&intervention, &[s1, s2, s3], &[], &[], None);
+        let vm = build_intervention_report_view_model(&intervention, &[s1, s2, s3], &[], &[], None);
         assert!((vm.summary.completion_percentage - 100.0).abs() < 0.01);
     }
 

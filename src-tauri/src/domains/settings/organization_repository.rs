@@ -1,15 +1,15 @@
 //! Organization repository for database operations
 
+use rusqlite::params;
 /// ADR-005: Repository Pattern
 use std::sync::Arc;
-use rusqlite::params;
 use tracing::{debug, error, info};
 
+use super::models::*;
+use crate::commands::AppError;
 use crate::db::Database;
 use crate::db::FromSqlRow;
-use crate::commands::AppError;
 use crate::domains::users::domain::models::user::UserRole;
-use super::models::*;
 
 pub struct OrganizationRepository {
     db: Arc<Database>,

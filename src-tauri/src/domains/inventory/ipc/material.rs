@@ -19,4 +19,3 @@ pub use crud::*;
 pub use stats::*;
 pub use stock::*;
 pub use suppliers::*;
-
