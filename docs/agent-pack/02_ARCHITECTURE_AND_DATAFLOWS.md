@@ -13,46 +13,139 @@ RPMA v2 follows a strict four-layer architecture (**ADR-001**) to ensure separat
 
 ## Layered Architecture (Backend)
 
-Each domain in `src-tauri/src/domains/` is structured as:
+Each domain in `src-tauri/src/domains/` follows this structure:
 
-1. **IPC Layer** (`ipc/`)
-   - Thin handlers with `#[tauri::command]`.
-   - Must call `resolve_context!` first (**ADR-006**).
-   - Delegates to Application layer.
+### 1. IPC Layer (`ipc/`)
+- **Entry points** for Tauri commands with `#[tauri::command]`.
+- **Thin handlers** — must call `resolve_context!` first (**ADR-006**, **ADR-018**).
+- **Delegates** to Application layer; never contains business logic.
+- **Location**: `domains/*/ipc/`
 
-2. **Application Layer** (`application/`)
-   - Orchestration, use cases, and transaction boundaries.
-   - Enforces RBAC via `RequestContext`.
-   - Coordinates services and repositories.
+```rust
+#[tauri::command]
+pub async fn task_crud(
+    state: AppState<'_>,
+    request: TaskCrudRequest,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<Task>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);// Auth + RBAC
+    let service = state.task_service.clone();
+    service.handle_crud(request, ctx).await
+}
+```
 
-3. **Domain Layer** (`domain/`)
-   - Pure business logic, entities, and value objects.
-   - **Zero dependencies** on other layers or frameworks.
-   - Implementation of domain-specific validation.
+### 2. Application Layer (`application/`)
+- **Orchestration** and use cases.
+- **RBAC enforcement** via `RequestContext`.
+- **Coordinates** services and repositories.
+- **Location**: `domains/*/application/`
 
-4. **Infrastructure Layer** (`infrastructure/`)
-   - Repository implementations (**ADR-005**) and external adapters.
-   - SQL queries using SQLite.
+### 3. Domain Layer (`domain/`)
+- **Pure business logic**, entities, value objects.
+- **Zero dependencies** on other layers or frameworks.
+- **Implementation** of domain-specific validation.
+- **Location**: `domains/*/domain/`
 
-## Data Flow: Example (Task Creation)
+### 4. Infrastructure Layer (`infrastructure/`)
+- **Repository implementations** (**ADR-005**).
+- **SQL queries** using SQLite.
+- **Location**: `domains/*/infrastructure/`
 
-1. **Frontend**: `TaskForm.tsx` collects data.
-2. **Frontend IPC**: `taskIpc.create(data)` (in `frontend/src/domains/tasks/ipc/`) calls `invoke`.
-3. **Backend IPC**: `tasks::ipc::task::task_crud` resolves context and calls the facade/service.
-4. **Backend Application**: `TaskService::create_task` validates and calls the repository.
-5. **Backend Infrastructure**: `SqliteTaskRepository` inserts into SQLite.
-6. **Backend Event Bus**: `TaskCreated` event published to `EventBus` (**ADR-016**).
-7. **Frontend Response**: IPC returns `ApiResponse<Task>`; TanStack Query invalidates 'tasks' pattern.
+## Layer Compliance Exceptions
+
+| Domain | Structure | Notes |
+|--------|-----------|-------|
+| calendar | `calendar_handler/`, `models.rs` | Flat handler pattern |
+| clients | `client_handler/` | Minimal structure |
+| documents | Flat `.rs` files | Handlers at root |
+| notifications | `notification_handler/` | Handler pattern |
+| settings | Flat `.rs` files | Handlers at root |
+
+## Service Builder Pattern (**ADR-004**)
+
+All services are wired centrally in `src-tauri/src/service_builder.rs`:
+
+```rust
+pub fn build_services(db: Arc<Database>, event_bus: Arc<dyn DomainEventBus>) -> Services {
+    // Repositories
+    let task_repo = Arc::new(SqliteTaskRepository::new(db.clone()));
+    // ...other repos
+
+    // Services (dependency order matters)
+    let task_service = Arc::new(TaskService::new(task_repo.clone(), event_bus.clone()));
+    // ...other services
+
+    Services { task_service, ... }
+}
+```
+
+## Facade Pattern
+
+Domains expose a simplified public API via a Facade:
+
+```rust
+pub struct TasksFacade {
+    task_service: Arc<TaskService>,
+    event_bus: Arc<dyn DomainEventBus>,
+}
+// Facade public methods wrap internal service calls
+```
+
+## Data Flow: Task Creation Example
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ FRONTEND                                                                     │
+│ TaskForm.tsx → taskIpc.create(data) → invoke('task_crud', {...})           │
+└────────────────────────────────────┬────────────────────────────────────────┘│                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ IPC LAYER                                                                    │
+│ resolve_context!() → validates session, checks RBAC → RequestContext       │
+│ task_crud() delegates to TaskService                                        │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ APPLICATION LAYER                                                            │
+│ TaskService.handle_crud(request, ctx)                                        │
+│   → validates business rules                                                │
+│   → calls repository                                                        │
+│   → publishes TaskCreated event                                              │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ INFRASTRUCTURE LAYER                                                         │
+│ SqliteTaskRepository.insert(task) → INSERT INTO tasks (...)                 │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ EVENT BUS                                                                    │
+│ DomainEvent::TaskCreated → subscribers (audit, notifications)                │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Core Communication Patterns
 
-- **Synchronous**: Direct IPC calls from Frontend to Backend.
-- **Asynchronous (Cross-Domain)**: In-memory `EventBus` (**ADR-016**) using domain events (**ADR-017**).
-- **Correlation IDs**: `correlation_id` passed in every request for tracing (**ADR-020**).
+| Pattern | Mechanism | Use Case |
+|---------|-----------|----------|
+| Synchronous | Direct IPC via `invoke()` | CRUD operations, queries |
+| Asynchronous | In-memory `EventBus` | Cross-domain reactions (e.g., inventory deduction on intervention finalize) |
+| Tracing | `correlation_id` per request | Debugging, audit trails(**ADR-020**) |
 
 ## Dependency Rules
 
-- **Inner layers** cannot depend on **outer layers**.
-- **Domain Layer** is the heart and has no dependencies.
-- **Cross-domain** calls MUST go through `shared/services/cross_domain.rs` or the `EventBus`.
+- **Inner layers cannot depend on outer layers.**
+- **Domain Layer** has zero dependencies.
+- **Cross-domain calls** MUST go through:
+  - `shared/services/cross_domain.rs` (synchronous)
+  - `shared/event_bus/` (asynchronous)
 - Direct imports from another domain's internals are **FORBIDDEN**.
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `src-tauri/src/main.rs` | Command registration via `tauri::generate_handler![]` |
+| `src-tauri/src/service_builder.rs` | Service wiring (ADR-004) |
+| `src-tauri/src/shared/event_bus/bus.rs` | EventBus implementation |
+| `src-tauri/src/shared/services/domain_event.rs` | DomainEvent enum |
+| `src-tauri/src/shared/services/cross_domain.rs` | Cross-domain service access |

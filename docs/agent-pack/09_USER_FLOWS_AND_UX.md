@@ -13,38 +13,164 @@ This guide defines how users interact with RPMA v2 and the standards for UI/UX.
 
 ## Primary User Flows
 
-1. **Scheduling**: Client → Quote → Accepted → Task → Scheduled on Calendar.
-2. **Execution**: Technician Dashboard → View Task → Start Intervention → Progress Steps → Record Materials → Finalize.
-3. **Reporting**: Finalized Intervention → Generate PDF → Send to Client.
-4. **Administration**: Inventory Audit → Adjust Stock → View Consumption Reports.
+### 1. Authentication Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| Login | `/login` | `auth_login` |
+| Session validate | — | `auth_validate_session` |
+| Logout | — | `auth_logout` |
+
+### 2. Client Management Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| List clients | `/clients` | `client_crud` (list) |
+| View client | `/clients/[id]` | `client_crud` (get) |
+| Create client | `/clients/new` | `client_crud` (create) |
+| Edit client | `/clients/[id]/edit` | `client_crud` (update) |
+| Soft delete | — | `client_crud` (delete) |
+
+### 3. Task & Scheduling Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| List tasks | `/schedule`, `/` | `task_crud` (list) |
+| Create task | `/tasks/new` | `task_crud` (create) |
+| View task | `/tasks/[id]` | `task_crud` (get) |
+| Edit task | `/tasks/[id]/edit` | `edit_task` |
+| Delay task | — | `delay_task` |
+| Change status | — | `task_transition_status` |
+
+### 4. Quote to Task Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| Create quote | `/quotes` | `quote_create` |
+| Add items | — | `quote_item_add` |
+| Accept quote | — | `quote_mark_accepted` |
+| Convert to task | — | Auto on accept |
+| Export PDF | — | `quote_export_pdf` |
+
+### 5. Intervention Execution Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| View assigned | `/interventions` | Intervention list |
+| Start intervention | — | `intervention_start` |
+| Progress steps | — | Step advancement |
+| Record materials | — | Material consumption |
+| Finalize | — | `intervention_complete` |
+
+### 6. Inventory Management Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| List materials | `/inventory` | `material_list` |
+| Create material | — | `material_create` |
+| Update stock | — | `material_update_stock` |
+| Dashboard data | — | `inventory_get_dashboard_data` |
+
+### 7. Administration Flow
+| Step | Route | Commands |
+|------|-------|----------|
+| User management | `/users`, `/admin` | `user_crud` |
+| Settings | `/settings` | Settings commands |
+| Trash | `/trash` | `entity_restore`, `entity_hard_delete` |
 
 ## Design System Rules
 
-- **Typography**: Strictly follow `shadcn/ui` hierarchy.
-- **Colors**: Use Tailwind theme variables (`primary`, `destructive`, `muted`, etc.).
-- **Feedback**: Every IPC call must have a loading state (Skeleton or Spinner) and success/error Toasts.
-- **Validation**: Real-time feedback via Zod schemas and hook-form.
+### Typography & Colors
+- **Typography**: `shadcn/ui` hierarchy
+- **Colors**: Tailwind theme variables:
+  - `primary` — Main actions
+  - `secondary` — Secondary actions
+  - `destructive` — Destructive actions
+  - `muted` — Disabled/inactive
+  - `accent` — Highlights
 
-## Interaction Patterns
+### Feedback Patterns
+| State | Implementation |
+|-------|---------------|
+| Loading | Skeleton or Spinner component |
+| Success | Toast notification |
+| Error | Toast with error message from `ApiResponse.error` |
+| Validation | Real-time via Zod schemas + hook-form |
 
-### 1. Modals vs. Sheets
-- **Modals**: For focused creation/editing (e.g., "Add Client").
-- **Sheets**: For context-aware details (e.g., "View Task Details" from calendar).
+### Component Patterns
+| Pattern | Use Case |
+|---------|----------|
+| Modal | Focused creation/editing (e.g., "Add Client") |
+| Sheet | Context-aware details (e.g., "Task Details" from calendar) |
+| Form | `shadcn/ui` Form + react-hook-form + Zod |
+| Table | TanStack Table for data grids |
 
-### 2. Forms
-- Group related fields.
-- Use `Form` component from `shadcn/ui`.
-- Always include a "Cancel" button.
+## Navigation Structure
 
-### 3. Navigation
-- Sidebar for main domains.
-- Breadcrumbs for nested views.
-- Deep linking support via Next.js App Router.
+### Sidebar
+Main navigation via sidebar for primary domains:
+- Dashboard `/`
+- Schedule `/schedule`
+- Clients `/clients`
+- Tasks `/tasks`
+- Quotes `/quotes`
+- Interventions `/interventions`
+- Inventory `/inventory`
+
+### Breadcrumbs
+Nested views include breadcrumbs for context.
+
+### Deep Linking
+Supported via Next.js App Router.
 
 ## Mobile Considerations
-While RPMA is a desktop app, the **Intervention Execution** flow must be usable on tablet devices (touch-friendly buttons, clear progress indicators).
+
+While RPMA is a desktop app, the **Intervention Execution** flow must be usable on tablet devices:
+- Touch-friendly buttons (minimum44px tap targets)
+- Clear progress indicators
+- Large form inputs
 
 ## Accessibility (A11y)
-- All interactive elements must have clear hover/focus states.
-- Support keyboard navigation for all core flows.
-- Maintain a minimum contrast ratio per WCAG standards.
+
+| Requirement | Implementation |
+|-------------|---------------|
+| Hover/focus states | Clear visual indicators |
+| Keyboard navigation | Tab order, Enter/Escape support |
+| Contrast | WCAG AA minimum |
+| Screen readers | ARIA labels on interactive elements |
+
+## Key Routes
+
+| Route | Purpose | Auth Required |
+|-------|---------|---------------|
+| `/` | Calendar Dashboard | Yes |
+| `/login` | Authentication | No |
+| `/signup` | Account creation | No |
+| `/onboarding` | First-time setup | No |
+| `/admin` | Admin panel | Admin |
+| `/bootstrap-admin` | Initial admin setup | No |
+| `/unauthorized` | Access denied | — |
+
+## Error Handling
+
+| Error Type | User Experience |
+|------------|-----------------|
+| Validation | Inline form errors via Zod |
+| Auth failure | Redirect to `/login` |
+| Authorization | Redirect to `/unauthorized` |
+| Network/IPC | Toast with sanitized error message |
+| Not found | Empty state component |
+
+## State Management Patterns
+
+| Data Type | Approach |
+|-----------|----------|
+| Server state | TanStack Query with mutation counters |
+| Global UI state | Zustand (e.g., notification panel, calendar view) |
+| Form state | react-hook-form + Zod validation |
+| Local component state | `useState` for toggles |
+
+## Key UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `Button` | `components/ui/button` | Actions |
+| `Form` | `components/ui/form` | Form handling |
+| `DataTable` | Domain components | Tabular data |
+| `Toast` | `components/ui/toast` | Notifications |
+| `Dialog/Sheet` | `components/ui/dialog` | Modals |
+| `Skeleton` | `components/ui/skeleton` | Loading states |
