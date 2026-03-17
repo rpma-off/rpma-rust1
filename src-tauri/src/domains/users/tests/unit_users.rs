@@ -1,4 +1,4 @@
-use crate::domains::users::application::{CreateUserRequest, UserAction};
+use crate::domains::users::domain::{CreateUserRequest, UserAction};
 use crate::domains::users::UsersFacade;
 
 #[test]

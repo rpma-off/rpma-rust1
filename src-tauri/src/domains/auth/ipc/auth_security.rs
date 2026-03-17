@@ -5,8 +5,8 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::auth::application::auth_security_service::AuthSecurityService;
-use crate::shared::contracts::auth::UserRole;
 use crate::resolve_context;
+use crate::shared::contracts::auth::UserRole;
 use tracing::{error, info, instrument};
 
 /// Construct a per-request [`AuthSecurityService`] from shared application state.

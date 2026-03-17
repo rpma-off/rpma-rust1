@@ -4,7 +4,6 @@
 
 use crate::db::InterventionError;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
-use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::domains::interventions::domain::models::step::StepStatus;
 use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_types::{
@@ -14,6 +13,7 @@ use crate::domains::interventions::infrastructure::intervention_types::{
 use crate::domains::interventions::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
+use crate::domains::tasks::domain::models::task::TaskStatus;
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use chrono::Utc;

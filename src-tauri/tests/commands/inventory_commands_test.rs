@@ -49,8 +49,8 @@ fn test_create_material_request_structure() {
         batch_number: None,
         storage_location: None,
         warehouse_id: None,
-    is_active: None,
-    is_discontinued: None,
+        is_active: None,
+        is_discontinued: None,
     };
 
     assert_eq!(req.sku, "PPF-TEST-001");

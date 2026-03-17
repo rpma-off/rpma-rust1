@@ -35,22 +35,52 @@ mod state_machine_tests {
 
     #[test]
     fn test_validate_transition_valid_returns_ok() {
-        assert!(validate_transition(&InterventionStatus::Pending, &InterventionStatus::InProgress).is_ok());
-        assert!(validate_transition(&InterventionStatus::InProgress, &InterventionStatus::Paused).is_ok());
-        assert!(validate_transition(&InterventionStatus::Paused, &InterventionStatus::Completed).is_ok());
-        assert!(validate_transition(&InterventionStatus::InProgress, &InterventionStatus::Completed).is_ok());
+        assert!(validate_transition(
+            &InterventionStatus::Pending,
+            &InterventionStatus::InProgress
+        )
+        .is_ok());
+        assert!(
+            validate_transition(&InterventionStatus::InProgress, &InterventionStatus::Paused)
+                .is_ok()
+        );
+        assert!(
+            validate_transition(&InterventionStatus::Paused, &InterventionStatus::Completed)
+                .is_ok()
+        );
+        assert!(validate_transition(
+            &InterventionStatus::InProgress,
+            &InterventionStatus::Completed
+        )
+        .is_ok());
     }
 
     #[test]
     fn test_validate_transition_invalid_returns_err() {
-        assert!(validate_transition(&InterventionStatus::Completed, &InterventionStatus::Pending).is_err());
-        assert!(validate_transition(&InterventionStatus::Cancelled, &InterventionStatus::InProgress).is_err());
-        assert!(validate_transition(&InterventionStatus::Pending, &InterventionStatus::Completed).is_err());
+        assert!(
+            validate_transition(&InterventionStatus::Completed, &InterventionStatus::Pending)
+                .is_err()
+        );
+        assert!(validate_transition(
+            &InterventionStatus::Cancelled,
+            &InterventionStatus::InProgress
+        )
+        .is_err());
+        assert!(
+            validate_transition(&InterventionStatus::Pending, &InterventionStatus::Completed)
+                .is_err()
+        );
     }
 
     #[test]
     fn test_validate_transition_same_status_returns_ok() {
-        assert!(validate_transition(&InterventionStatus::InProgress, &InterventionStatus::InProgress).is_ok());
-        assert!(validate_transition(&InterventionStatus::Pending, &InterventionStatus::Pending).is_ok());
+        assert!(validate_transition(
+            &InterventionStatus::InProgress,
+            &InterventionStatus::InProgress
+        )
+        .is_ok());
+        assert!(
+            validate_transition(&InterventionStatus::Pending, &InterventionStatus::Pending).is_ok()
+        );
     }
 }

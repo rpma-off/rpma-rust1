@@ -1,6 +1,6 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use rusqlite::params;
+use std::sync::Arc;
 
 use crate::db::Database;
 use crate::domains::notifications::models::NotificationPreferences;
@@ -45,7 +45,13 @@ impl NotificationPreferencesQuery {
     fn build_order_by_clause(&self) -> Result<String, RepoError> {
         let sort_by = crate::shared::repositories::base::validate_sort_column(
             self.sort_by.as_deref().unwrap_or("created_at"),
-            &["created_at", "updated_at", "user_id", "in_app_enabled", "quiet_hours_enabled"],
+            &[
+                "created_at",
+                "updated_at",
+                "user_id",
+                "in_app_enabled",
+                "quiet_hours_enabled",
+            ],
         )?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
@@ -67,15 +73,23 @@ pub struct NotificationPreferencesRepository {
 
 impl NotificationPreferencesRepository {
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
-        Self { db, cache, cache_key_builder: CacheKeyBuilder::new("notification_preferences") }
+        Self {
+            db,
+            cache,
+            cache_key_builder: CacheKeyBuilder::new("notification_preferences"),
+        }
     }
 
-    pub async fn find_by_user_id(&self, user_id: String) -> RepoResult<Option<NotificationPreferences>> {
+    pub async fn find_by_user_id(
+        &self,
+        user_id: String,
+    ) -> RepoResult<Option<NotificationPreferences>> {
         let cache_key = self.cache_key_builder.id(&user_id);
         if let Some(p) = self.cache.get::<NotificationPreferences>(&cache_key) {
             return Ok(Some(p));
         }
-        let prefs = self.db
+        let prefs = self
+            .db
             .query_single_as::<NotificationPreferences>(
                 "SELECT * FROM notification_preferences WHERE user_id = ?",
                 params![user_id],
@@ -96,53 +110,90 @@ impl NotificationPreferencesRepository {
         Ok(new_prefs)
     }
 
-    pub async fn update_task_settings(&self, user_id: String, task_assigned: bool, task_updated: bool, task_completed: bool, task_overdue: bool) -> RepoResult<NotificationPreferences> {
+    pub async fn update_task_settings(
+        &self,
+        user_id: String,
+        task_assigned: bool,
+        task_updated: bool,
+        task_completed: bool,
+        task_overdue: bool,
+    ) -> RepoResult<NotificationPreferences> {
         let now = chrono::Utc::now().timestamp();
         self.db.execute(
             "UPDATE notification_preferences SET task_assigned=?, task_updated=?, task_completed=?, task_overdue=?, updated_at=? WHERE user_id=?",
             params![if task_assigned{1}else{0}, if task_updated{1}else{0}, if task_completed{1}else{0}, if task_overdue{1}else{0}, now, user_id],
         ).map_err(|e| RepoError::Database(format!("Failed to update task settings: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&user_id));
-        self.find_by_user_id(user_id).await?.ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
+        self.find_by_user_id(user_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
     }
 
-    pub async fn update_client_settings(&self, user_id: String, client_created: bool, client_updated: bool) -> RepoResult<NotificationPreferences> {
+    pub async fn update_client_settings(
+        &self,
+        user_id: String,
+        client_created: bool,
+        client_updated: bool,
+    ) -> RepoResult<NotificationPreferences> {
         let now = chrono::Utc::now().timestamp();
         self.db.execute(
             "UPDATE notification_preferences SET client_created=?, client_updated=?, updated_at=? WHERE user_id=?",
             params![if client_created{1}else{0}, if client_updated{1}else{0}, now, user_id],
         ).map_err(|e| RepoError::Database(format!("Failed to update client settings: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&user_id));
-        self.find_by_user_id(user_id).await?.ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
+        self.find_by_user_id(user_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
     }
 
-    pub async fn update_system_settings(&self, user_id: String, system_alerts: bool, maintenance_notifications: bool) -> RepoResult<NotificationPreferences> {
+    pub async fn update_system_settings(
+        &self,
+        user_id: String,
+        system_alerts: bool,
+        maintenance_notifications: bool,
+    ) -> RepoResult<NotificationPreferences> {
         let now = chrono::Utc::now().timestamp();
         self.db.execute(
             "UPDATE notification_preferences SET system_alerts=?, maintenance_notifications=?, updated_at=? WHERE user_id=?",
             params![if system_alerts{1}else{0}, if maintenance_notifications{1}else{0}, now, user_id],
         ).map_err(|e| RepoError::Database(format!("Failed to update system settings: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&user_id));
-        self.find_by_user_id(user_id).await?.ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
+        self.find_by_user_id(user_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
     }
 
-    pub async fn update_quiet_hours(&self, user_id: String, enabled: bool, start_time: Option<String>, end_time: Option<String>) -> RepoResult<NotificationPreferences> {
+    pub async fn update_quiet_hours(
+        &self,
+        user_id: String,
+        enabled: bool,
+        start_time: Option<String>,
+        end_time: Option<String>,
+    ) -> RepoResult<NotificationPreferences> {
         let now = chrono::Utc::now().timestamp();
         self.db.execute(
             "UPDATE notification_preferences SET quiet_hours_enabled=?, quiet_hours_start=?, quiet_hours_end=?, updated_at=? WHERE user_id=?",
             params![if enabled{1}else{0}, start_time, end_time, now, user_id],
         ).map_err(|e| RepoError::Database(format!("Failed to update quiet hours: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&user_id));
-        self.find_by_user_id(user_id).await?.ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
+        self.find_by_user_id(user_id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Preferences not found".to_string()))
     }
 
-    pub async fn search(&self, query: NotificationPreferencesQuery) -> RepoResult<Vec<NotificationPreferences>> {
+    pub async fn search(
+        &self,
+        query: NotificationPreferencesQuery,
+    ) -> RepoResult<Vec<NotificationPreferences>> {
         let (where_clause, where_params) = query.build_where_clause();
-        let order_by = query.build_order_by_clause().unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
+        let order_by = query
+            .build_order_by_clause()
+            .unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
         let limit_offset = query.build_limit_offset();
         let sql = format!(
             "SELECT * FROM notification_preferences {} {} {}",
-            where_clause, order_by,
+            where_clause,
+            order_by,
             if let Some((limit, offset)) = limit_offset {
                 match offset {
                     Some(offset) => format!("LIMIT {} OFFSET {}", limit, offset),
@@ -159,7 +210,10 @@ impl NotificationPreferencesRepository {
 
     pub async fn count(&self, query: NotificationPreferencesQuery) -> RepoResult<i64> {
         let (where_clause, where_params) = query.build_where_clause();
-        let sql = format!("SELECT COUNT(*) as count FROM notification_preferences {}", where_clause);
+        let sql = format!(
+            "SELECT COUNT(*) as count FROM notification_preferences {}",
+            where_clause
+        );
         self.db
             .query_single_value::<i64>(&sql, rusqlite::params_from_iter(where_params))
             .map_err(|e| RepoError::Database(format!("Failed to count: {}", e)))
@@ -177,7 +231,8 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
         if let Some(p) = self.cache.get::<NotificationPreferences>(&cache_key) {
             return Ok(Some(p));
         }
-        let prefs = self.db
+        let prefs = self
+            .db
             .query_single_as::<NotificationPreferences>(
                 "SELECT * FROM notification_preferences WHERE id = ?",
                 params![id],
@@ -194,7 +249,8 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
         if let Some(p) = self.cache.get::<Vec<NotificationPreferences>>(&cache_key) {
             return Ok(p);
         }
-        let prefs = self.db
+        let prefs = self
+            .db
             .query_as::<NotificationPreferences>(
                 "SELECT * FROM notification_preferences ORDER BY created_at DESC LIMIT 1000",
                 [],
@@ -218,14 +274,21 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
                 params![entity.id, entity.user_id, if entity.in_app_enabled{1}else{0}, if entity.task_assigned{1}else{0}, if entity.task_updated{1}else{0}, if entity.task_completed{1}else{0}, if entity.task_overdue{1}else{0}, if entity.client_created{1}else{0}, if entity.client_updated{1}else{0}, if entity.system_alerts{1}else{0}, if entity.maintenance_notifications{1}else{0}, if entity.quiet_hours_enabled{1}else{0}, entity.quiet_hours_start, entity.quiet_hours_end, entity.created_at, entity.updated_at],
             ).map_err(|e| RepoError::Database(format!("Failed to create preferences: {}", e)))?;
         }
-        self.cache.remove(&self.cache_key_builder.id(&entity.user_id));
+        self.cache
+            .remove(&self.cache_key_builder.id(&entity.user_id));
         self.cache.clear();
-        self.find_by_id(entity.id).await?.ok_or_else(|| RepoError::NotFound("Preferences not found after save".to_string()))
+        self.find_by_id(entity.id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Preferences not found after save".to_string()))
     }
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
-        let result = self.db
-            .execute("DELETE FROM notification_preferences WHERE id = ?", params![id])
+        let result = self
+            .db
+            .execute(
+                "DELETE FROM notification_preferences WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to delete: {}", e)))?;
         self.cache.remove(&self.cache_key_builder.id(&id));
         self.cache.clear();
@@ -233,8 +296,12 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
     }
 
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
-        let count = self.db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM notification_preferences WHERE id = ?", params![id])
+        let count = self
+            .db
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM notification_preferences WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to check existence: {}", e)))?;
         Ok(count > 0)
     }

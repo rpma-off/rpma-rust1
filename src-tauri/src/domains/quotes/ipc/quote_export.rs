@@ -8,15 +8,12 @@ use crate::domains::quotes::application::quote_export_service::QuoteExportServic
 use crate::domains::quotes::domain::models::quote::*;
 use tracing::{debug, error, instrument, Span};
 
-use crate::resolve_context;
 use crate::domains::quotes::application::{QuoteConvertToTaskRequest, QuoteGetRequest};
+use crate::resolve_context;
 
 /// Construct a per-request [`QuoteExportService`] from shared application state.
 fn export_service(state: &AppState<'_>) -> QuoteExportService {
-    QuoteExportService::new(
-        state.quote_service.clone(),
-        state.app_data_dir.clone(),
-    )
+    QuoteExportService::new(state.quote_service.clone(), state.app_data_dir.clone())
 }
 
 /// Export a quote to PDF.
@@ -52,10 +49,7 @@ pub async fn quote_convert_to_task(
         "correlation_id",
         tracing::field::display(ctx.correlation_id.as_str()),
     );
-    Span::current().record(
-        "user_id",
-        tracing::field::display(ctx.user_id()),
-    );
+    Span::current().record("user_id", tracing::field::display(ctx.user_id()));
 
     let svc = export_service(&state);
 

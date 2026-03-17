@@ -4,11 +4,10 @@
 //! values declared in `models`, preventing silent drift.
 
 use crate::domains::settings::models::{
-    AppSettings, OnboardingData, StorageSettings,
-    UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings, UserPreferences,
-    UserProfileSettings, UserSecuritySettings, UserSettings,
-    default_profile, default_preferences, default_security, default_performance,
-    default_accessibility, default_notifications, default_user_settings,
+    default_accessibility, default_notifications, default_performance, default_preferences,
+    default_profile, default_security, default_user_settings, AppSettings, OnboardingData,
+    StorageSettings, UserAccessibilitySettings, UserNotificationSettings, UserPerformanceSettings,
+    UserPreferences, UserProfileSettings, UserSecuritySettings, UserSettings,
 };
 use crate::test_utils::build_test_app_state;
 
@@ -163,7 +162,9 @@ fn storage_settings_serialization_omits_cloud_credentials() {
     };
 
     let value = serde_json::to_value(&settings).expect("storage settings should serialize");
-    let object = value.as_object().expect("storage settings should serialize to an object");
+    let object = value
+        .as_object()
+        .expect("storage settings should serialize to an object");
 
     assert!(!object.contains_key("cloud_access_key"));
     assert!(!object.contains_key("cloud_secret_key"));
@@ -180,7 +181,9 @@ fn onboarding_data_serialization_omits_admin_password() {
     };
 
     let value = serde_json::to_value(&data).expect("onboarding data should serialize");
-    let object = value.as_object().expect("onboarding data should serialize to an object");
+    let object = value
+        .as_object()
+        .expect("onboarding data should serialize to an object");
 
     assert!(!object.contains_key("admin_password"));
 }
@@ -213,8 +216,14 @@ async fn storage_settings_repository_round_trip_preserves_cloud_credentials() {
         .get_app_settings_db()
         .expect("app settings should load");
 
-    assert_eq!(loaded.storage.cloud_access_key.as_deref(), Some("access-key"));
-    assert_eq!(loaded.storage.cloud_secret_key.as_deref(), Some("secret-key"));
+    assert_eq!(
+        loaded.storage.cloud_access_key.as_deref(),
+        Some("access-key")
+    );
+    assert_eq!(
+        loaded.storage.cloud_secret_key.as_deref(),
+        Some("secret-key")
+    );
 }
 
 #[tokio::test]
@@ -240,7 +249,10 @@ async fn storage_settings_repository_persists_cloud_credentials_in_raw_json() {
         .save_app_settings_db(&settings, "test-user")
         .expect("app settings should save");
 
-    let conn = state.db.get_connection().expect("database connection should be available");
+    let conn = state
+        .db
+        .get_connection()
+        .expect("database connection should be available");
     let raw_storage: String = conn
         .query_row(
             "SELECT storage_settings FROM app_settings WHERE id = 'global'",
@@ -256,11 +268,15 @@ async fn storage_settings_repository_persists_cloud_credentials_in_raw_json() {
         .expect("storage_settings JSON should be an object");
 
     assert_eq!(
-        raw_object.get("cloud_access_key").and_then(serde_json::Value::as_str),
+        raw_object
+            .get("cloud_access_key")
+            .and_then(serde_json::Value::as_str),
         Some("access-key")
     );
     assert_eq!(
-        raw_object.get("cloud_secret_key").and_then(serde_json::Value::as_str),
+        raw_object
+            .get("cloud_secret_key")
+            .and_then(serde_json::Value::as_str),
         Some("secret-key")
     );
 }

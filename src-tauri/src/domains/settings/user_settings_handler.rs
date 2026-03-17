@@ -5,10 +5,10 @@
 
 use tracing::instrument;
 
+use super::facade::SettingsFacade;
+use super::models::*;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::resolve_context;
-use super::models::*;
-use super::facade::SettingsFacade;
 
 /// ADR-018: Thin IPC layer
 #[tauri::command]
@@ -173,4 +173,3 @@ pub async fn upload_user_avatar(
     // Placeholder
     Ok(ApiResponse::success("Avatar uploaded".to_string()))
 }
-

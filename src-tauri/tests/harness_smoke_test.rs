@@ -56,7 +56,11 @@ async fn test_app_inject_session_makes_session_available() {
     let app = harness::app::TestApp::new().await;
     app.inject_session(UserRole::Admin);
     // Session store should now return a valid session.
-    let session = app.state.session_store.get().expect("session should be present");
+    let session = app
+        .state
+        .session_store
+        .get()
+        .expect("session should be present");
     assert_eq!(session.role, UserRole::Admin);
 }
 
@@ -109,8 +113,14 @@ fn auth_make_context_has_unique_correlation_ids() {
 #[test]
 fn auth_role_shortcuts_return_correct_roles() {
     assert_eq!(*harness::auth::admin_ctx().role(), UserRole::Admin);
-    assert_eq!(*harness::auth::technician_ctx().role(), UserRole::Technician);
-    assert_eq!(*harness::auth::supervisor_ctx().role(), UserRole::Supervisor);
+    assert_eq!(
+        *harness::auth::technician_ctx().role(),
+        UserRole::Technician
+    );
+    assert_eq!(
+        *harness::auth::supervisor_ctx().role(),
+        UserRole::Supervisor
+    );
     assert_eq!(*harness::auth::viewer_ctx().role(), UserRole::Viewer);
 }
 
@@ -161,7 +171,10 @@ async fn two_test_apps_are_isolated() {
     // app2's database must not see the row.
     let count: i64 = app2
         .db
-        .query_single_value("SELECT COUNT(*) FROM tasks WHERE id='isolation-test-id'", [])
+        .query_single_value(
+            "SELECT COUNT(*) FROM tasks WHERE id='isolation-test-id'",
+            [],
+        )
         .expect("query app2");
     assert_eq!(count, 0, "app2 database must be isolated from app1");
 }

@@ -4,7 +4,7 @@
 //! and session revocation logic that was previously inline in IPC handlers.
 
 use std::sync::Arc;
-use tracing::{info, error};
+use tracing::{error, info};
 
 use crate::commands::AppError;
 use crate::domains::auth::infrastructure::session::SessionService;

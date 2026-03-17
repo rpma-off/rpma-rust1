@@ -2,6 +2,7 @@ pub(crate) mod intervention;
 pub(crate) mod intervention_calculation;
 pub(crate) mod intervention_data;
 pub(crate) mod intervention_repository;
+pub(crate) mod intervention_row_mapping;
 pub mod intervention_types;
 pub(crate) mod intervention_validation;
 pub(crate) mod intervention_workflow;

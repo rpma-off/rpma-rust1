@@ -23,7 +23,7 @@ async fn test_trash_list_requires_supervisor() {
         Some("corr-123".to_string()),
     )
     .await;
-    
+
     assert!(matches!(result, Err(AppError::Authentication(_))));
 
     // Supervisor -> Should Succeed
@@ -37,7 +37,7 @@ async fn test_trash_list_requires_supervisor() {
         Some("corr-123".to_string()),
     )
     .await;
-    
+
     assert!(result.is_ok());
 }
 
@@ -55,9 +55,9 @@ async fn test_trash_hard_delete_requires_admin() {
         Some("corr-123".to_string()),
     )
     .await;
-    
+
     assert!(matches!(result, Err(AppError::Authentication(_))));
-    
+
     // Admin -> Should succeed (with not found error since id doesn't exist, but NOT auth error)
     app.inject_session(UserRole::Admin);
     let state = app.state();
@@ -68,7 +68,7 @@ async fn test_trash_hard_delete_requires_admin() {
         Some("corr-123".to_string()),
     )
     .await;
-    
+
     assert!(!matches!(result, Err(AppError::Authentication(_))));
 }
 */

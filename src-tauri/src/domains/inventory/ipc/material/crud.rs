@@ -2,9 +2,7 @@
 
 use crate::commands::{ApiResponse, AppState};
 use crate::domains::inventory::domain::models::material::MaterialType;
-use crate::domains::inventory::infrastructure::material::{
-    CreateMaterialRequest, MaterialError,
-};
+use crate::domains::inventory::infrastructure::material::{CreateMaterialRequest, MaterialError};
 use crate::resolve_context;
 use crate::shared::contracts::auth::UserRole;
 use tracing::{error, info, instrument};
@@ -30,7 +28,10 @@ pub async fn material_create(
     match service.create_material(request, Some(ctx.user_id().to_string())) {
         Ok(material) => {
             info!(material_id = %material.id, "Material created");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(material)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, "Failed to create material");
@@ -55,9 +56,9 @@ pub async fn material_get(
     let service = state.material_service.clone();
 
     match service.get_material(&id) {
-        Ok(material) => {
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
-        }
+        Ok(material) => Ok(
+            ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone()))
+        ),
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to get material");
             Err(e.into_app_error())
@@ -81,9 +82,9 @@ pub async fn material_get_by_sku(
     let service = state.material_service.clone();
 
     match service.get_material_by_sku(&sku) {
-        Ok(material) => {
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
-        }
+        Ok(material) => Ok(
+            ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone()))
+        ),
         Err(e) => {
             error!(error = %e, sku = %sku, "Failed to get material by SKU");
             Err(e.into_app_error())
@@ -129,7 +130,8 @@ pub async fn material_list(
         offset,
     ) {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(materials)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to list materials");
@@ -157,7 +159,10 @@ pub async fn material_update(
     match service.update_material(&id, request, Some(ctx.user_id().to_string())) {
         Ok(material) => {
             info!(material_id = %id, "Material updated");
-            Ok(ApiResponse::success(material).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(
+                ApiResponse::success(material)
+                    .with_correlation_id(Some(ctx.correlation_id.clone())),
+            )
         }
         Err(e) => {
             error!(error = %e, material_id = %id, "Failed to update material");

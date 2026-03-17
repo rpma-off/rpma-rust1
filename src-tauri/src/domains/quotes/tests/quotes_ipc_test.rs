@@ -111,7 +111,10 @@ async fn test_quote_create_empty_client_id_fails_validation() {
     };
 
     let validation = req.validate();
-    assert!(validation.is_err(), "empty client_id should fail validate()");
+    assert!(
+        validation.is_err(),
+        "empty client_id should fail validate()"
+    );
     assert!(
         validation.unwrap_err().contains("Client ID"),
         "error should mention Client ID"
@@ -138,7 +141,10 @@ async fn test_quote_create_whitespace_client_id_fails_validation() {
 async fn test_quote_create_valid_request_passes_domain_validation() {
     // Domain-level validation passes for a well-formed request.
     let req = valid_create_request();
-    assert!(req.validate().is_ok(), "valid request should pass validate()");
+    assert!(
+        req.validate().is_ok(),
+        "valid request should pass validate()"
+    );
 }
 
 #[tokio::test]

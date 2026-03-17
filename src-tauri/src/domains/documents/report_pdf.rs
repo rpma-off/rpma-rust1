@@ -70,13 +70,10 @@ impl InterventionPdfReport {
         let html = render_report_html(&vm);
 
         // 3. Write HTML to temp file
-        let tmp_html = std::env::temp_dir().join(format!(
-            "rpma_report_{}.html",
-            &self.intervention.id
-        ));
-        std::fs::write(&tmp_html, &html).map_err(|e| {
-            AppError::Internal(format!("Failed to write temp HTML: {}", e))
-        })?;
+        let tmp_html =
+            std::env::temp_dir().join(format!("rpma_report_{}.html", &self.intervention.id));
+        std::fs::write(&tmp_html, &html)
+            .map_err(|e| AppError::Internal(format!("Failed to write temp HTML: {}", e)))?;
 
         // 4 & 5. Launch browser and convert to PDF
         let result = Self::html_to_pdf(&tmp_html, output_path);
@@ -90,10 +87,7 @@ impl InterventionPdfReport {
     /// Launch a headless browser, open the HTML file, and print to PDF.
     fn html_to_pdf(html_path: &Path, output_path: &Path) -> AppResult<()> {
         // Build a file:// URL with forward slashes (required on Windows too)
-        let file_url = format!(
-            "file:///{}",
-            html_path.to_string_lossy().replace('\\', "/")
-        );
+        let file_url = format!("file:///{}", html_path.to_string_lossy().replace('\\', "/"));
 
         tracing::info!("Launching headless browser for PDF: {}", file_url);
 
@@ -111,9 +105,9 @@ impl InterventionPdfReport {
             ))
         })?;
 
-        let tab = browser.new_tab().map_err(|e| {
-            AppError::Internal(format!("Failed to open browser tab: {}", e))
-        })?;
+        let tab = browser
+            .new_tab()
+            .map_err(|e| AppError::Internal(format!("Failed to open browser tab: {}", e)))?;
 
         tab.navigate_to(&file_url)
             .map_err(|e| AppError::Internal(format!("Navigation failed: {}", e)))?
@@ -130,14 +124,10 @@ impl InterventionPdfReport {
                 AppError::Internal(format!("Failed to create output directory: {}", e))
             })?;
         }
-        std::fs::write(output_path, pdf_bytes).map_err(|e| {
-            AppError::Internal(format!("Failed to write PDF: {}", e))
-        })?;
+        std::fs::write(output_path, pdf_bytes)
+            .map_err(|e| AppError::Internal(format!("Failed to write PDF: {}", e)))?;
 
-        tracing::info!(
-            "Successfully generated PDF report at {:?}",
-            output_path
-        );
+        tracing::info!("Successfully generated PDF report at {:?}", output_path);
         Ok(())
     }
 
@@ -162,7 +152,9 @@ mod tests {
     use super::super::report_view_model;
     use super::*;
     use crate::shared::contracts::common::*;
-    use crate::shared::services::cross_domain::{Intervention, InterventionStatus, InterventionStep};
+    use crate::shared::services::cross_domain::{
+        Intervention, InterventionStatus, InterventionStep,
+    };
     use serde_json::json;
 
     fn build_test_intervention() -> Intervention {

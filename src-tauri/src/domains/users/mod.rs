@@ -2,9 +2,12 @@ mod facade;
 pub(crate) use facade::{UsersCommand, UsersDomainResponse, UsersFacade, UsersServices};
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
-pub use facade::{CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse};
+pub use application::{UserListResponse, UserResponse};
 #[cfg(feature = "export-types")]
-pub use application::UserResponse;
+pub use domain::{CreateUserRequest, UpdateUserRequest, UserAction};
+#[cfg(feature = "export-types")]
+pub mod domain;
+#[cfg(not(feature = "export-types"))]
 pub(crate) mod domain;
 pub(crate) mod infrastructure;
 pub(crate) mod ipc;

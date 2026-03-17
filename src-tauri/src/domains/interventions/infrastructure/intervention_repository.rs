@@ -1,6 +1,6 @@
 /// ADR-005: Repository Pattern
 use crate::db::InterventionResult;
-use crate::db::{Database, InterventionError};
+use crate::db::{Database, FromSqlRow, InterventionError};
 use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
@@ -836,7 +836,11 @@ impl InterventionRepository {
              WHERE status = ?
              AND completed_at < ?
              AND status != 'archived'",
-                rusqlite::params![chrono::Utc::now().timestamp_millis(), InterventionStatus::Completed.to_string(), cutoff_timestamp],
+                rusqlite::params![
+                    chrono::Utc::now().timestamp_millis(),
+                    InterventionStatus::Completed.to_string(),
+                    cutoff_timestamp
+                ],
             )
             .map_err(|e| {
                 InterventionError::Database(format!("Failed to archive old interventions: {}", e))

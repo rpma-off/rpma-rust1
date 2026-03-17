@@ -48,7 +48,11 @@ impl InventoryFacade {
     }
 
     /// TODO: document
-    pub fn update_stock(&self, request: UpdateStockRequest, role: &UserRole) -> Result<Material, AppError> {
+    pub fn update_stock(
+        &self,
+        request: UpdateStockRequest,
+        role: &UserRole,
+    ) -> Result<Material, AppError> {
         self.service
             .update_stock(request, role)
             .map_err(|err| map_inventory_error("update_stock", err))

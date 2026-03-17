@@ -10,10 +10,10 @@ use super::extractors::{
 };
 use super::formatters::{
     format_duration_seconds, step_status_badge, step_status_label, timestamp_string_display,
-    NOT_EVALUATED, NO_OBSERVATION, NOT_SPECIFIED,
+    NOT_EVALUATED, NOT_SPECIFIED, NO_OBSERVATION,
 };
 use super::{
-    ReportApproval, ReportPhotos, ReportPhotoGroup, ReportQuality, ReportQualityCheckpoint,
+    ReportApproval, ReportPhotoGroup, ReportPhotos, ReportQuality, ReportQualityCheckpoint,
     ReportStep,
 };
 
@@ -144,10 +144,7 @@ pub(super) fn build_quality_section(
     }
 }
 
-pub(super) fn build_photos_section(
-    photos: &[Photo],
-    steps: &[InterventionStep],
-) -> ReportPhotos {
+pub(super) fn build_photos_section(photos: &[Photo], steps: &[InterventionStep]) -> ReportPhotos {
     // Group by step
     let mut step_map: HashMap<String, usize> = HashMap::new();
     for step in steps {

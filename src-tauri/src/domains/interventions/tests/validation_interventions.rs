@@ -44,8 +44,17 @@ fn create_intervention_rejects_invalid_gps_coordinates() {
             ppf_zones, scheduled_date, status, priority, created_at, updated_at, synced
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)"#,
         rusqlite::params![
-            task_id, "T-99999", "Test task", "AA-000-AA", "Model X",
-            r#"["front"]"#, "2025-01-01", "draft", "medium", now, now
+            task_id,
+            "T-99999",
+            "Test task",
+            "AA-000-AA",
+            "Model X",
+            r#"["front"]"#,
+            "2025-01-01",
+            "draft",
+            "medium",
+            now,
+            now
         ],
     )
     .expect("insert test task");

@@ -12,9 +12,9 @@ use crate::shared::ipc::correlation::{init_correlation_context, update_correlati
 use crate::shared::ipc::{AppError, AppResult};
 use tracing::{debug, instrument, warn};
 
-use super::AppContext;
 use super::auth_context::AuthContext;
 use super::request_context::RequestContext;
+use super::AppContext;
 
 /// Resolve a [`RequestContext`] from the active in-memory session.
 #[instrument(skip(app))]
@@ -40,10 +40,8 @@ pub fn resolve_request_context(
 
     // ── 2. RBAC gate ─────────────────────────────────────────────────
     if let Some(ref required) = required_role {
-        if !crate::shared::auth_middleware::AuthMiddleware::has_permission(
-            &session.role,
-            required,
-        ) {
+        if !crate::shared::auth_middleware::AuthMiddleware::has_permission(&session.role, required)
+        {
             warn!(
                 "Authorization failed for user {} with role {:?}, required {:?}",
                 session.user_id, session.role, required
@@ -115,8 +113,9 @@ mod tests {
     #[tokio::test]
     async fn missing_session_is_rejected() {
         let db = std::sync::Arc::new(crate::db::Database::new_in_memory().await.expect("db"));
-        let repositories =
-            std::sync::Arc::new(crate::shared::repositories::Repositories::new(db.clone(), 1000).await);
+        let repositories = std::sync::Arc::new(
+            crate::shared::repositories::Repositories::new(db.clone(), 1000).await,
+        );
         let app_data_dir = std::path::PathBuf::from("/tmp/test");
         let app_state = crate::service_builder::ServiceBuilder::new(db, repositories, app_data_dir)
             .build()

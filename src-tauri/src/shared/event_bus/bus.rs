@@ -96,18 +96,23 @@ pub fn register_handler(handler: Arc<dyn DomainEventHandler>) {
     if let Some(bus) = GLOBAL_EVENT_BUS.get() {
         DomainEventBus::subscribe(bus.as_ref(), handler);
     } else {
-        tracing::warn!("register_handler called before global bus was initialised — handler not registered");
+        tracing::warn!(
+            "register_handler called before global bus was initialised — handler not registered"
+        );
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
-    use async_trait::async_trait;
-    use chrono::Utc;
     use crate::shared::event_bus::bus::{DomainEventBus, DomainEventHandler};
     use crate::shared::event_bus::events::DomainEvent;
     use crate::shared::services::event_bus::InMemoryEventBus;
+    use async_trait::async_trait;
+    use chrono::Utc;
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
 
     /// `publish_event` must not panic when the global bus has not been
     /// initialised.  In that state the event is silently dropped (with a
@@ -164,6 +169,9 @@ mod tests {
 
         // Give the spawned task time to run.
         tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-        assert!(received.load(Ordering::SeqCst), "handler should have been called");
+        assert!(
+            received.load(Ordering::SeqCst),
+            "handler should have been called"
+        );
     }
 }

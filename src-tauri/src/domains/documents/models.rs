@@ -1,8 +1,8 @@
 //! Models for Documents domain (photos and reports)
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use chrono::{DateTime, Utc};
 
 // ── Photo Models — canonical definitions live in shared::contracts::photo ────
 pub use crate::shared::contracts::photo::{Photo, PhotoCategory, PhotoType};

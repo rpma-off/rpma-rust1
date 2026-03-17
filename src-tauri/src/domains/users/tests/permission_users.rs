@@ -1,4 +1,4 @@
-use crate::domains::users::application::UserAction;
+use crate::domains::users::domain::UserAction;
 use crate::domains::users::UsersFacade;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::ipc::errors::AppError;

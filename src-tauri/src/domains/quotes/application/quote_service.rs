@@ -30,10 +30,7 @@ impl QuoteService {
         repo: Arc<dyn IQuoteRepository>,
         event_bus: Arc<crate::shared::services::event_bus::InMemoryEventBus>,
     ) -> Self {
-        Self {
-            repo,
-            event_bus,
-        }
+        Self { repo, event_bus }
     }
 
     // ------------------------------------------------------------------
@@ -81,7 +78,12 @@ impl QuoteService {
     // ------------------------------------------------------------------
 
     /// Create a new quote.
-    pub fn create_quote(&self, req: CreateQuoteRequest, user_id: &str, role: &UserRole) -> Result<Quote, String> {
+    pub fn create_quote(
+        &self,
+        req: CreateQuoteRequest,
+        user_id: &str,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "create")?;
         req.validate()?;
 
@@ -181,7 +183,12 @@ impl QuoteService {
     }
 
     /// Update a quote (Draft only).
-    pub fn update_quote(&self, id: &str, req: UpdateQuoteRequest, role: &UserRole) -> Result<Quote, String> {
+    pub fn update_quote(
+        &self,
+        id: &str,
+        req: UpdateQuoteRequest,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
@@ -216,7 +223,12 @@ impl QuoteService {
     }
 
     /// Duplicate a quote: create a new Draft with copies of all items.
-    pub fn duplicate_quote(&self, id: &str, user_id: &str, role: &UserRole) -> Result<Quote, String> {
+    pub fn duplicate_quote(
+        &self,
+        id: &str,
+        user_id: &str,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "duplicate")?;
         let source = self.fetch_quote(id)?;
 
@@ -295,7 +307,12 @@ impl QuoteService {
     // ------------------------------------------------------------------
 
     /// Add an item to a quote (Draft only).
-    pub fn add_item(&self, quote_id: &str, req: CreateQuoteItemRequest, role: &UserRole) -> Result<Quote, String> {
+    pub fn add_item(
+        &self,
+        quote_id: &str,
+        req: CreateQuoteItemRequest,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "update")?;
         req.validate()?;
 
@@ -354,7 +371,12 @@ impl QuoteService {
     }
 
     /// Delete a quote item (Draft only).
-    pub fn delete_item(&self, quote_id: &str, item_id: &str, role: &UserRole) -> Result<Quote, String> {
+    pub fn delete_item(
+        &self,
+        quote_id: &str,
+        item_id: &str,
+        role: &UserRole,
+    ) -> Result<Quote, String> {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
@@ -370,7 +392,6 @@ impl QuoteService {
 
         self.fetch_quote(quote_id)
     }
-
 }
 // Status transitions (mark_sent, mark_accepted, mark_rejected, mark_expired,
 // mark_changes_requested, reopen) and convert_to_task live in quote_status.rs.

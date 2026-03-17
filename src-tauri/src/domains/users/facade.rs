@@ -1,19 +1,12 @@
 use std::sync::Arc;
 
-use crate::domains::users::application::UserResponse;
-use crate::domains::users::domain::UserAccessPolicy;
+use crate::domains::users::application::{UserListResponse, UserResponse};
+use crate::domains::users::domain::{CreateUserRequest, UpdateUserRequest, UserAccessPolicy, UserAction};
 use crate::domains::users::infrastructure::user::UserService;
+use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::contracts::user_account::UserAccountManager;
-use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
-
-#[cfg(feature = "export-types")]
-pub use crate::domains::users::application::{
-    CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse,
-};
-#[cfg(not(feature = "export-types"))]
-use crate::domains::users::application::{UserAction, UserListResponse};
 
 /// TODO: document
 pub struct UsersServices {
@@ -25,9 +18,7 @@ pub struct UsersServices {
 #[derive(Debug)]
 pub enum UsersCommand {
     Crud(UserAction),
-    BootstrapFirstAdmin {
-        user_id: String,
-    },
+    BootstrapFirstAdmin { user_id: String },
     HasAdmins,
 }
 
@@ -202,7 +193,12 @@ impl UsersFacade {
                     UserAction::List { limit, offset } => {
                         let users = services
                             .account_manager
-                            .list_users(Some(limit.unwrap_or(crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32)), Some(offset.unwrap_or(0)))
+                            .list_users(
+                                Some(limit.unwrap_or(
+                                    crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32,
+                                )),
+                                Some(offset.unwrap_or(0)),
+                            )
                             .map_err(|e| {
                                 AppError::Database(format!("User listing failed: {}", e))
                             })?;
@@ -271,7 +267,13 @@ impl UsersFacade {
 
         let sanitized: String = local
             .chars()
-            .map(|c| if c.is_alphanumeric() || c == '-' { c } else { '_' })
+            .map(|c| {
+                if c.is_alphanumeric() || c == '-' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect();
 
         let trimmed = sanitized

@@ -26,8 +26,7 @@ fn main() {
     // forward it to the linker for test targets only.
     if std::env::var("CARGO_CFG_WINDOWS").is_ok() {
         let out_dir = std::env::var("OUT_DIR").unwrap();
-        let manifest_path =
-            std::path::PathBuf::from(&out_dir).join("comctl32v6-test.manifest");
+        let manifest_path = std::path::PathBuf::from(&out_dir).join("comctl32v6-test.manifest");
         std::fs::write(
             &manifest_path,
             r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>

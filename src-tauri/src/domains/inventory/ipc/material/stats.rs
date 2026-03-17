@@ -74,7 +74,8 @@ pub async fn material_get_low_stock_materials(
 
     match service.get_low_stock_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(materials)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get low stock materials");
@@ -99,7 +100,8 @@ pub async fn material_get_expired_materials(
 
     match service.get_expired_materials() {
         Ok(materials) => {
-            Ok(ApiResponse::success(materials).with_correlation_id(Some(ctx.correlation_id.clone())))
+            Ok(ApiResponse::success(materials)
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
         }
         Err(e) => {
             error!(error = %e, "Failed to get expired materials");

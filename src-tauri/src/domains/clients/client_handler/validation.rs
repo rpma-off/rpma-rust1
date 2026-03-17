@@ -59,9 +59,7 @@ pub fn required_permission(action: &ClientAction) -> Option<&'static str> {
     }
 }
 
-fn sanitize_create_request(
-    data: CreateClientRequest,
-) -> Result<CreateClientRequest, IpcAppError> {
+fn sanitize_create_request(data: CreateClientRequest) -> Result<CreateClientRequest, IpcAppError> {
     let validator = ValidationService::new();
     let validated_name = validator
         .sanitize_text_input(&data.name, "name", 100)
@@ -77,9 +75,7 @@ fn sanitize_create_request(
         .map_err(|e| IpcAppError::Validation(format!("Company name validation failed: {}", e)))?;
     let validated_contact_person = validator
         .sanitize_optional_text(data.contact_person.as_deref(), "contact_person", 100)
-        .map_err(|e| {
-            IpcAppError::Validation(format!("Contact person validation failed: {}", e))
-        })?;
+        .map_err(|e| IpcAppError::Validation(format!("Contact person validation failed: {}", e)))?;
     let validated_notes = validator
         .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
         .map_err(|e| IpcAppError::Validation(format!("Notes validation failed: {}", e)))?;
@@ -139,9 +135,7 @@ fn sanitize_update_request(
         .map_err(|e| IpcAppError::Validation(format!("Company name validation failed: {}", e)))?;
     let validated_contact_person = validator
         .sanitize_optional_text(data.contact_person.as_deref(), "contact_person", 100)
-        .map_err(|e| {
-            IpcAppError::Validation(format!("Contact person validation failed: {}", e))
-        })?;
+        .map_err(|e| IpcAppError::Validation(format!("Contact person validation failed: {}", e)))?;
     let validated_notes = validator
         .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
         .map_err(|e| IpcAppError::Validation(format!("Notes validation failed: {}", e)))?;
@@ -212,19 +206,30 @@ impl ClientValidationService {
     }
 
     pub fn validate_update_request(&self, req: &UpdateClientRequest) -> Result<(), String> {
-        if let Some(email) = &req.email { self.validate_email(email)?; }
-        if let Some(phone) = &req.phone { self.validate_phone(phone)?; }
-        if let (Some(street), Some(city), Some(state), Some(zip)) =
-            (&req.address_street, &req.address_city, &req.address_state, &req.address_zip)
-        {
+        if let Some(email) = &req.email {
+            self.validate_email(email)?;
+        }
+        if let Some(phone) = &req.phone {
+            self.validate_phone(phone)?;
+        }
+        if let (Some(street), Some(city), Some(state), Some(zip)) = (
+            &req.address_street,
+            &req.address_city,
+            &req.address_state,
+            &req.address_zip,
+        ) {
             self.validate_address(street, city, state, zip)?;
         }
         Ok(())
     }
 
     fn validate_required_fields(&self, req: &CreateClientRequest) -> Result<(), String> {
-        if req.name.trim().is_empty() { return Err("Client name is required".to_string()); }
-        if req.name.len() > 100 { return Err("Client name cannot exceed 100 characters".to_string()); }
+        if req.name.trim().is_empty() {
+            return Err("Client name is required".to_string());
+        }
+        if req.name.len() > 100 {
+            return Err("Client name cannot exceed 100 characters".to_string());
+        }
         if req.email.as_ref().map_or(true, |e| e.trim().is_empty()) {
             return Err("Email address is required".to_string());
         }
@@ -232,17 +237,27 @@ impl ClientValidationService {
     }
 
     fn validate_contact_info(&self, req: &CreateClientRequest) -> Result<(), String> {
-        if let Some(ref email) = req.email { self.validate_email(email)?; }
-        if let Some(ref phone) = req.phone { self.validate_phone(phone)?; }
+        if let Some(ref email) = req.email {
+            self.validate_email(email)?;
+        }
+        if let Some(ref phone) = req.phone {
+            self.validate_phone(phone)?;
+        }
         Ok(())
     }
 
     fn validate_email(&self, email: &str) -> Result<(), String> {
-        if email.is_empty() { return Err("Email cannot be empty".to_string()); }
-        if email.len() > 254 { return Err("Email address is too long".to_string()); }
+        if email.is_empty() {
+            return Err("Email cannot be empty".to_string());
+        }
+        if email.len() > 254 {
+            return Err("Email address is too long".to_string());
+        }
         let email_regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
             .map_err(|_| "Invalid email regex pattern".to_string())?;
-        if !email_regex.is_match(email) { return Err("Invalid email format".to_string()); }
+        if !email_regex.is_match(email) {
+            return Err("Invalid email format".to_string());
+        }
         if email.contains("..") || email.starts_with('.') || email.ends_with('.') {
             return Err("Invalid email format".to_string());
         }
@@ -250,7 +265,9 @@ impl ClientValidationService {
     }
 
     fn validate_phone(&self, phone: &str) -> Result<(), String> {
-        if phone.is_empty() { return Err("Phone number is required".to_string()); }
+        if phone.is_empty() {
+            return Err("Phone number is required".to_string());
+        }
         let digits_only: String = phone.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits_only.len() < 10 || digits_only.len() > 15 {
             return Err("Phone number must be between 10 and 15 digits".to_string());
@@ -259,9 +276,12 @@ impl ClientValidationService {
     }
 
     fn validate_location_data(&self, req: &CreateClientRequest) -> Result<(), String> {
-        if let (Some(street), Some(city), Some(state), Some(zip)) =
-            (&req.address_street, &req.address_city, &req.address_state, &req.address_zip)
-        {
+        if let (Some(street), Some(city), Some(state), Some(zip)) = (
+            &req.address_street,
+            &req.address_city,
+            &req.address_state,
+            &req.address_zip,
+        ) {
             self.validate_address(street, city, state, zip)?;
         }
         if let Some(country) = &req.address_country {
@@ -272,13 +292,27 @@ impl ClientValidationService {
         Ok(())
     }
 
-    fn validate_address(&self, street: &str, city: &str, state: &str, zip: &str) -> Result<(), String> {
-        if street.trim().is_empty() { return Err("Street address is required".to_string()); }
-        if city.trim().is_empty() { return Err("City is required".to_string()); }
-        if state.trim().is_empty() { return Err("State is required".to_string()); }
-        if zip.trim().is_empty() { return Err("ZIP code is required".to_string()); }
-        let zip_regex = Regex::new(r"^\d{5}(-\d{4})?$")
-            .map_err(|_| "Invalid ZIP regex pattern".to_string())?;
+    fn validate_address(
+        &self,
+        street: &str,
+        city: &str,
+        state: &str,
+        zip: &str,
+    ) -> Result<(), String> {
+        if street.trim().is_empty() {
+            return Err("Street address is required".to_string());
+        }
+        if city.trim().is_empty() {
+            return Err("City is required".to_string());
+        }
+        if state.trim().is_empty() {
+            return Err("State is required".to_string());
+        }
+        if zip.trim().is_empty() {
+            return Err("ZIP code is required".to_string());
+        }
+        let zip_regex =
+            Regex::new(r"^\d{5}(-\d{4})?$").map_err(|_| "Invalid ZIP regex pattern".to_string())?;
         if !zip_regex.is_match(zip) {
             return Err("Invalid ZIP code format (expected 12345 or 12345-6789)".to_string());
         }
@@ -287,21 +321,26 @@ impl ClientValidationService {
 
     async fn check_for_duplicates(&self, req: &CreateClientRequest) -> Result<(), String> {
         if let Some(ref email) = req.email {
-            let exists = IClientRepository::find_by_email(self.client_repo.as_ref(), email).await
+            let exists = IClientRepository::find_by_email(self.client_repo.as_ref(), email)
+                .await
                 .map_err(|e| format!("Failed to check email duplicates: {}", e))?
                 .is_some();
-            if exists { return Err("A client with this email address already exists".to_string()); }
+            if exists {
+                return Err("A client with this email address already exists".to_string());
+            }
         }
         if let Some(ref tax_id) = req.tax_id {
             if !tax_id.trim().is_empty() {
                 let query = ClientRepoQuery {
                     ..Default::default()
                 };
-                let count = IClientRepository::count(self.client_repo.as_ref(), query).await
+                let count = IClientRepository::count(self.client_repo.as_ref(), query)
+                    .await
                     .map_err(|e| format!("Failed to check tax ID duplicates: {}", e))?;
                 // This is a placeholder, actual implementation should filter by tax_id in Repo.
-                if count > 1000000 { // dummy
-                     return Err("A client with this tax ID already exists".to_string());
+                if count > 1000000 {
+                    // dummy
+                    return Err("A client with this tax ID already exists".to_string());
                 }
             }
         }
@@ -311,10 +350,18 @@ impl ClientValidationService {
     fn validate_business_rules(&self, req: &CreateClientRequest) -> Result<(), String> {
         match req.customer_type {
             CustomerType::Business => {
-                if req.company_name.as_ref().map_or(true, |n| n.trim().is_empty()) {
+                if req
+                    .company_name
+                    .as_ref()
+                    .map_or(true, |n| n.trim().is_empty())
+                {
                     return Err("Company name is required for business clients".to_string());
                 }
-                if req.contact_person.as_ref().map_or(true, |p| p.trim().is_empty()) {
+                if req
+                    .contact_person
+                    .as_ref()
+                    .map_or(true, |p| p.trim().is_empty())
+                {
                     return Err("Contact person is required for business clients".to_string());
                 }
                 if req.tax_id.as_ref().map_or(true, |t| t.trim().is_empty()) {
@@ -328,7 +375,9 @@ impl ClientValidationService {
             }
         }
         if let Some(tags) = &req.tags {
-            if tags.len() > 500 { return Err("Tags cannot exceed 500 characters".to_string()); }
+            if tags.len() > 500 {
+                return Err("Tags cannot exceed 500 characters".to_string());
+            }
             if !tags.trim().is_empty() {
                 serde_json::from_str::<serde_json::Value>(tags)
                     .map_err(|_| "Tags must be valid JSON".to_string())?;
@@ -338,8 +387,9 @@ impl ClientValidationService {
     }
 
     pub fn validate_client_deletion(&self, client_id: &str) -> Result<(), String> {
-        let active_tasks = futures::executor::block_on(self.client_repo.count_active_tasks(client_id))
-            .map_err(|e| format!("Failed to check active tasks: {}", e))?;
+        let active_tasks =
+            futures::executor::block_on(self.client_repo.count_active_tasks(client_id))
+                .map_err(|e| format!("Failed to check active tasks: {}", e))?;
         if active_tasks > 0 {
             return Err(format!(
                 "Cannot delete client with {} active tasks. Complete or cancel all tasks first.",

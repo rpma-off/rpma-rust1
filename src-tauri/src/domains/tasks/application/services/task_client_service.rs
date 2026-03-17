@@ -8,14 +8,14 @@ use std::sync::Arc;
 use tracing::{debug, info};
 
 use crate::commands::AppError;
-use crate::shared::contracts::client_ops::ClientResolver;
 use crate::domains::tasks::application::services::task_policy_service;
-use crate::domains::tasks::domain::models::task::{TaskQuery, TaskStatus, TaskPriority, SortOrder};
+use crate::domains::tasks::domain::models::task::{SortOrder, TaskPriority, TaskQuery, TaskStatus};
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::ipc::task::client_integration::TaskWithClientDetails;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
+use crate::shared::contracts::client_ops::ClientResolver;
 
 /// Orchestrates task-client integration queries and relationship operations.
 pub struct TaskClientService {
@@ -115,7 +115,9 @@ impl TaskClientService {
                     .map(|c| c.name.clone())
                     .unwrap_or_default(),
                 client_contact: client_contact_info.as_ref().and_then(|c| c.email.clone()),
-                client_region: client_contact_info.as_ref().and_then(|c| c.address_state.clone()),
+                client_region: client_contact_info
+                    .as_ref()
+                    .and_then(|c| c.address_state.clone()),
                 client_priority: Some("standard".to_string()),
                 relationship_status,
             });
@@ -166,7 +168,10 @@ impl TaskClientService {
             })?;
 
         if !exists {
-            return Err(AppError::NotFound(format!("Client not found: {}", client_id)));
+            return Err(AppError::NotFound(format!(
+                "Client not found: {}",
+                client_id
+            )));
         }
 
         Ok(())

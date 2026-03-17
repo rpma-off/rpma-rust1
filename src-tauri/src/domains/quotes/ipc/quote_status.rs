@@ -6,8 +6,8 @@ use crate::domains::quotes::domain::models::quote::*;
 use crate::domains::quotes::QuotesFacade;
 use tracing::{debug, error, info, instrument};
 
-use crate::resolve_context;
 use crate::domains::quotes::application::QuoteStatusRequest;
+use crate::resolve_context;
 
 /// TODO: document
 /// ADR-018: Thin IPC layer

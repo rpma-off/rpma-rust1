@@ -62,17 +62,35 @@ fn application_layers_accessible_within_crate() {
     let _ = std::any::type_name::<SendNotificationRequest>();
 }
 
-/// Guardrail: task domain modules must not depend on infrastructure modules.
+/// Guardrail: domain modules must not depend on application, infrastructure, IPC,
+/// or external I/O crates.
 #[test]
-fn task_domain_does_not_import_task_infrastructure() {
+fn domain_modules_do_not_import_forbidden_dependencies() {
     use std::fs;
     use std::path::Path;
+
+    const FORBIDDEN_IO_PATTERNS: &[&str] = &[
+        "rusqlite::",
+        "reqwest::",
+        "tokio::fs",
+        "std::fs",
+        "sqlx::",
+        "ureq::",
+        "hyper::",
+        "headless_chrome::",
+        "tauri::",
+    ];
 
     fn scan(path: &Path, violations: &mut Vec<String>) {
         if path.is_dir() {
             for entry in fs::read_dir(path).expect("read_dir failed") {
                 let entry = entry.expect("dir entry failed");
-                scan(&entry.path(), violations);
+                let entry_path = entry.path();
+                if path.file_name().and_then(|name| name.to_str()) == Some("domain") {
+                    scan(&entry_path, violations);
+                } else if entry_path.is_dir() {
+                    scan(&entry_path, violations);
+                }
             }
             return;
         }
@@ -82,16 +100,26 @@ fn task_domain_does_not_import_task_infrastructure() {
         }
 
         let content = fs::read_to_string(path).expect("read file failed");
-        if content.contains("crate::domains::tasks::infrastructure::") {
-            violations.push(path.display().to_string());
+        for (line_number, line) in content.lines().enumerate() {
+            let contains_forbidden_domain_import = line.contains("crate::domains::")
+                && (line.contains("::infrastructure::")
+                    || line.contains("::application::")
+                    || line.contains("::ipc::"));
+            let contains_forbidden_io_crate = FORBIDDEN_IO_PATTERNS
+                .iter()
+                .any(|pattern| line.contains(pattern));
+
+            if contains_forbidden_domain_import || contains_forbidden_io_crate {
+                violations.push(format!("{}:{}", path.display(), line_number + 1));
+            }
         }
     }
 
     let mut violations = Vec::new();
-    scan(Path::new("src/domains/tasks/domain"), &mut violations);
+    scan(Path::new("src/domains"), &mut violations);
     assert!(
         violations.is_empty(),
-        "Task domain imports infrastructure modules: {:?}",
+        "Domain modules import forbidden dependencies: {:?}",
         violations
     );
 }

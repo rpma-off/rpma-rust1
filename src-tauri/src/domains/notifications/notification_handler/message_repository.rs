@@ -1,6 +1,6 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use rusqlite::params;
+use std::sync::Arc;
 
 use crate::db::Database;
 use crate::domains::notifications::models::{Message, MessageStatus, MessageType};
@@ -77,7 +77,17 @@ impl MessageRepoQuery {
     pub fn build_order_by_clause(&self) -> Result<String, RepoError> {
         let sort_by = crate::shared::repositories::base::validate_sort_column(
             self.sort_by.as_deref().unwrap_or("created_at"),
-            &["created_at", "updated_at", "message_type", "status", "priority", "scheduled_at", "sent_at", "read_at", "subject"],
+            &[
+                "created_at",
+                "updated_at",
+                "message_type",
+                "status",
+                "priority",
+                "scheduled_at",
+                "sent_at",
+                "read_at",
+                "subject",
+            ],
         )?;
         let sort_order = match self.sort_order.as_deref() {
             Some("ASC") => "ASC",
@@ -99,11 +109,17 @@ pub struct MessageRepository {
 
 impl MessageRepository {
     pub fn new(db: Arc<Database>, cache: Arc<Cache>) -> Self {
-        Self { db, cache, cache_key_builder: CacheKeyBuilder::new("message") }
+        Self {
+            db,
+            cache,
+            cache_key_builder: CacheKeyBuilder::new("message"),
+        }
     }
 
     pub async fn find_by_type(&self, message_type: MessageType) -> RepoResult<Vec<Message>> {
-        let cache_key = self.cache_key_builder.query(&["type", &message_type.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .query(&["type", &message_type.to_string()]);
         if let Some(m) = self.cache.get::<Vec<Message>>(&cache_key) {
             return Ok(m);
         }
@@ -118,7 +134,9 @@ impl MessageRepository {
     }
 
     pub async fn find_by_status(&self, status: MessageStatus) -> RepoResult<Vec<Message>> {
-        let cache_key = self.cache_key_builder.query(&["status", &status.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .query(&["status", &status.to_string()]);
         if let Some(m) = self.cache.get::<Vec<Message>>(&cache_key) {
             return Ok(m);
         }
@@ -183,7 +201,9 @@ impl MessageRepository {
             return Ok(m);
         }
         let (where_clause, params) = query.build_where_clause();
-        let order_clause = query.build_order_by_clause().unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
+        let order_clause = query
+            .build_order_by_clause()
+            .unwrap_or_else(|_| "ORDER BY created_at DESC".to_string());
         let (limit, _offset) = query.build_limit_offset().unwrap_or((100, None));
         let sql = format!(
             "SELECT id, message_type, sender_id, recipient_id, recipient_email, recipient_phone, subject, body, template_id, task_id, client_id, status, priority, scheduled_at, sent_at, read_at, error_message, metadata, created_at, updated_at FROM messages {} {} LIMIT ?",
@@ -191,7 +211,8 @@ impl MessageRepository {
         );
         let mut params_vec: Vec<rusqlite::types::Value> = params;
         params_vec.push(limit.into());
-        let messages = self.db
+        let messages = self
+            .db
             .query_as::<Message>(&sql, rusqlite::params_from_iter(params_vec.iter()))
             .map_err(|e| RepoError::Database(format!("Failed to search: {}", e)))?;
         self.cache.set(&cache_key, messages.clone(), ttl::SHORT);
@@ -259,19 +280,25 @@ impl Repository<Message, String> for MessageRepository {
             ).map_err(|e| RepoError::Database(format!("Failed to create message: {}", e)))?;
         }
         self.cache.remove(&self.cache_key_builder.id(&entity.id));
-        self.find_by_id(entity.id).await?.ok_or_else(|| RepoError::NotFound("Message not found after save".to_string()))
+        self.find_by_id(entity.id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Message not found after save".to_string()))
     }
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
-        let rows = self.db
+        let rows = self
+            .db
             .execute("DELETE FROM messages WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to delete: {}", e)))?;
-        if rows > 0 { self.cache.remove(&self.cache_key_builder.id(&id)); }
+        if rows > 0 {
+            self.cache.remove(&self.cache_key_builder.id(&id));
+        }
         Ok(rows > 0)
     }
 
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
-        let count = self.db
+        let count = self
+            .db
             .query_single_value::<i64>("SELECT COUNT(*) FROM messages WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to check existence: {}", e)))?;
         Ok(count > 0)

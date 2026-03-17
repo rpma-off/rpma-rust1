@@ -42,14 +42,22 @@ pub async fn calendar_get_tasks(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_get_tasks command received");
     match facade(&state)
-        .execute(CalendarCommand::GetTasks {
-            date_range: request.date_range,
-            technician_ids: request.technician_ids,
-            statuses: request.statuses,
-        }, &ctx).await?
+        .execute(
+            CalendarCommand::GetTasks {
+                date_range: request.date_range,
+                technician_ids: request.technician_ids,
+                statuses: request.statuses,
+            },
+            &ctx,
+        )
+        .await?
     {
-        CalendarResponse::Tasks(tasks) => Ok(ApiResponse::success(tasks).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::Tasks(tasks) => {
+            Ok(ApiResponse::success(tasks).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -61,9 +69,16 @@ pub async fn get_event_by_id(
 ) -> Result<ApiResponse<Option<CalendarEvent>>, AppError> {
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_event_by_id command received");
-    match facade(&state).execute(CalendarCommand::GetEventById { id: request.id }, &ctx).await? {
-        CalendarResponse::OptionalEvent(event) => Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+    match facade(&state)
+        .execute(CalendarCommand::GetEventById { id: request.id }, &ctx)
+        .await?
+    {
+        CalendarResponse::OptionalEvent(event) => {
+            Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -75,9 +90,21 @@ pub async fn create_event(
 ) -> Result<ApiResponse<CalendarEvent>, AppError> {
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("create_event command received");
-    match facade(&state).execute(CalendarCommand::CreateEvent { event_data: request.event_data }, &ctx).await? {
-        CalendarResponse::Event(event) => Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+    match facade(&state)
+        .execute(
+            CalendarCommand::CreateEvent {
+                event_data: request.event_data,
+            },
+            &ctx,
+        )
+        .await?
+    {
+        CalendarResponse::Event(event) => {
+            Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -90,11 +117,21 @@ pub async fn update_event(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("update_event command received");
     match facade(&state)
-        .execute(CalendarCommand::UpdateEvent { id: request.id, event_data: request.event_data }, &ctx)
+        .execute(
+            CalendarCommand::UpdateEvent {
+                id: request.id,
+                event_data: request.event_data,
+            },
+            &ctx,
+        )
         .await?
     {
-        CalendarResponse::OptionalEvent(event) => Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::OptionalEvent(event) => {
+            Ok(ApiResponse::success(event).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -106,9 +143,16 @@ pub async fn delete_event(
 ) -> Result<ApiResponse<bool>, AppError> {
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("delete_event command received");
-    match facade(&state).execute(CalendarCommand::DeleteEvent { id: request.id }, &ctx).await? {
-        CalendarResponse::Deleted(deleted) => Ok(ApiResponse::success(deleted).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+    match facade(&state)
+        .execute(CalendarCommand::DeleteEvent { id: request.id }, &ctx)
+        .await?
+    {
+        CalendarResponse::Deleted(deleted) => {
+            Ok(ApiResponse::success(deleted).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -121,11 +165,20 @@ pub async fn get_events_for_technician(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_events_for_technician command received");
     match facade(&state)
-        .execute(CalendarCommand::GetEventsForTechnician { technician_id: request.technician_id }, &ctx)
+        .execute(
+            CalendarCommand::GetEventsForTechnician {
+                technician_id: request.technician_id,
+            },
+            &ctx,
+        )
         .await?
     {
-        CalendarResponse::Events(events) => Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::Events(events) => {
+            Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -138,11 +191,20 @@ pub async fn get_events_for_task(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("get_events_for_task command received");
     match facade(&state)
-        .execute(CalendarCommand::GetEventsForTask { task_id: request.task_id }, &ctx)
+        .execute(
+            CalendarCommand::GetEventsForTask {
+                task_id: request.task_id,
+            },
+            &ctx,
+        )
         .await?
     {
-        CalendarResponse::Events(events) => Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::Events(events) => {
+            Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -158,11 +220,22 @@ pub async fn get_events(
     let ctx = calendar_context(&state, &correlation_id)?;
     info!("get_events command received");
     match facade(&state)
-        .execute(CalendarCommand::GetEventsInRange { start_date, end_date, technician_id }, &ctx)
+        .execute(
+            CalendarCommand::GetEventsInRange {
+                start_date,
+                end_date,
+                technician_id,
+            },
+            &ctx,
+        )
         .await?
     {
-        CalendarResponse::Events(events) => Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::Events(events) => {
+            Ok(ApiResponse::success(events).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -175,15 +248,23 @@ pub async fn calendar_check_conflicts(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_check_conflicts command received");
     match facade(&state)
-        .execute(CalendarCommand::CheckConflicts {
-            task_id: request.task_id,
-            new_date: request.new_date,
-            new_start: request.new_start,
-            new_end: request.new_end,
-        }, &ctx).await?
+        .execute(
+            CalendarCommand::CheckConflicts {
+                task_id: request.task_id,
+                new_date: request.new_date,
+                new_start: request.new_start,
+                new_end: request.new_end,
+            },
+            &ctx,
+        )
+        .await?
     {
-        CalendarResponse::Conflict(conflicts) => Ok(ApiResponse::success(conflicts).with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        CalendarResponse::Conflict(conflicts) => {
+            Ok(ApiResponse::success(conflicts).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }
 
@@ -196,23 +277,32 @@ pub async fn calendar_schedule_task(
     let ctx = calendar_context(&state, &request.correlation_id)?;
     info!("calendar_schedule_task command received");
     match facade(&state)
-        .execute(CalendarCommand::ScheduleTask {
-            task_id: request.task_id,
-            new_date: request.new_date,
-            new_start: request.new_start,
-            new_end: request.new_end,
-            force: request.force.unwrap_or(false),
-        }, &ctx).await?
+        .execute(
+            CalendarCommand::ScheduleTask {
+                task_id: request.task_id,
+                new_date: request.new_date,
+                new_start: request.new_start,
+                new_end: request.new_end,
+                force: request.force.unwrap_or(false),
+            },
+            &ctx,
+        )
+        .await?
     {
         CalendarResponse::Conflict(result) => {
             if result.has_conflict {
                 let msg = result.message.unwrap_or_else(|| {
-                    format!("Scheduling conflict: {} task(s) overlap", result.conflicting_tasks.len())
+                    format!(
+                        "Scheduling conflict: {} task(s) overlap",
+                        result.conflicting_tasks.len()
+                    )
                 });
                 return Err(AppError::Validation(msg));
             }
             Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal("Unexpected calendar facade response".to_string())),
+        _ => Err(AppError::Internal(
+            "Unexpected calendar facade response".to_string(),
+        )),
     }
 }

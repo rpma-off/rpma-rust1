@@ -93,7 +93,10 @@ impl ClientService {
             "Creating new client",
             Some({
                 let mut ctx = HashMap::new();
-                ctx.insert("customer_type".to_string(), json!(req.customer_type.to_string()));
+                ctx.insert(
+                    "customer_type".to_string(),
+                    json!(req.customer_type.to_string()),
+                );
                 ctx
             }),
         );
@@ -142,8 +145,19 @@ impl ClientService {
             .await
             .map_err(|e| format!("Failed to create client: {}", e));
         match &result {
-            Ok(_) => logger.info("Client created successfully", Some({ let mut ctx = HashMap::new(); ctx.insert("client_id".to_string(), json!(client.id)); ctx })),
-            Err(e) => logger.error("Failed to create client", Some(&std::io::Error::new(std::io::ErrorKind::Other, e.clone())), None),
+            Ok(_) => logger.info(
+                "Client created successfully",
+                Some({
+                    let mut ctx = HashMap::new();
+                    ctx.insert("client_id".to_string(), json!(client.id));
+                    ctx
+                }),
+            ),
+            Err(e) => logger.error(
+                "Failed to create client",
+                Some(&std::io::Error::new(std::io::ErrorKind::Other, e.clone())),
+                None,
+            ),
         }
         result.map(|_| client)
     }
@@ -191,7 +205,12 @@ impl ClientService {
         });
         Ok(ClientListResponse {
             data: clients,
-            pagination: PaginationInfo { page, limit, total, total_pages },
+            pagination: PaginationInfo {
+                page,
+                limit,
+                total,
+                total_pages,
+            },
             statistics,
         })
     }
@@ -241,16 +260,36 @@ impl ClientService {
         if let Some(customer_type) = &req.customer_type {
             client.customer_type = customer_type.clone();
         }
-        if req.address_street.is_some() { client.address_street = req.address_street.clone(); }
-        if req.address_city.is_some() { client.address_city = req.address_city.clone(); }
-        if req.address_state.is_some() { client.address_state = req.address_state.clone(); }
-        if req.address_zip.is_some() { client.address_zip = req.address_zip.clone(); }
-        if req.address_country.is_some() { client.address_country = req.address_country.clone(); }
-        if req.tax_id.is_some() { client.tax_id = req.tax_id.clone(); }
-        if req.company_name.is_some() { client.company_name = req.company_name.clone(); }
-        if req.contact_person.is_some() { client.contact_person = req.contact_person.clone(); }
-        if req.notes.is_some() { client.notes = req.notes.clone(); }
-        if req.tags.is_some() { client.tags = req.tags.clone(); }
+        if req.address_street.is_some() {
+            client.address_street = req.address_street.clone();
+        }
+        if req.address_city.is_some() {
+            client.address_city = req.address_city.clone();
+        }
+        if req.address_state.is_some() {
+            client.address_state = req.address_state.clone();
+        }
+        if req.address_zip.is_some() {
+            client.address_zip = req.address_zip.clone();
+        }
+        if req.address_country.is_some() {
+            client.address_country = req.address_country.clone();
+        }
+        if req.tax_id.is_some() {
+            client.tax_id = req.tax_id.clone();
+        }
+        if req.company_name.is_some() {
+            client.company_name = req.company_name.clone();
+        }
+        if req.contact_person.is_some() {
+            client.contact_person = req.contact_person.clone();
+        }
+        if req.notes.is_some() {
+            client.notes = req.notes.clone();
+        }
+        if req.tags.is_some() {
+            client.tags = req.tags.clone();
+        }
         client.updated_at = Utc::now().timestamp_millis();
         IClientRepository::save(self.client_repo.as_ref(), client.clone())
             .await
@@ -267,7 +306,14 @@ impl ClientService {
             format!("Client with id {} not found", id)
         })?;
         if client.created_by.as_ref() != Some(&user_id.to_string()) {
-            logger.warn("Unauthorized client deletion attempt", Some({ let mut ctx = HashMap::new(); ctx.insert("client_id".to_string(), json!(id)); ctx }));
+            logger.warn(
+                "Unauthorized client deletion attempt",
+                Some({
+                    let mut ctx = HashMap::new();
+                    ctx.insert("client_id".to_string(), json!(id));
+                    ctx
+                }),
+            );
             return Err("You can only delete clients you created".to_string());
         }
         let result = IClientRepository::delete_by_id(self.client_repo.as_ref(), id.to_string())
@@ -276,7 +322,11 @@ impl ClientService {
             .map_err(|e| format!("Failed to delete client: {}", e));
         match &result {
             Ok(_) => logger.info("Client deleted successfully", None),
-            Err(e) => logger.error("Failed to delete client", Some(&std::io::Error::new(std::io::ErrorKind::Other, e.clone())), None),
+            Err(e) => logger.error(
+                "Failed to delete client",
+                Some(&std::io::Error::new(std::io::ErrorKind::Other, e.clone())),
+                None,
+            ),
         }
         result
     }
@@ -317,7 +367,11 @@ impl ClientService {
         let mut top_clients: Vec<ClientStat> = all_clients
             .iter()
             .filter(|c| c.total_tasks > 0)
-            .map(|c| ClientStat { id: c.id.clone(), name: c.name.clone(), total_tasks: c.total_tasks })
+            .map(|c| ClientStat {
+                id: c.id.clone(),
+                name: c.name.clone(),
+                total_tasks: c.total_tasks,
+            })
             .collect();
         top_clients.sort_by(|a, b| b.total_tasks.cmp(&a.total_tasks));
         top_clients.truncate(5);
@@ -335,13 +389,43 @@ impl ClientService {
     // These are thin forwarders kept for backward compatibility with
     // `task_client_service.rs` and existing test helpers.
     // New call-sites should call the base methods directly.
-    pub async fn create_client_async(&self, req: CreateClientRequest, user_id: &str) -> Result<Client, String> { self.create_client(req, user_id).await }
-    pub async fn get_clients_async(&self, query: ClientQuery) -> Result<ClientListResponse, String> { self.get_clients(query).await }
-    pub async fn get_client_async(&self, id: &str) -> Result<Option<Client>, String> { self.get_client(id).await }
-    pub async fn update_client_async(&self, req: UpdateClientRequest, user_id: &str) -> Result<Client, String> { self.update_client(req, user_id).await }
-    pub async fn delete_client_async(&self, id: &str, user_id: &str) -> Result<(), String> { self.delete_client(id, user_id).await }
-    pub async fn search_clients_async(&self, query: &str, page: i32, limit: i32) -> Result<Vec<Client>, String> { self.search_clients(query, page, limit).await }
-    pub async fn get_client_stats_async(&self) -> Result<ClientStats, String> { self.get_client_stats().await }
+    pub async fn create_client_async(
+        &self,
+        req: CreateClientRequest,
+        user_id: &str,
+    ) -> Result<Client, String> {
+        self.create_client(req, user_id).await
+    }
+    pub async fn get_clients_async(
+        &self,
+        query: ClientQuery,
+    ) -> Result<ClientListResponse, String> {
+        self.get_clients(query).await
+    }
+    pub async fn get_client_async(&self, id: &str) -> Result<Option<Client>, String> {
+        self.get_client(id).await
+    }
+    pub async fn update_client_async(
+        &self,
+        req: UpdateClientRequest,
+        user_id: &str,
+    ) -> Result<Client, String> {
+        self.update_client(req, user_id).await
+    }
+    pub async fn delete_client_async(&self, id: &str, user_id: &str) -> Result<(), String> {
+        self.delete_client(id, user_id).await
+    }
+    pub async fn search_clients_async(
+        &self,
+        query: &str,
+        page: i32,
+        limit: i32,
+    ) -> Result<Vec<Client>, String> {
+        self.search_clients(query, page, limit).await
+    }
+    pub async fn get_client_stats_async(&self) -> Result<ClientStats, String> {
+        self.get_client_stats().await
+    }
 }
 
 // ── ClientResolver contract implementation ───────────────────────────────────

@@ -78,7 +78,10 @@ impl std::fmt::Debug for CalendarFacade {
 
 impl CalendarFacade {
     pub fn new(calendar_service: Arc<CalendarService>, db: Arc<Database>) -> Self {
-        Self { calendar_service, db }
+        Self {
+            calendar_service,
+            db,
+        }
     }
 
     pub fn is_ready(&self) -> bool {
@@ -109,7 +112,11 @@ impl CalendarFacade {
         ctx: &RequestContext,
     ) -> Result<CalendarResponse, IpcAppError> {
         match command {
-            CalendarCommand::GetTasks { date_range, technician_ids, statuses } => {
+            CalendarCommand::GetTasks {
+                date_range,
+                technician_ids,
+                statuses,
+            } => {
                 let tasks = self
                     .calendar_service
                     .get_tasks(date_range, technician_ids, statuses)
@@ -144,7 +151,9 @@ impl CalendarFacade {
                 Ok(CalendarResponse::Event(event))
             }
             CalendarCommand::UpdateEvent { id, event_data } => {
-                if let (Some(start), Some(end)) = (&event_data.start_datetime, &event_data.end_datetime) {
+                if let (Some(start), Some(end)) =
+                    (&event_data.start_datetime, &event_data.end_datetime)
+                {
                     if start >= end {
                         return Err(IpcAppError::Validation(
                             "Event start time must be before end time".to_string(),
@@ -182,7 +191,11 @@ impl CalendarFacade {
                     .map_err(|e| IpcAppError::internal_sanitized("get_task_events", &e))?;
                 Ok(CalendarResponse::Events(events))
             }
-            CalendarCommand::GetEventsInRange { start_date, end_date, technician_id } => {
+            CalendarCommand::GetEventsInRange {
+                start_date,
+                end_date,
+                technician_id,
+            } => {
                 self.validate_date_range(&start_date, &end_date)?;
                 let repo = CalendarEventRepository::new(self.db.clone());
                 let tech_id = technician_id.as_deref();
@@ -192,18 +205,38 @@ impl CalendarFacade {
                     .map_err(|e| IpcAppError::internal_sanitized("get_events", &e))?;
                 Ok(CalendarResponse::Events(events))
             }
-            CalendarCommand::CheckConflicts { task_id, new_date, new_start, new_end } => {
+            CalendarCommand::CheckConflicts {
+                task_id,
+                new_date,
+                new_start,
+                new_end,
+            } => {
                 let conflicts = self
                     .calendar_service
                     .check_conflicts(task_id, new_date, new_start, new_end)
                     .await
-                    .map_err(|e| IpcAppError::internal_sanitized("check_scheduling_conflicts", &e))?;
+                    .map_err(|e| {
+                        IpcAppError::internal_sanitized("check_scheduling_conflicts", &e)
+                    })?;
                 Ok(CalendarResponse::Conflict(conflicts))
             }
-            CalendarCommand::ScheduleTask { task_id, new_date, new_start, new_end, force } => {
+            CalendarCommand::ScheduleTask {
+                task_id,
+                new_date,
+                new_start,
+                new_end,
+                force,
+            } => {
                 let result = self
                     .calendar_service
-                    .schedule_task_with_options(task_id, new_date, new_start, new_end, &ctx.auth.user_id, force)
+                    .schedule_task_with_options(
+                        task_id,
+                        new_date,
+                        new_start,
+                        new_end,
+                        &ctx.auth.user_id,
+                        force,
+                    )
                     .await
                     .map_err(|e| IpcAppError::internal_sanitized("schedule_task", &e))?;
                 Ok(CalendarResponse::Conflict(result))

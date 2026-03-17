@@ -1,6 +1,6 @@
-use std::sync::Arc;
 use async_trait::async_trait;
 use rusqlite::params;
+use std::sync::Arc;
 
 use crate::db::Database;
 use crate::domains::notifications::models::Notification;
@@ -23,22 +23,27 @@ impl NotificationRepository {
     }
 
     pub async fn find_by_user(&self, user_id: &str, limit: i32) -> RepoResult<Vec<Notification>> {
-        let cache_key = self.cache_key_builder.list(&["user", user_id, &limit.to_string()]);
+        let cache_key = self
+            .cache_key_builder
+            .list(&["user", user_id, &limit.to_string()]);
         if let Some(n) = self.cache.get::<Vec<Notification>>(&cache_key) {
             return Ok(n);
         }
-        let notifications = self.db
+        let notifications = self
+            .db
             .query_as::<Notification>(
                 "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ?",
                 params![user_id, limit],
             )
             .map_err(|e| RepoError::Database(format!("Failed to find notifications: {}", e)))?;
-        self.cache.set(&cache_key, notifications.clone(), ttl::SHORT);
+        self.cache
+            .set(&cache_key, notifications.clone(), ttl::SHORT);
         Ok(notifications)
     }
 
     pub async fn count_unread(&self, user_id: &str) -> RepoResult<i32> {
-        let count = self.db
+        let count = self
+            .db
             .query_single_value::<i64>(
                 "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read = 0",
                 params![user_id],
@@ -49,7 +54,10 @@ impl NotificationRepository {
 
     pub async fn mark_read(&self, id: &str) -> RepoResult<()> {
         self.db
-            .execute("UPDATE notifications SET read = 1 WHERE id = ?", params![id])
+            .execute(
+                "UPDATE notifications SET read = 1 WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to mark read: {}", e)))?;
         self.cache.clear();
         Ok(())
@@ -67,7 +75,8 @@ impl NotificationRepository {
     }
 
     pub async fn delete(&self, id: &str) -> RepoResult<bool> {
-        let result = self.db
+        let result = self
+            .db
             .execute("DELETE FROM notifications WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to delete: {}", e)))?;
         self.cache.clear();
@@ -82,8 +91,12 @@ impl Repository<Notification, String> for NotificationRepository {
         if let Some(n) = self.cache.get::<Notification>(&cache_key) {
             return Ok(Some(n));
         }
-        let notification = self.db
-            .query_single_as::<Notification>("SELECT * FROM notifications WHERE id = ?", params![id])
+        let notification = self
+            .db
+            .query_single_as::<Notification>(
+                "SELECT * FROM notifications WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to find notification: {}", e)))?;
         if let Some(ref n) = notification {
             self.cache.set(&cache_key, n.clone(), ttl::MEDIUM);
@@ -113,11 +126,14 @@ impl Repository<Notification, String> for NotificationRepository {
             )
             .map_err(|e| RepoError::Database(format!("Failed to create notification: {}", e)))?;
         self.cache.clear();
-        self.find_by_id(entity.id).await?.ok_or_else(|| RepoError::NotFound("Notification not found after save".to_string()))
+        self.find_by_id(entity.id)
+            .await?
+            .ok_or_else(|| RepoError::NotFound("Notification not found after save".to_string()))
     }
 
     async fn delete_by_id(&self, id: String) -> RepoResult<bool> {
-        let result = self.db
+        let result = self
+            .db
             .execute("DELETE FROM notifications WHERE id = ?", params![id])
             .map_err(|e| RepoError::Database(format!("Failed to delete: {}", e)))?;
         self.cache.clear();
@@ -125,8 +141,12 @@ impl Repository<Notification, String> for NotificationRepository {
     }
 
     async fn exists_by_id(&self, id: String) -> RepoResult<bool> {
-        let count = self.db
-            .query_single_value::<i64>("SELECT COUNT(*) FROM notifications WHERE id = ?", params![id])
+        let count = self
+            .db
+            .query_single_value::<i64>(
+                "SELECT COUNT(*) FROM notifications WHERE id = ?",
+                params![id],
+            )
             .map_err(|e| RepoError::Database(format!("Failed to check existence: {}", e)))?;
         Ok(count > 0)
     }

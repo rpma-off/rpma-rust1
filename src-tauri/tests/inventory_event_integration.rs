@@ -102,8 +102,8 @@ async fn finalize_intervention_emits_event_and_inventory_updates() {
                 batch_number: None,
                 storage_location: Some("Shelf A".to_string()),
                 warehouse_id: None,
-            is_active: None,
-            is_discontinued: None,
+                is_active: None,
+                is_discontinued: None,
             },
             Some("test_user".to_string()),
         )
@@ -276,8 +276,8 @@ async fn finalize_intervention_rollback_does_not_update_inventory() {
                 batch_number: None,
                 storage_location: Some("Shelf B".to_string()),
                 warehouse_id: None,
-            is_active: None,
-            is_discontinued: None,
+                is_active: None,
+                is_discontinued: None,
             },
             Some("test_user".to_string()),
         )

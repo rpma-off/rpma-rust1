@@ -1,6 +1,6 @@
 use crate::db::Database;
-use crate::domains::documents::{PhotoService, PhotoStorageSettings};
 use crate::domains::documents::DocumentsFacade;
+use crate::domains::documents::{PhotoService, PhotoStorageSettings};
 use std::sync::Arc;
 
 #[tokio::test]

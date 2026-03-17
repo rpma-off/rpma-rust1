@@ -96,10 +96,7 @@ async fn test_harness_two_apps_are_isolated() {
 
     let count: i64 = app2
         .db
-        .query_single_value(
-            "SELECT COUNT(*) FROM tasks WHERE id='iso-test-id'",
-            [],
-        )
+        .query_single_value("SELECT COUNT(*) FROM tasks WHERE id='iso-test-id'", [])
         .expect("query app2");
     assert_eq!(count, 0, "app2 database must be isolated from app1");
 }

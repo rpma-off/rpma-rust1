@@ -1,5 +1,4 @@
 mod contracts;
 
-pub use contracts::{
-    CreateUserRequest, UpdateUserRequest, UserAction, UserListResponse, UserResponse,
-};
+pub(crate) use crate::domains::users::domain::{CreateUserRequest, UpdateUserRequest, UserAction};
+pub use contracts::{UserListResponse, UserResponse};

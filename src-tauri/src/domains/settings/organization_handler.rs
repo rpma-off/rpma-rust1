@@ -5,11 +5,11 @@
 
 use tracing::{info, instrument};
 
-use crate::commands::{ApiResponse, AppError, AppState, init_correlation_context};
-use crate::shared::contracts::auth::UserRole;
-use crate::resolve_context;
-use super::models::*;
 use super::facade::SettingsFacade;
+use super::models::*;
+use crate::commands::{init_correlation_context, ApiResponse, AppError, AppState};
+use crate::resolve_context;
+use crate::shared::contracts::auth::UserRole;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct UploadLogoRequest {
@@ -42,7 +42,10 @@ pub async fn complete_onboarding(
     let correlation_id = init_correlation_context(&correlation_id, None);
     let facade = SettingsFacade::new(state.db.clone());
     let organization = facade.complete_onboarding(&data)?;
-    info!("Onboarding completed successfully for organization: {}", organization.name);
+    info!(
+        "Onboarding completed successfully for organization: {}",
+        organization.name
+    );
     Ok(ApiResponse::success(organization).with_correlation_id(Some(correlation_id)))
 }
 
@@ -54,11 +57,9 @@ pub async fn get_organization(
 ) -> Result<ApiResponse<Organization>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Viewer);
     let facade = SettingsFacade::new(state.db.clone());
-    let organization = facade
-        .get_organization()?
-        .ok_or_else(|| {
-            AppError::NotFound("Organization not found. Please complete onboarding.".to_string())
-        })?;
+    let organization = facade.get_organization()?.ok_or_else(|| {
+        AppError::NotFound("Organization not found. Please complete onboarding.".to_string())
+    })?;
     Ok(ApiResponse::success(organization).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -119,4 +120,3 @@ pub async fn update_organization_settings(
     let settings = facade.update_organization_settings(&data)?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
-

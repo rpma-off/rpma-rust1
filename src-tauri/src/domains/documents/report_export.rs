@@ -1,7 +1,7 @@
-use crate::commands::{AppError, AppResult};
-use crate::db::Database;
 use super::models::{CompleteInterventionData, InterventionReportResult};
 use super::report_pdf::InterventionPdfReport;
+use crate::commands::{AppError, AppResult};
+use crate::db::Database;
 use crate::shared::contracts::auth::{UserRole, UserSession};
 use crate::shared::services::cross_domain::Intervention;
 use crate::shared::services::document_storage::DocumentStorageService;
@@ -137,14 +137,13 @@ pub async fn export_intervention_report(
     );
     let output_path = DocumentStorageService::get_document_path(app_data_dir, &file_name);
 
-    let pdf_report =
-        InterventionPdfReport::new(
-            intervention_data.intervention.clone(),
-            intervention_data.workflow_steps.clone(),
-            intervention_data.photos.clone(),
-            Vec::new(),
-            intervention_data.client.clone(),
-        );
+    let pdf_report = InterventionPdfReport::new(
+        intervention_data.intervention.clone(),
+        intervention_data.workflow_steps.clone(),
+        intervention_data.photos.clone(),
+        Vec::new(),
+        intervention_data.client.clone(),
+    );
     pdf_report.generate(&output_path).await?;
 
     let file_size = tokio::fs::metadata(&output_path)
@@ -181,14 +180,13 @@ pub async fn save_intervention_report(
             .map_err(|e| AppError::Io(format!("Failed to prepare destination directory: {}", e)))?;
     }
 
-    let pdf_report =
-        InterventionPdfReport::new(
-            intervention_data.intervention.clone(),
-            intervention_data.workflow_steps.clone(),
-            intervention_data.photos.clone(),
-            Vec::new(),
-            intervention_data.client.clone(),
-        );
+    let pdf_report = InterventionPdfReport::new(
+        intervention_data.intervention.clone(),
+        intervention_data.workflow_steps.clone(),
+        intervention_data.photos.clone(),
+        Vec::new(),
+        intervention_data.client.clone(),
+    );
     pdf_report.generate(&output_path).await?;
 
     Ok(destination_path.to_string())

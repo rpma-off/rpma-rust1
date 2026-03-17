@@ -10,10 +10,9 @@ use crate::db::Database;
 use crate::shared::ipc::errors::AppError;
 
 use super::models::{
-    AppSettings, DataConsent, GeneralSettings, NotificationSettings,
-    OnboardingData, OnboardingStatus, Organization, OrganizationSettings,
-    SecuritySettings, UpdateOrganizationRequest, UpdateOrganizationSettingsRequest,
-    UserSettings,
+    AppSettings, DataConsent, GeneralSettings, NotificationSettings, OnboardingData,
+    OnboardingStatus, Organization, OrganizationSettings, SecuritySettings,
+    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest, UserSettings,
 };
 use super::organization_repository::OrganizationRepository;
 use super::settings_repository::SettingsRepository;
@@ -159,8 +158,13 @@ impl SettingsFacade {
     }
 
     /// Persist updated settings for the given user.
-    pub fn save_user_settings(&self, user_id: &str, settings: &UserSettings) -> Result<(), AppError> {
-        self.user_settings_repo().save_user_settings(user_id, settings)
+    pub fn save_user_settings(
+        &self,
+        user_id: &str,
+        settings: &UserSettings,
+    ) -> Result<(), AppError> {
+        self.user_settings_repo()
+            .save_user_settings(user_id, settings)
     }
 
     /// Retrieve the data-consent record for the given user.
@@ -222,8 +226,7 @@ impl SettingsFacade {
 
     /// Complete the onboarding flow by creating the organisation.
     pub fn complete_onboarding(&self, data: &OnboardingData) -> Result<Organization, AppError> {
-        data.validate()
-            .map_err(AppError::Validation)?;
+        data.validate().map_err(AppError::Validation)?;
         let repo = self.org_repo();
         if repo.get_organization()?.is_some() {
             return Err(AppError::Validation(

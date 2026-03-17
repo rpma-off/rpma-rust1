@@ -141,7 +141,6 @@ pub async fn get_recent_activities(
     Ok(activities)
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::shared::policies::url_policy::validate_https_url;

@@ -813,7 +813,10 @@ pub struct SystemSettings {
 
 impl Default for SystemSettings {
     fn default() -> Self {
-        Self { onboarding_completed: false, onboarding_step: 0 }
+        Self {
+            onboarding_completed: false,
+            onboarding_step: 0,
+        }
     }
 }
 
@@ -824,7 +827,9 @@ pub struct TaskSettings {
 
 impl Default for TaskSettings {
     fn default() -> Self {
-        Self { default_task_priority: "medium".to_string() }
+        Self {
+            default_task_priority: "medium".to_string(),
+        }
     }
 }
 
@@ -836,7 +841,10 @@ pub struct OrgSecuritySettings {
 
 impl Default for OrgSecuritySettings {
     fn default() -> Self {
-        Self { default_session_timeout: 480, require_2fa: false }
+        Self {
+            default_session_timeout: 480,
+            require_2fa: false,
+        }
     }
 }
 
@@ -896,7 +904,13 @@ impl Default for BusinessSettings {
         Self {
             business_hours_start: "08:00".to_string(),
             business_hours_end: "18:00".to_string(),
-            business_days: vec!["1".to_string(), "2".to_string(), "3".to_string(), "4".to_string(), "5".to_string()],
+            business_days: vec![
+                "1".to_string(),
+                "2".to_string(),
+                "3".to_string(),
+                "4".to_string(),
+                "5".to_string(),
+            ],
         }
     }
 }

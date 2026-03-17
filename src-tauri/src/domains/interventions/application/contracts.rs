@@ -45,7 +45,9 @@ impl From<InterventionWorkflowAction> for crate::domains::interventions::Interve
             }
             InterventionWorkflowAction::Update { id, data } => Cmd::WorkflowUpdate { id, data },
             InterventionWorkflowAction::Delete { id } => Cmd::WorkflowDelete { id },
-            InterventionWorkflowAction::Finalize { data } => Cmd::WorkflowFinalize { request: data },
+            InterventionWorkflowAction::Finalize { data } => {
+                Cmd::WorkflowFinalize { request: data }
+            }
         }
     }
 }

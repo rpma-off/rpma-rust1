@@ -320,9 +320,8 @@ pub async fn build_test_app_state() -> crate::shared::app_state::AppStateType {
             .await
             .expect("in-memory db for IPC test"),
     );
-    let repos = std::sync::Arc::new(
-        crate::shared::repositories::Repositories::new(db.clone(), 64).await,
-    );
+    let repos =
+        std::sync::Arc::new(crate::shared::repositories::Repositories::new(db.clone(), 64).await);
     crate::service_builder::ServiceBuilder::new(db, repos, std::env::temp_dir())
         .build()
         .expect("ServiceBuilder::build in IPC test")
