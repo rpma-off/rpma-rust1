@@ -48,8 +48,7 @@ jobs:
         run: npm run build
 
       - name: Build Tauri
-        working-directory: frontend
-        run: npm run tauri build
+        run: npm exec --prefix frontend tauri build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
