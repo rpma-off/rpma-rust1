@@ -125,14 +125,40 @@ pub struct ReportStep {
     pub photo_count: i32,
     pub notes: String,
     pub checklist: Vec<ReportChecklistItem>,
-    pub defects: Vec<String>,
+    pub defects: Vec<ReportDefect>,
     pub observations: Vec<String>,
     pub measurements: Vec<ReportKeyValue>,
     pub environment: Vec<ReportKeyValue>,
-    pub zones: Vec<String>,
+    pub zones: Vec<ReportZone>,
     pub quality_score: String,
     pub validation_data: Vec<ReportKeyValue>,
     pub approval_data: ReportApproval,
+}
+
+/// A single defect detected during an inspection step.
+#[derive(Debug, Clone, Serialize)]
+pub struct ReportDefect {
+    /// The vehicle zone where the defect was found (e.g. "trunk", "hood").
+    pub zone: String,
+    /// Type/category of the defect (e.g. "scratch", "impact").
+    pub defect_type: String,
+    /// Severity level: "high", "medium", "low", or empty string.
+    pub severity: String,
+    /// Free-text technician notes.
+    pub notes: String,
+}
+
+/// A PPF coverage zone from the installation step.
+#[derive(Debug, Clone, Serialize)]
+pub struct ReportZone {
+    /// Zone identifier (e.g. "full_front", "capot").
+    pub id: String,
+    /// Human-readable zone name.
+    pub name: String,
+    /// Quality score assigned by the technician (0–10 scale).
+    pub quality_score: Option<f64>,
+    /// Status string (e.g. "completed", "in_progress").
+    pub status: String,
 }
 
 /// TODO: document
@@ -241,6 +267,21 @@ pub fn build_intervention_report_view_model(
     };
 
     // --- Summary ---
+    // Recalculate completion_percentage from the actual steps rather than reading the
+    // potentially stale value stored in the interventions row (ADR-012 / Bug B3).
+    let recalculated_completion = {
+        let total = steps.len();
+        let completed = steps
+            .iter()
+            .filter(|s| matches!(s.step_status, StepStatus::Completed))
+            .count();
+        if total > 0 {
+            (completed as f64 / total as f64) * 100.0
+        } else {
+            0.0
+        }
+    };
+
     let summary = ReportSummary {
         status: intervention_status_label(&intervention.status),
         status_badge: intervention_status_badge(&intervention.status),
@@ -256,7 +297,7 @@ pub fn build_intervention_report_view_model(
             .actual_duration
             .map(|d| format!("{} min", d))
             .unwrap_or_else(|| NOT_SPECIFIED.to_string()),
-        completion_percentage: intervention.completion_percentage,
+        completion_percentage: recalculated_completion,
         intervention_type: intervention_type_label(&intervention.intervention_type),
     };
 
@@ -588,8 +629,11 @@ mod tests {
         let vm = build_intervention_report_view_model(&intervention, &steps, &[], &[], None);
 
         let inspection = &vm.steps[0];
-        // Defects from collected_data
-        assert!(inspection.defects.contains(&"rayure legere".to_string()));
+        // Defects from collected_data (legacy string format → stored in defect_type)
+        assert!(inspection
+            .defects
+            .iter()
+            .any(|d| d.defect_type == "rayure legere"));
         // Environment from collected_data
         assert!(!inspection.environment.is_empty());
         let temp_kv = inspection
@@ -621,9 +665,9 @@ mod tests {
         let vm = build_intervention_report_view_model(&intervention, &steps, &[], &[], None);
 
         let installation = &vm.steps[2];
-        // Zones from collected_data
-        assert!(installation.zones.contains(&"full_front".to_string()));
-        assert!(installation.zones.contains(&"full_vehicle".to_string()));
+        // Zones from collected_data (legacy string format → stored in id/name)
+        assert!(installation.zones.iter().any(|z| z.id == "full_front"));
+        assert!(installation.zones.iter().any(|z| z.id == "full_vehicle"));
         // Quality score
         assert_eq!(installation.quality_score, "92/100");
         // Notes
@@ -729,16 +773,37 @@ mod tests {
     }
 
     #[test]
+    fn test_vm_completion_percentage_recalculated_from_steps() {
+        // Stale DB value is 66.666 — all 3 steps are completed → should be 100%
+        let mut intervention = build_test_intervention();
+        intervention.completion_percentage = 66.666; // stale DB value
+
+        use crate::shared::services::cross_domain::{StepStatus, StepType};
+        let mut s1 = InterventionStep::new("i".into(), 1, "S1".into(), StepType::Inspection);
+        s1.step_status = StepStatus::Completed;
+        let mut s2 = InterventionStep::new("i".into(), 2, "S2".into(), StepType::Preparation);
+        s2.step_status = StepStatus::Completed;
+        let mut s3 = InterventionStep::new("i".into(), 3, "S3".into(), StepType::Installation);
+        s3.step_status = StepStatus::Completed;
+
+        let vm =
+            build_intervention_report_view_model(&intervention, &[s1, s2, s3], &[], &[], None);
+        assert!((vm.summary.completion_percentage - 100.0).abs() < 0.01);
+    }
+
+    #[test]
     fn test_vm_summary_fields() {
         let intervention = build_test_intervention();
-        let vm = build_intervention_report_view_model(&intervention, &[], &[], &[], None);
+        let steps = build_test_steps();
+        let vm = build_intervention_report_view_model(&intervention, &steps, &[], &[], None);
 
         assert_eq!(vm.summary.status, "Terminee");
         assert_eq!(vm.summary.status_badge, "[OK]");
         assert_eq!(vm.summary.technician_name, "Jean Dupont");
         assert_eq!(vm.summary.estimated_duration, "120 min");
         assert_eq!(vm.summary.actual_duration, "95 min");
-        assert_eq!(vm.summary.completion_percentage, 100.0);
+        // 3/4 steps completed (Inspection, Installation, Finalization — Preparation is Pending)
+        assert!((vm.summary.completion_percentage - 75.0).abs() < 0.01);
         assert_eq!(vm.summary.intervention_type, "PPF (Protection Film)");
     }
 
@@ -834,18 +899,53 @@ mod tests {
     }
 
     #[test]
-    fn test_extract_zones_from_json() {
+    fn test_extract_ppf_zones_string_array() {
         let data = json!({"zones": ["full_front", "full_vehicle"]});
-        let result = extract_zones(Some(&data));
+        let result = extract_ppf_zones(Some(&data));
         assert_eq!(result.len(), 2);
-        assert!(result.contains(&"full_front".to_string()));
+        assert!(result.iter().any(|z| z.id == "full_front"));
     }
 
     #[test]
-    fn test_extract_zones_fallback_installation_zones() {
-        let data = json!({"installation_zones": ["hood", "bumper"]});
-        let result = extract_zones(Some(&data));
+    fn test_extract_ppf_zones_object_array() {
+        let data = json!({"zones": [
+            {"id": "capot", "name": "Capot", "status": "completed", "quality_score": 9.5},
+            {"id": "bumper", "name": "Pare-chocs", "status": "completed", "quality_score": 8.0}
+        ]});
+        let result = extract_ppf_zones(Some(&data));
         assert_eq!(result.len(), 2);
-        assert!(result.contains(&"hood".to_string()));
+        let capot = result.iter().find(|z| z.id == "capot").unwrap();
+        assert_eq!(capot.name, "Capot");
+        assert_eq!(capot.status, "completed");
+        assert!((capot.quality_score.unwrap() - 9.5).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_extract_ppf_zones_fallback_installation_zones() {
+        let data = json!({"installation_zones": ["hood", "bumper"]});
+        let result = extract_ppf_zones(Some(&data));
+        assert_eq!(result.len(), 2);
+        assert!(result.iter().any(|z| z.id == "hood"));
+    }
+
+    #[test]
+    fn test_extract_defects_string_array() {
+        let data = json!({"defects": ["rayure legere", "impact"]});
+        let result = extract_defects(Some(&data));
+        assert_eq!(result.len(), 2);
+        assert!(result.iter().any(|d| d.defect_type == "rayure legere"));
+    }
+
+    #[test]
+    fn test_extract_defects_object_array() {
+        let data = json!({"defects": [
+            {"id": "d1", "zone": "trunk", "type": "scratch", "severity": "high", "notes": "deep"}
+        ]});
+        let result = extract_defects(Some(&data));
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].zone, "trunk");
+        assert_eq!(result[0].defect_type, "scratch");
+        assert_eq!(result[0].severity, "high");
+        assert_eq!(result[0].notes, "deep");
     }
 }

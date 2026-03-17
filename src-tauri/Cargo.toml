@@ -151,6 +151,7 @@ num_cpus = "1.16"
 
 # PDF generation
 genpdf = "0.2"
+headless_chrome = "1.0"
 
 # Directory operations
 dirs = "5.0"

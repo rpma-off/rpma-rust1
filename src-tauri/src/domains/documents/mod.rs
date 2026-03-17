@@ -8,6 +8,7 @@ pub mod photo_repository;
 pub mod document_storage;
 pub mod report_export;
 pub mod report_pdf;
+pub mod report_template;
 pub mod report_view_model;
 
 pub use models::*;
