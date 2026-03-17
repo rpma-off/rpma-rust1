@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use crate::shared::services::cross_domain::{Intervention, InterventionStep, Photo};
 
 use super::extractors::{
-    extract_checklist, extract_key_values, extract_string_array, extract_zones, json_to_key_values,
+    extract_checklist, extract_defects, extract_key_values, extract_ppf_zones,
+    extract_string_array, json_to_key_values,
 };
 use super::formatters::{
     format_duration_seconds, step_status_badge, step_status_label, timestamp_string_display,
@@ -34,9 +35,9 @@ pub(super) fn build_report_step(step: &InterventionStep, photos: &[Photo]) -> Re
     let effective_data = step.collected_data.as_ref().or(step.step_data.as_ref());
 
     let checklist = extract_checklist(effective_data);
-    let defects = extract_string_array(effective_data, "defects");
+    let defects = extract_defects(effective_data);
     let environment = extract_key_values(effective_data, "environment");
-    let zones = extract_zones(effective_data);
+    let zones = extract_ppf_zones(effective_data);
     let quality_scores = extract_key_values(effective_data, "quality_scores");
     let measurements_from_data = extract_key_values(effective_data, "measurements");
 

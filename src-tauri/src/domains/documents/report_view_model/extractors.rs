@@ -1,7 +1,7 @@
 //! JSON extraction helpers for the report view model.
 
 use super::formatters::humanize_key;
-use super::{ReportChecklistItem, ReportKeyValue};
+use super::{ReportChecklistItem, ReportDefect, ReportKeyValue, ReportZone};
 
 pub(super) fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportChecklistItem> {
     let Some(data) = data else {
@@ -75,6 +75,104 @@ pub(super) fn extract_zones(data: Option<&serde_json::Value>) -> Vec<String> {
         result = extract_string_array(data, "installation_zones");
     }
     result
+}
+
+/// Extract defects from `collected_data["defects"]`.
+///
+/// Handles two formats:
+/// - **Object array** (production): `[{"id":..., "zone":..., "type":..., "severity":..., "notes":...}]`
+/// - **String array** (legacy / tests): `["rayure legere"]` → `defect_type` only
+pub(super) fn extract_defects(data: Option<&serde_json::Value>) -> Vec<ReportDefect> {
+    let Some(arr) = data
+        .and_then(|d| d.get("defects"))
+        .and_then(|v| v.as_array())
+    else {
+        return Vec::new();
+    };
+
+    arr.iter()
+        .filter_map(|item| match item {
+            serde_json::Value::Object(obj) => Some(ReportDefect {
+                zone: obj
+                    .get("zone")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                defect_type: obj
+                    .get("type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                severity: obj
+                    .get("severity")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                notes: obj
+                    .get("notes")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+            }),
+            serde_json::Value::String(s) => Some(ReportDefect {
+                zone: String::new(),
+                defect_type: s.clone(),
+                severity: String::new(),
+                notes: String::new(),
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+/// Extract PPF zones from `collected_data["zones"]`.
+///
+/// Handles two formats:
+/// - **Object array** (production): `[{"id":..., "name":..., "status":..., "quality_score":...}]`
+/// - **String array** (legacy / tests): `["full_front"]` → `id` and `name` only
+pub(super) fn extract_ppf_zones(data: Option<&serde_json::Value>) -> Vec<ReportZone> {
+    // Try "zones" first, then "installation_zones" for legacy data
+    let arr_opt = data
+        .and_then(|d| d.get("zones"))
+        .and_then(|v| v.as_array())
+        .or_else(|| {
+            data.and_then(|d| d.get("installation_zones"))
+                .and_then(|v| v.as_array())
+        });
+
+    let Some(arr) = arr_opt else {
+        return Vec::new();
+    };
+
+    arr.iter()
+        .filter_map(|item| match item {
+            serde_json::Value::Object(obj) => Some(ReportZone {
+                id: obj
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                name: obj
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                quality_score: obj.get("quality_score").and_then(|v| v.as_f64()),
+                status: obj
+                    .get("status")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+            }),
+            serde_json::Value::String(s) => Some(ReportZone {
+                id: s.clone(),
+                name: s.clone(),
+                quality_score: None,
+                status: String::new(),
+            }),
+            _ => None,
+        })
+        .collect()
 }
 
 pub(super) fn json_to_key_values(value: &serde_json::Value) -> Vec<ReportKeyValue> {

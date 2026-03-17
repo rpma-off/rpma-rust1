@@ -3,9 +3,33 @@ use crate::db::Database;
 use super::models::{CompleteInterventionData, InterventionReportResult};
 use super::report_pdf::InterventionPdfReport;
 use crate::shared::contracts::auth::{UserRole, UserSession};
+use crate::shared::services::cross_domain::Intervention;
 use crate::shared::services::document_storage::DocumentStorageService;
 use chrono::Utc;
+use rusqlite::OptionalExtension;
 use std::path::Path;
+
+/// Resolves `technician_name` from the `users` table when the denormalized
+/// field on the intervention row is NULL but `technician_id` is set (Bug B4).
+fn resolve_technician_name(db: &Database, intervention: &mut Intervention) -> AppResult<()> {
+    if intervention.technician_name.is_none() {
+        if let Some(ref tech_id) = intervention.technician_id.clone() {
+            let conn = db
+                .get_connection()
+                .map_err(|e| AppError::Database(format!("DB connection error: {}", e)))?;
+            let name: Option<String> = conn
+                .query_row(
+                    "SELECT username FROM users WHERE id = ?1",
+                    [tech_id],
+                    |row| row.get(0),
+                )
+                .optional()
+                .map_err(|e| AppError::Database(format!("Failed to resolve technician: {}", e)))?;
+            intervention.technician_name = name;
+        }
+    }
+    Ok(())
+}
 
 /// TODO: document
 #[tracing::instrument(skip(db))]
@@ -46,12 +70,15 @@ pub async fn get_intervention_with_details(
         .get_intervention(intervention_id)
         .map_err(|e| AppError::Database(format!("Failed to get intervention: {}", e)))?;
 
-    let intervention = intervention_opt.ok_or_else(|| {
+    let mut intervention = intervention_opt.ok_or_else(|| {
         AppError::NotFound(format!(
             "Intervention {} not found. This intervention may have been deleted or never existed.",
             intervention_id
         ))
     })?;
+
+    // Resolve technician_name from users table if the denormalized field is NULL (Bug B4).
+    resolve_technician_name(db, &mut intervention)?;
 
     let workflow_steps = intervention_svc
         .get_intervention_steps(intervention_id)
