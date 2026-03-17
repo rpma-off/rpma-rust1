@@ -6,6 +6,7 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
 import { useCalendarStore } from '../stores/calendarStore';
 import { useCalendar } from '../hooks/useCalendar';
@@ -16,6 +17,7 @@ import { DayView } from './DayView';
 import { AgendaView } from './AgendaView';
 
 export function CalendarDashboard() {
+  const { t } = useTranslation();
   const router = useRouter();
   const currentView = useCalendarStore((state) => state.currentView);
   const currentDate = useCalendarStore((state) => state.currentDate);
@@ -161,10 +163,10 @@ export function CalendarDashboard() {
         <Button
           onClick={handleCreateTask}
           className="h-11 px-6 rounded-full shadow-[var(--rpma-shadow-soft)] bg-[hsl(var(--rpma-teal))] text-white hover:bg-[hsl(var(--rpma-teal))]/90"
-          aria-label="Ajouter une nouvelle tache"
+          aria-label="Ajouter une nouvelle tâche"
         >
           <Plus className="h-5 w-5 mr-2" />
-          + Add
+          {t('common.add')}
         </Button>
       </div>
     </div>
