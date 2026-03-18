@@ -65,7 +65,6 @@ function collectRustFiles(dir) {
  * @returns {'import'|'construction'|'clone'|'type'|'other'}
  */
 function classify(line) {
-  const t = line.trim();
 
   // Import statement
   if (/^\s*use\s+.*\bArc\b/.test(line)) return 'import';
