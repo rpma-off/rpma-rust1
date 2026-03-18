@@ -343,28 +343,25 @@ function RUST_SERVICE_TEMPLATE(n: DomainNames, crud: boolean): string {
     /// Create a new ${n.pascal}.
     pub async fn create(
         &self,
-        _payload: Create${n.pascal}Request,
-        _ctx: &RequestContext,
+        payload: Create${n.pascal}Request,
+        ctx: &RequestContext,
     ) -> AppResult<${n.pascal}> {
-        // TODO(scaffold): Implement create logic
-        todo!("Implement ${n.pascal}Service::create")
+        self.repo.create(payload, ctx).await
     }
 
     /// Update a ${n.pascal}.
     pub async fn update(
         &self,
-        _id: &str,
-        _payload: Update${n.pascal}Request,
-        _ctx: &RequestContext,
+        id: &str,
+        payload: Update${n.pascal}Request,
+        ctx: &RequestContext,
     ) -> AppResult<${n.pascal}> {
-        // TODO(scaffold): Implement update logic
-        todo!("Implement ${n.pascal}Service::update")
+        self.repo.update(id, payload, ctx).await
     }
 
     /// Delete a ${n.pascal}.
-    pub async fn delete(&self, _id: &str, _ctx: &RequestContext) -> AppResult<()> {
-        // TODO(scaffold): Implement delete logic
-        todo!("Implement ${n.pascal}Service::delete")
+    pub async fn delete(&self, id: &str, ctx: &RequestContext) -> AppResult<()> {
+        self.repo.delete(id, ctx).await
     }`
     : "";
 
@@ -383,33 +380,31 @@ use crate::domains::${n.snake}::domain::models::${n.snake}::{Create${n.pascal}Re
 
 use crate::commands::AppResult;
 use crate::db::Database;
+use crate::domains::${n.snake}::infrastructure::${n.snake}_repository::{${n.pascal}Repository, Sqlite${n.pascal}Repository};
 use crate::domains::${n.snake}::domain::models::${n.snake}::${n.pascal};
 use crate::shared::context::RequestContext;
 use std::sync::Arc;${crudTypes}
 
 /// Service for ${n.pascal} use-cases.
 pub struct ${n.pascal}Service {
-    db: Arc<Database>,
-    // TODO(scaffold): Add repository field once ${n.pascal}Repository is wired
-    // repo: Arc<${n.pascal}Repository>,
+    repo: Arc<dyn ${n.pascal}Repository>,
 }
 
 impl ${n.pascal}Service {
     /// Construct a new \`${n.pascal}Service\`.
     pub fn new(db: Arc<Database>) -> Self {
-        Self { db }
+        let repo = Arc::new(Sqlite${n.pascal}Repository::new(db));
+        Self { repo }
     }
 
     /// List all ${n.pascal} records visible to the caller.
-    pub async fn list(&self, _ctx: &RequestContext) -> AppResult<Vec<${n.pascal}>> {
-        // TODO(scaffold): Implement list logic via ${n.pascal}Repository
-        Ok(vec![])
+    pub async fn list(&self, ctx: &RequestContext) -> AppResult<Vec<${n.pascal}>> {
+        self.repo.list(ctx).await
     }
 
     /// Fetch a single ${n.pascal} by primary key.
-    pub async fn get(&self, _id: &str, _ctx: &RequestContext) -> AppResult<${n.pascal}> {
-        // TODO(scaffold): Implement get logic via ${n.pascal}Repository
-        todo!("Implement ${n.pascal}Service::get")
+    pub async fn get(&self, id: &str, ctx: &RequestContext) -> AppResult<${n.pascal}> {
+        self.repo.get(id, ctx).await
     }${crudMethods}
 }
 `;
@@ -470,27 +465,75 @@ ${crudStructs}
 `;
 }
 
-function RUST_INFRA_MOD_TEMPLATE(n: DomainNames): string {
+function RUST_INFRA_MOD_TEMPLATE(n: DomainNames, crud: boolean): string {
+  const crudImports = crud
+    ? `\nuse crate::domains::${n.snake}::domain::models::${n.snake}::{Create${n.pascal}Request, Update${n.pascal}Request};`
+    : "";
+
+  const crudTraitMethods = crud
+    ? `\n    async fn create(&self, payload: Create${n.pascal}Request, ctx: &RequestContext) -> AppResult<${n.pascal}>;\n    async fn update(&self, id: &str, payload: Update${n.pascal}Request, ctx: &RequestContext) -> AppResult<${n.pascal}>;\n    async fn delete(&self, id: &str, ctx: &RequestContext) -> AppResult<()>;`
+    : "";
+
+  const crudImplMethods = crud
+    ? `
+
+    async fn create(&self, _payload: Create${n.pascal}Request, _ctx: &RequestContext) -> AppResult<${n.pascal}> {
+        todo!("Implement Sqlite${n.pascal}Repository::create")
+    }
+
+    async fn update(&self, _id: &str, _payload: Update${n.pascal}Request, _ctx: &RequestContext) -> AppResult<${n.pascal}> {
+        todo!("Implement Sqlite${n.pascal}Repository::update")
+    }
+
+    async fn delete(&self, _id: &str, _ctx: &RequestContext) -> AppResult<()> {
+        todo!("Implement Sqlite${n.pascal}Repository::delete")
+    }`
+    : "";
+
   return `\
 //! Repository implementation for the \`${n.snake}\` domain (ADR-005).
 
+use async_trait::async_trait;
+use crate::commands::{AppError, AppResult};
 use crate::db::Database;
-use std::sync::Arc;
+use crate::domains::${n.snake}::domain::models::${n.snake}::${n.pascal};
+use crate::shared::context::RequestContext;
+use std::sync::Arc;${crudImports}
 
-/// Repository for \`${n.pascal}\` persistence operations.
-pub struct ${n.pascal}Repository {
+#[async_trait]
+pub trait ${n.pascal}Repository: Send + Sync {
+    async fn list(&self, ctx: &RequestContext) -> AppResult<Vec<${n.pascal}>>;
+    async fn get(&self, id: &str, ctx: &RequestContext) -> AppResult<${n.pascal}>;
+${crudTraitMethods}
+}
+
+/// SQLite implementation of \`${n.pascal}Repository\`.
+pub struct Sqlite${n.pascal}Repository {
     db: Arc<Database>,
 }
 
-impl ${n.pascal}Repository {
-    /// Create a new \`${n.pascal}Repository\`.
+impl Sqlite${n.pascal}Repository {
+    /// Create a new \`Sqlite${n.pascal}Repository\`.
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
-
-    // TODO(scaffold): Add CRUD SQL methods here.
-    //   Follow the pattern in src-tauri/src/domains/tasks/infrastructure/task_crud.rs
 }
+
+#[async_trait]
+impl ${n.pascal}Repository for Sqlite${n.pascal}Repository {
+    async fn list(&self, _ctx: &RequestContext) -> AppResult<Vec<${n.pascal}>> {
+        // NOTE: Keep soft-delete filter on every read path.
+        let _sql = "SELECT id, created_at, updated_at, deleted_at FROM ${n.snake}s WHERE deleted_at IS NULL";
+        Ok(vec![])
+    }
+
+    async fn get(&self, _id: &str, _ctx: &RequestContext) -> AppResult<${n.pascal}> {
+        // NOTE: Keep soft-delete filter on every read path.
+        let _sql = "SELECT id, created_at, updated_at, deleted_at FROM ${n.snake}s WHERE id = ?1 AND deleted_at IS NULL";
+        Err(AppError::NotFound("${n.pascal} not found".into()))
+    }${crudImplMethods}
+}
+
 `;
 }
 
@@ -604,7 +647,7 @@ function TS_IPC_TEMPLATE(n: DomainNames, crud: boolean): string {
 import { safeInvoke } from "@/lib/ipc/core";
 import type { ${n.pascal} } from "@/types/${n.pascal}";${crudImports}
 
-export const ${n.camel}Ipc = {
+export const raw${n.pascal}Ipc = {
   async list(): Promise<${n.pascal}[]> {
     return safeInvoke<${n.pascal}[]>("list_${n.snake}", {});
   },
@@ -617,7 +660,21 @@ export const ${n.camel}Ipc = {
 }
 
 function TS_IPC_INDEX_TEMPLATE(n: DomainNames): string {
-  return `export { ${n.camel}Ipc } from "./${n.snake}.ipc";\n`;
+  return `\
+import { raw${n.pascal}Ipc } from "./${n.snake}.ipc";
+
+export const ${n.camel}Ipc: typeof raw${n.pascal}Ipc = raw${n.pascal}Ipc;
+`;
+}
+
+function TS_API_KEYS_TEMPLATE(n: DomainNames): string {
+  return `\
+export const ${n.camel}Keys = {
+  all: ["${n.snake}"] as const,
+  lists: () => [...${n.camel}Keys.all, "list"] as const,
+  detail: (id: string) => [...${n.camel}Keys.all, "detail", id] as const,
+};
+`;
 }
 
 function TS_API_TEMPLATE(n: DomainNames, crud: boolean): string {
@@ -649,7 +706,9 @@ export function useDelete${n.pascal}() {
     mutationFn: (id: string) => ${n.camel}Ipc.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ${n.camel}Keys.lists() }),
   });
-}`
+}
+
+export const useCreate = useCreate${n.pascal};`
     : "";
 
   const crudImports = crud
@@ -666,14 +725,8 @@ export function useDelete${n.pascal}() {
  */
 import { useQuery${crudUseImports} } from "@tanstack/react-query";
 import { ${n.camel}Ipc } from "../ipc";${crudImports}
-
-// ── Query Keys ────────────────────────────────────────────────────────────────
-
-export const ${n.camel}Keys = {
-  all: ["${n.snake}"] as const,
-  lists: () => [...${n.camel}Keys.all, "list"] as const,
-  detail: (id: string) => [...${n.camel}Keys.all, "detail", id] as const,
-};
+import { ${n.camel}Keys } from "./keys";
+export { ${n.camel}Keys } from "./keys";
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
@@ -691,6 +744,7 @@ export function use${n.pascal}(id: string) {
     enabled: !!id,
   });
 }
+export const useList = use${n.pascal}List;
 ${crudHooks}
 `;
 }
@@ -782,6 +836,21 @@ export * from "./ipc";
 export * from "./hooks";
 export { ${n.pascal}List } from "./components/${n.pascal}List";
 export { use${n.pascal}Page } from "./hooks/use${n.pascal}Page";
+`;
+}
+
+function TS_DOMAIN_TEST_TEMPLATE(n: DomainNames): string {
+  return `\
+/**
+ * Scaffolded frontend tests for the \`${n.snake}\` domain.
+ */
+import { describe, expect, it } from '@jest/globals';
+
+describe("${n.pascal} domain scaffold", () => {
+  it("has a test stub", () => {
+    expect(true).toBe(true);
+  });
+});
 `;
 }
 
@@ -920,7 +989,7 @@ export async function generateBackendFiles(
   );
   await writeFile(
     path.join(base, "infrastructure", `${n.snake}_repository`, "mod.rs"),
-    RUST_INFRA_MOD_TEMPLATE(n),
+    RUST_INFRA_MOD_TEMPLATE(n, opts.crud),
     opts.dryRun
   );
 
@@ -974,6 +1043,11 @@ export async function generateFrontendFiles(
     opts.dryRun
   );
   await writeFile(
+    path.join(base, "api", "keys.ts"),
+    TS_API_KEYS_TEMPLATE(n),
+    opts.dryRun
+  );
+  await writeFile(
     path.join(base, "api", "index.ts"),
     TS_API_TEMPLATE(n, opts.crud),
     opts.dryRun
@@ -996,6 +1070,11 @@ export async function generateFrontendFiles(
   await writeFile(
     path.join(base, "index.ts"),
     TS_DOMAIN_INDEX_TEMPLATE(n),
+    opts.dryRun
+  );
+  await writeFile(
+    path.join(base, "tests", `${n.snake}.scaffold.test.ts`),
+    TS_DOMAIN_TEST_TEMPLATE(n),
     opts.dryRun
   );
 
