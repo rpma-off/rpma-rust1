@@ -393,7 +393,7 @@ pub struct ${n.pascal}Service {
 impl ${n.pascal}Service {
     /// Construct a new \`${n.pascal}Service\`.
     pub fn new(db: Arc<Database>) -> Self {
-        let repo: Arc<dyn ${n.pascal}Repository> = Arc::new(Sqlite${n.pascal}Repository::new(db));
+        let repo = Arc::new(Sqlite${n.pascal}Repository::new(db));
         Self { repo }
     }
 
