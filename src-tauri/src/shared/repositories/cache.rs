@@ -3,7 +3,7 @@
 //! Provides in-memory caching for repository queries to improve performance.
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use ts_rs::TS;
 
@@ -34,7 +34,8 @@ impl<T: Clone> CacheEntry<T> {
 /// expiry or a bulk clear when the capacity limit is hit.
 #[derive(Debug)]
 pub struct Cache {
-    entries: Arc<Mutex<HashMap<String, Box<dyn std::any::Any + Send + Sync>>>>,
+    // RwLock: read-heavy, written only on set/remove/eviction.
+    entries: Arc<RwLock<HashMap<String, Box<dyn std::any::Any + Send + Sync>>>>,
     max_size: usize,
 }
 
@@ -42,7 +43,7 @@ impl Cache {
     /// Create a new cache with specified maximum size
     pub fn new(max_size: usize) -> Self {
         Self {
-            entries: Arc::new(Mutex::new(HashMap::new())),
+            entries: Arc::new(RwLock::new(HashMap::new())),
             max_size,
         }
     }
@@ -52,7 +53,7 @@ impl Cache {
     where
         T: Clone + 'static + Send + Sync,
     {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
         let entry = entries.get(key)?;
 
         let typed_entry = entry.downcast_ref::<CacheEntry<T>>()?;
@@ -71,7 +72,7 @@ impl Cache {
     where
         T: Clone + 'static + Send + Sync,
     {
-        let mut entries = self.entries.lock().unwrap();
+        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
 
         // Evict all entries if at capacity (simple TTL-cache flush)
         if entries.len() >= self.max_size {
@@ -83,31 +84,31 @@ impl Cache {
 
     /// Remove value from cache
     pub fn remove(&self, key: &str) {
-        let mut entries = self.entries.lock().unwrap();
+        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
         entries.remove(key);
     }
 
     /// Clear all entries from cache
     pub fn clear(&self) {
-        let mut entries = self.entries.lock().unwrap();
+        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
         entries.clear();
     }
 
     /// Remove all entries whose key starts with `prefix`
     pub fn remove_by_prefix(&self, prefix: &str) {
-        let mut entries = self.entries.lock().unwrap();
+        let mut entries = self.entries.write().unwrap_or_else(|e| e.into_inner());
         entries.retain(|k, _| !k.starts_with(prefix));
     }
 
     /// Check if key exists
     pub fn exists(&self, key: &str) -> bool {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
         entries.contains_key(key)
     }
 
     /// Get cache size
     pub fn size(&self) -> usize {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
         entries.len()
     }
 }

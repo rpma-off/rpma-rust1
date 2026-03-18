@@ -159,6 +159,7 @@ pub fn checkpoint_wal(pool: &Pool<SqliteConnectionManager>) -> Result<(), String
 #[derive(Clone, Debug)]
 pub struct QueryPerformanceMonitor {
     slow_query_threshold: Duration,
+    // Mutex retained: write-heavy — monitor_query() writes stats on every query execution.
     query_stats: Arc<Mutex<HashMap<String, QueryStats>>>,
 }
 
@@ -222,7 +223,7 @@ impl QueryPerformanceMonitor {
     pub fn get_slow_queries(&self) -> Vec<(String, QueryStats)> {
         self.query_stats
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .iter()
             .filter(|(_, stats)| stats.avg_time > self.slow_query_threshold)
             .map(|(query, stats)| (query.clone(), stats.clone()))
@@ -254,6 +255,7 @@ impl Default for QueryStats {
 pub struct PreparedStatementCache {
     // Since rusqlite handles prepared statement caching internally via prepare_cached(),
     // we just track usage statistics here
+    // Mutex retained: write-heavy — record_usage() writes on every prepared statement execution.
     stats: Arc<Mutex<HashMap<String, usize>>>,
 }
 
@@ -403,7 +405,7 @@ impl DynamicPoolManager {
                 .load_monitor
                 .connection_wait_times
                 .lock()
-                .unwrap()
+                .unwrap_or_else(|e| e.into_inner())
                 .len(),
             current_config: self.get_config(),
         }

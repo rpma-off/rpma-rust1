@@ -1,12 +1,12 @@
 //! Event Bus Implementation
 //!
 //! Provides a publish/subscribe event bus for loose coupling between services.
-//! Thread-safe with Arc<Mutex<>> for handler registration.
+//! Thread-safe with Arc<RwLock<>> for handler registration.
 
 use async_trait::async_trait;
 use chrono::Utc;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use tauri::Emitter;
 
 use crate::shared::services::domain_event::DomainEvent;
@@ -23,14 +23,15 @@ pub trait EventHandler: Send + Sync {
 
 /// In-memory event bus with publish/subscribe pattern
 pub struct InMemoryEventBus {
-    handlers: Arc<Mutex<HashMap<String, Vec<Arc<dyn EventHandler>>>>>,
+    // RwLock: read-heavy, written only on handler registration at startup.
+    handlers: Arc<RwLock<HashMap<String, Vec<Arc<dyn EventHandler>>>>>,
 }
 
 impl InMemoryEventBus {
     /// Create a new in-memory event bus
     pub fn new() -> Self {
         Self {
-            handlers: Arc::new(Mutex::new(HashMap::new())),
+            handlers: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -40,7 +41,7 @@ impl InMemoryEventBus {
         H: EventHandler + 'static,
     {
         let handler = Arc::new(handler);
-        let mut handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
+        let mut handlers = self.handlers.write().unwrap_or_else(|e| e.into_inner());
 
         for event_type in handler.interested_events() {
             handlers
@@ -57,7 +58,7 @@ impl InMemoryEventBus {
     pub async fn dispatch(&self, event: DomainEvent) -> Result<(), String> {
         let event_type = event.event_type();
         let handlers = {
-            let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
+            let handlers = self.handlers.read().unwrap_or_else(|e| e.into_inner());
             handlers.get(event_type).cloned().unwrap_or_default()
         };
 
@@ -98,7 +99,7 @@ impl InMemoryEventBus {
 
     /// Get the number of registered handlers for an event type
     pub fn handler_count(&self, event_type: &str) -> usize {
-        let handlers = self.handlers.lock().unwrap_or_else(|e| e.into_inner());
+        let handlers = self.handlers.read().unwrap_or_else(|e| e.into_inner());
         handlers.get(event_type).map(|h| h.len()).unwrap_or(0)
     }
 
