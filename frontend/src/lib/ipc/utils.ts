@@ -58,6 +58,8 @@ function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string)
   }
 
   switch (errorCode) {
+    case 'IPC_TIMEOUT':
+      return 'La requête a pris trop de temps. Veuillez réessayer.';
     case 'VALIDATION':
     case 'VALIDATION_ERROR':
       return 'Les données saisies ne sont pas valides. Veuillez vérifier et réessayer.';
@@ -122,7 +124,7 @@ export async function safeInvoke<T>(
   command: string,
   args?: JsonObject,
   validator?: (data: JsonValue) => T,
-  timeoutMs: number = 120000 // Increased to 120 seconds to handle database locking
+  timeoutMs: number = 15_000
 ): Promise<T> {
   const startTime = performance.now();
 
@@ -175,7 +177,11 @@ export async function safeInvoke<T>(
           correlation_id: correlationId,
           timeout_ms: timeoutMs,
         });
-        reject(new Error(`IPC call to ${command} timed out after ${timeoutMs}ms`));
+        const timeoutError: EnhancedError = new Error(`IPC call to ${command} timed out after ${timeoutMs}ms`);
+        timeoutError.code = 'IPC_TIMEOUT';
+        timeoutError.correlationId = correlationId;
+        timeoutError.alreadyLogged = true;
+        reject(timeoutError);
       }, timeoutMs);
     });
 

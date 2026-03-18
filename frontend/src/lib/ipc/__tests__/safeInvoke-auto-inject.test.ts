@@ -234,6 +234,36 @@ describe('safeInvoke – session_token auto-injection', () => {
       );
     });
   });
+
+  describe('timeout behaviour', () => {
+    it('throws an error with code IPC_TIMEOUT when the invoke call does not resolve in time', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+      // invoke never resolves
+      mockInvoke.mockReturnValue(new Promise(() => {}));
+
+      await expect(
+        safeInvoke('task_crud', {}, undefined, 1)
+      ).rejects.toMatchObject({ code: 'IPC_TIMEOUT' });
+    });
+
+    it('throws an error with code IPC_TIMEOUT and a descriptive message when the invoke call does not resolve in time', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+      mockInvoke.mockReturnValue(new Promise(() => {}));
+
+      await expect(
+        safeInvoke('task_crud', {}, undefined, 1)
+      ).rejects.toMatchObject({ code: 'IPC_TIMEOUT', message: expect.stringContaining('timed out') });
+    });
+
+    it('resolves normally when invoke responds before the timeout', async () => {
+      mockGetSessionToken.mockResolvedValue('token');
+      mockInvoke.mockResolvedValue({ success: true, data: 'fast-result' });
+
+      const result = await safeInvoke('task_crud', {}, undefined, 5000);
+
+      expect(result).toBe('fast-result');
+    });
+  });
 });
 
 
