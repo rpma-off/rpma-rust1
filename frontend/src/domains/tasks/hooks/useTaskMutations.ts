@@ -39,10 +39,27 @@ export function useTaskMutations() {
       requireToken();
       return taskIpc.update(taskId, data);
     },
-    onSuccess: (_, { taskId }) => invalidateTask(taskId),
-    onError: (err: unknown) => {
+    onMutate: async ({ taskId, data }) => {
+      await queryClient.cancelQueries({ queryKey: taskKeys.byId(taskId) });
+      const previous = queryClient.getQueryData(taskKeys.byId(taskId));
+      if (previous && typeof previous === 'object') {
+        const patch: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(data)) {
+          if (value !== null && value !== undefined) {
+            patch[key] = value;
+          }
+        }
+        queryClient.setQueryData(taskKeys.byId(taskId), { ...(previous as Record<string, unknown>), ...patch });
+      }
+      return { previous, taskId };
+    },
+    onError: (err: unknown, { taskId }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(taskKeys.byId(taskId), context.previous);
+      }
       console.error('[useTaskMutations] updateTask failed:', err);
     },
+    onSettled: (_, __, { taskId }) => invalidateTask(taskId),
   });
 
   const deleteTaskMutation = useMutation({
@@ -50,7 +67,8 @@ export function useTaskMutations() {
       requireToken();
       return taskIpc.delete(taskId);
     },
-    onSuccess: () => {
+    onSuccess: (_, taskId) => {
+      queryClient.removeQueries({ queryKey: taskKeys.byId(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
     onError: (err: unknown) => {

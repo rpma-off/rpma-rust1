@@ -124,7 +124,8 @@ impl super::MaterialRepository {
             warn!("Invalid order clause, using default: {}", e);
             "ORDER BY name ASC".to_string()
         });
-        let (limit, _offset) = query.build_limit_offset().unwrap_or((100, None));
+        let (limit, offset) = query.build_limit_offset().unwrap_or((100, None));
+        let offset_val = offset.unwrap_or(0);
 
         let sql = format!(
             r#"
@@ -132,13 +133,14 @@ impl super::MaterialRepository {
             FROM materials
             {}
             {}
-            LIMIT ?
+            LIMIT ? OFFSET ?
             "#,
             MATERIAL_COLUMNS, where_clause, order_clause
         );
 
         let mut params_vec: Vec<rusqlite::types::Value> = params;
         params_vec.push(limit.into());
+        params_vec.push(offset_val.into());
 
         let materials = self
             .db

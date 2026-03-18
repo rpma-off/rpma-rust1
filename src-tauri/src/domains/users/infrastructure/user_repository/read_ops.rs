@@ -109,7 +109,8 @@ impl super::UserRepository {
             warn!("Invalid order clause, using default: {}", e);
             "ORDER BY created_at DESC".to_string()
         });
-        let (limit, _offset) = query.build_limit_offset().unwrap_or((50, None));
+        let (limit, offset) = query.build_limit_offset().unwrap_or((50, None));
+        let offset_val = offset.unwrap_or(0);
 
         let sql = format!(
             r#"
@@ -117,13 +118,14 @@ impl super::UserRepository {
             FROM users
             {}
             {}
-            LIMIT ?
+            LIMIT ? OFFSET ?
             "#,
             USER_COLUMNS, where_clause, order_clause
         );
 
         let mut params_vec: Vec<rusqlite::types::Value> = params;
         params_vec.push(limit.into());
+        params_vec.push(offset_val.into());
 
         let users = self
             .db
