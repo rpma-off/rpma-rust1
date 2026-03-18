@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use crate::db::Database;
 use crate::shared::ipc::errors::AppError;
+use crate::shared::repositories::base::Repository;
 use crate::shared::repositories::cache::Cache;
 
 use super::models::{
@@ -157,7 +158,6 @@ impl NotificationsFacade {
         user_id: &str,
         updates: &UpdateNotificationPreferencesRequest,
     ) -> Result<NotificationPreferences, AppError> {
-        use crate::shared::repositories::base::Repository;
         let repo = self.preferences_repo();
         let mut prefs = repo
             .get_or_create(user_id.to_string())

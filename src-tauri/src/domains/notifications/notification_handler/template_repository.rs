@@ -270,10 +270,13 @@ impl NotificationTemplateRepository {
         );
         let mut owned_params: Vec<String> = Vec::new();
         if let Some(cat) = category {
+            // SAFETY: only the `?` placeholder is appended to the SQL string.
+            // The value itself is bound via `params_from_iter` — not interpolated.
             sql.push_str(" AND category = ?");
             owned_params.push(cat.to_string());
         }
         if let Some(msg_type) = message_type {
+            // SAFETY: same — value is bound as a parameter, not embedded in SQL.
             sql.push_str(" AND message_type = ?");
             owned_params.push(msg_type.to_string());
         }
@@ -303,6 +306,7 @@ impl NotificationTemplateRepository {
             .map_err(|e| RepoError::Database(format!("Failed to collect templates: {}", e)))?;
         Ok(templates)
     }
+}
 
 #[async_trait]
 impl Repository<NotificationTemplate, String> for NotificationTemplateRepository {
