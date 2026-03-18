@@ -50,23 +50,25 @@ impl IInventoryTransactionRepository for InventoryTransactionRepository {
         &self,
         reference_id: &str,
     ) -> Result<usize, String> {
-        let conn = self.db.get_connection().map_err(|e| e.to_string())?;
-        
+        let mut conn = self.db.get_connection().map_err(|e| e.to_string())?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+
         // Find transactions to revert
-        let mut stmt = conn
-            .prepare("SELECT material_id, quantity FROM inventory_transactions WHERE intervention_id = ? AND transaction_type = 'stock_out'")
-            .map_err(|e| e.to_string())?;
-            
-        let to_revert: Vec<(String, f64)> = stmt
-            .query_map(rusqlite::params![reference_id], |row| {
-                Ok((row.get(0)?, row.get(1)?))
-            })
-            .map_err(|e| e.to_string())?
-            .filter_map(Result::ok)
-            .collect();
-            
+        let to_revert: Vec<(String, f64)> = {
+            let mut stmt = tx
+                .prepare("SELECT material_id, quantity FROM inventory_transactions WHERE intervention_id = ? AND transaction_type = 'stock_out'")
+                .map_err(|e| e.to_string())?;
+            stmt
+                .query_map(rusqlite::params![reference_id], |row| {
+                    Ok((row.get(0)?, row.get(1)?))
+                })
+                .map_err(|e| e.to_string())?
+                .filter_map(Result::ok)
+                .collect()
+        };
+
         // First delete the transactions
-        let deleted = conn
+        let deleted = tx
             .execute(
                 "DELETE FROM inventory_transactions WHERE intervention_id = ?",
                 rusqlite::params![reference_id],
@@ -75,11 +77,13 @@ impl IInventoryTransactionRepository for InventoryTransactionRepository {
 
         // Then restore material stock
         for (material_id, quantity) in to_revert {
-            conn.execute(
+            tx.execute(
                 "UPDATE materials SET current_stock = current_stock + ? WHERE id = ?",
                 rusqlite::params![quantity, material_id],
             ).map_err(|e| e.to_string())?;
         }
+
+        tx.commit().map_err(|e| e.to_string())?;
 
         Ok(deleted)
     }

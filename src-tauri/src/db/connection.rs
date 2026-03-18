@@ -104,7 +104,10 @@ pub fn initialize_pool_with_config(
                  PRAGMA cache_size = 10000;
                  PRAGMA temp_store = MEMORY;
                  PRAGMA foreign_keys = ON;
-                 PRAGMA locking_mode = NORMAL;",
+                 PRAGMA locking_mode = NORMAL;
+                 PRAGMA mmap_size = 268435456;
+                 PRAGMA optimize;
+                 PRAGMA journal_size_limit = 67108864;",
             )?;
             Ok(())
         });
