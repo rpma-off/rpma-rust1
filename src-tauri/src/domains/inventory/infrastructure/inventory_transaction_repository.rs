@@ -58,13 +58,16 @@ impl IInventoryTransactionRepository for InventoryTransactionRepository {
             let mut stmt = tx
                 .prepare("SELECT material_id, quantity FROM inventory_transactions WHERE intervention_id = ? AND transaction_type = 'stock_out'")
                 .map_err(|e| e.to_string())?;
-            stmt
+
+            let result: Vec<(String, f64)> = stmt
                 .query_map(rusqlite::params![reference_id], |row| {
                     Ok((row.get(0)?, row.get(1)?))
                 })
                 .map_err(|e| e.to_string())?
                 .filter_map(Result::ok)
-                .collect()
+                .collect();
+
+            result
         };
 
         // First delete the transactions

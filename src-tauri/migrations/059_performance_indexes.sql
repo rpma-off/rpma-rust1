@@ -4,14 +4,14 @@
 CREATE INDEX IF NOT EXISTS idx_tasks_status_active
   ON tasks(status, updated_at DESC) WHERE deleted_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to_active
-  ON tasks(assigned_to) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_technician_id_active
+  ON tasks(technician_id) WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_interventions_client_active
-  ON interventions(client_id, status) WHERE deleted_at IS NULL;
+  ON interventions(client_id, status);
 
 CREATE INDEX IF NOT EXISTS idx_interventions_task_active
-  ON interventions(task_id) WHERE deleted_at IS NULL;
+  ON interventions(task_id);
 
 CREATE INDEX IF NOT EXISTS idx_materials_category_active
   ON materials(category, name) WHERE deleted_at IS NULL;
