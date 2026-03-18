@@ -3,7 +3,6 @@
 use super::*;
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::domains::calendar::models::*;
 use std::sync::Arc;
 
 /// Repository for calendar-related database operations (tasks + scheduling).

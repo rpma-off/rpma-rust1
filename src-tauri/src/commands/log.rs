@@ -5,7 +5,6 @@
 
 use crate::commands::{AppState, UserRole};
 use crate::resolve_context;
-use crate::shared::ipc::AppError;
 use serde::Deserialize;
 use tauri::command;
 use tracing::{debug, error, info, warn};

@@ -3,7 +3,7 @@
 use rusqlite::params;
 /// ADR-005: Repository Pattern
 use std::sync::Arc;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 use super::models::*;
 use crate::commands::AppError;
