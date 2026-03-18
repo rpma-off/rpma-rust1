@@ -131,6 +131,29 @@ Checkpoint every 60 seconds to:
 - Free disk space
 - Improve read performance
 
+### Shutdown WAL Checkpoint
+
+```rust
+// src-tauri/src/main.rs
+.on_window_event(|window, event| {
+    if let tauri::WindowEvent::CloseRequested { .. } = event {
+        // Flush WAL checkpoint with FULL mode on application shutdown
+        if let Ok(conn) = app_state.db.get_connection() {
+            match conn.execute_batch("PRAGMA wal_checkpoint(FULL);") {
+                Ok(_) => info!("SQLite WAL checkpoint flushed successfully"),
+                Err(e) => error!("Failed to flush WAL checkpoint: {}", e),
+            }
+        }
+    }
+})
+```
+
+On application shutdown:
+- Execute `PRAGMA wal_checkpoint(FULL)` to flush all WAL data to main database file
+- Ensures data integrity and prevents uncommitted changes in WAL
+- Clears in-memory session store to prevent dangling sessions on restart
+- Logs all shutdown steps for debuggability
+
 ### Database Location
 
 ```rust
@@ -207,6 +230,7 @@ info!("Database migrated: {} -> {}", current_version, latest_version);
 - `src-tauri/src/db/connection.rs` — Connection pool and pragmas
 - `src-tauri/src/db/mod.rs` — Database module
 - `src-tauri/src/main.rs:274-379` — Database initialization
+- `src-tauri/src/main.rs:280-313` — Shutdown hook with WAL checkpoint
 - `src-tauri/migrations/` — SQL migration files
 
 ## When to Read This ADR
