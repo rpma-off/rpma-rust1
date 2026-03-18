@@ -2,7 +2,6 @@
 
 use super::*;
 use crate::db::Database;
-use crate::domains::calendar::models::*;
 use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError as IpcAppError;
 use crate::shared::repositories::base::Repository;

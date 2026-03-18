@@ -2,7 +2,6 @@
 
 use super::*;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::calendar::models::*;
 use crate::resolve_context;
 use crate::shared::context::RequestContext;
 use tracing::{info, instrument};

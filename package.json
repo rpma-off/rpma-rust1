@@ -31,6 +31,7 @@
     "types:ci-drift-check": "node scripts/ci-type-drift-check.js",
     "bundle:analyze": "cd frontend && ANALYZE=true npm run build",
     "backend:architecture-check": "node scripts/backend-architecture-check.js",
+    "backend:scan-arc": "node scripts/scan-arc-usage.js",
     "backend:migration:fresh-db-test": "cd src-tauri && cargo test smoke_migration_harness_full --lib",
     "install": "npm run frontend:install",
     "clean": "npm run frontend:clean && cd src-tauri && cargo clean",

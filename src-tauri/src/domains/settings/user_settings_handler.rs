@@ -32,10 +32,8 @@ pub async fn update_user_profile(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.profile = profile;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_profile(&ctx.auth.user_id, profile)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -47,10 +45,8 @@ pub async fn update_user_preferences(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.preferences = preferences;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_preferences(&ctx.auth.user_id, preferences)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -62,10 +58,8 @@ pub async fn update_user_security(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.security = security;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_security(&ctx.auth.user_id, security)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -77,10 +71,8 @@ pub async fn update_user_performance(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.performance = performance;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_performance(&ctx.auth.user_id, performance)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -92,10 +84,8 @@ pub async fn update_user_accessibility(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.accessibility = accessibility;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_accessibility(&ctx.auth.user_id, accessibility)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -107,10 +97,8 @@ pub async fn update_user_notifications(
 ) -> Result<ApiResponse<UserSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     let facade = SettingsFacade::new(state.db.clone());
-    let mut current = facade.get_user_settings(&ctx.auth.user_id)?;
-    current.notifications = notifications;
-    facade.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(ApiResponse::success(current).with_correlation_id(Some(ctx.correlation_id)))
+    let settings = facade.update_user_notifications(&ctx.auth.user_id, notifications)?;
+    Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]

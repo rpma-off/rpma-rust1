@@ -8,7 +8,6 @@ use crate::shared::services::cross_domain::{PaginationInfo, SortOrder};
 use chrono;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use ts_rs::TS;
 
 // ── Sub-modules ───────────────────────────────────────────────────────────────
@@ -336,8 +335,10 @@ fn parse_timestamp_millis(value: &str) -> Option<i64> {
 }
 
 pub(crate) fn is_valid_email(email: &str) -> bool {
-    let email_regex = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .unwrap_or_else(|_| regex::Regex::new(r".+@.+\..+").expect("fallback email regex"));
+    let Ok(email_regex) = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    else {
+        return false;
+    };
     email_regex.is_match(email)
         && !email.contains("..")
         && !email.starts_with('.')

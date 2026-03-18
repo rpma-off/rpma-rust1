@@ -4,7 +4,7 @@
 //! focused purely on command dispatch logic.
 
 use crate::domains::tasks::ipc::task_types::TaskFilter;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fmt::Debug;
 
 // Re-export the domain-layer response type so callers of this module see no change.

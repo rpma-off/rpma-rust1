@@ -101,7 +101,7 @@ impl TaskRulesRepository {
     pub fn validate_assignment_change(
         &self,
         task_id: &str,
-        old_user_id: Option<&str>,
+        _old_user_id: Option<&str>,
         new_user_id: &str,
     ) -> Result<Vec<String>, String> {
         let mut warnings = Vec::new();

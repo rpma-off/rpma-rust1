@@ -5,7 +5,6 @@ use super::{
     CreateClientRequest, CustomerType, IClientRepository, UpdateClientRequest,
 };
 use crate::db::Database;
-use crate::shared::repositories::base::Repository;
 use crate::shared::repositories::cache::Cache;
 use crate::shared::services::cross_domain::PaginationInfo;
 use chrono::{Datelike, Utc};

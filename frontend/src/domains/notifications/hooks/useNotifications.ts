@@ -1,13 +1,14 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notificationKeys } from '@/lib/query-keys';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../services/notificationActions';
 
 export function useNotifications() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: notificationKeys.lists(),
     queryFn: async () => {
       const result = await getNotifications();
       if (!result.success) throw new Error(result.error || 'Failed to fetch notifications');
@@ -19,21 +20,22 @@ export function useNotifications() {
   const markReadMutation = useMutation({
     mutationFn: (id: string) => markNotificationRead(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
     },
   });
 
   const markAllReadMutation = useMutation({
     mutationFn: () => markAllNotificationsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteNotification(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: (_,  id) => {
+      queryClient.removeQueries({ queryKey: notificationKeys.byId(id) });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
     },
   });
 

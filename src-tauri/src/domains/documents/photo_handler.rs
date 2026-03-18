@@ -3,7 +3,6 @@
 //! This module provides the flattened implementation of photo management,
 //! combining service logic and Tauri IPC commands.
 
-use chrono::{DateTime, Utc};
 use image::{GenericImageView, ImageEncoder, ImageFormat};
 use rusqlite::params;
 use std::collections::HashMap;
@@ -12,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
 use tokio::sync::Semaphore;
-use tracing::{debug, info, instrument, warn};
+use tracing::{info, instrument, warn};
 
 use super::models::*;
 use super::report_export as report_export_service;
@@ -460,8 +459,8 @@ impl PhotoService {
     async fn store_in_cloud(
         &self,
         provider: &CloudProvider,
-        bucket: &str,
-        region: &str,
+        _bucket: &str,
+        _region: &str,
         intervention_id: &str,
         file_name: &str,
         data: &[u8],

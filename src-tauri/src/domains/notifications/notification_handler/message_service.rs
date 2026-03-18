@@ -1,13 +1,10 @@
 use async_trait::async_trait;
-use rusqlite::params;
 use std::sync::Arc;
 use tracing::{error, info};
 
 use crate::commands::AppError;
-use crate::db::Database;
 use crate::domains::notifications::models::{
-    Message, MessageListResponse, MessageQuery, MessageStatus, MessageTemplate,
-    NotificationPreferences, SendMessageRequest, UpdateNotificationPreferencesRequest,
+    Message, MessageListResponse, MessageQuery, MessageStatus, SendMessageRequest,
 };
 use crate::shared::contracts::notification::{NotificationSender, SentMessage};
 use crate::shared::repositories::base::Repository;
@@ -17,12 +14,11 @@ use super::message_repository::{MessageRepoQuery, MessageRepository};
 #[derive(Clone)]
 pub struct MessageService {
     repository: Arc<MessageRepository>,
-    db: Arc<Database>,
 }
 
 impl MessageService {
-    pub fn new(repository: Arc<MessageRepository>, db: Arc<Database>) -> Self {
-        Self { repository, db }
+    pub fn new(repository: Arc<MessageRepository>) -> Self {
+        Self { repository }
     }
 
     pub async fn send_message(&self, request: &SendMessageRequest) -> Result<Message, AppError> {
@@ -147,133 +143,6 @@ impl MessageService {
         Ok(())
     }
 
-    pub async fn get_templates(
-        &self,
-        category: Option<&str>,
-        message_type: Option<&str>,
-    ) -> Result<Vec<MessageTemplate>, AppError> {
-        let conn = self.db.get_connection().map_err(|e| {
-            error!("Failed to get DB connection: {}", e);
-            AppError::Database("Failed to get database connection".to_string())
-        })?;
-        let mut sql = String::from("SELECT id, name, description, message_type, subject, body, variables, category, is_active, created_by, created_at, updated_at FROM message_templates WHERE is_active = 1");
-        let mut owned_params: Vec<String> = Vec::new();
-        if let Some(cat) = category {
-            sql.push_str(" AND category = ?");
-            owned_params.push(cat.to_string());
-        }
-        if let Some(msg_type) = message_type {
-            sql.push_str(" AND message_type = ?");
-            owned_params.push(msg_type.to_string());
-        }
-        sql.push_str(" ORDER BY name");
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(|e| AppError::Database(format!("Failed to query templates: {}", e)))?;
-        let templates = stmt
-            .query_map(rusqlite::params_from_iter(owned_params), |row| {
-                Ok(MessageTemplate {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    description: row.get(2)?,
-                    message_type: row.get(3)?,
-                    subject: row.get(4)?,
-                    body: row.get(5)?,
-                    variables: row.get(6)?,
-                    category: row.get(7)?,
-                    is_active: row.get(8)?,
-                    created_by: row.get(9)?,
-                    created_at: row.get(10)?,
-                    updated_at: row.get(11)?,
-                })
-            })
-            .map_err(|e| AppError::Database(format!("Failed to query templates: {}", e)))?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| AppError::Database(format!("Failed to collect templates: {}", e)))?;
-        Ok(templates)
-    }
-
-    pub async fn get_preferences(
-        &self,
-        user_id: &str,
-    ) -> Result<NotificationPreferences, AppError> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(e.to_string()))?;
-        conn.query_row(
-            "SELECT id, user_id, in_app_enabled, task_assigned, task_updated, task_completed, task_overdue, client_created, client_updated, system_alerts, maintenance_notifications, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, created_at, updated_at FROM notification_preferences WHERE user_id = ?",
-            params![user_id],
-            |row| Ok(NotificationPreferences {
-                id: row.get(0)?,
-                user_id: row.get(1)?,
-                in_app_enabled: row.get(2)?,
-                task_assigned: row.get(3)?,
-                task_updated: row.get(4)?,
-                task_completed: row.get(5)?,
-                task_overdue: row.get(6)?,
-                client_created: row.get(7)?,
-                client_updated: row.get(8)?,
-                system_alerts: row.get(9)?,
-                maintenance_notifications: row.get(10)?,
-                quiet_hours_enabled: row.get(11)?,
-                quiet_hours_start: row.get(12)?,
-                quiet_hours_end: row.get(13)?,
-                created_at: row.get(14)?,
-                updated_at: row.get(15)?,
-            }),
-        )
-        .map_err(|e| AppError::Database(format!("Failed to get preferences: {}", e)))
-    }
-
-    pub async fn update_preferences(
-        &self,
-        user_id: &str,
-        updates: &UpdateNotificationPreferencesRequest,
-    ) -> Result<NotificationPreferences, AppError> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| AppError::Database(e.to_string()))?;
-        let mut sql = String::from("UPDATE notification_preferences SET updated_at = ?");
-        let now = chrono::Utc::now().timestamp();
-        let mut param_values: Vec<String> = vec![now.to_string()];
-        macro_rules! maybe_field {
-            ($field:expr, $col:literal) => {
-                if let Some(v) = $field {
-                    sql.push_str(concat!(", ", $col, " = ?"));
-                    param_values.push(v.to_string());
-                }
-            };
-        }
-        maybe_field!(updates.in_app_enabled, "in_app_enabled");
-        maybe_field!(updates.task_assigned, "task_assigned");
-        maybe_field!(updates.task_updated, "task_updated");
-        maybe_field!(updates.task_completed, "task_completed");
-        maybe_field!(updates.task_overdue, "task_overdue");
-        maybe_field!(updates.client_created, "client_created");
-        maybe_field!(updates.client_updated, "client_updated");
-        maybe_field!(updates.system_alerts, "system_alerts");
-        maybe_field!(
-            updates.maintenance_notifications,
-            "maintenance_notifications"
-        );
-        maybe_field!(updates.quiet_hours_enabled, "quiet_hours_enabled");
-        if let Some(ref v) = updates.quiet_hours_start {
-            sql.push_str(", quiet_hours_start = ?");
-            param_values.push(v.clone());
-        }
-        if let Some(ref v) = updates.quiet_hours_end {
-            sql.push_str(", quiet_hours_end = ?");
-            param_values.push(v.clone());
-        }
-        sql.push_str(" WHERE user_id = ?");
-        param_values.push(user_id.to_string());
-        conn.execute(&sql, rusqlite::params_from_iter(param_values))
-            .map_err(|e| AppError::Database(format!("Failed to update preferences: {}", e)))?;
-        info!("Updated notification preferences for user {}", user_id);
-        self.get_preferences(user_id).await
-    }
 }
 
 #[async_trait]

@@ -247,6 +247,65 @@ impl NotificationTemplateRepository {
     pub fn invalidate_all_cache(&self) {
         self.cache.clear();
     }
+
+    /// Fetch active message templates from the `message_templates` table,
+    /// optionally filtered by category and/or message_type string.
+    ///
+    /// Returns the lightweight [`crate::domains::notifications::models::MessageTemplate`]
+    /// DTO rather than the richer [`NotificationTemplate`] entity, because the
+    /// IPC surface for this query predates the typed `NotificationTemplate` model.
+    pub async fn find_active_message_templates(
+        &self,
+        category: Option<&str>,
+        message_type: Option<&str>,
+    ) -> RepoResult<Vec<crate::domains::notifications::models::MessageTemplate>> {
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|e| RepoError::Database(format!("Failed to get DB connection: {}", e)))?;
+        let mut sql = String::from(
+            "SELECT id, name, description, message_type, subject, body, variables, \
+             category, is_active, created_by, created_at, updated_at \
+             FROM message_templates WHERE is_active = 1",
+        );
+        let mut owned_params: Vec<String> = Vec::new();
+        if let Some(cat) = category {
+            // SAFETY: only the `?` placeholder is appended to the SQL string.
+            // The value itself is bound via `params_from_iter` — not interpolated.
+            sql.push_str(" AND category = ?");
+            owned_params.push(cat.to_string());
+        }
+        if let Some(msg_type) = message_type {
+            // SAFETY: same — value is bound as a parameter, not embedded in SQL.
+            sql.push_str(" AND message_type = ?");
+            owned_params.push(msg_type.to_string());
+        }
+        sql.push_str(" ORDER BY name");
+        let mut stmt = conn
+            .prepare(&sql)
+            .map_err(|e| RepoError::Database(format!("Failed to query templates: {}", e)))?;
+        let templates = stmt
+            .query_map(rusqlite::params_from_iter(owned_params), |row| {
+                Ok(crate::domains::notifications::models::MessageTemplate {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    description: row.get(2)?,
+                    message_type: row.get(3)?,
+                    subject: row.get(4)?,
+                    body: row.get(5)?,
+                    variables: row.get(6)?,
+                    category: row.get(7)?,
+                    is_active: row.get(8)?,
+                    created_by: row.get(9)?,
+                    created_at: row.get(10)?,
+                    updated_at: row.get(11)?,
+                })
+            })
+            .map_err(|e| RepoError::Database(format!("Failed to query templates: {}", e)))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| RepoError::Database(format!("Failed to collect templates: {}", e)))?;
+        Ok(templates)
+    }
 }
 
 #[async_trait]

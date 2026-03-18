@@ -18,6 +18,7 @@ struct CacheEntry {
 /// Stores JSON-serialized values in memory with TTL expiration. Uses a process-local mutex-protected HashMap.
 #[derive(Debug, Clone)]
 pub struct SimpleCache {
+    // Mutex retained: get() evicts expired entries under the same lock — can't split into read+write without restructuring.
     cache: Arc<Mutex<HashMap<String, CacheEntry>>>,
     default_ttl: Duration,
 }

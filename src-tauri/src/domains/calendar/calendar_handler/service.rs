@@ -4,7 +4,6 @@
 use super::*;
 use crate::commands::AppError;
 use crate::db::Database;
-use crate::domains::calendar::models::*;
 use crate::shared::services::validation::ValidationService;
 use std::sync::Arc;
 

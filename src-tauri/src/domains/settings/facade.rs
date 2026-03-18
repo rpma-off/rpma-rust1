@@ -12,7 +12,9 @@ use crate::shared::ipc::errors::AppError;
 use super::models::{
     AppSettings, DataConsent, GeneralSettings, NotificationSettings, OnboardingData,
     OnboardingStatus, Organization, OrganizationSettings, SecuritySettings,
-    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest, UserSettings,
+    UpdateOrganizationRequest, UpdateOrganizationSettingsRequest, UserAccessibilitySettings,
+    UserNotificationSettings, UserPerformanceSettings, UserPreferences, UserProfileSettings,
+    UserSecuritySettings, UserSettings,
 };
 use super::organization_repository::OrganizationRepository;
 use super::settings_repository::SettingsRepository;
@@ -165,6 +167,84 @@ impl SettingsFacade {
     ) -> Result<(), AppError> {
         self.user_settings_repo()
             .save_user_settings(user_id, settings)
+    }
+
+    /// Update only the `profile` sub-section of a user's settings.
+    pub fn update_user_profile(
+        &self,
+        user_id: &str,
+        profile: UserProfileSettings,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.profile = profile;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
+    }
+
+    /// Update only the `preferences` sub-section of a user's settings.
+    pub fn update_user_preferences(
+        &self,
+        user_id: &str,
+        preferences: UserPreferences,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.preferences = preferences;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
+    }
+
+    /// Update only the `security` sub-section of a user's settings.
+    pub fn update_user_security(
+        &self,
+        user_id: &str,
+        security: UserSecuritySettings,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.security = security;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
+    }
+
+    /// Update only the `performance` sub-section of a user's settings.
+    pub fn update_user_performance(
+        &self,
+        user_id: &str,
+        performance: UserPerformanceSettings,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.performance = performance;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
+    }
+
+    /// Update only the `accessibility` sub-section of a user's settings.
+    pub fn update_user_accessibility(
+        &self,
+        user_id: &str,
+        accessibility: UserAccessibilitySettings,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.accessibility = accessibility;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
+    }
+
+    /// Update only the `notifications` sub-section of a user's settings.
+    pub fn update_user_notifications(
+        &self,
+        user_id: &str,
+        notifications: UserNotificationSettings,
+    ) -> Result<UserSettings, AppError> {
+        let repo = self.user_settings_repo();
+        let mut current = repo.get_user_settings(user_id)?;
+        current.notifications = notifications;
+        repo.save_user_settings(user_id, &current)?;
+        Ok(current)
     }
 
     /// Retrieve the data-consent record for the given user.

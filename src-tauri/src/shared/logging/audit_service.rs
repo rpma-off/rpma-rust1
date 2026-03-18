@@ -11,7 +11,6 @@ use rusqlite::params;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use uuid;
 
 // Canonical type definitions — single source of truth in audit_types.rs
 pub use crate::shared::logging::audit_types::{ActionResult, AuditEventType};

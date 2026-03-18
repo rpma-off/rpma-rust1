@@ -657,16 +657,23 @@ impl InterventionRepository {
 
     /// TODO: document
     pub fn delete_intervention(&self, id: &str) -> InterventionResult<()> {
-        let conn = self.db.get_connection()?;
+        let mut conn = self.db.get_connection()?;
+        let tx = conn.transaction().map_err(|e| {
+            InterventionError::Database(format!("Failed to start transaction: {}", e))
+        })?;
 
         // Delete steps first (foreign key constraint)
-        conn.execute(
+        tx.execute(
             "DELETE FROM intervention_steps WHERE intervention_id = ?",
             [id],
         )?;
 
         // Delete the intervention
-        conn.execute("DELETE FROM interventions WHERE id = ?", [id])?;
+        tx.execute("DELETE FROM interventions WHERE id = ?", [id])?;
+
+        tx.commit().map_err(|e| {
+            InterventionError::Database(format!("Failed to commit transaction: {}", e))
+        })?;
 
         Ok(())
     }
@@ -747,16 +754,18 @@ impl InterventionRepository {
 
     /// Delete orphaned intervention and steps for a specific task
     pub fn delete_orphaned_for_task(&self, task_id: &str) -> Result<(), String> {
-        let conn = self.db.get_connection()?;
-        conn.execute(
+        let mut conn = self.db.get_connection()?;
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute(
             "DELETE FROM intervention_steps WHERE intervention_id IN (SELECT id FROM interventions WHERE task_id = ?)",
             rusqlite::params![task_id]
         ).map_err(|e| e.to_string())?;
-        conn.execute(
+        tx.execute(
             "DELETE FROM interventions WHERE task_id = ?",
             rusqlite::params![task_id],
         )
         .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
         Ok(())
     }
 
@@ -781,14 +790,18 @@ impl InterventionRepository {
 
     /// Delete all orphaned interventions and their steps
     pub fn delete_orphaned(&self) -> InterventionResult<u32> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
-
         let orphaned_count = self.count_orphaned()?;
         if orphaned_count > 0 {
-            conn.execute(
+            let mut conn = self
+                .db
+                .get_connection()
+                .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
+
+            let tx = conn.transaction().map_err(|e| {
+                InterventionError::Database(format!("Failed to start transaction: {}", e))
+            })?;
+
+            tx.execute(
                 "DELETE FROM intervention_steps WHERE intervention_id IN (
                     SELECT i.id FROM interventions i 
                     LEFT JOIN tasks t ON i.task_id = t.id 
@@ -800,7 +813,7 @@ impl InterventionRepository {
                 InterventionError::Database(format!("Failed to delete orphaned steps: {}", e))
             })?;
 
-            conn.execute(
+            tx.execute(
                 "DELETE FROM interventions WHERE id IN (
                     SELECT i.id FROM interventions i 
                     LEFT JOIN tasks t ON i.task_id = t.id 
@@ -813,6 +826,10 @@ impl InterventionRepository {
                     "Failed to delete orphaned interventions: {}",
                     e
                 ))
+            })?;
+
+            tx.commit().map_err(|e| {
+                InterventionError::Database(format!("Failed to commit transaction: {}", e))
             })?;
         }
 

@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use crate::db::Database;
 use crate::shared::ipc::errors::AppError;
+use crate::shared::repositories::base::Repository;
 use crate::shared::repositories::cache::Cache;
 
 use super::models::{
@@ -15,7 +16,8 @@ use super::models::{
     NotificationPreferences, SendMessageRequest, UpdateNotificationPreferencesRequest,
 };
 use super::notification_handler::{
-    GetNotificationsResponse, MessageService, NotificationRepository,
+    GetNotificationsResponse, MessageService, NotificationPreferencesRepository,
+    NotificationRepository, NotificationTemplateRepository,
 };
 
 /// Facade for the Notifications bounded context.
@@ -133,8 +135,8 @@ impl NotificationsFacade {
         category: Option<&str>,
         message_type: Option<&str>,
     ) -> Result<Vec<MessageTemplate>, AppError> {
-        self.message_service
-            .get_templates(category, message_type)
+        self.template_repo()
+            .find_active_message_templates(category, message_type)
             .await
             .map_err(|e| AppError::Database(e.to_string()))
     }
@@ -144,10 +146,10 @@ impl NotificationsFacade {
         &self,
         user_id: &str,
     ) -> Result<NotificationPreferences, AppError> {
-        self.message_service
-            .get_preferences(user_id)
+        self.preferences_repo()
+            .get_or_create(user_id.to_string())
             .await
-            .map_err(|e| AppError::Database(e.to_string()))
+            .map_err(|e| AppError::Database(format!("Failed to get preferences: {}", e)))
     }
 
     /// Update notification preferences for the given user.
@@ -156,15 +158,65 @@ impl NotificationsFacade {
         user_id: &str,
         updates: &UpdateNotificationPreferencesRequest,
     ) -> Result<NotificationPreferences, AppError> {
-        self.message_service
-            .update_preferences(user_id, updates)
+        let repo = self.preferences_repo();
+        let mut prefs = repo
+            .get_or_create(user_id.to_string())
             .await
-            .map_err(|e| AppError::Database(e.to_string()))
+            .map_err(|e| AppError::Database(format!("Failed to get preferences: {}", e)))?;
+
+        if let Some(v) = updates.in_app_enabled {
+            prefs.in_app_enabled = v;
+        }
+        if let Some(v) = updates.task_assigned {
+            prefs.task_assigned = v;
+        }
+        if let Some(v) = updates.task_updated {
+            prefs.task_updated = v;
+        }
+        if let Some(v) = updates.task_completed {
+            prefs.task_completed = v;
+        }
+        if let Some(v) = updates.task_overdue {
+            prefs.task_overdue = v;
+        }
+        if let Some(v) = updates.client_created {
+            prefs.client_created = v;
+        }
+        if let Some(v) = updates.client_updated {
+            prefs.client_updated = v;
+        }
+        if let Some(v) = updates.system_alerts {
+            prefs.system_alerts = v;
+        }
+        if let Some(v) = updates.maintenance_notifications {
+            prefs.maintenance_notifications = v;
+        }
+        if let Some(v) = updates.quiet_hours_enabled {
+            prefs.quiet_hours_enabled = v;
+        }
+        if let Some(ref v) = updates.quiet_hours_start {
+            prefs.quiet_hours_start = Some(v.clone());
+        }
+        if let Some(ref v) = updates.quiet_hours_end {
+            prefs.quiet_hours_end = Some(v.clone());
+        }
+
+        repo.save(prefs)
+            .await
+            .map_err(|e| AppError::Database(format!("Failed to save preferences: {}", e)))
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
     fn notification_repo(&self) -> NotificationRepository {
         NotificationRepository::new(self.db.clone(), self.cache.clone())
+    }
+
+    fn preferences_repo(&self) -> NotificationPreferencesRepository {
+        NotificationPreferencesRepository::new(self.db.clone(), self.cache.clone())
+    }
+
+    fn template_repo(&self) -> NotificationTemplateRepository {
+        NotificationTemplateRepository::new(self.db.clone(), self.cache.clone())
     }
 }
