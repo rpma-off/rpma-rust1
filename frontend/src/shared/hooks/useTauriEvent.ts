@@ -37,7 +37,7 @@ export function useTauriEvent(): void {
 
     const unlistenPromises = [
       listen('task:status_changed', () => {
-        void queryClient.invalidateQueries({ queryKey: taskKeys.all });
+        void queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
       }),
 
       listen('intervention:started', () => {

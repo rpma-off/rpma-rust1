@@ -60,6 +60,7 @@ impl super::MaterialRepository {
             WHERE is_active = 1 AND is_discontinued = 0 AND deleted_at IS NULL
               AND (current_stock < COALESCE(minimum_stock, 0) OR current_stock < COALESCE(reorder_point, 0))
             ORDER BY current_stock ASC
+            LIMIT 500
             "#,
             MATERIAL_COLUMNS
         );
@@ -92,6 +93,7 @@ impl super::MaterialRepository {
             FROM materials
             WHERE material_type = ? AND is_active = 1 AND is_discontinued = 0 AND deleted_at IS NULL
             ORDER BY name ASC
+            LIMIT 500
             "#,
             MATERIAL_COLUMNS
         );

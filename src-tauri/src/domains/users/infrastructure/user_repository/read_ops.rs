@@ -54,6 +54,7 @@ impl super::UserRepository {
             FROM users
             WHERE role = ? AND deleted_at IS NULL
             ORDER BY full_name ASC
+            LIMIT 500
             "#,
             USER_COLUMNS
         );
@@ -82,6 +83,7 @@ impl super::UserRepository {
             FROM users
             WHERE is_active = 1 AND deleted_at IS NULL
             ORDER BY full_name ASC
+            LIMIT 500
             "#,
             USER_COLUMNS
         );
