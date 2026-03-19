@@ -140,8 +140,14 @@ async fn test_create_client_publishes_client_created_event() {
     let result = service.create_client(req, "user-1").await;
     assert!(result.is_ok(), "create_client must succeed");
 
-    // Allow the async handler task to run.
-    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    // Wait deterministically for the async handler task to increment the counter.
+    for _ in 0..100 {
+        if created_counter.load(Ordering::SeqCst) == 1 {
+            break;
+        }
+        tokio::task::yield_now().await;
+        tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+    }
     assert_eq!(
         created_counter.load(Ordering::SeqCst),
         1,
