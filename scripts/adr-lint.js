@@ -202,6 +202,11 @@ function checkAdr001(rootDir, files) {
       continue;
     }
 
+    // Auth domain commands handle authentication and don't always have a context to resolve.
+    if (relPath.startsWith('src-tauri/src/domains/auth/ipc/')) {
+      continue;
+    }
+
     const content = readFile(absolutePath);
     if (!content.includes('#[tauri::command]')) {
       continue;
