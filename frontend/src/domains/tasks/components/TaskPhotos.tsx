@@ -120,13 +120,14 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   unoptimized={shouldUseUnoptimizedImage(displaySrc)}
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                   <Button
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <Button
                     variant="destructive"
                     size="icon"
                     className="h-8 w-8 rounded-full"
                     onClick={() => deletePhoto.mutate(photo.id)}
                     disabled={deletePhoto.isPending}
+                    aria-label={`Supprimer la photo ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
