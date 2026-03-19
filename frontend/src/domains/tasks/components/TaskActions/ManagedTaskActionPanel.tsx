@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  MoreVertical,
-  Edit,
   FileText,
-  Phone,
-  MessageSquare,
-  Clock,
-  AlertCircle,
   User,
   Settings,
 } from 'lucide-react';
@@ -20,16 +14,8 @@ import { Label } from '@/components/ui/label';
 import { TaskWithDetails } from '@/types/task.types';
 import { useTaskActions } from './useTaskActions';
 import { PrimaryActionButton } from './PrimaryActionButton';
-import { SecondaryActionsGrid } from './SecondaryActionsGrid';
-import { IconActionButton } from './IconActionButton';
-import { MoreActionsSection } from './MoreActionsSection';
 import { StatusWarnings } from './StatusWarnings';
 import { PrioritySelector } from './PrioritySelector';
-import type { TaskActionItem } from './TaskActionButton';
-import EditTaskModal from './EditTaskModal';
-import SendMessageModal from './SendMessageModal';
-import DelayTaskModal from './DelayTaskModal';
-import ReportIssueModal from './ReportIssueModal';
 
 interface ManagedTaskActionPanelProps {
   task: TaskWithDetails;
@@ -54,14 +40,9 @@ export function ManagedTaskActionPanel({
   const router = useRouter();
   const actions = useTaskActions(task);
 
-  const [showMoreActions, setShowMoreActions] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showAssignmentDialog, setShowAssignmentDialog] = useState(false);
   const [showNotesDialog, setShowNotesDialog] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showSendMessageModal, setShowSendMessageModal] = useState(false);
-  const [showDelayTaskModal, setShowDelayTaskModal] = useState(false);
-  const [showReportIssueModal, setShowReportIssueModal] = useState(false);
   const [notes, setNotes] = useState(task.note || '');
 
   const isInProgress = task.status === 'in_progress';
@@ -92,73 +73,11 @@ export function ManagedTaskActionPanel({
     }
   };
 
-  const handleActionClick = (action: () => void) => {
-    action();
-  };
-
-  const communicationActions: TaskActionItem[] = [
-    {
-      id: 'call',
-      label: 'Appeler le client',
-      icon: Phone,
-      onClick: () => actions.initiateCall(),
-      disabled: !task.customer_phone,
-    },
-    {
-      id: 'message',
-      label: 'Envoyer un message',
-      icon: MessageSquare,
-      onClick: () => setShowSendMessageModal(true),
-    },
-  ];
-
-  const administrationActions: TaskActionItem[] = [
-    {
-      id: 'status',
-      label: 'Changer le statut',
-      icon: Settings,
-      onClick: () => setShowStatusDialog(true),
-    },
-    {
-      id: 'assign',
-      label: 'M&apos;assigner la tâche',
-      icon: User,
-      onClick: () => setShowAssignmentDialog(true),
-      disabled: isAssignedToCurrentUser,
-    },
-    {
-      id: 'notes',
-      label: 'Modifier les notes',
-      icon: FileText,
-      onClick: () => setShowNotesDialog(true),
-    },
-    {
-      id: 'edit',
-      label: 'Modifier la tâche',
-      icon: Edit,
-      onClick: () => setShowEditModal(true),
-    },
-    {
-      id: 'delay',
-      label: 'Reporter la tâche',
-      icon: Clock,
-      onClick: () => setShowDelayTaskModal(true),
-    },
-    {
-      id: 'report',
-      label: 'Signaler un problème',
-      icon: AlertCircle,
-      onClick: () => setShowReportIssueModal(true),
-    },
-  ];
-
   const primaryDisabledReason = !isAvailable && !isAssignedToCurrentUser
     ? 'Intervention indisponible : cette tâche est déjà prise par un autre technicien.'
     : shouldShowDisabledReason
       ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
       : null;
-
-  const dockedQuickActions = communicationActions.slice(0, 2);
 
   return (
     <div
@@ -187,43 +106,34 @@ export function ManagedTaskActionPanel({
             {primaryDisabledReason && !mobileDocked && <p className="mt-2 text-xs text-amber-600">{primaryDisabledReason}</p>}
           </div>
 
-          {mobileDocked ? (
-            <div className="grid grid-cols-4 gap-2">
-              {dockedQuickActions.map((action) => (
-                <IconActionButton key={action.id} action={action} onActionClick={handleActionClick} compact />
-              ))}
-              <button
-                type="button"
-                onClick={() => setShowMoreActions((current) => !current)}
-                className="rounded-lg border border-border/60 bg-background/60 px-2 py-2 text-xs text-border-light hover:text-foreground"
-              >
-                <MoreVertical className="h-4 w-4 mx-auto mb-1" />
-                Plus
-              </button>
-
-              {showMoreActions && (
-                <div className="col-span-4 grid grid-cols-2 gap-2 pt-1">
-                  {[...communicationActions, ...administrationActions].map((action) => (
-                    <IconActionButton key={action.id} action={action} onActionClick={handleActionClick} compact />
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
+          {!mobileDocked && (
             <>
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Communication</p>
-                <SecondaryActionsGrid actions={communicationActions} onActionClick={handleActionClick} columns={2} />
-              </div>
-
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Administration</p>
-                <MoreActionsSection
-                  showMoreActions={showMoreActions}
-                  toggleMoreActions={() => setShowMoreActions((current) => !current)}
-                  actions={administrationActions}
-                  onActionClick={handleActionClick}
-                />
+              <div className="pt-4 border-t border-border/30">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-border-light">Administration</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                   <button
+                    onClick={() => setShowStatusDialog(true)}
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent/5 hover:border-accent/30 transition-all duration-200 text-sm font-medium text-muted-foreground"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Statut
+                  </button>
+                  <button
+                    onClick={() => setShowAssignmentDialog(true)}
+                    disabled={isAssignedToCurrentUser}
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent/5 hover:border-accent/30 transition-all duration-200 text-sm font-medium text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <User className="h-4 w-4" />
+                    M&apos;assigner
+                  </button>
+                  <button
+                    onClick={() => setShowNotesDialog(true)}
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border/50 bg-background/60 hover:bg-accent/5 hover:border-accent/30 transition-all duration-200 text-sm font-medium text-muted-foreground"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Notes
+                  </button>
+                </div>
               </div>
 
               <StatusWarnings
@@ -356,11 +266,6 @@ export function ManagedTaskActionPanel({
             </div>
           </DialogContent>
         </Dialog>
-
-        <EditTaskModal task={task} open={showEditModal} onOpenChange={setShowEditModal} />
-        <SendMessageModal task={task} open={showSendMessageModal} onOpenChange={setShowSendMessageModal} />
-        <DelayTaskModal task={task} open={showDelayTaskModal} onOpenChange={setShowDelayTaskModal} />
-        <ReportIssueModal task={task} open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
       </div>
     </div>
   );

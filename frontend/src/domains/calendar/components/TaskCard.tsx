@@ -14,8 +14,8 @@ export type CalendarTaskWithCustomerName = CalendarTask & { customer_name?: stri
 export const getCalendarTaskLabel = (task: CalendarTaskWithCustomerName): string => {
   const plateValue = task.vehicle_plate?.trim();
   const clientValue = task.client_name?.trim() || task.customer_name?.trim();
-  const plate = plateValue ? plateValue : 'N/A';
-  const clientName = clientValue ? clientValue : 'N/A';
+  const plate = plateValue ? plateValue : 'N/D';
+  const clientName = clientValue ? clientValue : 'N/D';
   return `${plate} – ${clientName}`;
 };
 
@@ -77,12 +77,12 @@ const TaskCardComponent = memo<TaskCardProps>(({
   const statusColors = getStatusColor(task.status);
   const priorityColor = getPriorityColor(task.priority);
   const taskLabel = getCalendarTaskLabel(task);
-  const titleSegment = task.title?.trim() ? `, Title: ${task.title.trim()}` : '';
-  const ariaLabel = `${taskLabel}${titleSegment}, Status: ${task.status}, Priority: ${task.priority}`;
+  const titleSegment = task.title?.trim() ? `, Titre: ${task.title.trim()}` : '';
+  const ariaLabel = `${taskLabel}${titleSegment}, Statut: ${task.status}, Priorité: ${task.priority}`;
 
   const timeDisplay = task.start_time && task.end_time
     ? `${task.start_time} - ${task.end_time}`
-    : task.start_time || 'TBD';
+    : task.start_time || 'À définir';
 
   if (mode === 'compact') {
     return (
@@ -134,19 +134,19 @@ const TaskCardComponent = memo<TaskCardProps>(({
 
         <div className="space-y-1 text-xs text-white/90">
           <div className="flex justify-between">
-            <span>Vehicle:</span>
-            <span className="font-medium text-white">{task.vehicle_plate || 'N/A'}</span>
+            <span>Véhicule :</span>
+            <span className="font-medium text-white">{task.vehicle_plate || 'N/D'}</span>
           </div>
           <div className="flex justify-between">
-            <span>Technician:</span>
-            <span className="font-medium text-white">{task.technician_name || 'Unassigned'}</span>
+            <span>Technicien :</span>
+            <span className="font-medium text-white">{task.technician_name || 'Non assigné'}</span>
           </div>
           <div className="flex justify-between">
-            <span>Time:</span>
+            <span>Heure :</span>
             <span className="font-medium text-white">{timeDisplay}</span>
           </div>
           <div className="flex justify-between">
-            <span>Priority:</span>
+            <span>Priorité :</span>
             <span className="font-medium px-2 py-1 rounded text-xs bg-white/20">
               {task.priority}
             </span>

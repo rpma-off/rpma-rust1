@@ -34,42 +34,42 @@ const DefaultTaskErrorFallback: React.FC<TaskErrorFallbackProps> = ({
 
     if (message.includes('task not found') || message.includes('404')) {
       return {
-        title: 'Task Not Found',
-        description: `The task ${taskId ? `#${taskId}` : ''} could not be found. It may have been deleted or you may not have access to it.`
+        title: 'Tâche introuvable',
+        description: `La tâche ${taskId ? `#${taskId}` : ''} est introuvable. Elle a peut-être été supprimée ou vous n'y avez pas accès.`
       };
     }
 
     if (message.includes('unauthorized') || message.includes('403')) {
       return {
-        title: 'Access Denied',
-        description: 'You do not have permission to view this task. Please contact your administrator.'
+        title: 'Accès refusé',
+        description: 'Vous n\'avez pas la permission de voir cette tâche. Veuillez contacter votre administrateur.'
       };
     }
 
     if (message.includes('network') || message.includes('fetch')) {
       return {
-        title: 'Connection Problem',
-        description: 'Unable to load task data. Please check your internet connection and try again.'
+        title: 'Problème de connexion',
+        description: 'Impossible de charger les données de la tâche. Veuillez vérifier votre connexion internet et réessayer.'
       };
     }
 
     if (message.includes('timeout')) {
       return {
-        title: 'Request Timeout',
-        description: 'The task is taking too long to load. This may be due to high server load.'
+        title: 'Délai d\'attente dépassé',
+        description: 'Le chargement de la tâche prend trop de temps. Cela peut être dû à une forte charge du serveur.'
       };
     }
 
     if (message.includes('validation') || message.includes('invalid')) {
       return {
-        title: 'Data Validation Error',
-        description: 'The task data appears to be corrupted or invalid. Please try refreshing the page.'
+        title: 'Erreur de validation des données',
+        description: 'Les données de la tâche semblent corrompues ou invalides. Veuillez essayer de rafraîchir la page.'
       };
     }
 
     return {
-      title: 'Task Loading Error',
-      description: 'An unexpected error occurred while loading the task. Please try again or contact support.'
+      title: 'Erreur de chargement de la tâche',
+      description: 'Une erreur inattendue s\'est produite lors du chargement de la tâche. Veuillez réessayer ou contacter le support.'
     };
   };
 
@@ -92,7 +92,7 @@ const DefaultTaskErrorFallback: React.FC<TaskErrorFallbackProps> = ({
 
         {taskId && (
           <div className="bg-gray-50 rounded-md p-3 mb-6">
-            <span className="text-sm text-gray-500">Task ID: </span>
+            <span className="text-sm text-gray-500">ID de la tâche : </span>
             <span className="text-sm font-mono text-gray-900">{taskId}</span>
           </div>
         )}
@@ -101,21 +101,21 @@ const DefaultTaskErrorFallback: React.FC<TaskErrorFallbackProps> = ({
           <div className="flex gap-3 justify-center">
             <Button onClick={onRetry} className="flex items-center space-x-2">
               <RefreshCw className="h-4 w-4" />
-              <span>Retry</span>
+              <span>Réessayer</span>
             </Button>
 
             <Button variant="outline" onClick={onGoBack} className="flex items-center space-x-2">
               <ArrowLeft className="h-4 w-4" />
-              <span>Go Back</span>
+              <span>Retour</span>
             </Button>
           </div>
 
           <div className="text-xs text-gray-500">
-            <p>If this problem persists:</p>
+            <p>Si ce problème persiste :</p>
             <ul className="list-disc list-inside mt-1 text-left">
-              <li>Check if the task exists in the task list</li>
-              <li>Verify your permissions with your administrator</li>
-              <li>Contact support with the task ID above</li>
+              <li>Vérifiez si la tâche existe dans la liste des tâches</li>
+              <li>Vérifiez vos permissions avec votre administrateur</li>
+              <li>Contactez le support avec l'ID de la tâche ci-dessus</li>
             </ul>
           </div>
         </div>
@@ -181,8 +181,8 @@ export const TaskErrorBoundary: React.FC<TaskErrorBoundaryProps> = ({
       <BaseErrorBoundary
         onError={handleTaskError}
         className={className}
-        fallbackTitle="Task Error"
-        fallbackDescription="An error occurred while loading the task"
+        fallbackTitle="Erreur de tâche"
+        fallbackDescription="Une erreur s'est produite lors du chargement de la tâche"
         showRetry={true}
         showHome={true}
       >

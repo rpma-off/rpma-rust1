@@ -5,18 +5,15 @@ import { Button, TaskErrorBoundary } from '@/shared/ui';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import {
-  TaskAttachments,
   TaskOverviewEditable,
-  TaskTimeline,
   TaskHeaderBand,
-  TaskStepperBand,
   StatusBadge,
   ActionsCard,
   getTaskDisplayTitle,
   useTaskDetailPage,
 } from '@/domains/tasks';
 import { useInterventionData } from '@/domains/interventions';
-import { InterventionReportSection, ReportPreviewPanel, useInterventionReport, useInterventionReportPreview } from '@/domains/reports';
+import { InterventionReportSection } from '@/domains/reports';
 
 export default function TaskDetailPage() {
   const {
@@ -29,11 +26,7 @@ export default function TaskDetailPage() {
     isAssignedToCurrentUser,
     isTaskAvailable,
     isStartingIntervention,
-    activeSection,
-    progressValue,
-    workflowSteps,
     showMobileActionBar,
-    quickNavSections,
     formatDate,
     handlePrimaryAction,
     handleSecondaryAction,
@@ -43,14 +36,6 @@ export default function TaskDetailPage() {
 
   const { data: interventionData } = useInterventionData(taskId);
   const interventionId = interventionData?.id as string | undefined;
-
-  const { viewModel: reportViewModel, isLoading: reportPreviewLoading } = useInterventionReportPreview({ interventionId });
-  // React Query cache hit — same query key as InterventionReportSection in the sidebar
-  const { report } = useInterventionReport({ interventionId });
-
-  const visibleQuickNavSections = quickNavSections.filter(
-    section => section.id !== 'task-attachments' || interventionId
-  );
 
   if (loading) {
     return (
@@ -103,6 +88,19 @@ export default function TaskDetailPage() {
   return (
     <TaskErrorBoundary>
       <PageShell>
+        <div className="mb-4 flex items-center gap-2">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent/5 -ml-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t('common.back')}
+          </Button>
+          <StatusBadge status={(task.status as 'completed' | 'in_progress' | 'pending' | 'scheduled' | 'on_hold' | 'cancelled' | 'failed' | 'overdue' | 'draft') || 'pending'} size="sm" />
+        </div>
+
         {/* Enhanced Header with TaskHeaderBand */}
         <TaskHeaderBand
           stepLabel={isCompleted ? 'TERMINÉ' : isInProgress ? 'EN COURS' : 'PLANIFIÉ'}
@@ -117,54 +115,7 @@ export default function TaskDetailPage() {
           hasEnvironmentalData={false}
         />
 
-        {/* Workflow Stepper */}
-        <TaskStepperBand
-          steps={workflowSteps}
-          totalProgress={progressValue}
-        />
-
-        {/* Quick Navigation */}
-        <div className="sticky top-0 z-30 bg-[hsl(var(--rpma-surface))]/95 backdrop-blur supports-[backdrop-filter]:bg-[hsl(var(--rpma-surface))]/80 border-b border-[hsl(var(--rpma-border))] shadow-sm py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => router.back()}
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground hover:bg-accent/5"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {t('common.back')}
-              </Button>
-               <StatusBadge status={(task.status as 'completed' | 'in_progress' | 'pending' | 'scheduled' | 'on_hold' | 'cancelled' | 'failed' | 'overdue' | 'draft') || 'pending'} size="sm" />
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {visibleQuickNavSections.map(section => (
-                <button
-                  key={section.id}
-                  type="button"
-                   onClick={() => {
-                     const target = document.getElementById(section.id);
-                     if (!target) return;
-                     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                     target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' } as ScrollIntoViewOptions);
-                   }}
-                  aria-current={activeSection === section.id ? 'page' : undefined}
-                  className={`px-3 py-1.5 text-xs sm:text-sm rounded-full border transition-all duration-200 ${
-                    activeSection === section.id
-                      ? 'border-primary/40 bg-primary/15 text-primary shadow-sm'
-                      : 'border-border/70 bg-background/70 text-muted-foreground hover:text-foreground hover:border-primary/30 hover:bg-background'
-                  }`}
-                >
-                  {t(section.label)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className={`space-y-6 ${showMobileActionBar ? 'pb-28' : ''}`}>
+        <div className={`mt-6 space-y-6 ${showMobileActionBar ? 'pb-28' : ''}`}>
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
             {/* Main Content Area */}
             <main className="space-y-6">
@@ -184,31 +135,6 @@ export default function TaskDetailPage() {
               {/* Task Overview */}
               <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <TaskOverviewEditable task={task} defaultExpandedSections={['notes-operationnelles']} />
-              </section>
-
-              {/* Task Attachments - Only shown when intervention exists */}
-              {interventionId && (
-                <section id="task-attachments" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <TaskAttachments taskId={taskId} interventionId={interventionId} />
-                </section>
-              )}
-
-              {/* Report Preview - shown when intervention exists */}
-              {interventionId && (
-                <section id="task-report-preview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                  <h2 className="text-base font-semibold text-foreground mb-4">Prévisualisation du rapport</h2>
-                  <ReportPreviewPanel
-                    viewModel={reportViewModel}
-                    isLoading={reportPreviewLoading}
-                    interventionId={interventionId}
-                    reportFilePath={report?.file_path}
-                  />
-                </section>
-              )}
-
-              {/* Task Timeline */}
-              <section id="task-timeline" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <TaskTimeline taskId={taskId} />
               </section>
             </main>
 
@@ -284,6 +210,3 @@ export default function TaskDetailPage() {
     </TaskErrorBoundary>
   );
 }
-
-
-

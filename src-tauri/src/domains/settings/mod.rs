@@ -1,5 +1,5 @@
-mod facade;
-pub use facade::SettingsFacade;
+pub mod application;
+pub use application::SettingsService;
 
 pub mod models;
 pub mod organization_handler;

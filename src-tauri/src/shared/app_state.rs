@@ -1,7 +1,7 @@
 //! Shared Tauri application state used across IPC entrypoints.
 
 use crate::db::Database;
-use crate::domains::clients::client_handler::ClientService;
+use crate::domains::clients::application::client_service::ClientService;
 use crate::domains::inventory::InventoryFacade;
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::users::infrastructure::user::UserService;

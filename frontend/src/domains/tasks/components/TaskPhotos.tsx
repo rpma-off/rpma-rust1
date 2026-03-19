@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Camera, Trash2, Upload, ImageIcon } from 'lucide-react';
 import { addKeyboardNavigation } from '@/lib/accessibility.ts';
@@ -10,7 +10,6 @@ import { resolveLocalImageUrl, shouldUseUnoptimizedImage } from '@/shared/utils'
 import { formatDate } from '@/shared/utils/date-formatters';
 import { useInterventionPhotos } from '@/domains/interventions';
 
-
 interface TaskPhotosProps {
   taskId: string;
   interventionId?: string;
@@ -18,18 +17,15 @@ interface TaskPhotosProps {
 
 export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps) {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = React.useState<'Before' | 'After'>('Before');
   const galleryRef = useRef<HTMLDivElement>(null);
 
   const {
     photos,
-    isLoading: _isLoading,
+    isLoading,
     uploadPhoto,
     deletePhoto,
     isUploading
   } = useInterventionPhotos(interventionId);
-
-  const tabLabel = (tab: 'Before' | 'After') => tab === 'Before' ? 'Avant' : 'Après';
 
   // Handle file input change
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'Before' | 'After') => {
@@ -50,234 +46,137 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
         });
       }
     }
-    // Reset the input value to allow selecting the same file again
     e.target.value = '';
-  };
-
-  const _handleDeletePhoto = async (photoId: string) => {
-    try {
-      await deletePhoto.mutateAsync(photoId);
-      toast({
-        title: 'Succès',
-        description: 'Photo supprimée avec succès',
-      });
-    } catch (_error) {
-      toast({
-        title: 'Erreur',
-        description: 'Échec de la suppression de la photo',
-        variant: 'destructive',
-      });
-    }
   };
 
   // Add keyboard navigation to photo gallery
   useEffect(() => {
-    const filteredPhotos = photos?.filter(photo => photo.photo_type === (activeTab === 'Before' ? 'before' : 'after')) || [];
-    if (galleryRef.current && filteredPhotos && filteredPhotos.length > 0) {
+    if (galleryRef.current && photos && photos.length > 0) {
       const cleanup = addKeyboardNavigation(galleryRef.current, {
         orientation: 'horizontal',
         loop: true,
-        onEnter: (element) => {
-          // Could open a modal or focus on photo details
-          const photoCard = element.closest('[data-photo-id]');
-          if (photoCard) {
-            // For now, just announce the photo for screen readers
-            const photoId = photoCard.getAttribute('data-photo-id');
-            const announcement = `Photo ${photoId} selected. Press Delete to remove or Tab to navigate.`;
-            const announcementElement = document.createElement('div');
-            announcementElement.setAttribute('aria-live', 'polite');
-            announcementElement.setAttribute('aria-atomic', 'true');
-            announcementElement.className = 'sr-only';
-            announcementElement.textContent = announcement;
-            document.body.appendChild(announcementElement);
-            setTimeout(() => document.body.removeChild(announcementElement), 1000);
-          }
-        },
-        onSpace: (element) => {
-          // Same as Enter
-          const photoCard = element.closest('[data-photo-id]');
-          if (photoCard) {
-            const photoId = photoCard.getAttribute('data-photo-id');
-            const announcement = `Photo ${photoId} activated.`;
-            const announcementElement = document.createElement('div');
-            announcementElement.setAttribute('aria-live', 'polite');
-            announcementElement.setAttribute('aria-atomic', 'true');
-            announcementElement.className = 'sr-only';
-            announcementElement.textContent = announcement;
-            document.body.appendChild(announcementElement);
-            setTimeout(() => document.body.removeChild(announcementElement), 1000);
-          }
-        }
       });
-
       return cleanup;
     }
     return () => {};
-  }, [photos, activeTab]);
+  }, [photos]);
 
-  // Filter photos based on active tab
-  const filteredPhotos = useMemo(
-    () => photos?.filter(photo => photo.photo_type === (activeTab === 'Before' ? 'before' : 'after')) ?? [],
-    [photos, activeTab],
-  );
+  const beforePhotos = photos?.filter(p => p.photo_type === 'before') || [];
+  const afterPhotos = photos?.filter(p => p.photo_type === 'after') || [];
 
-  return (
+  type InterventionPhoto = NonNullable<typeof photos>[number];
+
+  const PhotoSection = ({
+    title,
+    photosList,
+    type,
+  }: {
+    title: string;
+    photosList: InterventionPhoto[];
+    type: 'Before' | 'After';
+  }) => (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-2">
-          <Button
-            variant={activeTab === 'Before' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('Before')}
-            aria-pressed={activeTab === 'Before'}
-            aria-controls="photos-gallery"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setActiveTab('Before');
-                e.preventDefault();
-              }
-            }}
-          >
-            <Camera className="h-4 w-4 mr-2" />
-            Avant
-          </Button>
-          <Button
-            variant={activeTab === 'After' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('After')}
-            aria-pressed={activeTab === 'After'}
-            aria-controls="photos-gallery"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setActiveTab('After');
-                e.preventDefault();
-              }
-            }}
-          >
-            <Camera className="h-4 w-4 mr-2" />
-            Après
-          </Button>
-        </div>
-
-        <div className="relative">
-          <Button asChild variant="outline">
-            <label className="cursor-pointer">
-              <Upload className="h-4 w-4 mr-2" />
-              Téléverser photo {tabLabel(activeTab)}
-              <input
-                type="file"
-                className="sr-only"
-                accept="image/*"
-                onChange={(e) => handleFileChange(e, activeTab)}
-                disabled={isUploading}
-                aria-label={`Téléverser photo ${tabLabel(activeTab)}`}
-              />
-            </label>
-          </Button>
-          {isUploading && (
-            <div className="absolute -top-2 -right-2" aria-live="polite">
-              <Skeleton className="h-5 w-5 animate-spin text-primary" />
-              <span className="sr-only">Téléversement de la photo...</span>
-            </div>
-          )}
-        </div>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <Camera className="w-4 h-4" />
+          {title}
+          <span className="ml-2 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[10px]">
+            {photosList.length} photo{photosList.length > 1 ? 's' : ''}
+          </span>
+        </h3>
+        <Button asChild variant="ghost" size="sm" className="h-8 text-xs hover:bg-accent/5 hover:text-accent">
+          <label className="cursor-pointer flex items-center gap-1.5">
+            <Upload className="h-3.5 w-3.5" />
+            Ajouter
+            <input
+              type="file"
+              className="sr-only"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, type)}
+              disabled={isUploading}
+            />
+          </label>
+        </Button>
       </div>
 
-       <div
-         id="photos-gallery"
-         ref={galleryRef}
-         aria-live="polite"
-         aria-label="Galerie de photos"
-         role="grid"
-         aria-rowcount={Math.ceil(filteredPhotos.length / 3)}
-         aria-colcount={3}
-       >
-      {filteredPhotos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg">
-          <ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">
-            Aucune photo {tabLabel(activeTab).toLowerCase()} téléversée pour le moment
-          </p>
-          <Button asChild variant="outline">
-            <label className="cursor-pointer">
-              <Upload className="h-4 w-4 mr-2" />
-              Téléverser photo {tabLabel(activeTab)}
-              <input
-                type="file"
-                className="sr-only"
-                accept="image/*"
-                onChange={(e) => handleFileChange(e, activeTab)}
-                disabled={isUploading}
-              />
-            </label>
-          </Button>
+      {photosList.length === 0 ? (
+        <div className="py-8 flex flex-col items-center justify-center border border-dashed border-border/60 rounded-xl bg-background/20 group hover:bg-background/40 transition-colors">
+          <ImageIcon className="h-8 w-8 text-border-light mb-2 group-hover:scale-110 transition-transform" />
+          <p className="text-xs text-muted-foreground font-medium">Aucune photo {title.toLowerCase()}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredPhotos.map((photo, index) => (
-            (() => {
-              const displaySrc = resolveLocalImageUrl(photo.storage_url || photo.file_path);
-              return (
-            <Card
-              key={photo.id}
-              data-photo-id={photo.id}
-              className="overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
-              tabIndex={0}
-              role="gridcell"
-              aria-rowindex={Math.floor(index / 3) + 1}
-              aria-colindex={(index % 3) + 1}
-               aria-label={`Photo ${index + 1} of ${filteredPhotos.length}: ${photo.photo_type || 'Unknown'} photo uploaded on ${formatDate(photo.created_at as unknown as string)}`}
-              onKeyDown={(e) => {
-                if (e.key === 'Delete' && !deletePhoto.isPending) {
-                  deletePhoto.mutate(photo.id);
-                  e.preventDefault();
-                }
-              }}
-            >
-              <div className="relative aspect-square">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {photosList.map((photo, index) => {
+            const displaySrc = resolveLocalImageUrl(photo.storage_url || photo.file_path);
+            return (
+              <Card
+                key={photo.id}
+                tabIndex={0}
+                className="group relative overflow-hidden aspect-square border-0 bg-transparent ring-1 ring-border/50 hover:ring-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/70 transition-all shadow-none hover:shadow-lg"
+              >
                 <Image
                   src={displaySrc}
-                   alt={`${photo.photo_type || 'Unknown'} photo uploaded on ${formatDate(photo.created_at as unknown as string)}`}
+                  alt={`${title} - Photo ${index + 1}`}
                   fill
-                  className="w-full h-full object-cover"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                   unoptimized={shouldUseUnoptimizedImage(displaySrc)}
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all flex items-center justify-center opacity-0 hover:opacity-100">
-                  <Button
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                   <Button
                     variant="destructive"
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
                     onClick={() => deletePhoto.mutate(photo.id)}
                     disabled={deletePhoto.isPending}
-                    aria-label={`Delete ${photo.photo_type} photo`}
-                    onKeyDown={(e) => {
-                      if ((e.key === 'Enter' || e.key === ' ') && !deletePhoto.isPending) {
-                        deletePhoto.mutate(photo.id);
-                        e.preventDefault();
-                      }
-                    }}
+                    aria-label={`Supprimer la photo ${index + 1}`}
                   >
-                    {deletePhoto.isPending ? (
-                      <Skeleton className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4" />
-                    )}
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-              <CardHeader className="p-3">
-                <CardTitle className="text-sm font-medium flex items-center justify-between">
-                  <span>{photo.photo_type || 'Inconnu'} Photo</span>
-                  <span className="text-xs text-muted-foreground">
-                   {photo.created_at ? formatDate(photo.created_at as unknown as string) : 'Inconnu'}
+                <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                  <span className="text-[10px] text-white/90 font-medium">
+                    {photo.created_at ? formatDate(photo.created_at as unknown as string) : ''}
                   </span>
-                </CardTitle>
-
-              </CardHeader>
-            </Card>
-              );
-            })()
-          ))}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 gap-8">
+        {[1, 2].map(i => (
+          <div key={i} className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <div className="grid grid-cols-2 gap-3">
+              <Skeleton className="aspect-square rounded-xl" />
+              <Skeleton className="aspect-square rounded-xl" />
+            </div>
+          </div>
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10" ref={galleryRef}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+        <PhotoSection title="Photos Avant" photosList={beforePhotos} type="Before" />
+        <PhotoSection title="Photos Après" photosList={afterPhotos} type="After" />
+      </div>
+
+      {isUploading && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4">
+          <Card className="flex items-center gap-3 p-3 bg-white shadow-2xl border-accent/20">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+            <span className="text-sm font-medium text-foreground">Téléversement en cours...</span>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

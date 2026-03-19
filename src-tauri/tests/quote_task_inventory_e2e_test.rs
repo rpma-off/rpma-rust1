@@ -45,7 +45,7 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
     let tester_id = tester.id.clone();
     let admin_role = UserRole::Admin;
 
-    let client_service = ClientService::new(repos.client.clone());
+    let client_service = ClientService::new(repos.client.clone(), Arc::new(InMemoryEventBus::new()));
     let client = client_service
         .create_client(
             CreateClientRequest {

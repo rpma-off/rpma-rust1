@@ -564,6 +564,32 @@ pub mod event_factory {
             metadata: None,
         }
     }
+
+    // ── Client events ─────────────────────────────────────────────────────────
+
+    /// Create a `ClientCreated` domain event (ADR-017).
+    pub fn client_created(client_id: String, name: String, user_id: String) -> DomainEvent {
+        DomainEvent::ClientCreated {
+            id: Uuid::new_v4().to_string(),
+            client_id,
+            name,
+            user_id,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a `ClientDeactivated` domain event (ADR-017).
+    pub fn client_deactivated(client_id: String, deactivated_by: String) -> DomainEvent {
+        DomainEvent::ClientDeactivated {
+            id: Uuid::new_v4().to_string(),
+            client_id,
+            deactivated_by,
+            reason: None,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
 }
 
 #[cfg(test)]

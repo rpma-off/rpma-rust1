@@ -1,11 +1,12 @@
-//! Flattened IPC handlers for global App Settings.
+//! IPC handlers for global App Settings.
 //!
-//! Each handler authenticates the caller via `resolve_context!`, then
-//! delegates all business logic to [`SettingsFacade`].
+//! Each handler resolves the request context via `resolve_context!`, then
+//! delegates all business logic — including RBAC enforcement — to
+//! [`SettingsService`].  Handlers must remain thin adapters (ADR-018).
 
-use tracing::{info, instrument};
+use tracing::instrument;
 
-use super::facade::SettingsFacade;
+use super::application::SettingsService;
 use super::models::*;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::resolve_context;
@@ -19,8 +20,8 @@ pub async fn get_app_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let settings = facade.get_app_settings()?;
+    let service = SettingsService::new(state.db.clone());
+    let settings = service.get_app_settings(&ctx)?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -32,9 +33,8 @@ pub async fn update_general_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_general_settings(settings, &ctx.auth.user_id)?;
-    info!("General settings updated");
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_general_settings(&ctx, settings)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -46,9 +46,8 @@ pub async fn update_security_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_security_settings(settings, &ctx.auth.user_id)?;
-    info!("Security settings updated");
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_security_settings(&ctx, settings)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -60,9 +59,8 @@ pub async fn update_notification_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_notification_settings(settings, &ctx.auth.user_id)?;
-    info!("Notification settings updated");
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_notification_settings(&ctx, settings)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -76,8 +74,8 @@ pub async fn update_business_rules(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_business_rules(rules, &ctx.auth.user_id)?;
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_business_rules(&ctx, rules)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -89,8 +87,8 @@ pub async fn update_security_policies(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_security_policies(policies, &ctx.auth.user_id)?;
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_security_policies(&ctx, policies)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -102,8 +100,8 @@ pub async fn update_integrations(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_integrations(integrations, &ctx.auth.user_id)?;
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_integrations(&ctx, integrations)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -115,8 +113,8 @@ pub async fn update_performance_configs(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_performance_configs(configs, &ctx.auth.user_id)?;
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_performance_configs(&ctx, configs)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -128,7 +126,7 @@ pub async fn update_business_hours(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<AppSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    let facade = SettingsFacade::new(state.db.clone());
-    let updated = facade.update_business_hours(hours, &ctx.auth.user_id)?;
+    let service = SettingsService::new(state.db.clone());
+    let updated = service.update_business_hours(&ctx, hours)?;
     Ok(ApiResponse::success(updated).with_correlation_id(Some(ctx.correlation_id)))
 }

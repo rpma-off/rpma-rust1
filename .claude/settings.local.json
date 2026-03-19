@@ -23,7 +23,9 @@
       "Bash(cargo check --all)",
       "Bash(node scripts/validate-migration-system.js)",
       "Bash(npm run:*)",
-      "Bash(cargo test:*)"
+      "Bash(cargo test:*)",
+      "Bash(wc -l /d/rpma-rust/frontend/src/domains/users/**/*.ts*)",
+      "Bash(xargs wc:*)"
     ]
   }
 }

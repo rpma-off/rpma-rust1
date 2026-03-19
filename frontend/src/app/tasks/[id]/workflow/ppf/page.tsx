@@ -15,7 +15,7 @@ import {
 
 export default function PPFWorkflowPage() {
   const router = useRouter();
-  const { taskId, task, steps, currentStep, canAccessStep, intervention } = usePpfWorkflow();
+  const { taskId, task, steps, currentStep, canAccessStep } = usePpfWorkflow();
 
   const orderedSteps = steps.length
     ? steps
@@ -27,8 +27,6 @@ export default function PPFWorkflowPage() {
         order: index + 1,
       }));
 
-  const completedCount = orderedSteps.filter((step) => step.status === 'completed').length;
-  const totalSteps = orderedSteps.length;
   const getLockReason = (stepIndex: number) => {
     const previousStep = orderedSteps[stepIndex - 1];
     if (previousStep && previousStep.status !== 'completed') {
@@ -37,11 +35,6 @@ export default function PPFWorkflowPage() {
     }
     return 'Étape verrouillée tant que les étapes précédentes ne sont pas validées.';
   };
-
-  const surfaceInfo = task?.ppf_zones?.length ? `${task.ppf_zones.length} zones` : '—';
-  const scheduledDate = task?.scheduled_date
-    ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(new Date(task.scheduled_date))
-    : null;
 
   return (
     <PpfWorkflowLayout>
@@ -56,79 +49,6 @@ export default function PPFWorkflowPage() {
         </div>
         <div className="rounded-full bg-[hsl(var(--rpma-surface))] px-3 py-1 text-xs text-muted-foreground shadow-sm">
           Sauvegarde auto activée
-        </div>
-      </div>
-
-      <div className="rounded-xl border-l-4 border-success bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success text-2xl text-success-foreground">
-              🚗
-            </div>
-            <div>
-              <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold">
-                {task?.priority && (
-                  <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-destructive">
-                    Priorité {task.priority}
-                  </span>
-                )}
-                <span className="rounded-full bg-success/10 px-2 py-0.5 text-success">PPF Intégral</span>
-                {scheduledDate && (
-                  <span className="rounded-full bg-info/10 px-2 py-0.5 text-info">
-                    Planifiée · {scheduledDate}
-                  </span>
-                )}
-              </div>
-              <div className="text-base font-extrabold text-foreground">
-                {task?.vehicle_make ?? 'Véhicule'} {task?.vehicle_model ?? ''}{' '}
-                {task?.vehicle_year ? `· ${task.vehicle_year}` : ''}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Client : {task?.customer_name ?? '—'} · {task?.customer_phone ?? '—'}
-              </div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-extrabold text-success">{surfaceInfo}</div>
-            <div className="text-xs text-muted-foreground">
-              Surface totale · {task?.ppf_zones?.length ?? 0} zones
-            </div>
-            <div className="text-xs font-semibold text-success">
-              {intervention?.status === 'completed' ? 'Intervention terminée' : 'Devis validé'}
-            </div>
-          </div>
-        </div>
-        <div className="mt-3">
-          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-            <span>Progression globale</span>
-            <span>
-              {completedCount} / {totalSteps} étapes
-            </span>
-          </div>
-          <div className="flex gap-1">
-            {orderedSteps.map((step) => {
-              const isDone = step.status === 'completed';
-              const isActive = step.id === currentStep?.id;
-              return (
-                <div
-                  key={`pill-${step.id}`}
-                  className={cn(
-                    'h-1 flex-1 rounded-full',
-                    isDone && 'bg-success',
-                    isActive && 'bg-info',
-                    !isDone && !isActive && 'bg-[hsl(var(--rpma-border))]'
-                  )}
-                />
-              );
-            })}
-          </div>
-          <div className="mt-2 flex flex-wrap justify-between text-[10px] text-muted-foreground">
-            {orderedSteps.map((step) => (
-              <span key={`label-${step.id}`} className={step.id === currentStep?.id ? 'text-info' : undefined}>
-                {PPF_STEP_CONFIG[step.id]?.label ?? step.title}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 

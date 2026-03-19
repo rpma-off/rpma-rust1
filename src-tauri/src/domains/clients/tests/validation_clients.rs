@@ -1,10 +1,11 @@
 use crate::db::Database;
 use crate::domains::clients::client_handler::{ClientService, CreateClientRequest, CustomerType};
-use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::client_handler::ClientsFacade;
 use crate::shared::ipc::errors::AppError;
 use std::sync::Arc;
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn validate_client_id_rejects_empty_string() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(ClientService::new_with_db(db));
@@ -14,6 +15,7 @@ async fn validate_client_id_rejects_empty_string() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn validate_client_id_rejects_whitespace_only() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(ClientService::new_with_db(db));
@@ -114,6 +116,7 @@ async fn validate_create_request_rejects_invalid_phone() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn create_client_rejects_duplicate_email() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = ClientService::new_with_db(db);

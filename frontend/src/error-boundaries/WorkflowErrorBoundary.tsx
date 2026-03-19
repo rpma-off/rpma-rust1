@@ -47,63 +47,63 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
 
     if (message.includes('step validation') || message.includes('validation failed')) {
       return {
-        title: 'Step Validation Error',
-        description: 'The current workflow step cannot be completed due to validation issues. Please review the required fields and photos.',
+        title: 'Erreur de validation de l\'étape',
+        description: 'L\'étape actuelle du workflow ne peut pas être terminée en raison de problèmes de validation. Veuillez vérifier les champs obligatoires et les photos.',
         severity: 'medium'
       };
     }
 
     if (message.includes('intervention not found')) {
       return {
-        title: 'Intervention Not Found',
-        description: 'The PPF intervention could not be found. It may have been deleted or corrupted.',
+        title: 'Intervention introuvable',
+        description: 'L\'intervention PPF est introuvable. Elle a peut-être été supprimée ou corrompue.',
         severity: 'high'
       };
     }
 
     if (message.includes('photo upload') || message.includes('image')) {
       return {
-        title: 'Photo Upload Error',
-        description: 'Failed to upload or process photos. Please check your connection and try again.',
+        title: 'Erreur d\'upload de photo',
+        description: 'Échec de l\'envoi ou du traitement des photos. Veuillez vérifier votre connexion et réessayer.',
         severity: 'medium'
       };
     }
 
     if (message.includes('geolocation') || message.includes('gps')) {
       return {
-        title: 'Location Service Error',
-        description: 'Unable to access location services. Some workflow features may be limited.',
+        title: 'Erreur du service de localisation',
+        description: 'Impossible d\'accéder aux services de localisation. Certaines fonctionnalités du workflow peuvent être limitées.',
         severity: 'low'
       };
     }
 
     if (message.includes('network') || message.includes('fetch')) {
       return {
-        title: 'Connection Error',
-        description: 'Unable to sync workflow data. You can continue working offline and sync later.',
+        title: 'Erreur de connexion',
+        description: 'Impossible de synchroniser les données du workflow. Vous pouvez continuer à travailler hors ligne et synchroniser plus tard.',
         severity: 'medium'
       };
     }
 
     if (message.includes('timeout')) {
       return {
-        title: 'Operation Timeout',
-        description: 'The workflow operation is taking too long. This may be due to network issues or high server load.',
+        title: 'Délai d\'opération dépassé',
+        description: 'L\'opération du workflow prend trop de temps. Cela peut être dû à des problèmes de réseau ou à une charge élevée du serveur.',
         severity: 'medium'
       };
     }
 
     if (message.includes('state') || message.includes('sync')) {
       return {
-        title: 'Workflow State Error',
-        description: 'The workflow state is inconsistent. Your progress may be saved, but some actions might need to be repeated.',
+        title: 'Erreur d\'état du workflow',
+        description: 'L\'état du workflow est incohérent. Votre progression peut être sauvegardée, mais certaines actions devront peut-être être répétées.',
         severity: 'high'
       };
     }
 
     return {
-      title: 'Workflow Error',
-      description: 'An unexpected error occurred during the workflow. Your progress should be saved.',
+      title: 'Erreur du workflow',
+      description: 'Une erreur inattendue s\'est produite lors du workflow. Votre progression devrait être sauvegardée.',
       severity: 'medium'
     };
   };
@@ -161,14 +161,14 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
                 <div className="space-y-1">
                   {interventionId && (
                     <div>
-                      <span className="font-medium">Intervention: </span>
+                      <span className="font-medium">Intervention : </span>
                       <span className="font-mono text-sm">{interventionId}</span>
                     </div>
                   )}
                   {currentStep && totalSteps && (
                     <div>
-                      <span className="font-medium">Current Step: </span>
-                      <span>{currentStep} of {totalSteps}</span>
+                      <span className="font-medium">Étape actuelle : </span>
+                      <span>{currentStep} sur {totalSteps}</span>
                     </div>
                   )}
                 </div>
@@ -183,7 +183,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
               severity === 'medium' ? 'text-yellow-800' :
               'text-blue-800'
             }`}>
-              Technical Details
+              Détails techniques
             </h4>
             <p className={`text-sm ${
               severity === 'high' ? 'text-red-700' :
@@ -199,20 +199,20 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
             <div className="flex flex-wrap gap-3">
               <Button onClick={onRetry} className="flex items-center space-x-2">
                 <RefreshCw className="h-4 w-4" />
-                <span>Retry Step</span>
+                <span>Réessayer l'étape</span>
               </Button>
 
               {onSaveProgress && (
                 <Button variant="outline" onClick={onSaveProgress} className="flex items-center space-x-2">
                   <Save className="h-4 w-4" />
-                  <span>Save Progress</span>
+                  <span>Sauvegarder la progression</span>
                 </Button>
               )}
 
               {onStepSkip && severity !== 'high' && (
                 <Button variant="outline" onClick={onStepSkip} className="flex items-center space-x-2">
                   <SkipForward className="h-4 w-4" />
-                  <span>Skip Step</span>
+                  <span>Passer l'étape</span>
                 </Button>
               )}
             </div>
@@ -224,8 +224,8 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
                   <AlertDescription className="text-orange-800">
                     <div className="space-y-2">
                       <p className="text-sm">
-                        This is a critical error that may require resetting the workflow.
-                        Your completed steps should be preserved.
+                        Il s'agit d'une erreur critique qui peut nécessiter la réinitialisation du workflow.
+                        Vos étapes terminées devraient être préservées.
                       </p>
                       <Button
                         variant="outline"
@@ -233,7 +233,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
                         onClick={onWorkflowReset}
                         className="border-orange-300 text-orange-700 hover:bg-orange-100"
                       >
-                        Reset Workflow
+                        Réinitialiser le workflow
                       </Button>
                     </div>
                   </AlertDescription>
@@ -244,17 +244,17 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
 
           {/* User Guidance */}
           <div className="text-xs text-gray-500 space-y-2">
-            <p><strong>Recovery Tips:</strong></p>
+            <p><strong>Conseils de récupération :</strong></p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Your progress is automatically saved every few minutes</li>
-              <li>Photos uploaded successfully are preserved even if the step fails</li>
-              <li>GPS tracking continues in the background</li>
-              <li>You can continue working offline if needed</li>
+              <li>Votre progression est automatiquement sauvegardée toutes les quelques minutes</li>
+              <li>Les photos téléchargées avec succès sont conservées même si l'étape échoue</li>
+              <li>Le suivi GPS continue en arrière-plan</li>
+              <li>Vous pouvez continuer à travailler hors ligne si nécessaire</li>
             </ul>
 
             {severity === 'medium' && (
               <p className="mt-2">
-                <strong>Note:</strong> This error is recoverable. You can likely continue the workflow.
+                <strong>Note :</strong> Cette erreur est récupérable. Vous pouvez probablement continuer le workflow.
               </p>
             )}
           </div>
@@ -262,7 +262,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
           {/* Back to Dashboard */}
           <div className="border-t pt-3">
             <Button variant="ghost" onClick={onGoBack} className="w-full">
-              Return to Dashboard
+              Retourner au tableau de bord
             </Button>
           </div>
         </CardContent>

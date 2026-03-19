@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, AlertCircle } from 'lucide-react';
+import { AlertCircle, Camera } from 'lucide-react';
 import { TaskPhotos } from './TaskPhotos';
 
 interface TaskAttachmentsProps {
@@ -8,25 +8,23 @@ interface TaskAttachmentsProps {
 }
 
 export function TaskAttachments({ taskId, interventionId }: TaskAttachmentsProps) {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Camera className="w-4 h-4 text-accent" />
-          <h2 className="text-base md:text-lg font-semibold text-foreground">Photos et pièces jointes</h2>
-        </div>
-        <span className="text-xs text-border-light uppercase tracking-wide">Médias</span>
+  if (!interventionId) {
+    return (
+      <div className="text-center py-10 rounded-xl border-2 border-dashed border-border/40 bg-background/20">
+        <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+        <p className="text-foreground font-semibold mb-1">Aucun média disponible</p>
+        <p className="text-muted-foreground text-xs">Démarrez l&apos;intervention pour activer les photos.</p>
       </div>
-      <div className="h-px bg-border/40" />
-      {interventionId ? (
-        <TaskPhotos taskId={taskId} interventionId={interventionId} />
-      ) : (
-        <div className="text-center py-8 rounded-lg border border-dashed border-border/60 bg-background/30">
-          <AlertCircle className="w-12 h-12 text-border-light mx-auto mb-4" />
-          <p className="text-foreground font-medium mb-1">Aucun média disponible pour le moment</p>
-          <p className="text-border-light text-sm">Démarrez l&apos;intervention pour activer les photos.</p>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+       <div className="flex items-center gap-2 mb-2">
+          <Camera className="w-5 h-5 text-accent" />
+          <h2 className="text-lg font-bold text-foreground tracking-tight">Photos & Pièces Jointes</h2>
         </div>
-      )}
+      <TaskPhotos taskId={taskId} interventionId={interventionId} />
     </div>
   );
 }

@@ -37,36 +37,36 @@ describe('TaskCard', () => {
       expect.stringContaining('AA-123-BB – John Doe')
     );
   });
-
-  it('falls back to customer name and N/A plate when missing data', () => {
-    const task = createTask({
-      vehicle_plate: null,
-      client_name: null,
-      customer_name: 'Jane Smith',
-    });
-
-    render(<TaskCard task={task} mode="full" />);
-
-    expect(screen.getByText('N/A – Jane Smith')).toBeInTheDocument();
-    expect(screen.getByRole('button')).toHaveAttribute(
-      'aria-label',
-      expect.stringContaining('N/A – Jane Smith')
-    );
+it('falls back to customer name and N/D plate when missing data', () => {
+  const task = createTask({
+    vehicle_plate: null,
+    client_name: null,
+    customer_name: 'Jane Smith',
   });
 
-  it('falls back to N/A when plate and client name are missing', () => {
-    const task = createTask({
-      vehicle_plate: null,
-      client_name: null,
-      customer_name: null,
-    });
+  render(<TaskCard task={task} mode="full" />);
 
-    render(<TaskCard task={task} mode="compact" />);
+  expect(screen.getByText('N/D – Jane Smith')).toBeInTheDocument();
 
-    expect(screen.getByText('N/A – N/A')).toBeInTheDocument();
-    expect(screen.getByRole('button')).toHaveAttribute(
-      'aria-label',
-      expect.stringContaining('N/A – N/A')
-    );
+  // Test the ARIA label which uses the fallback logic as well
+  expect(screen.getByRole('button')).toHaveAttribute('aria-label',
+    expect.stringContaining('N/D – Jane Smith')
+  );
+});
+
+it('falls back to N/D when plate and client name are missing', () => {
+  const task = createTask({
+    vehicle_plate: null,
+    client_name: null,
+    customer_name: null,
   });
+
+  render(<TaskCard task={task} mode="compact" />);
+
+  expect(screen.getByText('N/D – N/D')).toBeInTheDocument();
+
+  expect(screen.getByRole('button')).toHaveAttribute('aria-label',
+    expect.stringContaining('N/D – N/D')
+  );
+});
 });

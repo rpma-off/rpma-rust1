@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Play,
   CheckCircle,
-  MoreVertical,
-  Phone,
-  MessageSquare,
   Clock,
-  AlertCircle,
   ArrowRight,
-  Settings,
   Shield,
   Ruler,
 } from 'lucide-react';
@@ -16,12 +11,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TaskWithDetails } from '@/types/task.types';
-import type { TaskActionItem } from './TaskActionButton';
-import { DelegatedActionCard } from './DelegatedActionCard';
-
-type DelegatedActionItem = Omit<TaskActionItem, 'onClick'> & {
-  variant?: 'primary' | 'secondary' | 'danger';
-};
 
 interface DelegatedTaskActionPanelProps {
   task: TaskWithDetails;
@@ -40,50 +29,12 @@ export function DelegatedTaskActionPanel({
   task,
   canStartTask,
   onPrimaryAction,
-  onSecondaryAction,
   compact = false,
   mobileDocked = false,
   isPending = false,
 }: DelegatedTaskActionPanelProps) {
-  const [showMoreActions, setShowMoreActions] = useState(false);
   const isInProgress = task.status === 'in_progress';
   const isCompleted = task.status === 'completed';
-
-  const communicationActions: DelegatedActionItem[] = [
-    {
-      id: 'call',
-      label: 'Appeler',
-      icon: Phone,
-      variant: 'primary',
-    },
-    {
-      id: 'message',
-      label: 'Message',
-      icon: MessageSquare,
-      variant: 'secondary',
-    },
-  ];
-
-  const adminActions: DelegatedActionItem[] = [
-    {
-      id: 'edit',
-      label: 'Modifier',
-      icon: Settings,
-      variant: 'primary',
-    },
-    {
-      id: 'delay',
-      label: 'Reporter',
-      icon: Clock,
-      variant: 'secondary',
-    },
-    {
-      id: 'report',
-      label: 'Signaler',
-      icon: AlertCircle,
-      variant: 'danger',
-    },
-  ];
 
   const getPrimaryButtonStyle = () => {
     if (isCompleted) {
@@ -137,31 +88,6 @@ export function DelegatedTaskActionPanel({
             </>
           )}
         </Button>
-        <div className="flex gap-2">
-          {communicationActions.slice(0, 2).map((action) => (
-            <button
-              key={action.id}
-              type="button"
-              onClick={() => onSecondaryAction?.(action.id)}
-              disabled={action.disabled}
-              className={cn(
-                'p-3 rounded-lg border transition-all duration-200',
-                action.disabled
-                  ? 'border-border/30 bg-background/30 cursor-not-allowed opacity-50'
-                  : 'border-border/50 bg-background/60 hover:border-accent/50 hover:bg-accent/10'
-              )}
-            >
-              <action.icon className={cn('h-5 w-5', action.disabled ? 'text-muted-foreground' : 'text-accent')} />
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setShowMoreActions(!showMoreActions)}
-            className="p-3 rounded-lg border border-border/50 bg-background/60 hover:border-accent/50 hover:bg-accent/10 transition-all duration-200"
-          >
-            <MoreVertical className="h-5 w-5 text-muted-foreground" />
-          </button>
-        </div>
       </div>
     );
   }
@@ -215,52 +141,6 @@ export function DelegatedTaskActionPanel({
               <span>
                 {task.ppf_zones.length} zone{task.ppf_zones.length > 1 ? 's' : ''} PPF
               </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-        <div className="mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Communication</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {communicationActions.map((action) => (
-            <DelegatedActionCard
-              key={action.id}
-              icon={action.icon}
-              label={action.label}
-              onClick={() => onSecondaryAction?.(action.id)}
-              disabled={action.disabled}
-              variant={action.variant}
-            />
-          ))}
-        </div>
-
-        <div className="pt-3 border-t border-border/50">
-          <button
-            type="button"
-            onClick={() => setShowMoreActions(!showMoreActions)}
-            className="w-full flex items-center justify-center p-3 rounded-lg border border-border/50 bg-background/60 hover:bg-accent/5 hover:border-accent/30 transition-all duration-200"
-            aria-expanded={showMoreActions}
-          >
-            <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
-            <span className="text-sm font-medium text-muted-foreground">Administration</span>
-            <MoreVertical className="h-4 w-4 ml-2 text-muted-foreground" />
-          </button>
-
-          {showMoreActions && (
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {adminActions.map((action) => (
-                <DelegatedActionCard
-                  key={action.id}
-                  icon={action.icon}
-                  label={action.label}
-                  onClick={() => onSecondaryAction?.(action.id)}
-                  disabled={action.disabled}
-                  variant={action.variant}
-                />
-              ))}
             </div>
           )}
         </div>

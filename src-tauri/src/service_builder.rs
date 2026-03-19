@@ -17,21 +17,21 @@
 //!   AppDataDir
 //!
 //! 1. TaskService                     <- Database
-//! 2. ClientService                   <- Repositories.client
-//! 3. InterventionService             <- Database
-//! 4. InterventionWorkflowService     <- Database
-//! 5. SettingsService                 <- Database
-//! 6. TaskImportService               <- Database
-//! 7. AuthService                     <- Database (plus init)
-//! 8. UserService                     <- Repositories.user
-//! 9. CacheService                    <- self-contained
-//! 10. SessionService                 <- Database
-//! 11. SessionStore                   <- self-contained
-//! 12. PhotoService                   <- Database + AppDataDir-derived storage settings
-//! 13. MaterialService                <- Database
-//! 14. InventoryFacade                <- Database + MaterialService
-//! 15. QuoteEventBus                  <- self-contained
-//! 16. EventBus                       <- self-contained
+//! 2. QuoteEventBus                   <- self-contained
+//! 3. EventBus                        <- self-contained
+//! 4. ClientService                   <- Repositories.client + EventBus
+//! 5. InterventionService             <- Database
+//! 6. InterventionWorkflowService     <- Database
+//! 7. SettingsService                 <- Database
+//! 8. TaskImportService               <- Database
+//! 9. AuthService                     <- Database (plus init)
+//! 10. UserService                    <- Repositories.user
+//! 11. CacheService                   <- self-contained
+//! 12. SessionService                 <- Database
+//! 13. SessionStore                   <- self-contained
+//! 14. PhotoService                   <- Database + AppDataDir-derived storage settings
+//! 15. MaterialService                <- Database
+//! 16. InventoryFacade                <- Database + MaterialService
 //! 17. QuoteService                   <- Repositories.quote + Database + QuoteEventBus
 //! 18. MessageService                 <- Repositories.message + Database
 //! 19. AsyncDatabase                  <- Database
@@ -64,6 +64,8 @@ use std::sync::Arc;
 #[cfg(test)]
 const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
     "TaskService",
+    "QuoteEventBus",
+    "EventBus",
     "ClientService",
     "InterventionService",
     "InterventionWorkflowService",
@@ -77,8 +79,6 @@ const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
     "PhotoService",
     "MaterialService",
     "InventoryFacade",
-    "QuoteEventBus",
-    "EventBus",
     "QuoteService",
     "MessageService",
     "AsyncDatabase",
@@ -92,7 +92,9 @@ const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
 #[cfg(test)]
 const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ("TaskService", &["Database"]),
-    ("ClientService", &["Repositories.client"]),
+    ("QuoteEventBus", &[]),
+    ("EventBus", &[]),
+    ("ClientService", &["Repositories.client", "EventBus"]),
     ("InterventionService", &["Database"]),
     ("InterventionWorkflowService", &["Database"]),
     ("SettingsService", &["Database"]),
@@ -105,8 +107,6 @@ const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ("PhotoService", &["Database", "AppDataDir"]),
     ("MaterialService", &["Database"]),
     ("InventoryFacade", &["Database", "MaterialService"]),
-    ("QuoteEventBus", &[]),
-    ("EventBus", &[]),
     (
         "QuoteService",
         &["Repositories.quote", "Database", "QuoteEventBus"],
@@ -188,9 +188,21 @@ impl ServiceBuilder {
         let task_service = Arc::new(
             crate::domains::tasks::infrastructure::task::TaskService::new(self.db.clone()),
         );
-        let client_service = Arc::new(crate::domains::clients::client_handler::ClientService::new(
-            self.repositories.client.clone(),
-        ));
+
+        // Quote service currently depends on the event_bus implementation.
+        let quote_event_bus = Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
+
+        // Initialize Event Bus early (self-contained, thread-safe) so it can be
+        // injected into services that publish domain events at startup.
+        let event_bus = Arc::new(InMemoryEventBus::new());
+        set_global_event_bus(event_bus.clone());
+
+        let client_service = Arc::new(
+            crate::domains::clients::application::client_service::ClientService::new(
+                self.repositories.client.clone(),
+                event_bus.clone(),
+            ),
+        );
         let intervention_service = Arc::new(
             crate::domains::interventions::infrastructure::intervention::InterventionService::new(
                 self.db.clone(),
@@ -269,13 +281,6 @@ impl ServiceBuilder {
             Arc::new(db_instance.clone()),
             material_service.clone(),
         ));
-
-        // Quote service currently depends on the event_bus implementation.
-        let quote_event_bus = Arc::new(crate::shared::services::event_bus::InMemoryEventBus::new());
-
-        // Initialize Event Bus (self-contained, thread-safe)
-        let event_bus = Arc::new(InMemoryEventBus::new());
-        set_global_event_bus(event_bus.clone());
 
         // Initialize Quote Service (depends on QuoteRepository)
         let quote_service = Arc::new(

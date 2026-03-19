@@ -52,8 +52,6 @@ describe('PPFWorkflowPage', () => {
   it('shows progression and lock reason for blocked steps', () => {
     render(<PPFWorkflowPage />);
 
-    expect(screen.getByText('Progression globale')).toBeInTheDocument();
-    expect(screen.getByText('0 / 4 étapes')).toBeInTheDocument();
     expect(screen.getByText("Complétez d'abord « Inspection » pour déverrouiller cette étape.")).toBeInTheDocument();
 
     const lockedLabels = screen.getAllByText('Verrouillé');

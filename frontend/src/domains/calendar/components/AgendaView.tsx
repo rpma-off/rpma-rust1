@@ -116,22 +116,22 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
                         <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
                           <div>
-                            <span className="font-medium">Client:</span> {task.client_name || 'N/A'}
+                            <span className="font-medium">Client :</span> {task.client_name || 'N/D'}
                           </div>
                           <div>
-                            <span className="font-medium">Vehicle:</span> {task.vehicle_plate || 'N/A'}
+                            <span className="font-medium">Véhicule :</span> {task.vehicle_plate || 'N/D'}
                           </div>
                           <div>
-                            <span className="font-medium">Technician:</span> {task.technician_name || 'Unassigned'}
+                            <span className="font-medium">Technicien :</span> {task.technician_name || 'Non assigné'}
                           </div>
                           <div>
-                            <span className="font-medium">Priority:</span> {task.priority}
+                            <span className="font-medium">Priorité :</span> {task.priority}
                           </div>
                         </div>
 
                         {task.estimated_duration && (
                           <div className="mt-2 text-sm text-gray-600">
-                            <span className="font-medium">Estimated duration:</span> {task.estimated_duration} minutes
+                            <span className="font-medium">Durée estimée :</span> {task.estimated_duration} minutes
                           </div>
                         )}
                       </div>

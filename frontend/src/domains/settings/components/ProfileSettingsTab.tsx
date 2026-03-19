@@ -94,13 +94,13 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
 
     if (settingsQueryError.includes('Failed to create user settings')
       || settingsQueryError.includes('No settings found')) {
-      setSettingsError('Unable to load your settings. Using default values.');
+      setSettingsError('Impossible de charger vos paramètres. Utilisation des valeurs par défaut.');
       setUsingDefaultSettings(true);
       setUserSettings(defaultUserSettings);
       return;
     }
 
-    setSettingsError('Failed to load settings. Some features may not work correctly.');
+    setSettingsError('Échec du chargement des paramètres. Certaines fonctionnalités pourraient ne pas fonctionner correctement.');
     setUsingDefaultSettings(false);
   }, [defaultUserSettings, logError, logInfo, settings, settingsQueryError, user?.user_id]);
 
@@ -193,14 +193,14 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      setSaveError('File size must be less than 5MB');
+      setSaveError('La taille du fichier doit être inférieure à 5 Mo');
       return;
     }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setSaveError('Only JPEG, PNG, GIF, and WebP images are allowed');
+      setSaveError('Seules les images JPEG, PNG, GIF et WebP sont autorisées');
       return;
     }
 
@@ -219,7 +219,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
           const base64 = result.split(',')[1] ?? '';
           resolve(base64);
         };
-        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.onerror = () => reject(new Error('Échec de la lecture du fichier'));
         reader.readAsDataURL(file);
       });
 
@@ -248,7 +248,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       setTimeout(() => setSaveSuccess(false), 3000);
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload avatar';
+      const errorMessage = error instanceof Error ? error.message : 'Échec de l\'upload de l\'avatar';
       setSaveError(errorMessage);
       logError('Avatar upload failed', { error: errorMessage, userId: user.user_id });
     } finally {

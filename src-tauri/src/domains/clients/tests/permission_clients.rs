@@ -1,10 +1,11 @@
 use crate::db::Database;
 use crate::domains::clients::client_handler::ClientService;
-use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::client_handler::ClientsFacade;
 use crate::shared::ipc::errors::AppError;
 use std::sync::Arc;
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn map_service_error_detects_invalid_keyword() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(ClientService::new_with_db(db));
@@ -14,6 +15,7 @@ async fn map_service_error_detects_invalid_keyword() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn clients_facade_service_is_shared_reference() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let service = Arc::new(ClientService::new_with_db(db));

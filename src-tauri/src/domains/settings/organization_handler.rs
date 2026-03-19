@@ -1,11 +1,12 @@
 //! Organization IPC commands.
 //!
-//! Each handler authenticates the caller via `resolve_context!`, then
-//! delegates all business logic to [`SettingsFacade`].
+//! Each handler resolves the request context via `resolve_context!`, then
+//! delegates all business logic — including RBAC enforcement — to
+//! [`SettingsService`].  Handlers must remain thin adapters (ADR-018).
 
-use tracing::{info, instrument};
+use tracing::instrument;
 
-use super::facade::SettingsFacade;
+use super::application::SettingsService;
 use super::models::*;
 use crate::commands::{init_correlation_context, ApiResponse, AppError, AppState};
 use crate::resolve_context;
@@ -27,8 +28,8 @@ pub async fn get_onboarding_status(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<OnboardingStatus>, AppError> {
     let correlation_id = init_correlation_context(&correlation_id, None);
-    let facade = SettingsFacade::new(state.db.clone());
-    let status = facade.get_onboarding_status()?;
+    let service = SettingsService::new(state.db.clone());
+    let status = service.get_onboarding_status()?;
     Ok(ApiResponse::success(status).with_correlation_id(Some(correlation_id)))
 }
 
@@ -40,12 +41,8 @@ pub async fn complete_onboarding(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Organization>, AppError> {
     let correlation_id = init_correlation_context(&correlation_id, None);
-    let facade = SettingsFacade::new(state.db.clone());
-    let organization = facade.complete_onboarding(&data)?;
-    info!(
-        "Onboarding completed successfully for organization: {}",
-        organization.name
-    );
+    let service = SettingsService::new(state.db.clone());
+    let organization = service.complete_onboarding(&data)?;
     Ok(ApiResponse::success(organization).with_correlation_id(Some(correlation_id)))
 }
 
@@ -56,10 +53,8 @@ pub async fn get_organization(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Organization>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Viewer);
-    let facade = SettingsFacade::new(state.db.clone());
-    let organization = facade.get_organization()?.ok_or_else(|| {
-        AppError::NotFound("Organization not found. Please complete onboarding.".to_string())
-    })?;
+    let service = SettingsService::new(state.db.clone());
+    let organization = service.get_organization(&ctx)?;
     Ok(ApiResponse::success(organization).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -71,9 +66,8 @@ pub async fn update_organization(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<Organization>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    info!("Updating organization");
-    let facade = SettingsFacade::new(state.db.clone());
-    let organization = facade.update_organization(&data)?;
+    let service = SettingsService::new(state.db.clone());
+    let organization = service.update_organization(&ctx, &data)?;
     Ok(ApiResponse::success(organization).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -84,14 +78,13 @@ pub async fn upload_logo(
     state: AppState<'_>,
 ) -> Result<ApiResponse<Organization>, AppError> {
     let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
-    info!("Uploading logo");
-    let facade = SettingsFacade::new(state.db.clone());
+    let service = SettingsService::new(state.db.clone());
     let update_request = UpdateOrganizationRequest {
         logo_url: request.file_path,
         logo_data: request.base64_data,
         ..Default::default()
     };
-    let organization = facade.update_organization(&update_request)?;
+    let organization = service.update_organization(&ctx, &update_request)?;
     Ok(ApiResponse::success(organization).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -102,8 +95,8 @@ pub async fn get_organization_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<OrganizationSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Viewer);
-    let facade = SettingsFacade::new(state.db.clone());
-    let settings = facade.get_organization_settings()?;
+    let service = SettingsService::new(state.db.clone());
+    let settings = service.get_organization_settings(&ctx)?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
 
@@ -115,8 +108,7 @@ pub async fn update_organization_settings(
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<OrganizationSettings>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    info!("Updating organization settings");
-    let facade = SettingsFacade::new(state.db.clone());
-    let settings = facade.update_organization_settings(&data)?;
+    let service = SettingsService::new(state.db.clone());
+    let settings = service.update_organization_settings(&ctx, &data)?;
     Ok(ApiResponse::success(settings).with_correlation_id(Some(ctx.correlation_id)))
 }
