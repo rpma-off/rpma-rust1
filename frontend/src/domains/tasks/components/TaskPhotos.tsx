@@ -128,6 +128,7 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
                     className="h-8 w-8 rounded-full"
                     onClick={() => deletePhoto.mutate(photo.id)}
                     disabled={deletePhoto.isPending}
+                    aria-label={`Supprimer la photo ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
