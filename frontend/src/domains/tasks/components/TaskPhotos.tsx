@@ -111,7 +111,8 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
             return (
               <Card
                 key={photo.id}
-                className="group relative overflow-hidden aspect-square border-0 bg-transparent ring-1 ring-border/50 hover:ring-accent/50 transition-all shadow-none hover:shadow-lg"
+                tabIndex={0}
+                className="group relative overflow-hidden aspect-square border-0 bg-transparent ring-1 ring-border/50 hover:ring-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/70 transition-all shadow-none hover:shadow-lg"
               >
                 <Image
                   src={displaySrc}
@@ -120,7 +121,7 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   unoptimized={shouldUseUnoptimizedImage(displaySrc)}
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity flex items-center justify-center gap-2">
                    <Button
                     variant="destructive"
                     size="icon"
@@ -131,7 +132,7 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                   <span className="text-[10px] text-white/90 font-medium">
                     {photo.created_at ? formatDate(photo.created_at as unknown as string) : ''}
                   </span>
