@@ -1,5 +1,11 @@
 use std::sync::Arc;
 
+// TODO: ADR Violation (ADR-001) - UsersFacade contains orchestration and business logic
+// that should be in Application or Domain layers. It also violates dependency rules
+// by importing from infrastructure.
+// TODO: ADR Violation (ADR-008) - derive_username_from_email contains ad-hoc
+// sanitization logic that should be moved to ValidationService.
+
 use crate::domains::users::application::{UserListResponse, UserResponse};
 use crate::domains::users::domain::{
     CreateUserRequest, UpdateUserRequest, UserAccessPolicy, UserAction,

@@ -4,7 +4,10 @@
 //! time ranges.  The companion trait `CalendarEventQueries` lets callers
 //! depend on the abstraction rather than the concrete struct.
 
-use crate::db::Database;
+//! // TODO: ADR Violation (ADR-012) - CalendarRepository uses ISO-8601 strings in the database
+//! // (start_datetime, end_datetime) instead of i64 milliseconds.
+//!
+//! use crate::db::Database;
 use crate::domains::calendar::models::CalendarEvent;
 use crate::shared::repositories::base::{RepoError, RepoResult};
 use async_trait::async_trait;

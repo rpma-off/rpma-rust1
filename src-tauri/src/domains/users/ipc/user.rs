@@ -117,6 +117,9 @@ pub async fn has_admins(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<bool>, AppError> {
+    // TODO: ADR Violation (ADR-018) - has_admins skips resolve_context! and contains business logic.
+    // It should call resolve_context! (or a specific unauthenticated version if intended)
+    // and delegate to an application service.
     let corr = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Checking if admin users exist");
     let has_admin = state.user_service.has_admins().await?;

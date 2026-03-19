@@ -1,4 +1,8 @@
 //! User service for user management operations
+//!
+//! // TODO: ADR Violation (ADR-001, ADR-002) - UserService is in the Infrastructure layer
+//! // but contains orchestration and business logic. It should be moved to
+//! // the application layer, and its business rules to the domain layer.
 
 use crate::commands::AppError;
 use crate::domains::auth::infrastructure::session_repository::SessionRepository;
