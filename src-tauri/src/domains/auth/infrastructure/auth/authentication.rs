@@ -8,21 +8,21 @@ use tracing::{debug, error, info, instrument, warn};
 
 impl super::AuthService {
     /// Authenticate user
-    #[instrument(skip(self, password), fields(email = %email))]
+    #[instrument(skip(self, password))]
     pub fn authenticate(
         &self,
         email: &str,
         password: &str,
         ip_address: Option<&str>,
     ) -> Result<UserSession, String> {
-        debug!("Authentication attempt for user {}", email);
+        debug!("Authentication attempt");
 
         // Validate input
         let (validated_email, validated_password) = self
             .validator
             .validate_login_data(email, password)
             .map_err(|e| {
-                warn!("Login validation failed for {}: {}", email, e);
+                warn!("Login validation failed: {}", e);
                 format!("Validation error: {}", e)
             })?;
 
@@ -89,11 +89,11 @@ impl super::AuthService {
         ).map_err(|e| {
             match e {
                 rusqlite::Error::QueryReturnedNoRows => {
-                    warn!("User not found or inactive: {}", validated_email);
+                    warn!("User not found or inactive");
                     "Invalid email or password".to_string()
                 },
                 _ => {
-                    error!("Database error during authentication for {}: {}", validated_email, e);
+                    error!("Database error during authentication: {}", e);
                     format!("Database error: {}", e)
                 },
             }
@@ -108,7 +108,7 @@ impl super::AuthService {
                 self.rate_limiter.record_failed_attempt(ip)?;
             }
 
-            warn!("Invalid password for user {}", validated_email);
+            warn!("Invalid password");
             return Err("Invalid email or password".to_string());
         }
 
@@ -123,7 +123,7 @@ impl super::AuthService {
             "UPDATE users SET last_login_at = ?, login_count = login_count + 1, updated_at = ? WHERE id = ?",
             params![Utc::now().timestamp_millis(), Utc::now().timestamp_millis(), account.id],
         ).map_err(|e| {
-            error!("Failed to update last login for {}: {}", validated_email, e);
+            error!("Failed to update last login: {}", e);
             format!("Failed to update last login: {}", e)
         })?;
 
@@ -142,11 +142,11 @@ impl super::AuthService {
         self.session_repository
             .insert_session(&session)
             .map_err(|e| {
-                error!("Failed to store session for {}: {}", validated_email, e);
+                error!("Failed to store session: {}", e);
                 format!("Failed to create session: {}", e)
             })?;
 
-        info!("User {} authenticated successfully", validated_email);
+        info!("User authenticated successfully");
         Ok(session)
     }
 

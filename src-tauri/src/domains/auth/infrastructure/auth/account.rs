@@ -7,7 +7,7 @@ use tracing::{debug, error, info, instrument, warn};
 
 impl super::AuthService {
     /// Create new user account
-    #[instrument(skip(self, password), fields(email = %email, username = %username, role = ?role))]
+    #[instrument(skip(self, password), fields(username = %username, role = ?role))]
     pub fn create_account(
         &self,
         email: &str,
@@ -17,7 +17,7 @@ impl super::AuthService {
         role: UserRole,
         password: &str,
     ) -> Result<UserAccount, String> {
-        debug!("Validating account creation data for email: {}", email);
+        debug!("Validating account creation data");
 
         // Validate all input data
         let (
@@ -38,7 +38,7 @@ impl super::AuthService {
                 Some(&role.to_string()),
             )
             .map_err(|e| {
-                warn!("Account validation failed for {}: {}", email, e);
+                warn!("Account validation failed: {}", e);
                 format!("Validation error: {}", e)
             })?;
 
@@ -48,7 +48,7 @@ impl super::AuthService {
         );
 
         let password_hash = self.hash_password(&validated_password).map_err(|e| {
-            error!("Password hashing failed for {}: {}", email, e);
+            error!("Password hashing failed: {}", e);
             format!("Failed to process password: {}", e)
         })?;
 
@@ -100,7 +100,7 @@ impl super::AuthService {
             ],
         ) {
             Ok(_) => {
-                info!("Account created successfully for {} with username {}", email, username);
+                info!("Account created successfully with username {}", username);
 
                 // Create default user settings for the new account
                 if let Err(e) = self.create_default_user_settings(&account.id, &account.first_name, &account.email) {
@@ -119,7 +119,6 @@ impl super::AuthService {
                 match &e {
                     rusqlite::Error::SqliteFailure(sqlite_err, _) => {
                         error!(
-                            email = %email,
                             error_code = ?sqlite_err.code,
                             extended_code = sqlite_err.extended_code,
                             contains_user_settings,
@@ -131,7 +130,6 @@ impl super::AuthService {
                     }
                     _ => {
                         error!(
-                            email = %email,
                             error_code = %"non_sqlite_failure",
                             extended_code = -1,
                             contains_user_settings,
@@ -258,12 +256,12 @@ impl super::AuthService {
     }
 
     /// Create new user account from signup request (handles validation, role mapping, username generation)
-    #[instrument(skip(self, request), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
+    #[instrument(skip(self, request), fields(first_name = %request.first_name, last_name = %request.last_name))]
     pub fn create_account_from_signup(
         &self,
         request: &SignupRequest,
     ) -> Result<UserAccount, String> {
-        debug!("Processing signup request for email: {}", request.email);
+        debug!("Processing signup request");
 
         // Validate input
         if request.email.trim().is_empty() {

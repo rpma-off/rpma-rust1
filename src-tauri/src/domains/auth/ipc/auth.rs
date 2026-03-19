@@ -26,7 +26,7 @@ pub struct LoginRequest {
 /// Login command
 /// ADR-018: Thin IPC layer
 #[tauri::command]
-#[instrument(skip(state, request), fields(email = %request.email))]
+#[instrument(skip(state, request))]
 pub async fn auth_login(
     request: LoginRequest,
     state: AppState<'_>,
@@ -66,7 +66,7 @@ pub async fn auth_login(
 
 /// Create account command
 #[tauri::command]
-#[instrument(skip(state, request), fields(email = %request.email, first_name = %request.first_name, last_name = %request.last_name))]
+#[instrument(skip(state, request), fields(first_name = %request.first_name, last_name = %request.last_name))]
 pub async fn auth_create_account(
     request: SignupRequest,
     state: AppState<'_>,
@@ -76,7 +76,6 @@ pub async fn auth_create_account(
 
     info!(
         correlation_id = %correlation_id,
-        email = %request.email,
         "Account creation attempt"
     );
 
@@ -89,13 +88,12 @@ pub async fn auth_create_account(
     let account = auth_service
         .create_account_from_signup(&validated_request)
         .map_err(|e| {
-            warn!("Account creation failed for {}: {}", validated_email, e);
+            warn!("Account creation failed: {}", e);
             auth_facade.map_signup_error(&e)
         })?;
 
     info!(
         correlation_id = %correlation_id,
-        email = %request.email,
         username = %account.username,
         "Account created successfully"
     );
@@ -106,7 +104,6 @@ pub async fn auth_create_account(
         .map_err(|e| {
             error!(
                 correlation_id = %correlation_id,
-                email = %validated_email,
                 error = %e,
                 "Auto-login failed"
             );
@@ -117,7 +114,6 @@ pub async fn auth_create_account(
 
     info!(
         correlation_id = %correlation_id,
-        email = %request.email,
         user_id = %session.user_id,
         "Auto-login successful for new user"
     );

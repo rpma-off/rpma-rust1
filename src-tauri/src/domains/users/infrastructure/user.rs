@@ -238,7 +238,7 @@ impl UserService {
                 }
             })?;
 
-        info!("Successfully bootstrapped admin for user: {}", user_email);
+        info!("Successfully bootstrapped admin");
         Ok(format!(
             "User {} has been promoted to admin. Please log in again to apply new permissions.",
             user_email
