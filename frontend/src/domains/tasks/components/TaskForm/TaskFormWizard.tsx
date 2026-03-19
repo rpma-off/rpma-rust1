@@ -86,11 +86,6 @@ const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
     setFormErrors(newErrors);
   }, [updateFormData, formErrors, setFormErrors]);
 
-  const handleCancel = useCallback(() => {
-    clearDraft?.();
-    onCancel?.();
-  }, [clearDraft, onCancel]);
-
   const { handleSubmit } = useTaskFormSubmission({
     formData,
     validateStep,
