@@ -64,7 +64,17 @@ export function TaskPhotos({ taskId: _taskId, interventionId }: TaskPhotosProps)
   const beforePhotos = photos?.filter(p => p.photo_type === 'before') || [];
   const afterPhotos = photos?.filter(p => p.photo_type === 'after') || [];
 
-  const PhotoSection = ({ title, photosList, type }: { title: string, photosList: any[], type: 'Before' | 'After' }) => (
+  type InterventionPhoto = NonNullable<typeof photos>[number];
+
+  const PhotoSection = ({
+    title,
+    photosList,
+    type,
+  }: {
+    title: string;
+    photosList: InterventionPhoto[];
+    type: 'Before' | 'After';
+  }) => (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
