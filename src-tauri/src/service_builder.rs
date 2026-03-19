@@ -197,10 +197,12 @@ impl ServiceBuilder {
         let event_bus = Arc::new(InMemoryEventBus::new());
         set_global_event_bus(event_bus.clone());
 
-        let client_service = Arc::new(crate::domains::clients::client_handler::ClientService::new(
-            self.repositories.client.clone(),
-            event_bus.clone(),
-        ));
+        let client_service = Arc::new(
+            crate::domains::clients::application::client_service::ClientService::new(
+                self.repositories.client.clone(),
+                event_bus.clone(),
+            ),
+        );
         let intervention_service = Arc::new(
             crate::domains::interventions::infrastructure::intervention::InterventionService::new(
                 self.db.clone(),

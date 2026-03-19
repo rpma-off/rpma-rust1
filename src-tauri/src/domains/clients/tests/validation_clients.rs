@@ -1,6 +1,6 @@
 use crate::db::Database;
 use crate::domains::clients::client_handler::{ClientService, CreateClientRequest, CustomerType};
-use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::client_handler::ClientsFacade;
 use crate::shared::ipc::errors::AppError;
 use std::sync::Arc;
 

@@ -2,7 +2,7 @@ use crate::db::Database;
 use crate::domains::clients::client_handler::{
     client_into_client_with_tasks, Client, ClientService, CreateClientRequest, CustomerType,
 };
-use crate::domains::clients::ClientsFacade;
+use crate::domains::clients::client_handler::ClientsFacade;
 use crate::shared::services::event_bus::InMemoryEventBus;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;

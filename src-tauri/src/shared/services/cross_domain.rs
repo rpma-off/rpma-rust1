@@ -14,9 +14,10 @@
 pub use crate::domains::interventions::infrastructure::intervention::InterventionService;
 
 // Client domain
-pub use crate::domains::clients::client_handler::ClientService;
+pub use crate::domains::clients::application::client_service::ClientService;
 pub use crate::domains::clients::client_handler::ClientStat;
 pub use crate::domains::clients::client_handler::{CreateClientRequest, CustomerType};
+pub use crate::domains::clients::ClientsFacade;
 
 // Settings domain
 pub use crate::domains::settings::settings_repository::SettingsRepository;
