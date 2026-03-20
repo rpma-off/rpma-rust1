@@ -5,7 +5,7 @@ use crate::domains::interventions::domain::models::intervention::{
     Intervention, InterventionStatus,
 };
 use crate::domains::interventions::domain::models::step::InterventionStep;
-use crate::domains::tasks::domain::models::task::TaskStatus;
+use crate::shared::contracts::task_status::TaskStatus;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::sync::Arc;
 use tracing::debug;

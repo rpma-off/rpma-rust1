@@ -1,5 +1,17 @@
 'use client';
 
+// TODO(ADR-014):
+//   **Problem**: This 619-line component mixes data fetching (useEffect → settingsOperations),
+//   transformation (type casting, object construction), and full UI rendering.
+//   **ADRs violated**: ADR-014 (TanStack Query hooks), ADR-002 (bounded context separation)
+//   **Proposed split**:
+//     - `hooks/useSecurityPolicies.ts` — TanStack Query hook for CRUD operations
+//     - `services/security-policy.transformer.ts` — pure fn for type casting/mapping
+//     - `SecurityPoliciesTab.tsx` — pure presentational component consuming the hook
+//   **Patch**: extract loadSecurityPolicies/saveSecurityPolicy/deleteSecurityPolicy into
+//   useSecurityPolicies hook with useQuery + useMutation; move type casts into transformer.
+//   **Compile check**: npm run frontend:type-check passes.
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {

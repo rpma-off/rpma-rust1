@@ -1,5 +1,17 @@
 'use client';
 
+// TODO(ADR-014):
+//   **Problem**: This 614-line component mixes data fetching (useEffect → settingsOperations),
+//   transformation (inferDataType, Object.entries mapping), and UI rendering.
+//   **ADRs violated**: ADR-014 (TanStack Query hooks), ADR-002 (bounded context separation)
+//   **Proposed split**:
+//     - `hooks/useSystemSettings.ts` — TanStack Query hook for configurations + business hours
+//     - `services/system-settings.transformer.ts` — inferDataType and config mapping logic
+//     - `SystemSettingsTab.tsx` — pure presentational component consuming the hook
+//   **Patch**: extract loadConfigurations/loadBusinessHours into useSystemSettings hook;
+//   move inferDataType + Object.entries transforms into transformer module.
+//   **Compile check**: npm run frontend:type-check passes.
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';

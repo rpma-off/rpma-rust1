@@ -204,6 +204,23 @@ pub fn enforce_technician_field_restrictions(
 
 /// Task CRUD command handler
 /// ADR-018: Thin IPC layer — delegates to TaskCommandService
+///
+// TODO(ADR-018):
+//   **Problem**: Single handler branches on 6 action variants, each resolving
+//   its own context and building different responses. Handlers must delegate to
+//   exactly one facade method.
+//   **ADRs violated**: ADR-018
+//   **Proposed split**:
+//     - `task_create.rs`       — standalone create handler
+//     - `task_get.rs`          — standalone get handler
+//     - `task_update.rs`       — standalone update handler
+//     - `task_delete.rs`       — standalone delete handler
+//     - `task_list.rs`         — standalone list handler
+//     - `task_statistics.rs`   — standalone get-statistics handler
+//   **Patch**: extract each match arm into its own `#[tauri::command]` fn,
+//   update main.rs registration, then deprecate `task_crud`.
+//   **Compile check**: cargo check --lib passes; frontend callers must switch
+//   from single `task_crud` to per-action commands.
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn task_crud(

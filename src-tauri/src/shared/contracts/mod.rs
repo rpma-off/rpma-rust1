@@ -10,6 +10,7 @@ pub mod prediction;
 pub mod sync;
 pub mod task_assignment;
 pub mod task_scheduler;
+pub mod task_status;
 pub mod timestamp;
 pub mod user_account;
 

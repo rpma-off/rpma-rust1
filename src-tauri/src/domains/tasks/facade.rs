@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
+use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus, Task,
     TaskStatus, ValidationResult,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
+use crate::shared::context::RequestContext;
 use crate::shared::ipc::errors::AppError;
 use crate::shared::services::validation::ValidationService;
 
@@ -354,5 +356,84 @@ impl TasksFacade {
             errors,
             warnings,
         })
+    }
+
+    // ── ADR-018 high-level orchestration methods ─────────────────────────
+    //
+    // These methods encapsulate the full workflow (RBAC → fetch → evaluate)
+    // so that IPC handlers can remain thin adapters that resolve context and
+    // delegate to a single facade call.
+
+    /// Check whether `user_id` can be assigned to task `task_id`.
+    ///
+    /// Enforces assignment-management RBAC, fetches the task, reads
+    /// `max_tasks_per_user` from settings, then evaluates eligibility.
+    pub async fn check_assignment(
+        &self,
+        ctx: &RequestContext,
+        task_id: &str,
+        user_id: &str,
+    ) -> Result<AssignmentCheckResponse, AppError> {
+        task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
+
+        let task = self
+            .task_service
+            .get_task_async(task_id)
+            .await
+            .map_err(|e| AppError::db_sanitized("tasks.assignment.fetch_task", e))?
+            .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", task_id)))?;
+
+        let max_tasks_per_user = self
+            .task_service
+            .get_max_tasks_per_user()
+            .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
+
+        self.evaluate_assignment_eligibility(&task, user_id, max_tasks_per_user)
+            .await
+    }
+
+    /// Check whether a task is currently available for assignment.
+    ///
+    /// Fetches the task by ID and then evaluates its availability.
+    pub async fn check_availability(
+        &self,
+        task_id: &str,
+    ) -> Result<AvailabilityCheckResponse, AppError> {
+        let task = self
+            .task_service
+            .get_task_async(task_id)
+            .await
+            .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?
+            .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", task_id)))?;
+
+        self.evaluate_task_availability(&task)
+    }
+
+    /// Validate a proposed reassignment from `old_user_id` to `new_user_id`.
+    ///
+    /// Enforces assignment-management RBAC, fetches the task, reads
+    /// `max_tasks_per_user` from settings, then evaluates the change.
+    pub async fn validate_assignment_change(
+        &self,
+        ctx: &RequestContext,
+        task_id: &str,
+        old_user_id: Option<&str>,
+        new_user_id: &str,
+    ) -> Result<ValidationResult, AppError> {
+        task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
+
+        let task = self
+            .task_service
+            .get_task_async(task_id)
+            .await
+            .map_err(|e| AppError::db_sanitized("tasks.assignment_change.fetch_task", e))?
+            .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", task_id)))?;
+
+        let max_tasks_per_user = self
+            .task_service
+            .get_max_tasks_per_user()
+            .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
+
+        self.evaluate_assignment_change(&task, old_user_id, new_user_id, max_tasks_per_user)
     }
 }

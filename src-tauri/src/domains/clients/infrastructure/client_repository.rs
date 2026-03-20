@@ -9,7 +9,7 @@
 use crate::db::Database;
 use crate::domains::clients::client_handler::{Client, ClientOverviewStats, ClientRepoQuery};
 use crate::domains::clients::domain::repositories::ClientRepository;
-use crate::domains::tasks::domain::models::task::TaskStatus;
+use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use crate::shared::repositories::cache::{ttl, Cache, CacheKeyBuilder};
 use async_trait::async_trait;
