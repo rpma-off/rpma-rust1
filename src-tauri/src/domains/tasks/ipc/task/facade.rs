@@ -202,25 +202,141 @@ pub fn enforce_technician_field_restrictions(
     task_policy_service::enforce_technician_field_restrictions(req)
 }
 
+async fn handle_crud_create(
+    data: crate::domains::tasks::domain::models::task::CreateTaskRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "create");
+    let task = cmd_service(&state).create_task(&ctx, data).await?;
+    Ok(
+        ApiResponse::success(crate::commands::TaskResponse::Created(task))
+            .with_correlation_id(Some(ctx.correlation_id.clone())),
+    )
+}
+
+async fn handle_crud_get(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    match cmd_service(&state).get_task(&id).await? {
+        Some(task) => Ok(
+            ApiResponse::success(crate::commands::TaskResponse::Found(task))
+                .with_correlation_id(Some(ctx.correlation_id.clone())),
+        ),
+        None => Ok(
+            ApiResponse::success(crate::commands::TaskResponse::NotFound)
+                .with_correlation_id(Some(ctx.correlation_id.clone())),
+        ),
+    }
+}
+
+async fn handle_crud_update(
+    id: String,
+    data: crate::domains::tasks::domain::models::task::UpdateTaskRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "update");
+    let task = cmd_service(&state).update_task_crud(&ctx, &id, data).await?;
+    Ok(
+        ApiResponse::success(crate::commands::TaskResponse::Updated(task))
+            .with_correlation_id(Some(ctx.correlation_id.clone())),
+    )
+}
+
+async fn handle_crud_delete(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "delete");
+    cmd_service(&state).delete_task(&ctx, &id).await?;
+    Ok(ApiResponse::success(crate::commands::TaskResponse::Deleted)
+        .with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+async fn handle_crud_list(
+    filters: crate::domains::tasks::domain::models::task::TaskQuery,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
+        page: None,
+        limit: None,
+        filter: Some(crate::domains::tasks::ipc::task_types::TaskFilter {
+            assigned_to: filters.technician_id,
+            client_id: filters.client_id,
+            status: filters.status.map(|s| s.to_string()),
+            priority: filters.priority.map(|p| p.to_string()),
+            region: None,
+            include_completed: Some(false),
+            date_from: None,
+            date_to: None,
+        }),
+        correlation_id: correlation_id.clone(),
+    };
+
+    let result = get_tasks_with_clients(request, state).await?;
+    let response_correlation_id = result.correlation_id.clone();
+    match result.data {
+        Some(task_list_response) => Ok(ApiResponse::success(
+            crate::commands::TaskResponse::List(task_list_response),
+        )
+        .with_correlation_id(response_correlation_id)),
+        None => Ok(
+            ApiResponse::error(AppError::NotFound("No tasks found".to_string()))
+                .with_correlation_id(response_correlation_id),
+        ),
+    }
+}
+
+async fn handle_crud_statistics(
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<crate::commands::ApiResponse<crate::commands::TaskResponse>, AppError> {
+    let stats_request =
+        crate::domains::tasks::ipc::task::queries::GetTaskStatisticsRequest {
+            filter: None,
+            correlation_id: correlation_id.clone(),
+        };
+
+    let stats_response = get_task_statistics(stats_request, state).await?;
+    let response_correlation_id = stats_response.correlation_id.clone();
+    match stats_response.data {
+        Some(stats) => {
+            let response_stats = crate::domains::tasks::ipc::task_types::TaskStatistics {
+                total: stats.total_tasks,
+                completed: stats.completed_tasks,
+                pending: stats.pending_tasks,
+                in_progress: stats.in_progress_tasks,
+                overdue: stats.overdue_tasks,
+            };
+            Ok(
+                ApiResponse::success(crate::commands::TaskResponse::Statistics(
+                    response_stats,
+                ))
+                .with_correlation_id(response_correlation_id),
+            )
+        }
+        None => Ok(ApiResponse::error(AppError::NotFound(
+            "Statistics not available".to_string(),
+        ))
+        .with_correlation_id(response_correlation_id)),
+    }
+}
+
 /// Task CRUD command handler
-/// ADR-018: Thin IPC layer — delegates to TaskCommandService
+/// ADR-018: Thin IPC layer — delegates to per-action handler functions.
 ///
-// TODO(ADR-018):
-//   **Problem**: Single handler branches on 6 action variants, each resolving
-//   its own context and building different responses. Handlers must delegate to
-//   exactly one facade method.
-//   **ADRs violated**: ADR-018
-//   **Proposed split**:
-//     - `task_create.rs`       — standalone create handler
-//     - `task_get.rs`          — standalone get handler
-//     - `task_update.rs`       — standalone update handler
-//     - `task_delete.rs`       — standalone delete handler
-//     - `task_list.rs`         — standalone list handler
-//     - `task_statistics.rs`   — standalone get-statistics handler
-//   **Patch**: extract each match arm into its own `#[tauri::command]` fn,
-//   update main.rs registration, then deprecate `task_crud`.
-//   **Compile check**: cargo check --lib passes; frontend callers must switch
-//   from single `task_crud` to per-action commands.
+/// Each action variant is handled by a dedicated `handle_crud_*` function,
+/// keeping this dispatcher under 10 lines and allowing individual actions
+/// to be read, tested, and extended independently.
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn task_crud(
@@ -235,114 +351,24 @@ pub async fn task_crud(
         action
     );
 
-    let svc = cmd_service(&state);
-
     match action {
         crate::commands::TaskAction::Create { data } => {
-            let ctx = resolve_context!(&state, &correlation_id);
-            check_task_permission!(&ctx.auth.role, "create");
-
-            let task = svc.create_task(&ctx, data).await?;
-
-            Ok(
-                ApiResponse::success(crate::commands::TaskResponse::Created(task))
-                    .with_correlation_id(Some(ctx.correlation_id.clone())),
-            )
+            handle_crud_create(data, correlation_id, state).await
         }
         crate::commands::TaskAction::Get { id } => {
-            let ctx = resolve_context!(&state, &correlation_id);
-
-            match svc.get_task(&id).await? {
-                Some(task) => Ok(
-                    ApiResponse::success(crate::commands::TaskResponse::Found(task))
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
-                ),
-                None => Ok(
-                    ApiResponse::success(crate::commands::TaskResponse::NotFound)
-                        .with_correlation_id(Some(ctx.correlation_id.clone())),
-                ),
-            }
+            handle_crud_get(id, correlation_id, state).await
         }
         crate::commands::TaskAction::Update { id, data } => {
-            let ctx = resolve_context!(&state, &correlation_id);
-            check_task_permission!(&ctx.auth.role, "update");
-
-            let task = svc.update_task_crud(&ctx, &id, data).await?;
-
-            Ok(
-                ApiResponse::success(crate::commands::TaskResponse::Updated(task))
-                    .with_correlation_id(Some(ctx.correlation_id.clone())),
-            )
+            handle_crud_update(id, data, correlation_id, state).await
         }
         crate::commands::TaskAction::Delete { id } => {
-            let ctx = resolve_context!(&state, &correlation_id);
-            check_task_permission!(&ctx.auth.role, "delete");
-
-            svc.delete_task(&ctx, &id).await?;
-
-            Ok(ApiResponse::success(crate::commands::TaskResponse::Deleted)
-                .with_correlation_id(Some(ctx.correlation_id.clone())))
+            handle_crud_delete(id, correlation_id, state).await
         }
         crate::commands::TaskAction::List { filters } => {
-            let request = crate::domains::tasks::ipc::task::queries::GetTasksWithClientsRequest {
-                page: None,
-                limit: None,
-                filter: Some(crate::domains::tasks::ipc::task_types::TaskFilter {
-                    assigned_to: filters.technician_id,
-                    client_id: filters.client_id,
-                    status: filters.status.map(|s| s.to_string()),
-                    priority: filters.priority.map(|p| p.to_string()),
-                    region: None,
-                    include_completed: Some(false),
-                    date_from: None,
-                    date_to: None,
-                }),
-                correlation_id: correlation_id.clone(),
-            };
-
-            let result = get_tasks_with_clients(request, state).await?;
-            let response_correlation_id = result.correlation_id.clone();
-            match result.data {
-                Some(task_list_response) => Ok(ApiResponse::success(
-                    crate::commands::TaskResponse::List(task_list_response),
-                )
-                .with_correlation_id(response_correlation_id)),
-                None => Ok(
-                    ApiResponse::error(AppError::NotFound("No tasks found".to_string()))
-                        .with_correlation_id(response_correlation_id),
-                ),
-            }
+            handle_crud_list(filters, correlation_id, state).await
         }
         crate::commands::TaskAction::GetStatistics => {
-            let stats_request =
-                crate::domains::tasks::ipc::task::queries::GetTaskStatisticsRequest {
-                    filter: None,
-                    correlation_id: correlation_id.clone(),
-                };
-
-            let stats_response = get_task_statistics(stats_request, state).await?;
-            let response_correlation_id = stats_response.correlation_id.clone();
-            match stats_response.data {
-                Some(stats) => {
-                    let response_stats = crate::domains::tasks::ipc::task_types::TaskStatistics {
-                        total: stats.total_tasks,
-                        completed: stats.completed_tasks,
-                        pending: stats.pending_tasks,
-                        in_progress: stats.in_progress_tasks,
-                        overdue: stats.overdue_tasks,
-                    };
-                    Ok(
-                        ApiResponse::success(crate::commands::TaskResponse::Statistics(
-                            response_stats,
-                        ))
-                        .with_correlation_id(response_correlation_id),
-                    )
-                }
-                None => Ok(ApiResponse::error(AppError::NotFound(
-                    "Statistics not available".to_string(),
-                ))
-                .with_correlation_id(response_correlation_id)),
-            }
+            handle_crud_statistics(correlation_id, state).await
         }
     }
 }
