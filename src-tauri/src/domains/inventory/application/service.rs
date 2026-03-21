@@ -3,8 +3,8 @@ use std::sync::Arc;
 use tracing::instrument;
 
 use crate::domains::inventory::domain::models::material::{
-    IInventoryTransactionRepository, InventoryDashboardData, InventoryStats, Material,
-    MaterialConsumption, MaterialStats, MaterialType,
+    IInventoryTransactionRepository, InventoryDashboardData, InventoryStats, InventoryTransaction,
+    InventoryTransactionType, Material, MaterialConsumption, MaterialStats, MaterialType,
 };
 use crate::domains::inventory::infrastructure::MaterialService;
 
@@ -17,6 +17,7 @@ use super::input::{RecordConsumptionRequest, UpdateStockRequest};
 use crate::domains::inventory::infrastructure::MaterialGateway;
 use crate::shared::auth_middleware::AuthMiddleware;
 use crate::shared::contracts::auth::UserRole;
+use crate::shared::contracts::events::InterventionFinalized;
 
 /// TODO: document
 #[derive(Debug)]
@@ -149,6 +150,87 @@ impl InventoryService {
             .record_consumption(request)
             .map_err(InventoryError::from)
     }
+    // ------------------------------------------------------------------
+    // Intervention lifecycle — Saga entry points (ADR-016)
+    // ------------------------------------------------------------------
+
+    /// Build and persist stock-out transactions for all material consumptions
+    /// recorded during a finalized intervention.
+    ///
+    /// Called from the application/IPC layer as part of the finalization saga,
+    /// **not** from an event handler (ADR-016: handlers are for side-effects only).
+    #[instrument(skip(self, event), fields(intervention_id = %event.intervention_id))]
+    pub fn consolidate_intervention_finalized(
+        &self,
+        event: &InterventionFinalized,
+    ) -> InventoryResult<usize> {
+        let consumptions = self
+            .gateway
+            .get_intervention_consumption(&event.intervention_id)
+            .map_err(InventoryError::from)?;
+
+        if consumptions.is_empty() {
+            return Ok(0);
+        }
+
+        let material_ids: Vec<&str> = consumptions
+            .iter()
+            .map(|c| c.material_id.as_str())
+            .collect();
+        let materials = self
+            .gateway
+            .get_materials_by_ids(&material_ids)
+            .map_err(InventoryError::from)?;
+
+        let mut transactions = Vec::new();
+        for consumption in consumptions {
+            let material = materials.get(&consumption.material_id).ok_or_else(|| {
+                InventoryError::NotFound(format!("Material {} not found", consumption.material_id))
+            })?;
+
+            let total_used = consumption.quantity_used + consumption.waste_quantity;
+            let mut transaction = InventoryTransaction::new(
+                crate::shared::utils::uuid::generate_uuid_string(),
+                consumption.material_id.clone(),
+                InventoryTransactionType::StockOut,
+                total_used,
+                material.current_stock + total_used,
+                material.current_stock,
+                event.technician_id.clone(),
+            );
+
+            transaction.reference_number = Some(consumption.id.clone());
+            transaction.reference_type = Some("intervention_finalized".to_string());
+            transaction.notes = Some("Finalized intervention consumption".to_string());
+            transaction.unit_cost = material.unit_cost;
+            transaction.total_cost = consumption.total_cost;
+            transaction.batch_number = consumption.batch_used.clone();
+            transaction.expiry_date = consumption.expiry_used;
+            transaction.intervention_id = Some(consumption.intervention_id.clone());
+            transaction.step_id = consumption.step_id.clone();
+            transaction.performed_at = event.completed_at_ms;
+            transaction.created_at = event.completed_at_ms;
+            transaction.updated_at = event.completed_at_ms;
+
+            transactions.push(transaction);
+        }
+
+        self.transaction_repository
+            .upsert_intervention_consumptions("intervention_finalized", &transactions)
+            .map_err(InventoryError::Database)
+    }
+
+    /// Revert inventory consumptions for a cancelled intervention.
+    ///
+    /// Called from the application/IPC layer as part of the cancellation saga,
+    /// **not** from an event handler (ADR-016).
+    #[instrument(skip(self))]
+    pub fn revert_intervention_consumptions(
+        &self,
+        intervention_id: &str,
+    ) -> InventoryResult<usize> {
+        self.transaction_repository
+            .revert_intervention_consumptions(intervention_id)
+            .map_err(InventoryError::Database)
+    }
 }
-// TODO(ADR-001): handle_intervention_finalized has been moved to InterventionFinalizedHandler
-// in handlers.rs. InventoryService is now a pure CRUD/query service with no event-handling logic.

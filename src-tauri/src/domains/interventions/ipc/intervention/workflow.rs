@@ -136,6 +136,33 @@ pub async fn intervention_finalize(
         .await?
     {
         InterventionsResponse::Finalized(result) => {
+            // ADR-016 saga: consolidate inventory transactions synchronously in
+            // the application layer instead of relying on the event handler.
+            let finalized_event = crate::shared::contracts::events::InterventionFinalized {
+                intervention_id: result.intervention.id.clone(),
+                task_id: result.intervention.task_id.clone(),
+                technician_id: result
+                    .intervention
+                    .technician_id
+                    .clone()
+                    .unwrap_or_else(|| ctx.user_id().to_string()),
+                completed_at_ms: result
+                    .intervention
+                    .completed_at
+                    .inner()
+                    .unwrap_or_else(crate::shared::contracts::common::now),
+            };
+            if let Err(e) = state
+                .inventory_service
+                .consolidate_intervention_finalized(&finalized_event)
+            {
+                tracing::warn!(
+                    intervention_id = %finalized_event.intervention_id,
+                    error = %e,
+                    "Failed to consolidate inventory transactions after intervention finalization"
+                );
+            }
+
             Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id)))
         }
         _ => Err(AppError::Internal(

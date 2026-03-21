@@ -38,6 +38,8 @@ pub async fn quote_export_pdf(
 /// Convert an accepted quote to a task.
 ///
 /// Cross-domain orchestration delegated to [`QuoteExportService::convert_to_task`].
+/// ADR-016 saga: After converting the quote, the intervention is created
+/// synchronously here instead of being delegated to a `QuoteConvertedHandler`.
 #[tauri::command]
 #[instrument(skip(state, request), fields(correlation_id = tracing::field::Empty, user_id = tracing::field::Empty))]
 pub async fn quote_convert_to_task(
@@ -86,6 +88,26 @@ pub async fn quote_convert_to_task(
 
     // Step 3: record the quote→task link inside quotes domain.
     let result = svc.record_task_conversion(&request, &task.id, &task.task_number, &ctx)?;
+
+    // Step 4 (ADR-016 saga): create the intervention synchronously instead of
+    // relying on the QuoteConvertedHandler event handler.
+    match state.intervention_creator.create_from_quote(&task.id, &request.quote_id) {
+        Ok(()) => {
+            tracing::info!(
+                task_id = %task.id,
+                quote_id = %request.quote_id,
+                "Intervention created from quote (saga)"
+            );
+        }
+        Err(e) => {
+            tracing::warn!(
+                task_id = %task.id,
+                quote_id = %request.quote_id,
+                error = %e,
+                "Failed to create intervention from quote (saga)"
+            );
+        }
+    }
 
     Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id.clone())))
 }

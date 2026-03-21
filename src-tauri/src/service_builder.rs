@@ -411,6 +411,8 @@ impl ServiceBuilder {
             task_import_service,
             calendar_service,
             intervention_service,
+            intervention_creator: intervention_workflow_service
+                as Arc<dyn crate::domains::interventions::application::InterventionCreator>,
             material_service,
             inventory_service,
             message_service,

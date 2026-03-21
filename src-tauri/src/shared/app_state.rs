@@ -31,6 +31,11 @@ pub struct AppStateType {
     pub calendar_service: Arc<crate::domains::calendar::calendar_handler::CalendarService>,
     pub intervention_service:
         Arc<crate::domains::interventions::infrastructure::intervention::InterventionService>,
+    /// ADR-016: Exposed for saga-style orchestration at the IPC layer
+    /// (e.g. `quote_convert_to_task` creates an intervention synchronously
+    /// instead of delegating to an event handler).
+    pub intervention_creator:
+        Arc<dyn crate::domains::interventions::application::InterventionCreator>,
     pub material_service: Arc<crate::domains::inventory::infrastructure::material::MaterialService>,
     pub inventory_service: Arc<InventoryFacade>,
     pub message_service: Arc<crate::domains::notifications::MessageService>,
