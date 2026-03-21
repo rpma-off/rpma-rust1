@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { CreateTaskRequest } from '@/lib/backend';
-import { ipcClient } from '@/lib/ipc';
 import { handleError } from '@/lib/utils/error-handler';
 import { LogDomain } from '@/lib/logging/types';
 import { useAuth } from '@/shared/hooks/useAuth';
 // ❌ CROSS-DOMAIN IMPORT
 import { ClientCreationService } from '@/domains/clients';
+import { taskService } from '@/domains/tasks/services/task.service';
 import { generateTaskTitle } from '../../utils/display';
 
 import { FormStep, TaskFormData } from './types';
@@ -165,11 +165,14 @@ export const useTaskFormSubmission = ({
       };
 
       // Submit to the Tauri backend
-      const createdTask = await ipcClient.tasks.create(taskData);
+      const createResult = await taskService.createTask(taskData);
+      if (!createResult.success || !createResult.data) {
+        throw new Error(createResult.error || 'Task creation failed');
+      }
       toast.success('Tâche créée avec succès !');
 
       if (onSuccess) {
-        onSuccess(createdTask as { id: string });
+        onSuccess(createResult.data);
       }
     } catch (error) {
       handleError(error, 'Task creation failed', {
@@ -184,4 +187,3 @@ export const useTaskFormSubmission = ({
 
   return { handleSubmit };
 };
-

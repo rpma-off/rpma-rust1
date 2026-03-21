@@ -23,7 +23,7 @@ import {
 } from '@/shared/ui/facade';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/shared/hooks/useTranslation';
-import { ipcClient } from '@/shared/utils';
+import { useAdminPasswordReset } from '../hooks/useAdminPasswordReset';
 
 interface AdminUser {
   id: string;
@@ -64,8 +64,8 @@ export function AdminUsersTab({
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
-  const [isResetting, setIsResetting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { isResetting, resetPassword } = useAdminPasswordReset();
 
   const requestDeleteUser = useCallback((user: AdminUser) => {
     setUserToDelete(user);
@@ -84,15 +84,10 @@ export function AdminUsersTab({
     setResetPasswordUser(user);
     setTempPassword(null);
     setCopied(false);
-    setIsResetting(true);
-    try {
-      const pwd = await ipcClient.users.adminResetPassword(user.id);
-      setTempPassword(pwd);
-      onReloadUsers?.();
-    } finally {
-      setIsResetting(false);
-    }
-  }, [onReloadUsers]);
+    const pwd = await resetPassword(user.id);
+    setTempPassword(pwd);
+    onReloadUsers?.();
+  }, [onReloadUsers, resetPassword]);
 
   const handleCopyPassword = useCallback(() => {
     if (tempPassword) {
