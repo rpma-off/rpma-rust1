@@ -4,4 +4,4 @@ import type { CreateQuoteItemRequest } from "./CreateQuoteItemRequest";
 /**
  * Create quote request
  */
-export type CreateQuoteRequest = { client_id: string, task_id: string | null, valid_until: bigint | null, notes: string | null, terms: string | null, vehicle_plate: string | null, vehicle_make: string | null, vehicle_model: string | null, vehicle_year: string | null, vehicle_vin: string | null, items: Array<CreateQuoteItemRequest>, };
+export type CreateQuoteRequest = { client_id: string, task_id: string | null, valid_until: bigint | null, description: string | null, notes: string | null, terms: string | null, discount_type: string | null, discount_value: bigint | null, vehicle_plate: string | null, vehicle_make: string | null, vehicle_model: string | null, vehicle_year: string | null, vehicle_vin: string | null, items: Array<CreateQuoteItemRequest>, };

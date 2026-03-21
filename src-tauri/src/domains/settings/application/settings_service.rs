@@ -474,18 +474,48 @@ impl SettingsService {
     pub fn complete_onboarding(&self, data: &OnboardingData) -> Result<Organization, AppError> {
         data.validate().map_err(AppError::Validation)?;
         let repo = self.org_repo();
+        
         if repo.get_organization()?.is_some() {
             return Err(AppError::Validation(
                 "Organization already exists".to_string(),
             ));
         }
+        
         let organization = repo.create_organization(&data.organization)?;
+        
+        // Promote first user to Admin role
+        if let Err(e) = self.promote_first_user_to_admin() {
+            tracing::warn!("Failed to promote first user to admin: {}", e);
+            // Don't fail the onboarding - just log the issue
+        }
+        
         repo.complete_onboarding()?;
         info!(
             "Onboarding completed for organization: {}",
             organization.name
         );
         Ok(organization)
+    }
+
+    fn promote_first_user_to_admin(&self) -> Result<(), AppError> {
+        let conn = self.db.get_connection().map_err(|e| {
+            AppError::Database(format!("Failed to get database connection: {}", e))
+        })?;
+        
+        conn.execute(
+            "UPDATE users SET role = 'admin', updated_at = ? WHERE id = (
+                SELECT id FROM users 
+                WHERE is_active = 1 AND deleted_at IS NULL 
+                ORDER BY created_at ASC LIMIT 1
+            )",
+            rusqlite::params![chrono::Utc::now().timestamp_millis()],
+        ).map_err(|e| {
+            tracing::error!("Failed to promote first user to admin: {}", e);
+            AppError::Database(format!("Failed to promote user: {}", e))
+        })?;
+        
+        info!("Promoted first user to Admin role");
+        Ok(())
     }
 
     /// Retrieve the organization record.  Requires at least Viewer.

@@ -3,6 +3,19 @@
 //! Each handler resolves the request context via `resolve_context!`, then
 //! delegates all business logic — including RBAC enforcement — to
 //! [`SettingsService`].  Handlers must remain thin adapters (ADR-018).
+//!
+// TODO(ADR-004):
+//   **Problem**: Every handler instantiates `SettingsService::new(state.db.clone())`
+//   per request instead of using a pre-built service from `AppState`. This
+//   bypasses the service builder pattern and causes redundant allocations.
+//   **ADRs violated**: ADR-004 (Service Builder Pattern)
+//   **Proposed split**:
+//     - `service_builder.rs` — register `SettingsService` in `AppState`
+//     - `settings_handler.rs` — use `state.settings_service` instead of
+//       constructing per-call
+//   **Patch**: add `settings_service: Arc<SettingsService>` to `AppState`,
+//   wire in `service_builder.rs`, update each handler to `state.settings_service.method()`.
+//   **Compile check**: cargo check --lib passes after wiring.
 
 use tracing::instrument;
 

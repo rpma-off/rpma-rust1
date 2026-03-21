@@ -81,7 +81,8 @@ struct ClientEventCounter {
 #[async_trait::async_trait]
 impl crate::shared::services::event_bus::EventHandler for ClientEventCounter {
     fn interested_events(&self) -> Vec<&'static str> {
-        vec!["ClientCreated", "ClientDeactivated"]
+        use crate::shared::services::domain_event::DomainEvent;
+        vec![DomainEvent::CLIENT_CREATED, DomainEvent::CLIENT_DEACTIVATED]
     }
 
     async fn handle(

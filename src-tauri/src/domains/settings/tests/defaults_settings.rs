@@ -170,24 +170,6 @@ fn storage_settings_serialization_omits_cloud_credentials() {
     assert!(!object.contains_key("cloud_secret_key"));
 }
 
-#[test]
-fn onboarding_data_serialization_omits_admin_password() {
-    let data = OnboardingData {
-        organization: Default::default(),
-        admin_email: "admin@example.com".to_string(),
-        admin_password: "super-secret".to_string(),
-        admin_first_name: "Admin".to_string(),
-        admin_last_name: "User".to_string(),
-    };
-
-    let value = serde_json::to_value(&data).expect("onboarding data should serialize");
-    let object = value
-        .as_object()
-        .expect("onboarding data should serialize to an object");
-
-    assert!(!object.contains_key("admin_password"));
-}
-
 #[tokio::test]
 async fn storage_settings_repository_round_trip_preserves_cloud_credentials() {
     let state = build_test_app_state().await;

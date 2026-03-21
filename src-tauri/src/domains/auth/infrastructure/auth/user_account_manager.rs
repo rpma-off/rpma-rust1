@@ -46,4 +46,14 @@ impl crate::shared::contracts::user_account::UserAccountManager for super::AuthS
     fn change_password(&self, user_id: &str, new_password: &str) -> Result<(), String> {
         self.change_password(user_id, new_password)
     }
+
+    fn search_users(
+        &self,
+        search: Option<&str>,
+        role: Option<&str>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<UserAccount>, String> {
+        self.search_users(search, role, limit, offset)
+    }
 }

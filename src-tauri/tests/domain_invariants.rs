@@ -447,9 +447,12 @@ mod quote_invariants {
         CreateQuoteRequest {
             client_id: client_id.to_string(),
             task_id: None,
+            description: None,
             valid_until: None,
             notes: None,
             terms: None,
+            discount_type: None,
+            discount_value: None,
             vehicle_plate: None,
             vehicle_make: None,
             vehicle_model: None,

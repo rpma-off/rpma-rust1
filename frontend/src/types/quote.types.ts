@@ -118,6 +118,8 @@ export interface CreateQuoteRequest {
   vehicle_model?: string | null;
   vehicle_year?: string | null;
   vehicle_vin?: string | null;
+  discount_type?: 'none' | 'percentage' | 'fixed' | null;
+  discount_value?: number | null;
   items?: CreateQuoteItemRequest[];
 }
 

@@ -199,7 +199,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
             <div className="flex flex-wrap gap-3">
               <Button onClick={onRetry} className="flex items-center space-x-2">
                 <RefreshCw className="h-4 w-4" />
-                <span>Réessayer l'étape</span>
+                <span>Réessayer l&apos;étape</span>
               </Button>
 
               {onSaveProgress && (
@@ -212,7 +212,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
               {onStepSkip && severity !== 'high' && (
                 <Button variant="outline" onClick={onStepSkip} className="flex items-center space-x-2">
                   <SkipForward className="h-4 w-4" />
-                  <span>Passer l'étape</span>
+                  <span>Passer l&apos;étape</span>
                 </Button>
               )}
             </div>
@@ -224,7 +224,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
                   <AlertDescription className="text-orange-800">
                     <div className="space-y-2">
                       <p className="text-sm">
-                        Il s'agit d'une erreur critique qui peut nécessiter la réinitialisation du workflow.
+                        Il s&apos;agit d&apos;une erreur critique qui peut nécessiter la réinitialisation du workflow.
                         Vos étapes terminées devraient être préservées.
                       </p>
                       <Button
@@ -247,7 +247,7 @@ const DefaultWorkflowErrorFallback: React.FC<WorkflowErrorFallbackProps> = ({
             <p><strong>Conseils de récupération :</strong></p>
             <ul className="list-disc list-inside space-y-1">
               <li>Votre progression est automatiquement sauvegardée toutes les quelques minutes</li>
-              <li>Les photos téléchargées avec succès sont conservées même si l'étape échoue</li>
+              <li>Les photos téléchargées avec succès sont conservées même si l&apos;étape échoue</li>
               <li>Le suivi GPS continue en arrière-plan</li>
               <li>Vous pouvez continuer à travailler hors ligne si nécessaire</li>
             </ul>

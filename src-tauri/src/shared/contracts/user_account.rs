@@ -38,4 +38,12 @@ pub trait UserAccountManager: Send + Sync {
     ) -> Result<Vec<UserAccount>, String>;
 
     fn change_password(&self, user_id: &str, new_password: &str) -> Result<(), String>;
+
+    fn search_users(
+        &self,
+        search: Option<&str>,
+        role: Option<&str>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<UserAccount>, String>;
 }

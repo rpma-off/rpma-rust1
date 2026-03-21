@@ -1,7 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
+// RESOLVED(ADR-014 partial): Data-fetching, transformation and persistence extracted into
+// `hooks/useSystemSettings.ts`. This component is now a pure presentational layer.
+// Note: the hook uses useState/useEffect rather than TanStack Query; a full TanStack Query
+// migration is tracked separately.
+
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings,
@@ -31,12 +35,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useLogger, useFormLogger } from '@/shared/hooks/useLogger';
-import { LogDomain } from '@/shared/utils';
-import { SystemConfiguration, BusinessHoursConfig } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue, JsonObject } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { SystemConfiguration } from '@/shared/types';
+import { useSystemSettings } from '../hooks/useSystemSettings';
 
 const ConfigurationSkeleton = () => (
   <div className="space-y-4">
@@ -72,184 +72,21 @@ const EmptyConfigState = ({ message }: { message: string }) => (
 );
 
 export function SystemSettingsTab() {
-  const [configurations, setConfigurations] = useState<SystemConfiguration[]>([]);
-  const [businessHours, setBusinessHours] = useState<BusinessHoursConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('general');
-  const [hasChanges, setHasChanges] = useState(false);
 
-  const { session } = useAuth();
-
-  const { logInfo, logError, logPerformance } = useLogger({
-    context: LogDomain.SYSTEM,
-    component: 'SystemSettingsTab',
-    enablePerformanceLogging: true,
-  });
-
-  const { logFormEvent, logFormSubmit } = useFormLogger('SystemSettings');
-
-  const logInfoRef = useRef(logInfo);
-  const logErrorRef = useRef(logError);
-  const logPerformanceRef = useRef(logPerformance);
-  logInfoRef.current = logInfo;
-  logErrorRef.current = logError;
-  logPerformanceRef.current = logPerformance;
-
-  const loadConfigurations = useCallback(async () => {
-    const timer = logPerformanceRef.current('Load configurations');
-    try {
-      setLoading(true);
-      logInfoRef.current('Loading system configurations');
-
-      const _sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings();
-      const appSettings = data as Record<string, JsonValue>;
-      const generalSettings = (appSettings?.general || {}) as Record<string, JsonValue>;
-      const inferDataType = (value: JsonValue): 'boolean' | 'number' | 'string' => {
-        if (typeof value === 'boolean') return 'boolean';
-        if (typeof value === 'number') return 'number';
-        return 'string';
-      };
-
-      const configs: SystemConfiguration[] = Object.entries(generalSettings).map(([key, value]) => ({
-        id: `general-${key}`,
-        category: 'general',
-        key,
-        value: value as string | number | boolean,
-        description: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        data_type: inferDataType(value),
-        is_required: false,
-        isRequired: false,
-        system_level: true,
-        created_at: '',
-        updated_at: '',
-      }));
-
-      setConfigurations(configs);
-      logInfoRef.current('System configurations loaded successfully via IPC', {
-        count: configs.length,
-        categories: ['general'],
-      });
-    } catch (error) {
-      logErrorRef.current('Error loading configurations', { error: error instanceof Error ? error.message : error });
-      toast.error('Erreur lors du chargement des configurations');
-    } finally {
-      setLoading(false);
-      timer();
-    }
-  }, [session?.token]);
-
-  const defaultBusinessHours: BusinessHoursConfig = {
-    enabled: true,
-    timezone: 'Europe/Paris',
-    schedule: {
-      monday: { start: '08:00', end: '18:00', enabled: true },
-      tuesday: { start: '08:00', end: '18:00', enabled: true },
-      wednesday: { start: '08:00', end: '18:00', enabled: true },
-      thursday: { start: '08:00', end: '18:00', enabled: true },
-      friday: { start: '08:00', end: '18:00', enabled: true },
-      saturday: { start: '09:00', end: '13:00', enabled: false },
-      sunday: { start: '00:00', end: '00:00', enabled: false },
-    },
-  };
-
-  const loadBusinessHours = useCallback(async () => {
-    const timer = logPerformanceRef.current('Load business hours');
-    try {
-      logInfoRef.current('Loading business hours configuration');
-      const _sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings();
-      const appSettings = data as Record<string, JsonValue>;
-      const stored = appSettings?.business_hours as unknown as BusinessHoursConfig | undefined;
-      setBusinessHours(
-        stored && stored.schedule ? stored : defaultBusinessHours
-      );
-      logInfoRef.current('Business hours loaded successfully');
-    } catch (error) {
-      logErrorRef.current('Error loading business hours', { error: error instanceof Error ? error.message : error });
-      setBusinessHours(defaultBusinessHours);
-    } finally {
-      timer();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.token]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!cancelled) {
-        await loadConfigurations();
-      }
-      if (!cancelled) {
-        await loadBusinessHours();
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadConfigurations, loadBusinessHours]);
-
-  const updateConfiguration = (id: string, value: string | number | boolean) => {
-    const config = configurations.find((c) => c.id === id);
-    logFormEvent('Configuration updated', {
-      configId: id,
-      configKey: config?.key,
-      oldValue: config?.value,
-      newValue: value,
-      configType: config?.data_type,
-    });
-
-    setConfigurations((prev) => prev.map((configItem) => (configItem.id === id ? { ...configItem, value } : configItem)));
-    setHasChanges(true);
-  };
-
-  const saveConfigurations = async () => {
-    const timer = logPerformanceRef.current('Save configurations');
-    setSaving(true);
-    logFormEvent('Save configurations initiated', { configurationsCount: configurations.length });
-
-    try {
-      const _sessionToken = session?.token || '';
-      logInfoRef.current('Saving configurations via IPC', { count: configurations.length });
-
-      const updateRequest: Record<string, string | number | boolean | undefined> = {};
-      for (const config of configurations) {
-        updateRequest[config.key] = config.value;
-      }
-
-      await settingsOperations.updateGeneralSettings(updateRequest as unknown as JsonObject);
-
-      if (businessHours) {
-        await settingsOperations.updateBusinessHours(businessHours as unknown as JsonObject);
-      }
-
-      logFormSubmit(configurations, true);
-      toast.success('Configurations sauvegardées avec succès');
-      setHasChanges(false);
-      logInfoRef.current('Configurations saved successfully', { count: configurations.length });
-    } catch (error) {
-      logFormSubmit(configurations, false, error);
-      logErrorRef.current('Error saving configurations', { error: error instanceof Error ? error.message : error });
-      toast.error(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-    } finally {
-      setSaving(false);
-      timer();
-    }
-  };
-
-  const resetChanges = async () => {
-    setResetting(true);
-    try {
-      await loadConfigurations();
-      await loadBusinessHours();
-      setHasChanges(false);
-    } finally {
-      setResetting(false);
-    }
-  };
+  const {
+    configurations,
+    businessHours,
+    loading,
+    saving,
+    resetting,
+    hasChanges,
+    save: saveConfigurations,
+    reset: resetChanges,
+    updateConfiguration,
+    setBusinessHours,
+    setHasChanges,
+  } = useSystemSettings();
 
   const renderConfigurationField = (config: SystemConfiguration) => {
     const onChange = (e: React.ChangeEvent<HTMLInputElement> | string | number | boolean) =>

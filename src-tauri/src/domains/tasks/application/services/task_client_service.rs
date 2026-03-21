@@ -50,21 +50,10 @@ impl TaskClientService {
         let query = TaskQuery {
             page: Some(((offset / limit) + 1) as i32),
             limit: Some(limit as i32),
-            status: filter.status.as_ref().and_then(|s| match s.as_str() {
-                "pending" => Some(TaskStatus::Pending),
-                "in_progress" => Some(TaskStatus::InProgress),
-                "completed" => Some(TaskStatus::Completed),
-                _ => None,
-            }),
+            status: filter.status.as_ref().and_then(|s| s.parse::<TaskStatus>().ok()),
             technician_id: filter.assigned_to.clone(),
             client_id: filter.client_id.clone(),
-            priority: filter.priority.as_ref().and_then(|p| match p.as_str() {
-                "low" => Some(TaskPriority::Low),
-                "medium" => Some(TaskPriority::Medium),
-                "high" => Some(TaskPriority::High),
-                "urgent" => Some(TaskPriority::Urgent),
-                _ => None,
-            }),
+            priority: filter.priority.as_ref().and_then(|p| p.parse::<TaskPriority>().ok()),
             search: None,
             from_date: filter.date_from.clone(),
             to_date: filter.date_to.clone(),

@@ -13,7 +13,7 @@ use crate::domains::interventions::infrastructure::intervention_types::{
 use crate::domains::interventions::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
-use crate::domains::tasks::domain::models::task::TaskStatus;
+use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::contracts::common::TimestampString;
 use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use chrono::Utc;

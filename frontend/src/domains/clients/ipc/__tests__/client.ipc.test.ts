@@ -10,6 +10,15 @@ jest.mock('@/lib/ipc/core', () => ({
 jest.mock('@/lib/ipc/commands', () => ({
   IPC_COMMANDS: {
     CLIENT_CRUD: 'client_crud',
+    CLIENT_CREATE: 'client_create',
+    CLIENT_GET: 'client_get',
+    CLIENT_GET_WITH_TASKS: 'client_get_with_tasks',
+    CLIENT_UPDATE: 'client_update',
+    CLIENT_DELETE: 'client_delete',
+    CLIENT_LIST: 'client_list',
+    CLIENT_LIST_WITH_TASKS: 'client_list_with_tasks',
+    CLIENT_SEARCH: 'client_search',
+    CLIENT_GET_STATS: 'client_get_stats',
   },
 }));
 
@@ -32,7 +41,7 @@ const { validateClientListResponse } = jest.requireMock('@/lib/validation/backen
   validateClientListResponse: jest.Mock;
 };
 
-describe('domains/clients/clientIpc tagged payload unwrapping', () => {
+describe('domains/clients/clientIpc individual commands', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     safeInvoke.mockResolvedValue({});
@@ -40,70 +49,55 @@ describe('domains/clients/clientIpc tagged payload unwrapping', () => {
     validateClientListResponse.mockReturnValue(true);
   });
 
-  it('unwraps tagged SearchResults payload to raw Client[]', async () => {
+  it('search returns Client[] from direct array response', async () => {
     const clients = [{ id: 'c1', name: 'Acme' }];
-    extractAndValidate.mockReturnValue({
-      type: 'SearchResults',
-      data: clients,
+    extractAndValidate.mockReturnValue(clients);
+
+    const result = await clientIpc.search('ac', 20);
+
+    expect(safeInvoke).toHaveBeenCalledWith('client_search', {
+      query: 'ac',
+      limit: 20,
     });
-
-    const result = await clientIpc.search('ac', 20, 'token');
-
     expect(result).toEqual(clients);
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('unwraps tagged List payload to ClientListResponse', async () => {
+  it('list returns ClientListResponse directly', async () => {
     const listResponse = {
       data: [{ id: 'c1', name: 'Acme' }],
       pagination: { page: 1, limit: 20, total: 1, total_pages: 1 },
       statistics: null,
     };
-    safeInvoke.mockResolvedValue({
-      type: 'List',
-      data: listResponse,
-    });
+    safeInvoke.mockResolvedValue(listResponse);
 
-    const result = await clientIpc.list({ page: 1 }, 'token');
+    const result = await clientIpc.list({ page: 1 });
 
+    expect(safeInvoke).toHaveBeenCalledWith('client_list', expect.objectContaining({
+      filters: expect.objectContaining({ page: 1 }),
+    }));
     expect(validateClientListResponse).toHaveBeenCalledWith(listResponse);
     expect(result).toEqual(listResponse);
-    expect(Array.isArray(result.data)).toBe(true);
   });
 
-  it('unwraps tagged ListWithTasks payload to raw ClientWithTasks[]', async () => {
+  it('listWithTasks returns ClientWithTasks[] from direct array response', async () => {
     const clientsWithTasks = [{ id: 'c1', name: 'Acme', tasks: [] }];
-    safeInvoke.mockResolvedValue({
-      type: 'ListWithTasks',
-      data: clientsWithTasks,
-    });
+    extractAndValidate.mockReturnValue(clientsWithTasks);
 
-    const result = await clientIpc.listWithTasks({ page: 1 }, 5, 'token');
+    const result = await clientIpc.listWithTasks({ page: 1 }, 5);
 
+    expect(safeInvoke).toHaveBeenCalledWith('client_list_with_tasks', expect.objectContaining({
+      limit_tasks: 5,
+    }));
     expect(result).toEqual(clientsWithTasks);
     expect(Array.isArray(result)).toBe(true);
   });
 
-  it('returns empty array when payload has data property regardless of type tag', async () => {
-    // unwrapTaggedArray returns data directly when { data: [...] } shape is present,
-    // allowing pre-unwrapped payloads from different envelope variants.
-    extractAndValidate.mockReturnValue({
-      type: 'List',
-      data: [],
-    });
+  it('search throws on non-array response', async () => {
+    extractAndValidate.mockReturnValue({});
 
-    const result = await clientIpc.search('x', 10);
-    expect(result).toEqual([]);
-  });
-
-  it('throws on missing array payload for listWithTasks', async () => {
-    extractAndValidate.mockReturnValue({
-      type: 'ListWithTasks',
-      data: { not: 'an-array' },
-    });
-
-    await expect(clientIpc.listWithTasks({}, 5, 'token')).rejects.toThrow(
-      'Invalid client list with tasks response: expected array payload'
+    await expect(clientIpc.search('x', 10)).rejects.toThrow(
+      'Invalid client search response: expected array payload'
     );
   });
 });

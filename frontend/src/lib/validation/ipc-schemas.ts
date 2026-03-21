@@ -274,6 +274,8 @@ export const CreateQuoteRequestSchema = z.object({
   vehicle_model: z.string().nullable().optional(),
   vehicle_year: z.string().nullable().optional(),
   vehicle_vin: z.string().nullable().optional(),
+  discount_type: z.enum(['none', 'percentage', 'fixed']).nullable().optional(),
+  discount_value: z.number().nullable().optional(),
 });
 
 export const UpdateQuoteRequestSchema = CreateQuoteRequestSchema.partial().extend({

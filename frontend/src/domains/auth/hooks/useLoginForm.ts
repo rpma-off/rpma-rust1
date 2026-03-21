@@ -36,7 +36,7 @@ export function useLoginForm() {
           typeof signInError === 'string'
             ? signInError
             : (signInError as Error).message || 'Erreur lors de la connexion';
-        logger.error('Échec de la connexion', { email: formData.email, error: errorMessage });
+        logger.warn('Échec de la connexion', { email: formData.email, error: errorMessage });
         setError(errorMessage);
       } else {
         logger.info('Connexion réussie', { email: formData.email });

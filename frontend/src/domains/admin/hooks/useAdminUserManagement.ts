@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ipcClient, convertTimestamps } from '@/shared/utils';
 import type { CreateUserRequest, UserAccount } from '@/shared/types';
 import { useAuth } from '@/shared/hooks/useAuth';
@@ -38,7 +38,7 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
 
     try {
       setIsLoading(true);
-      const result = await ipcClient.users.list(50, 0);
+      const result = await ipcClient.users.list(50, 0, searchQuery || undefined, roleFilter);
       if (result && result.data) {
         const normalizedUsers = (result.data || []).map(u => convertTimestamps(u));
         setUsers(normalizedUsers as UserAccount[]);
@@ -48,7 +48,7 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.token]);
+  }, [user?.token, searchQuery, roleFilter]);
 
   const addUser = useCallback(async (userData: CreateUserRequest) => {
     if (!user?.token) return;
@@ -88,18 +88,17 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     }
   }, [user?.token, loadUsers]);
 
-  const filteredUsers = useMemo(() => {
-    return users.filter(u =>
-      (roleFilter === 'all' || u.role === roleFilter) &&
-      (searchQuery === '' ||
-       `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-       u.email.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  }, [users, roleFilter, searchQuery]);
+  // Re-run search whenever filters change (debounced via useEffect)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadUsers();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, roleFilter, loadUsers]);
 
   return {
     users,
-    filteredUsers,
+    filteredUsers: users,
     isLoading,
     searchQuery,
     roleFilter,

@@ -119,9 +119,12 @@ async fn quote_to_task_conversion_updates_inventory_and_audit() {
             CreateQuoteRequest {
                 client_id: client.id.clone(),
                 task_id: None,
+                description: None,
                 valid_until: None,
                 notes: Some("Convert and consume material".to_string()),
                 terms: None,
+                discount_type: None,
+                discount_value: None,
                 vehicle_plate: Some("QUOTE-INV-1".to_string()),
                 vehicle_make: Some("Audi".to_string()),
                 vehicle_model: Some("A4".to_string()),

@@ -29,7 +29,7 @@ export interface IpcInvokeOptions {
 export interface IpcAdapter {
   /**
    * Invoke an IPC command with type safety
-   * @param command - IPC command name (e.g., 'auth_login', 'task_crud')
+   * @param command - IPC command name (e.g., 'auth_login', 'task_create')
    * @param args - Command arguments
    * @param options - Invocation options
    * @returns Promise resolving to typed response data

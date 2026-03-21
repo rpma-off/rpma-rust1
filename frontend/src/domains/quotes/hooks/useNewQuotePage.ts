@@ -140,6 +140,8 @@ export function useNewQuotePage() {
         client_id: resolvedClientId,
         notes: publicNote || undefined,
         terms: internalNote || undefined,
+        discount_type: discountType === 'none' ? undefined : discountType,
+        discount_value: discountType === 'none' ? undefined : discountType === 'fixed' ? Math.round(discountValue * 100) : discountValue,
         valid_until: validUntilTimestamp,
         items,
         vehicle_make: vehicleMake.trim() || undefined,

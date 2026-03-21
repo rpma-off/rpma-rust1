@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { Plus, Trash2, Package } from 'lucide-react';
-import { formatCents } from '@/lib/format';
+import { formatCurrency } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QuotePartInput } from '@/types/quote.types';
@@ -120,7 +120,7 @@ export function QuotePartsSection({
                 className="h-8 text-sm"
               />
               <div className="flex items-center rounded-md bg-muted/50 px-3 text-sm font-medium h-8">
-                {formatCents(part.total)}
+                {formatCurrency(part.total, 'EUR')}
               </div>
               <Button
                 type="button"
@@ -146,7 +146,7 @@ export function QuotePartsSection({
           {/* Subtotal */}
           <div className="flex justify-end pt-2 text-sm border-t border-border">
             <span className="font-medium text-muted-foreground">
-              Sous-total pièces: <span className="text-foreground">{formatCents(partsSubtotal)}</span>
+              Sous-total pièces: <span className="text-foreground">{formatCurrency(partsSubtotal, 'EUR')}</span>
             </span>
           </div>
         </div>

@@ -34,11 +34,12 @@ Database schema changes use numbered SQL files in `migrations/` directory. Compl
 
 ### SQL Migrations
 
-Migrations are numbered SQL files stored in `src-tauri/migrations/`:
+Fresh databases are bootstrapped from `src-tauri/src/db/schema.sql`, then additive changes are applied from numbered SQL migrations stored in `src-tauri/migrations/`:
 
 ```
+src-tauri/src/db/schema.sql
+
 src-tauri/migrations/
-├── 001_initial_schema.sql
 ├── 002_rename_ppf_zone.sql
 ├── 003_add_client_stats_triggers.sql
 ├── ...
@@ -53,11 +54,17 @@ src-tauri/migrations/
 {number}_{description}.sql
 
 Examples:
-├── 001_initial_schema.sql
+├── 002_rename_ppf_zone.sql
 ├── 014_add_avatar_url.sql
 ├── 037_quotes.sql
 ├── 052_add_intervention_reports_table.sql
 ```
+
+### Bootstrap Schema
+
+The repository no longer carries a `001_initial_schema.sql` file. Instead, `src-tauri/src/db/schema.sql` is embedded into the application and executed on first startup to create the bootstrap schema for a fresh database.
+
+After bootstrap, numbered migrations (`002+`) are applied in order. This keeps new changes reviewable and preserves additive schema history while still allowing a fresh database to be initialized from a single up-to-date snapshot.
 
 ### Migration Structure
 
@@ -203,7 +210,7 @@ Migrations are embedded at compile time:
 // src-tauri/src/db/migrations/mod.rs
 pub fn get_all() -> Vec<Migration> {
     vec![
-        Migration::from_sql(include_str!("../../migrations/001_initial_schema.sql")),
+        // Fresh databases are bootstrapped from src/db/schema.sql via Database::init()
         Migration::from_sql(include_str!("../../migrations/002_rename_ppf_zone.sql")),
         // ... all migrations
     ]

@@ -18,6 +18,7 @@ impl UserAccessPolicy {
             | UserAction::Unban { .. } => "update",
             UserAction::Delete { .. } => "delete",
             UserAction::Get { .. } | UserAction::List { .. } => "read",
+            UserAction::AdminResetPassword { .. } => "update",
         }
     }
 
@@ -32,6 +33,7 @@ impl UserAccessPolicy {
             | UserAction::Ban { id }
             | UserAction::Unban { id } => Some(id.as_str()),
             UserAction::Create { .. } | UserAction::List { .. } => None,
+            UserAction::AdminResetPassword { id } => Some(id.as_str()),
         }
     }
 
@@ -53,7 +55,8 @@ impl UserAccessPolicy {
             UserAction::Delete { .. }
             | UserAction::ChangeRole { .. }
             | UserAction::Ban { .. }
-            | UserAction::Unban { .. } => {
+            | UserAction::Unban { .. }
+            | UserAction::AdminResetPassword { .. } => {
                 if matches!(current_user.role, UserRole::Admin) {
                     Ok(())
                 } else {

@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ZodError } from 'zod';
 import { User, Camera, Save, X, AlertCircle, CheckCircle } from 'lucide-react';
 import { LogDomain } from '@/lib/logging/types';
-import { ipcClient } from '@/lib/ipc';
 import { UserSession, UserSettings } from '@/lib/backend';
 import {
   updateProfileRequestSchema,
@@ -27,6 +26,7 @@ import { formatDate, formatDateTime } from '@/shared/utils/date-formatters';
 import { UserAccount } from '@/types';
 import { DEFAULT_USER_SETTINGS } from '../api/defaults';
 import { useSettings } from '../api/useSettings';
+import { useProfileSettingsActions } from '../hooks/useProfileSettingsActions';
 
 type ProfileFormData = UpdateProfileRequestValidation;
 
@@ -44,6 +44,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [usingDefaultSettings, setUsingDefaultSettings] = useState(false);
   const { settings, loading: isLoading, error: settingsQueryError } = useSettings();
+  const { updateProfile, uploadAvatar } = useProfileSettingsActions();
 
   const { logInfo, logError, logUserAction } = useLogger({
     context: LogDomain.USER,
@@ -148,7 +149,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
         avatar_url: userSettings?.profile?.avatar_url ?? null,
       };
 
-      await ipcClient.settings.updateUserProfile(profileData);
+      await updateProfile(profileData);
 
       setSaveSuccess(true);
       logInfo('Profile updated successfully', {
@@ -224,7 +225,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
       });
 
       // Upload avatar via IPC
-      const avatarUrl = await ipcClient.settings.uploadUserAvatar(
+      const avatarUrl = await uploadAvatar(
         base64Data,
         file.name,
         file.type

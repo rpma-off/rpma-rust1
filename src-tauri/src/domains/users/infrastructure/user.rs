@@ -1,6 +1,11 @@
 //! User service for user management operations
+//!
+//! // TODO: ADR Violation (ADR-001, ADR-002) - UserService is in the Infrastructure layer
+//! // but contains orchestration and business logic. It should be moved to
+//! // the application layer, and its business rules to the domain layer.
 
 use crate::commands::AppError;
+use crate::domains::auth::infrastructure::session_repository::SessionRepository;
 use crate::domains::users::infrastructure::user_repository::UserRepository;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::repositories::base::RepoError;
@@ -12,6 +17,7 @@ use tracing::{debug, error, info, warn};
 #[derive(Clone, Debug)]
 pub struct UserService {
     user_repo: Arc<UserRepository>,
+    session_repo: Arc<SessionRepository>,
 }
 
 /// Convert between auth UserRole and repo UserRole
@@ -28,18 +34,29 @@ fn auth_role_to_repo_role(
 
 impl UserService {
     /// TODO: document
-    pub fn new(user_repo: Arc<UserRepository>) -> Self {
-        Self { user_repo }
+    pub fn new(user_repo: Arc<UserRepository>, session_repo: Arc<SessionRepository>) -> Self {
+        Self {
+            user_repo,
+            session_repo,
+        }
     }
 
     /// Create a new UserService instance with database (for backward compatibility)
-    #[deprecated(note = "Use new(user_repo) instead")]
+    #[deprecated(note = "Use new(user_repo, session_repo) instead")]
     pub fn new_with_db(db: Arc<crate::db::Database>) -> Self {
         use crate::shared::repositories::Cache;
         let cache = Arc::new(Cache::new(1000));
         Self {
-            user_repo: Arc::new(UserRepository::new(db, cache)),
+            user_repo: Arc::new(UserRepository::new(db.clone(), cache)),
+            session_repo: Arc::new(SessionRepository::new(db)),
         }
+    }
+
+    /// Generate a temporary password for admin-initiated password resets.
+    /// Returns a string suitable for one-time display to the admin.
+    pub fn generate_temp_password() -> String {
+        let raw = uuid::Uuid::new_v4().to_string().replace('-', "");
+        format!("Tmp{}", &raw[..9])
     }
 
     /// Parse a role string into a UserRole enum.
@@ -47,13 +64,9 @@ impl UserService {
     /// Centralises the role-string ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ enum conversion so that IPC command
     /// handlers do not contain this business logic.
     pub fn parse_user_role(role_str: &str) -> Result<UserRole, AppError> {
-        match role_str {
-            "admin" => Ok(UserRole::Admin),
-            "technician" => Ok(UserRole::Technician),
-            "supervisor" => Ok(UserRole::Supervisor),
-            "viewer" => Ok(UserRole::Viewer),
-            _ => Err(AppError::Validation(format!("Invalid role: {}", role_str))),
-        }
+        role_str
+            .parse::<UserRole>()
+            .map_err(|_| AppError::Validation(format!("Invalid role: {}", role_str)))
     }
 
     /// Validate that the acting user is not performing an action on themselves
@@ -119,8 +132,13 @@ impl UserService {
             admin_id
         );
 
-        // NOTE: Invalidate sessions - this would require direct DB access or session repository
-        info!("Sessions for user {} should be invalidated", user_id);
+        // Invalidate all active sessions for the user immediately.
+        if let Err(e) = self.session_repo.delete_user_sessions(user_id) {
+            warn!(
+                "Failed to revoke sessions for user {} after role change: {}",
+                user_id, e
+            );
+        }
 
         Ok(())
     }
@@ -159,11 +177,15 @@ impl UserService {
                 AppError::Database("Failed to ban user".to_string())
             })?;
 
-        // NOTE: Add audit log to database directly since we don't have an audit repository yet
         info!("Successfully banned user {} by admin {}", user_id, admin_id);
 
-        // NOTE: Invalidate sessions - this would require direct DB access or session repository
-        info!("Sessions for user {} should be invalidated", user_id);
+        // Invalidate all active sessions for the banned user immediately.
+        if let Err(e) = self.session_repo.delete_user_sessions(user_id) {
+            warn!(
+                "Failed to revoke sessions for banned user {}: {}",
+                user_id, e
+            );
+        }
 
         Ok(())
     }
@@ -279,7 +301,8 @@ mod tests {
         let db = Arc::new(setup_test_db().await);
         let cache = Arc::new(Cache::new(100));
         let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
-        let service = UserService::new(repo.clone());
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo);
 
         let user = build_user("bootstrap-success", RepoUserRole::Viewer, true);
         repo.save(user.clone()).await.unwrap();
@@ -296,7 +319,8 @@ mod tests {
         let db = Arc::new(setup_test_db().await);
         let cache = Arc::new(Cache::new(100));
         let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
-        let service = UserService::new(repo.clone());
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo);
 
         let admin = build_user("admin-user", RepoUserRole::Admin, true);
         repo.save(admin).await.unwrap();
@@ -312,8 +336,9 @@ mod tests {
     async fn test_bootstrap_first_admin_user_not_found() {
         let db = Arc::new(setup_test_db().await);
         let cache = Arc::new(Cache::new(100));
-        let repo = Arc::new(UserRepository::new(db, cache));
-        let service = UserService::new(repo);
+        let repo = Arc::new(UserRepository::new(db.clone(), cache));
+        let session_repo = Arc::new(SessionRepository::new(db));
+        let service = UserService::new(repo, session_repo);
 
         let err = service
             .bootstrap_first_admin("missing-user")
@@ -327,7 +352,8 @@ mod tests {
         let db = Arc::new(setup_test_db().await);
         let cache = Arc::new(Cache::new(100));
         let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
-        let service = UserService::new(repo.clone());
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo);
 
         let user = build_user("inactive-user", RepoUserRole::Viewer, false);
         repo.save(user.clone()).await.unwrap();
@@ -371,6 +397,101 @@ mod tests {
     fn test_validate_not_self_action_same_user() {
         let err =
             UserService::validate_not_self_action("user1", "user1", "ban yourself").unwrap_err();
+        assert!(matches!(err, AppError::Validation(_)));
+    }
+
+    #[test]
+    fn test_generate_temp_password_format() {
+        let pwd = UserService::generate_temp_password();
+        assert!(pwd.starts_with("Tmp"), "password should start with 'Tmp'");
+        assert!(pwd.len() >= 12, "password should be at least 12 chars");
+    }
+
+    #[test]
+    fn test_generate_temp_password_unique() {
+        let a = UserService::generate_temp_password();
+        let b = UserService::generate_temp_password();
+        assert_ne!(a, b, "generated passwords should be unique");
+    }
+
+    #[tokio::test]
+    async fn test_ban_user_revokes_sessions() {
+        use crate::domains::auth::domain::models::auth::{UserRole as AuthRole, UserSession};
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo.clone());
+
+        let user = build_user("ban-session-test", RepoUserRole::Technician, true);
+        repo.save(user.clone()).await.unwrap();
+
+        let session = UserSession::new(
+            user.id.clone(),
+            user.username.clone(),
+            user.email.clone(),
+            AuthRole::Technician,
+            "test-token-ban".to_string(),
+            3600,
+        );
+        session_repo.insert_session(&session).unwrap();
+
+        service.ban_user(&user.id, "admin-1").await.unwrap();
+
+        let sessions = session_repo
+            .list_user_sessions(&user.id, chrono::Utc::now().timestamp_millis())
+            .unwrap();
+        assert!(sessions.is_empty(), "sessions should be revoked after ban");
+    }
+
+    #[tokio::test]
+    async fn test_change_role_revokes_sessions() {
+        use crate::domains::auth::domain::models::auth::{UserRole as AuthRole, UserSession};
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo.clone());
+
+        let user = build_user("role-session-test", RepoUserRole::Technician, true);
+        repo.save(user.clone()).await.unwrap();
+
+        let session = UserSession::new(
+            user.id.clone(),
+            user.username.clone(),
+            user.email.clone(),
+            AuthRole::Technician,
+            "test-token-role".to_string(),
+            3600,
+        );
+        session_repo.insert_session(&session).unwrap();
+
+        service
+            .change_role(&user.id, UserRole::Supervisor, "admin-1")
+            .await
+            .unwrap();
+
+        let sessions = session_repo
+            .list_user_sessions(&user.id, chrono::Utc::now().timestamp_millis())
+            .unwrap();
+        assert!(
+            sessions.is_empty(),
+            "sessions should be revoked after role change"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_ban_already_banned_user_returns_validation_error() {
+        let db = Arc::new(setup_test_db().await);
+        let cache = Arc::new(Cache::new(100));
+        let repo = Arc::new(UserRepository::new(Arc::clone(&db), cache));
+        let session_repo = Arc::new(SessionRepository::new(db.clone()));
+        let service = UserService::new(repo.clone(), session_repo);
+
+        let user = build_user("already-banned", RepoUserRole::Technician, false);
+        repo.save(user.clone()).await.unwrap();
+
+        let err = service.ban_user(&user.id, "admin-1").await.unwrap_err();
         assert!(matches!(err, AppError::Validation(_)));
     }
 }

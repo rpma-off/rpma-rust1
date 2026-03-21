@@ -170,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true, data: userSession };
     } catch (error) {
-      logger.error(LogContext.AUTH, 'Login failed', { email, error });
+      logger.warn(LogContext.AUTH, 'Login failed', { email, error });
       toast.error(getErrorMessage(error, 'Erreur de connexion. Vérifiez vos identifiants.'));
       setState(prev => ({ ...prev, isAuthenticating: false }));
       return { success: false, error: error instanceof Error ? error.message : 'Login failed' };

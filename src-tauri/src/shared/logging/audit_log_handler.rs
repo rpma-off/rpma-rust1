@@ -326,15 +326,15 @@ impl EventHandler for AuditLogHandler {
 
     fn interested_events(&self) -> Vec<&'static str> {
         vec![
-            "TaskCreated",
-            "TaskUpdated",
-            "TaskAssigned",
-            "TaskStatusChanged",
-            "TaskDeleted",
-            "InterventionStarted",
-            "InterventionCompleted",
-            "InterventionFinalized",
-            "MaterialConsumed",
+            DomainEvent::TASK_CREATED,
+            DomainEvent::TASK_UPDATED,
+            DomainEvent::TASK_ASSIGNED,
+            DomainEvent::TASK_STATUS_CHANGED,
+            DomainEvent::TASK_DELETED,
+            DomainEvent::INTERVENTION_STARTED,
+            DomainEvent::INTERVENTION_COMPLETED,
+            DomainEvent::INTERVENTION_FINALIZED,
+            DomainEvent::MATERIAL_CONSUMED,
         ]
     }
 }
@@ -466,7 +466,7 @@ mod tests {
                 Err("intentional failure".to_string())
             }
             fn interested_events(&self) -> Vec<&'static str> {
-                vec!["TaskCreated"]
+                vec![DomainEvent::TASK_CREATED]
             }
         }
         event_bus.register_handler(FailingHandler);
@@ -504,7 +504,7 @@ mod tests {
                 panic!("intentional panic in handler");
             }
             fn interested_events(&self) -> Vec<&'static str> {
-                vec!["TaskCreated"]
+                vec![DomainEvent::TASK_CREATED]
             }
         }
         event_bus.register_handler(PanickingHandler);
@@ -521,7 +521,7 @@ mod tests {
                 Ok(())
             }
             fn interested_events(&self) -> Vec<&'static str> {
-                vec!["TaskCreated"]
+                vec![DomainEvent::TASK_CREATED]
             }
         }
         event_bus.register_handler(CountingHandler {

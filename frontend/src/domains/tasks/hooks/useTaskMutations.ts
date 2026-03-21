@@ -9,7 +9,7 @@ import { taskIpc } from '../ipc/task.ipc';
  * Hook providing common task mutations with automatic cache invalidation.
  *
  * ## Mutation guide
- * - `updateTask` — typed CRUD update via `task_crud` IPC action (prefer this)
+ * - `updateTask` — typed CRUD update via `task_update` IPC command (prefer this)
  * - `editTask`   — field-restricted update via the dedicated `edit_task` IPC
  *                  command; used when the caller holds a raw `JsonObject`
  *                  (e.g. form payloads not yet typed as UpdateTaskRequest)

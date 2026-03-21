@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { Plus, Trash2, Wrench } from 'lucide-react';
-import { formatCents, getCurrencySymbol } from '@/lib/format';
+import { formatCurrency, getCurrencySymbol } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { QuoteLaborInput } from '@/types/quote.types';
@@ -117,7 +117,7 @@ export function QuoteLaborSection({
                 className="h-8 text-sm"
               />
               <div className="flex items-center rounded-md bg-muted/50 px-3 text-sm font-medium h-8">
-                {formatCents(labor.total)}
+                {formatCurrency(labor.total, 'EUR')}
               </div>
               <Button
                 type="button"
@@ -143,7 +143,7 @@ export function QuoteLaborSection({
           {/* Subtotal */}
           <div className="flex justify-end pt-2 text-sm border-t border-border">
             <span className="font-medium text-muted-foreground">
-              Sous-total main d&apos;œuvre: <span className="text-foreground">{formatCents(laborSubtotal)}</span>
+              Sous-total main d&apos;œuvre: <span className="text-foreground">{formatCurrency(laborSubtotal, 'EUR')}</span>
             </span>
           </div>
         </div>

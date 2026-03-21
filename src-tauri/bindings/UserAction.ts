@@ -6,4 +6,4 @@ import type { UserRole } from "./UserRole";
 /**
  * Domain-level user management action.
  */
-export type UserAction = { "action": "Create", data: CreateUserRequest, } | { "action": "Get", id: string, } | { "action": "Update", id: string, data: UpdateUserRequest, } | { "action": "Delete", id: string, } | { "action": "List", limit: number | null, offset: number | null, } | { "action": "ChangePassword", id: string, new_password: string, } | { "action": "ChangeRole", id: string, new_role: UserRole, } | { "action": "Ban", id: string, } | { "action": "Unban", id: string, };
+export type UserAction = { "action": "Create", data: CreateUserRequest, } | { "action": "Get", id: string, } | { "action": "Update", id: string, data: UpdateUserRequest, } | { "action": "Delete", id: string, } | { "action": "List", limit: number | null, offset: number | null, search: string | null, role_filter: string | null, } | { "action": "ChangePassword", id: string, new_password: string, } | { "action": "ChangeRole", id: string, new_role: UserRole, } | { "action": "Ban", id: string, } | { "action": "Unban", id: string, } | { "action": "AdminResetPassword", id: string, };

@@ -1,5 +1,11 @@
 use std::sync::Arc;
 
+// TODO: ADR Violation (ADR-001) - UsersFacade contains orchestration and business logic
+// that should be in Application or Domain layers. It also violates dependency rules
+// by importing from infrastructure.
+// TODO: ADR Violation (ADR-008) - derive_username_from_email contains ad-hoc
+// sanitization logic that should be moved to ValidationService.
+
 use crate::domains::users::application::{UserListResponse, UserResponse};
 use crate::domains::users::domain::{
     CreateUserRequest, UpdateUserRequest, UserAccessPolicy, UserAction,
@@ -209,18 +215,37 @@ impl UsersFacade {
                         })?;
                         UserResponse::Deleted
                     }
-                    UserAction::List { limit, offset } => {
-                        let users = services
-                            .account_manager
-                            .list_users(
-                                Some(limit.unwrap_or(
-                                    crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32,
-                                )),
-                                Some(offset.unwrap_or(0)),
-                            )
-                            .map_err(|e| {
-                                AppError::Database(format!("User listing failed: {}", e))
-                            })?;
+                    UserAction::List {
+                        limit,
+                        offset,
+                        search,
+                        role_filter,
+                    } => {
+                        let default_limit =
+                            crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32;
+                        let users = if search.is_some() || role_filter.is_some() {
+                            services
+                                .account_manager
+                                .search_users(
+                                    search.as_deref(),
+                                    role_filter.as_deref(),
+                                    limit.unwrap_or(default_limit),
+                                    offset.unwrap_or(0),
+                                )
+                                .map_err(|e| {
+                                    AppError::Database(format!("User search failed: {}", e))
+                                })?
+                        } else {
+                            services
+                                .account_manager
+                                .list_users(
+                                    Some(limit.unwrap_or(default_limit)),
+                                    Some(offset.unwrap_or(0)),
+                                )
+                                .map_err(|e| {
+                                    AppError::Database(format!("User listing failed: {}", e))
+                                })?
+                        };
                         UserResponse::List(UserListResponse { data: users })
                     }
                     UserAction::ChangePassword { id, new_password } => {
@@ -258,6 +283,21 @@ impl UsersFacade {
                             .unban_user(&id, &ctx.auth.user_id)
                             .await?;
                         UserResponse::UserUnbanned
+                    }
+                    UserAction::AdminResetPassword { id } => {
+                        self.ensure_not_self_action(
+                            &ctx.auth.user_id,
+                            &id,
+                            "reset your own password via admin reset",
+                        )?;
+                        let temp_password = UserService::generate_temp_password();
+                        services
+                            .account_manager
+                            .change_password(&id, &temp_password)
+                            .map_err(|e| {
+                                AppError::Database(format!("Password reset failed: {}", e))
+                            })?;
+                        UserResponse::PasswordReset(temp_password)
                     }
                 };
 

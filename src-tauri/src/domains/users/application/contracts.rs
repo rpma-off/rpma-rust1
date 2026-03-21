@@ -25,4 +25,6 @@ pub enum UserResponse {
     RoleChanged,
     UserBanned,
     UserUnbanned,
+    /// Contains the generated temporary password (shown once to the admin).
+    PasswordReset(String),
 }

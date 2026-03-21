@@ -734,32 +734,11 @@ pub struct OnboardingStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct OnboardingData {
     pub organization: CreateOrganizationRequest,
-    pub admin_email: String,
-    // SECURITY: not serialized to frontend
-    #[serde(skip_serializing)]
-    pub admin_password: String,
-    pub admin_first_name: String,
-    pub admin_last_name: String,
 }
 
 impl OnboardingData {
     pub fn validate(&self) -> Result<(), String> {
         self.organization.validate()?;
-        if self.admin_email.trim().is_empty() {
-            return Err("Admin email is required".to_string());
-        }
-        if !is_valid_email(&self.admin_email) {
-            return Err("Invalid admin email format".to_string());
-        }
-        if self.admin_password.len() < 8 {
-            return Err("Password must be at least 8 characters".to_string());
-        }
-        if self.admin_first_name.trim().is_empty() {
-            return Err("Admin first name is required".to_string());
-        }
-        if self.admin_last_name.trim().is_empty() {
-            return Err("Admin last name is required".to_string());
-        }
         Ok(())
     }
 }

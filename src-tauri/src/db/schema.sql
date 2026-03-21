@@ -1,5 +1,32 @@
+-- RPMA bootstrap database schema snapshot.
+-- ADR-010: fresh databases are initialized from this file, then additive changes run from
+-- `src-tauri/migrations/002+`. Keep this file aligned with applied migrations, but make all
+-- new schema changes in numbered migrations instead of editing historical structure in place.
+-- GROUPS:
+--   - Core Auth: users, sessions, login_attempts, user_settings, user_consent
+--   - Tasks & Workflow: interventions, intervention_steps, photos, tasks, task_history, sync_queue
+--   - Clients & Quotes: clients, quotes, quote_items, quote_attachments
+--   - Messaging & Notifications: message_templates, messages, notification_preferences, notifications
+--   - Inventory & Procurement: suppliers, material_categories, materials, material_consumption, inventory_transactions
+--   - Audit & Cache: audit_logs, audit_events, settings_audit_log, cache_metadata, cache_statistics
+--   - Calendar & System: calendar_events, schema_version
+-- TABLES: interventions, intervention_steps, photos, tasks, task_history, quotes, quote_items,
+--   quote_attachments, clients, sync_queue, users, sessions, login_attempts, audit_logs,
+--   audit_events, user_settings, settings_audit_log, cache_metadata, cache_statistics,
+--   user_consent, message_templates, messages, notification_preferences, suppliers,
+--   material_categories, materials, material_consumption, inventory_transactions,
+--   calendar_events, notifications, schema_version
+-- Refresh this table list whenever the bootstrap schema is audited or new tables are folded into it.
+-- DO NOT MODIFY: use numbered migrations in `src-tauri/migrations/` (starting from 002)
+-- for schema changes
+-- then update this bootstrap snapshot only as needed to keep fresh-database initialization in sync.
+--
 -- Configuration SQLite pour performance optimale
 -- Note: PRAGMA déjà appliqués dans mod.rs, ce fichier contient uniquement les CREATE statements
+
+-- ============================================================
+-- SECTION: INTERVENTION WORKFLOW
+-- ============================================================
 
 -- Table 1: interventions
 -- Detailed PPF intervention records with workflow steps, photos, and quality tracking.
@@ -317,6 +344,10 @@ CREATE INDEX IF NOT EXISTS idx_photos_step ON photos(step_id);
 CREATE INDEX IF NOT EXISTS idx_photos_synced ON photos(synced) WHERE synced = 0;
 CREATE INDEX IF NOT EXISTS idx_photos_type ON photos(photo_type);
 CREATE INDEX IF NOT EXISTS idx_photos_category ON photos(photo_category);
+
+-- ============================================================
+-- SECTION: TASKS, QUOTES, CLIENTS, AND SYNC
+-- ============================================================
 
 -- Table 4: tasks
 -- General task management for all work types (legacy/general tasks).
@@ -762,6 +793,10 @@ CREATE INDEX IF NOT EXISTS idx_sync_timestamp ON sync_queue(timestamp_utc);
 CREATE INDEX IF NOT EXISTS idx_sync_entity_operation ON sync_queue(entity_type, entity_id, operation_type);
 CREATE INDEX IF NOT EXISTS idx_sync_retry_status ON sync_queue(retry_count, status);
 
+-- ============================================================
+-- SECTION: USER MANAGEMENT AND AUTHENTICATION
+-- ============================================================
+
 -- Table 7: users
 CREATE TABLE IF NOT EXISTS users (
   -- Identifiants
@@ -849,6 +884,10 @@ CREATE TABLE IF NOT EXISTS login_attempts (
 
 CREATE INDEX IF NOT EXISTS idx_login_attempts_identifier ON login_attempts(identifier);
 CREATE INDEX IF NOT EXISTS idx_login_attempts_last_attempt ON login_attempts(last_attempt);
+
+-- ============================================================
+-- SECTION: AUDIT, SETTINGS, AND CACHE
+-- ============================================================
 
 -- Table 8: audit_logs (optionnel)
 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -1080,6 +1119,10 @@ CREATE TABLE IF NOT EXISTS user_consent (
 
 CREATE INDEX IF NOT EXISTS idx_user_consent_user_id ON user_consent(user_id);
 
+-- ============================================================
+-- SECTION: MESSAGING AND NOTIFICATIONS
+-- ============================================================
+
 -- Table 9.5: message_templates
 -- Reusable templates for email/SMS/in-app messages
 CREATE TABLE IF NOT EXISTS message_templates (
@@ -1178,6 +1221,10 @@ CREATE INDEX IF NOT EXISTS idx_notification_preferences_user_id ON notification_
 -- Table 10: sync_queue (PRD-07: Sync Queue System)
 -- Note: Table already defined above at line 464 with comprehensive schema
 -- This duplicate definition removed to prevent schema corruption
+
+-- ============================================================
+-- SECTION: INVENTORY AND PROCUREMENT
+-- ============================================================
 
 -- Table 10.5: suppliers
 -- Master data for material suppliers
@@ -1486,6 +1533,10 @@ CREATE INDEX IF NOT EXISTS idx_inventory_transactions_performed_by ON inventory_
 CREATE INDEX IF NOT EXISTS idx_inventory_transactions_material_performed_at
   ON inventory_transactions(material_id, performed_at DESC);
 
+-- ============================================================
+-- SECTION: CALENDAR
+-- ============================================================
+
 -- Table 13: calendar_events
 -- Calendar events for scheduling meetings, appointments, and task-related time blocks
 CREATE TABLE IF NOT EXISTS calendar_events (
@@ -1570,6 +1621,10 @@ CREATE INDEX IF NOT EXISTS idx_events_synced ON calendar_events(synced) WHERE sy
 CREATE INDEX IF NOT EXISTS idx_events_technician_date ON calendar_events(technician_id, start_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_date_range ON calendar_events(start_datetime, end_datetime);
 CREATE INDEX IF NOT EXISTS idx_events_status_technician ON calendar_events(status, technician_id);
+
+-- ============================================================
+-- SECTION: NOTIFICATIONS AND SYSTEM VERSIONING
+-- ============================================================
 
 -- Table 14: notifications (kept in sync with migration 044)
 CREATE TABLE IF NOT EXISTS notifications (

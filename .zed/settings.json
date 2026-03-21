@@ -1,0 +1,30 @@
+{
+  "disable_ai": true,
+  "languages": {
+    "Rust": {
+      "language_servers": ["rust-analyzer"]
+    }
+  },
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "cargo": {
+          "buildScripts": {
+            "enable": true
+          },
+          "features": "all"
+        },
+        "procMacro": {
+          "enable": true
+        },
+        "checkOnSave": {
+          "command": "check",
+          "extraArgs": ["--all-targets"]
+        },
+        "diagnostics": {
+          "enable": true
+        }
+      }
+    }
+  }
+}

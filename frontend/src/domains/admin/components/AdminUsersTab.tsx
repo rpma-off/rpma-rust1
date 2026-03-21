@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import {
   CheckCircle,
+  Copy,
+  KeyRound,
   Plus,
   Search,
   Trash2,
@@ -21,6 +23,7 @@ import {
 } from '@/shared/ui/facade';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/shared/hooks/useTranslation';
+import { useAdminPasswordReset } from '../hooks/useAdminPasswordReset';
 
 interface AdminUser {
   id: string;
@@ -41,6 +44,7 @@ interface AdminUsersTabProps {
   onAddUser: () => void;
   onUpdateUserStatus: (userId: string, isActive: boolean) => void;
   onDeleteUser: (userId: string) => void;
+  onReloadUsers?: () => void;
 }
 
 export function AdminUsersTab({
@@ -53,10 +57,15 @@ export function AdminUsersTab({
   onAddUser,
   onUpdateUserStatus,
   onDeleteUser,
+  onReloadUsers,
 }: AdminUsersTabProps) {
   const { t } = useTranslation();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<AdminUser | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<AdminUser | null>(null);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const { isResetting, resetPassword } = useAdminPasswordReset();
 
   const requestDeleteUser = useCallback((user: AdminUser) => {
     setUserToDelete(user);
@@ -70,6 +79,23 @@ export function AdminUsersTab({
       setDeleteConfirmOpen(false);
     }
   }, [userToDelete, onDeleteUser]);
+
+  const handleResetPassword = useCallback(async (user: AdminUser) => {
+    setResetPasswordUser(user);
+    setTempPassword(null);
+    setCopied(false);
+    const pwd = await resetPassword(user.id);
+    setTempPassword(pwd);
+    onReloadUsers?.();
+  }, [onReloadUsers, resetPassword]);
+
+  const handleCopyPassword = useCallback(() => {
+    if (tempPassword) {
+      navigator.clipboard.writeText(tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [tempPassword]);
 
   return (
     <>
@@ -162,6 +188,15 @@ export function AdminUsersTab({
                          <Button
                            variant="outline"
                            size="sm"
+                           onClick={() => handleResetPassword(user)}
+                           title="Réinitialiser le mot de passe"
+                           className="border-border/60 text-muted-foreground hover:bg-border/20"
+                         >
+                           <KeyRound className="h-4 w-4" />
+                         </Button>
+                         <Button
+                           variant="outline"
+                           size="sm"
                            onClick={() => requestDeleteUser(user)}
                            className="border-red-500/60 text-red-400 hover:bg-red-500/20"
                          >
@@ -190,6 +225,57 @@ export function AdminUsersTab({
         variant="destructive"
         onConfirm={handleConfirmDelete}
       />
+
+      {/* Reset password dialog */}
+      {resetPasswordUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">
+              Réinitialisation du mot de passe
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {resetPasswordUser.first_name} {resetPasswordUser.last_name} — {resetPasswordUser.email}
+            </p>
+
+            {isResetting && (
+              <p className="text-sm text-muted-foreground animate-pulse">Génération en cours…</p>
+            )}
+
+            {tempPassword && (
+              <div className="space-y-2">
+                <p className="text-xs text-amber-600 font-medium">
+                  ⚠ Ce mot de passe temporaire ne sera affiché qu&apos;une seule fois.
+                </p>
+                <div className="flex items-center gap-2 p-3 bg-muted rounded-md font-mono text-sm">
+                  <span className="flex-1 select-all">{tempPassword}</span>
+                  <Button variant="ghost" size="sm" onClick={handleCopyPassword}>
+                    {copied ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Transmettez ce mot de passe à l&apos;utilisateur de manière sécurisée.
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setResetPasswordUser(null);
+                  setTempPassword(null);
+                }}
+              >
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

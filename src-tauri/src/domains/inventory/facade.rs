@@ -95,6 +95,31 @@ impl InventoryFacade {
         Arc::new(InterventionFinalizedHandler::new(self.service.clone()))
     }
 
+    /// Consolidate inventory transactions for a finalized intervention.
+    ///
+    /// Called from the IPC orchestration layer as part of the finalization saga
+    /// (ADR-016: primary operations belong in the application layer, not event handlers).
+    pub fn consolidate_intervention_finalized(
+        &self,
+        event: &crate::shared::contracts::events::InterventionFinalized,
+    ) -> Result<usize, AppError> {
+        self.service
+            .consolidate_intervention_finalized(event)
+            .map_err(|err| map_inventory_error("consolidate_intervention_finalized", err))
+    }
+
+    /// Revert inventory consumptions for a cancelled intervention.
+    ///
+    /// Called from the IPC orchestration layer (ADR-016).
+    pub fn revert_intervention_consumptions(
+        &self,
+        intervention_id: &str,
+    ) -> Result<usize, AppError> {
+        self.service
+            .revert_intervention_consumptions(intervention_id)
+            .map_err(|err| map_inventory_error("revert_intervention_consumptions", err))
+    }
+
     /// TODO: document
     pub fn is_ready(&self) -> bool {
         true

@@ -58,7 +58,7 @@ pub fn required_permission(action: &ClientAction) -> Option<&'static str> {
     }
 }
 
-fn sanitize_create_request(data: CreateClientRequest) -> Result<CreateClientRequest, IpcAppError> {
+pub(crate) fn sanitize_create_request(data: CreateClientRequest) -> Result<CreateClientRequest, IpcAppError> {
     let validator = ValidationService::new();
     let validated_name = validator
         .sanitize_text_input(&data.name, "name", 100)
@@ -110,7 +110,7 @@ fn sanitize_create_request(data: CreateClientRequest) -> Result<CreateClientRequ
     })
 }
 
-fn sanitize_update_request(
+pub(crate) fn sanitize_update_request(
     id: String,
     data: UpdateClientRequest,
 ) -> Result<UpdateClientRequest, IpcAppError> {

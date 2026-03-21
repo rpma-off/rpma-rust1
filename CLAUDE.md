@@ -60,9 +60,11 @@ rpma-rust/
 Use the real command surfaces below; do not invent shortcuts.
 
 
-- **Run App (Dev)**: `npm run dev` (Starts Tauri dev environment with hot reloading).
+- **Run App (Dev)**: `npm run dev` (Starts Tauri dev environment with hot reloading). **Does NOT run type sync automatically.**
+- **Run App (Dev, with type sync)**: `npm run dev:types` (runs `types:sync` then starts Tauri). Prefer this when IPC structs changed.
+- **Run App (Dev, strict)**: `npm run dev:strict` (runs `types:sync` + drift check then starts Tauri).
 - **Frontend Only**: `npm run frontend:dev` (Runs Next.js in the browser).
-- **Type Sync**: `npm run types:sync` (Exports Rust models to TS). **Run this after changing any Rust struct used in IPC.**
+- **Type Sync**: `npm run types:sync` (Exports Rust models to TS). **Mandatory after any change to a `#[derive(TS)]` struct or IPC-facing model. Frontend type-check will fail without it.**
 
 ## Verification & Testing
 
@@ -157,6 +159,7 @@ Naming convention: `test_<function>_<scenario>_<expected_result>`
 | Migration added | `npm run backend:migration:fresh-db-test` then `cargo test --test integration` |
 | RBAC / auth change | `cd src-tauri && cargo test permission -- --nocapture` |
 | Any backend change | `make test` as final check before task is complete |
+| Any `#[derive(TS)]` struct changed/added | `npm run types:sync` then `npm run frontend:type-check` |
 
 ### A task is NOT complete if
 
@@ -164,6 +167,7 @@ Naming convention: `test_<function>_<scenario>_<expected_result>`
 - A new feature has no tests covering the required scenarios above
 - The harness panics or fails to compile
 - A failing test was suppressed, commented out, or deleted instead of fixed
+- A `#[derive(TS)]` struct was changed but `npm run types:sync` was not run (frontend will have stale generated types)
 
 If a test failure cannot be resolved within the current task scope,
 you **must** explicitly say so and add a `// TODO(issue-XXX): <reason>` marker.

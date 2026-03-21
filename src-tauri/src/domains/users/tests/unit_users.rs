@@ -23,6 +23,8 @@ fn required_permission_for_list_is_read() {
     let action = UserAction::List {
         limit: Some(10),
         offset: Some(0),
+        search: None,
+        role_filter: None,
     };
 
     assert_eq!(facade.required_permission(&action), "read");

@@ -61,9 +61,12 @@ async fn session_creation_rbac_enforcement_and_expiry_are_enforced() {
             CreateQuoteRequest {
                 client_id: "client-forbidden".to_string(),
                 task_id: None,
+                description: None,
                 valid_until: None,
                 notes: Some("should fail".to_string()),
                 terms: None,
+                discount_type: None,
+                discount_value: None,
                 vehicle_plate: Some("RBAC-001".to_string()),
                 vehicle_make: None,
                 vehicle_model: Some("Model".to_string()),

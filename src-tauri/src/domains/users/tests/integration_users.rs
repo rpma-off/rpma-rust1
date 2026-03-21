@@ -20,3 +20,21 @@ fn ensure_not_self_action_blocks_destructive_self_operations() {
         .unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
+
+#[test]
+fn test_admin_reset_password_self_reset_returns_validation_error() {
+    let facade = UsersFacade::new();
+
+    let err = facade
+        .ensure_not_self_action("admin-1", "admin-1", "reset your own password via admin reset")
+        .unwrap_err();
+    assert!(matches!(err, AppError::Validation(_)));
+}
+
+#[test]
+fn test_admin_reset_password_other_user_allows_action() {
+    let facade = UsersFacade::new();
+
+    let result = facade.ensure_not_self_action("admin-1", "user-2", "reset password via admin");
+    assert!(result.is_ok());
+}

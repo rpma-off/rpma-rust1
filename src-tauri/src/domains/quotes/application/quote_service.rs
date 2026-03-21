@@ -87,6 +87,12 @@ impl QuoteService {
         Self::check_quote_permission(role, "create")?;
         req.validate()?;
 
+        // Validate discount values
+        quote_validation::validate_discount_update(
+            req.discount_type.as_deref(),
+            req.discount_value,
+        )?;
+
         let now = Utc::now().timestamp_millis();
         let id = crate::shared::utils::uuid::generate_uuid_string();
         let quote_number = self
@@ -101,14 +107,14 @@ impl QuoteService {
             task_id: req.task_id.clone(),
             status: QuoteStatus::Draft,
             valid_until: req.valid_until,
-            description: None,
+            description: req.description.clone(),
             notes: req.notes.clone(),
             terms: req.terms.clone(),
             subtotal: 0,
             tax_total: 0,
             total: 0,
-            discount_type: None,
-            discount_value: None,
+            discount_type: req.discount_type.clone(),
+            discount_value: req.discount_value,
             discount_amount: None,
             vehicle_plate: req.vehicle_plate.clone(),
             vehicle_make: req.vehicle_make.clone(),

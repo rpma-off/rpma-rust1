@@ -162,6 +162,93 @@ impl super::AuthService {
         Ok(current_user)
     }
 
+    /// Search users by name/email and/or role with pagination.
+    pub fn search_users(
+        &self,
+        search: Option<&str>,
+        role: Option<&str>,
+        limit: i32,
+        offset: i32,
+    ) -> Result<Vec<UserAccount>, String> {
+        let conn = self.db.get_connection()?;
+
+        let mut where_parts: Vec<String> = Vec::new();
+        let mut params: Vec<rusqlite::types::Value> = Vec::new();
+
+        if let Some(q) = search {
+            if !q.trim().is_empty() {
+                where_parts
+                    .push("(first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)".to_string());
+                let pattern = format!("%{}%", q);
+                params.push(pattern.clone().into());
+                params.push(pattern.clone().into());
+                params.push(pattern.into());
+            }
+        }
+
+        if let Some(r) = role {
+            if r != "all" && !r.trim().is_empty() {
+                where_parts.push("role = ?".to_string());
+                params.push(r.to_string().into());
+            }
+        }
+
+        let where_sql = if where_parts.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", where_parts.join(" AND "))
+        };
+
+        params.push((limit as i64).into());
+        params.push((offset as i64).into());
+
+        let sql = format!(
+            "SELECT id, email, username, password_hash, salt, first_name, last_name, role, \
+             phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, \
+             created_at, updated_at FROM users {} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+            where_sql
+        );
+
+        let mut stmt = conn
+            .prepare(&sql)
+            .map_err(|e| format!("Failed to prepare search statement: {}", e))?;
+
+        let users = stmt
+            .query_map(rusqlite::params_from_iter(params.iter()), |row| {
+                let role_str: String = row.get(7)?;
+                let role = match role_str.as_str() {
+                    "admin" => UserRole::Admin,
+                    "technician" => UserRole::Technician,
+                    "supervisor" => UserRole::Supervisor,
+                    _ => UserRole::Viewer,
+                };
+                Ok(UserAccount {
+                    id: row.get(0)?,
+                    email: row.get(1)?,
+                    username: row.get(2)?,
+                    password_hash: row.get(3)?,
+                    salt: row.get(4)?,
+                    first_name: row.get(5)?,
+                    last_name: row.get(6)?,
+                    role,
+                    phone: row.get(8)?,
+                    is_active: row.get::<_, i32>(9)? != 0,
+                    last_login: row.get(10)?,
+                    login_count: row.get(11)?,
+                    preferences: row.get(12)?,
+                    synced: row.get::<_, i32>(13)? != 0,
+                    last_synced_at: row.get(14)?,
+                    created_at: row.get(15)?,
+                    updated_at: row.get(16)?,
+                })
+            })
+            .map_err(|e| format!("Failed to query users: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to collect users: {}", e))?;
+
+        Ok(users)
+    }
+
     /// Delete user (soft delete by setting inactive)
     pub fn delete_user(&self, user_id: &str) -> Result<(), String> {
         let conn = self.db.get_connection()?;

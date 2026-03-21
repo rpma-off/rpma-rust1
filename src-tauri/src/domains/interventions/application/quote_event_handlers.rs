@@ -1,21 +1,20 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::shared::event_bus::{DomainEvent, DomainEventHandler};
 
 use crate::domains::interventions::application::contracts::InterventionCreator;
 
-/// Handler for QuoteAccepted events
+/// Handler for QuoteAccepted events — log-only (ADR-016 side-effect).
 pub struct QuoteAcceptedHandler {
-    service: Arc<dyn InterventionCreator>,
+    _service: Arc<dyn InterventionCreator>,
 }
 
 impl QuoteAcceptedHandler {
-    /// TODO: document
     pub fn new(service: Arc<dyn InterventionCreator>) -> Self {
-        Self { service }
+        Self { _service: service }
     }
 }
 
@@ -54,15 +53,19 @@ impl DomainEventHandler for QuoteAcceptedHandler {
     }
 }
 
-/// Handler for QuoteConverted events
+/// Handler for QuoteConverted events — log-only (ADR-016 side-effect).
+///
+/// ADR-016: The primary operation (intervention creation via
+/// `InterventionCreator::create_from_quote`) is now performed synchronously in
+/// the `quote_convert_to_task` IPC handler.  This handler is kept solely for
+/// observability logging.
 pub struct QuoteConvertedHandler {
-    service: Arc<dyn InterventionCreator>,
+    _service: Arc<dyn InterventionCreator>,
 }
 
 impl QuoteConvertedHandler {
-    /// TODO: document
     pub fn new(service: Arc<dyn InterventionCreator>) -> Self {
-        Self { service }
+        Self { _service: service }
     }
 }
 
@@ -86,27 +89,8 @@ impl DomainEventHandler for QuoteConvertedHandler {
                 task_id = %task_id,
                 task_number = %task_number,
                 converted_by = %converted_by,
-                "QuoteConvertedHandler: Quote converted to task, creating intervention"
+                "QuoteConvertedHandler: Quote converted to task (intervention creation handled by application layer)"
             );
-
-            // Create intervention from the converted quote
-            match self.service.create_from_quote(task_id, quote_id) {
-                Ok(_) => {
-                    info!(
-                        task_id = %task_id,
-                        quote_id = %quote_id,
-                        "QuoteConvertedHandler: Intervention created successfully"
-                    );
-                }
-                Err(e) => {
-                    warn!(
-                        task_id = %task_id,
-                        quote_id = %quote_id,
-                        error = %e,
-                        "QuoteConvertedHandler: Failed to create intervention"
-                    );
-                }
-            }
         }
         Ok(())
     }

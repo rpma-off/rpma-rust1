@@ -21,12 +21,40 @@ fn viewer_cannot_list_users() {
     let action = UserAction::List {
         limit: Some(20),
         offset: Some(0),
+        search: None,
+        role_filter: None,
     };
 
     let err = facade
         .enforce_action_permissions(&current_user, &action)
         .unwrap_err();
     assert!(matches!(err, AppError::Authorization(_)));
+}
+
+#[test]
+fn test_admin_reset_password_as_technician_returns_authorization_error() {
+    let facade = UsersFacade::new();
+    let current_user = build_session("tech-1", UserRole::Technician);
+    let action = UserAction::AdminResetPassword {
+        id: "user-2".to_string(),
+    };
+
+    let err = facade
+        .enforce_action_permissions(&current_user, &action)
+        .unwrap_err();
+    assert!(matches!(err, AppError::Authorization(_)));
+}
+
+#[test]
+fn test_admin_reset_password_as_admin_succeeds_permission_check() {
+    let facade = UsersFacade::new();
+    let current_user = build_session("admin-1", UserRole::Admin);
+    let action = UserAction::AdminResetPassword {
+        id: "user-2".to_string(),
+    };
+
+    let result = facade.enforce_action_permissions(&current_user, &action);
+    assert!(result.is_ok());
 }
 
 #[test]

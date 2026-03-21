@@ -1,5 +1,9 @@
 //! # Task Service Module
 //!
+//! // TODO: ADR Violation (ADR-001) - TaskService is in the Infrastructure layer
+//! // but acts as an orchestration service. It should be moved to the
+//! // application layer, and focused repository traits should be used.
+//!
 //! This module provides the main entry point for all task-related operations in the RPMA backend.
 //! It follows a clean architecture pattern by orchestrating operations across specialized service modules.
 //!

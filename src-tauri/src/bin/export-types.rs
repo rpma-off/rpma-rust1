@@ -102,6 +102,10 @@ use rpma_ppf_intervention::domains::interventions::{
     TechnicianInterventionStats,
 };
 
+use rpma_ppf_intervention::shared::services::global_search::{
+    GlobalSearchResponse, GlobalSearchResult,
+};
+
 fn main() {
     use std::fs;
     use std::path::PathBuf;
@@ -763,8 +767,21 @@ fn main() {
         &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
     );
     type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&UserResponse::export_to_string().expect("Failed to export UserResponse type"));
+    type_definitions.push_str(
+        &UserResponse::export_to_string().expect("Failed to export UserResponse type"),
+    );
+    type_definitions.push_str("\n\n");
+
+    // Domain: navigation / global search
+    type_definitions.push_str("// @domain:navigation\n");
+    type_definitions.push_str("// Global Search types\n");
+    type_definitions.push_str(
+        &GlobalSearchResult::export_to_string().expect("Failed to export GlobalSearchResult type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &GlobalSearchResponse::export_to_string().expect("Failed to export GlobalSearchResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: tasks (status types)

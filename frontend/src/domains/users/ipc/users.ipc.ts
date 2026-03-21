@@ -20,10 +20,21 @@ export const userIpc = {
     }, (data: JsonValue) => extractAndValidate(data, undefined, { handleNotFound: true }));
   },
 
-  list: async (limit: number, offset: number): Promise<UserListResponse> => {
+  list: async (
+    limit: number,
+    offset: number,
+    search?: string,
+    roleFilter?: string
+  ): Promise<UserListResponse> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
       request: {
-        action: { action: 'List', limit, offset },
+        action: {
+          action: 'List',
+          limit,
+          offset,
+          search: search ?? null,
+          role_filter: roleFilter && roleFilter !== 'all' ? roleFilter : null,
+        },
       }
     });
     const userList = extractAndValidate(result) as UserListResponse;
@@ -90,5 +101,20 @@ export const userIpc = {
         action: { action: 'Unban', id: userId },
       }
     });
+  },
+
+  adminResetPassword: async (userId: string): Promise<string | null> => {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.USER_CRUD, {
+      request: {
+        action: { action: 'AdminResetPassword', id: userId },
+      }
+    });
+    if (result && typeof result === 'object' && !Array.isArray(result)) {
+      const res = result as Record<string, unknown>;
+      if (res.type === 'PasswordReset' && typeof res.PasswordReset === 'string') {
+        return res.PasswordReset;
+      }
+    }
+    return null;
   },
 };

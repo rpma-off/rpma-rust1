@@ -4,21 +4,17 @@ use regex::Regex;
 
 use crate::commands::TaskAction;
 use crate::domains::tasks::domain::models::task::CreateTaskRequest;
+use crate::shared::contracts::auth::UserRole;
 
 use super::ValidationError;
 
 impl super::ValidationService {
     /// Validate user role
     pub fn validate_role(&self, role: &str) -> Result<String, ValidationError> {
-        let valid_roles = ["admin", "technician", "supervisor", "viewer"];
-
-        if !valid_roles.contains(&role.to_lowercase().as_str()) {
-            return Err(ValidationError::InvalidName(
-                "Invalid user role".to_string(),
-            ));
-        }
-
-        Ok(role.to_lowercase())
+        role.to_lowercase()
+            .parse::<UserRole>()
+            .map(|r| r.to_string())
+            .map_err(|_| ValidationError::InvalidName("Invalid user role".to_string()))
     }
 
     /// Validate complete signup data
@@ -39,7 +35,7 @@ impl super::ValidationService {
 
         let validated_role = match role {
             Some(r) => self.validate_role(r)?,
-            None => "viewer".to_string(), // Default role
+            None => UserRole::Viewer.to_string(), // Default role
         };
 
         Ok((

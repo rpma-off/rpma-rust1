@@ -92,6 +92,23 @@ function getUserFriendlyErrorMessage(errorCode: string, originalMessage: string)
 }
 
 /**
+ * Checks if an error code is an expected business/domain error
+ * that should be logged as a warning rather than a system error.
+ */
+export function isExpectedError(errorCode: string | null | undefined): boolean {
+  if (!errorCode) return false;
+  const upperCode = errorCode.toUpperCase();
+  return [
+    'AUTHENTICATION', 
+    'AUTH_INVALID', 
+    'NOTFOUND', 
+    'NOT_FOUND',
+    'VALIDATION', 
+    'AUTHORIZATION'
+  ].includes(upperCode);
+}
+
+/**
  * Safe invoke wrapper for Tauri IPC calls
  * Provides centralized logging, error handling, type validation, and metrics recording
  */
@@ -205,13 +222,19 @@ export async function safeInvoke<T>(
         const errorMsg = apiResult.error?.message || apiResult.message || 'Unknown error';
         const errorCode = apiResult.error?.code || apiResult.error_code || 'UNKNOWN';
 
-        logger.error(LogDomain.API, `IPC call failed: ${command}`, {
+        const logPayload = {
           command,
           correlation_id: backendCorrelationId,
           error: errorMsg,
           error_code: errorCode,
           duration_ms: Math.round(duration),
-        });
+        };
+
+        if (isExpectedError(errorCode)) {
+          logger.warn(LogDomain.API, `IPC call expected error: ${command}`, logPayload);
+        } else {
+          logger.error(LogDomain.API, `IPC call failed: ${command}`, logPayload);
+        }
 
         // Create a structured error with user-friendly message
         const userFriendlyMessage = getUserFriendlyErrorMessage(errorCode, errorMsg);
@@ -238,13 +261,19 @@ export async function safeInvoke<T>(
         const errorMsg = errObj.message;
         const errorCode = errObj.code;
 
-        logger.error(LogDomain.API, `IPC call failed: ${command}`, {
+        const logPayload = {
           command,
           correlation_id: effectiveCorrelationId,
           error: errorMsg,
           error_code: errorCode,
           duration_ms: Math.round(duration),
-        });
+        };
+
+        if (isExpectedError(errorCode)) {
+          logger.warn(LogDomain.API, `IPC call expected error: ${command}`, logPayload);
+        } else {
+          logger.error(LogDomain.API, `IPC call failed: ${command}`, logPayload);
+        }
 
         // Create a structured error with user-friendly message
         const userFriendlyMessage = getUserFriendlyErrorMessage(errorCode, errorMsg);
@@ -311,6 +340,16 @@ export async function safeInvoke<T>(
       } else {
         errorMessage = JSON.stringify(error);
         errorDetails = error as JsonObject;
+
+        // Try to extract rust-style enum error type (e.g., {"Authentication": "message"})
+        const keys = Object.keys(error);
+        if (keys.length === 1) {
+          const firstKey = keys[0];
+          if (firstKey && typeof (error as Record<string, unknown>)[firstKey] === 'string') {
+            errorDetails.code = firstKey;
+            errorMessage = (error as Record<string, unknown>)[firstKey] as string;
+          }
+        }
       }
     } else {
       errorMessage = String(error);
@@ -319,12 +358,22 @@ export async function safeInvoke<T>(
 
     const errorWithFlags = error instanceof Error ? error as EnhancedError : undefined;
     if (!errorWithFlags?.alreadyLogged) {
-      logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), {
+      const code = typeof errorDetails.code === 'string' ? errorDetails.code : errorWithFlags?.code;
+      const logPayload = {
         command,
         correlation_id: effectiveCorrelationId,
         duration_ms: Math.round(duration),
         error_details: errorDetails,
-      });
+      };
+
+      if (isExpectedError(code)) {
+        logger.warn(LogDomain.API, `IPC call expected error: ${command}`, {
+          error: errorMessage,
+          ...logPayload
+        });
+      } else {
+        logger.error(LogDomain.API, `IPC call error: ${command}`, error instanceof Error ? error : new Error(errorMessage), logPayload);
+      }
     }
 
     // Record metric

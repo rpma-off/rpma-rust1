@@ -20,7 +20,11 @@
 //! 2. QuoteEventBus                   <- self-contained
 //! 3. EventBus                        <- self-contained
 //! 4. ClientService                   <- Repositories.client + EventBus
-//! 5. InterventionService             <- Database
+//! 5a. InterventionStepService        <- Database
+//! 5b. PhotoValidationService         <- Database
+//! 5c. InterventionScoringService     <- Database
+//! 5d. MaterialConsumptionService     <- Database
+//! 5. InterventionService             <- Database + InterventionStepService + PhotoValidationService + InterventionScoringService + MaterialConsumptionService
 //! 6. InterventionWorkflowService     <- Database
 //! 7. SettingsService                 <- Database
 //! 8. TaskImportService               <- Database
@@ -51,11 +55,12 @@
 use crate::db::Database;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::infrastructure::auth::session_store::SessionStore;
-use crate::shared::app_state::AppStateType;
+use crate::shared::app_state::{AppConfig, AppStateType};
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::shared::logging::audit_log_handler::AuditLogHandler;
 use crate::shared::logging::audit_service::AuditService;
 use crate::shared::repositories::Repositories;
+use crate::shared::services::domain_event::DomainEvent;
 use crate::shared::services::event_bus::InMemoryEventBus;
 #[cfg(test)]
 use std::collections::{HashMap, HashSet};
@@ -67,6 +72,10 @@ const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
     "QuoteEventBus",
     "EventBus",
     "ClientService",
+    "InterventionStepService",
+    "PhotoValidationService",
+    "InterventionScoringService",
+    "MaterialConsumptionService",
     "InterventionService",
     "InterventionWorkflowService",
     "SettingsService",
@@ -95,12 +104,25 @@ const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ("QuoteEventBus", &[]),
     ("EventBus", &[]),
     ("ClientService", &["Repositories.client", "EventBus"]),
-    ("InterventionService", &["Database"]),
+    ("InterventionStepService", &["Database"]),
+    ("PhotoValidationService", &["Database"]),
+    ("InterventionScoringService", &["Database"]),
+    ("MaterialConsumptionService", &["Database"]),
+    (
+        "InterventionService",
+        &[
+            "Database",
+            "InterventionStepService",
+            "PhotoValidationService",
+            "InterventionScoringService",
+            "MaterialConsumptionService",
+        ],
+    ),
     ("InterventionWorkflowService", &["Database"]),
     ("SettingsService", &["Database"]),
     ("TaskImportService", &["Database"]),
     ("AuthService", &["Database"]),
-    ("UserService", &["Repositories.user"]),
+    ("UserService", &["Repositories.user", "SessionRepository"]),
     ("CacheService", &[]),
     ("SessionService", &["Database"]),
     ("SessionStore", &[]),
@@ -203,9 +225,34 @@ impl ServiceBuilder {
                 event_bus.clone(),
             ),
         );
-        let intervention_service = Arc::new(
-            crate::domains::interventions::infrastructure::intervention::InterventionService::new(
+        // Build extracted sub-services (Groups B–E) before the coordinator.
+        let intervention_step_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention_step_service::InterventionStepService::new(
                 self.db.clone(),
+            ),
+        );
+        let photo_validation_service = Arc::new(
+            crate::domains::interventions::infrastructure::photo_validation_service::PhotoValidationService::new(
+                self.db.clone(),
+            ),
+        );
+        let intervention_scoring_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention_scoring_service::InterventionScoringService::new(
+                self.db.clone(),
+            ),
+        );
+        let material_consumption_service = Arc::new(
+            crate::domains::interventions::infrastructure::material_consumption_service::MaterialConsumptionService::new(
+                self.db.clone(),
+            ),
+        );
+        let intervention_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention::InterventionService::with_services(
+                self.db.clone(),
+                intervention_step_service,
+                photo_validation_service,
+                intervention_scoring_service,
+                material_consumption_service,
             ),
         );
         let intervention_workflow_service = Arc::new(
@@ -234,8 +281,16 @@ impl ServiceBuilder {
         auth_service.init()?;
         let auth_service = Arc::new(auth_service);
 
-        // Initialize User Service (depends on user repository)
-        let user_service = Arc::new(UserService::new(self.repositories.user.clone()));
+        // Initialize User Service (depends on user repository + session repository)
+        let user_session_repo = Arc::new(
+            crate::domains::auth::infrastructure::session_repository::SessionRepository::new(
+                self.db.clone(),
+            ),
+        );
+        let user_service = Arc::new(UserService::new(
+            self.repositories.user.clone(),
+            user_session_repo,
+        ));
 
         // Initialize Cache Service (self-contained)
         let cache_service = Arc::new(crate::shared::services::cache::CacheService::default());
@@ -341,6 +396,12 @@ impl ServiceBuilder {
             ),
         );
 
+        let global_search_service = Arc::new(
+            crate::shared::services::global_search::GlobalSearchService::new(
+                self.repositories.clone(),
+            ),
+        );
+
         // Build and return AppStateType
         Ok(AppStateType {
             db: self.db,
@@ -351,6 +412,8 @@ impl ServiceBuilder {
             task_import_service,
             calendar_service,
             intervention_service,
+            intervention_creator: intervention_workflow_service
+                as Arc<dyn crate::domains::interventions::application::InterventionCreator>,
             material_service,
             inventory_service,
             message_service,
@@ -364,8 +427,11 @@ impl ServiceBuilder {
             user_service,
             cache_service,
             event_bus,
-            app_data_dir: self.app_data_dir,
+            app_config: Arc::new(AppConfig {
+                app_data_dir: self.app_data_dir,
+            }),
             trash_service,
+            global_search_service,
         })
     }
 }
@@ -423,8 +489,12 @@ mod tests {
         let app_state = builder.build().expect("Failed to build app state");
 
         // Verify event bus is initialized — only events in AuditLogHandler::interested_events()
-        assert!(app_state.event_bus.has_handlers("TaskCreated"));
-        assert!(app_state.event_bus.has_handlers("InterventionStarted"));
+        assert!(app_state
+            .event_bus
+            .has_handlers(DomainEvent::TASK_CREATED));
+        assert!(app_state
+            .event_bus
+            .has_handlers(DomainEvent::INTERVENTION_STARTED));
     }
 
     #[test]

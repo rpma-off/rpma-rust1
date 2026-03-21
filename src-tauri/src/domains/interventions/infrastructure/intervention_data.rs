@@ -18,7 +18,7 @@ use crate::domains::interventions::infrastructure::intervention_repository::Inte
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, InterventionPhoto, StartInterventionRequest,
 };
-use crate::domains::tasks::domain::models::task::TaskStatus;
+use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::contracts::common::*;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::str::FromStr;

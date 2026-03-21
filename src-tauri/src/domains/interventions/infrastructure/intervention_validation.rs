@@ -5,6 +5,21 @@
 //! - Business rule validation
 //! - Permission validation
 //! - Data integrity checks
+//!
+// TODO(ADR-008):
+//   **Problem**: Validation is scattered across 5 locations: this file,
+//   `workflow_validation.rs`, `domain/services/intervention_state_machine.rs`,
+//   `domain/models/intervention.rs` (validate method), and `facade.rs`
+//   (validate_intervention_id / validate_task_id).
+//   **ADRs violated**: ADR-008 (Centralized Validation)
+//   **Proposed split**:
+//     - `domain/validators/intervention_validator.rs` — single source of truth
+//       for all intervention validation rules
+//     - This file — keep only infrastructure-level checks (DB uniqueness, FK existence)
+//     - `workflow_validation.rs` — merge domain rules into the validator above
+//   **Patch**: create InterventionValidator in domain layer, move pure validation
+//   rules there, leave DB-dependent checks in infrastructure.
+//   **Compile check**: cargo check --lib passes after consolidation.
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};

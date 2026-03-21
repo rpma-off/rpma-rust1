@@ -41,7 +41,7 @@ export function useUserActions(): UseUserActionsResult {
 
   const banUser = useCallback(async (id: string) => {
     if (!user?.token) return false;
-    const response = await ipcClient.users.unbanUser(id);
+    const response = await ipcClient.users.banUser(id);
     return response !== null;
   }, [user?.token]);
 

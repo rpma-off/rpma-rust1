@@ -1,7 +1,8 @@
 //! Navigation commands for desktop app routing and history management
 
-use crate::commands::{AppState, UserRole};
+use crate::commands::{ApiResponse, AppError, AppState, UserRole};
 use crate::resolve_context;
+use crate::shared::services::global_search::GlobalSearchResponse;
 use lazy_static::lazy_static;
 use std::collections::VecDeque;
 use std::sync::Mutex;
@@ -186,4 +187,21 @@ pub async fn shortcuts_register(
         shortcuts_count
     );
     Ok(())
+}
+
+/// Perform a global search across multiple domains
+/// ADR-018: Thin IPC layer
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn global_search(
+    state: AppState<'_>,
+    query: String,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<GlobalSearchResponse>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Viewer);
+    
+    let response = state.global_search_service.search(&query, &ctx).await
+        .map_err(|e| AppError::Internal(e))?;
+        
+    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
 }

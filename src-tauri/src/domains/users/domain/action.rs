@@ -43,6 +43,8 @@ pub enum UserAction {
     List {
         limit: Option<i32>,
         offset: Option<i32>,
+        search: Option<String>,
+        role_filter: Option<String>,
     },
     ChangePassword {
         id: String,
@@ -56,6 +58,10 @@ pub enum UserAction {
         id: String,
     },
     Unban {
+        id: String,
+    },
+    /// Admin-initiated password reset: generates a temporary password and returns it once.
+    AdminResetPassword {
         id: String,
     },
 }

@@ -69,9 +69,10 @@ impl InterventionPdfReport {
         // 2. Render HTML
         let html = render_report_html(&vm);
 
-        // 3. Write HTML to temp file
-        let tmp_html =
-            std::env::temp_dir().join(format!("rpma_report_{}.html", &self.intervention.id));
+        // 3. Write HTML to temp file — use a unique suffix to avoid collisions in parallel tests
+        let unique_id = uuid::Uuid::new_v4().to_string();
+        let tmp_html = std::env::temp_dir()
+            .join(format!("rpma_report_{}_{}.html", &self.intervention.id, unique_id));
         std::fs::write(&tmp_html, &html)
             .map_err(|e| AppError::Internal(format!("Failed to write temp HTML: {}", e)))?;
 

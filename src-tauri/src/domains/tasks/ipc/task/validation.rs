@@ -1,9 +1,10 @@
-//! Task validation functions
+//! Task validation IPC commands — thin adapters (ADR-018).
 //!
-//! This module handles task assignment validation and availability checking.
+//! Each handler resolves context, builds the facade, and delegates to a
+//! single facade method. All orchestration (RBAC, fetch, settings lookup)
+//! lives inside the facade.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AvailabilityCheckResponse, ValidationResult,
 };
@@ -41,8 +42,16 @@ pub struct ValidateTaskAssignmentChangeRequest {
     pub correlation_id: Option<String>,
 }
 
+/// Construct a per-request [`TasksFacade`] from shared application state.
+fn facade(state: &AppState<'_>) -> TasksFacade {
+    TasksFacade::new(
+        state.task_service.clone(),
+        state.task_import_service.clone(),
+    )
+}
+
 /// Check task assignment eligibility
-/// ADR-018: Thin IPC layer
+/// ADR-018: Thin IPC layer — resolve context, delegate to facade
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn check_task_assignment(
@@ -52,26 +61,8 @@ pub async fn check_task_assignment(
     let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Checking task assignment eligibility");
 
-    task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
-
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.assignment.fetch_task", e))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    let max_tasks_per_user = state
-        .task_service
-        .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
-
-    let facade = TasksFacade::new(
-        state.task_service.clone(),
-        state.task_import_service.clone(),
-    );
-    let response = facade
-        .evaluate_assignment_eligibility(&task, &request.user_id, max_tasks_per_user)
+    let response = facade(&state)
+        .check_assignment(&ctx, &request.task_id, &request.user_id)
         .await?;
 
     info!(
@@ -83,6 +74,7 @@ pub async fn check_task_assignment(
 }
 
 /// Check task availability
+/// ADR-018: Thin IPC layer — resolve context, delegate to facade
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn check_task_availability(
@@ -92,18 +84,9 @@ pub async fn check_task_availability(
     let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Checking task availability");
 
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::NotFound(format!("Task not found: {}", e)))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    let facade = TasksFacade::new(
-        state.task_service.clone(),
-        state.task_import_service.clone(),
-    );
-    let response = facade.evaluate_task_availability(&task)?;
+    let response = facade(&state)
+        .check_availability(&request.task_id)
+        .await?;
 
     info!(
         "Task availability check completed for task {}",
@@ -114,6 +97,7 @@ pub async fn check_task_availability(
 }
 
 /// Validate task assignment change
+/// ADR-018: Thin IPC layer — resolve context, delegate to facade
 #[tauri::command]
 #[tracing::instrument(skip(state))]
 pub async fn validate_task_assignment_change(
@@ -123,30 +107,14 @@ pub async fn validate_task_assignment_change(
     let ctx = resolve_context!(&state, &request.correlation_id);
     debug!("Validating task assignment change");
 
-    task_policy_service::ensure_assignment_management_role(&ctx.auth)?;
-
-    let task = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::db_sanitized("tasks.assignment_change.fetch_task", e))?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-    let max_tasks_per_user = state
-        .task_service
-        .get_max_tasks_per_user()
-        .map_err(|e| AppError::db_sanitized("get_settings", &e))?;
-
-    let facade = TasksFacade::new(
-        state.task_service.clone(),
-        state.task_import_service.clone(),
-    );
-    let validation_result = facade.evaluate_assignment_change(
-        &task,
-        request.old_user_id.as_deref(),
-        &request.new_user_id,
-        max_tasks_per_user,
-    )?;
+    let validation_result = facade(&state)
+        .validate_assignment_change(
+            &ctx,
+            &request.task_id,
+            request.old_user_id.as_deref(),
+            &request.new_user_id,
+        )
+        .await?;
 
     info!(
         "Task assignment change validation completed for task {}",

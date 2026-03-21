@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+// RESOLVED(ADR-014): Data-fetching operations extracted into `hooks/useSecurityPolicies.ts`.
+// Component now consumes the hook and contains only UI state and thin operation wrappers.
+
+import { useState } from 'react';
 import {
   Shield,
   Plus,
@@ -28,14 +30,11 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SecurityPolicy, SecurityPolicyType } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useSecurityPolicies } from '../hooks/useSecurityPolicies';
 
 export function SecurityPoliciesTab() {
-  const [securityPolicies, setSecurityPolicies] = useState<SecurityPolicy[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { policies: securityPolicies, loading, saving, save: savePolicyData, remove: removePolicyData, toggle: togglePolicyData } = useSecurityPolicies();
+
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(null);
   const [activeSubTab, setActiveSubTab] = useState('password');
@@ -69,112 +68,44 @@ export function SecurityPoliciesTab() {
     exceptions: [] as string[]
   });
 
-  const { session } = useAuth();
-
-  useEffect(() => {
-    loadSecurityPolicies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadSecurityPolicies = async () => {
-    try {
-      setLoading(true);
-      const _sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings();
-      const appSettings = data as Record<string, JsonValue>;
-      const policies = (appSettings?.security_policies || []) as unknown as SecurityPolicy[];
-      setSecurityPolicies(Array.isArray(policies) ? policies : []);
-    } catch (error) {
-      console.error('Error loading security policies:', error);
-      toast.error('Erreur lors du chargement des politiques de sécurité');
-      setSecurityPolicies([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveSecurityPolicy = async () => {
-    setSaving(true);
-    try {
-      const _sessionToken = session?.token || '';
-      const newPolicy: SecurityPolicy = {
-        id: editingPolicy?.id || crypto.randomUUID(),
-        name: formData.name,
-        description: formData.description || formData.name,
-        policy_type: formData.type,
-        type: formData.type,
-        is_active: formData.isActive,
-        isActive: formData.isActive,
-        applies_to: formData.appliesTo,
-        appliesTo: formData.appliesTo,
-        settings: formData.settings as unknown as Record<string, unknown>,
-        exceptions: [],
-        created_at: editingPolicy?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        createdAt: editingPolicy?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      let updatedPolicies: SecurityPolicy[];
-      if (editingPolicy) {
-        updatedPolicies = securityPolicies.map(p => p.id === editingPolicy.id ? newPolicy : p);
-      } else {
-        updatedPolicies = [...securityPolicies, newPolicy];
-      }
-
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
-
-      toast.success(editingPolicy ? 'Politique mise à jour avec succès' : 'Politique créée avec succès');
-      setShowCreateDialog(false);
-      setEditingPolicy(null);
-      resetForm();
-      await loadSecurityPolicies();
-    } catch (error) {
-      console.error('Error saving security policy:', error);
-      toast.error('Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
-    }
+    const newPolicy: SecurityPolicy = {
+      id: editingPolicy?.id || crypto.randomUUID(),
+      name: formData.name,
+      description: formData.description || formData.name,
+      policy_type: formData.type,
+      type: formData.type,
+      is_active: formData.isActive,
+      isActive: formData.isActive,
+      applies_to: formData.appliesTo,
+      appliesTo: formData.appliesTo,
+      settings: formData.settings as unknown as Record<string, unknown>,
+      exceptions: [],
+      created_at: editingPolicy?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      createdAt: editingPolicy?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await savePolicyData(newPolicy, !!editingPolicy, securityPolicies);
+    setShowCreateDialog(false);
+    setEditingPolicy(null);
+    resetForm();
   };
 
   const deleteSecurityPolicy = async () => {
     if (!policyToDelete) return;
-    try {
-      const _sessionToken = session?.token || '';
-      const updatedPolicies = securityPolicies.filter((policy) => policy.id !== policyToDelete.id);
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
-      toast.success('Politique supprimée avec succès');
-      await loadSecurityPolicies();
-    } catch (error) {
-      console.error('Error deleting security policy:', error);
-      toast.error('Erreur lors de la suppression');
-    } finally {
-      setDeleteConfirmOpen(false);
-      setPolicyToDelete(null);
-    }
+    await removePolicyData(policyToDelete.id, securityPolicies);
+    setDeleteConfirmOpen(false);
+    setPolicyToDelete(null);
+  };
+
+  const togglePolicyStatus = async (policy: SecurityPolicy) => {
+    await togglePolicyData(policy, securityPolicies);
   };
 
   const confirmDeleteSecurityPolicy = (policy: SecurityPolicy) => {
     setPolicyToDelete(policy);
     setDeleteConfirmOpen(true);
-  };
-
-  const togglePolicyStatus = async (policy: SecurityPolicy) => {
-    try {
-      const _sessionToken = session?.token || '';
-      const updatedPolicies = securityPolicies.map(p =>
-        p.id === policy.id ? { ...p, is_active: !p.is_active, isActive: !p.is_active } : p
-      );
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>);
-      toast.success(`Politique ${policy.is_active ? 'désactivée' : 'activée'} avec succès`);
-      await loadSecurityPolicies();
-    } catch (error) {
-      console.error('Error updating policy status:', error);
-      toast.error('Erreur lors de la mise à jour');
-    }
   };
 
   const resetForm = () => {

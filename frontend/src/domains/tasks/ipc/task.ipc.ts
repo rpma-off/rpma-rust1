@@ -19,10 +19,8 @@ import type {
 
 export const taskIpc = {
   create: async (data: CreateTaskRequest): Promise<Task> => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: { action: 'Create', data }
-      }
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CREATE, {
+      data,
     });
     invalidatePattern('task:');
     signalMutation('tasks');
@@ -30,18 +28,15 @@ export const taskIpc = {
   },
 
   get: async (id: string): Promise<Task | null> => {
-    return cachedInvoke(`task:${id}`, IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: { action: 'Get', id }
-      }
+    return cachedInvoke(`task:${id}`, IPC_COMMANDS.TASK_GET, {
+      id,
     }, (data: JsonValue) => extractAndValidate(data, validateTask, { handleNotFound: true }) as Task | null);
   },
 
   update: async (id: string, data: UpdateTaskRequest): Promise<Task> => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: { action: 'Update', id, data }
-      }
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_UPDATE, {
+      id,
+      data,
     });
     invalidatePattern('task:');
     signalMutation('tasks');
@@ -49,25 +44,19 @@ export const taskIpc = {
   },
 
   list: async (filters: Partial<TaskQuery>): Promise<TaskListResponse> => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: {
-          action: 'List',
-          filters: {
-            page: filters.page ?? 1,
-            limit: filters.limit ?? 20,
-            status: filters.status ?? null,
-            technician_id: filters.technician_id ?? null,
-            client_id: filters.client_id ?? null,
-            priority: filters.priority ?? null,
-            search: filters.search ?? null,
-            from_date: filters.from_date ?? null,
-            to_date: filters.to_date ?? null,
-            sort_by: filters.sort_by ?? 'created_at',
-            sort_order: filters.sort_order ?? 'desc'
-          }
-        }
-      }
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_LIST, {
+      filter: {
+        assigned_to: filters.technician_id ?? null,
+        client_id: filters.client_id ?? null,
+        status: filters.status ?? null,
+        priority: filters.priority ?? null,
+        region: null,
+        include_completed: false,
+        date_from: filters.from_date ?? null,
+        date_to: filters.to_date ?? null,
+      },
+      page: filters.page ?? 1,
+      limit: filters.limit ?? 20,
     });
     const data = result as unknown as TaskListResponse;
     if (!validateTaskListResponse(data)) {
@@ -77,21 +66,15 @@ export const taskIpc = {
   },
 
   delete: async (id: string): Promise<void> => {
-    await safeInvoke<void>(IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: { action: 'Delete', id }
-      }
+    await safeInvoke<void>(IPC_COMMANDS.TASK_DELETE, {
+      id,
     });
     invalidatePattern('task:');
     signalMutation('tasks');
   },
 
   statistics: async (): Promise<TaskStatistics> => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_CRUD, {
-      request: {
-        action: { action: 'GetStatistics' }
-      }
-    });
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.TASK_STATISTICS, {});
     return extractAndValidate(result) as TaskStatistics;
   },
 

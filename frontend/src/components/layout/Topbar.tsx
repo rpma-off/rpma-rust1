@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { ROUTES } from '@/constants/routes';
 import { NotificationBell } from '@/domains/notifications';
+import { GlobalSearch } from './GlobalSearch';
+import * as React from 'react';
 
 interface TopbarProps {
   onMenuToggle: () => void;
@@ -16,6 +18,18 @@ interface TopbarProps {
 
 export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarProps) {
   const { t } = useTranslation();
+  const [searchOpen, setSearchOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
 
   const navTabs = [
     { key: 'calendar', label: t('nav.schedule'), href: ROUTES.DASHBOARD, enabled: true, icon: <CalendarDays className="h-4 w-4" /> },
@@ -78,6 +92,7 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setSearchOpen(true)}
             className="p-2 rounded-full hover:bg-white/15 transition-colors"
             aria-label="Rechercher"
           >
@@ -86,6 +101,7 @@ export function Topbar({ onMenuToggle, onSidebarToggle, isSidebarOpen }: TopbarP
           <NotificationBell />
         </div>
       </div>
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 }

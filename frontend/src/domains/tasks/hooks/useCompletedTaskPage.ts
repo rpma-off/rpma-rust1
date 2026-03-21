@@ -17,9 +17,16 @@ import {
   useInterventionData,
   useWorkflowStepData,
 } from '@/domains/interventions';
-// ❌ CROSS-DOMAIN IMPORT
+// TODO(ADR-003): Cross-domain import — tasks should not import directly from interventions.
+//   **Problem**: downloadJsonFile is a utility that belongs in shared/utils, not interventions.
+//   **ADRs violated**: ADR-003, ADR-002
+//   **Proposed split**: move downloadJsonFile to `lib/utils/file-download.ts`
 import { downloadJsonFile } from '@/domains/interventions';
-// ❌ CROSS-DOMAIN IMPORT
+// TODO(ADR-003): Cross-domain import — tasks should not import directly from inventory.
+//   **Problem**: inventoryIpc creates tight coupling between tasks and inventory domains.
+//   **ADRs violated**: ADR-003, ADR-002
+//   **Proposed split**: create a shared coordination layer or use event-based communication
+//   through a shared hook in `lib/hooks/useInventoryLookup.ts`
 import { inventoryIpc } from '@/domains/inventory';
 import { printCompletedInterventionReport, saveCompletedInterventionReport } from '../services/completed-task-report.service';
 import { taskGateway } from '../api/taskGateway';
