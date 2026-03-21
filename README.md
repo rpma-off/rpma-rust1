@@ -2,7 +2,7 @@
 
 # 🛡️ RPMA v2
 
-### Repair Management Application — * by [Raye Pas Mon Auto](https://www.rayepasmonauto.com/)*
+### Resource Planning & Management Application — * by [Raye Pas Mon Auto](https://www.rayepasmonauto.com/)*
 
 <br/>
 
@@ -15,11 +15,10 @@
 <br/>
 
 > **Application de bureau offline-first** pour la gestion des interventions PPF (Paint Protection Film)  
-> conçue pour les ateliers automobiles [Raye Pas Mon Auto](https://www.rayepasmonauto.com/).
-
+> conçue pour les ateliers automobiles
 <br/>
 
-[🚀 Démarrage rapide](#-démarrage-rapide) • [🏗️ Architecture](#️-architecture) • [📋 Fonctionnalités](#-fonctionnalités-principales) • [📖 Documentation](#-documentation) • [🤝 Contribuer](#-contribution)
+
 
 </div>
 
