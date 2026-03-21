@@ -25,10 +25,12 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('UsersProvider', () => {
   it('throws when useUsersContext is used outside provider', () => {
+    const originalError = console.error;
     jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => renderHook(() => useUsersContext())).toThrow(
       'useUsersContext must be used within UsersProvider'
     );
+    console.error = originalError;
   });
 
   it('provides users state and actions to consumers', () => {
