@@ -1,119 +1,29 @@
 ﻿'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React from 'react';
 import { Shield, AlertTriangle, Users, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { ipcClient } from '@/lib/ipc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/shared/hooks/useAuth';
 import { formatDateTime } from '@/shared/utils/date-formatters';
-
-interface SecurityMetrics {
-  total_events_today: number;
-  critical_alerts_today: number;
-  active_brute_force_attempts: number;
-  blocked_ips: number;
-  failed_auth_attempts_last_hour: number;
-  suspicious_activities_detected: number;
-}
-
-interface SecurityAlert {
-  id: string;
-  event_id: string;
-  title: string;
-  description: string;
-  severity: string;
-  timestamp: string;
-  acknowledged: boolean;
-  resolved: boolean;
-}
-
-interface UserSession {
-  id: string;
-  user_id: string;
-  username: string;
-  device_info?: {
-    user_agent?: string;
-    ip_address?: string;
-  };
-  last_activity: string;
-  created_at: string;
-}
+import { useSecurityDashboard } from '../hooks/useSecurityDashboard';
 
 export interface SecurityDashboardProps {
   onRefresh?: () => void;
 }
 
 export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardProps) {
-  const { user } = useAuth();
-  const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
-  const [sessions, setSessions] = useState<UserSession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadSecurityData = useCallback(async () => {
-    if (!user?.token) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [metricsData, alertsData, sessionsData] = await Promise.all([
-        ipcClient.audit.getMetrics(),
-        ipcClient.audit.getAlerts(),
-        ipcClient.settings.getActiveSessions(),
-      ]);
-
-      setMetrics(metricsData as unknown as SecurityMetrics);
-      setAlerts(alertsData as unknown as SecurityAlert[]);
-      setSessions(sessionsData as unknown as UserSession[]);
-    } catch (err) {
-      console.error('Failed to load security data:', err);
-      setError('Erreur lors du chargement des données de sécurité');
-      toast.error('Erreur lors du chargement des données de sécurité');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.token]);
-
-  useEffect(() => {
-    loadSecurityData();
-  }, [loadSecurityData]);
-
-  const unresolvedAlerts = useMemo(
-    () => alerts.filter(alert => !alert.resolved),
-    [alerts],
-  );
-
-  const handleAcknowledgeAlert = async (alertId: string) => {
-    if (!user?.token) return;
-
-    try {
-      await ipcClient.audit.acknowledgeAlert(alertId);
-      toast.success('Alerte acquittée');
-      loadSecurityData(); // Refresh data
-    } catch (err) {
-      console.error('Failed to acknowledge alert:', err);
-      toast.error('Erreur lors de l\'acquittement de l\'alerte');
-    }
-  };
-
-  const handleRevokeSession = async (sessionId: string) => {
-    if (!user?.token) return;
-
-    try {
-      await ipcClient.settings.revokeSession(sessionId);
-      toast.success('Session révoquée');
-      loadSecurityData(); // Refresh data
-    } catch (err) {
-      console.error('Failed to revoke session:', err);
-      toast.error('Erreur lors de la révocation de la session');
-    }
-  };
+  const {
+    metrics,
+    sessions,
+    unresolvedAlerts,
+    loading,
+    error,
+    acknowledgeAlert,
+    revokeSession,
+  } = useSecurityDashboard();
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -245,7 +155,9 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleAcknowledgeAlert(alert.id)}
+                            onClick={() => void acknowledgeAlert(alert.id).catch(() => {
+                              toast.error('Erreur lors de l\'acquittement de l\'alerte');
+                            })}
                             className="text-xs"
                           >
                             Acquitter
@@ -295,7 +207,9 @@ export function SecurityDashboard({ onRefresh: _onRefresh }: SecurityDashboardPr
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleRevokeSession(session.id)}
+                    onClick={() => void revokeSession(session.id).catch(() => {
+                      toast.error('Erreur lors de la révocation de la session');
+                    })}
                     className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
                   >
                     <XCircle className="h-3 w-3 mr-1" />

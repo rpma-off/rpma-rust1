@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
   Globe, 
@@ -19,15 +19,11 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { IntegrationConfig, IntegrationType, IntegrationStatus } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useIntegrations } from '../hooks/useIntegrations';
 import { IntegrationCard } from './IntegrationCard';
 
 export function IntegrationsTab() {
-  const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { integrations, loading, saving, persistIntegrations } = useIntegrations();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingIntegration, setEditingIntegration] = useState<IntegrationConfig | null>(null);
   const [testingIntegration, setTestingIntegration] = useState<string | null>(null);
@@ -63,34 +59,8 @@ export function IntegrationsTab() {
     }
   });
 
-  const { session } = useAuth();
-
-  useEffect(() => {
-    loadIntegrations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadIntegrations = async () => {
-    try {
-      setLoading(true);
-      const _sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings();
-      const appSettings = data as Record<string, JsonValue>;
-      const configs = (appSettings?.integrations || []) as unknown as IntegrationConfig[];
-      setIntegrations(Array.isArray(configs) ? configs : []);
-    } catch (error) {
-      console.error('Error loading integrations:', error);
-      toast.error('Erreur lors du chargement des intégrations');
-      setIntegrations([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const saveIntegration = async () => {
-    setSaving(true);
     try {
-      const _sessionToken = session?.token || '';
       const newIntegration: IntegrationConfig = {
         id: editingIntegration?.id || crypto.randomUUID(),
         name: formData.name,
@@ -115,31 +85,26 @@ export function IntegrationsTab() {
         updatedIntegrations = [...integrations, newIntegration];
       }
 
-      await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
-
-      toast.success(editingIntegration ? 'Intégration mise à jour avec succès' : 'Intégration créée avec succès');
+      await persistIntegrations(
+        updatedIntegrations,
+        editingIntegration
+          ? 'Intégration mise à jour avec succès'
+          : 'Intégration créée avec succès',
+      );
       setShowCreateDialog(false);
       setEditingIntegration(null);
       resetForm();
-      await loadIntegrations();
     } catch (error) {
       console.error('Error saving integration:', error);
       toast.error('Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
     }
   };
 
   const deleteIntegration = async () => {
     if (!integrationToDelete) return;
     try {
-      const _sessionToken = session?.token || '';
       const updatedIntegrations = integrations.filter((integration) => integration.id !== integrationToDelete.id);
-      await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
-      toast.success('Intégration supprimée avec succès');
-      await loadIntegrations();
+      await persistIntegrations(updatedIntegrations, 'Intégration supprimée avec succès');
     } catch (error) {
       console.error('Error deleting integration:', error);
       toast.error('Erreur lors de la suppression');
@@ -180,17 +145,16 @@ export function IntegrationsTab() {
 
   const toggleIntegrationStatus = async (integration: IntegrationConfig) => {
     try {
-      const _sessionToken = session?.token || '';
       const newActive = !integration.isActive;
       const updatedIntegrations = integrations.map(i =>
         i.id === integration.id
           ? { ...i, isActive: newActive, status: (newActive ? 'active' : 'inactive') as IntegrationStatus }
           : i
       );
-      await settingsOperations.updateGeneralSettings(
-        { integrations: updatedIntegrations as unknown as JsonValue } as Record<string, JsonValue>);
-      toast.success(`Intégration ${integration.isActive ? 'désactivée' : 'activée'} avec succès`);
-      await loadIntegrations();
+      await persistIntegrations(
+        updatedIntegrations,
+        `Intégration ${integration.isActive ? 'désactivée' : 'activée'} avec succès`,
+      );
     } catch (error) {
       console.error('Error updating integration status:', error);
       toast.error('Erreur lors de la mise à jour');
@@ -509,4 +473,3 @@ export function IntegrationsTab() {
     </div>
   );
 }
-

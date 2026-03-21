@@ -1,19 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { z } from 'zod';
 import { Plus, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { convertTimestamps } from '@/lib/types';
 import { UpdateTaskRequest } from '@/lib/backend';
-import { ipcClient } from '@/lib/ipc';
-import { handleError } from '@/lib/utils/error-handler';
-import { LogDomain } from '@/lib/logging/types';
-import { Task, Client } from '@/types';
+import { Task } from '@/types';
 import { DesktopForm, DesktopTable, type Column, EntitySyncIndicator } from '@/shared/ui';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDate } from '@/shared/utils/date-formatters';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useTaskManager, type TaskWithClient } from '../hooks/useTaskManager';
 
 // Validation schema for task creation/editing
 const taskSchema = z.object({
@@ -24,62 +20,11 @@ const taskSchema = z.object({
   scheduled_date: z.string().optional(),
 });
 
-interface TaskWithClient extends Task {
-  client_name?: string;
-}
-
 export default function TaskManager() {
-  const { user } = useAuth();
-  const [tasks, setTasks] = useState<TaskWithClient[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { tasks, clients, isLoading, createTask, updateTask, deleteTask, user } = useTaskManager();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
-
-  const loadData = useCallback(async () => {
-    if (!user?.token) return;
-
-    try {
-      setIsLoading(true);
-      const [tasksResult, clientsResult, clientsResult2] = await Promise.all([
-        ipcClient.tasks.list({ page: 1, limit: 100, status: null, technician_id: null, client_id: null, priority: null, search: null, from_date: null, to_date: null, sort_by: "created_at", sort_order: "desc" }),
-        ipcClient.clients.list({ page: 1, limit: 100, sort_by: "created_at", sort_order: "desc" }),
-        ipcClient.clients.list({ page: 1, limit: 100, sort_by: "name", sort_order: "asc" }),
-      ]);
-
-      const tasksData = tasksResult;
-      const clientsData = clientsResult;
-      const clientsData2 = clientsResult2;
-
-      if (tasksData && clientsData && clientsData2) {
-        // Convert data types and merge client names into tasks for display
-        const convertedTasks = tasksData.data.map(task => convertTimestamps(task));
-        const convertedClients = clientsData.data.map(client => convertTimestamps(client));
-
-        const tasksWithClients = convertedTasks.map((task) => ({
-          ...task,
-          client_name: convertedClients.find((c) => c.id === task.client_id)?.name || 'Client inconnu',
-        })) as unknown as TaskWithClient[];
-        setTasks(tasksWithClients);
-        setClients(convertedClients as unknown as Client[]);
-      }
-    } catch (error) {
-      handleError(error, 'Failed to load tasks and clients', {
-        domain: LogDomain.TASK,
-        userId: user?.user_id,
-        component: 'TaskManager',
-        toastMessage: 'Erreur lors du chargement des données'
-      });
-     } finally {
-      setIsLoading(false);
-    }
-  }, [user?.token, user?.user_id]);
-
-  // Load tasks and clients on component mount
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   const handleCreateTask = useCallback(async (data: z.infer<typeof taskSchema>) => {
     if (!user?.token) return;
@@ -121,20 +66,13 @@ export default function TaskManager() {
         tags: null,
       };
 
-      await ipcClient.tasks.create(taskData);
+      await createTask(taskData);
       toast.success('Tâche créée avec succès');
       setShowCreateForm(false);
-      loadData();
     } catch (error) {
-      handleError(error, 'Task creation failed', {
-        domain: LogDomain.TASK,
-        userId: user?.user_id,
-        component: 'TaskManager',
-        toastMessage: 'Erreur lors de la création de la tâche'
-      });
       throw error;
     }
-  }, [loadData, user?.token, user?.user_id]);
+  }, [createTask, user?.token, user?.user_id]);
 
   const handleUpdateTask = useCallback(async (data: z.infer<typeof taskSchema>) => {
     if (!editingTask || !user?.token) return;
@@ -174,20 +112,13 @@ export default function TaskManager() {
         technician_id: null
       };
 
-      await ipcClient.tasks.update(editingTask.id, updateData);
+      await updateTask(editingTask.id, updateData);
       toast.success('Tâche mise à jour avec succès');
       setEditingTask(null);
-      loadData();
     } catch (error) {
-      handleError(error, 'Task update failed', {
-        domain: LogDomain.TASK,
-        userId: user?.user_id,
-        component: 'TaskManager',
-        toastMessage: 'Erreur lors de la mise à jour de la tâche'
-      });
       throw error;
     }
-  }, [editingTask, loadData, user?.token, user?.user_id]);
+  }, [editingTask, updateTask, user?.token]);
 
   const handleDeleteTask = useCallback(async (taskId: string) => {
     if (!user?.token) return;
@@ -198,20 +129,12 @@ export default function TaskManager() {
     if (!user?.token || !taskToDelete) return;
 
     try {
-      await ipcClient.tasks.delete(taskToDelete);
+      await deleteTask(taskToDelete);
       toast.success('Tâche supprimée avec succès');
-      loadData();
-    } catch (error) {
-      handleError(error, 'Task deletion failed', {
-        domain: LogDomain.TASK,
-        userId: user?.user_id,
-        component: 'TaskManager',
-        toastMessage: 'Erreur lors de la suppression de la tâche'
-      });
     } finally {
       setTaskToDelete(null);
     }
-  }, [loadData, taskToDelete, user?.token, user?.user_id]);
+  }, [deleteTask, taskToDelete, user?.token]);
 
   const handleEditTask = useCallback((task: Task) => {
     setEditingTask(task);
