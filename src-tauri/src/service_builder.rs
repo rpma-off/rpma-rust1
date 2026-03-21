@@ -20,7 +20,11 @@
 //! 2. QuoteEventBus                   <- self-contained
 //! 3. EventBus                        <- self-contained
 //! 4. ClientService                   <- Repositories.client + EventBus
-//! 5. InterventionService             <- Database
+//! 5a. InterventionStepService        <- Database
+//! 5b. PhotoValidationService         <- Database
+//! 5c. InterventionScoringService     <- Database
+//! 5d. MaterialConsumptionService     <- Database
+//! 5. InterventionService             <- Database + InterventionStepService + PhotoValidationService + InterventionScoringService + MaterialConsumptionService
 //! 6. InterventionWorkflowService     <- Database
 //! 7. SettingsService                 <- Database
 //! 8. TaskImportService               <- Database
@@ -67,6 +71,10 @@ const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
     "QuoteEventBus",
     "EventBus",
     "ClientService",
+    "InterventionStepService",
+    "PhotoValidationService",
+    "InterventionScoringService",
+    "MaterialConsumptionService",
     "InterventionService",
     "InterventionWorkflowService",
     "SettingsService",
@@ -95,7 +103,20 @@ const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ("QuoteEventBus", &[]),
     ("EventBus", &[]),
     ("ClientService", &["Repositories.client", "EventBus"]),
-    ("InterventionService", &["Database"]),
+    ("InterventionStepService", &["Database"]),
+    ("PhotoValidationService", &["Database"]),
+    ("InterventionScoringService", &["Database"]),
+    ("MaterialConsumptionService", &["Database"]),
+    (
+        "InterventionService",
+        &[
+            "Database",
+            "InterventionStepService",
+            "PhotoValidationService",
+            "InterventionScoringService",
+            "MaterialConsumptionService",
+        ],
+    ),
     ("InterventionWorkflowService", &["Database"]),
     ("SettingsService", &["Database"]),
     ("TaskImportService", &["Database"]),
@@ -203,9 +224,34 @@ impl ServiceBuilder {
                 event_bus.clone(),
             ),
         );
-        let intervention_service = Arc::new(
-            crate::domains::interventions::infrastructure::intervention::InterventionService::new(
+        // Build extracted sub-services (Groups B–E) before the coordinator.
+        let intervention_step_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention_step_service::InterventionStepService::new(
                 self.db.clone(),
+            ),
+        );
+        let photo_validation_service = Arc::new(
+            crate::domains::interventions::infrastructure::photo_validation_service::PhotoValidationService::new(
+                self.db.clone(),
+            ),
+        );
+        let intervention_scoring_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention_scoring_service::InterventionScoringService::new(
+                self.db.clone(),
+            ),
+        );
+        let material_consumption_service = Arc::new(
+            crate::domains::interventions::infrastructure::material_consumption_service::MaterialConsumptionService::new(
+                self.db.clone(),
+            ),
+        );
+        let intervention_service = Arc::new(
+            crate::domains::interventions::infrastructure::intervention::InterventionService::with_services(
+                self.db.clone(),
+                intervention_step_service,
+                photo_validation_service,
+                intervention_scoring_service,
+                material_consumption_service,
             ),
         );
         let intervention_workflow_service = Arc::new(
