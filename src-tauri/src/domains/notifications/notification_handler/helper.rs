@@ -4,6 +4,7 @@ use crate::db::Database;
 use crate::domains::notifications::models::Notification;
 use crate::shared::repositories::base::Repository;
 use crate::shared::repositories::cache::Cache;
+use crate::shared::services::domain_event::DomainEvent;
 
 use super::notification_repository::NotificationRepository;
 
@@ -65,7 +66,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "InterventionCreated".to_string(),
+            DomainEvent::INTERVENTION_CREATED.to_string(),
             "Nouvelle intervention".to_string(),
             format!("Une intervention a été créée pour la tâche {}", task_id),
             "intervention".to_string(),
@@ -134,7 +135,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "ClientCreated".to_string(),
+            DomainEvent::CLIENT_CREATED.to_string(),
             "Nouveau client ajouté".to_string(),
             format!("Un nouveau client a été ajouté: {}", client_name),
             "client".to_string(),

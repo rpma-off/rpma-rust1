@@ -151,7 +151,7 @@ mod tests {
                 Ok(())
             }
             fn interested_events(&self) -> Vec<&'static str> {
-                vec!["TaskCreated"]
+                vec![DomainEvent::TASK_CREATED]
             }
         }
 

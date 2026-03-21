@@ -24,6 +24,17 @@ impl ActionResult {
             ActionResult::Cancelled => "Cancelled",
         }
     }
+
+    /// Parse from a database string, defaulting to `Failure` for unknown values.
+    pub fn from_str_or_default(s: &str) -> Self {
+        match s {
+            "Success" => ActionResult::Success,
+            "Failure" => ActionResult::Failure,
+            "Partial" => ActionResult::Partial,
+            "Cancelled" => ActionResult::Cancelled,
+            _ => ActionResult::Failure,
+        }
+    }
 }
 
 /// Security event types for comprehensive audit logging
@@ -162,6 +173,68 @@ impl AuditEventType {
             AuditEventType::SettingUpdated => "SettingUpdated",
             AuditEventType::RoleChanged => "RoleChanged",
             AuditEventType::PermissionChanged => "PermissionChanged",
+        }
+    }
+
+    /// Parse from a database string, defaulting to `SystemError` for unknown values.
+    pub fn from_str_or_default(s: &str) -> Self {
+        match s {
+            "AuthenticationSuccess" => AuditEventType::AuthenticationSuccess,
+            "AuthenticationFailure" => AuditEventType::AuthenticationFailure,
+            "AuthorizationGranted" => AuditEventType::AuthorizationGranted,
+            "AuthorizationDenied" => AuditEventType::AuthorizationDenied,
+            "SessionCreated" => AuditEventType::SessionCreated,
+            "SessionExpired" => AuditEventType::SessionExpired,
+            "SessionInvalidated" => AuditEventType::SessionInvalidated,
+            "PasswordChanged" => AuditEventType::PasswordChanged,
+            "PasswordResetRequested" => AuditEventType::PasswordResetRequested,
+            "PasswordResetCompleted" => AuditEventType::PasswordResetCompleted,
+            "DataRead" => AuditEventType::DataRead,
+            "DataCreated" => AuditEventType::DataCreated,
+            "DataUpdated" => AuditEventType::DataUpdated,
+            "DataDeleted" => AuditEventType::DataDeleted,
+            "DataExported" => AuditEventType::DataExported,
+            "DataImported" => AuditEventType::DataImported,
+            "TaskCreated" => AuditEventType::TaskCreated,
+            "TaskUpdated" => AuditEventType::TaskUpdated,
+            "TaskDeleted" => AuditEventType::TaskDeleted,
+            "TaskAssigned" => AuditEventType::TaskAssigned,
+            "TaskCompleted" => AuditEventType::TaskCompleted,
+            "TaskCancelled" => AuditEventType::TaskCancelled,
+            "TaskStatusChanged" => AuditEventType::TaskStatusChanged,
+            "ClientCreated" => AuditEventType::ClientCreated,
+            "ClientUpdated" => AuditEventType::ClientUpdated,
+            "ClientDeleted" => AuditEventType::ClientDeleted,
+            "ClientContactChanged" => AuditEventType::ClientContactChanged,
+            "InterventionCreated" => AuditEventType::InterventionCreated,
+            "InterventionUpdated" => AuditEventType::InterventionUpdated,
+            "InterventionStarted" => AuditEventType::InterventionStarted,
+            "InterventionCompleted" => AuditEventType::InterventionCompleted,
+            "InterventionStepCompleted" => AuditEventType::InterventionStepCompleted,
+            "InterventionWorkflowChanged" => AuditEventType::InterventionWorkflowChanged,
+            "SystemStartup" => AuditEventType::SystemStartup,
+            "SystemShutdown" => AuditEventType::SystemShutdown,
+            "BackupStarted" => AuditEventType::BackupStarted,
+            "BackupCompleted" => AuditEventType::BackupCompleted,
+            "BackupFailed" => AuditEventType::BackupFailed,
+            "MaintenanceStarted" => AuditEventType::MaintenanceStarted,
+            "MaintenanceCompleted" => AuditEventType::MaintenanceCompleted,
+            "SecurityViolation" => AuditEventType::SecurityViolation,
+            "SuspiciousActivity" => AuditEventType::SuspiciousActivity,
+            "RateLimitExceeded" => AuditEventType::RateLimitExceeded,
+            "BruteForceAttempt" => AuditEventType::BruteForceAttempt,
+            "SqlInjectionAttempt" => AuditEventType::SqlInjectionAttempt,
+            "XssAttempt" => AuditEventType::XssAttempt,
+            "PathTraversalAttempt" => AuditEventType::PathTraversalAttempt,
+            "SystemError" => AuditEventType::SystemError,
+            "DatabaseError" => AuditEventType::DatabaseError,
+            "NetworkError" => AuditEventType::NetworkError,
+            "ValidationError" => AuditEventType::ValidationError,
+            "ConfigurationChanged" => AuditEventType::ConfigurationChanged,
+            "SettingUpdated" => AuditEventType::SettingUpdated,
+            "RoleChanged" => AuditEventType::RoleChanged,
+            "PermissionChanged" => AuditEventType::PermissionChanged,
+            _ => AuditEventType::SystemError,
         }
     }
 }

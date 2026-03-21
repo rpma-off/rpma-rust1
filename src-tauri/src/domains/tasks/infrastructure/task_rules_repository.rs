@@ -8,6 +8,7 @@
 use crate::db::{Database, FromSqlRow};
 use crate::domains::tasks::domain::models::task::{Task, TaskPriority, TaskStatus};
 use crate::domains::tasks::infrastructure::task_constants::TASK_QUERY_COLUMNS;
+use crate::shared::contracts::auth::UserRole;
 use rusqlite::params;
 use std::sync::Arc;
 
@@ -171,9 +172,12 @@ impl TaskRulesRepository {
             return Err(format!("Technician {} is not active", technician_id));
         }
 
-        // Check if user has valid role
-        let valid_roles = ["technician", "admin", "manager", "supervisor"];
-        if !valid_roles.contains(&role.as_str()) {
+        // Check if user has valid role for task assignment
+        let can_be_assigned = role
+            .parse::<UserRole>()
+            .map(|r| matches!(r, UserRole::Technician | UserRole::Admin | UserRole::Supervisor))
+            .unwrap_or(false);
+        if !can_be_assigned {
             return Err(format!(
                 "User {} has role '{}' which cannot be assigned to tasks.",
                 technician_id, role

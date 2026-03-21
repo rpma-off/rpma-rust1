@@ -359,43 +359,80 @@ pub enum AlertSeverity {
 }
 
 impl DomainEvent {
+    // Event type name constants — use these instead of hardcoded string literals
+    // when registering handlers or matching event types.
+    pub const TASK_CREATED: &'static str = "TaskCreated";
+    pub const TASK_UPDATED: &'static str = "TaskUpdated";
+    pub const TASK_ASSIGNED: &'static str = "TaskAssigned";
+    pub const TASK_STATUS_CHANGED: &'static str = "TaskStatusChanged";
+    pub const TASK_COMPLETED: &'static str = "TaskCompleted";
+    pub const TASK_DELETED: &'static str = "TaskDeleted";
+    pub const CLIENT_CREATED: &'static str = "ClientCreated";
+    pub const CLIENT_UPDATED: &'static str = "ClientUpdated";
+    pub const CLIENT_DEACTIVATED: &'static str = "ClientDeactivated";
+    pub const INTERVENTION_CREATED: &'static str = "InterventionCreated";
+    pub const INTERVENTION_STARTED: &'static str = "InterventionStarted";
+    pub const INTERVENTION_STEP_STARTED: &'static str = "InterventionStepStarted";
+    pub const INTERVENTION_STEP_COMPLETED: &'static str = "InterventionStepCompleted";
+    pub const INTERVENTION_COMPLETED: &'static str = "InterventionCompleted";
+    pub const INTERVENTION_FINALIZED: &'static str = "InterventionFinalized";
+    pub const INTERVENTION_CANCELLED: &'static str = "InterventionCancelled";
+    pub const MATERIAL_CONSUMED: &'static str = "MaterialConsumed";
+    pub const USER_CREATED: &'static str = "UserCreated";
+    pub const USER_UPDATED: &'static str = "UserUpdated";
+    pub const USER_LOGGED_IN: &'static str = "UserLoggedIn";
+    pub const USER_LOGGED_OUT: &'static str = "UserLoggedOut";
+    pub const AUTHENTICATION_FAILED: &'static str = "AuthenticationFailed";
+    pub const AUTHENTICATION_SUCCESS: &'static str = "AuthenticationSuccess";
+    pub const SYSTEM_ERROR: &'static str = "SystemError";
+    pub const SYSTEM_MAINTENANCE: &'static str = "SystemMaintenance";
+    pub const PERFORMANCE_ALERT: &'static str = "PerformanceAlert";
+    pub const NOTIFICATION_RECEIVED: &'static str = "NotificationReceived";
+    pub const QUOTE_ACCEPTED: &'static str = "QuoteAccepted";
+    pub const QUOTE_REJECTED: &'static str = "QuoteRejected";
+    pub const QUOTE_CONVERTED: &'static str = "QuoteConverted";
+    pub const QUOTE_SHARED: &'static str = "QuoteShared";
+    pub const QUOTE_CUSTOMER_RESPONDED: &'static str = "QuoteCustomerResponded";
+    pub const ENTITY_RESTORED: &'static str = "EntityRestored";
+    pub const ENTITY_HARD_DELETED: &'static str = "EntityHardDeleted";
+
     /// Get the event type name as a string
     pub fn event_type(&self) -> &'static str {
         match self {
-            DomainEvent::TaskCreated { .. } => "TaskCreated",
-            DomainEvent::TaskUpdated { .. } => "TaskUpdated",
-            DomainEvent::TaskAssigned { .. } => "TaskAssigned",
-            DomainEvent::TaskStatusChanged { .. } => "TaskStatusChanged",
-            DomainEvent::TaskCompleted { .. } => "TaskCompleted",
-            DomainEvent::TaskDeleted { .. } => "TaskDeleted",
-            DomainEvent::ClientCreated { .. } => "ClientCreated",
-            DomainEvent::ClientUpdated { .. } => "ClientUpdated",
-            DomainEvent::ClientDeactivated { .. } => "ClientDeactivated",
-            DomainEvent::InterventionCreated { .. } => "InterventionCreated",
-            DomainEvent::InterventionStarted { .. } => "InterventionStarted",
-            DomainEvent::InterventionStepStarted { .. } => "InterventionStepStarted",
-            DomainEvent::InterventionStepCompleted { .. } => "InterventionStepCompleted",
-            DomainEvent::InterventionCompleted { .. } => "InterventionCompleted",
-            DomainEvent::InterventionFinalized { .. } => "InterventionFinalized",
-            DomainEvent::InterventionCancelled { .. } => "InterventionCancelled",
-            DomainEvent::MaterialConsumed { .. } => "MaterialConsumed",
-            DomainEvent::UserCreated { .. } => "UserCreated",
-            DomainEvent::UserUpdated { .. } => "UserUpdated",
-            DomainEvent::UserLoggedIn { .. } => "UserLoggedIn",
-            DomainEvent::UserLoggedOut { .. } => "UserLoggedOut",
-            DomainEvent::AuthenticationFailed { .. } => "AuthenticationFailed",
-            DomainEvent::AuthenticationSuccess { .. } => "AuthenticationSuccess",
-            DomainEvent::SystemError { .. } => "SystemError",
-            DomainEvent::SystemMaintenance { .. } => "SystemMaintenance",
-            DomainEvent::PerformanceAlert { .. } => "PerformanceAlert",
-            DomainEvent::NotificationReceived { .. } => "NotificationReceived",
-            DomainEvent::QuoteAccepted { .. } => "QuoteAccepted",
-            DomainEvent::QuoteRejected { .. } => "QuoteRejected",
-            DomainEvent::QuoteConverted { .. } => "QuoteConverted",
-            DomainEvent::QuoteShared { .. } => "QuoteShared",
-            DomainEvent::QuoteCustomerResponded { .. } => "QuoteCustomerResponded",
-            DomainEvent::EntityRestored { .. } => "EntityRestored",
-            DomainEvent::EntityHardDeleted { .. } => "EntityHardDeleted",
+            DomainEvent::TaskCreated { .. } => Self::TASK_CREATED,
+            DomainEvent::TaskUpdated { .. } => Self::TASK_UPDATED,
+            DomainEvent::TaskAssigned { .. } => Self::TASK_ASSIGNED,
+            DomainEvent::TaskStatusChanged { .. } => Self::TASK_STATUS_CHANGED,
+            DomainEvent::TaskCompleted { .. } => Self::TASK_COMPLETED,
+            DomainEvent::TaskDeleted { .. } => Self::TASK_DELETED,
+            DomainEvent::ClientCreated { .. } => Self::CLIENT_CREATED,
+            DomainEvent::ClientUpdated { .. } => Self::CLIENT_UPDATED,
+            DomainEvent::ClientDeactivated { .. } => Self::CLIENT_DEACTIVATED,
+            DomainEvent::InterventionCreated { .. } => Self::INTERVENTION_CREATED,
+            DomainEvent::InterventionStarted { .. } => Self::INTERVENTION_STARTED,
+            DomainEvent::InterventionStepStarted { .. } => Self::INTERVENTION_STEP_STARTED,
+            DomainEvent::InterventionStepCompleted { .. } => Self::INTERVENTION_STEP_COMPLETED,
+            DomainEvent::InterventionCompleted { .. } => Self::INTERVENTION_COMPLETED,
+            DomainEvent::InterventionFinalized { .. } => Self::INTERVENTION_FINALIZED,
+            DomainEvent::InterventionCancelled { .. } => Self::INTERVENTION_CANCELLED,
+            DomainEvent::MaterialConsumed { .. } => Self::MATERIAL_CONSUMED,
+            DomainEvent::UserCreated { .. } => Self::USER_CREATED,
+            DomainEvent::UserUpdated { .. } => Self::USER_UPDATED,
+            DomainEvent::UserLoggedIn { .. } => Self::USER_LOGGED_IN,
+            DomainEvent::UserLoggedOut { .. } => Self::USER_LOGGED_OUT,
+            DomainEvent::AuthenticationFailed { .. } => Self::AUTHENTICATION_FAILED,
+            DomainEvent::AuthenticationSuccess { .. } => Self::AUTHENTICATION_SUCCESS,
+            DomainEvent::SystemError { .. } => Self::SYSTEM_ERROR,
+            DomainEvent::SystemMaintenance { .. } => Self::SYSTEM_MAINTENANCE,
+            DomainEvent::PerformanceAlert { .. } => Self::PERFORMANCE_ALERT,
+            DomainEvent::NotificationReceived { .. } => Self::NOTIFICATION_RECEIVED,
+            DomainEvent::QuoteAccepted { .. } => Self::QUOTE_ACCEPTED,
+            DomainEvent::QuoteRejected { .. } => Self::QUOTE_REJECTED,
+            DomainEvent::QuoteConverted { .. } => Self::QUOTE_CONVERTED,
+            DomainEvent::QuoteShared { .. } => Self::QUOTE_SHARED,
+            DomainEvent::QuoteCustomerResponded { .. } => Self::QUOTE_CUSTOMER_RESPONDED,
+            DomainEvent::EntityRestored { .. } => Self::ENTITY_RESTORED,
+            DomainEvent::EntityHardDeleted { .. } => Self::ENTITY_HARD_DELETED,
         }
     }
 
