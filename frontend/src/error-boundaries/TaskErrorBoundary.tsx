@@ -115,7 +115,7 @@ const DefaultTaskErrorFallback: React.FC<TaskErrorFallbackProps> = ({
             <ul className="list-disc list-inside mt-1 text-left">
               <li>Vérifiez si la tâche existe dans la liste des tâches</li>
               <li>Vérifiez vos permissions avec votre administrateur</li>
-              <li>Contactez le support avec l'ID de la tâche ci-dessus</li>
+              <li>Contactez le support avec l&apos;ID de la tâche ci-dessus</li>
             </ul>
           </div>
         </div>

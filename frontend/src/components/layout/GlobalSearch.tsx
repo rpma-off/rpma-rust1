@@ -93,7 +93,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
         )}
         
         {!isLoading && query.length >= 2 && results.length === 0 && (
-          <CommandEmpty>Aucun résultat trouvé pour "{query}".</CommandEmpty>
+          <CommandEmpty>Aucun résultat trouvé pour &quot;{query}&quot;.</CommandEmpty>
         )}
 
         {!isLoading && query.length < 2 && (

@@ -249,7 +249,7 @@ export function AdminUsersTab({
             {tempPassword && (
               <div className="space-y-2">
                 <p className="text-xs text-amber-600 font-medium">
-                  ⚠ Ce mot de passe temporaire ne sera affiché qu'une seule fois.
+                  ⚠ Ce mot de passe temporaire ne sera affiché qu&apos;une seule fois.
                 </p>
                 <div className="flex items-center gap-2 p-3 bg-muted rounded-md font-mono text-sm">
                   <span className="flex-1 select-all">{tempPassword}</span>
@@ -262,7 +262,7 @@ export function AdminUsersTab({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Transmettez ce mot de passe à l'utilisateur de manière sécurisée.
+                  Transmettez ce mot de passe à l&apos;utilisateur de manière sécurisée.
                 </p>
               </div>
             )}
