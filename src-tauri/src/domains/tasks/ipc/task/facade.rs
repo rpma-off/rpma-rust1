@@ -11,8 +11,14 @@ use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::application::services::task_command_service::TaskCommandService;
 use crate::domains::tasks::application::services::task_policy_service;
-use crate::domains::tasks::domain::models::task::Task;
-use crate::domains::tasks::ipc::task::queries::{get_task_statistics, get_tasks_with_clients};
+use crate::domains::tasks::domain::models::task::{
+    CreateTaskRequest, Task, TaskListResponse, UpdateTaskRequest,
+};
+use crate::domains::tasks::ipc::task::queries::{
+    get_task_statistics, get_tasks_with_clients, GetTaskStatisticsRequest,
+    GetTasksWithClientsRequest,
+};
+use crate::domains::tasks::ipc::task_types::TaskFilter;
 use crate::resolve_context;
 use tracing::{debug, info};
 
@@ -331,13 +337,112 @@ async fn handle_crud_statistics(
     }
 }
 
-/// Task CRUD command handler
-/// ADR-018: Thin IPC layer — single IPC entry point, delegates internally to
-/// private `handle_crud_*` helper functions.
+// ── Individual thin handlers (ADR-018) ────────────────────────────────────────
+
+/// Create a new task.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_create(
+    data: CreateTaskRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Task>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "create");
+    let task = cmd_service(&state).create_task(&ctx, data).await?;
+    Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Get a single task by ID.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_get(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Option<Task>>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    let task = cmd_service(&state).get_task(&id).await?;
+    Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Update an existing task.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_update(
+    id: String,
+    data: UpdateTaskRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Task>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "update");
+    let task = cmd_service(&state).update_task_crud(&ctx, &id, data).await?;
+    Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Delete a task by ID.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_delete(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<()>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    check_task_permission!(&ctx.auth.role, "delete");
+    cmd_service(&state).delete_task(&ctx, &id).await?;
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// List tasks with optional filters and pagination.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_list(
+    filter: Option<TaskFilter>,
+    page: Option<u32>,
+    limit: Option<u32>,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<TaskListResponse>, AppError> {
+    let request = GetTasksWithClientsRequest {
+        filter,
+        page,
+        limit,
+        correlation_id,
+    };
+    get_tasks_with_clients(request, state).await
+}
+
+/// Get aggregated task statistics.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tracing::instrument(skip(state))]
+#[tauri::command]
+pub async fn task_statistics(
+    filter: Option<TaskFilter>,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<crate::domains::tasks::infrastructure::task_statistics::TaskStatistics>, AppError>
+{
+    let request = GetTaskStatisticsRequest {
+        filter,
+        correlation_id,
+    };
+    get_task_statistics(request, state).await
+}
+
+// ── Deprecated unified handler ────────────────────────────────────────────────
+
+/// **Deprecated** — use the individual `task_create`, `task_get`, `task_update`,
+/// `task_delete`, `task_list`, `task_statistics` commands instead.
 ///
-/// Each action variant is handled by a dedicated `handle_crud_*` helper,
-/// keeping this dispatcher under 25 lines and allowing individual actions
-/// to be read, tested, and extended independently.
+/// Kept as a shim so existing frontend code continues to work during migration.
+#[deprecated(note = "Use individual task_create/task_get/task_update/task_delete/task_list/task_statistics commands")]
 #[tracing::instrument(skip(state))]
 #[tauri::command]
 pub async fn task_crud(
@@ -348,7 +453,7 @@ pub async fn task_crud(
     let correlation_id = request.correlation_id.clone();
     info!(
         correlation_id = %correlation_id.as_deref().unwrap_or("none"),
-        "task_crud command received - action: {:?}",
+        "task_crud command received (deprecated) - action: {:?}",
         action
     );
 

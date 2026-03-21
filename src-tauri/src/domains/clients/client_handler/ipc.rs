@@ -100,10 +100,283 @@ pub(crate) fn client_into_client_with_tasks(client: Client, tasks: Vec<Task>) ->
     }
 }
 
-// ── IPC Command ───────────────────────────────────────────────────────────────
+// ── Individual thin handlers (ADR-018) ────────────────────────────────────────
 
-/// Client CRUD operations
-/// ADR-018: Thin IPC layer
+/// Shared preamble: rate-limit check + RBAC permission check.
+fn check_client_access(
+    state: &AppState<'_>,
+    user_id: &str,
+    role: &crate::shared::contracts::auth::UserRole,
+    permission: &str,
+) -> Result<(), AppError> {
+    let rate_limiter = state.auth_service.rate_limiter();
+    let rate_limit_key = format!("client_ops:{}", user_id);
+    if !rate_limiter
+        .check_and_record(&rate_limit_key, 100, 60)
+        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
+    {
+        return Err(AppError::Validation(
+            "Rate limit exceeded. Please try again later.".to_string(),
+        ));
+    }
+    if !crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(role, permission)
+    {
+        return Err(AppError::Authorization(format!(
+            "Insufficient permissions to {} clients",
+            permission
+        )));
+    }
+    Ok(())
+}
+
+/// Create a new client.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_create(
+    data: CreateClientRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Client>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "create")?;
+    let sanitized =
+        super::validation::sanitize_create_request(data)?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    let client = facade
+        .client_service()
+        .create_client_async(sanitized, ctx.user_id())
+        .await
+        .map_err(|e| facade.map_service_error("create_client", &e))?;
+    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Get a single client by ID.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_get(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Option<Client>>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    facade.validate_client_id(&id)?;
+    let client = facade
+        .client_service()
+        .get_client_async(&id)
+        .await
+        .map_err(|e| facade.map_service_error("get_client", &e))?;
+    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Get a single client with its associated tasks.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_get_with_tasks(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Option<ClientWithTasks>>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    facade.validate_client_id(&id)?;
+    let client = facade
+        .client_service()
+        .get_client_async(&id)
+        .await
+        .map_err(|e| facade.map_service_error("get_client", &e))?;
+    match client {
+        Some(client) => {
+            let task_query = TaskQuery {
+                client_id: Some(id.to_string()),
+                page: Some(1),
+                limit: Some(1000),
+                status: None,
+                technician_id: None,
+                priority: None,
+                search: None,
+                from_date: None,
+                to_date: None,
+                sort_by: "created_at".to_string(),
+                sort_order: SortOrder::Desc,
+            };
+            let tasks_response = state
+                .task_service
+                .get_tasks_async(task_query)
+                .await
+                .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+            let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
+            let client_with_tasks = client_into_client_with_tasks(client, tasks);
+            Ok(ApiResponse::success(Some(client_with_tasks))
+                .with_correlation_id(Some(ctx.correlation_id.clone())))
+        }
+        None => Ok(ApiResponse::success(None).with_correlation_id(Some(ctx.correlation_id.clone()))),
+    }
+}
+
+/// Update an existing client.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_update(
+    id: String,
+    data: UpdateClientRequest,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Client>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "update")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    facade.validate_client_id(&id)?;
+    let sanitized =
+        super::validation::sanitize_update_request(id, data)?;
+    let client = facade
+        .client_service()
+        .update_client_async(sanitized, ctx.user_id())
+        .await
+        .map_err(|e| facade.map_service_error("update_client", &e))?;
+    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Delete a client by ID.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_delete(
+    id: String,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<()>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "delete")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    facade.validate_client_id(&id)?;
+    facade
+        .client_service()
+        .delete_client_async(&id, ctx.user_id())
+        .await
+        .map_err(|e| facade.map_service_error("delete_client", &e))?;
+    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// List clients with optional filters and pagination.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_list(
+    filters: ClientQuery,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<super::ClientListResponse>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    let clients = facade
+        .client_service()
+        .get_clients_async(filters)
+        .await
+        .map_err(|e| facade.map_service_error("list_clients", &e))?;
+    Ok(ApiResponse::success(clients).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// List clients with their associated tasks.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_list_with_tasks(
+    filters: ClientQuery,
+    limit_tasks: Option<i32>,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Vec<ClientWithTasks>>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    let clients = facade
+        .client_service()
+        .get_clients_async(filters)
+        .await
+        .map_err(|e| facade.map_service_error("list_clients", &e))?;
+    let task_limit = limit_tasks.unwrap_or(5);
+    let mut clients_with_tasks = Vec::new();
+    for client in clients.data {
+        let task_query = TaskQuery {
+            client_id: Some(client.id.clone()),
+            page: Some(1),
+            limit: Some(task_limit),
+            status: None,
+            technician_id: None,
+            priority: None,
+            search: None,
+            from_date: None,
+            to_date: None,
+            sort_by: "created_at".to_string(),
+            sort_order: SortOrder::Desc,
+        };
+        let tasks_response = state
+            .task_service
+            .get_tasks_async(task_query)
+            .await
+            .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+        let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
+        clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
+    }
+    Ok(ApiResponse::success(clients_with_tasks).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Search clients by query string.
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_search(
+    query: String,
+    limit: i32,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Vec<Client>>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    let clients = facade
+        .client_service()
+        .search_clients_async(&query, 1, limit)
+        .await
+        .map_err(|e| facade.map_service_error("search_clients", &e))?;
+    Ok(ApiResponse::success(clients).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+/// Get client statistics (counts by type, etc.).
+/// ADR-018: resolve_context → delegate to service → return.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn client_get_stats(
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<super::ClientStats>, AppError> {
+    let ctx = crate::resolve_context!(&state, &correlation_id);
+    check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
+    let facade = ClientsFacade::new(state.client_service.clone());
+    let stats = facade
+        .client_service()
+        .get_client_stats_async()
+        .await
+        .map_err(|e| facade.map_service_error("get_client_stats", &e))?;
+    Ok(ApiResponse::success(stats).with_correlation_id(Some(ctx.correlation_id.clone())))
+}
+
+// ── Deprecated unified handler ────────────────────────────────────────────────
+
+/// **Deprecated** — use the individual `client_create`, `client_get`, `client_update`,
+/// `client_delete`, `client_list`, `client_search`, `client_get_stats`,
+/// `client_get_with_tasks`, `client_list_with_tasks` commands instead.
+///
+/// Kept as a shim so existing frontend code continues to work during migration.
+#[deprecated(note = "Use individual client_create/client_get/client_update/client_delete/client_list/client_search/client_get_stats commands")]
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn client_crud(

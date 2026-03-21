@@ -16,6 +16,12 @@ export const IPC_COMMANDS = {
 
   // Task commands
   TASK_CRUD: 'task_crud',
+  TASK_CREATE: 'task_create',
+  TASK_GET: 'task_get',
+  TASK_UPDATE: 'task_update',
+  TASK_DELETE: 'task_delete',
+  TASK_LIST: 'task_list',
+  TASK_STATISTICS: 'task_statistics',
   CHECK_TASK_ASSIGNMENT: 'check_task_assignment',
   CHECK_TASK_AVAILABILITY: 'check_task_availability',
   GET_TASK_HISTORY: 'get_task_history',
@@ -32,6 +38,15 @@ export const IPC_COMMANDS = {
 
   // Client commands
   CLIENT_CRUD: 'client_crud',
+  CLIENT_CREATE: 'client_create',
+  CLIENT_GET: 'client_get',
+  CLIENT_GET_WITH_TASKS: 'client_get_with_tasks',
+  CLIENT_UPDATE: 'client_update',
+  CLIENT_DELETE: 'client_delete',
+  CLIENT_LIST: 'client_list',
+  CLIENT_LIST_WITH_TASKS: 'client_list_with_tasks',
+  CLIENT_SEARCH: 'client_search',
+  CLIENT_GET_STATS: 'client_get_stats',
 
   // Inventory/Material commands
   MATERIAL_LIST: 'material_list',
