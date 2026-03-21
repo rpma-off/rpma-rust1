@@ -41,37 +41,37 @@ export const ipcClient = {
   },
   clients: {
     create: (data: JsonObject) =>
-      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Create', data } } }),
+      mockSafeInvoke<Client>('client_create', { data }),
     get: (id: string) =>
-      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'Get', id } } }),
+      mockSafeInvoke<Client | null>('client_get', { id }),
     getWithTasks: (id: string) =>
-      mockSafeInvoke<Client | null>('client_crud', { request: { action: { action: 'GetWithTasks', id } } }),
+      mockSafeInvoke<Client | null>('client_get_with_tasks', { id }),
     search: (query: string, limit: number) =>
-      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'Search', query, limit } } }),
+      mockSafeInvoke<Client[]>('client_search', { query, limit }),
     list: (filters: JsonObject) =>
-      mockSafeInvoke<ClientListResponse>('client_crud', { request: { action: { action: 'List', filters } } }),
+      mockSafeInvoke<ClientListResponse>('client_list', { filters }),
     listWithTasks: (filters: JsonObject, limitTasks: number) =>
-      mockSafeInvoke<Client[]>('client_crud', { request: { action: { action: 'ListWithTasks', filters, limit_tasks: limitTasks } } }),
+      mockSafeInvoke<Client[]>('client_list_with_tasks', { filters, limit_tasks: limitTasks }),
     stats: () =>
-      mockSafeInvoke<ClientStatistics>('client_crud', { request: { action: { action: 'Stats' } } }),
+      mockSafeInvoke<ClientStatistics>('client_get_stats', {}),
     update: (id: string, data: JsonObject) =>
-      mockSafeInvoke<Client>('client_crud', { request: { action: { action: 'Update', id, data } } }),
+      mockSafeInvoke<Client>('client_update', { id, data }),
     delete: (id: string) =>
-      mockSafeInvoke<void>('client_crud', { request: { action: { action: 'Delete', id } } })
+      mockSafeInvoke<void>('client_delete', { id })
   },
   tasks: {
     create: (data: JsonObject) =>
-      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Create', data } } }),
+      mockSafeInvoke<Task>('task_create', { data }),
     get: (id: string) =>
-      mockSafeInvoke<Task | null>('task_crud', { request: { action: { action: 'Get', id } } }),
+      mockSafeInvoke<Task | null>('task_get', { id }),
     update: (id: string, data: JsonObject) =>
-      mockSafeInvoke<Task>('task_crud', { request: { action: { action: 'Update', id, data } } }),
+      mockSafeInvoke<Task>('task_update', { id, data }),
     list: (filters: JsonObject) =>
-      mockSafeInvoke<TaskListResponse>('task_crud', { request: { action: { action: 'List', filters } } }),
+      mockSafeInvoke<TaskListResponse>('task_list', { filter: filters }),
     delete: (id: string) =>
-      mockSafeInvoke<void>('task_crud', { request: { action: { action: 'Delete', id } } }),
+      mockSafeInvoke<void>('task_delete', { id }),
     statistics: () =>
-      mockSafeInvoke<TaskStatistics>('task_crud', { request: { action: { action: 'GetStatistics' } } }),
+      mockSafeInvoke<TaskStatistics>('task_statistics', {}),
     checkTaskAssignment: (_taskId: string, _userId: string) => mockSafeInvoke('check_task_assignment'),
     checkTaskAvailability: (_taskId: string) => mockSafeInvoke('check_task_availability'),
     validateTaskAssignmentChange: (_taskId: string, _oldUserId: string | null, _newUserId: string) => mockSafeInvoke('validate_task_assignment_change'),
