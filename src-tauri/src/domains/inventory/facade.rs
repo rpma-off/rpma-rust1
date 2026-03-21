@@ -114,7 +114,7 @@ impl InventoryFacade {
     pub fn revert_intervention_consumptions(
         &self,
         intervention_id: &str,
-    ) -> Result<(), AppError> {
+    ) -> Result<usize, AppError> {
         self.service
             .revert_intervention_consumptions(intervention_id)
             .map_err(|err| map_inventory_error("revert_intervention_consumptions", err))

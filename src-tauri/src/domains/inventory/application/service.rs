@@ -228,7 +228,7 @@ impl InventoryService {
     pub fn revert_intervention_consumptions(
         &self,
         intervention_id: &str,
-    ) -> InventoryResult<()> {
+    ) -> InventoryResult<usize> {
         self.transaction_repository
             .revert_intervention_consumptions(intervention_id)
             .map_err(InventoryError::Database)
