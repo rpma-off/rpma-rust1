@@ -13,7 +13,7 @@ import {
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { invoke } from '@tauri-apps/api/core';
 import { GlobalSearchResponse, GlobalSearchResult } from '@/lib/backend';
-import { Search, User, ClipboardList, Package, FileText, Loader2 } from 'lucide-react';
+import { User, ClipboardList, Package, FileText, Loader2 } from 'lucide-react';
 import { ApiResponse } from '@/types/api';
 
 interface GlobalSearchProps {
