@@ -14,7 +14,7 @@ use crate::resolve_context;
 
 /// Construct a per-request [`QuoteExportService`] from shared application state.
 fn export_service(state: &AppState<'_>) -> QuoteExportService {
-    QuoteExportService::new(state.quote_service.clone(), state.app_data_dir.clone())
+    QuoteExportService::new(state.quote_service.clone(), state.app_config.app_data_dir.clone())
 }
 
 /// Export a quote to PDF.

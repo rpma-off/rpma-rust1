@@ -204,7 +204,7 @@ pub async fn report_generate(
         &format!("report_{}", report_number.replace('-', "_")),
         "pdf",
     );
-    let output_path = DocumentStorageService::get_document_path(&state.app_data_dir, &file_name);
+    let output_path = DocumentStorageService::get_document_path(&state.app_config.app_data_dir, &file_name);
 
     let pdf_report = InterventionPdfReport::new(
         intervention_data.intervention.clone(),

@@ -9,6 +9,16 @@ use crate::infrastructure::auth::session_store::SessionStore;
 use std::sync::Arc;
 use tauri::State;
 
+/// Immutable application-wide configuration values.
+///
+/// Wrapping config in `Arc<AppConfig>` keeps `AppStateType` uniform —
+/// every field is an `Arc<…>` — and makes the data cheaply cloneable
+/// across service constructors without copying paths.
+#[derive(Debug)]
+pub struct AppConfig {
+    pub app_data_dir: std::path::PathBuf,
+}
+
 /// App state containing database and long-lived services.
 pub struct AppStateType {
     pub db: Arc<Database>,
@@ -34,7 +44,7 @@ pub struct AppStateType {
     pub user_service: Arc<UserService>,
     pub cache_service: Arc<crate::shared::services::cache::CacheService>,
     pub event_bus: Arc<crate::shared::services::event_bus::InMemoryEventBus>,
-    pub app_data_dir: std::path::PathBuf,
+    pub app_config: Arc<AppConfig>,
     pub trash_service:
         Arc<crate::domains::trash::application::services::trash_service::TrashService>,
     pub global_search_service: Arc<crate::shared::services::global_search::GlobalSearchService>,

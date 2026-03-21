@@ -55,7 +55,7 @@
 use crate::db::Database;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::infrastructure::auth::session_store::SessionStore;
-use crate::shared::app_state::AppStateType;
+use crate::shared::app_state::{AppConfig, AppStateType};
 use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::shared::logging::audit_log_handler::AuditLogHandler;
 use crate::shared::logging::audit_service::AuditService;
@@ -424,7 +424,9 @@ impl ServiceBuilder {
             user_service,
             cache_service,
             event_bus,
-            app_data_dir: self.app_data_dir,
+            app_config: Arc::new(AppConfig {
+                app_data_dir: self.app_data_dir,
+            }),
             trash_service,
             global_search_service,
         })

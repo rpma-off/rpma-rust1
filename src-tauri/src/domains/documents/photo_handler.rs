@@ -1080,7 +1080,7 @@ fn get_services(state: &AppState<'_>) -> DocumentsServices {
         db: state.db.clone(),
         intervention_service: state.intervention_service.clone(),
         client_service: state.client_service.clone(),
-        app_data_dir: state.app_data_dir.clone(),
+        app_data_dir: state.app_config.app_data_dir.clone(),
     }
 }
 
