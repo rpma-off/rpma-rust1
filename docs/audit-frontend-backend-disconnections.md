@@ -392,24 +392,24 @@ Math.floor(Math.random() * 1000).toString()
 | # | Catégorie | Fichier | Sévérité | Effort |
 |---|-----------|---------|----------|--------|
 | A-1 | IPC mort | `admin/ipc/admin.ipc.ts` | Faible | Bas |
-| A-2 | IPC mort | `admin/ipc/audit.ipc.ts` | Moyenne | Moyen |
+| A-2 | IPC mort | `admin/ipc/audit.ipc.ts` | Moyenne | Moyen | ✅ CORRIGÉ — `resolveAlert`, `cleanupEvents` supprimés |
 | A-3 | IPC mort | `admin/ipc/organization.ipc.ts` | Haute | Haut |
-| A-4 | IPC dupliqué | `calendar/ipc/calendar.ipc.ts` | Faible | Bas |
-| A-5 | IPC mort | `inventory/ipc/material.ipc.ts` | Faible | Bas |
-| A-6 | IPC mort | `notifications/ipc/notifications.ipc.ts` | Moyenne | Moyen |
-| A-7 | IPC mort | `users/ipc/users.ipc.ts` | **Critique** | Haut |
-| A-8 | IPC mort | `tasks/ipc/task.ipc.ts` | Moyenne | Moyen |
-| A-9 | IPC mort | `quotes/ipc/quotes.ipc.ts` | Moyenne | Bas |
-| A-10 | Stubs vides | `performance/api/performanceProvider.tsx` | Faible | Moyen |
-| B-1 | localStorage | `tasks/components/TaskForm/useTaskForm.ts` | Haute | Moyen |
-| B-2 | localStorage | `tasks/components/TaskDetail/PoseDetail.tsx` | **Critique** | Haut |
+| A-4 | IPC dupliqué | `calendar/ipc/calendar.ipc.ts` | Faible | Bas | ✅ CORRIGÉ — `calendar.ipc.ts` supprimé (session précédente) |
+| A-5 | IPC mort | `inventory/ipc/material.ipc.ts` | Faible | Bas | ℹ️ Conservé — utilisé dans les server operations et tests contrat |
+| A-6 | IPC mort | `notifications/ipc/notifications.ipc.ts` | Moyenne | Moyen | ℹ️ Faux positif — `initialize`/`send`/`getStatus` utilisés dans `notifications.service.ts` |
+| A-7 | IPC mort | `users/ipc/users.ipc.ts` | **Critique** | Haut | ℹ️ Faux positif — 9 méthodes actives via `ipcClient.users` dans `useAdminUserManagement` |
+| A-8 | IPC mort | `tasks/ipc/task.ipc.ts` | Moyenne | Moyen | ✅ CORRIGÉ — `validateTaskAssignmentChange` supprimé du wrapper TS (cmd Rust conservée) |
+| A-9 | IPC mort | `quotes/ipc/quotes.ipc.ts` | Moyenne | Bas | ✅ CORRIGÉ — `openAttachment` supprimé |
+| A-10 | Stubs vides | `performance/api/performanceProvider.tsx` | Faible | Moyen | ℹ️ Provider non monté dans l'arbre React — aucun impact runtime |
+| B-1 | localStorage | `tasks/components/TaskForm/useTaskForm.ts` | Haute | Moyen | ✅ CORRIGÉ — draft persisté via `task_drafts` SQLite (migration 062, 3 cmds Tauri) |
+| B-2 | localStorage | `tasks/components/TaskDetail/PoseDetail.tsx` | **Critique** | Haut | ✅ CORRIGÉ — `task_checklist_items` SQLite via `useTaskChecklist` (session précédente) |
 | B-3 | localStorage | `calendar/stores/calendarStore.ts` | Moyenne | Bas |
-| C-1 | Placeholder | `quotes/hooks/useQuotesPage.ts` | **Critique** | Moyen |
+| C-1 | Placeholder | `quotes/hooks/useQuotesPage.ts` | **Critique** | Moyen | ✅ CORRIGÉ — `duplicate`/`exportPdf`/`delete` branchés (session précédente) |
 | C-2 | Placeholder | `reports/api/ReportsProvider.tsx` | Haute | Haut |
-| D-1 | Calcul client | `quotes/hooks/useQuotesPage.ts` | Haute | Moyen |
+| D-1 | Calcul client | `quotes/hooks/useQuotesPage.ts` | Haute | Moyen | ✅ CORRIGÉ — `get_quote_stats` backend + `QuoteStats` type (session précédente) |
 | E-1 | Polling lent | `notifications/hooks/useNotificationUpdates.ts` | Haute | Haut |
 | E-2 | localStorage | `lib/logger.ts` | Faible | Bas |
-| E-3 | ID client | `tasks/utils/number-generator.ts` | Haute | Bas |
+| E-3 | ID client | `tasks/utils/number-generator.ts` | Haute | Bas | ✅ CORRIGÉ — `useTaskForm` utilise déjà `task_number: null` (backend génère) |
 
 ### Légende sévérité
 - **Critique** : Donnée perdue ou fonctionnalité visible non opérationnelle
@@ -421,22 +421,22 @@ Math.floor(Math.random() * 1000).toString()
 
 ## Recommandations par priorité
 
-### Priorité 1 — Correctif immédiat (Critique)
+### Priorité 1 — Correctif immédiat (Critique) — TERMINÉ ✅
 
-1. **A-7 / Users CRUD** : Identifier quel chemin IPC les composants utilisateurs empruntent réellement et supprimer les 9 méthodes orphelines ou les brancher.
-2. **B-2 / Checklist localStorage** : Exposer `update_checklist_item` en Tauri command et remplacer le localStorage.
-3. **C-1 / Devis CRUD** : Brancher `quotesIpc.duplicate` et `quotesIpc.exportPdf` dans les handlers de `useQuotesPage.ts`.
+1. ~~**A-7 / Users CRUD**~~ — Faux positif : actif via `ipcClient.users`.
+2. ~~**B-2 / Checklist localStorage**~~ — Corrigé : `task_checklist_items` SQLite.
+3. ~~**C-1 / Devis CRUD**~~ — Corrigé : handlers branchés.
 
 ### Priorité 2 — Correction lors du prochain sprint
 
 4. **A-3 / Organization IPC** : Créer un formulaire "Profil entreprise" ou supprimer `organizationIpc`.
-5. **B-1 / Task drafts** : Implémenter `save_task_draft` / `get_task_draft` côté Tauri.
-6. **D-1 / Quote analytics** : Ajouter une commande `get_quote_stats` pour les agrégats.
-7. **E-3 / Task number** : Générer le numéro séquentiel côté backend dans `create_task`.
+5. ~~**B-1 / Task drafts**~~ — Corrigé : migration 062 + 3 cmds Tauri (`task_draft_save/get/delete`).
+6. ~~**D-1 / Quote analytics**~~ — Corrigé : `get_quote_stats` backend.
+7. ~~**E-3 / Task number**~~ — Corrigé : `useTaskForm` délègue déjà au backend.
 
 ### Priorité 3 — Dette technique
 
-8. **A-4 / Calendar IPC doublon** : Supprimer `calendar.ipc.ts`, garder `calendar.ts`.
+8. ~~**A-4 / Calendar IPC doublon**~~ — Corrigé : `calendar.ipc.ts` supprimé.
 9. **A-10 / Performance stubs** : Soit réimplémenter le monitoring, soit supprimer le Provider et tous ses consumers.
 10. **C-2 / Reports domain** : Implémenter ou retirer le domaine entier.
 11. **E-1 / Notifications polling** : Migrer vers `tauri::event::listen` pour les notifications temps réel.

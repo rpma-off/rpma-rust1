@@ -74,7 +74,6 @@ export const ipcClient = {
       mockSafeInvoke<TaskStatistics>('task_statistics', {}),
     checkTaskAssignment: (_taskId: string, _userId: string) => mockSafeInvoke('check_task_assignment'),
     checkTaskAvailability: (_taskId: string) => mockSafeInvoke('check_task_availability'),
-    validateTaskAssignmentChange: (_taskId: string, _oldUserId: string | null, _newUserId: string) => mockSafeInvoke('validate_task_assignment_change'),
     editTask: (taskId: string, updates: JsonObject) =>
       mockSafeInvoke<Task>('edit_task', { request: { task_id: taskId, data: updates } }),
     addTaskNote: (taskId: string, note: string) => mockSafeInvoke('add_task_note', { request: { task_id: taskId, note } }),
@@ -218,8 +217,6 @@ export const ipcClient = {
     getEvents: (limit: number) => mockSafeInvoke('get_security_events', { limit }),
     getAlerts: () => mockSafeInvoke('get_security_alerts', {}),
     acknowledgeAlert: (alertId: string) => mockSafeInvoke('acknowledge_security_alert', { alert_id: alertId }),
-    resolveAlert: (alertId: string, actionsTaken: string[]) => mockSafeInvoke('resolve_security_alert', { alert_id: alertId, actions_taken: actionsTaken }),
-    cleanupEvents: () => mockSafeInvoke('cleanup_security_events', {}),
   },
   calendar: {
     getEvents: (startDate: string, endDate: string, technicianId?: string) => mockSafeInvoke('get_events', { start_date: startDate, end_date: endDate, technician_id: technicianId }),

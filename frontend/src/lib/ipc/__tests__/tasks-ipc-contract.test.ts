@@ -213,17 +213,6 @@ describe('taskOperations IPC contract tests', () => {
       });
     });
 
-    it('calls safeInvoke with correct parameters for validateTaskAssignmentChange', async () => {
-      await taskOperations.validateTaskAssignmentChange('task-123', 'old-user', 'new-user');
-
-      expect(safeInvoke).toHaveBeenCalledWith('validate_task_assignment_change', {
-        request: {
-          task_id: 'task-123',
-          old_user_id: 'old-user',
-          new_user_id: 'new-user'
-        }
-      });
-    });
 
     it('calls safeInvoke and extractAndValidate for editTask', async () => {
       const updates = { title: 'Updated Task' };

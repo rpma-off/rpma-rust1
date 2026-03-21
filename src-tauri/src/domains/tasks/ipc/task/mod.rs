@@ -6,6 +6,7 @@
 // Refactored task command modules
 pub mod checklist;
 pub mod client_integration;
+pub mod draft;
 pub mod facade;
 pub mod history;
 pub mod queries;
@@ -16,6 +17,8 @@ pub mod validation;
 // Re-export the main facade for backward compatibility
 #[allow(unused_imports)]
 pub use checklist::*;
+#[allow(unused_imports)]
+pub use draft::*;
 #[allow(unused_imports)]
 pub use facade::*;
 #[allow(unused_imports)]

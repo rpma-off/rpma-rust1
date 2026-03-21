@@ -16,30 +16,27 @@ import {
   createValidationResult
 } from '@/lib/utils/validation-utils';
 import { TaskFormData, FormStep } from './types';
+import { taskIpc } from '../../ipc/task.ipc';
 
 const logger = createLogger('useTaskForm');
 
 export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>) => {
-  const getDraftStorageKey = useCallback(() => `task-form-draft:${userId || 'anonymous'}`, [userId]);
-
-  const saveDraftToStorage = useCallback((data: TaskFormData, lastSaved: string) => {
-    if (typeof window === 'undefined') return;
+  const saveDraftToStorage = useCallback(async (data: TaskFormData, lastSaved: string) => {
     try {
       const payload = { data, lastSaved };
-      window.localStorage.setItem(getDraftStorageKey(), JSON.stringify(payload));
+      await taskIpc.draftSave(JSON.stringify(payload));
     } catch (error) {
-      logger.warn('Failed to save task draft to storage', error);
+      logger.warn('Failed to save task draft to backend', error);
     }
-  }, [getDraftStorageKey]);
+  }, []);
 
-  const clearDraftFromStorage = useCallback(() => {
-    if (typeof window === 'undefined') return;
+  const clearDraftFromStorage = useCallback(async () => {
     try {
-      window.localStorage.removeItem(getDraftStorageKey());
+      await taskIpc.draftDelete();
     } catch (error) {
-      logger.warn('Failed to clear task draft from storage', error);
+      logger.warn('Failed to clear task draft from backend', error);
     }
-  }, [getDraftStorageKey]);
+  }, []);
 
   const [formData, setFormData] = useState<TaskFormData>(() => ({
     // Core fields
@@ -322,7 +319,7 @@ export const useTaskForm = (userId?: string, initialData?: Partial<TaskFormData>
     try {
       setLoading(true);
       const now = new Date();
-      saveDraftToStorage(
+      await saveDraftToStorage(
         {
           ...formData,
           updated_at: now.toISOString()

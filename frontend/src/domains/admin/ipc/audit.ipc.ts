@@ -14,10 +14,4 @@ export const auditIpc = {
 
   acknowledgeAlert: (alertId: string) =>
     safeInvoke<JsonValue>(IPC_COMMANDS.ACKNOWLEDGE_SECURITY_ALERT, { alert_id: alertId }),
-
-  resolveAlert: (alertId: string, actionsTaken: string[]) =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.RESOLVE_SECURITY_ALERT, { alert_id: alertId, actions_taken: actionsTaken }),
-
-  cleanupEvents: () =>
-    safeInvoke<JsonValue>(IPC_COMMANDS.CLEANUP_SECURITY_EVENTS, {}),
 };

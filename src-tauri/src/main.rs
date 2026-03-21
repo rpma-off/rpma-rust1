@@ -123,6 +123,9 @@ fn main() {
             domains::tasks::ipc::task::task_checklist_items_get,
             domains::tasks::ipc::task::task_checklist_item_update,
             domains::tasks::ipc::task::task_checklist_item_create,
+            domains::tasks::ipc::task::task_draft_save,
+            domains::tasks::ipc::task::task_draft_get,
+            domains::tasks::ipc::task::task_draft_delete,
             domains::tasks::ipc::status::task_transition_status,
             domains::tasks::ipc::status::task_get_status_distribution,
             // ── Interventions ────────────────────────────────────────────

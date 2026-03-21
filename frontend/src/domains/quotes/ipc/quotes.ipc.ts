@@ -153,12 +153,6 @@ export const quotesIpc = {
     });
   },
 
-  openAttachment: async (attachmentId: string) => {
-    return safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_OPEN, {
-      request: { attachment_id: attachmentId }
-    });
-  },
-
   createAttachment: async (quoteId: string, data: JsonObject) => {
     const result = await safeInvoke('quote_attachment_create', {
       request: { quote_id: quoteId, data }

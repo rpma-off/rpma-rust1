@@ -25,7 +25,9 @@ export const IPC_COMMANDS = {
   CHECK_TASK_ASSIGNMENT: 'check_task_assignment',
   CHECK_TASK_AVAILABILITY: 'check_task_availability',
   GET_TASK_HISTORY: 'get_task_history',
-  VALIDATE_TASK_ASSIGNMENT_CHANGE: 'validate_task_assignment_change',
+  TASK_DRAFT_SAVE: 'task_draft_save',
+  TASK_DRAFT_GET: 'task_draft_get',
+  TASK_DRAFT_DELETE: 'task_draft_delete',
   EDIT_TASK: 'edit_task',
   ADD_TASK_NOTE: 'add_task_note',
   SEND_TASK_MESSAGE: 'send_task_message',
@@ -243,7 +245,6 @@ export const IPC_COMMANDS = {
   QUOTE_ATTACHMENT_CREATE: 'quote_attachment_create',
   QUOTE_ATTACHMENT_UPDATE: 'quote_attachment_update',
   QUOTE_ATTACHMENT_DELETE: 'quote_attachment_delete',
-  QUOTE_ATTACHMENT_OPEN: 'quote_attachment_open',
   QUOTE_CONVERT_TO_TASK: 'quote_convert_to_task',
 
   // Organization commands
@@ -273,6 +274,4 @@ export const IPC_COMMANDS = {
   GET_SECURITY_EVENTS: 'get_security_events',
   GET_SECURITY_ALERTS: 'get_security_alerts',
   ACKNOWLEDGE_SECURITY_ALERT: 'acknowledge_security_alert',
-  RESOLVE_SECURITY_ALERT: 'resolve_security_alert',
-  CLEANUP_SECURITY_EVENTS: 'cleanup_security_events',
 } as const;

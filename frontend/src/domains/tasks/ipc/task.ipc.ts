@@ -97,16 +97,6 @@ export const taskIpc = {
     });
   },
 
-  validateTaskAssignmentChange: async (
-    taskId: string,
-    oldUserId: string | null,
-    newUserId: string
-  ): Promise<JsonValue> => {
-    return safeInvoke<JsonValue>(IPC_COMMANDS.VALIDATE_TASK_ASSIGNMENT_CHANGE, {
-      request: { task_id: taskId, old_user_id: oldUserId, new_user_id: newUserId, }
-    });
-  },
-
   editTask: async (taskId: string, updates: JsonObject): Promise<Task> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.EDIT_TASK, {
       request: {
@@ -228,5 +218,17 @@ export const taskIpc = {
     return safeInvoke<ChecklistItem>(IPC_COMMANDS.TASK_CHECKLIST_ITEM_CREATE, {
       data: { task_id: taskId, description, position: position ?? null },
     });
+  },
+
+  draftSave: async (formData: string): Promise<void> => {
+    await safeInvoke<void>(IPC_COMMANDS.TASK_DRAFT_SAVE, { form_data: formData });
+  },
+
+  draftGet: async (): Promise<string | null> => {
+    return safeInvoke<string | null>(IPC_COMMANDS.TASK_DRAFT_GET, {});
+  },
+
+  draftDelete: async (): Promise<void> => {
+    await safeInvoke<void>(IPC_COMMANDS.TASK_DRAFT_DELETE, {});
   },
 };
