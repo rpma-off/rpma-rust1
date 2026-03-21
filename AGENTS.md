@@ -83,7 +83,7 @@ Before writing any code, the agent **MUST** read the relevant ADR(s) listed belo
 ## 3. Repository Layout
 
 ```text
-rpma-rust1/
+rpma-rust/
 ├── AGENTS.md                          # This file: mandatory AI agent operating instructions
 ├── CLAUDE.md                          # Supplemental agent guidance
 ├── GEMINI.md                          # Supplemental agent guidance
