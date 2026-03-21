@@ -133,21 +133,7 @@ pub fn enforce_technician_field_restrictions(req: &UpdateTaskRequest) -> Result<
     }
 }
 
-/// TODO: document
+/// Convert a task status to its canonical string representation for relationship tracking.
 pub fn relationship_status_from_task_status(status: &TaskStatus) -> String {
-    match status {
-        TaskStatus::Completed => "completed".to_string(),
-        TaskStatus::Cancelled => "cancelled".to_string(),
-        TaskStatus::InProgress => "in_progress".to_string(),
-        TaskStatus::Pending => "pending".to_string(),
-        TaskStatus::OnHold => "on_hold".to_string(),
-        TaskStatus::Draft => "draft".to_string(),
-        TaskStatus::Scheduled => "scheduled".to_string(),
-        TaskStatus::Invalid => "invalid".to_string(),
-        TaskStatus::Archived => "archived".to_string(),
-        TaskStatus::Failed => "failed".to_string(),
-        TaskStatus::Overdue => "overdue".to_string(),
-        TaskStatus::Assigned => "assigned".to_string(),
-        TaskStatus::Paused => "paused".to_string(),
-    }
+    status.to_str().to_string()
 }

@@ -394,32 +394,9 @@ impl AuditService {
                 let session_id: Option<String> = row.get(14)?;
                 let request_id: Option<String> = row.get(15)?;
 
-                let event_type = match event_type_str.as_str() {
-                    "AuthenticationSuccess" => AuditEventType::AuthenticationSuccess,
-                    "AuthenticationFailure" => AuditEventType::AuthenticationFailure,
-                    "AuthorizationGranted" => AuditEventType::AuthorizationGranted,
-                    "AuthorizationDenied" => AuditEventType::AuthorizationDenied,
-                    "TaskCreated" => AuditEventType::TaskCreated,
-                    "TaskUpdated" => AuditEventType::TaskUpdated,
-                    "TaskDeleted" => AuditEventType::TaskDeleted,
-                    "ClientCreated" => AuditEventType::ClientCreated,
-                    "ClientUpdated" => AuditEventType::ClientUpdated,
-                    "InterventionCreated" => AuditEventType::InterventionCreated,
-                    "InterventionUpdated" => AuditEventType::InterventionUpdated,
-                    "InterventionStarted" => AuditEventType::InterventionStarted,
-                    "InterventionCompleted" => AuditEventType::InterventionCompleted,
-                    "SecurityViolation" => AuditEventType::SecurityViolation,
-                    "SuspiciousActivity" => AuditEventType::SuspiciousActivity,
-                    _ => AuditEventType::SystemError, // Default for unknown types
-                };
+                let event_type = AuditEventType::from_str_or_default(&event_type_str);
 
-                let result = match result_str.as_str() {
-                    "Success" => ActionResult::Success,
-                    "Failure" => ActionResult::Failure,
-                    "Partial" => ActionResult::Partial,
-                    "Cancelled" => ActionResult::Cancelled,
-                    _ => ActionResult::Failure,
-                };
+                let result = ActionResult::from_str_or_default(&result_str);
 
                 let previous_state =
                     previous_state_json.and_then(|s| serde_json::from_str(&s).ok());

@@ -622,7 +622,7 @@ mod tests {
 
         let handler = TestHandler {
             counter: counter.clone(),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         };
 
         event_bus.register_handler(handler);
@@ -643,12 +643,12 @@ mod tests {
 
         let handler1 = TestHandler {
             counter: counter1.clone(),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         };
 
         let handler2 = TestHandler {
             counter: counter2.clone(),
-            event_types: vec!["TaskCreated", "TaskUpdated"],
+            event_types: vec![DomainEvent::TASK_CREATED, DomainEvent::TASK_UPDATED],
         };
 
         event_bus.register_handler(handler1);
@@ -671,7 +671,7 @@ mod tests {
 
         let handler = TestHandler {
             counter: counter.clone(),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         };
 
         event_bus.register_handler(handler);
@@ -691,7 +691,7 @@ mod tests {
 
         let handler = TestHandler {
             counter: counter.clone(),
-            event_types: vec!["TaskCreated", "TaskUpdated"],
+            event_types: vec![DomainEvent::TASK_CREATED, DomainEvent::TASK_UPDATED],
         };
 
         event_bus.register_handler(handler);
@@ -711,14 +711,14 @@ mod tests {
     fn test_domain_event_types() {
         let task_created =
             event_factory::task_created("task-123".to_string(), "Test".to_string(), None);
-        assert_eq!(task_created.event_type(), "TaskCreated");
+        assert_eq!(task_created.event_type(), DomainEvent::TASK_CREATED);
 
         let auth_success = event_factory::authentication_success("user-123".to_string());
-        assert_eq!(auth_success.event_type(), "AuthenticationSuccess");
+        assert_eq!(auth_success.event_type(), DomainEvent::AUTHENTICATION_SUCCESS);
 
         let intervention_started =
             event_factory::intervention_started("int-123".to_string(), "task-123".to_string());
-        assert_eq!(intervention_started.event_type(), "InterventionStarted");
+        assert_eq!(intervention_started.event_type(), DomainEvent::INTERVENTION_STARTED);
 
         let intervention_finalized = event_factory::intervention_finalized(
             "int-999".to_string(),
@@ -726,7 +726,7 @@ mod tests {
             "tech-1".to_string(),
             Utc::now().timestamp_millis(),
         );
-        assert_eq!(intervention_finalized.event_type(), "InterventionFinalized");
+        assert_eq!(intervention_finalized.event_type(), DomainEvent::INTERVENTION_FINALIZED);
 
         let material_consumed = event_factory::material_consumed(
             "mat-1".to_string(),
@@ -734,7 +734,7 @@ mod tests {
             1.5,
             "m²".to_string(),
         );
-        assert_eq!(material_consumed.event_type(), "MaterialConsumed");
+        assert_eq!(material_consumed.event_type(), DomainEvent::MATERIAL_CONSUMED);
 
         let quote_accepted = event_factory::quote_accepted(
             "quote-1".to_string(),
@@ -744,7 +744,7 @@ mod tests {
             Some("task-1".to_string()),
             Some(serde_json::json!({ "error": "none" })),
         );
-        assert_eq!(quote_accepted.event_type(), "QuoteAccepted");
+        assert_eq!(quote_accepted.event_type(), DomainEvent::QUOTE_ACCEPTED);
 
         let quote_rejected = event_factory::quote_rejected(
             "quote-2".to_string(),
@@ -753,7 +753,7 @@ mod tests {
             "user-2".to_string(),
             Some("too expensive".to_string()),
         );
-        assert_eq!(quote_rejected.event_type(), "QuoteRejected");
+        assert_eq!(quote_rejected.event_type(), DomainEvent::QUOTE_REJECTED);
 
         let quote_converted = event_factory::quote_converted(
             "quote-3".to_string(),
@@ -763,21 +763,21 @@ mod tests {
             "T-003".to_string(),
             "user-3".to_string(),
         );
-        assert_eq!(quote_converted.event_type(), "QuoteConverted");
+        assert_eq!(quote_converted.event_type(), DomainEvent::QUOTE_CONVERTED);
 
         let entity_restored = event_factory::entity_restored(
             "entity-1".to_string(),
             "Task".to_string(),
             "user-4".to_string(),
         );
-        assert_eq!(entity_restored.event_type(), "EntityRestored");
+        assert_eq!(entity_restored.event_type(), DomainEvent::ENTITY_RESTORED);
 
         let entity_hard_deleted = event_factory::entity_hard_deleted(
             "entity-2".to_string(),
             "Quote".to_string(),
             "user-5".to_string(),
         );
-        assert_eq!(entity_hard_deleted.event_type(), "EntityHardDeleted");
+        assert_eq!(entity_hard_deleted.event_type(), DomainEvent::ENTITY_HARD_DELETED);
     }
 
     #[test]
@@ -812,17 +812,17 @@ mod tests {
     fn test_handler_count() {
         let event_bus = InMemoryEventBus::new();
 
-        assert_eq!(event_bus.handler_count("TaskCreated"), 0);
+        assert_eq!(event_bus.handler_count(DomainEvent::TASK_CREATED), 0);
 
         let handler = TestHandler {
             counter: Arc::new(AtomicUsize::new(0)),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         };
 
         event_bus.register_handler(handler);
 
-        assert_eq!(event_bus.handler_count("TaskCreated"), 1);
-        assert_eq!(event_bus.handler_count("TaskUpdated"), 0);
+        assert_eq!(event_bus.handler_count(DomainEvent::TASK_CREATED), 1);
+        assert_eq!(event_bus.handler_count(DomainEvent::TASK_UPDATED), 0);
     }
 
     #[test]
@@ -832,13 +832,13 @@ mod tests {
 
         let handler = TestHandler {
             counter: Arc::new(AtomicUsize::new(0)),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         };
 
         event_bus1.register_handler(handler);
 
         // Both event buses should share the same handlers
-        assert_eq!(event_bus2.handler_count("TaskCreated"), 1);
+        assert_eq!(event_bus2.handler_count(DomainEvent::TASK_CREATED), 1);
     }
 
     #[tokio::test]
@@ -854,7 +854,7 @@ mod tests {
 
         bus.register_handler(TestHandler {
             counter: counter.clone(),
-            event_types: vec!["TaskCreated"],
+            event_types: vec![DomainEvent::TASK_CREATED],
         });
 
         let handles: Vec<_> = (0..4)

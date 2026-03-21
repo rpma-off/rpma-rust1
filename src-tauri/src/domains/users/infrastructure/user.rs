@@ -64,13 +64,9 @@ impl UserService {
     /// Centralises the role-string ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ enum conversion so that IPC command
     /// handlers do not contain this business logic.
     pub fn parse_user_role(role_str: &str) -> Result<UserRole, AppError> {
-        match role_str {
-            "admin" => Ok(UserRole::Admin),
-            "technician" => Ok(UserRole::Technician),
-            "supervisor" => Ok(UserRole::Supervisor),
-            "viewer" => Ok(UserRole::Viewer),
-            _ => Err(AppError::Validation(format!("Invalid role: {}", role_str))),
-        }
+        role_str
+            .parse::<UserRole>()
+            .map_err(|_| AppError::Validation(format!("Invalid role: {}", role_str)))
     }
 
     /// Validate that the acting user is not performing an action on themselves

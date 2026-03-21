@@ -60,6 +60,7 @@ use crate::shared::event_bus::{register_handler, set_global_event_bus};
 use crate::shared::logging::audit_log_handler::AuditLogHandler;
 use crate::shared::logging::audit_service::AuditService;
 use crate::shared::repositories::Repositories;
+use crate::shared::services::domain_event::DomainEvent;
 use crate::shared::services::event_bus::InMemoryEventBus;
 #[cfg(test)]
 use std::collections::{HashMap, HashSet};
@@ -488,8 +489,12 @@ mod tests {
         let app_state = builder.build().expect("Failed to build app state");
 
         // Verify event bus is initialized — only events in AuditLogHandler::interested_events()
-        assert!(app_state.event_bus.has_handlers("TaskCreated"));
-        assert!(app_state.event_bus.has_handlers("InterventionStarted"));
+        assert!(app_state
+            .event_bus
+            .has_handlers(DomainEvent::TASK_CREATED));
+        assert!(app_state
+            .event_bus
+            .has_handlers(DomainEvent::INTERVENTION_STARTED));
     }
 
     #[test]
