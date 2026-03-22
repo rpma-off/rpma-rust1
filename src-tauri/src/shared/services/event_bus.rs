@@ -590,6 +590,26 @@ pub mod event_factory {
             metadata: None,
         }
     }
+
+    /// Create a `NotificationReceived` domain event.
+    ///
+    /// Emitted after a notification is persisted so the frontend can
+    /// invalidate its notification cache via the Tauri `notification:received`
+    /// event instead of relying on polling.
+    pub fn notification_received(
+        notification_id: String,
+        user_id: String,
+        message: String,
+    ) -> DomainEvent {
+        DomainEvent::NotificationReceived {
+            id: Uuid::new_v4().to_string(),
+            notification_id,
+            user_id,
+            message,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
 }
 
 #[cfg(test)]

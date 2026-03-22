@@ -25,6 +25,7 @@ use ts_rs::TS;
 
 use crate::commands::{init_correlation_context, ApiResponse, AppError, AppState};
 use crate::resolve_context;
+use crate::shared::services::event_bus::{event_factory, EventPublisher};
 
 use super::models::*;
 
@@ -314,5 +315,17 @@ pub async fn create_notification(
         notification_id = %created.id,
         "Notification created"
     );
+    let notif_event = event_factory::notification_received(
+        created.id.clone(),
+        created.user_id.clone(),
+        created.message.clone(),
+    );
+    if let Err(e) = state.event_bus.publish(notif_event) {
+        tracing::warn!(
+            notification_id = %created.id,
+            "Failed to publish NotificationReceived event: {}",
+            e
+        );
+    }
     Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
 }

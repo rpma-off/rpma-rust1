@@ -391,9 +391,9 @@ Math.floor(Math.random() * 1000).toString()
 
 | # | Catégorie | Fichier | Sévérité | Effort |
 |---|-----------|---------|----------|--------|
-| A-1 | IPC mort | `admin/ipc/admin.ipc.ts` | Faible | Bas |
+| A-1 | IPC mort | `admin/ipc/admin.ipc.ts` | Faible | Bas | ✅ CORRIGÉ — 5 méthodes mortes supprimées (`getHealthStatus`, `getDatabaseStatus`, `getDatabasePoolHealth`, `getAppInfo`, `getDeviceInfo`) |
 | A-2 | IPC mort | `admin/ipc/audit.ipc.ts` | Moyenne | Moyen | ✅ CORRIGÉ — `resolveAlert`, `cleanupEvents` supprimés |
-| A-3 | IPC mort | `admin/ipc/organization.ipc.ts` | Haute | Haut |
+| A-3 | IPC mort | `admin/ipc/organization.ipc.ts` | Haute | Haut | ℹ️ Faux positif — `organizationIpc` actif via `ipcClient.organization` dans `useOrganization`, `useOnboarding`, `OrganizationSettingsTab` |
 | A-4 | IPC dupliqué | `calendar/ipc/calendar.ipc.ts` | Faible | Bas | ✅ CORRIGÉ — `calendar.ipc.ts` supprimé (session précédente) |
 | A-5 | IPC mort | `inventory/ipc/material.ipc.ts` | Faible | Bas | ℹ️ Conservé — utilisé dans les server operations et tests contrat |
 | A-6 | IPC mort | `notifications/ipc/notifications.ipc.ts` | Moyenne | Moyen | ℹ️ Faux positif — `initialize`/`send`/`getStatus` utilisés dans `notifications.service.ts` |
@@ -403,11 +403,11 @@ Math.floor(Math.random() * 1000).toString()
 | A-10 | Stubs vides | `performance/api/performanceProvider.tsx` | Faible | Moyen | ℹ️ Provider non monté dans l'arbre React — aucun impact runtime |
 | B-1 | localStorage | `tasks/components/TaskForm/useTaskForm.ts` | Haute | Moyen | ✅ CORRIGÉ — draft persisté via `task_drafts` SQLite (migration 062, 3 cmds Tauri) |
 | B-2 | localStorage | `tasks/components/TaskDetail/PoseDetail.tsx` | **Critique** | Haut | ✅ CORRIGÉ — `task_checklist_items` SQLite via `useTaskChecklist` (session précédente) |
-| B-3 | localStorage | `calendar/stores/calendarStore.ts` | Moyenne | Bas |
+| B-3 | localStorage | `calendar/stores/calendarStore.ts` | Moyenne | Bas | ✅ CORRIGÉ — migration 063, champs calendrier dans `UserPreferences`, store synchro backend |
 | C-1 | Placeholder | `quotes/hooks/useQuotesPage.ts` | **Critique** | Moyen | ✅ CORRIGÉ — `duplicate`/`exportPdf`/`delete` branchés (session précédente) |
-| C-2 | Placeholder | `reports/api/ReportsProvider.tsx` | Haute | Haut |
+| C-2 | Placeholder | `reports/api/ReportsProvider.tsx` | Haute | Haut | ℹ️ Faux positif partiel — domaine fonctionnel via `useInterventionReport` + composants embarqués dans les interventions ; Provider thin intentionnel |
 | D-1 | Calcul client | `quotes/hooks/useQuotesPage.ts` | Haute | Moyen | ✅ CORRIGÉ — `get_quote_stats` backend + `QuoteStats` type (session précédente) |
-| E-1 | Polling lent | `notifications/hooks/useNotificationUpdates.ts` | Haute | Haut |
+| E-1 | Polling lent | `notifications/hooks/useNotificationUpdates.ts` | Haute | Haut | ✅ CORRIGÉ — `DomainEvent::NotificationReceived` publié depuis `create_notification`; polling réduit à 5 min (fallback) |
 | E-2 | localStorage | `lib/logger.ts` | Faible | Bas |
 | E-3 | ID client | `tasks/utils/number-generator.ts` | Haute | Bas | ✅ CORRIGÉ — `useTaskForm` utilise déjà `task_number: null` (backend génère) |
 
@@ -429,7 +429,7 @@ Math.floor(Math.random() * 1000).toString()
 
 ### Priorité 2 — Correction lors du prochain sprint
 
-4. **A-3 / Organization IPC** : Créer un formulaire "Profil entreprise" ou supprimer `organizationIpc`.
+4. ~~**A-3 / Organization IPC**~~ — Faux positif : `organizationIpc` actif via `ipcClient.organization`.
 5. ~~**B-1 / Task drafts**~~ — Corrigé : migration 062 + 3 cmds Tauri (`task_draft_save/get/delete`).
 6. ~~**D-1 / Quote analytics**~~ — Corrigé : `get_quote_stats` backend.
 7. ~~**E-3 / Task number**~~ — Corrigé : `useTaskForm` délègue déjà au backend.
@@ -438,9 +438,9 @@ Math.floor(Math.random() * 1000).toString()
 
 8. ~~**A-4 / Calendar IPC doublon**~~ — Corrigé : `calendar.ipc.ts` supprimé.
 9. **A-10 / Performance stubs** : Soit réimplémenter le monitoring, soit supprimer le Provider et tous ses consumers.
-10. **C-2 / Reports domain** : Implémenter ou retirer le domaine entier.
-11. **E-1 / Notifications polling** : Migrer vers `tauri::event::listen` pour les notifications temps réel.
-12. **B-3 / Calendar filters** : Brancher sur `updateUserPreferences`.
+10. ~~**C-2 / Reports domain**~~ — Faux positif partiel : domaine actif via hooks/composants intervention.
+11. ~~**E-1 / Notifications polling**~~ — Corrigé : événement Tauri temps réel + polling 5 min (fallback).
+12. ~~**B-3 / Calendar filters**~~ — Corrigé : migration 063 + `UserPreferences` + store synchro backend.
 
 ---
 

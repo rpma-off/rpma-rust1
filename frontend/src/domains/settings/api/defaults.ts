@@ -46,6 +46,10 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   screen_reader: false,
   auto_refresh: true,
   refresh_interval: 60,
+  calendar_view: null,
+  calendar_show_my_events_only: null,
+  calendar_filter_statuses: null,
+  calendar_filter_priorities: null,
 };
 
 export const DEFAULT_SECURITY: UserSecuritySettings = {

@@ -32,7 +32,8 @@ export function useNotificationUpdates() {
     function startPolling() {
       if (!mountedRef.current || !user?.token) return;
 
-      // S-2 perf: interval raised 30s→120s; skip when tab is hidden (visibilityState guard).
+      // Polling is a 5-minute fallback only — real-time updates arrive via the
+      // Tauri `notification:received` event (useTauriEvent.ts → notificationKeys.all).
       pollTimerRef.current = setInterval(async () => {
         if (!mountedRef.current) return;
         if (document.visibilityState !== 'visible') return;
@@ -74,7 +75,7 @@ export function useNotificationUpdates() {
             return newIds;
           });
         }
-      }, 120000); // S-2: raised from 30s to 120s (offline-first, tab guard above)
+      }, 300000); // fallback poll — real-time path: Tauri event → useTauriEvent.ts
     }
 
     startPolling();
