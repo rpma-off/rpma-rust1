@@ -6,6 +6,7 @@ use crate::domains::inventory::InventoryFacade;
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::users::infrastructure::user::UserService;
 use crate::infrastructure::auth::session_store::SessionStore;
+use crate::shared::logging::audit_service::AuditService;
 use std::sync::Arc;
 use tauri::State;
 
@@ -53,6 +54,7 @@ pub struct AppStateType {
     pub trash_service:
         Arc<crate::domains::trash::application::services::trash_service::TrashService>,
     pub global_search_service: Arc<crate::shared::services::global_search::GlobalSearchService>,
+    pub audit_service: Arc<AuditService>,
 }
 
 pub type AppState<'a> = State<'a, AppStateType>;

@@ -1227,6 +1227,135 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
     case 'system_health_check': {
       return { db: true, version: '0.1.0' };
     }
+
+    // Individual client commands (used by mock-client.ts via ipcClient)
+    case 'client_list': {
+      const filters = (args?.filters ?? args?.params ?? {}) as AnyRecord;
+      const page = (filters.page as number) ?? 1;
+      const limit = (filters.limit as number) ?? 20;
+      const search = (filters.search as string | null) ?? null;
+      let data = state.clients.filter(c => !c.deleted_at);
+      if (search) data = data.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+      const start = (page - 1) * limit;
+      const slice = data.slice(start, start + limit);
+      return {
+        data: slice,
+        pagination: {
+          page,
+          limit,
+          total: BigInt(data.length),
+          total_pages: Math.max(1, Math.ceil(data.length / limit)),
+        },
+        statistics: null,
+      };
+    }
+    case 'client_get': {
+      return state.clients.find(c => c.id === (args?.id as string)) || null;
+    }
+    case 'client_get_with_tasks': {
+      return state.clients.find(c => c.id === (args?.id as string)) || null;
+    }
+    case 'client_create': {
+      const created = normalizeClient((args?.data ?? args ?? {}) as Partial<Client>);
+      state.clients.push(created);
+      return created;
+    }
+    case 'client_update': {
+      const idx = state.clients.findIndex(c => c.id === (args?.id as string));
+      if (idx === -1) return null;
+      state.clients[idx] = normalizeClient({ ...state.clients[idx], ...((args?.data ?? {}) as AnyRecord), id: args?.id as string, updated_at: nowIso() });
+      return state.clients[idx];
+    }
+    case 'client_delete': {
+      state.clients = state.clients.filter(c => c.id !== (args?.id as string));
+      return null;
+    }
+    case 'client_search': {
+      const q = ((args?.query as string) ?? '').toLowerCase();
+      const lim = Number(args?.limit ?? 10);
+      return state.clients.filter(c => c.name.toLowerCase().includes(q)).slice(0, lim);
+    }
+    case 'client_get_stats': {
+      const totalClients = BigInt(state.clients.filter(c => !c.deleted_at).length);
+      const individual = BigInt(state.clients.filter(c => !c.deleted_at && c.customer_type === 'individual').length);
+      const business = BigInt(state.clients.filter(c => !c.deleted_at && c.customer_type === 'business').length);
+      const withTasks = BigInt(state.clients.filter(c => !c.deleted_at && state.tasks.some(t => t.client_id === c.id)).length);
+      return {
+        total_clients: totalClients,
+        individual_clients: individual,
+        business_clients: business,
+        clients_with_tasks: withTasks,
+        new_clients_this_month: BigInt(0),
+      };
+    }
+
+    // Individual task commands (used by mock-client.ts via ipcClient)
+    case 'task_list': {
+      const filter = (args?.filter ?? args?.filters ?? args?.params ?? {}) as AnyRecord;
+      const page = (filter.page as number) ?? 1;
+      const limit = (filter.limit as number) ?? 20;
+      const search = (filter.search as string | null) ?? null;
+      let data = state.tasks.filter(t => !t.deleted_at);
+      if (search) data = data.filter(t => (t.title ?? '').toLowerCase().includes(search.toLowerCase()));
+      if (filter.status) data = data.filter(t => t.status === filter.status);
+      const start = (page - 1) * limit;
+      return {
+        data: data.slice(start, start + limit),
+        pagination: {
+          page,
+          limit,
+          total: BigInt(data.length),
+          total_pages: Math.max(1, Math.ceil(data.length / limit)),
+        },
+        statistics: null,
+      };
+    }
+    case 'task_get': {
+      return state.tasks.find(t => t.id === (args?.id as string)) || null;
+    }
+    case 'task_create': {
+      const created = normalizeTask((args?.data ?? args ?? {}) as Partial<Task>);
+      state.tasks.push(created);
+      return created;
+    }
+    case 'task_update': {
+      const idx = state.tasks.findIndex(t => t.id === (args?.id as string));
+      if (idx === -1) return null;
+      state.tasks[idx] = normalizeTask({ ...state.tasks[idx], ...((args?.data ?? {}) as AnyRecord), id: args?.id as string, updated_at: nowIso() });
+      return state.tasks[idx];
+    }
+    case 'task_delete': {
+      state.tasks = state.tasks.filter(t => t.id !== (args?.id as string));
+      return null;
+    }
+    case 'task_statistics': {
+      return {
+        total_tasks: state.tasks.length,
+        draft_tasks: state.tasks.filter(t => t.status === 'draft').length,
+        scheduled_tasks: state.tasks.filter(t => t.status === 'scheduled').length,
+        in_progress_tasks: state.tasks.filter(t => t.status === 'in_progress').length,
+        completed_tasks: state.tasks.filter(t => t.status === 'completed').length,
+        cancelled_tasks: state.tasks.filter(t => t.status === 'cancelled').length,
+        on_hold_tasks: state.tasks.filter(t => t.status === 'on_hold').length,
+        pending_tasks: state.tasks.filter(t => t.status === 'pending').length,
+        invalid_tasks: state.tasks.filter(t => t.status === 'invalid').length,
+        archived_tasks: state.tasks.filter(t => t.status === 'archived').length,
+        failed_tasks: state.tasks.filter(t => t.status === 'failed').length,
+        overdue_tasks: state.tasks.filter(t => t.status === 'overdue').length,
+        assigned_tasks: state.tasks.filter(t => t.status === 'assigned').length,
+        paused_tasks: state.tasks.filter(t => t.status === 'paused').length,
+      };
+    }
+
+    // System settings (used by settings components)
+    case 'get_app_settings':
+    case 'system_get_app_settings': {
+      return {};
+    }
+    case 'get_business_hours': {
+      return null;
+    }
+
     default:
       return null;
   }

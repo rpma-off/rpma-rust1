@@ -65,16 +65,13 @@ test.describe('Inventory Management', () => {
 
   test('supplier tab create flow works', async ({ page }) => {
     await page.getByRole('tab', { name: /Fournisseurs|Suppliers/i }).click();
-    await expect(page.getByText(/Fournisseurs|Suppliers/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('tab', { name: /Fournisseurs|Suppliers/i })).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: /Ajouter un fournisseur|Add Supplier/i }).click();
-    await page.fill('#supplier-name', `E2E Supplier ${Date.now()}`);
-    await page.fill('#supplier-email', 'supplier-e2e@example.com');
-    await page.fill('#supplier-phone', '+1-555-0100');
-    await page.fill('#supplier-lead', '7');
+    await page.fill('#supplierName', `E2E Supplier ${Date.now()}`);
+    await page.fill('#supplierEmail', 'supplier-e2e@example.com');
+    await page.fill('#supplierPhone', '+1-555-0100');
 
-    await page.locator('[role="dialog"] button[type="submit"]').click();
-    await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 10000 });
+    await page.locator('button[type="submit"]').filter({ hasText: /Ajouter/i }).first().click();
 
     await expect(page.getByText(/supplier-e2e@example.com/i)).toBeVisible({ timeout: 10000 });
   });
@@ -82,23 +79,18 @@ test.describe('Inventory Management', () => {
   test('reports tab renders low stock and movement sections', async ({ page }) => {
     await page.getByRole('tab', { name: /Rapports|Reports/i }).click();
 
-    await expect(page.getByText(/stock faible|Low Stock/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(/R.sum. des mouvements|Movement Summary/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Alertes stock bas|Low Stock/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Mouvements|Movement/i)).toBeVisible({ timeout: 10000 });
   });
 
   test('settings tab create category flow works', async ({ page }) => {
     await page.getByRole('tab', { name: /Param.tres|Settings/i }).click();
     await expect(page.getByText(/Cat.gories|Categories/i)).toBeVisible({ timeout: 10000 });
 
-    await page.getByRole('button', { name: /Ajouter une cat.gorie|Add Category/i }).click();
-
     const categoryName = `E2E Category ${Date.now()}`;
-    await page.fill('#cat-name', categoryName);
-    await page.fill('#cat-code', `E2E-${Date.now().toString().slice(-4)}`);
-    await page.fill('#cat-desc', 'E2E category description');
+    await page.fill('#categoryName', categoryName);
 
-    await page.locator('[role="dialog"] button[type="submit"]').click();
-    await expect(page.locator('[role="dialog"]')).toBeHidden({ timeout: 10000 });
+    await page.locator('button[type="submit"]').filter({ hasText: /Ajouter/i }).first().click();
 
     await expect(page.getByText(categoryName)).toBeVisible({ timeout: 10000 });
   });

@@ -225,6 +225,7 @@ export const IPC_COMMANDS = {
   CALENDAR_SCHEDULE_TASK: 'calendar_schedule_task',
 
   // Quote commands
+  QUOTE_GET_STATS: 'quote_get_stats',
   QUOTE_CREATE: 'quote_create',
   QUOTE_GET: 'quote_get',
   QUOTE_LIST: 'quote_list',
@@ -256,13 +257,6 @@ export const IPC_COMMANDS = {
   GET_ORGANIZATION_SETTINGS: 'get_organization_settings',
   UPDATE_ORGANIZATION_SETTINGS: 'update_organization_settings',
 
-  // IPC optimization commands
-  COMPRESS_DATA_FOR_IPC: 'compress_data_for_ipc',
-  DECOMPRESS_DATA_FROM_IPC: 'decompress_data_from_ipc',
-  START_STREAM_TRANSFER: 'start_stream_transfer',
-  SEND_STREAM_CHUNK: 'send_stream_chunk',
-  GET_STREAM_DATA: 'get_stream_data',
-  GET_IPC_STATS: 'get_ipc_stats',
   // Trash commands
   LIST_TRASH: 'list_trash',
   RESTORE_ENTITY: 'restore_entity',

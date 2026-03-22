@@ -117,9 +117,15 @@ pub async fn has_admins(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<bool>, AppError> {
-    // TODO: ADR Violation (ADR-018) - has_admins skips resolve_context! and contains business logic.
-    // It should call resolve_context! (or a specific unauthenticated version if intended)
-    // and delegate to an application service.
+    // ARCH VIOLATION: `has_admins` bypasses `resolve_context!` entirely and calls
+    // `state.user_service.has_admins()` directly from the IPC handler, embedding both
+    // auth-bypass logic and a direct application-service call at the IPC boundary without
+    // going through the façade/command pattern used by every other handler in this file.
+    // TODO: If this endpoint is intentionally unauthenticated (bootstrap check), introduce
+    //       a dedicated `UsersCommand::HasAdmins` variant in `domain/action.rs`, handle it
+    //       in `UsersFacade::execute`, and document the auth exemption explicitly.  The IPC
+    //       handler should remain a thin delegate: resolve (or explicitly skip) context, then
+    //       call the façade.
     let corr = crate::commands::init_correlation_context(&correlation_id, None);
     debug!("Checking if admin users exist");
     let has_admin = state.user_service.has_admins().await?;

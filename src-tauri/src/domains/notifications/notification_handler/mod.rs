@@ -329,3 +329,52 @@ pub async fn create_notification(
     }
     Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
 }
+
+/// Send a notification — accepts the TS-exported `SendNotificationRequest` shape.
+///
+/// ADR-018: Thin IPC layer. Delegates to `create_notification` logic via the shared facade.
+#[tauri::command]
+#[instrument(skip(state, request))]
+pub async fn send_notification(
+    request: crate::domains::notifications::models::SendNotificationRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Notification>, AppError> {
+    let correlation_id = init_correlation_context(&request.correlation_id, None);
+    let user_id = request.user_id.clone();
+    let notification_type = request.notification_type.clone();
+    let notification = Notification::new(
+        user_id.clone(),
+        notification_type.clone(),
+        request.title,
+        request.message,
+        request.entity_type,
+        request.entity_id,
+        request.entity_url,
+    );
+    let created = notifications_facade(&state)
+        .create_notification(notification)
+        .await
+        .map_err(|e| {
+            error!(error = %e, user_id = %user_id, "Failed to send notification");
+            e
+        })?;
+    info!(
+        user_id = %user_id,
+        notification_type = %notification_type,
+        notification_id = %created.id,
+        "Notification sent"
+    );
+    let notif_event = event_factory::notification_received(
+        created.id.clone(),
+        created.user_id.clone(),
+        created.message.clone(),
+    );
+    if let Err(e) = state.event_bus.publish(notif_event) {
+        tracing::warn!(
+            notification_id = %created.id,
+            "Failed to publish NotificationReceived event: {}",
+            e
+        );
+    }
+    Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
+}

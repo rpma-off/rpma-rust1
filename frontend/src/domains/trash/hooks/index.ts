@@ -1,10 +1,13 @@
 /**
  * Trash domain — UI hooks.
  *
- * Place domain-specific, presentation-side hooks here.
- * Query state lives in api/index.ts (TanStack Query).
+ * Re-exports TanStack Query hooks from api/index.ts for use by UI components.
  */
 
-// TODO(scaffold): Add Trash-specific UI hooks as needed.
-
-export {};
+export {
+  useTrashList,
+  useRestoreEntity,
+  useHardDeleteEntity,
+  useEmptyTrash,
+  trashKeys,
+} from '../api';

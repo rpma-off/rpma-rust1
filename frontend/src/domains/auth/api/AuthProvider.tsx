@@ -253,6 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fresh) {
         setState(prev => ({ ...prev, user: fresh }));
         await AuthSecureStorage.storeSession(fresh.token, fresh as unknown as Record<string, unknown>);
+        await loadProfile(fresh);
       }
     } catch (error) {
       logger.error(LogContext.AUTH, 'Session refresh failed', {
@@ -269,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       toast.error('Session expirée. Veuillez vous reconnecter.');
     }
-  }, [state.user?.token]);
+  }, [state.user?.token, loadProfile]);
 
   const value = useMemo<AuthContextType>(() => ({
     user: state.user,

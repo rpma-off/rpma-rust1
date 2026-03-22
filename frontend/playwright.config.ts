@@ -13,13 +13,6 @@ const defaultProjects = [
 
 export default defineConfig({
   testDir: './tests/e2e',
-  testIgnore: [
-    'client-lifecycle.spec.ts',
-    'configuration-smoke.spec.ts',
-    'connectivity-smoke.spec.ts',
-    'intervention-management.spec.ts',
-    'inventory-management.spec.ts',
-  ],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

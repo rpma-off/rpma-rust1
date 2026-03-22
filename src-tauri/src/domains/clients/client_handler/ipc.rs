@@ -30,6 +30,10 @@ impl ClientsFacade {
         &self.client_service
     }
 
+    // ARCH VIOLATION: input validation (`client_id` presence check) is business logic and
+    // must not execute at the IPC boundary. TODO: Move `validate_client_id` into
+    // `application/client_service.rs` (or a shared `ClientInputValidator`) and let the
+    // application layer enforce this rule before any repository call.
     pub fn validate_client_id(&self, client_id: &str) -> Result<(), IpcAppError> {
         if client_id.trim().is_empty() {
             return Err(IpcAppError::Validation("client_id is required".to_string()));
@@ -37,6 +41,12 @@ impl ClientsFacade {
         Ok(())
     }
 
+    // ARCH VIOLATION: classifying raw error strings into Not-Found / Authorization /
+    // Validation / DB categories is business/error-domain logic and must not live in the
+    // IPC layer. TODO: Move `map_service_error` into `application/client_service.rs` (or a
+    // dedicated `ClientError` enum in `domain/`), return typed `AppError` variants from the
+    // application layer, and let the IPC boundary perform only a final mapping to
+    // `ApiResponse`.
     pub fn map_service_error(&self, context: &str, error: &str) -> IpcAppError {
         let normalized = error.to_lowercase();
         if normalized.contains("not found") {
@@ -103,6 +113,11 @@ pub(crate) fn client_into_client_with_tasks(client: Client, tasks: Vec<Task>) ->
 // ── Individual thin handlers (ADR-018) ────────────────────────────────────────
 
 /// Shared preamble: rate-limit check + RBAC permission check.
+// ARCH VIOLATION: `check_client_access` enforces both rate-limiting policy and RBAC inside
+// an IPC-layer helper. Rate-limiting and permission checks are application-layer concerns
+// (see ADR-007). TODO: Move rate-limit enforcement and `can_perform_client_operation` checks
+// into `application/client_service.rs` (or a `ClientAuthorizationService`); IPC should only
+// resolve context and forward to the application service.
 fn check_client_access(
     state: &AppState<'_>,
     user_id: &str,

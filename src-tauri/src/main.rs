@@ -76,6 +76,7 @@ fn main() {
             commands::get_database_status,
             commands::get_database_pool_stats,
             commands::vacuum_database,
+            commands::system::force_wal_checkpoint,
             // ── Auth ─────────────────────────────────────────────────────
             domains::auth::ipc::auth::auth_login,
             domains::auth::ipc::auth::auth_create_account,
@@ -257,6 +258,7 @@ fn main() {
             domains::notifications::notification_handler::mark_all_notifications_read,
             domains::notifications::notification_handler::delete_notification,
             domains::notifications::notification_handler::create_notification,
+            domains::notifications::notification_handler::send_notification,
             domains::notifications::notification_handler::message_send,
             domains::notifications::notification_handler::message_get_list,
             domains::notifications::notification_handler::message_mark_read,
@@ -269,6 +271,11 @@ fn main() {
             domains::auth::ipc::auth_security::revoke_all_sessions_except_current,
             domains::auth::ipc::auth_security::update_session_timeout,
             domains::auth::ipc::auth_security::get_session_timeout_config,
+            // ── Security audit ───────────────────────────────────────────────
+            domains::auth::ipc::audit_security_ipc::get_security_metrics,
+            domains::auth::ipc::audit_security_ipc::get_security_events,
+            domains::auth::ipc::audit_security_ipc::get_security_alerts,
+            domains::auth::ipc::audit_security_ipc::acknowledge_security_alert,
             // ── UI / Window ──────────────────────────────────────────────
             commands::ui::ui_window_minimize,
             commands::ui::ui_window_maximize,

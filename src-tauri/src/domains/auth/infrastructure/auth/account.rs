@@ -1,5 +1,11 @@
 //! Account creation and signup processing.
 
+// ARCH VIOLATION: `SignupRequest` is imported from the application layer into infrastructure.
+// Infrastructure must only depend on the domain layer (or shared kernel), never on
+// application/. The dependency rule (ADR-001) is: IPC → Application → Domain ← Infrastructure.
+// TODO: Move `SignupRequest` to `domain/models/auth.rs` (or `shared/contracts/`) so that
+// both the application layer and infrastructure can import it from a shared, inward-facing
+// location; then remove this `use crate::domains::auth::application::SignupRequest` import.
 use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
 use rusqlite::params;

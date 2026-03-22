@@ -8,11 +8,11 @@ import type { JsonObject, JsonValue } from '@/types/json';
 
 export const quotesIpc = {
   getStats: async (): Promise<QuoteStats> => {
-    return safeInvoke<QuoteStats>('quote_get_stats', {});
+    return safeInvoke<QuoteStats>(IPC_COMMANDS.QUOTE_GET_STATS, {});
   },
 
   create: async (data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_create', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_CREATE, {
       request: { data }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -21,7 +21,7 @@ export const quotesIpc = {
   },
 
   get: async (id: string): Promise<Quote | null> => {
-    const result = await safeInvoke<JsonValue>('quote_get', {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.QUOTE_GET, {
       request: { id }
     });
     if (result === null || result === undefined) return null;
@@ -29,13 +29,13 @@ export const quotesIpc = {
   },
 
   list: async (filters: JsonObject): Promise<QuoteListResponse> => {
-    return safeInvoke<QuoteListResponse>('quote_list', {
+    return safeInvoke<QuoteListResponse>(IPC_COMMANDS.QUOTE_LIST, {
       request: { filters }
     }, validateQuoteList);
   },
 
   update: async (id: string, data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_update', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_UPDATE, {
       request: { id, data }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -44,7 +44,7 @@ export const quotesIpc = {
   },
 
   delete: async (id: string): Promise<void> => {
-    await safeInvoke<void>('quote_delete', {
+    await safeInvoke<void>(IPC_COMMANDS.QUOTE_DELETE, {
       request: { id }
     });
     invalidatePattern('quote:');
@@ -52,7 +52,7 @@ export const quotesIpc = {
   },
 
   addItem: async (quoteId: string, item: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_item_add', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_ADD, {
       request: { quote_id: quoteId, item }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -61,7 +61,7 @@ export const quotesIpc = {
   },
 
   updateItem: async (quoteId: string, itemId: string, data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_item_update', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_UPDATE, {
       request: { quote_id: quoteId, item_id: itemId, data }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -70,7 +70,7 @@ export const quotesIpc = {
   },
 
   deleteItem: async (quoteId: string, itemId: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_item_delete', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_DELETE, {
       request: { quote_id: quoteId, item_id: itemId }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -79,7 +79,7 @@ export const quotesIpc = {
   },
 
   markSent: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_mark_sent', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_SENT, {
       request: { id }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -88,7 +88,7 @@ export const quotesIpc = {
   },
 
   markAccepted: async (id: string): Promise<QuoteAcceptResponse> => {
-    const result = await safeInvoke<QuoteAcceptResponse>('quote_mark_accepted', {
+    const result = await safeInvoke<QuoteAcceptResponse>(IPC_COMMANDS.QUOTE_MARK_ACCEPTED, {
       request: { id }
     }, validateQuoteAcceptResponse);
     invalidatePattern('quote:');
@@ -97,7 +97,7 @@ export const quotesIpc = {
   },
 
   markRejected: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>('quote_mark_rejected', {
+    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_REJECTED, {
       request: { id }
     }, validateQuote);
     invalidatePattern('quote:');
@@ -142,19 +142,19 @@ export const quotesIpc = {
   },
 
   exportPdf: async (id: string) => {
-    return safeInvoke('quote_export_pdf', {
+    return safeInvoke(IPC_COMMANDS.QUOTE_EXPORT_PDF, {
       request: { id }
     });
   },
 
   getAttachments: async (quoteId: string) => {
-    return safeInvoke('quote_attachments_get', {
+    return safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENTS_GET, {
       request: { quote_id: quoteId }
     });
   },
 
   createAttachment: async (quoteId: string, data: JsonObject) => {
-    const result = await safeInvoke('quote_attachment_create', {
+    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_CREATE, {
       request: { quote_id: quoteId, data }
     });
     invalidatePattern('quote:');
@@ -163,7 +163,7 @@ export const quotesIpc = {
   },
 
   updateAttachment: async (quoteId: string, attachmentId: string, data: JsonObject) => {
-    const result = await safeInvoke('quote_attachment_update', {
+    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_UPDATE, {
       request: { quote_id: quoteId, attachment_id: attachmentId, data }
     });
     invalidatePattern('quote:');
@@ -172,7 +172,7 @@ export const quotesIpc = {
   },
 
   deleteAttachment: async (quoteId: string, attachmentId: string) => {
-    const result = await safeInvoke('quote_attachment_delete', {
+    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_DELETE, {
       request: { quote_id: quoteId, attachment_id: attachmentId }
     });
     invalidatePattern('quote:');

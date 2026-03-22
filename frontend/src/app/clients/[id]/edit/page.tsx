@@ -113,6 +113,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               <Input
                 type="text"
                 id="name"
+                name="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={formErrors.name ? 'border-destructive focus-visible:ring-destructive' : ''}
@@ -167,6 +168,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               <Input
                 type="email"
                 id="email"
+                name="email"
                 value={formData.email ?? ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={formErrors.email ? 'border-destructive focus-visible:ring-destructive' : ''}
@@ -183,6 +185,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               <Input
                 type="tel"
                 id="phone"
+                name="phone"
                 value={formData.phone ?? ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className={formErrors.phone ? 'border-destructive focus-visible:ring-destructive' : ''}
@@ -207,6 +210,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
                 <Input
                   type="text"
                   id="company_name"
+                  name="company_name"
                   value={formData.company_name ?? ''}
                   onChange={(e) => handleInputChange('company_name', e.target.value)}
                   className={formErrors.company_name ? 'border-destructive focus-visible:ring-destructive' : ''}
@@ -223,6 +227,7 @@ export default function EditClientPage({ params }: EditClientPageProps) {
               </label>
               <Textarea
                 id="notes"
+                name="notes"
                 value={formData.notes ?? ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 className={formErrors.notes ? 'border-destructive focus-visible:ring-destructive' : ''}

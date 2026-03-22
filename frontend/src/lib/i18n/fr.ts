@@ -332,6 +332,31 @@ export const fr = {
     addClient: "Ajouter un client",
     addNewClient: "Ajouter un nouveau client",
     addToSystem: "Ajouter un nouveau client au système",
+    subtitle: "Gérez votre base de clients",
+    clientOverview: "Aperçu du client",
+    completed: "Terminées",
+    clientSince: "Client depuis",
+    recentActivity: "Activité récente",
+    inProgress: "En cours",
+    pending: "En attente",
+    since: "Depuis le",
+
+    // Missing keys used by list/detail/edit pages
+    totalClients: "Total clients",
+    withTasks: "Avec tâches",
+    searchPlaceholder: "Rechercher un client...",
+    sortNameAsc: "Nom (A-Z)",
+    sortNameDesc: "Nom (Z-A)",
+    sortNewest: "Plus récents",
+    sortOldest: "Plus anciens",
+    sortMostTasks: "Plus de tâches",
+    viewAll: "Voir tout",
+    noTasks: "Aucune tâche",
+    createFirstTask: "Créer une première tâche",
+    viewAllActivity: "Voir toute l'activité",
+    noRecentActivity: "Aucune activité récente",
+    checkId: "Vérifier l'identifiant",
+    refreshing: "Actualisation...",
   },
 
   // Interventions
@@ -1049,6 +1074,7 @@ export const fr = {
   // Confirmation Dialogs
   confirm: {
     delete: "Êtes-vous sûr de vouloir supprimer ?",
+    deleteClient: "Êtes-vous sûr de vouloir supprimer le client {name} ?",
     deletePermanent: "Cette action est irréversible. Continuer ?",
     unsavedChanges: "Des modifications non enregistrées seront perdues. Continuer ?",
     logout: "Êtes-vous sûr de vouloir vous déconnecter ?",

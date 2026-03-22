@@ -1,7 +1,4 @@
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import type { LowStockMaterial, LowStockMaterialsResponse, Material } from '@/shared/types';
-import type { JsonObject } from '@/types/json';
 
 type ApiErrorShape = {
   message?: string | null;
@@ -18,17 +15,6 @@ type ApiEnvelope<T> = {
   correlation_id?: string | null;
 };
 
-type DecompressPayload = {
-  request: {
-    compressed: {
-      data: string;
-      original_size: number;
-      compressed_size: number;
-      compression_ratio: number;
-    };
-  };
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
 }
@@ -37,21 +23,6 @@ function normalizeApiError(response: ApiEnvelope<unknown>, ctx: string): string 
   const rawMessage = response.error?.message ?? response.message ?? `Request failed for ${ctx}`;
   const code = response.error?.code ?? response.error_code;
   return code ? `${rawMessage} (${code})` : rawMessage;
-}
-
-async function decompressApiData(data: string): Promise<unknown> {
-  const payload: DecompressPayload = {
-    request: {
-      compressed: {
-        data,
-        original_size: 0,
-        compressed_size: 0,
-        compression_ratio: 0,
-      },
-    },
-  };
-
-  return safeInvoke<unknown>(IPC_COMMANDS.DECOMPRESS_DATA_FROM_IPC, payload as unknown as JsonObject);
 }
 
 export async function unwrapApiResponse<T>(raw: unknown, ctx: string): Promise<T> {
@@ -67,10 +38,7 @@ export async function unwrapApiResponse<T>(raw: unknown, ctx: string): Promise<T
     }
 
     if (response.compressed === true) {
-      if (typeof response.data !== 'string') {
-        throw new Error(`Invalid compressed response format for ${ctx}`);
-      }
-      return await decompressApiData(response.data) as T;
+      throw new Error(`Compressed responses are not supported for ${ctx}`);
     }
 
     if (response.compressed === false && typeof response.data === 'string') {
@@ -85,10 +53,7 @@ export async function unwrapApiResponse<T>(raw: unknown, ctx: string): Promise<T
   }
 
   if (response.compressed === true) {
-    if (typeof response.data !== 'string') {
-      throw new Error(`Invalid compressed response format for ${ctx}`);
-    }
-    return await decompressApiData(response.data) as T;
+    throw new Error(`Compressed responses are not supported for ${ctx}`);
   }
 
   return raw as T;

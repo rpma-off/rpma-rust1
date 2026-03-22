@@ -361,7 +361,7 @@ impl ServiceBuilder {
         if let Err(e) = audit_service.init() {
             tracing::warn!("Audit service init failed (non-fatal): {}", e);
         }
-        let audit_log_handler = AuditLogHandler::new(audit_service);
+        let audit_log_handler = AuditLogHandler::new(audit_service.clone());
         event_bus.register_handler(audit_log_handler);
 
         register_handler(inventory_service.intervention_finalized_handler());
@@ -432,6 +432,7 @@ impl ServiceBuilder {
             }),
             trash_service,
             global_search_service,
+            audit_service,
         })
     }
 }

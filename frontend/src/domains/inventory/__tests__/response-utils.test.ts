@@ -1,12 +1,4 @@
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { unwrapApiResponse, validateLowStockPayload, validateMaterialListPayload } from '../server/response-utils';
-
-jest.mock('@/lib/ipc/core', () => ({
-  safeInvoke: jest.fn(),
-}));
-
-const mockSafeInvoke = safeInvoke as jest.MockedFunction<typeof safeInvoke>;
 
 const material = {
   id: 'mat-1',
@@ -24,15 +16,11 @@ const material = {
 };
 
 describe('inventory response-utils', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('unwraps ApiResponse success payload', async () => {
     const result = await unwrapApiResponse<unknown[]>({
       success: true,
       data: [material],
-    }, 'test ctx', 'token');
+    }, 'test ctx');
 
     expect(result).toEqual([material]);
   });
@@ -43,33 +31,18 @@ describe('inventory response-utils', () => {
         success: false,
         message: 'Failed request',
         error_code: 'VALIDATION_ERROR',
-      }, 'test ctx', 'token')
+      }, 'test ctx')
     ).rejects.toThrow('Failed request (VALIDATION_ERROR)');
   });
 
-  it('decompresses compressed response payload', async () => {
-    mockSafeInvoke.mockResolvedValueOnce([material] as never);
-
-    const result = await unwrapApiResponse<unknown[]>({
-      success: true,
-      compressed: true,
-      data: 'base64-gzip-payload',
-    }, 'test ctx', 'session-token');
-
-    expect(result).toEqual([material]);
-    expect(mockSafeInvoke).toHaveBeenCalledWith(
-      IPC_COMMANDS.DECOMPRESS_DATA_FROM_IPC,
-      {
-        request: {
-          compressed: {
-            data: 'base64-gzip-payload',
-            original_size: 0,
-            compressed_size: 0,
-            compression_ratio: 0,
-          },
-        },
-      }
-    );
+  it('throws for compressed response (not supported)', async () => {
+    await expect(
+      unwrapApiResponse({
+        success: true,
+        compressed: true,
+        data: 'base64-gzip-payload',
+      }, 'test ctx')
+    ).rejects.toThrow('Compressed responses are not supported for test ctx');
   });
 
   it('throws for invalid list payload', () => {

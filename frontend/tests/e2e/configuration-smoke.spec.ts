@@ -65,7 +65,7 @@ test.describe('Configuration page smoke', () => {
     await expect(page.locator('text=Paramètres Système')).toBeVisible({ timeout: 10000 });
 
     // The Save button should be present but disabled when no changes made
-    const saveButton = page.locator('button:has-text("Sauvegarder")').first();
+    const saveButton = page.locator('button:has-text("Enregistrer")').first();
     await expect(saveButton).toBeVisible({ timeout: 5000 });
 
     // The Reset button should also be present

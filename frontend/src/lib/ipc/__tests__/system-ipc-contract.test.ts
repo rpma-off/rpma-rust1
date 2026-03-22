@@ -21,12 +21,6 @@ describe('systemOperations IPC contract tests', () => {
     expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.HEALTH_CHECK);
   });
 
-  it('calls safeInvoke with correct parameters for getApplicationMetrics', async () => {
-    await systemOperations.getApplicationMetrics();
-
-    expect(safeInvoke).toHaveBeenCalledWith(IPC_COMMANDS.GET_IPC_STATS);
-  });
-
   it('calls safeInvoke with correct parameters for getDatabaseStatus', async () => {
     await systemOperations.getDatabaseStatus();
 

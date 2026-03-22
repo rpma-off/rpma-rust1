@@ -6,4 +6,10 @@
 //! path working so that callers such as `service_builder`, `app_state`,
 //! `facade`, and existing tests need no changes.
 
+// ARCH VIOLATION: re-exporting an application-layer service (`QuoteService`) from an
+// infrastructure module creates an infrastructure → application dependency, which inverts
+// the required dependency direction (IPC → Application → Domain ← Infrastructure).
+// TODO: Remove this re-export shim. Update all callers
+//   (`service_builder`, `app_state`, `facade`, tests) to import `QuoteService` directly from
+//   `crate::domains::quotes::application::quote_service::QuoteService`, then delete this file.
 pub use crate::domains::quotes::application::quote_service::QuoteService;

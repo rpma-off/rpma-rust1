@@ -36,9 +36,8 @@ pub mod auth {
         pub correlation_id: Option<String>,
     }
 
-    /// ADR-018: Thin IPC layer
+    /// ADR-018: Thin IPC layer — token refresh not supported in this build
     #[tracing::instrument(skip(_state))]
-    #[tauri::command]
     pub async fn auth_refresh_token(
         _request: RefreshTokenRequest,
         _state: AppState<'_>,

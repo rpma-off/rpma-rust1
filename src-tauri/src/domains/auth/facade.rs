@@ -20,6 +20,12 @@ impl AuthFacade {
         Self
     }
 
+    // ARCH VIOLATION: input validation is business logic and must not live at the IPC/facade
+    // boundary. `validate_login_input` orchestrates `validate_email` + `validate_password` rules
+    // that belong in the application layer.
+    // TODO: Move this method (and its callers in ipc/auth.rs) to
+    //       `application/auth_security_service.rs` or a new
+    //       `application/auth_input_validator.rs`.
     /// TODO: document
     pub fn validate_login_input(
         &self,
@@ -32,6 +38,11 @@ impl AuthFacade {
         Ok((validated_email, validated_password))
     }
 
+    // ARCH VIOLATION: signup input validation (field presence, format, password strength) is
+    // business logic that must not live at the IPC/facade boundary.
+    // TODO: Move `validate_signup_input` to `application/auth_security_service.rs` (or a
+    //       dedicated `application/auth_input_validator.rs`) and call it from there, not
+    //       directly from `ipc/auth.rs`.
     /// TODO: document
     pub fn validate_signup_input(
         &self,
@@ -75,6 +86,10 @@ impl AuthFacade {
         Ok(())
     }
 
+    // ARCH VIOLATION: email format/length rules are domain validation logic and must not reside
+    // in the facade root (IPC boundary).
+    // TODO: Extract `validate_email` into `application/auth_input_validator.rs` or
+    //       `domain/` (pure rule, no side-effects) and remove from this facade.
     fn validate_email(&self, email: &str) -> Result<String, AppError> {
         let trimmed = email.trim().to_lowercase();
         if trimmed.is_empty() || trimmed.len() > 254 {
@@ -92,6 +107,9 @@ impl AuthFacade {
         Ok(trimmed)
     }
 
+    // ARCH VIOLATION: name presence/length rules are domain validation logic that must not live
+    // at the IPC boundary.
+    // TODO: Move `validate_name` to `application/auth_input_validator.rs` or `domain/`.
     fn validate_name(&self, name: &str, field: &str) -> Result<String, AppError> {
         let trimmed = name.trim();
         if trimmed.is_empty() {
@@ -109,6 +127,10 @@ impl AuthFacade {
         Ok(trimmed.to_string())
     }
 
+    // ARCH VIOLATION: password-strength rules (min length, upper/lower/digit requirements) are
+    // pure business logic and must not be embedded in the IPC/facade layer.
+    // TODO: Move `validate_password` to `application/auth_input_validator.rs` or
+    //       `domain/policy.rs` and remove from this facade.
     fn validate_password(&self, password: &str) -> Result<String, AppError> {
         if password.trim().is_empty() || password.len() > 128 {
             return Err(AppError::Validation(

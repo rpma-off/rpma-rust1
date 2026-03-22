@@ -43,6 +43,12 @@ pub struct ClientStat {
     pub total_tasks: i32,
 }
 
+// ARCH VIOLATION: `FromSqlRow for ClientStat` implements a `rusqlite::Row` mapping directly
+// in the application layer. DB row-to-model mapping is an infrastructure concern and must not
+// appear here (ADR-001: infrastructure/ owns all SQL/rusqlite touches).
+// TODO: Move this `impl` block to `infrastructure/client_repository.rs` (or a sibling
+// `infrastructure/client_row_mapping.rs`), keeping `ClientStat` as a plain data struct in
+// the application layer with no rusqlite dependency.
 impl crate::db::FromSqlRow for ClientStat {
     fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Self> {
         Ok(ClientStat {

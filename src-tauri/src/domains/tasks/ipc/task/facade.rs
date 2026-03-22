@@ -184,6 +184,11 @@ pub async fn edit_task(
     Ok(ApiResponse::success(updated_task).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
 
+// ARCH VIOLATION: `validate_status_change` is a status-transition business rule exposed as a
+// `pub` function at the IPC boundary. Policy functions must not be surfaced here.
+// TODO: Remove this re-export from the IPC layer. Callers should reach
+//       `application::services::task_policy_service::validate_status_change` directly, or the
+//       logic should be invoked only from within `TaskCommandService` (application layer).
 /// Validate status change - thin delegate to policy service.
 pub fn validate_status_change(
     current: &crate::domains::tasks::domain::models::task::TaskStatus,
@@ -192,6 +197,11 @@ pub fn validate_status_change(
     task_policy_service::validate_status_change(current, new)
 }
 
+// ARCH VIOLATION: `check_task_permissions` is an RBAC enforcement function exposed as a `pub`
+// function at the IPC boundary. Permission checks belong in the application layer.
+// TODO: Remove this re-export from the IPC layer. Callers should invoke
+//       `application::services::task_policy_service::check_task_permissions` directly, or
+//       RBAC enforcement should be encapsulated inside `TaskCommandService`.
 /// Check permissions for task operations - thin delegate to policy service.
 pub fn check_task_permissions(
     auth: &crate::shared::context::AuthContext,
@@ -201,6 +211,12 @@ pub fn check_task_permissions(
     task_policy_service::check_task_permissions(auth, task, operation)
 }
 
+// ARCH VIOLATION: `enforce_technician_field_restrictions` is a field-level business rule
+// exposed as a `pub` function at the IPC boundary. Validation logic belongs in the
+// application layer, not in IPC.
+// TODO: Remove this re-export from the IPC layer. The restriction should be enforced solely
+//       inside `TaskCommandService::update_task` (application layer); remove the pub wrapper
+//       here and delete any IPC-level call sites.
 /// Validate that a Technician is not attempting to change restricted fields.
 pub fn enforce_technician_field_restrictions(
     req: &crate::domains::tasks::domain::models::task::UpdateTaskRequest,

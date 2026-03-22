@@ -60,6 +60,7 @@ export default function NewClientPage() {
               <Input
                 type="text"
                 id="name"
+                name="name"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -114,6 +115,7 @@ export default function NewClientPage() {
               <Input
                 type="email"
                 id="email"
+                name="email"
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -130,6 +132,7 @@ export default function NewClientPage() {
               <Input
                 type="tel"
                 id="phone"
+                name="phone"
                 value={formData.phone || ''}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -145,6 +148,7 @@ export default function NewClientPage() {
               </label>
               <Textarea
                 id="address_street"
+                name="address_street"
                 value={formData.address_street || ''}
                 onChange={(e) => handleInputChange('address_street', e.target.value)}
                 className={errors.address_street ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -163,6 +167,7 @@ export default function NewClientPage() {
                 <Input
                   type="text"
                   id="company_name"
+                  name="company_name"
                   value={formData.company_name || ''}
                   onChange={(e) => handleInputChange('company_name', e.target.value)}
                   className={errors.company_name ? 'border-red-500 focus-visible:ring-red-500' : ''}
@@ -179,6 +184,7 @@ export default function NewClientPage() {
               </label>
               <Textarea
                 id="notes"
+                name="notes"
                 value={formData.notes || ''}
                 onChange={(e) => handleInputChange('notes', e.target.value)}
                 className={errors.notes ? 'border-red-500 focus-visible:ring-red-500' : ''}

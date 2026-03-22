@@ -25,6 +25,11 @@ pub struct ClientCrudRequest {
 
 // ── Sanitization helpers ──────────────────────────────────────────────────────
 
+// ARCH VIOLATION: `sanitize_client_action` performs input validation (dispatching to
+// `sanitize_create_request` / `sanitize_update_request`) inside the IPC/handler layer.
+// Validation logic belongs in application/.
+// TODO: Move `sanitize_client_action` to `application/client_service.rs` (or a new
+// `application/client_input_validator.rs`) and call it from there; remove from this file.
 /// Validate and sanitize the data inside a [`ClientAction`].
 pub fn sanitize_client_action(action: ClientAction) -> Result<ClientAction, IpcAppError> {
     match action {
@@ -58,6 +63,11 @@ pub fn required_permission(action: &ClientAction) -> Option<&'static str> {
     }
 }
 
+// ARCH VIOLATION: `sanitize_create_request` is field-level validation and sanitization
+// (name length, email format, phone format, tag JSON) executing in the IPC/handler layer.
+// Validation belongs in application/.
+// TODO: Move to `application/client_input_validator.rs` and call from the application
+// service; remove from this file.
 pub(crate) fn sanitize_create_request(data: CreateClientRequest) -> Result<CreateClientRequest, IpcAppError> {
     let validator = ValidationService::new();
     let validated_name = validator
@@ -110,6 +120,10 @@ pub(crate) fn sanitize_create_request(data: CreateClientRequest) -> Result<Creat
     })
 }
 
+// ARCH VIOLATION: `sanitize_update_request` mirrors the create-path validation but for
+// updates — business logic executing in the IPC/handler layer.
+// TODO: Move to `application/client_input_validator.rs` alongside
+// `sanitize_create_request`; remove from this file.
 pub(crate) fn sanitize_update_request(
     id: String,
     data: UpdateClientRequest,
@@ -173,6 +187,16 @@ pub(crate) fn sanitize_update_request(
 
 // ── ClientValidationService ───────────────────────────────────────────────────
 
+// ARCH VIOLATION: `ClientValidationService` is a full validation service (required-field
+// checks, email/phone format rules, address validation, duplicate detection, business-type
+// rules, deletion guard) living in the IPC/handler layer (`client_handler/validation.rs`).
+// All of this logic belongs in application/ (orchestration + duplicate checks) and
+// domain/ (pure field/business rules with no DB access).
+// TODO: Split into:
+//   • `domain/models/client.rs` — pure field/format rules (no DB)
+//   • `application/client_service.rs` — duplicate detection (`check_for_duplicates`) and
+//     deletion guard (`validate_client_deletion`) using the repository trait
+// Then remove `ClientValidationService` from this file.
 /// Service for client validation operations
 #[derive(Debug)]
 pub struct ClientValidationService {

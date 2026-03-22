@@ -19,8 +19,9 @@ test.describe('Connectivity smoke', () => {
     await page.goto('/tasks');
     await expect(page.locator('h1')).toContainText(/Jobs|Tâches/i);
 
-    const firstTaskCard = page.locator('.grid > div').first();
-    await expect(firstTaskCard).toBeVisible();
+    // Default view is 'table': task rows are inside .divide-y; fallback to .animate-fadeIn for list view
+    const firstTaskCard = page.locator('.divide-y > div, .animate-fadeIn').first();
+    await expect(firstTaskCard).toBeVisible({ timeout: 15000 });
     await firstTaskCard.click();
 
     await page.waitForURL(/\/tasks\/[a-zA-Z0-9-]+/, { timeout: 10000 });
@@ -43,8 +44,13 @@ test.describe('Connectivity smoke', () => {
       await expect(page.locator('.step.completed, text=/terminée|completed/i').first()).toBeVisible({ timeout: 10000 });
     }
 
+    // Open the user dropdown first (logout is inside it)
+    const userMenuButton = page.locator('button:has-text("Connecté en tant que")').first();
+    if (await userMenuButton.isVisible()) {
+      await userMenuButton.click();
+    }
     const logoutButton = page.locator('button:has-text("Déconnexion"), a:has-text("Déconnexion"), button:has-text("Logout")').first();
-    await expect(logoutButton).toBeVisible();
+    await expect(logoutButton).toBeVisible({ timeout: 5000 });
     await logoutButton.click();
     await page.waitForURL(/\/login/, { timeout: 10000 });
   });
