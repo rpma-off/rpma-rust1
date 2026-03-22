@@ -196,7 +196,7 @@ impl TaskCommandService {
 
         let facade = self.facade();
         let issue_entry =
-            facade.format_issue_entry(&ctx.auth.user_id, issue_type, &severity, description);
+            facade.format_issue_entry(&ctx.auth.user_id, issue_type, &severity.to_string(), description);
         let updated_notes = facade.append_note(task.notes.as_deref(), &issue_entry);
 
         let update_request = UpdateTaskRequest {
@@ -210,7 +210,7 @@ impl TaskCommandService {
             .await
             .map_err(|e| AppError::db_sanitized("tasks.report_issue", e))?;
 
-        if matches!(severity.as_str(), "high" | "critical") {
+        if severity.requires_escalation() {
             if let Err(err) = self
                 .notification_sender
                 .send_message_raw(
@@ -223,7 +223,7 @@ impl TaskCommandService {
                     format!("{} (severity: {})", description, severity),
                     Some(task.id.clone()),
                     task.client_id.clone(),
-                    Some("high".to_string()),
+                    Some(severity.notification_priority().to_string()),
                     None,
                     Some(ctx.correlation_id.clone()),
                 )

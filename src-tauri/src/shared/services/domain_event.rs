@@ -396,6 +396,16 @@ impl DomainEvent {
     pub const ENTITY_RESTORED: &'static str = "EntityRestored";
     pub const ENTITY_HARD_DELETED: &'static str = "EntityHardDeleted";
 
+    // Notification-type constants — preserve the DB-stored string values.
+    // Intentionally distinct from event-bus constants (e.g., TASK_ASSIGNED vs
+    // TASK_ASSIGNMENT_NOTIF) because notification types and domain-event types
+    // are different vocabularies.
+    pub const TASK_ASSIGNMENT_NOTIF: &'static str = "TaskAssignment";
+    pub const TASK_UPDATE_NOTIF: &'static str = "TaskUpdate";
+    pub const QUOTE_CREATED_NOTIF: &'static str = "QuoteCreated";
+    pub const QUOTE_APPROVED_NOTIF: &'static str = "QuoteApproved";
+    pub const SYSTEM_ALERT_NOTIF: &'static str = "SystemAlert";
+
     /// Get the event type name as a string
     pub fn event_type(&self) -> &'static str {
         match self {

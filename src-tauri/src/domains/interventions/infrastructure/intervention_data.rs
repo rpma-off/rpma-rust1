@@ -16,10 +16,10 @@ use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_types::{
-    AdvanceStepRequest, InterventionPhoto, StartInterventionRequest,
+    AdvanceStepRequest, InterventionPhoto, StartInterventionRequest, UpdateInterventionRequest,
 };
-use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::contracts::common::*;
+use crate::shared::contracts::task_status::TaskStatus;
 use rusqlite::{params, OptionalExtension, Transaction};
 use std::str::FromStr;
 
@@ -394,25 +394,54 @@ impl InterventionDataService {
     pub fn update_intervention(
         &self,
         intervention_id: &str,
-        updates: serde_json::Value,
+        updates: UpdateInterventionRequest,
     ) -> InterventionResult<Intervention> {
         let mut intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
 
-        // Apply updates
-        if let Some(notes) = updates.get("notes").and_then(|v| v.as_str()) {
-            intervention.notes = Some(notes.to_string());
+        // Apply updates — each field is Option<T>; None means "leave unchanged".
+        if let Some(notes) = updates.notes {
+            intervention.notes = Some(notes);
         }
-        if let Some(special_instructions) =
-            updates.get("special_instructions").and_then(|v| v.as_str())
-        {
-            intervention.special_instructions = Some(special_instructions.to_string());
+        if let Some(special_instructions) = updates.special_instructions {
+            intervention.special_instructions = Some(special_instructions);
         }
 
         intervention.updated_at = now();
         self.save_intervention(&intervention)?;
         Ok(intervention)
+    }
+
+    /// Apply administrative field updates to an existing intervention.
+    ///
+    /// Handles management-level fields (`status`, `technician_id`) that are
+    /// separate from the user-facing `UpdateInterventionRequest` (notes /
+    /// special_instructions). Passing `None` for a field leaves it unchanged.
+    ///
+    /// Previously these fields were passed through a `serde_json::Value` that
+    /// was never extracted, so they were silently dropped. This method
+    /// guarantees the values reach the database.
+    pub fn bulk_apply_update(
+        &self,
+        intervention_id: &str,
+        status: Option<&str>,
+        technician_id: Option<&str>,
+    ) -> InterventionResult<()> {
+        let mut intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
+            InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
+        })?;
+
+        if let Some(s) = status {
+            intervention.status = s.parse().unwrap_or(intervention.status);
+        }
+        if let Some(tid) = technician_id {
+            intervention.technician_id = Some(tid.to_string());
+        }
+
+        intervention.updated_at = now();
+        self.save_intervention(&intervention)?;
+        Ok(())
     }
 
     /// Delete intervention
@@ -604,17 +633,21 @@ impl InterventionDataService {
             )?;
 
             if let Some(int_status) = intervention_status {
-                let expected_task_status = match int_status.as_str() {
-                    "completed" => "completed",
-                    "cancelled" => "cancelled",
-                    "paused" => "paused",
-                    _ => "in_progress",
+                let intervention_status_enum = int_status
+                    .parse::<InterventionStatus>()
+                    .unwrap_or(InterventionStatus::InProgress);
+
+                let expected_task_status = match intervention_status_enum {
+                    InterventionStatus::Completed => TaskStatus::Completed,
+                    InterventionStatus::Cancelled => TaskStatus::Cancelled,
+                    InterventionStatus::Paused => TaskStatus::Paused,
+                    _ => TaskStatus::InProgress,
                 };
 
-                if task_status != expected_task_status {
+                if task_status != expected_task_status.to_string() {
                     self.db.get_connection()?.execute(
                         "UPDATE tasks SET status = ? WHERE id = ?",
-                        params![expected_task_status, task_id],
+                        params![expected_task_status.to_string(), task_id],
                     )?;
                 }
             }
@@ -720,10 +753,17 @@ mod tests {
              (id, email, username, password_hash, full_name, role, created_at, updated_at, synced) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
             rusqlite::params![
-                tech_id, "tech@test.com", "tech_test", "hash",
-                "Tech Test", "technician", now, now
+                tech_id,
+                "tech@test.com",
+                "tech_test",
+                "hash",
+                "Tech Test",
+                "technician",
+                now,
+                now
             ],
-        ).expect("seed user");
+        )
+        .expect("seed user");
 
         let service = InterventionDataService::new(db.clone());
         let mut req = make_start_request(task_id);
@@ -736,10 +776,26 @@ mod tests {
             .expect("create_intervention_with_tx failed");
         tx.commit().expect("commit tx");
 
-        assert_eq!(intervention.vehicle_model.as_deref(), Some("Model 3"), "vehicle_model must be copied");
-        assert_eq!(intervention.vehicle_make.as_deref(), Some("Tesla"), "vehicle_make must be copied");
-        assert_eq!(intervention.vehicle_year, Some(2022), "vehicle_year must be parsed from TEXT");
-        assert_eq!(intervention.vehicle_vin.as_deref(), Some("VIN999"), "vehicle_vin must be copied");
+        assert_eq!(
+            intervention.vehicle_model.as_deref(),
+            Some("Model 3"),
+            "vehicle_model must be copied"
+        );
+        assert_eq!(
+            intervention.vehicle_make.as_deref(),
+            Some("Tesla"),
+            "vehicle_make must be copied"
+        );
+        assert_eq!(
+            intervention.vehicle_year,
+            Some(2022),
+            "vehicle_year must be parsed from TEXT"
+        );
+        assert_eq!(
+            intervention.vehicle_vin.as_deref(),
+            Some("VIN999"),
+            "vehicle_vin must be copied"
+        );
     }
 
     #[test]

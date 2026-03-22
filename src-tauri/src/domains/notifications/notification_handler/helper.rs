@@ -21,7 +21,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "TaskAssignment".to_string(),
+            DomainEvent::TASK_ASSIGNMENT_NOTIF.to_string(),
             "Nouvelle tâche assignée".to_string(),
             format!("Vous avez été assigné à la tâche: {}", task_title),
             "task".to_string(),
@@ -44,7 +44,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "TaskUpdate".to_string(),
+            DomainEvent::TASK_UPDATE_NOTIF.to_string(),
             "Mise à jour de tâche".to_string(),
             format!("La tâche '{}' a été mise à jour: {}", task_title, status),
             "task".to_string(),
@@ -88,7 +88,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "QuoteCreated".to_string(),
+            DomainEvent::QUOTE_CREATED_NOTIF.to_string(),
             "Nouveau devis créé".to_string(),
             format!(
                 "Un nouveau devis a été créé pour le client: {}",
@@ -113,7 +113,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "QuoteApproved".to_string(),
+            DomainEvent::QUOTE_APPROVED_NOTIF.to_string(),
             "Devis approuvé".to_string(),
             format!("Le devis pour {} a été approuvé", client_name),
             "quote".to_string(),
@@ -157,7 +157,7 @@ impl NotificationHelper {
         let repo = NotificationRepository::new(db.clone(), cache.clone());
         repo.save(Notification::new(
             user_id.to_string(),
-            "SystemAlert".to_string(),
+            DomainEvent::SYSTEM_ALERT_NOTIF.to_string(),
             title.to_string(),
             message.to_string(),
             "system".to_string(),

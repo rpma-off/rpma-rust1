@@ -66,6 +66,65 @@ impl TaskPriority {
     }
 }
 
+/// Issue severity for task defect reporting.
+///
+/// Distinct from `TaskPriority` — severity describes the urgency of a
+/// reported defect; "critical" is valid here but not in task priority.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
+#[ts(export)]
+pub enum IssueSeverity {
+    #[serde(rename = "low")]
+    Low,
+    #[serde(rename = "medium")]
+    #[default]
+    Medium,
+    #[serde(rename = "high")]
+    High,
+    #[serde(rename = "critical")]
+    Critical,
+}
+
+impl std::fmt::Display for IssueSeverity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Critical => "critical",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl std::str::FromStr for IssueSeverity {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "low" => Ok(Self::Low),
+            "medium" => Ok(Self::Medium),
+            "high" => Ok(Self::High),
+            "critical" => Ok(Self::Critical),
+            _ => Err(format!("Unknown issue severity: {}", s)),
+        }
+    }
+}
+
+impl IssueSeverity {
+    /// Returns `true` if this severity warrants an escalation notification.
+    pub fn requires_escalation(&self) -> bool {
+        matches!(self, Self::High | Self::Critical)
+    }
+
+    /// Returns the notification priority string for this severity level.
+    pub fn notification_priority(&self) -> &'static str {
+        match self {
+            Self::High | Self::Critical => "high",
+            _ => "normal",
+        }
+    }
+}
+
 /// Sort order for queries
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
 pub enum SortOrder {
