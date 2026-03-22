@@ -13,8 +13,8 @@ use crate::domains::interventions::infrastructure::intervention_types::{
 use crate::domains::interventions::infrastructure::workflow_strategy::{
     EnvironmentConditions, WorkflowContext, WorkflowStrategyFactory,
 };
-use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::contracts::common::TimestampString;
+use crate::shared::contracts::task_status::TaskStatus;
 use crate::shared::logging::{LogDomain, RPMARequestLogger};
 use chrono::Utc;
 use serde_json::json;
@@ -422,12 +422,7 @@ impl super::InterventionWorkflowService {
         intervention.updated_at = chrono::Utc::now().timestamp_millis();
         intervention.updated_by = Some(user_id.to_string());
 
-        let updates = json!({
-            "status": serde_json::to_string(&intervention.status).unwrap_or_default(),
-            "updated_at": intervention.updated_at,
-            "updated_by": intervention.updated_by
-        });
-        self.data.update_intervention(&intervention.id, updates)?;
+        self.data.save_intervention(&intervention)?;
 
         Ok(intervention)
     }

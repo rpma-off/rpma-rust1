@@ -3,6 +3,7 @@
 //! These types define the IPC request/response contracts for intervention
 //! workflow operations.
 
+use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
 use serde::Deserialize;
 
 /// Narrow application-layer contract for quote-driven intervention creation.
@@ -22,12 +23,25 @@ pub trait InterventionCreator: Send + Sync {
 #[derive(Deserialize, Debug)]
 #[serde(tag = "action")]
 pub enum InterventionWorkflowAction {
-    Start { data: StartInterventionRequest },
-    Get { id: String },
-    GetActiveByTask { task_id: String },
-    Update { id: String, data: serde_json::Value },
-    Delete { id: String },
-    Finalize { data: FinalizeInterventionRequest },
+    Start {
+        data: StartInterventionRequest,
+    },
+    Get {
+        id: String,
+    },
+    GetActiveByTask {
+        task_id: String,
+    },
+    Update {
+        id: String,
+        data: UpdateInterventionRequest,
+    },
+    Delete {
+        id: String,
+    },
+    Finalize {
+        data: FinalizeInterventionRequest,
+    },
 }
 
 /// Convert an application-layer workflow action into the matching domain command.

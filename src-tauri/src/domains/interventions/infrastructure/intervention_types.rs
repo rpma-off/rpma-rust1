@@ -76,6 +76,24 @@ pub struct SaveStepProgressRequest {
     pub photos: Option<Vec<String>>,
 }
 
+/// Request to update mutable fields on an existing intervention.
+///
+/// Replaces the previous `serde_json::Value` payload that required manual
+/// field extraction (`updates.get("notes").and_then(|v| v.as_str())`) in the
+/// application layer. All fields are optional; omitting a field leaves the
+/// stored value unchanged.
+///
+/// ADR-018: accepted as a direct Tauri command parameter so Tauri handles
+/// deserialization automatically — no manual `from_value` step needed.
+#[derive(Debug, Clone, Deserialize, TS)]
+#[ts(export)]
+pub struct UpdateInterventionRequest {
+    /// Free-form technician notes attached to this intervention.
+    pub notes: Option<String>,
+    /// Special handling or client-requested instructions.
+    pub special_instructions: Option<String>,
+}
+
 /// Response for saving step progress
 #[derive(Debug, Serialize, TS)]
 pub struct SaveStepProgressResponse {

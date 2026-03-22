@@ -7,6 +7,7 @@ use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowAction, InterventionWorkflowResponse,
     StartInterventionRequest,
 };
+use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
 use crate::domains::interventions::{
     InterventionsCommand, InterventionsFacade, InterventionsResponse,
 };
@@ -58,7 +59,7 @@ pub async fn intervention_start(
 #[instrument(skip(state, data), fields(user_id))]
 pub async fn intervention_update(
     id: String,
-    data: serde_json::Value,
+    data: UpdateInterventionRequest,
     correlation_id: Option<String>,
     state: AppState<'_>,
 ) -> Result<

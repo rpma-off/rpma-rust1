@@ -20,6 +20,7 @@ use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::intervention_scoring_service::InterventionScoringService;
 use crate::domains::interventions::infrastructure::intervention_step_service::InterventionStepService;
+use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
 use crate::domains::interventions::infrastructure::intervention_workflow::InterventionWorkflowService;
 use crate::domains::interventions::infrastructure::material_consumption_service::MaterialConsumptionService;
 use crate::domains::interventions::infrastructure::photo_validation_service::PhotoValidationService;
@@ -133,11 +134,14 @@ impl InterventionService {
         self.data.get_latest_intervention_by_task(task_id)
     }
 
-    /// Update intervention
+    /// Update mutable user-facing fields on an existing intervention.
+    ///
+    /// Accepts a strongly-typed request instead of a raw `serde_json::Value`
+    /// so callers cannot silently pass unknown fields that would be dropped.
     pub fn update_intervention(
         &self,
         intervention_id: &str,
-        updates: serde_json::Value,
+        updates: UpdateInterventionRequest,
     ) -> InterventionResult<Intervention> {
         self.data.update_intervention(intervention_id, updates)
     }
@@ -159,18 +163,26 @@ impl InterventionService {
             .list_interventions(status, technician_id, limit, offset)
     }
 
-    /// Apply the same update payload to each intervention in `ids`.
+    /// Apply administrative field updates to each intervention in `ids`.
+    ///
+    /// Accepts typed `status` and `technician_id` params instead of a raw
+    /// `serde_json::Value` so the fields are guaranteed to reach the database
+    /// (the previous Value-based path silently dropped these fields).
     ///
     /// Returns the number of successfully updated interventions.
     /// Extracted from the IPC layer per ADR-018.
     pub fn bulk_update_interventions(
         &self,
         ids: &[String],
-        updates: serde_json::Value,
+        status: Option<String>,
+        technician_id: Option<String>,
     ) -> InterventionResult<usize> {
         let mut updated = 0usize;
         for id in ids {
-            match self.data.update_intervention(id, updates.clone()) {
+            match self
+                .data
+                .bulk_apply_update(id, status.as_deref(), technician_id.as_deref())
+            {
                 Ok(_) => updated += 1,
                 Err(e) => {
                     tracing::warn!(intervention_id = %id, error = %e, "bulk_update: skipping failed intervention update");
@@ -250,8 +262,7 @@ impl InterventionService {
         &self,
         technician_id: Option<&str>,
     ) -> InterventionResult<InterventionAggregateStats> {
-        self.scoring_service
-            .get_stats_by_technician(technician_id)
+        self.scoring_service.get_stats_by_technician(technician_id)
     }
 
     // ── Composite reads ──────────────────────────────────────────────────
