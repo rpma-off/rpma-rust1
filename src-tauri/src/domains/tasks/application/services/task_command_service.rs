@@ -12,7 +12,7 @@ use tracing::{error, info, instrument, warn};
 use crate::commands::AppError;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    BulkImportResponse, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
+    BulkImportResponse, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
@@ -278,8 +278,12 @@ impl TaskCommandService {
 
     fn build_export_query(filter: Option<&TaskFilter>) -> TaskQuery {
         TaskQuery {
-            page: Some(1),
-            limit: Some(10000),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(10000),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: filter
                 .and_then(|f| f.status.as_ref())
                 .and_then(|s| TaskStatus::from_str_opt(s)),
@@ -291,8 +295,6 @@ impl TaskCommandService {
             search: None,
             from_date: filter.and_then(|f| f.date_from.clone()),
             to_date: filter.and_then(|f| f.date_to.clone()),
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         }
     }
 

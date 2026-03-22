@@ -217,17 +217,28 @@ pub struct QuoteItem {
 }
 
 /// Quote query parameters for listing and filtering
-#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct QuoteQuery {
-    pub page: Option<i32>,
-    pub limit: Option<i32>,
+    /// Shared pagination params (page, page_size, sort_by, sort_order).
+    pub pagination: crate::shared::repositories::base::PaginationParams,
     pub search: Option<String>,
     pub client_id: Option<String>,
     pub status: Option<QuoteStatus>,
     pub date_from: Option<String>,
     pub date_to: Option<String>,
-    pub sort_by: Option<String>,
-    pub sort_order: Option<String>,
+}
+
+impl Default for QuoteQuery {
+    fn default() -> Self {
+        Self {
+            pagination: Default::default(),
+            search: None,
+            client_id: None,
+            status: None,
+            date_from: None,
+            date_to: None,
+        }
+    }
 }
 
 /// Aggregate statistics for all quotes (not limited by pagination).

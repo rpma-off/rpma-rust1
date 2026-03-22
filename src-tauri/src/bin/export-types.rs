@@ -75,7 +75,10 @@ use rpma_ppf_intervention::shared::contracts::sync::{
     EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
 };
 
-use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
+use rpma_ppf_intervention::shared::repositories::{
+    base::{PaginatedResult, PaginationParams},
+    cache::CacheStats,
+};
 
 // Import service request types from canonical domain paths
 use rpma_ppf_intervention::domains::interventions::{
@@ -412,6 +415,10 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &PaginationInfo::export_to_string().expect("Failed to export PaginationInfo type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &PaginationParams::export_to_string().expect("Failed to export PaginationParams type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -1043,6 +1050,7 @@ fn main() {
         "DeleteTaskRequest",
         "TaskListResponse",
         "PaginationInfo",
+        "PaginationParams",
         "PaginatedResult",
         "CacheStats",
         "TaskStatistics",

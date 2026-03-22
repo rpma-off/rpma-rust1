@@ -424,8 +424,9 @@ pub struct DeleteTaskRequest {
 /// Query parameters for task listing
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct TaskQuery {
-    pub page: Option<i32>,
-    pub limit: Option<i32>,
+    /// Shared pagination params (page, page_size, sort_by, sort_order).
+    pub pagination: crate::shared::repositories::base::PaginationParams,
+    // Domain-specific filters
     pub status: Option<TaskStatus>,
     pub technician_id: Option<String>,
     pub client_id: Option<String>,
@@ -433,15 +434,17 @@ pub struct TaskQuery {
     pub search: Option<String>,
     pub from_date: Option<String>,
     pub to_date: Option<String>,
-    pub sort_by: String,
-    pub sort_order: SortOrder,
 }
 
 impl Default for TaskQuery {
     fn default() -> Self {
         Self {
-            page: Some(1),
-            limit: Some(20),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(20),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: None,
             technician_id: None,
             client_id: None,
@@ -449,8 +452,6 @@ impl Default for TaskQuery {
             search: None,
             from_date: None,
             to_date: None,
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         }
     }
 }

@@ -93,12 +93,14 @@ pub async fn get_tasks_with_clients(
     // Set pagination defaults
     let page = request.page.unwrap_or(1).max(1);
     let limit = request.limit.unwrap_or(50).min(200); // Max 200 per page
-    let _offset = (page - 1) * limit;
-
     // Construct TaskQuery from filter and pagination
     let query = crate::domains::tasks::domain::models::task::TaskQuery {
-        page: Some(page as i32),
-        limit: Some(limit as i32),
+        pagination: crate::shared::repositories::base::PaginationParams {
+            page: Some(page as i32),
+            page_size: Some(limit as i32),
+            sort_by: Some("created_at".to_string()),
+            sort_order: Some("desc".to_string()),
+        },
         status: filter.status.as_deref().and_then(TaskStatus::from_str_opt),
         technician_id: filter.assigned_to.clone(),
         client_id: filter.client_id.clone(),
@@ -109,8 +111,6 @@ pub async fn get_tasks_with_clients(
         search: None,
         from_date: filter.date_from.clone(),
         to_date: filter.date_to.clone(),
-        sort_by: "created_at".to_string(),
-        sort_order: crate::domains::tasks::domain::models::task::SortOrder::Desc,
     };
 
     // Delegate client data merging to the service layer

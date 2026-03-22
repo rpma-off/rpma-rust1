@@ -1,4 +1,4 @@
-export * from '@/types';
+export * from "@/types";
 
 export type {
   ClientType,
@@ -16,7 +16,7 @@ export type {
   ClientDetailProps,
   ClientFormProps,
   ClientFiltersProps,
-} from '@/types/client.types';
+} from "@/types/client.types";
 
 export type {
   QuoteStatus,
@@ -40,7 +40,7 @@ export type {
   QuotePageStats,
   QuotePartInput,
   QuoteLaborInput,
-} from '@/types/quote.types';
+} from "@/types/quote.types";
 
 export type {
   ConfigurationItem,
@@ -70,7 +70,7 @@ export type {
   PerformanceConfig,
   PerformanceCategory,
   CreatePerformanceConfigDTO,
-} from '@/types/configuration.types';
+} from "@/types/configuration.types";
 
 export type {
   QualityIssue,
@@ -89,26 +89,23 @@ export type {
   InterventionFinalizationResponse,
   GeographicLocation,
   VehicleInfo,
-} from '@/types/ppf-intervention';
+} from "@/types/ppf-intervention";
 
 export type {
   WorkflowExecution,
   WorkflowExecutionStep,
   WorkflowStepStatus,
   TaskWorkflowProgress,
-} from '@/types/workflow.types';
+} from "@/types/workflow.types";
 
 export type {
   JsonArray,
   JsonObject,
   JsonPrimitive,
   JsonValue,
-} from '@/types/json';
+} from "@/types/json";
 
-export type {
-  Priority,
-  DashboardTask,
-} from './dashboard.types';
+export type { Priority, DashboardTask } from "./dashboard.types";
 
 export type {
   MaterialType,
@@ -126,6 +123,12 @@ export type {
   InterventionMaterialSummary,
   MaterialConsumptionSummary,
   InventoryMovementSummary,
-} from './inventory.types';
+} from "./inventory.types";
 
-export type { CreateUserRequest } from '@/lib/backend';
+export type { CreateUserRequest } from "@/lib/backend";
+
+export type {
+  PaginationParams,
+  PaginationInfo,
+  PaginatedResponse,
+} from "./pagination.types";

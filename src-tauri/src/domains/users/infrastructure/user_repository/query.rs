@@ -1,19 +1,16 @@
 //! Query builder for filtering users.
 
 use crate::domains::users::domain::models::user::UserRole;
-use crate::shared::repositories::base::RepoError;
+use crate::shared::repositories::base::{PaginationParams, RepoError};
 
 /// Query for filtering users
 #[derive(Debug, Clone, Default)]
 pub struct UserQuery {
+    pub pagination: PaginationParams,
     pub search: Option<String>,
     pub role: Option<UserRole>,
     pub is_active: Option<bool>,
     pub email: Option<String>,
-    pub limit: Option<i64>,
-    pub offset: Option<i64>,
-    pub sort_by: Option<String>,
-    pub sort_order: Option<String>,
 }
 
 impl UserQuery {
@@ -70,19 +67,15 @@ impl UserQuery {
     }
 
     pub(super) fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("created_at"))?;
-        let sort_order = match self.sort_order.as_deref() {
-            Some("ASC") => "ASC",
-            Some("DESC") => "DESC",
-            _ => "DESC",
-        };
+        let sort_by = Self::validate_sort_column(self.pagination.sort_by_or("created_at"))?;
+        let sort_order = self.pagination.sort_order_sql();
         Ok(format!("ORDER BY {} {}", sort_by, sort_order))
     }
 
     pub(super) fn build_limit_offset(&self) -> Option<(i64, Option<i64>)> {
-        match (self.limit, self.offset) {
-            (Some(limit), offset) => Some((limit, offset)),
-            _ => None,
-        }
+        Some((
+            self.pagination.page_size() as i64,
+            Some(self.pagination.offset() as i64),
+        ))
     }
 }

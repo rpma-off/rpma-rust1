@@ -120,10 +120,9 @@ impl ClientService {
     }
 
     pub async fn get_clients(&self, query: ClientQuery) -> Result<ClientListResponse, String> {
-        let page = query.page.unwrap_or(1).max(1);
-        let limit = query.limit.unwrap_or(20).min(200).max(1);
-        let offset = (page - 1) * limit;
-        let sort_order = query.sort_order.map(|o| o.to_string());
+        let page = query.pagination.page();
+        let limit = query.pagination.page_size();
+        let offset = query.pagination.offset();
         let repo_query = ClientRepoQuery {
             search: query.search.clone(),
             customer_type: query.customer_type.clone(),
@@ -133,8 +132,8 @@ impl ClientService {
             tags: None,
             limit: Some(limit as i64),
             offset: Some(offset as i64),
-            sort_by: query.sort_by.clone(),
-            sort_order,
+            sort_by: query.pagination.sort_by.clone(),
+            sort_order: query.pagination.sort_order.clone(),
         };
         let clients = self
             .client_repo

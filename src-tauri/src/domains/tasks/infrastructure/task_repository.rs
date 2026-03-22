@@ -5,7 +5,7 @@
 /// ADR-005: Repository Pattern
 use crate::db::{Database, FromSqlRow, QueryBuilder};
 use crate::domains::tasks::domain::models::task::{
-    PaginationInfo, SortOrder, Task, TaskListResponse, TaskQuery, TaskWithDetails,
+    PaginationInfo, Task, TaskListResponse, TaskQuery, TaskWithDetails,
 };
 use crate::shared::repositories::base::{RepoError, RepoResult, Repository};
 use async_trait::async_trait;
@@ -35,14 +35,14 @@ impl TaskRepository {
         let logger = RepositoryLogger::new();
 
         let mut log_context = HashMap::new();
-        log_context.insert("page".to_string(), serde_json::json!(query.page));
-        log_context.insert("limit".to_string(), serde_json::json!(query.limit));
+        log_context.insert("page".to_string(), serde_json::json!(query.pagination.page));
+        log_context.insert("limit".to_string(), serde_json::json!(query.pagination.page_size));
         logger.debug("Finding tasks with query", Some(log_context));
 
-        query.limit = Some(
+        query.pagination.page_size = Some(
             query
-                .limit
-                .unwrap_or(Self::DEFAULT_PAGE_SIZE)
+                .pagination
+                .page_size()
                 .clamp(1, Self::MAX_PAGE_SIZE),
         );
         let (sql, params) = self.build_task_query_sql(&query);
@@ -61,8 +61,8 @@ impl TaskRepository {
             .map_err(|e| RepoError::Database(format!("Failed to count tasks: {}", e)))?;
 
         let pagination = PaginationInfo::new(
-            query.page.unwrap_or(1),
-            query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE),
+            query.pagination.page(),
+            query.pagination.page_size(),
             total_count,
         );
 
@@ -219,20 +219,15 @@ impl TaskRepository {
         }
 
         // Apply sorting
-        let sort_by = &query.sort_by;
-        let sort_order = match query.sort_order {
-            SortOrder::Asc => "asc",
-            SortOrder::Desc => "desc",
-        };
-        qb = qb.order_by(sort_by, sort_order);
+        let sort_by = query.pagination.sort_by_or("created_at");
+        let sort_order = query.pagination.sort_order_sql().to_lowercase();
+        qb = qb.order_by(sort_by, &sort_order);
 
         // Apply pagination
-        qb = qb.limit(query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE) as i64);
+        qb = qb.limit(query.pagination.page_size() as i64);
 
-        if let Some(page) = query.page {
-            let offset = (page - 1) * query.limit.unwrap_or(Self::DEFAULT_PAGE_SIZE);
-            qb = qb.offset(offset as i64);
-        }
+        let offset = query.pagination.offset();
+        qb = qb.offset(offset as i64);
 
         qb.build()
     }

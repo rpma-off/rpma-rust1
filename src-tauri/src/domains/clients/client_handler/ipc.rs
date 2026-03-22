@@ -6,7 +6,7 @@ use super::{
 };
 use crate::commands::{ApiResponse, AppError, AppState, ClientResponse};
 use crate::shared::ipc::errors::AppError as IpcAppError;
-use crate::shared::services::cross_domain::{SortOrder, Task, TaskQuery};
+use crate::shared::services::cross_domain::{Task, TaskQuery};
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, warn};
 
@@ -194,16 +194,18 @@ pub async fn client_get_with_tasks(
         Some(client) => {
             let task_query = TaskQuery {
                 client_id: Some(id.to_string()),
-                page: Some(1),
-                limit: Some(1000),
+                pagination: crate::shared::repositories::base::PaginationParams {
+                    page: Some(1),
+                    page_size: Some(1000),
+                    sort_by: Some("created_at".to_string()),
+                    sort_order: Some("desc".to_string()),
+                },
                 status: None,
                 technician_id: None,
                 priority: None,
                 search: None,
                 from_date: None,
                 to_date: None,
-                sort_by: "created_at".to_string(),
-                sort_order: SortOrder::Desc,
             };
             let tasks_response = state
                 .task_service
@@ -307,16 +309,18 @@ pub async fn client_list_with_tasks(
     for client in clients.data {
         let task_query = TaskQuery {
             client_id: Some(client.id.clone()),
-            page: Some(1),
-            limit: Some(task_limit),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(task_limit),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: None,
             technician_id: None,
             priority: None,
             search: None,
             from_date: None,
             to_date: None,
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         };
         let tasks_response = state
             .task_service
@@ -570,16 +574,18 @@ async fn handle_client_with_tasks_retrieval(
         Some(client) => {
             let task_query = TaskQuery {
                 client_id: Some(id.to_string()),
-                page: Some(1),
-                limit: Some(1000),
+                pagination: crate::shared::repositories::base::PaginationParams {
+                    page: Some(1),
+                    page_size: Some(1000),
+                    sort_by: Some("created_at".to_string()),
+                    sort_order: Some("desc".to_string()),
+                },
                 status: None,
                 technician_id: None,
                 priority: None,
                 search: None,
                 from_date: None,
                 to_date: None,
-                sort_by: "created_at".to_string(),
-                sort_order: SortOrder::Desc,
             };
             let tasks_response = task_service
                 .get_tasks_async(task_query)
@@ -663,16 +669,18 @@ async fn handle_client_listing_with_tasks(
     for client in clients.data {
         let task_query = TaskQuery {
             client_id: Some(client.id.clone()),
-            page: Some(1),
-            limit: Some(task_limit),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(task_limit),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: None,
             technician_id: None,
             priority: None,
             search: None,
             from_date: None,
             to_date: None,
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         };
         let tasks_response = task_service
             .get_tasks_async(task_query)

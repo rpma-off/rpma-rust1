@@ -1,43 +1,75 @@
 /**
  * Zod validation schemas for IPC communication
- * 
+ *
  * These schemas provide runtime type safety for frontend-backend communication
  * and ensure that data structures match the Rust backend serde schemas.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
+
+/**
+ * Canonical pagination parameters schema — mirrors Rust `PaginationParams`.
+ * Embed via `.extend({ pagination: PaginationParamsSchema })` in any list query schema.
+ */
+export const PaginationParamsSchema = z.object({
+  page: z.number().int().positive().optional().nullable(),
+  page_size: z.number().int().positive().max(200).optional().nullable(),
+  sort_by: z.string().optional().nullable(),
+  sort_order: z.enum(["asc", "desc"]).optional().nullable(),
+});
 
 /**
  * Base task-related schemas
  */
 export const TaskQuerySchema = z.object({
-  page: z.number().int().positive().optional(),
-  limit: z.number().int().positive().optional(),
+  pagination: PaginationParamsSchema.optional(),
   status: z.string().optional(),
   technician_id: z.string().optional(),
   from_date: z.string().optional(),
   to_date: z.string().optional(),
   search: z.string().optional(),
+  // Legacy flat fields — kept for backward compatibility with existing call sites.
+  // New code should use `pagination.page` / `pagination.page_size` instead.
+  page: z.number().int().positive().optional(),
+  limit: z.number().int().positive().optional(),
   sort_by: z.string().optional(),
-  sort_order: z.enum(['asc', 'desc']).optional(),
+  sort_order: z.enum(["asc", "desc"]).optional(),
 });
 
 export const CreateTaskRequestSchema = z.object({
   // Required fields matching Rust CreateTaskRequest exactly
-  vehicle_plate: z.string().min(1, 'Vehicle plate is required'),
-  vehicle_model: z.string().min(1, 'Vehicle model is required'),
-  ppf_zones: z.array(z.string().min(1)).min(1, 'At least one PPF zone is required'),
-  scheduled_date: z.string().min(1, 'Scheduled date is required'),
-  
+  vehicle_plate: z.string().min(1, "Vehicle plate is required"),
+  vehicle_model: z.string().min(1, "Vehicle model is required"),
+  ppf_zones: z
+    .array(z.string().min(1))
+    .min(1, "At least one PPF zone is required"),
+  scheduled_date: z.string().min(1, "Scheduled date is required"),
+
   // Optional fields matching Rust struct
   external_id: z.string().optional(),
-  status: z.enum(['draft', 'scheduled', 'in_progress', 'completed', 'cancelled', 'on_hold', 'pending', 'invalid', 'archived', 'failed', 'overdue', 'assigned', 'paused']).optional(),
+  status: z
+    .enum([
+      "draft",
+      "scheduled",
+      "in_progress",
+      "completed",
+      "cancelled",
+      "on_hold",
+      "pending",
+      "invalid",
+      "archived",
+      "failed",
+      "overdue",
+      "assigned",
+      "paused",
+    ])
+    .optional(),
   technician_id: z.string().optional(),
   start_time: z.string().optional(),
   end_time: z.string().optional(),
   checklist_completed: z.boolean().optional(),
   notes: z.string().optional(),
-  
+
   // Additional fields for frontend compatibility (matching Rust struct)
   title: z.string().optional(),
   vehicle_make: z.string().optional(),
@@ -57,53 +89,55 @@ export const CreateTaskRequestSchema = z.object({
   task_number: z.string().optional(),
   creator_id: z.string().optional(),
   created_by: z.string().optional(),
-  
+
   // Legacy fields for compatibility
   description: z.string().optional(),
-  priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+  priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   client_id: z.string().optional(),
   estimated_duration: z.number().int().optional(),
   tags: z.string().optional(),
 });
 
-export const UpdateTaskRequestSchema = CreateTaskRequestSchema.partial().extend({
-  id: z.string().min(1, 'Task ID is required'),
-});
+export const UpdateTaskRequestSchema = CreateTaskRequestSchema.partial().extend(
+  {
+    id: z.string().min(1, "Task ID is required"),
+  },
+);
 
 /**
  * Task action schemas matching Rust backend TaskAction enum
  */
 export const TaskActionCreateSchema = z.object({
-  action: z.literal('Create'),
+  action: z.literal("Create"),
   data: CreateTaskRequestSchema,
 });
 
 export const TaskActionGetSchema = z.object({
-  action: z.literal('Get'),
-  id: z.string().min(1, 'Task ID is required'),
+  action: z.literal("Get"),
+  id: z.string().min(1, "Task ID is required"),
 });
 
 export const TaskActionUpdateSchema = z.object({
-  action: z.literal('Update'),
-  id: z.string().min(1, 'Task ID is required'),
+  action: z.literal("Update"),
+  id: z.string().min(1, "Task ID is required"),
   data: UpdateTaskRequestSchema,
 });
 
 export const TaskActionDeleteSchema = z.object({
-  action: z.literal('Delete'),
-  id: z.string().min(1, 'Task ID is required'),
+  action: z.literal("Delete"),
+  id: z.string().min(1, "Task ID is required"),
 });
 
 export const TaskActionListSchema = z.object({
-  action: z.literal('List'),
+  action: z.literal("List"),
   filters: TaskQuerySchema,
 });
 
 export const TaskActionGetStatisticsSchema = z.object({
-  action: z.literal('GetStatistics'),
+  action: z.literal("GetStatistics"),
 });
 
-export const TaskActionSchema = z.discriminatedUnion('action', [
+export const TaskActionSchema = z.discriminatedUnion("action", [
   TaskActionCreateSchema,
   TaskActionGetSchema,
   TaskActionUpdateSchema,
@@ -123,24 +157,27 @@ export const TaskCrudRequestSchema = z.object({
  * Authentication schemas
  */
 export const LoginRequestSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email("Valid email is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const SignupRequestSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  password: z.string().min(1, 'Password is required'),
-  role: z.enum(['admin', 'technician', 'supervisor', 'viewer']).optional(),
+  email: z.string().email("Valid email is required"),
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  password: z.string().min(1, "Password is required"),
+  role: z.enum(["admin", "technician", "supervisor", "viewer"]).optional(),
 });
 
 /**
  * Client-related schemas
  */
 export const CreateClientRequestSchema = z.object({
-  name: z.string().min(1, 'Client name is required').max(100, 'Client name cannot exceed 100 characters'),
-  email: z.string().email('Invalid email format').nullable().optional(),
+  name: z
+    .string()
+    .min(1, "Client name is required")
+    .max(100, "Client name cannot exceed 100 characters"),
+  email: z.string().email("Invalid email format").nullable().optional(),
   phone: z
     .string()
     .nullable()
@@ -148,34 +185,53 @@ export const CreateClientRequestSchema = z.object({
     .refine(
       (value) => {
         if (!value) return true;
-        const digits = value.replace(/\D/g, '');
+        const digits = value.replace(/\D/g, "");
         return digits.length >= 7 && digits.length <= 20;
       },
-      { message: 'Invalid phone number format' }
+      { message: "Invalid phone number format" },
     ),
-  customer_type: z.enum(['individual', 'business']).default('individual'),
+  customer_type: z.enum(["individual", "business"]).default("individual"),
   address_street: z.string().nullable().optional(),
   address_city: z.string().nullable().optional(),
   address_state: z.string().nullable().optional(),
   address_zip: z.string().nullable().optional(),
   address_country: z.string().nullable().optional(),
   tax_id: z.string().nullable().optional(),
-  company_name: z.string().max(100, 'Company name cannot exceed 100 characters').nullable().optional(),
-  contact_person: z.string().max(100, 'Contact person cannot exceed 100 characters').nullable().optional(),
-  notes: z.string().max(1000, 'Notes cannot exceed 1000 characters').nullable().optional(),
-  tags: z.string().max(500, 'Tags cannot exceed 500 characters').nullable().optional(),
+  company_name: z
+    .string()
+    .max(100, "Company name cannot exceed 100 characters")
+    .nullable()
+    .optional(),
+  contact_person: z
+    .string()
+    .max(100, "Contact person cannot exceed 100 characters")
+    .nullable()
+    .optional(),
+  notes: z
+    .string()
+    .max(1000, "Notes cannot exceed 1000 characters")
+    .nullable()
+    .optional(),
+  tags: z
+    .string()
+    .max(500, "Tags cannot exceed 500 characters")
+    .nullable()
+    .optional(),
 });
 
-export const UpdateClientRequestSchema = CreateClientRequestSchema.partial().extend({
-  id: z.string().min(1, 'Client ID is required'),
-});
+export const UpdateClientRequestSchema =
+  CreateClientRequestSchema.partial().extend({
+    id: z.string().min(1, "Client ID is required"),
+  });
 
 export const ClientQuerySchema = z.object({
+  pagination: PaginationParamsSchema.optional(),
+  search: z.string().optional(),
+  // Legacy flat fields for backward compatibility.
   page: z.number().int().positive().optional(),
   limit: z.number().int().positive().optional(),
   sort_by: z.string().optional(),
-  sort_order: z.enum(['asc', 'desc']).optional(),
-  search: z.string().optional(),
+  sort_order: z.enum(["asc", "desc"]).optional(),
 });
 
 /**
@@ -189,20 +245,20 @@ export const ClientActionCreateSchema = z.object({
 
 export const ClientActionGetSchema = z.object({
   Get: z.object({
-    id: z.string().min(1, 'Client ID is required'),
+    id: z.string().min(1, "Client ID is required"),
   }),
 });
 
 export const ClientActionUpdateSchema = z.object({
   Update: z.object({
-    id: z.string().min(1, 'Client ID is required'),
+    id: z.string().min(1, "Client ID is required"),
     data: UpdateClientRequestSchema,
   }),
 });
 
 export const ClientActionDeleteSchema = z.object({
   Delete: z.object({
-    id: z.string().min(1, 'Client ID is required'),
+    id: z.string().min(1, "Client ID is required"),
   }),
 });
 
@@ -214,7 +270,7 @@ export const ClientActionListSchema = z.object({
 
 export const ClientActionSearchSchema = z.object({
   Search: z.object({
-    query: z.string().min(1, 'Search query is required'),
+    query: z.string().min(1, "Search query is required"),
     limit: z.number().int().positive().optional(),
   }),
 });
@@ -243,27 +299,35 @@ export const ClientCrudRequestSchema = z.object({
 /**
  * API Response schemas
  */
-export const ApiResponseSchema = <T extends z.ZodType>(dataSchema: T) => z.object({
-  success: z.boolean(),
-  data: dataSchema.optional(),
-  error: z.string().optional(),
-});
+export const ApiResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
+  z.object({
+    success: z.boolean(),
+    data: dataSchema.optional(),
+    error: z.string().optional(),
+  });
 
-export const ServiceResponseSchema = <T extends z.ZodType>(dataSchema: T) => z.object({
-  success: z.boolean(),
-  data: dataSchema.nullable(),
-  error: z.string().nullable(),
-  status: z.number().optional(),
-});
+export const ServiceResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
+  z.object({
+    success: z.boolean(),
+    data: dataSchema.nullable(),
+    error: z.string().nullable(),
+    status: z.number().optional(),
+  });
 
 // ─── Quote domain ────────────────────────────────────────────────────────────
 
 export const QuoteStatusSchema = z.enum([
-  'draft', 'sent', 'accepted', 'rejected', 'expired', 'converted', 'changes_requested',
+  "draft",
+  "sent",
+  "accepted",
+  "rejected",
+  "expired",
+  "converted",
+  "changes_requested",
 ]);
 
 export const CreateQuoteRequestSchema = z.object({
-  client_id: z.string().min(1, 'Client is required'),
+  client_id: z.string().min(1, "Client is required"),
   task_id: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
@@ -274,19 +338,20 @@ export const CreateQuoteRequestSchema = z.object({
   vehicle_model: z.string().nullable().optional(),
   vehicle_year: z.string().nullable().optional(),
   vehicle_vin: z.string().nullable().optional(),
-  discount_type: z.enum(['none', 'percentage', 'fixed']).nullable().optional(),
+  discount_type: z.enum(["none", "percentage", "fixed"]).nullable().optional(),
   discount_value: z.number().nullable().optional(),
 });
 
-export const UpdateQuoteRequestSchema = CreateQuoteRequestSchema.partial().extend({
-  id: z.string().min(1, 'Quote id is required'),
-  status: QuoteStatusSchema.optional(),
-});
+export const UpdateQuoteRequestSchema =
+  CreateQuoteRequestSchema.partial().extend({
+    id: z.string().min(1, "Quote id is required"),
+    status: QuoteStatusSchema.optional(),
+  });
 
 export const QuoteItemSchema = z.object({
   id: z.string(),
   quote_id: z.string(),
-  kind: z.enum(['labor', 'material', 'service', 'discount']),
+  kind: z.enum(["labor", "material", "service", "discount"]),
   description: z.string(),
   quantity: z.number(),
   unit_price: z.number(),
@@ -331,14 +396,20 @@ export const QuoteListResponseSchema = z.object({
 
 // ─── User domain ─────────────────────────────────────────────────────────────
 
-export const UserRoleSchema = z.enum(['Admin', 'Supervisor', 'Technician', 'Viewer', 'Manager']);
+export const UserRoleSchema = z.enum([
+  "Admin",
+  "Supervisor",
+  "Technician",
+  "Viewer",
+  "Manager",
+]);
 
 export const CreateUserRequestSchema = z.object({
-  email: z.string().email('Valid email required'),
-  first_name: z.string().min(1, 'First name required'),
-  last_name: z.string().min(1, 'Last name required'),
+  email: z.string().email("Valid email required"),
+  first_name: z.string().min(1, "First name required"),
+  last_name: z.string().min(1, "Last name required"),
   role: UserRoleSchema,
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const UpdateUserRequestSchema = z.object({
@@ -367,28 +438,49 @@ export const InterventionStatsSchema = z.object({
   technician_stats: z.array(TechnicianInterventionStatsSchema),
 });
 
-export const InterventionManagementResponseSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('List'), interventions: z.array(z.unknown()), total: z.number(), page: z.number(), limit: z.number() }),
-  z.object({ type: z.literal('Stats'), stats: InterventionStatsSchema }),
-  z.object({ type: z.literal('ByTask'), interventions: z.array(z.unknown()) }),
-  z.object({ type: z.literal('BulkUpdated'), updated_count: z.number(), message: z.string() }),
-]);
+export const InterventionManagementResponseSchema = z.discriminatedUnion(
+  "type",
+  [
+    z.object({
+      type: z.literal("List"),
+      interventions: z.array(z.unknown()),
+      total: z.number(),
+      page: z.number(),
+      limit: z.number(),
+    }),
+    z.object({ type: z.literal("Stats"), stats: InterventionStatsSchema }),
+    z.object({
+      type: z.literal("ByTask"),
+      interventions: z.array(z.unknown()),
+    }),
+    z.object({
+      type: z.literal("BulkUpdated"),
+      updated_count: z.number(),
+      message: z.string(),
+    }),
+  ],
+);
 
-export const InterventionProgressResponseSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('Retrieved'), progress: z.unknown(), steps: z.array(z.unknown()) }),
+export const InterventionProgressResponseSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal('StepAdvanced'),
+    type: z.literal("Retrieved"),
+    progress: z.unknown(),
+    steps: z.array(z.unknown()),
+  }),
+  z.object({
+    type: z.literal("StepAdvanced"),
     step: z.unknown(),
     next_step: z.unknown().nullable(),
     progress_percentage: z.number(),
     requirements_completed: z.array(z.string()),
   }),
-  z.object({ type: z.literal('StepProgressSaved'), step: z.unknown() }),
+  z.object({ type: z.literal("StepProgressSaved"), step: z.unknown() }),
 ]);
 
 /**
  * Type exports
  */
+export type PaginationParams = z.infer<typeof PaginationParamsSchema>;
 export type TaskQuery = z.infer<typeof TaskQuerySchema>;
 export type CreateTaskRequest = z.infer<typeof CreateTaskRequestSchema>;
 export type UpdateTaskRequest = z.infer<typeof UpdateTaskRequestSchema>;
@@ -413,13 +505,29 @@ export type UserRole = z.infer<typeof UserRoleSchema>;
 export type CreateUserRequest = z.infer<typeof CreateUserRequestSchema>;
 export type UpdateUserRequest = z.infer<typeof UpdateUserRequestSchema>;
 
-export type TechnicianInterventionStats = z.infer<typeof TechnicianInterventionStatsSchema>;
+export type TechnicianInterventionStats = z.infer<
+  typeof TechnicianInterventionStatsSchema
+>;
 export type InterventionStats = z.infer<typeof InterventionStatsSchema>;
-export type InterventionManagementResponse = z.infer<typeof InterventionManagementResponseSchema>;
-export type InterventionProgressResponse = z.infer<typeof InterventionProgressResponseSchema>;
+export type InterventionManagementResponse = z.infer<
+  typeof InterventionManagementResponseSchema
+>;
+export type InterventionProgressResponse = z.infer<
+  typeof InterventionProgressResponseSchema
+>;
 
-export type ApiResponse<T extends z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>> = 
-  z.infer<ReturnType<typeof ApiResponseSchema<T>>>;
+export type ApiResponse<
+  T extends z.ZodType<
+    unknown,
+    unknown,
+    z.core.$ZodTypeInternals<unknown, unknown>
+  >,
+> = z.infer<ReturnType<typeof ApiResponseSchema<T>>>;
 
-export type ServiceResponse<T extends z.ZodType<unknown, unknown, z.core.$ZodTypeInternals<unknown, unknown>>> = 
-  z.infer<ReturnType<typeof ServiceResponseSchema<T>>>;
+export type ServiceResponse<
+  T extends z.ZodType<
+    unknown,
+    unknown,
+    z.core.$ZodTypeInternals<unknown, unknown>
+  >,
+> = z.infer<ReturnType<typeof ServiceResponseSchema<T>>>;
