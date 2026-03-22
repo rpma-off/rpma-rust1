@@ -1,30 +1,165 @@
 {
-  "disable_ai": false,
-  "languages": {
-    "Rust": {
-      "language_servers": ["rust-analyzer"],
+  "redact_private_values": true,
+
+  // -------------------------
+  // UI / ERGONOMICS
+  // -------------------------
+  "theme": "Catppuccin Mocha",
+  "icon_theme": "Catppuccin Mocha",
+
+  "ui_font_size": 16,
+  "buffer_font_size": 17,
+  "buffer_font_family": "Maple Mono NF",
+
+  "relative_line_numbers": true,
+  "vim_mode": true,
+
+  "scrollbar": { "show": "never" },
+
+  "tabs": {
+    "show_diagnostics": "errors",
+  },
+
+  "indent_guides": {
+    "enabled": true,
+    "coloring": "indent_aware",
+  },
+
+  "centered_layout": {
+    "left_padding": 0.12,
+    "right_padding": 0.12,
+  },
+
+  // -------------------------
+  // PANELS (FOCUS MODE)
+  // -------------------------
+  "project_panel": { "dock": "right" },
+  "git_panel": { "dock": "right" },
+  "outline_panel": { "dock": "right" },
+
+  "notification_panel": { "dock": "left" },
+  "collaboration_panel": { "dock": "left" },
+
+  // -------------------------
+  // AI (SIMPLIFIED)
+  // -------------------------
+  "agent": {
+    "default_model": {
+      "provider": "copilot_chat",
+      "model": "gpt-4o",
     },
   },
+
+  "assistant": {
+    "version": "2",
+  },
+
+  // -------------------------
+  // GLOBAL DEV EXPERIENCE
+  // -------------------------
+  "inlay_hints": {
+    "enabled": true,
+  },
+
+  "file_finder": {
+    "modal_max_width": "medium",
+  },
+
+  // -------------------------
+  // RUST (CRITICAL FOR RPMA)
+  // -------------------------
+  "languages": {
+    "Rust": {
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "rustfmt",
+        },
+      },
+      "inlay_hints": {
+        "enabled": true,
+      },
+    },
+
+    "TypeScript": {
+      "inlay_hints": {
+        "enabled": true,
+        "show_parameter_hints": false,
+        "show_type_hints": true,
+      },
+    },
+
+    "Python": {
+      "format_on_save": "on",
+      "formatter": {
+        "language_server": {
+          "name": "ruff",
+        },
+      },
+      "language_servers": ["pyright", "ruff"],
+    },
+  },
+
+  // -------------------------
+  // LSP CUSTOMIZATION
+  // -------------------------
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
         "cargo": {
-          "buildScripts": {
-            "enable": true,
-          },
-          "features": "all",
-        },
-        "procMacro": {
-          "enable": true,
+          "allFeatures": true,
         },
         "checkOnSave": {
-          "command": "check",
-          "extraArgs": ["--all-targets"],
-        },
-        "diagnostics": {
-          "enable": true,
+          "command": "clippy",
         },
       },
     },
+
+    "tailwindcss-language-server": {
+      "settings": {
+        "classAttributes": ["class", "className"],
+      },
+    },
+  },
+
+  // -------------------------
+  // TERMINAL (DEV WORKFLOW)
+  // -------------------------
+  "terminal": {
+    "font_family": "Maple Mono NF",
+    "env": {
+      "EDITOR": "zed --wait",
+    },
+  },
+
+  // -------------------------
+  // FILE TYPES
+  // -------------------------
+  "file_types": {
+    "Dockerfile": ["Dockerfile", "Dockerfile.*"],
+    "JSON": ["json", "jsonc", "*.code-snippets"],
+  },
+
+  // -------------------------
+  // PERFORMANCE
+  // -------------------------
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/node_modules",
+    "**/dist",
+    "**/.next",
+    "**/target",
+    "**/coverage",
+    "**/*.log",
+    "**/tmp",
+    "**/.cache",
+  ],
+
+  // -------------------------
+  // SECURITY / PRIVACY
+  // -------------------------
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false,
   },
 }
