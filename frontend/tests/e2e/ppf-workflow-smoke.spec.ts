@@ -26,7 +26,9 @@ test('ppf workflow smoke: draft + validate unlocks next step', async ({ page }) 
   await expect(page.getByText(/Workflow PPF|PPF/i).first()).toBeVisible({ timeout: 20000 });
 
   await page.getByRole('button', { name: /Commencer/i }).first().click();
-  await expect(page.getByText('Inspection du véhicule')).toBeVisible();
+  // Wait for navigation to inspection step (page needs compilation on first visit)
+  await page.waitForURL(/\/tasks\/task-1\/workflow\/ppf\/steps\/inspection/, { timeout: 30000 });
+  await expect(page.getByText('Inspection du véhicule')).toBeVisible({ timeout: 15000 });
 
   const checklistLabels = [
     'Véhicule propre et sec',

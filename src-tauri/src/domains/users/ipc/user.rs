@@ -140,8 +140,14 @@ pub async fn get_users(
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
 
-    let limit = Some(page_size);
-    let offset = Some((page - 1) * page_size);
+    let pagination = crate::shared::repositories::base::PaginationParams {
+        page: Some(page),
+        page_size: Some(page_size),
+        sort_by: None,
+        sort_order: None,
+    };
+    let limit = Some(pagination.page_size());
+    let offset = Some(pagination.offset());
 
     match execute_user_action(
         UserAction::List {

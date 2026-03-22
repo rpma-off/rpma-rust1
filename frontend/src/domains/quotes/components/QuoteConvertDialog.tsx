@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ArrowRight, Loader2, Car, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-// ❌ CROSS-DOMAIN IMPORT
-import { PPF_ZONES } from '@/domains/tasks';
 import { useConvertQuoteToTask } from '../hooks/useQuotes';
 
 export interface VehicleInfo {
@@ -30,6 +28,11 @@ export interface VehicleInfo {
   ppfZones?: string[];
 }
 
+interface PpfZoneOption {
+  id: string;
+  name: string;
+}
+
 export interface QuoteConvertDialogProps {
   quoteId: string;
   quoteNumber: string;
@@ -37,6 +40,7 @@ export interface QuoteConvertDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (taskId: string) => void;
+  availableZones?: PpfZoneOption[];
 }
 
 export function QuoteConvertDialog({
@@ -46,6 +50,7 @@ export function QuoteConvertDialog({
   open,
   onOpenChange,
   onSuccess,
+  availableZones = [],
 }: QuoteConvertDialogProps) {
   const { convertQuoteToTask, loading } = useConvertQuoteToTask();
   const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo>({
@@ -53,6 +58,13 @@ export function QuoteConvertDialog({
     ppfZones: initialVehicleInfo.ppfZones || [],
   });
   const [errors, setErrors] = useState<Partial<Record<keyof VehicleInfo, string>>>({});
+
+  useEffect(() => {
+    if (open) {
+      setVehicleInfo({ ...initialVehicleInfo, ppfZones: initialVehicleInfo.ppfZones || [] });
+      setErrors({});
+    }
+  }, [open, initialVehicleInfo]);
 
   const handleFieldChange = useCallback((field: keyof VehicleInfo, value: unknown) => {
     setVehicleInfo(prev => ({ ...prev, [field]: value }));
@@ -104,10 +116,7 @@ export function QuoteConvertDialog({
     }
   }, [quoteId, vehicleInfo, validate, convertQuoteToTask, onSuccess, onOpenChange]);
 
-  const sortedZones = useMemo(() => {
-    // Group by category if possible, or just return as-is
-    return PPF_ZONES;
-  }, []);
+  const sortedZones = useMemo(() => availableZones, [availableZones]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

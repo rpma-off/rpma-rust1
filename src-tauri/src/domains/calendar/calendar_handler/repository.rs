@@ -126,9 +126,9 @@ impl CalendarRepository {
             .get_connection()
             .map_err(|e| AppError::Database(e.to_string()))?;
 
-        // SAFETY: format! uses only hardcoded status strings — no user input.
-        let completed = "completed";
-        let cancelled = "cancelled";
+        // Use TaskStatus enum variants so any rename is caught at compile time (ADR-002).
+        let completed = crate::shared::contracts::task_status::TaskStatus::Completed.to_string();
+        let cancelled = crate::shared::contracts::task_status::TaskStatus::Cancelled.to_string();
         let mut sql = format!(
             "SELECT * FROM calendar_tasks \
              WHERE technician_id = ?1 \

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type {
@@ -42,12 +42,6 @@ export function useNewQuotePage() {
   const [vehicleYear, setVehicleYear] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleVin, setVehicleVin] = useState('');
-
-  useEffect(() => {
-    if (error?.message) {
-      toast.error(error.message);
-    }
-  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +145,14 @@ export function useNewQuotePage() {
         vehicle_vin: vehicleVin.trim() || undefined,
       };
 
-      const result = await createQuote(data);
+      let result;
+      try {
+        result = await createQuote(data);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Erreur lors de la création du devis';
+        toast.error(msg);
+        return;
+      }
       if (result) {
         toast.success('Devis créé avec succès');
         router.push(`/quotes/${result.id}`);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,10 @@ export function ChangeRoleDialog({
   const { t } = useTranslation();
   const [selectedRole, setSelectedRole] = useState(currentRole);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) setSelectedRole(currentRole);
+  }, [open, currentRole]);
 
   const roles = [
     { value: 'viewer', label: t('users.roleViewer') },

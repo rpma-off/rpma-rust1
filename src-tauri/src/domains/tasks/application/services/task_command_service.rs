@@ -12,7 +12,7 @@ use tracing::{error, info, instrument, warn};
 use crate::commands::AppError;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    BulkImportResponse, SortOrder, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
+    BulkImportResponse, Task, TaskPriority, TaskQuery, TaskStatus, UpdateTaskRequest,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
@@ -196,7 +196,7 @@ impl TaskCommandService {
 
         let facade = self.facade();
         let issue_entry =
-            facade.format_issue_entry(&ctx.auth.user_id, issue_type, &severity, description);
+            facade.format_issue_entry(&ctx.auth.user_id, issue_type, &severity.to_string(), description);
         let updated_notes = facade.append_note(task.notes.as_deref(), &issue_entry);
 
         let update_request = UpdateTaskRequest {
@@ -210,7 +210,7 @@ impl TaskCommandService {
             .await
             .map_err(|e| AppError::db_sanitized("tasks.report_issue", e))?;
 
-        if matches!(severity.as_str(), "high" | "critical") {
+        if severity.requires_escalation() {
             if let Err(err) = self
                 .notification_sender
                 .send_message_raw(
@@ -223,7 +223,7 @@ impl TaskCommandService {
                     format!("{} (severity: {})", description, severity),
                     Some(task.id.clone()),
                     task.client_id.clone(),
-                    Some("high".to_string()),
+                    Some(severity.notification_priority().to_string()),
                     None,
                     Some(ctx.correlation_id.clone()),
                 )
@@ -278,8 +278,12 @@ impl TaskCommandService {
 
     fn build_export_query(filter: Option<&TaskFilter>) -> TaskQuery {
         TaskQuery {
-            page: Some(1),
-            limit: Some(10000),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(10000),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: filter
                 .and_then(|f| f.status.as_ref())
                 .and_then(|s| TaskStatus::from_str_opt(s)),
@@ -291,8 +295,6 @@ impl TaskCommandService {
             search: None,
             from_date: filter.and_then(|f| f.date_from.clone()),
             to_date: filter.and_then(|f| f.date_to.clone()),
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         }
     }
 

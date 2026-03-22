@@ -236,6 +236,63 @@ pub trait PaginatedRepository<
     }
 }
 
+/// Canonical pagination input parameters — embed in every domain filter/query
+/// struct via composition instead of repeating `page`, `page_size`, `sort_by`,
+/// `sort_order` on every struct.  Changing pagination behaviour (e.g. adding
+/// cursor-based pagination, adding a `sort_by` field) now requires editing
+/// ONE struct + the `usePagination()` frontend hook — not 8+ structs.
+///
+/// # DEBT-08 / REF-08
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, TS)]
+#[ts(export)]
+pub struct PaginationParams {
+    pub page: Option<i32>,
+    pub page_size: Option<i32>,
+    pub sort_by: Option<String>,
+    pub sort_order: Option<String>, // "asc" | "desc"
+}
+
+impl Default for PaginationParams {
+    fn default() -> Self {
+        Self {
+            page: Some(1),
+            page_size: Some(20),
+            sort_by: None,
+            sort_order: Some("desc".to_string()),
+        }
+    }
+}
+
+impl PaginationParams {
+    /// Current page (≥ 1).
+    pub fn page(&self) -> i32 {
+        self.page.unwrap_or(1).max(1)
+    }
+
+    /// Page size clamped to [1, 200].
+    pub fn page_size(&self) -> i32 {
+        self.page_size.unwrap_or(20).clamp(1, 200)
+    }
+
+    /// SQL OFFSET for the current page.
+    pub fn offset(&self) -> i32 {
+        (self.page() - 1) * self.page_size()
+    }
+
+    /// Return `sort_by` or fall back to `default`.
+    pub fn sort_by_or<'a>(&'a self, default: &'a str) -> &'a str {
+        self.sort_by.as_deref().unwrap_or(default)
+    }
+
+    /// Normalised SQL sort direction ("ASC" or "DESC").
+    pub fn sort_order_sql(&self) -> &str {
+        match self.sort_order.as_deref() {
+            Some(o) if o.eq_ignore_ascii_case("asc") => "ASC",
+            _ => "DESC",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -549,14 +549,14 @@ impl TaskService {
         };
 
         for (status, count) in status_counts {
-            match status.as_str() {
-                "draft" | "pending" => distribution.quote += count,
-                "scheduled" | "assigned" | "overdue" => distribution.scheduled += count,
-                "in_progress" => distribution.in_progress += count,
-                "paused" | "on_hold" => distribution.paused += count,
-                "completed" | "archived" => distribution.completed += count,
-                "cancelled" | "failed" | "invalid" => distribution.cancelled += count,
-                _ => {}
+            let Ok(ts) = status.parse::<TaskStatus>() else { continue };
+            match ts {
+                TaskStatus::Draft | TaskStatus::Pending => distribution.quote += count,
+                TaskStatus::Scheduled | TaskStatus::Assigned | TaskStatus::Overdue => distribution.scheduled += count,
+                TaskStatus::InProgress => distribution.in_progress += count,
+                TaskStatus::Paused | TaskStatus::OnHold => distribution.paused += count,
+                TaskStatus::Completed | TaskStatus::Archived => distribution.completed += count,
+                TaskStatus::Cancelled | TaskStatus::Failed | TaskStatus::Invalid => distribution.cancelled += count,
             }
         }
 

@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
+import type { UserPreferences } from '@/lib/backend';
 import type { CalendarViewMode } from '../hooks/useCalendar';
+import { ipcClient } from '@/lib/ipc/client';
 
 interface CalendarState {
   currentView: CalendarViewMode;
@@ -91,3 +93,45 @@ export const useCalendarStore = create<CalendarState>()(
     }
   )
 );
+
+// Debounce helper — avoids one backend call per keypress in filter inputs.
+let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleSyncToBackend(currentView: CalendarViewMode, filters: CalendarState['filters']) {
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    ipcClient.settings.updateUserPreferences({
+      calendar_view: currentView,
+      calendar_show_my_events_only: filters.showMyEventsOnly,
+      calendar_filter_statuses: filters.statuses as string[],
+      calendar_filter_priorities: filters.priorities as string[],
+    } as Partial<UserPreferences>).catch(() => {
+      // Sync failure is non-critical — localStorage still holds the preference.
+    });
+  }, 800);
+}
+
+// Subscribe to all state changes and mirror view/filter to the backend.
+// localStorage (via persist) stays as the fast local fallback.
+// The debounce ensures we don't call the backend on every keystroke.
+useCalendarStore.subscribe((state) => {
+  scheduleSyncToBackend(state.currentView, state.filters);
+});
+
+/**
+ * Call this once on app init (e.g. in CalendarProvider) to hydrate the store
+ * from backend preferences, overriding the localStorage snapshot when the user
+ * has preferences saved from another device.
+ */
+export function hydrateCalendarFromPreferences(prefs: UserPreferences): void {
+  const store = useCalendarStore.getState();
+  if (prefs.calendar_view) {
+    store.setCurrentView(prefs.calendar_view as CalendarViewMode);
+  }
+  if (prefs.calendar_filter_statuses || prefs.calendar_filter_priorities || prefs.calendar_show_my_events_only !== undefined) {
+    store.setFilters({
+      ...(prefs.calendar_filter_statuses && { statuses: prefs.calendar_filter_statuses as TaskStatus[] }),
+      ...(prefs.calendar_filter_priorities && { priorities: prefs.calendar_filter_priorities as TaskPriority[] }),
+      ...(prefs.calendar_show_my_events_only != null && { showMyEventsOnly: prefs.calendar_show_my_events_only }),
+    });
+  }
+}

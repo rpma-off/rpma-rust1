@@ -87,13 +87,8 @@ impl UsersFacade {
 
     /// TODO: document
     pub fn parse_role(&self, role: &str) -> Result<UserRole, AppError> {
-        match role {
-            "admin" => Ok(UserRole::Admin),
-            "technician" => Ok(UserRole::Technician),
-            "supervisor" => Ok(UserRole::Supervisor),
-            "viewer" => Ok(UserRole::Viewer),
-            _ => Err(AppError::Validation(format!("Invalid role: {}", role))),
-        }
+        role.parse::<UserRole>()
+            .map_err(|_| AppError::Validation(format!("Invalid role: {}", role)))
     }
 
     /// TODO: document
@@ -221,8 +216,7 @@ impl UsersFacade {
                         search,
                         role_filter,
                     } => {
-                        let default_limit =
-                            crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32;
+                        let default_limit = crate::shared::constants::DEFAULT_USER_LIST_SIZE as i32;
                         let users = if search.is_some() || role_filter.is_some() {
                             services
                                 .account_manager

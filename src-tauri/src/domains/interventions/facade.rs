@@ -8,6 +8,7 @@ use crate::domains::interventions::infrastructure::intervention::InterventionSer
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
     SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
+    UpdateInterventionRequest,
 };
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
@@ -61,7 +62,7 @@ pub enum InterventionsCommand {
     },
     Update {
         id: String,
-        data: serde_json::Value,
+        data: UpdateInterventionRequest,
     },
     Delete {
         id: String,
@@ -80,7 +81,7 @@ pub enum InterventionsCommand {
     },
     WorkflowUpdate {
         id: String,
-        data: serde_json::Value,
+        data: UpdateInterventionRequest,
     },
     WorkflowDelete {
         id: String,

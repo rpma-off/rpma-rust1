@@ -1,10 +1,11 @@
 //! Query builder for filtering materials.
 
-use crate::shared::repositories::base::RepoError;
+use crate::shared::repositories::base::{PaginationParams, RepoError};
 
 /// Query for filtering materials
 #[derive(Debug, Clone, Default)]
 pub struct MaterialQuery {
+    pub pagination: PaginationParams,
     pub search: Option<String>,
     pub material_type: Option<crate::domains::inventory::domain::models::material::MaterialType>,
     pub is_active: Option<bool>,
@@ -12,10 +13,6 @@ pub struct MaterialQuery {
     pub sku: Option<String>,
     pub category: Option<String>,
     pub supplier_id: Option<String>,
-    pub limit: Option<i64>,
-    pub offset: Option<i64>,
-    pub sort_by: Option<String>,
-    pub sort_order: Option<String>,
 }
 
 impl MaterialQuery {
@@ -87,19 +84,15 @@ impl MaterialQuery {
     }
 
     pub(super) fn build_order_by_clause(&self) -> Result<String, RepoError> {
-        let sort_by = Self::validate_sort_column(self.sort_by.as_deref().unwrap_or("name"))?;
-        let sort_order = match self.sort_order.as_deref() {
-            Some("ASC") => "ASC",
-            Some("DESC") => "DESC",
-            _ => "ASC",
-        };
+        let sort_by = Self::validate_sort_column(self.pagination.sort_by_or("name"))?;
+        let sort_order = self.pagination.sort_order_sql();
         Ok(format!("ORDER BY {} {}", sort_by, sort_order))
     }
 
     pub(super) fn build_limit_offset(&self) -> Option<(i64, Option<i64>)> {
-        match (self.limit, self.offset) {
-            (Some(limit), offset) => Some((limit, offset)),
-            _ => None,
-        }
+        Some((
+            self.pagination.page_size() as i64,
+            Some(self.pagination.offset() as i64),
+        ))
     }
 }

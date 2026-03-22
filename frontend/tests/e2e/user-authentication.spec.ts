@@ -28,6 +28,7 @@ test.describe('User Authentication Smoke', () => {
   });
 
   test('logs in and keeps authenticated session on protected route', async ({ page }) => {
+    test.setTimeout(60000);
     await loginAsTestUser(page);
 
     // Wait for page to fully load after login

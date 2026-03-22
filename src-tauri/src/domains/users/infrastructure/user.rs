@@ -20,18 +20,6 @@ pub struct UserService {
     session_repo: Arc<SessionRepository>,
 }
 
-/// Convert between auth UserRole and repo UserRole
-fn auth_role_to_repo_role(
-    auth_role: UserRole,
-) -> crate::domains::users::domain::models::user::UserRole {
-    match auth_role {
-        UserRole::Admin => crate::domains::users::domain::models::user::UserRole::Admin,
-        UserRole::Technician => crate::domains::users::domain::models::user::UserRole::Technician,
-        UserRole::Supervisor => crate::domains::users::domain::models::user::UserRole::Supervisor,
-        UserRole::Viewer => crate::domains::users::domain::models::user::UserRole::Viewer,
-    }
-}
-
 impl UserService {
     /// TODO: document
     pub fn new(user_repo: Arc<UserRepository>, session_repo: Arc<SessionRepository>) -> Self {
@@ -111,7 +99,7 @@ impl UserService {
 
         // Update user with new role
         let mut updated_user = repo_user.clone();
-        updated_user.role = auth_role_to_repo_role(new_role.clone());
+        updated_user.role = new_role.clone();
         updated_user.updated_at = chrono::Utc::now().timestamp_millis();
 
         self.user_repo

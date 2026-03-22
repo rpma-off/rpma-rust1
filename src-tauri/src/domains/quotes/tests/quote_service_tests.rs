@@ -895,7 +895,7 @@ async fn test_convert_to_task_emits_event_with_current_actor() {
         }
 
         fn interested_events(&self) -> Vec<&'static str> {
-            vec!["QuoteConverted"]
+            vec![DomainEvent::QUOTE_CONVERTED]
         }
     }
 

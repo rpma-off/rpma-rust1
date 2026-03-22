@@ -177,8 +177,8 @@ impl QuoteService {
     /// List quotes with filters.
     pub fn list_quotes(&self, query: &QuoteQuery) -> Result<QuoteListResponse, String> {
         let (quotes, total) = self.repo.list(query).map_err(|e| e.to_string())?;
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(20);
+        let page = query.pagination.page();
+        let limit = query.pagination.page_size();
 
         Ok(QuoteListResponse {
             data: quotes,

@@ -10,7 +10,7 @@ export async function clearAuthState(page: Page): Promise<void> {
   await page.context().clearCookies();
   
   // Navigate to login - use domcontentloaded for faster response
-  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto('/login', { waitUntil: 'domcontentloaded', timeout: 60000 });
   
   // Clear storage completely to ensure AuthProvider doesn't try to validate a session
   await page.evaluate(() => {

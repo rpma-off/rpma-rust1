@@ -11,26 +11,26 @@ use crate::shared::context::RequestContext;
 #[serde(tag = "type", rename_all = "lowercase")]
 #[ts(export, export_to = "../../../../frontend/src/types/GlobalSearchResult.ts")]
 pub enum GlobalSearchResult {
-    Task { 
-        id: String, 
-        task_number: String, 
-        title: String, 
-        status: String 
+    Task {
+        id: String,
+        task_number: String,
+        title: String,
+        status: String
     },
-    Client { 
-        id: String, 
-        name: String, 
-        email: Option<String> 
+    Client {
+        id: String,
+        name: String,
+        email: Option<String>
     },
-    Material { 
-        id: String, 
-        name: String, 
-        sku: String 
+    Material {
+        id: String,
+        name: String,
+        sku: String
     },
-    Quote { 
-        id: String, 
-        quote_number: String, 
-        description: Option<String> 
+    Quote {
+        id: String,
+        quote_number: String,
+        description: Option<String>
     },
 }
 
@@ -51,14 +51,17 @@ impl GlobalSearchService {
 
     pub async fn search(&self, query: &str, _ctx: &RequestContext) -> Result<GlobalSearchResponse, String> {
         debug!("Performing global search for: {}", query);
-        
+
         let mut results = Vec::new();
         let query_str = query.to_string();
 
         // 1. Search Tasks
         let task_query = crate::domains::tasks::domain::models::task::TaskQuery {
             search: Some(query_str.clone()),
-            limit: Some(5),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page_size: Some(5),
+                ..Default::default()
+            },
             ..Default::default()
         };
         if let Ok(task_list) = self.repos.task.find_with_query(task_query).await {
@@ -92,7 +95,10 @@ impl GlobalSearchService {
         // 3. Search Materials
         let material_query = crate::domains::inventory::infrastructure::material_repository::MaterialQuery {
             search: Some(query_str.clone()),
-            limit: Some(5),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page_size: Some(5),
+                ..Default::default()
+            },
             ..Default::default()
         };
         if let Ok(materials) = self.repos.material.search(material_query).await {
@@ -108,7 +114,10 @@ impl GlobalSearchService {
         // 4. Search Quotes
         let quote_query = crate::domains::quotes::domain::models::quote::QuoteQuery {
             search: Some(query_str.clone()),
-            limit: Some(5),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page_size: Some(5),
+                ..Default::default()
+            },
             ..Default::default()
         };
         if let Ok((quotes, _)) = self.repos.quote.list(&quote_query) {

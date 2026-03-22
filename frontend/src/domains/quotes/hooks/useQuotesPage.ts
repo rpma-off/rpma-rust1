@@ -25,6 +25,7 @@ export function useQuotesPage() {
 
   const { quotes, total, loading, error, updateFilters } = useQuotesList({
     autoFetch: true,
+    onError: (err) => toast.error(err.message),
   });
   const { deleteQuote } = useDeleteQuote();
   const { duplicateQuote } = useDuplicateQuote();
@@ -56,12 +57,6 @@ export function useQuotesPage() {
       }
     }
   }, [quotes, loadClients]);
-
-  useEffect(() => {
-    if (error?.message) {
-      toast.error(error.message);
-    }
-  }, [error]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

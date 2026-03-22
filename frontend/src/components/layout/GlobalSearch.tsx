@@ -57,19 +57,18 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
     performSearch();
   }, [debouncedQuery]);
 
+  const ROUTES: Record<GlobalSearchResult['type'], (id: string) => string> = {
+    task:     (id) => `/tasks/${id}`,
+    client:   (id) => `/clients/${id}`,
+    material: (id) => `/inventory/materials/${id}`,
+    quote:    (id) => `/quotes/${id}`,
+  };
+
   const handleSelect = (result: GlobalSearchResult) => {
     onOpenChange(false);
     setQuery('');
-    
-    if (result.type === 'task') {
-      router.push(`/tasks/${result.id}`);
-    } else if (result.type === 'client') {
-      router.push(`/clients/${result.id}`);
-    } else if (result.type === 'material') {
-      router.push(`/inventory/materials/${result.id}`);
-    } else if (result.type === 'quote') {
-      router.push(`/quotes/${result.id}`);
-    }
+    const route = ROUTES[result.type];
+    if (route) router.push(route(result.id));
   };
 
   const tasks = results.filter((r): r is Extract<GlobalSearchResult, { type: 'task' }> => r.type === 'task');

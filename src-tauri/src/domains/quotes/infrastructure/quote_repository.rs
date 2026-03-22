@@ -265,25 +265,18 @@ impl QuoteRepository {
             .map_err(|e| RepoError::Database(format!("Failed to count quotes: {}", e)))?;
 
         // Query
-        let sort_by = match query.sort_by.as_deref() {
+        let sort_by = match query.pagination.sort_by.as_deref() {
             Some("quote_number") => "quote_number",
+            Some("client_id") => "client_id",
             Some("status") => "status",
             Some("total") => "total",
             Some("updated_at") => "updated_at",
             _ => "created_at",
         };
-        let sort_order = match query.sort_order.as_deref() {
-            Some("ASC") | Some("asc") => "ASC",
-            _ => "DESC",
-        };
-
-        let page = query.page.unwrap_or(1).max(1);
-        let limit = query
-            .limit
-            .unwrap_or(crate::shared::constants::DEFAULT_PAGE_SIZE as i32)
-            .max(1)
-            .min(100);
-        let offset = (page - 1) * limit;
+        let sort_order = query.pagination.sort_order_sql();
+        let page = query.pagination.page();
+        let limit = query.pagination.page_size().min(100);
+        let offset = query.pagination.offset();
 
         let sql = format!(
             r#"
@@ -958,14 +951,15 @@ impl QuoteRepository {
         for row in rows {
             let (status, count) = row
                 .map_err(|e| RepoError::Database(format!("Failed to read status row: {}", e)))?;
-            match status.as_str() {
-                "draft" => draft = count,
-                "sent" => sent = count,
-                "accepted" => accepted = count,
-                "rejected" => rejected = count,
-                "expired" => expired = count,
-                "converted" => converted = count,
-                _ => {}
+            let Ok(qs) = status.parse::<QuoteStatus>() else { continue };
+            match qs {
+                QuoteStatus::Draft            => draft     = count,
+                QuoteStatus::Sent             => sent      = count,
+                QuoteStatus::Accepted         => accepted  = count,
+                QuoteStatus::Rejected         => rejected  = count,
+                QuoteStatus::Expired          => expired   = count,
+                QuoteStatus::Converted        => converted = count,
+                QuoteStatus::ChangesRequested => {}
             }
         }
 

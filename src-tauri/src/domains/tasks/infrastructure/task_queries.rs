@@ -51,8 +51,8 @@ impl TaskQueriesService {
         sql.push_str(" ORDER BY created_at DESC");
 
         // Add pagination
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(DEFAULT_PAGE_SIZE);
+        let page = query.pagination.page();
+        let limit = query.pagination.page_size();
         let offset = calculate_offset(page, limit);
 
         sql.push_str(" LIMIT ? OFFSET ?");

@@ -5,8 +5,8 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Inventory Smoke', () => {
   test.beforeEach(async ({ page }) => {
-    // Increase timeout for beforeEach hook
-    test.setTimeout(60000);
+    // Increase timeout for beforeEach hook (server compilation can take >30s on cold start)
+    test.setTimeout(120000);
     // loginAsTestUser handles mock initialization and navigation
     await loginAsTestUser(page);
   });

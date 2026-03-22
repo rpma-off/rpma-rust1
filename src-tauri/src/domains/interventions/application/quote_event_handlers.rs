@@ -49,7 +49,7 @@ impl DomainEventHandler for QuoteAcceptedHandler {
     }
 
     fn interested_events(&self) -> Vec<&'static str> {
-        vec!["QuoteAccepted"]
+        vec![DomainEvent::QUOTE_ACCEPTED]
     }
 }
 
@@ -96,6 +96,6 @@ impl DomainEventHandler for QuoteConvertedHandler {
     }
 
     fn interested_events(&self) -> Vec<&'static str> {
-        vec!["QuoteConverted"]
+        vec![DomainEvent::QUOTE_CONVERTED]
     }
 }

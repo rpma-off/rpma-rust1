@@ -146,8 +146,14 @@ impl super::UserRepository {
         self.db
             .execute(
                 "INSERT INTO audit_logs (user_id, user_email, action, entity_type, entity_id, old_values, new_values, timestamp)
-                 VALUES (?, ?, 'bootstrap_admin', 'user', ?, 'viewer', 'admin', (unixepoch() * 1000))",
-                params![user_id, user_email, user_id],
+                 VALUES (?, ?, 'bootstrap_admin', 'user', ?, ?, ?, (unixepoch() * 1000))",
+                params![
+                    user_id,
+                    user_email,
+                    user_id,
+                    UserRole::Viewer.to_string(),
+                    UserRole::Admin.to_string(),
+                ],
             )
             .map_err(|e| RepoError::Database(format!("Failed to create audit log: {}", e)))?;
         Ok(())

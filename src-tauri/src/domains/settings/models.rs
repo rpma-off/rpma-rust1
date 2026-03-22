@@ -404,6 +404,11 @@ pub struct UserPreferences {
     pub screen_reader: bool,
     pub auto_refresh: bool,
     pub refresh_interval: u32,
+    // Calendar preferences — synced from calendarStore (migration 063)
+    pub calendar_view: Option<String>,
+    pub calendar_show_my_events_only: Option<bool>,
+    pub calendar_filter_statuses: Option<Vec<String>>,
+    pub calendar_filter_priorities: Option<Vec<String>>,
 }
 
 impl Default for UserPreferences {
@@ -425,6 +430,10 @@ impl Default for UserPreferences {
             screen_reader: false,
             auto_refresh: true,
             refresh_interval: 60,
+            calendar_view: None,
+            calendar_show_my_events_only: None,
+            calendar_filter_statuses: None,
+            calendar_filter_priorities: None,
         }
     }
 }
@@ -744,9 +753,10 @@ impl OnboardingData {
 }
 
 fn is_valid_email(email: &str) -> bool {
-    let email_regex = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .unwrap_or_else(|_| regex::Regex::new(r".+@.+\..+").expect("fallback email regex"));
-    email_regex.is_match(email)
+    regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        .or_else(|_| regex::Regex::new(r".+@.+\..+"))
+        .map(|re| re.is_match(email))
+        .unwrap_or(false)
         && !email.contains("..")
         && !email.starts_with('.')
         && !email.ends_with('.')

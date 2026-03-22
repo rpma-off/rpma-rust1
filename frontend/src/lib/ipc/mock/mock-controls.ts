@@ -144,7 +144,18 @@ export function installMockControls(): void {
       return null;
     }
 
-    return handleInvoke(command, args) as Promise<JsonValue>;
+    // Wrap in ApiResponse format to match real Tauri backend.
+    // safeInvoke (utils.ts) extracts `.data` from ApiResponse wrappers — without
+    // this, it falls into the BackendResponse branch and returns `.payload`
+    // (undefined), causing all domain IPC calls that use safeInvoke directly to
+    // receive undefined instead of the actual mock data.
+    try {
+      const result = await handleInvoke(command, args);
+      return { success: true, data: result } as JsonValue;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: { message, code: 'MOCK_ERROR', details: null } } as JsonValue;
+    }
   };
 
   const controls: E2eMockControls = {

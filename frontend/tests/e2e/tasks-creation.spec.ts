@@ -21,8 +21,8 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Task Creation Smoke', () => {
   test.beforeEach(async ({ page }) => {
-    // Increase timeout for beforeEach hook
-    test.setTimeout(60000);
+    // Increase timeout for beforeEach hook + /tasks/new compilation (~53s)
+    test.setTimeout(120000);
     // loginAsTestUser handles mock initialization and navigation
     await loginAsTestUser(page);
   });

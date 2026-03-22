@@ -7,10 +7,12 @@
  *
  * Detects:
  *  1. `rusqlite` imports in domain/ or application/ layers  (ADR-002)
- *  2. Direct cross-domain imports between bounded contexts   (ADR-001)
- *  3. SQL keyword usage (SELECT/INSERT/UPDATE/DELETE) in
- *     domain/ or application/ layers                        (ADR-002)
+ *  2. SQL keyword usage (SELECT/INSERT/UPDATE/DELETE) in
+ *     domain/, application/, or ipc/ layers                 (ADR-002)
+ *  3. Direct cross-domain imports between bounded contexts   (ADR-001)
  *  4. Business-logic orchestration in ipc/ handlers         (ADR-005)
+ *  5. #[tauri::command] handlers missing resolve_context!   (ADR-006)
+ *  6. pub use of domain/infrastructure internals in mod.rs  (ADR-001)
  *
  * Exit codes:
  *   0 – all checks passed (warnings may still be printed)
@@ -62,12 +64,38 @@ function collectRustFiles(dir) {
 }
 
 /** Return the layer name ('domain', 'application', 'ipc', 'infrastructure', 'tests')
- *  for a file path, or null if it cannot be determined. */
+ *  for a file path, or null if it cannot be determined.
+ *
+ *  Extended to cover flat domain handler files (Gap A fix):
+ *  - Root-level handler files (<domain>/<name>_handler.rs) are treated as IPC.
+ *  - Files explicitly named ipc.rs inside handler directories are treated as IPC.
+ *  - Repository/query files inside handler directories are skipped (infrastructure).
+ */
 function layerOf(filePath) {
-  const rel = path.relative(DOMAINS_DIR, filePath);
+  const rel   = path.relative(DOMAINS_DIR, filePath);
   const parts = rel.split(path.sep);
-  // parts[0] = domain name, parts[1] = layer folder, ...
-  if (parts.length >= 2) return parts[1];
+  // parts[0] = domain name, parts[1] = layer folder or handler dir or handler file
+
+  if (parts.length < 2) return null;
+
+  const second   = parts[1];
+  const filename = parts[parts.length - 1];
+
+  // Standard layers
+  const STANDARD_LAYERS = new Set(['domain', 'application', 'ipc', 'infrastructure', 'tests']);
+  if (STANDARD_LAYERS.has(second)) return second;
+
+  // Flat handler *file* at domain root: settings_handler.rs, user_settings_handler.rs …
+  // (e.g. settings/settings_handler.rs, documents/photo_handler.rs)
+  if (parts.length === 2 && second.endsWith('_handler.rs')) return 'ipc';
+
+  // Files explicitly named ipc.rs inside a handler directory
+  // (e.g. clients/client_handler/ipc.rs, calendar/calendar_handler/ipc.rs)
+  if (second.endsWith('_handler') && filename === 'ipc.rs') return 'ipc';
+
+  // Everything else inside *_handler/ directories (repository.rs, mod.rs, etc.)
+  // contains infrastructure/application code — skip to avoid false positives.
+
   return null;
 }
 
@@ -109,9 +137,10 @@ function checkRusqliteInDomainOrApp(file, lines, domain, layer) {
   }
 }
 
-/** 2. Detect raw SQL keywords in domain/ or application/ layers. */
+/** 2. Detect raw SQL keywords in domain/, application/, or ipc/ layers.
+ *     (ipc/ includes flat domain handler files — Gap A fix.) */
 function checkSqlInDomainOrApp(file, lines, domain, layer) {
-  if (layer !== 'domain' && layer !== 'application') return;
+  if (layer !== 'domain' && layer !== 'application' && layer !== 'ipc') return;
 
   // Require paired SQL keywords to avoid false positives:
   //   SELECT ... FROM, INSERT INTO, UPDATE ... SET, DELETE FROM
@@ -167,6 +196,80 @@ function checkCrossDomainImports(file, lines, fromDomain, layer) {
   }
 }
 
+/** 5. Warn when a #[tauri::command] handler file does not call resolve_context!
+ *     Non-public IPC handlers must resolve the request context to enforce auth
+ *     (ADR-006). Publicly accessible handlers are listed in PUBLIC_HANDLER_FILES. */
+
+// Files whose handlers are legitimately public (no auth required).
+// Paths are relative to DOMAINS_DIR or SRC_DIR root.
+const PUBLIC_HANDLER_FILES = new Set([
+  // Authentication flows — callers are not yet authenticated
+  path.join('auth', 'ipc', 'auth.rs'),
+  path.join('auth', 'ipc', 'auth_security.rs'),
+  // System / navigation commands do not touch domain data
+  path.join('..', 'commands', 'navigation.rs'),
+  path.join('..', 'commands', 'system.rs'),
+  path.join('..', 'commands', 'mod.rs'),
+  // Correlation ID passthrough — no business data
+  path.join('..', 'shared', 'ipc', 'correlation.rs'),
+  // Logging endpoint — no auth gate needed
+  path.join('..', 'logging', 'mod.rs'),
+]);
+
+function checkResolveContext(file, content, layer) {
+  if (layer !== 'ipc') return;
+  if (!content.includes('#[tauri::command]')) return;
+
+  // Skip files listed as intentionally public
+  const relFromDomains = path.relative(DOMAINS_DIR, file);
+  if (PUBLIC_HANDLER_FILES.has(relFromDomains)) return;
+
+  if (!content.includes('resolve_context!')) {
+    addWarning(
+      `[ADR-006] CHECK-5 — IPC handler file has #[tauri::command] but no resolve_context! call:\n` +
+      `  ${path.relative(ROOT, file)}\n` +
+      `  → Either add resolve_context! to authenticate the request, or add this file\n` +
+      `    to PUBLIC_HANDLER_FILES in backend-architecture-check.js if auth is intentionally skipped`
+    );
+  }
+}
+
+/** 6. Detect pub use of domain/ or infrastructure/ internals in ipc/ or application/ files
+ *     (ADR-001: layer abstractions must not be bypassed by re-exporting internals). */
+function checkPubUseInternals(file, lines, layer) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Skip non-pub-use lines and comment lines
+    if (!/^\s*pub\s+use\b/.test(line)) continue;
+    if (/^\s*\/\//.test(line)) continue;
+
+    let violation = null;
+
+    // ipc/ files must not re-export from domain/ or infrastructure/
+    if (layer === 'ipc') {
+      if (/::domain::/.test(line) || /::infrastructure::/.test(line)) {
+        violation = 'ipc/ leaks domain/infrastructure internals';
+      }
+    }
+
+    // application/ files must not re-export from infrastructure/
+    if (layer === 'application') {
+      if (/::infrastructure::/.test(line)) {
+        violation = 'application/ leaks infrastructure internals';
+      }
+    }
+
+    if (violation) {
+      addError(
+        `[ADR-001] CHECK-6 — pub use leaks layer internals (${violation}):\n` +
+        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+        `  ${line.trim()}\n` +
+        `  → Remove pub use or move the type to a shared contract`
+      );
+    }
+  }
+}
+
 /** 4. Warn when an ipc/ handler contains substantial business logic heuristics
  *     (complex match arms, domain-type construction, etc.). */
 function checkBusinessLogicInIpc(file, lines, domain, layer) {
@@ -217,6 +320,8 @@ for (const domain of allDomains) {
     checkSqlInDomainOrApp(file, lines, domain, layer);
     checkCrossDomainImports(file, lines, domain, layer);
     checkBusinessLogicInIpc(file, lines, domain, layer);
+    checkResolveContext(file, content, layer);
+    checkPubUseInternals(file, lines, layer);
 
     filesChecked++;
   }

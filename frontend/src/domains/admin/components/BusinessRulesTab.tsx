@@ -80,20 +80,13 @@ export function BusinessRulesTab() {
     deleteConfirmOpen,
     setDeleteConfirmOpen,
     ruleToDelete,
-    formData,
-    setFormData,
     loadBusinessRules,
-    resetForm,
     openEditDialog,
     saveRule,
     confirmDeleteRule,
     deleteRule,
     toggleRuleStatus,
     testRule,
-    addCondition,
-    removeCondition,
-    addAction,
-    removeAction,
     filteredRules,
     getCategoryIcon,
   } = useBusinessRules();
@@ -136,7 +129,6 @@ export function BusinessRulesTab() {
           </Button>
           <Button
             onClick={() => {
-              resetForm();
               setEditingRule(null);
               setShowCreateDialog(true);
             }}
@@ -293,14 +285,8 @@ export function BusinessRulesTab() {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         editingRule={editingRule}
-        formData={formData}
-        setFormData={setFormData}
         saving={saving}
         onSave={saveRule}
-        onAddCondition={addCondition}
-        onRemoveCondition={removeCondition}
-        onAddAction={addAction}
-        onRemoveAction={removeAction}
       />
 
       <ConfirmDialog

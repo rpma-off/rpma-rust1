@@ -9,7 +9,7 @@ use tracing::{debug, info};
 
 use crate::commands::AppError;
 use crate::domains::tasks::application::services::task_policy_service;
-use crate::domains::tasks::domain::models::task::{SortOrder, TaskPriority, TaskQuery, TaskStatus};
+use crate::domains::tasks::domain::models::task::{TaskPriority, TaskQuery, TaskStatus};
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::ipc::task::client_integration::TaskWithClientDetails;
 use crate::domains::tasks::ipc::task_types::TaskFilter;
@@ -48,8 +48,12 @@ impl TaskClientService {
         let offset = (page - 1) * limit;
 
         let query = TaskQuery {
-            page: Some(((offset / limit) + 1) as i32),
-            limit: Some(limit as i32),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(((offset / limit) + 1) as i32),
+                page_size: Some(limit as i32),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             status: filter.status.as_ref().and_then(|s| s.parse::<TaskStatus>().ok()),
             technician_id: filter.assigned_to.clone(),
             client_id: filter.client_id.clone(),
@@ -57,8 +61,6 @@ impl TaskClientService {
             search: None,
             from_date: filter.date_from.clone(),
             to_date: filter.date_to.clone(),
-            sort_by: "created_at".to_string(),
-            sort_order: SortOrder::Desc,
         };
 
         let tasks_with_clients = self

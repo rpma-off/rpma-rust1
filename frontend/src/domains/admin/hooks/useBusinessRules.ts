@@ -14,8 +14,9 @@ import { useLogger } from '@/shared/hooks/useLogger';
 import { LogDomain } from '@/shared/utils';
 import { settingsOperations } from '@/shared/utils';
 import type { JsonValue } from '@/shared/types';
-import type { BusinessRule, RuleCondition, RuleAction, BusinessRuleCategory } from '@/shared/types';
+import type { BusinessRule } from '@/shared/types';
 import { useAuth } from '@/shared/hooks/useAuth';
+import type { BusinessRuleFormData } from '../components/BusinessRuleFormDialog';
 
 export function useBusinessRules() {
   const [businessRules, setBusinessRules] = useState<BusinessRule[]>([]);
@@ -28,16 +29,6 @@ export function useBusinessRules() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [ruleToDelete, setRuleToDelete] = useState<BusinessRule | null>(null);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: 'task_assignment' as BusinessRuleCategory,
-    priority: 0,
-    isActive: true,
-    conditions: [] as RuleCondition[],
-    actions: [] as RuleAction[],
-  });
 
   const { session } = useAuth();
   const { logInfo, logError, logPerformance } = useLogger({
@@ -70,46 +61,25 @@ export function useBusinessRules() {
     loadBusinessRules();
   }, [loadBusinessRules]);
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      category: 'task_assignment',
-      priority: 0,
-      isActive: true,
-      conditions: [],
-      actions: [],
-    });
-  };
-
   const openEditDialog = (rule: BusinessRule) => {
     setEditingRule(rule);
-    setFormData({
-      name: rule.name,
-      description: rule.description || '',
-      category: rule.category as BusinessRuleCategory,
-      priority: rule.priority,
-      isActive: rule.isActive ?? false,
-      conditions: rule.conditions,
-      actions: rule.actions,
-    });
     setShowCreateDialog(true);
   };
 
-  const saveRule = async () => {
+  const saveRule = async (data: BusinessRuleFormData) => {
     setSaving(true);
     try {
       const _sessionToken = session?.token || '';
       const newRule: BusinessRule = {
         id: editingRule?.id || crypto.randomUUID(),
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        priority: formData.priority,
-        is_active: formData.isActive,
-        isActive: formData.isActive,
-        conditions: formData.conditions,
-        actions: formData.actions,
+        name: data.name,
+        description: data.description,
+        category: data.category,
+        priority: data.priority,
+        is_active: data.isActive,
+        isActive: data.isActive,
+        conditions: data.conditions,
+        actions: data.actions,
         created_at: editingRule?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
         createdAt: editingRule?.createdAt || new Date().toISOString(),
@@ -124,7 +94,6 @@ export function useBusinessRules() {
       toast.success(editingRule ? 'Règle mise à jour avec succès' : 'Règle créée avec succès');
       setShowCreateDialog(false);
       setEditingRule(null);
-      resetForm();
       await loadBusinessRules();
     } catch (error) {
       logError('Error saving business rule', { error: error instanceof Error ? error.message : error });
@@ -196,28 +165,6 @@ export function useBusinessRules() {
     }
   };
 
-  const addCondition = () => {
-    setFormData((prev) => ({
-      ...prev,
-      conditions: [...prev.conditions, { field: '', operator: 'equals', value: '' }],
-    }));
-  };
-
-  const removeCondition = (index: number) => {
-    setFormData((prev) => ({ ...prev, conditions: prev.conditions.filter((_, i) => i !== index) }));
-  };
-
-  const addAction = () => {
-    setFormData((prev) => ({
-      ...prev,
-      actions: [...prev.actions, { type: 'send_notification', target: '', value: '' }],
-    }));
-  };
-
-  const removeAction = (index: number) => {
-    setFormData((prev) => ({ ...prev, actions: prev.actions.filter((_, i) => i !== index) }));
-  };
-
   const filteredRules = businessRules.filter((rule) => {
     const matchesSearch =
       rule.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -253,20 +200,13 @@ export function useBusinessRules() {
     deleteConfirmOpen,
     setDeleteConfirmOpen,
     ruleToDelete,
-    formData,
-    setFormData,
     loadBusinessRules,
-    resetForm,
     openEditDialog,
     saveRule,
     confirmDeleteRule,
     deleteRule,
     toggleRuleStatus,
     testRule,
-    addCondition,
-    removeCondition,
-    addAction,
-    removeAction,
     filteredRules,
     getCategoryIcon,
   };

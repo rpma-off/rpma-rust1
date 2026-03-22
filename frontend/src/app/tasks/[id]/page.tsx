@@ -1,9 +1,6 @@
-'use client';
+"use client";
 
-import { ArrowLeft, AlertCircle, Settings } from 'lucide-react';
-import { Button, TaskErrorBoundary } from '@/shared/ui';
-import { PageShell } from '@/shared/ui/layout/PageShell';
-import { LoadingState } from '@/shared/ui/layout/LoadingState';
+import { ArrowLeft, AlertCircle, Settings } from "lucide-react";
 import {
   TaskOverviewEditable,
   TaskHeaderBand,
@@ -11,9 +8,12 @@ import {
   ActionsCard,
   getTaskDisplayTitle,
   useTaskDetailPage,
-} from '@/domains/tasks';
-import { useInterventionData } from '@/domains/interventions';
-import { InterventionReportSection } from '@/domains/reports';
+} from "@/domains/tasks";
+import { useInterventionData } from "@/domains/interventions";
+import { InterventionReportSection } from "@/domains/reports";
+import { Button, TaskErrorBoundary } from "@/shared/ui";
+import { PageShell } from "@/shared/ui/layout/PageShell";
+import { LoadingState } from "@/shared/ui/layout/LoadingState";
 
 export default function TaskDetailPage() {
   const {
@@ -23,6 +23,7 @@ export default function TaskDetailPage() {
     error,
     isInProgress,
     isCompleted,
+    canStartTask,
     isAssignedToCurrentUser,
     isTaskAvailable,
     isStartingIntervention,
@@ -40,7 +41,7 @@ export default function TaskDetailPage() {
   if (loading) {
     return (
       <PageShell>
-        <LoadingState message={t('tasks.loadingDetails')} />
+        <LoadingState message={t("tasks.loadingDetails")} />
       </PageShell>
     );
   }
@@ -52,7 +53,9 @@ export default function TaskDetailPage() {
           <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto ring-4 ring-destructive/20">
             <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">{t('tasks.error')}</h2>
+          <h2 className="text-xl font-semibold text-foreground">
+            {t("tasks.error")}
+          </h2>
           <p className="text-muted-foreground">{error}</p>
           <Button
             onClick={() => router.back()}
@@ -60,7 +63,7 @@ export default function TaskDetailPage() {
             className="border-border text-muted-foreground hover:text-foreground hover:border-primary transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            {t('common.back')}
+            {t("common.back")}
           </Button>
         </div>
       </PageShell>
@@ -71,14 +74,14 @@ export default function TaskDetailPage() {
     return (
       <PageShell>
         <div className="text-center space-y-4 max-w-md mx-auto">
-          <p className="text-foreground font-medium">{t('tasks.notFound')}</p>
+          <p className="text-foreground font-medium">{t("tasks.notFound")}</p>
           <Button
             onClick={() => router.back()}
             variant="outline"
             className="border-border text-muted-foreground hover:text-foreground hover:border-primary transition-all duration-200"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            {t('common.back')}
+            {t("common.back")}
           </Button>
         </div>
       </PageShell>
@@ -96,26 +99,42 @@ export default function TaskDetailPage() {
             className="text-muted-foreground hover:text-foreground hover:bg-accent/5 -ml-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            {t('common.back')}
+            {t("common.back")}
           </Button>
-          <StatusBadge status={(task.status as 'completed' | 'in_progress' | 'pending' | 'scheduled' | 'on_hold' | 'cancelled' | 'failed' | 'overdue' | 'draft') || 'pending'} size="sm" />
+          <StatusBadge
+            status={
+              (task.status as
+                | "completed"
+                | "in_progress"
+                | "pending"
+                | "scheduled"
+                | "on_hold"
+                | "cancelled"
+                | "failed"
+                | "overdue"
+                | "draft") || "pending"
+            }
+            size="sm"
+          />
         </div>
 
         {/* Enhanced Header with TaskHeaderBand */}
         <TaskHeaderBand
-          stepLabel={isCompleted ? 'TERMINÉ' : isInProgress ? 'EN COURS' : 'PLANIFIÉ'}
-          title={getTaskDisplayTitle(task)}
-          subtitle={
-            `${task?.vehicle_make || ''} ${task?.vehicle_model || ''} ${task?.vehicle_year ? `· ${task.vehicle_year}` : ''} · ${task?.customer_name || 'Client non spécifié'}`
+          stepLabel={
+            isCompleted ? "TERMINÉ" : isInProgress ? "EN COURS" : "PLANIFIÉ"
           }
+          title={getTaskDisplayTitle(task)}
+          subtitle={`${task?.vehicle_make || ""} ${task?.vehicle_model || ""} ${task?.vehicle_year ? `· ${task.vehicle_year}` : ""} · ${task?.customer_name || "Client non spécifié"}`}
           temperature={null}
           humidity={null}
-          surfaceValue={task?.ppf_zones?.length ? `${task.ppf_zones.length}` : '—'}
+          surfaceValue={
+            task?.ppf_zones?.length ? `${task.ppf_zones.length}` : "—"
+          }
           surfaceLabel="zones PPF"
           hasEnvironmentalData={false}
         />
 
-        <div className={`mt-6 space-y-6 ${showMobileActionBar ? 'pb-28' : ''}`}>
+        <div className={`mt-6 space-y-6 ${showMobileActionBar ? "pb-28" : ""}`}>
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
             {/* Main Content Area */}
             <main className="space-y-6">
@@ -125,7 +144,7 @@ export default function TaskDetailPage() {
                   task={task}
                   isAssignedToCurrentUser={isAssignedToCurrentUser}
                   isAvailable={isTaskAvailable}
-                  canStartTask={task.status === 'pending' || task.status === 'draft'}
+                  canStartTask={canStartTask}
                   onPrimaryAction={handlePrimaryAction}
                   onSecondaryAction={handleSecondaryAction}
                   isPending={isStartingIntervention}
@@ -133,8 +152,14 @@ export default function TaskDetailPage() {
               </section>
 
               {/* Task Overview */}
-              <section id="task-overview" className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <TaskOverviewEditable task={task} defaultExpandedSections={['notes-operationnelles']} />
+              <section
+                id="task-overview"
+                className="scroll-mt-28 rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                <TaskOverviewEditable
+                  task={task}
+                  defaultExpandedSections={["notes-operationnelles"]}
+                />
               </section>
             </main>
 
@@ -144,38 +169,58 @@ export default function TaskDetailPage() {
               <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
                 <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                   <Settings className="w-4 h-4 text-accent" />
-                  {t('tasks.administration')}
+                  {t("tasks.administration")}
                 </h3>
 
                 <dl className="space-y-2.5 text-sm">
                   <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                    <dt className="text-muted-foreground">{t('tasks.taskId')}</dt>
-                    <dd className="font-mono text-foreground text-xs">{task.id?.slice(-8) || t('common.noData')}</dd>
+                    <dt className="text-muted-foreground">
+                      {t("tasks.taskId")}
+                    </dt>
+                    <dd className="font-mono text-foreground text-xs">
+                      {task.id?.slice(-8) || t("common.noData")}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                    <dt className="text-muted-foreground">{t('tasks.createdOn')}</dt>
-                    <dd className="text-foreground">{formatDate(task.created_at as unknown as string)}</dd>
+                    <dt className="text-muted-foreground">
+                      {t("tasks.createdOn")}
+                    </dt>
+                    <dd className="text-foreground">
+                      {formatDate(task.created_at as unknown as string)}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                    <dt className="text-muted-foreground">{t('tasks.updated')}</dt>
-                    <dd className="text-foreground">{formatDate(task.updated_at as unknown as string)}</dd>
+                    <dt className="text-muted-foreground">
+                      {t("tasks.updated")}
+                    </dt>
+                    <dd className="text-foreground">
+                      {formatDate(task.updated_at as unknown as string)}
+                    </dd>
                   </div>
                   {task.external_id && (
                     <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                      <dt className="text-muted-foreground">{t('tasks.externalRef')}</dt>
+                      <dt className="text-muted-foreground">
+                        {t("tasks.externalRef")}
+                      </dt>
                       <dd className="text-foreground">{task.external_id}</dd>
                     </div>
                   )}
                   {task.task_number && (
                     <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                      <dt className="text-muted-foreground">{t('tasks.taskNum')}</dt>
+                      <dt className="text-muted-foreground">
+                        {t("tasks.taskNum")}
+                      </dt>
                       <dd className="text-foreground">{task.task_number}</dd>
                     </div>
                   )}
                   {task.template_id && (
                     <div className="flex justify-between gap-3 py-1 hover:bg-background/50 -mx-1 px-1 rounded transition-colors">
-                      <dt className="text-muted-foreground">{t('tasks.template')}</dt>
-                      <dd className="font-mono text-foreground text-xs">{task.template_id.slice(-8)}</dd>
+                      <dt className="text-muted-foreground">
+                        {t("tasks.template")}
+                      </dt>
+                      <dd className="font-mono text-foreground text-xs">
+                        {task.template_id.slice(-8)}
+                      </dd>
                     </div>
                   )}
                 </dl>
@@ -183,7 +228,10 @@ export default function TaskDetailPage() {
 
               {/* Intervention Report */}
               {interventionId && (
-                <div id="task-admin" className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
+                <div
+                  id="task-admin"
+                  className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm"
+                >
                   <InterventionReportSection interventionId={interventionId} />
                 </div>
               )}
@@ -197,7 +245,7 @@ export default function TaskDetailPage() {
               task={task}
               isAssignedToCurrentUser={isAssignedToCurrentUser}
               isAvailable={isTaskAvailable}
-              canStartTask={task.status === 'pending' || task.status === 'draft'}
+              canStartTask={canStartTask}
               onPrimaryAction={handlePrimaryAction}
               onSecondaryAction={handleSecondaryAction}
               isPending={isStartingIntervention}

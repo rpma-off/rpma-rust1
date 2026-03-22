@@ -1,20 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { useTranslation } from '@/shared/hooks';
-import { bigintToNumber, handleError, LogDomain } from '@/shared/utils';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { taskGateway } from '@/domains/tasks/api/taskGateway';
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useTranslation } from "@/shared/hooks";
+import { bigintToNumber, handleError, LogDomain } from "@/shared/utils";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { taskGateway } from "@/domains/tasks/api/taskGateway";
 // ❌ CROSS-DOMAIN IMPORT
-import { InterventionWorkflowService } from '@/domains/interventions';
-import type { TaskWithDetails } from '@/domains/tasks/api/types';
+import { InterventionWorkflowService } from "@/domains/interventions";
+import type { TaskWithDetails } from "@/domains/tasks/api/types";
+import {
+  canStartIntervention,
+  isActiveStatus,
+} from "../constants/task-transitions";
 
 const QUICK_NAV_SECTIONS = [
-  { id: 'task-actions', label: 'tasks.actions' },
-  { id: 'task-overview', label: 'tasks.overview' },
-  { id: 'task-attachments', label: 'tasks.attachments' },
-  { id: 'task-timeline', label: 'tasks.history' },
-  { id: 'task-admin', label: 'tasks.administration' },
+  { id: "task-actions", label: "tasks.actions" },
+  { id: "task-overview", label: "tasks.overview" },
+  { id: "task-attachments", label: "tasks.attachments" },
+  { id: "task-timeline", label: "tasks.history" },
+  { id: "task-admin", label: "tasks.administration" },
 ] as const;
 
 export type QuickNavSection = (typeof QUICK_NAV_SECTIONS)[number];
@@ -32,11 +36,15 @@ export function useTaskDetailPage() {
   const [isAssignedToCurrentUser, setIsAssignedToCurrentUser] = useState(false);
   const [isTaskAvailable, setIsTaskAvailable] = useState(true);
   const [isStartingIntervention, setIsStartingIntervention] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>(QUICK_NAV_SECTIONS[0].id);
+  const [activeSection, setActiveSection] = useState<string>(
+    QUICK_NAV_SECTIONS[0].id,
+  );
 
-  const isInProgress = task?.status === 'in_progress';
-  const isCompleted = task?.status === 'completed';
-  const canStartTask = task?.status === 'pending' || task?.status === 'draft';
+  const isInProgress = task?.status === "in_progress";
+  const isCompleted = task?.status === "completed";
+  // Single source of truth: delegates to ALLOWED_TRANSITIONS in task-transitions.ts
+  // which mirrors task_state_machine.rs::allowed_transitions() (DEBT-21, ADR-001).
+  const canStartTask = task ? canStartIntervention(task.status) : false;
 
   useEffect(() => {
     if (!taskId) return;
@@ -50,13 +58,13 @@ export function useTaskDetailPage() {
 
         if (result.error) {
           if (result.status === 404) {
-            setError(t('tasks.notFound'));
-            toast.error(t('tasks.notFound'));
+            setError(t("tasks.notFound"));
+            toast.error(t("tasks.notFound"));
           } else if (result.status === 403) {
-            setError(t('tasks.unauthorized'));
-            toast.error(t('tasks.unauthorized'));
+            setError(t("tasks.unauthorized"));
+            toast.error(t("tasks.unauthorized"));
           } else {
-            const errorMessage = result.error || t('errors.loadFailed');
+            const errorMessage = result.error || t("errors.loadFailed");
             setError(errorMessage);
             toast.error(errorMessage);
           }
@@ -67,14 +75,19 @@ export function useTaskDetailPage() {
 
         if (result.data && user?.token) {
           try {
-            const assignmentCheck = await taskGateway.checkTaskAssignment(result.data.id, user.user_id);
-            setIsAssignedToCurrentUser(assignmentCheck.status === 'assigned');
+            const assignmentCheck = await taskGateway.checkTaskAssignment(
+              result.data.id,
+              user.user_id,
+            );
+            setIsAssignedToCurrentUser(assignmentCheck.status === "assigned");
 
-            const availabilityCheck = await taskGateway.checkTaskAvailability(result.data.id);
-            setIsTaskAvailable(availabilityCheck.status === 'available');
+            const availabilityCheck = await taskGateway.checkTaskAvailability(
+              result.data.id,
+            );
+            setIsTaskAvailable(availabilityCheck.status === "available");
           } catch (validationErr) {
             const validationError = validationErr as Error;
-            console.warn('Task validation failed:', {
+            console.warn("Task validation failed:", {
               taskId: result.data.id,
               userId: user.user_id,
               error: validationError.message,
@@ -82,38 +95,59 @@ export function useTaskDetailPage() {
               details: (validationError as { details?: unknown }).details,
             });
 
-            if (validationError.message?.includes('authentication') || validationError.message?.includes('token')) {
-              handleError(new Error(t('errors.sessionExpired')), 'Authentication failed during task validation', {
-                domain: LogDomain.API,
-                userId: user?.user_id,
-                component: 'TaskValidation',
-                showToast: true,
-              });
-            } else if (validationError.message?.includes('authorization') || validationError.message?.includes('permission')) {
-              handleError(new Error(t('errors.permissionDenied')), 'Authorization failed during task validation', {
-                domain: LogDomain.API,
-                userId: user?.user_id,
-                component: 'TaskValidation',
-                showToast: true,
-              });
-            } else if (validationError.message?.includes('rate limit')) {
-              handleError(new Error(t('errors.rateLimitExceeded')), 'Rate limit exceeded during task validation', {
-                domain: LogDomain.API,
-                userId: user?.user_id,
-                component: 'TaskValidation',
-                showToast: true,
-              });
+            if (
+              validationError.message?.includes("authentication") ||
+              validationError.message?.includes("token")
+            ) {
+              handleError(
+                new Error(t("errors.sessionExpired")),
+                "Authentication failed during task validation",
+                {
+                  domain: LogDomain.API,
+                  userId: user?.user_id,
+                  component: "TaskValidation",
+                  showToast: true,
+                },
+              );
+            } else if (
+              validationError.message?.includes("authorization") ||
+              validationError.message?.includes("permission")
+            ) {
+              handleError(
+                new Error(t("errors.permissionDenied")),
+                "Authorization failed during task validation",
+                {
+                  domain: LogDomain.API,
+                  userId: user?.user_id,
+                  component: "TaskValidation",
+                  showToast: true,
+                },
+              );
+            } else if (validationError.message?.includes("rate limit")) {
+              handleError(
+                new Error(t("errors.rateLimitExceeded")),
+                "Rate limit exceeded during task validation",
+                {
+                  domain: LogDomain.API,
+                  userId: user?.user_id,
+                  component: "TaskValidation",
+                  showToast: true,
+                },
+              );
             } else {
-              console.warn('Task validation encountered an issue but continuing with defaults');
+              console.warn(
+                "Task validation encountered an issue but continuing with defaults",
+              );
             }
           }
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : t('errors.connectionError');
+        const errorMessage =
+          err instanceof Error ? err.message : t("errors.connectionError");
         setError(errorMessage);
-        handleError(err, 'Failed to fetch task details', {
+        handleError(err, "Failed to fetch task details", {
           domain: LogDomain.TASK,
-          component: 'TaskDetailPage',
+          component: "TaskDetailPage",
           showToast: false,
         });
       } finally {
@@ -140,7 +174,7 @@ export function useTaskDetailPage() {
         }
       },
       {
-        rootMargin: '-20% 0px -55% 0px',
+        rootMargin: "-20% 0px -55% 0px",
         threshold: [0.2, 0.4, 0.7],
       },
     );
@@ -155,11 +189,14 @@ export function useTaskDetailPage() {
 
   const formatDate = (timestamp: bigint | string | null | undefined) => {
     try {
-      if (!timestamp) return t('common.noData');
-      const date = typeof timestamp === 'bigint' ? new Date(bigintToNumber(timestamp) || 0) : new Date(timestamp);
-      return date.toLocaleDateString('fr-FR');
+      if (!timestamp) return t("common.noData");
+      const date =
+        typeof timestamp === "bigint"
+          ? new Date(bigintToNumber(timestamp) || 0)
+          : new Date(timestamp);
+      return date.toLocaleDateString("fr-FR");
     } catch {
-      return t('errors.invalidDate');
+      return t("errors.invalidDate");
     }
   };
 
@@ -178,7 +215,9 @@ export function useTaskDetailPage() {
       total += 1;
     }
     if (task.checklist_items && task.checklist_items.length > 0) {
-      const completedItems = task.checklist_items.filter((item) => item.is_completed).length;
+      const completedItems = task.checklist_items.filter(
+        (item) => item.is_completed,
+      ).length;
       progress += completedItems;
       total += task.checklist_items.length;
     }
@@ -187,41 +226,53 @@ export function useTaskDetailPage() {
   }, [task]);
 
   const workflowSteps = useMemo(() => {
-    const hasBeforePhotos = task?.photos_before && task.photos_before.length > 0;
+    const hasBeforePhotos =
+      task?.photos_before && task.photos_before.length > 0;
     const hasAfterPhotos = task?.photos_after && task.photos_after.length > 0;
-    const hasChecklist = task?.checklist_items && task.checklist_items.length > 0;
+    const hasChecklist =
+      task?.checklist_items && task.checklist_items.length > 0;
     const checklistCompleted =
-      task?.checklist_items?.filter((item) => item.is_completed).length === task?.checklist_items?.length;
+      task?.checklist_items?.filter((item) => item.is_completed).length ===
+      task?.checklist_items?.length;
 
     return [
       {
-        id: 'photos_before',
-        label: 'Photos Avant',
-        status: (hasBeforePhotos ? 'completed' : 'pending') as 'completed' | 'in_progress' | 'pending',
+        id: "photos_before",
+        label: "Photos Avant",
+        status: (hasBeforePhotos ? "completed" : "pending") as
+          | "completed"
+          | "in_progress"
+          | "pending",
         count: task?.photos_before?.length,
       },
       {
-        id: 'workflow',
-        label: 'Workflow',
-        status: (isInProgress ? 'in_progress' : isCompleted ? 'completed' : 'pending') as
-          | 'completed'
-          | 'in_progress'
-          | 'pending',
+        id: "workflow",
+        label: "Workflow",
+        status: (isInProgress
+          ? "in_progress"
+          : isCompleted
+            ? "completed"
+            : "pending") as "completed" | "in_progress" | "pending",
       },
       {
-        id: 'photos_after',
-        label: 'Photos Après',
-        status: (hasAfterPhotos ? 'completed' : 'pending') as 'completed' | 'in_progress' | 'pending',
+        id: "photos_after",
+        label: "Photos Après",
+        status: (hasAfterPhotos ? "completed" : "pending") as
+          | "completed"
+          | "in_progress"
+          | "pending",
         count: task?.photos_after?.length,
       },
       {
-        id: 'checklist',
-        label: 'Validation',
-        status: (checklistCompleted ? 'completed' : hasChecklist ? 'in_progress' : 'pending') as
-          | 'completed'
-          | 'in_progress'
-          | 'pending',
-        count: task?.checklist_items?.filter((item) => item.is_completed).length,
+        id: "checklist",
+        label: "Validation",
+        status: (checklistCompleted
+          ? "completed"
+          : hasChecklist
+            ? "in_progress"
+            : "pending") as "completed" | "in_progress" | "pending",
+        count: task?.checklist_items?.filter((item) => item.is_completed)
+          .length,
       },
     ];
   }, [task, isInProgress, isCompleted]);
@@ -234,7 +285,7 @@ export function useTaskDetailPage() {
     } else if (canStartTask) {
       if (!task) return;
       if (!user?.token) {
-        toast.error(t('errors.sessionExpired'));
+        toast.error(t("errors.sessionExpired"));
         return;
       }
 
@@ -244,16 +295,16 @@ export function useTaskDetailPage() {
         const interventionData = {
           task_id: task.id,
           intervention_number: null,
-          intervention_type: 'ppf',
-          priority: task.priority || 'medium',
+          intervention_type: "ppf",
+          priority: task.priority || "medium",
           ppf_zones: task.ppf_zones || [],
           custom_ppf_zones: task.custom_ppf_zones || null,
-          film_type: 'standard',
+          film_type: "standard",
           film_brand: null,
           film_model: null,
-          weather_condition: 'sunny',
-          lighting_condition: 'natural',
-          work_location: 'outdoor',
+          weather_condition: "sunny",
+          lighting_condition: "natural",
+          work_location: "outdoor",
           temperature: null,
           humidity: null,
           technician_id: task.technician_id || user.user_id,
@@ -267,20 +318,28 @@ export function useTaskDetailPage() {
           special_instructions: null,
         };
 
-        const response = await InterventionWorkflowService.startIntervention(task.id, interventionData);
+        const response = await InterventionWorkflowService.startIntervention(
+          task.id,
+          interventionData,
+        );
         if (!response.success) {
-          throw new Error(response.error?.message || "Impossible de démarrer l'intervention");
+          throw new Error(
+            response.error?.message || "Impossible de démarrer l'intervention",
+          );
         }
 
-        setTask((prev) => (prev ? { ...prev, status: 'in_progress' } : prev));
-        toast.success('Intervention démarrée avec succès');
+        setTask((prev) => (prev ? { ...prev, status: "in_progress" } : prev));
+        toast.success("Intervention démarrée avec succès");
         router.push(`/tasks/${taskId}/workflow/ppf`);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Erreur au démarrage de l'intervention";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Erreur au démarrage de l'intervention";
         toast.error(message);
-        handleError(err, 'Failed to start intervention from task detail page', {
+        handleError(err, "Failed to start intervention from task detail page", {
           domain: LogDomain.TASK,
-          component: 'TaskDetailPage',
+          component: "TaskDetailPage",
           showToast: false,
         });
       } finally {
@@ -291,32 +350,35 @@ export function useTaskDetailPage() {
 
   const handleSecondaryAction = (actionId: string) => {
     switch (actionId) {
-      case 'workflow':
+      case "workflow":
         if (isInProgress || isCompleted) {
           router.push(`/tasks/${taskId}/workflow/ppf`);
         }
         break;
-      case 'photos':
+      case "photos":
         router.push(`/tasks/${taskId}/photos`);
         break;
-      case 'checklist':
+      case "checklist":
         router.push(`/tasks/${taskId}/checklist`);
         break;
-      case 'call':
+      case "call":
         if (task?.customer_phone) {
           window.location.href = `tel:${task.customer_phone}`;
         }
         break;
-      case 'message':
-      case 'edit':
-      case 'delay':
-      case 'report':
+      case "message":
+      case "edit":
+      case "delay":
+      case "report":
         toast.info(`Action "${actionId}" en cours de développement`);
         break;
     }
   };
 
-  const showMobileActionBar = !!task && task.status !== 'completed';
+  // Hide the mobile action bar only when the task has reached a terminal state
+  // (completed, cancelled, archived). Use isActiveStatus rather than a raw string
+  // comparison so the check stays in sync with the state machine (DEBT-21).
+  const showMobileActionBar = !!task && isActiveStatus(task.status);
 
   return {
     taskId,
@@ -325,6 +387,7 @@ export function useTaskDetailPage() {
     error,
     isInProgress,
     isCompleted,
+    canStartTask,
     isAssignedToCurrentUser,
     isTaskAvailable,
     isStartingIntervention,

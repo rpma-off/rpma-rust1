@@ -116,7 +116,6 @@ export function WorkflowProvider({
   // ── State ──────────────────────────────────────────────────────────────────
   const [workflow, setWorkflow] = useState<WorkflowExecution | null>(null);
   const [steps, setSteps] = useState<WorkflowExecutionStep[]>([]);
-  const [currentStep, setCurrentStep] = useState<WorkflowExecutionStep | null>(null);
   const [progress, setProgress] = useState<Record<string, TaskWorkflowProgress>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<{ message: string; code?: string } | null>(null);
@@ -189,16 +188,6 @@ export function WorkflowProvider({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, user, loadWorkflow, initialWorkflow]);
 
-  // Update current step when workflow changes
-  useEffect(() => {
-    if (workflow?.currentStepId) {
-      const step = steps.find(s => s.id === workflow.currentStepId);
-      setCurrentStep(step || null);
-    } else {
-      setCurrentStep(null);
-    }
-  }, [workflow, steps]);
-
   // Create progress map for steps
   const progressMap = useMemo(() => {
     const progressMap: Record<string, TaskWorkflowProgress> = {};
@@ -221,10 +210,19 @@ export function WorkflowProvider({
     return progressMap;
   }, [steps, taskId]);
 
-  // Update progress when steps change
-  useEffect(() => {
-    setProgress(progressMap);
-  }, [progressMap]);
+  // Derived current step — pure computation from workflow + steps, no extra state needed
+  const currentStep = useMemo(
+    () => workflow?.currentStepId
+      ? (steps.find(s => s.id === workflow.currentStepId) ?? null)
+      : null,
+    [workflow, steps]
+  );
+
+  // Merge base progress (derived from steps) with any optimistic overrides
+  const effectiveProgress = useMemo(
+    () => ({ ...progressMap, ...progress }),
+    [progressMap, progress]
+  );
 
   // ── Step handlers ─────────────────────────────────────────────────────────
   const startTiming = useCallback(async (stepId: string) => {
@@ -341,10 +339,8 @@ export function WorkflowProvider({
       await workflowService.updateWorkflowExecution(workflow.id, {
         currentStepId: stepId
       });
-      
-      setCurrentStep(step);
-      
-      // Reload workflow to ensure consistency
+
+      // Reload workflow to ensure consistency — currentStep is derived from workflow
       await loadWorkflow(taskId);
       
     } catch (err) {
@@ -468,14 +464,6 @@ export function WorkflowProvider({
 
       setSteps(updatedSteps);
 
-      // Update current step if it's the one being modified
-      if (currentStep?.id === stepId) {
-        const updatedStep = updatedSteps.find(s => s.id === stepId);
-        if (updatedStep) {
-          setCurrentStep(updatedStep);
-        }
-      }
-
       return urls;
     } catch (err) {
       const normalizedError = normalizeError(err);
@@ -485,25 +473,25 @@ export function WorkflowProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [workflow, user, workflowService, steps, currentStep]);
+  }, [workflow, user, workflowService, steps]);
 
   // ── Status helpers ────────────────────────────────────────────────────────
   // Status helper methods
   const isStepComplete = useCallback((stepId: string): boolean => {
-    return progress[stepId]?.status === 'completed';
-  }, [progress]);
+    return effectiveProgress[stepId]?.status === 'completed';
+  }, [effectiveProgress]);
 
   const isStepInProgress = useCallback((stepId: string): boolean => {
-    return progress[stepId]?.status === 'in_progress';
-  }, [progress]);
+    return effectiveProgress[stepId]?.status === 'in_progress';
+  }, [effectiveProgress]);
 
   const isStepSkipped = useCallback((stepId: string): boolean => {
-    return progress[stepId]?.status === 'skipped';
-  }, [progress]);
+    return effectiveProgress[stepId]?.status === 'skipped';
+  }, [effectiveProgress]);
 
   const getStepProgress = useCallback((stepId: string): TaskWorkflowProgress | undefined => {
-    return progress[stepId];
-  }, [progress]);
+    return effectiveProgress[stepId];
+  }, [effectiveProgress]);
 
   // Utility methods
   const getProgressPercentage = useCallback((): number => {
@@ -535,7 +523,6 @@ export function WorkflowProvider({
   const resetWorkflow = useCallback(() => {
     setWorkflow(null);
     setSteps([]);
-    setCurrentStep(null);
     setProgress({});
     setError(null);
   }, []);
@@ -593,7 +580,7 @@ export function WorkflowProvider({
     workflow,
     steps,
     currentStep,
-    progress,
+    progress: effectiveProgress,
     isLoading,
     error,
     
@@ -636,7 +623,7 @@ export function WorkflowProvider({
     canProceedToNextStep,
     resetWorkflow
   }), [
-    workflow, steps, currentStep, progress, isLoading, error,
+    workflow, steps, currentStep, effectiveProgress, isLoading, error,
     isFirstStep, isLastStep,
     loadWorkflow, startWorkflow, startStep, completeStep, skipStep,
     goToStep, goToNextStep, goToPreviousStep, updateStepData, updateStepStatus,

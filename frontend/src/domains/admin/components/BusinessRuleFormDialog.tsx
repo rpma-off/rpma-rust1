@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Save,
   RefreshCw,
@@ -16,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { RuleCondition, RuleAction, BusinessRuleCategory, BusinessRule } from '@/shared/types';
 
-interface BusinessRuleFormData {
+export interface BusinessRuleFormData {
   name: string;
   description: string;
   category: BusinessRuleCategory;
@@ -26,33 +27,74 @@ interface BusinessRuleFormData {
   actions: RuleAction[];
 }
 
+const DEFAULT_FORM: BusinessRuleFormData = {
+  name: '',
+  description: '',
+  category: 'task_assignment' as BusinessRuleCategory,
+  priority: 0,
+  isActive: true,
+  conditions: [],
+  actions: [],
+};
+
+function buildDefaultForm(rule: BusinessRule | null): BusinessRuleFormData {
+  if (!rule) return { ...DEFAULT_FORM, conditions: [], actions: [] };
+  return {
+    name: rule.name,
+    description: rule.description || '',
+    category: rule.category as BusinessRuleCategory,
+    priority: rule.priority,
+    isActive: rule.isActive ?? false,
+    conditions: rule.conditions,
+    actions: rule.actions,
+  };
+}
+
 interface BusinessRuleFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editingRule: BusinessRule | null;
-  formData: BusinessRuleFormData;
-  setFormData: React.Dispatch<React.SetStateAction<BusinessRuleFormData>>;
   saving: boolean;
-  onSave: () => void;
-  onAddCondition: () => void;
-  onRemoveCondition: (index: number) => void;
-  onAddAction: () => void;
-  onRemoveAction: (index: number) => void;
+  onSave: (data: BusinessRuleFormData) => void;
 }
 
 export function BusinessRuleFormDialog({
   open,
   onOpenChange,
   editingRule,
-  formData,
-  setFormData,
   saving,
   onSave,
-  onAddCondition,
-  onRemoveCondition,
-  onAddAction,
-  onRemoveAction,
 }: BusinessRuleFormDialogProps) {
+  const [formData, setFormData] = useState<BusinessRuleFormData>(() => buildDefaultForm(editingRule));
+
+  useEffect(() => {
+    if (open) setFormData(buildDefaultForm(editingRule));
+  }, [open, editingRule]);
+
+  const handleAddCondition = () =>
+    setFormData((prev) => ({
+      ...prev,
+      conditions: [...prev.conditions, { field: '', operator: 'equals' as const, value: '' }],
+    }));
+
+  const handleRemoveCondition = (index: number) =>
+    setFormData((prev) => ({
+      ...prev,
+      conditions: prev.conditions.filter((_, i) => i !== index),
+    }));
+
+  const handleAddAction = () =>
+    setFormData((prev) => ({
+      ...prev,
+      actions: [...prev.actions, { type: 'send_notification' as const, target: '', value: '' }],
+    }));
+
+  const handleRemoveAction = (index: number) =>
+    setFormData((prev) => ({
+      ...prev,
+      actions: prev.actions.filter((_, i) => i !== index),
+    }));
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -129,7 +171,7 @@ export function BusinessRuleFormDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Conditions</Label>
-              <Button variant="outline" size="sm" onClick={onAddCondition}>
+              <Button variant="outline" size="sm" onClick={handleAddCondition}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Ajouter
               </Button>
@@ -175,7 +217,7 @@ export function BusinessRuleFormDialog({
                     setFormData((prev) => ({ ...prev, conditions: next }));
                   }}
                 />
-                <Button variant="outline" size="sm" className="col-span-1" onClick={() => onRemoveCondition(index)}>
+                <Button variant="outline" size="sm" className="col-span-1" onClick={() => handleRemoveCondition(index)}>
                   <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -185,7 +227,7 @@ export function BusinessRuleFormDialog({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-base font-semibold">Actions</Label>
-              <Button variant="outline" size="sm" onClick={onAddAction}>
+              <Button variant="outline" size="sm" onClick={handleAddAction}>
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Ajouter
               </Button>
@@ -213,7 +255,7 @@ export function BusinessRuleFormDialog({
                     <SelectItem value="escalate">Escalader</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" className="col-span-2" onClick={() => onRemoveAction(index)}>
+                <Button variant="outline" size="sm" className="col-span-2" onClick={() => handleRemoveAction(index)}>
                   <MinusCircle className="h-4 w-4" />
                 </Button>
               </div>
@@ -224,7 +266,7 @@ export function BusinessRuleFormDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button onClick={onSave} disabled={saving}>
+            <Button onClick={() => onSave(formData)} disabled={saving}>
               {saving ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
             </Button>

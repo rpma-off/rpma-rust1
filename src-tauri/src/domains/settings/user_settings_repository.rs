@@ -48,7 +48,9 @@ impl UserSettingsRepository {
                 notifications_security_alerts, notifications_quiet_hours_enabled,
                 notifications_quiet_hours_start, notifications_quiet_hours_end,
                 notifications_digest_frequency, notifications_batch_notifications,
-                notifications_sound_enabled, notifications_sound_volume
+                notifications_sound_enabled, notifications_sound_volume,
+                calendar_view, calendar_show_my_events_only,
+                calendar_filter_statuses, calendar_filter_priorities
              FROM user_settings WHERE user_id = ?",
             params![user_id],
             |row| {
@@ -77,6 +79,16 @@ impl UserSettingsRepository {
                         screen_reader: row.get::<_, i32>(18)? != 0,
                         auto_refresh: row.get::<_, i32>(19)? != 0,
                         refresh_interval: row.get::<_, u32>(20)?,
+                        calendar_view: row.get(57)?,
+                        calendar_show_my_events_only: row
+                            .get::<_, Option<i32>>(58)?
+                            .map(|v| v != 0),
+                        calendar_filter_statuses: row
+                            .get::<_, Option<String>>(59)?
+                            .and_then(|s| serde_json::from_str(&s).ok()),
+                        calendar_filter_priorities: row
+                            .get::<_, Option<String>>(60)?
+                            .and_then(|s| serde_json::from_str(&s).ok()),
                     },
                     security: UserSecuritySettings {
                         two_factor_enabled: row.get::<_, i32>(21)? != 0,
@@ -172,6 +184,8 @@ impl UserSettingsRepository {
                 notifications_quiet_hours_start, notifications_quiet_hours_end,
                 notifications_digest_frequency, notifications_batch_notifications,
                 notifications_sound_enabled, notifications_sound_volume,
+                calendar_view, calendar_show_my_events_only,
+                calendar_filter_statuses, calendar_filter_priorities,
                 updated_at
             ) VALUES (
                 ?1, ?2, ?3, ?4, ?5, ?6, ?7,
@@ -181,7 +195,8 @@ impl UserSettingsRepository {
                 ?33, ?34, ?35, ?36, ?37, ?38, ?39, ?40, ?41, ?42,
                 ?43, ?44, ?45, ?46, ?47, ?48, ?49, ?50, ?51, ?52,
                 ?53, ?54, ?55, ?56, ?57, ?58, ?59,
-                ?60
+                ?60, ?61, ?62, ?63,
+                ?64
             ) ON CONFLICT(user_id) DO UPDATE SET
                 full_name = excluded.full_name,
                 email = excluded.email,
@@ -240,6 +255,10 @@ impl UserSettingsRepository {
                 notifications_batch_notifications = excluded.notifications_batch_notifications,
                 notifications_sound_enabled = excluded.notifications_sound_enabled,
                 notifications_sound_volume = excluded.notifications_sound_volume,
+                calendar_view = excluded.calendar_view,
+                calendar_show_my_events_only = excluded.calendar_show_my_events_only,
+                calendar_filter_statuses = excluded.calendar_filter_statuses,
+                calendar_filter_priorities = excluded.calendar_filter_priorities,
                 updated_at = excluded.updated_at",
             params![
                 new_id,
@@ -261,6 +280,12 @@ impl UserSettingsRepository {
                 settings.notifications.quiet_hours_start, settings.notifications.quiet_hours_end,
                 settings.notifications.digest_frequency, settings.notifications.batch_notifications as i32,
                 settings.notifications.sound_enabled as i32, settings.notifications.sound_volume,
+                settings.preferences.calendar_view,
+                settings.preferences.calendar_show_my_events_only.map(|v| v as i32),
+                settings.preferences.calendar_filter_statuses.as_ref()
+                    .and_then(|v| serde_json::to_string(v).ok()),
+                settings.preferences.calendar_filter_priorities.as_ref()
+                    .and_then(|v| serde_json::to_string(v).ok()),
                 chrono::Utc::now().timestamp_millis()
             ],
         ).map_err(|e| {

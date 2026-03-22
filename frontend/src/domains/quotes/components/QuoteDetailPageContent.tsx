@@ -52,6 +52,8 @@ import type { QuoteItemKind } from '@/shared/types';
 import { FadeIn } from '@/shared/ui/animations/FadeIn';
 import { formatDate } from '@/shared/utils/date-formatters';
 import type { ActiveTab } from '../hooks/useQuoteDetailPage';
+import { useMemo } from 'react';
+import { PPF_ZONES } from '@/domains/tasks';
 import { useQuoteDetailPage } from '../hooks/useQuoteDetailPage';
 import { QuoteWorkflowPanel } from './QuoteWorkflowPanel';
 import { QuoteStatusBadge } from './QuoteStatusBadge';
@@ -109,6 +111,15 @@ export function QuoteDetailPageContent() {
     handleConvertToTask,
     refetch,
   } = useQuoteDetailPage(quoteId);
+
+  const convertVehicleInfo = useMemo(() => ({
+    plate: quote?.vehicle_plate || '',
+    make: quote?.vehicle_make || '',
+    model: quote?.vehicle_model || '',
+    year: quote?.vehicle_year || '',
+    vin: quote?.vehicle_vin || '',
+    ppfZones: [],
+  }), [quote?.vehicle_plate, quote?.vehicle_make, quote?.vehicle_model, quote?.vehicle_year, quote?.vehicle_vin]);
 
   if (loading && !quote) {
     return (
@@ -601,20 +612,14 @@ export function QuoteDetailPageContent() {
       <QuoteConvertDialog
         quoteId={quote.id}
         quoteNumber={quote.quote_number}
-        initialVehicleInfo={{
-          plate: quote.vehicle_plate || '',
-          make: quote.vehicle_make || '',
-          model: quote.vehicle_model || '',
-          year: quote.vehicle_year || '',
-          vin: quote.vehicle_vin || '',
-          ppfZones: [],
-        }}
+        initialVehicleInfo={convertVehicleInfo}
         open={showConvertDialog}
         onOpenChange={setShowConvertDialog}
         onSuccess={(taskId) => {
           toast.success('Tâche créée avec succès');
           router.push(`/tasks/${taskId}`);
         }}
+        availableZones={PPF_ZONES}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

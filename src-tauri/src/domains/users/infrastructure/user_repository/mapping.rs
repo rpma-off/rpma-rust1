@@ -10,13 +10,10 @@ impl FromSqlRow for User {
             username: row.get("username")?,
             password_hash: row.get("password_hash")?,
             full_name: row.get("full_name")?,
-            role: match row.get::<_, String>("role")?.as_str() {
-                "admin" => UserRole::Admin,
-                "technician" => UserRole::Technician,
-                "supervisor" => UserRole::Supervisor,
-                "viewer" => UserRole::Viewer,
-                _ => UserRole::Viewer,
-            },
+            role: row
+                .get::<_, String>("role")?
+                .parse::<UserRole>()
+                .unwrap_or(UserRole::Viewer),
             phone: row.get("phone")?,
             is_active: row.get::<_, i32>("is_active")? != 0,
             last_login_at: row.get("last_login_at")?,

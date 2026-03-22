@@ -18,11 +18,12 @@ import { quotesIpc } from '@/domains/quotes/ipc/quotes.ipc';
 export interface UseQuotesListOptions {
   filters?: QuoteFilters;
   autoFetch?: boolean;
+  onError?: (err: Error) => void;
 }
 
 export function useQuotesList(options: UseQuotesListOptions = {}) {
   const { user } = useAuth();
-  const { filters: initialFilters = {}, autoFetch = true } = options;
+  const { filters: initialFilters = {}, autoFetch = true, onError } = options;
   const quotesMutations = useMutationCounter('quotes');
 
   const [filters, setFilters] = useState<QuoteFilters>({
@@ -50,11 +51,13 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
         setTotal(listResult.total);
       }
     } catch (err: unknown) {
-      setError(normalizeError(err));
+      const normalized = normalizeError(err);
+      setError(normalized);
+      onError?.(normalized);
     } finally {
       setLoading(false);
     }
-  }, [user?.token, filters]);
+  }, [user?.token, filters, onError]);
 
   const updateFilters = useCallback((newFilters: Partial<QuoteFilters>) => {
     setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
@@ -151,8 +154,9 @@ export function useCreateQuote() {
         }
         return null;
       } catch (err: unknown) {
-        setError(normalizeError(err));
-        return null;
+        const normalized = normalizeError(err);
+        setError(normalized);
+        throw normalized;
       } finally {
         setLoading(false);
       }

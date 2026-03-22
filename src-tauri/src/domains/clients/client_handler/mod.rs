@@ -4,7 +4,7 @@
 
 use crate::db::FromSqlRow;
 use crate::shared::contracts::common::{serialize_optional_timestamp, serialize_timestamp};
-use crate::shared::services::cross_domain::{PaginationInfo, SortOrder};
+use crate::shared::services::cross_domain::PaginationInfo;
 use chrono;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
@@ -134,23 +134,23 @@ pub struct ClientWithTasks {
 /// Client query parameters for listing and filtering
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct ClientQuery {
-    pub page: Option<i32>,
-    pub limit: Option<i32>,
+    /// Shared pagination params.
+    pub pagination: crate::shared::repositories::base::PaginationParams,
     pub search: Option<String>,
     pub customer_type: Option<CustomerType>,
-    pub sort_by: Option<String>,
-    pub sort_order: Option<SortOrder>,
 }
 
 impl Default for ClientQuery {
     fn default() -> Self {
         Self {
-            page: Some(1),
-            limit: Some(20),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(20),
+                sort_by: Some("created_at".to_string()),
+                sort_order: Some("desc".to_string()),
+            },
             search: None,
             customer_type: None,
-            sort_by: Some("created_at".to_string()),
-            sort_order: Some(SortOrder::Desc),
         }
     }
 }

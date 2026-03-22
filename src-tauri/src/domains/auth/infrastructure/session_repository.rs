@@ -203,12 +203,7 @@ impl SessionRepository {
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 fn parse_role(s: &str) -> UserRole {
-    match s {
-        "admin" => UserRole::Admin,
-        "supervisor" => UserRole::Supervisor,
-        "technician" => UserRole::Technician,
-        _ => UserRole::Viewer,
-    }
+    s.parse::<UserRole>().unwrap_or(UserRole::Viewer)
 }
 
 fn rfc3339_to_ms(s: &str) -> Result<i64, AppError> {

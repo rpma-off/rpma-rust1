@@ -1,5 +1,5 @@
-import React, { memo, useState, lazy, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { memo, useState, lazy, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import {
   MoreVertical,
   Edit,
@@ -10,27 +10,25 @@ import {
   AlertCircle,
   User,
   Settings,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { TaskStatus } from '@/lib/backend';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { TaskWithDetails } from '@/types/task.types';
-import { useTaskActions } from './useTaskActions';
-import { PrimaryActionButton } from './PrimaryActionButton';
-import { SecondaryActionsGrid } from './SecondaryActionsGrid';
-import { IconActionButton } from './IconActionButton';
-import { MoreActionsSection } from './MoreActionsSection';
-import { StatusWarnings } from './StatusWarnings';
-import { PrioritySelector } from './PrioritySelector';
-import { TaskActionPanel } from './TaskActionPanel';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { TaskWithDetails } from "@/types/task.types";
+import { useTaskActions } from "./useTaskActions";
+import { PrimaryActionButton } from "./PrimaryActionButton";
+import { SecondaryActionsGrid } from "./SecondaryActionsGrid";
+import { IconActionButton } from "./IconActionButton";
+import { MoreActionsSection } from "./MoreActionsSection";
+import { StatusWarnings } from "./StatusWarnings";
+import { PrioritySelector } from "./PrioritySelector";
+import { TaskActionPanel } from "./TaskActionPanel";
+import { StatusDialog } from "./StatusDialog";
+import { AssignmentDialog } from "./AssignmentDialog";
+import { NotesDialog } from "./NotesDialog";
 
-const EditTaskModal = lazy(() => import('./EditTaskModal'));
-const SendMessageModal = lazy(() => import('./SendMessageModal'));
-const DelayTaskModal = lazy(() => import('./DelayTaskModal'));
-const ReportIssueModal = lazy(() => import('./ReportIssueModal'));
+const EditTaskModal = lazy(() => import("./EditTaskModal"));
+const SendMessageModal = lazy(() => import("./SendMessageModal"));
+const DelayTaskModal = lazy(() => import("./DelayTaskModal"));
+const ReportIssueModal = lazy(() => import("./ReportIssueModal"));
 
 interface ActionsCardProps {
   task: TaskWithDetails;
@@ -75,11 +73,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
   const [showSendMessageModal, setShowSendMessageModal] = useState(false);
   const [showDelayTaskModal, setShowDelayTaskModal] = useState(false);
   const [showReportIssueModal, setShowReportIssueModal] = useState(false);
-  const [notes, setNotes] = useState(task.note || '');
 
-  const isInProgress = task.status === 'in_progress';
-  const isCompleted = task.status === 'completed';
-  const shouldShowDisabledReason = !canStartTask && !isInProgress && !isCompleted;
+  const isInProgress = task.status === "in_progress";
+  const isCompleted = task.status === "completed";
+  const shouldShowDisabledReason =
+    !canStartTask && !isInProgress && !isCompleted;
 
   const handleViewCompleted = () => {
     router.push(`/tasks/${task.id}/completed`);
@@ -93,33 +91,21 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
     actions.startIntervention();
   };
 
-  const handleAssignToMe = () => {
-    actions.assignToMe();
-    setShowAssignmentDialog(false);
-  };
-
-  const handleSaveNotes = () => {
-    if (notes !== task.note) {
-      actions.updateNotes(notes);
-      setShowNotesDialog(false);
-    }
-  };
-
   const handleActionClick = (action: () => void) => {
     action();
   };
 
   const communicationActions: ActionItem[] = [
     {
-      id: 'call',
-      label: 'Appeler le client',
+      id: "call",
+      label: "Appeler le client",
       icon: Phone,
       onClick: () => actions.initiateCall(),
       disabled: !task.customer_phone,
     },
     {
-      id: 'message',
-      label: 'Envoyer un message',
+      id: "message",
+      label: "Envoyer un message",
       icon: MessageSquare,
       onClick: () => setShowSendMessageModal(true),
     },
@@ -127,66 +113,79 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
   const administrationActions: ActionItem[] = [
     {
-      id: 'status',
-      label: 'Changer le statut',
+      id: "status",
+      label: "Changer le statut",
       icon: Settings,
       onClick: () => setShowStatusDialog(true),
     },
     {
-      id: 'assign',
-      label: 'M&apos;assigner la tâche',
+      id: "assign",
+      label: "M&apos;assigner la tâche",
       icon: User,
       onClick: () => setShowAssignmentDialog(true),
       disabled: isAssignedToCurrentUser,
     },
     {
-      id: 'notes',
-      label: 'Modifier les notes',
+      id: "notes",
+      label: "Modifier les notes",
       icon: FileText,
       onClick: () => setShowNotesDialog(true),
     },
     {
-      id: 'edit',
-      label: 'Modifier la tâche',
+      id: "edit",
+      label: "Modifier la tâche",
       icon: Edit,
       onClick: () => setShowEditModal(true),
     },
     {
-      id: 'delay',
-      label: 'Reporter la tâche',
+      id: "delay",
+      label: "Reporter la tâche",
       icon: Clock,
       onClick: () => setShowDelayTaskModal(true),
     },
     {
-      id: 'report',
-      label: 'Signaler un problème',
+      id: "report",
+      label: "Signaler un problème",
       icon: AlertCircle,
       onClick: () => setShowReportIssueModal(true),
     },
   ];
 
-  const primaryDisabledReason = !isAvailable && !isAssignedToCurrentUser
-    ? 'Intervention indisponible : cette tâche est déjà prise par un autre technicien.'
-    : shouldShowDisabledReason
-      ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
-      : null;
+  const primaryDisabledReason =
+    !isAvailable && !isAssignedToCurrentUser
+      ? "Intervention indisponible : cette tâche est déjà prise par un autre technicien."
+      : shouldShowDisabledReason
+        ? `Cette tâche est au statut « ${task.status} » et ne peut pas être démarrée.`
+        : null;
 
   const dockedQuickActions = communicationActions.slice(0, 2);
 
   return (
     <div
-      className={cn('rounded-xl overflow-hidden', compact ? 'bg-transparent border-0' : 'bg-background/40 border border-border/50', stickyOffsetClass)}
+      className={cn(
+        "rounded-xl overflow-hidden",
+        compact
+          ? "bg-transparent border-0"
+          : "bg-background/40 border border-border/50",
+        stickyOffsetClass,
+      )}
     >
-      <div className={compact ? 'p-0' : 'p-5'}>
+      <div className={compact ? "p-0" : "p-5"}>
         {!mobileDocked && (
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Actions de l&apos;intervention</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Actions de l&apos;intervention
+            </h3>
           </div>
         )}
 
-        <div className={cn(mobileDocked ? 'space-y-2' : 'space-y-5')}>
+        <div className={cn(mobileDocked ? "space-y-2" : "space-y-5")}>
           <div>
-            {!mobileDocked && <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Action principale</p>}
+            {!mobileDocked && (
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">
+                Action principale
+              </p>
+            )}
             <PrimaryActionButton
               isCompleted={isCompleted}
               isInProgress={isInProgress}
@@ -197,13 +196,22 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
               onStartWorkflow={handleStartWorkflow}
               compact={mobileDocked}
             />
-            {primaryDisabledReason && !mobileDocked && <p className="mt-2 text-xs text-amber-600">{primaryDisabledReason}</p>}
+            {primaryDisabledReason && !mobileDocked && (
+              <p className="mt-2 text-xs text-amber-600">
+                {primaryDisabledReason}
+              </p>
+            )}
           </div>
 
           {mobileDocked ? (
             <div className="grid grid-cols-4 gap-2">
               {dockedQuickActions.map((action) => (
-                <IconActionButton key={action.id} action={action} onActionClick={handleActionClick} compact />
+                <IconActionButton
+                  key={action.id}
+                  action={action}
+                  onActionClick={handleActionClick}
+                  compact
+                />
               ))}
               <button
                 type="button"
@@ -216,24 +224,41 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 
               {showMoreActions && (
                 <div className="col-span-4 grid grid-cols-2 gap-2 pt-1">
-                  {[...communicationActions, ...administrationActions].map((action) => (
-                    <IconActionButton key={action.id} action={action} onActionClick={handleActionClick} compact />
-                  ))}
+                  {[...communicationActions, ...administrationActions].map(
+                    (action) => (
+                      <IconActionButton
+                        key={action.id}
+                        action={action}
+                        onActionClick={handleActionClick}
+                        compact
+                      />
+                    ),
+                  )}
                 </div>
               )}
             </div>
           ) : (
             <>
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Communication</p>
-                <SecondaryActionsGrid actions={communicationActions} onActionClick={handleActionClick} columns={2} />
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">
+                  Communication
+                </p>
+                <SecondaryActionsGrid
+                  actions={communicationActions}
+                  onActionClick={handleActionClick}
+                  columns={2}
+                />
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">Administration</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-border-light">
+                  Administration
+                </p>
                 <MoreActionsSection
                   showMoreActions={showMoreActions}
-                  toggleMoreActions={() => setShowMoreActions((current) => !current)}
+                  toggleMoreActions={() =>
+                    setShowMoreActions((current) => !current)
+                  }
                   actions={administrationActions}
                   onActionClick={handleActionClick}
                 />
@@ -248,7 +273,7 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
               />
 
               <PrioritySelector
-                value={task.priority || 'medium'}
+                value={task.priority || "medium"}
                 onChange={(value) => actions.updatePriority(value)}
                 isPending={actions.isUpdatingPriority}
               />
@@ -256,131 +281,49 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
           )}
         </div>
 
-        <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Changer le statut de la tâche</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="status-select">Nouveau statut</Label>
-                <Select
-                  value={task.status}
-                  onValueChange={(value: string) => {
-                    const statusValue = [
-                      'draft',
-                      'scheduled',
-                      'in_progress',
-                      'completed',
-                      'cancelled',
-                      'on_hold',
-                      'pending',
-                      'invalid',
-                      'archived',
-                      'failed',
-                      'overdue',
-                      'assigned',
-                      'paused',
-                    ].find((s) => s === value) as TaskStatus;
-                    if (statusValue) actions.updateStatus(statusValue);
-                  }}
-                  disabled={actions.isUpdatingStatus}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">En attente</SelectItem>
-                    <SelectItem value="scheduled">Planifiée</SelectItem>
-                    <SelectItem value="in_progress">En cours</SelectItem>
-                    <SelectItem value="completed">Terminée</SelectItem>
-                    <SelectItem value="cancelled">Annulée</SelectItem>
-                    <SelectItem value="on_hold">En pause</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showAssignmentDialog} onOpenChange={setShowAssignmentDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>S&apos;assigner cette tâche</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-foreground">
-                Vous êtes sur le point de vous assigner cette tâche. Confirmez-vous ?
-              </p>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAssignmentDialog(false)}
-                  className="px-4 py-2 rounded-lg border border-border/50 bg-background/60 hover:bg-border/30 text-sm"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAssignToMe}
-                  disabled={actions.isAssigning}
-                  className="px-4 py-2 rounded-lg bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-background text-sm disabled:opacity-50"
-                >
-                  {actions.isAssigning ? 'Assignation...' : 'Confirmer'}
-                </button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showNotesDialog} onOpenChange={setShowNotesDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Modifier les notes</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Ajoutez des notes sur cette tâche..."
-                  className="min-h-[150px]"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNotesDialog(false)}
-                  className="px-4 py-2 rounded-lg border border-border/50 bg-background/60 hover:bg-border/30 text-sm"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveNotes}
-                  disabled={actions.isUpdatingNotes}
-                  className="px-4 py-2 rounded-lg bg-[hsl(var(--rpma-teal))] hover:bg-[hsl(var(--rpma-teal))]/90 text-background text-sm disabled:opacity-50"
-                >
-                  {actions.isUpdatingNotes ? 'Enregistrement...' : 'Enregistrer'}
-                </button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <StatusDialog
+          task={task}
+          open={showStatusDialog}
+          onOpenChange={setShowStatusDialog}
+        />
+        <AssignmentDialog
+          task={task}
+          open={showAssignmentDialog}
+          onOpenChange={setShowAssignmentDialog}
+        />
+        <NotesDialog
+          task={task}
+          open={showNotesDialog}
+          onOpenChange={setShowNotesDialog}
+        />
 
         <Suspense fallback={null}>
-          <EditTaskModal task={task} open={showEditModal} onOpenChange={setShowEditModal} />
+          <EditTaskModal
+            task={task}
+            open={showEditModal}
+            onOpenChange={setShowEditModal}
+          />
         </Suspense>
         <Suspense fallback={null}>
-          <SendMessageModal task={task} open={showSendMessageModal} onOpenChange={setShowSendMessageModal} />
+          <SendMessageModal
+            task={task}
+            open={showSendMessageModal}
+            onOpenChange={setShowSendMessageModal}
+          />
         </Suspense>
         <Suspense fallback={null}>
-          <DelayTaskModal task={task} open={showDelayTaskModal} onOpenChange={setShowDelayTaskModal} />
+          <DelayTaskModal
+            task={task}
+            open={showDelayTaskModal}
+            onOpenChange={setShowDelayTaskModal}
+          />
         </Suspense>
         <Suspense fallback={null}>
-          <ReportIssueModal task={task} open={showReportIssueModal} onOpenChange={setShowReportIssueModal} />
+          <ReportIssueModal
+            task={task}
+            open={showReportIssueModal}
+            onOpenChange={setShowReportIssueModal}
+          />
         </Suspense>
       </div>
     </div>
@@ -388,7 +331,11 @@ const ActionsCard: React.FC<ActionsCardProps> = ({
 };
 
 const ActionsCardWrapper: React.FC<ActionsCardProps> = (props) => {
-  const isDelegated = Boolean(props.onPrimaryAction || props.onSecondaryAction || props.isPending !== undefined);
+  const isDelegated = Boolean(
+    props.onPrimaryAction ||
+    props.onSecondaryAction ||
+    props.isPending !== undefined,
+  );
   if (isDelegated) {
     return <TaskActionPanel mode="delegated" {...props} />;
   }

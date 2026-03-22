@@ -5,7 +5,7 @@
 
 use crate::domains::clients::application::client_service::{ClientStat, ClientService};
 use crate::domains::clients::client_handler::{Client, ClientQuery};
-use crate::shared::services::cross_domain::SortOrder;
+
 use std::sync::Arc;
 
 /// Maximum number of clients returned by `get_active_clients_for_selector`.
@@ -33,12 +33,14 @@ impl ClientsFacade {
     /// Return all active (non-deleted) clients suitable for selector/dropdown components.
     pub async fn get_active_clients_for_selector(&self) -> Result<Vec<Client>, String> {
         let query = ClientQuery {
-            page: Some(1),
-            limit: Some(MAX_SELECTOR_CLIENTS),
+            pagination: crate::shared::repositories::base::PaginationParams {
+                page: Some(1),
+                page_size: Some(MAX_SELECTOR_CLIENTS),
+                sort_by: Some("name".to_string()),
+                sort_order: Some("asc".to_string()),
+            },
             search: None,
             customer_type: None,
-            sort_by: Some("name".to_string()),
-            sort_order: Some(SortOrder::Asc),
         };
         self.service.get_clients(query).await.map(|r| r.data)
     }

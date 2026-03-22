@@ -3,41 +3,10 @@
 use crate::shared::contracts::common::*;
 use serde::{Deserialize, Serialize};
 
-/// RBAC role for the users domain. Serialized as lowercase strings.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum UserRole {
-    Admin,
-    Technician,
-    Supervisor,
-    Viewer,
-}
-
-impl std::str::FromStr for UserRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "admin" => Ok(Self::Admin),
-            "technician" => Ok(Self::Technician),
-            "supervisor" => Ok(Self::Supervisor),
-            "viewer" => Ok(Self::Viewer),
-            _ => Err(format!("Invalid user role: {}", s)),
-        }
-    }
-}
-
-impl std::fmt::Display for UserRole {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Admin => "admin",
-            Self::Technician => "technician",
-            Self::Supervisor => "supervisor",
-            Self::Viewer => "viewer",
-        };
-        write!(f, "{}", s)
-    }
-}
+// Re-export the canonical RBAC role from the shared kernel (ADR-003).
+// A local duplicate previously existed here; consumers of
+// `users::domain::models::user::UserRole` transparently get the shared type.
+pub use crate::shared::contracts::auth::UserRole;
 
 /// Core user entity. Password hash is excluded from serialization.
 #[derive(Clone, Serialize, Deserialize)]

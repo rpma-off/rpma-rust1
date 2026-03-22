@@ -22,14 +22,10 @@ impl super::AuthService {
 
         let users = stmt
             .query_map(params![limit, offset], |row| {
-                let role_str: String = row.get(7)?;
-                let role = match role_str.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => UserRole::Viewer,
-                };
+                let role = row
+                    .get::<_, String>(7)?
+                    .parse::<UserRole>()
+                    .unwrap_or(UserRole::Viewer);
 
                 Ok(UserAccount {
                     id: row.get(0)?,
@@ -67,14 +63,9 @@ impl super::AuthService {
               FROM users WHERE id = ?",
             [user_id],
             |row| {
-                let role_str: String = row.get(7)?;
-                let role = match role_str.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => UserRole::Viewer,
-                };
+                let role = row.get::<_, String>(7)?
+                    .parse::<UserRole>()
+                    .unwrap_or(UserRole::Viewer);
 
                 Ok(UserAccount {
                     id: row.get(0)?,
@@ -215,13 +206,10 @@ impl super::AuthService {
 
         let users = stmt
             .query_map(rusqlite::params_from_iter(params.iter()), |row| {
-                let role_str: String = row.get(7)?;
-                let role = match role_str.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    _ => UserRole::Viewer,
-                };
+                let role = row
+                    .get::<_, String>(7)?
+                    .parse::<UserRole>()
+                    .unwrap_or(UserRole::Viewer);
                 Ok(UserAccount {
                     id: row.get(0)?,
                     email: row.get(1)?,

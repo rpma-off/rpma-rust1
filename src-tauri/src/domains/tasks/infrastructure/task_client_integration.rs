@@ -61,8 +61,11 @@ impl TaskClientIntegrationService {
         let logger = ServiceLogger::new(LogDomain::Task);
 
         let mut context = HashMap::new();
-        context.insert("page".to_string(), serde_json::json!(query.page));
-        context.insert("limit".to_string(), serde_json::json!(query.limit));
+        context.insert("page".to_string(), serde_json::json!(query.pagination.page));
+        context.insert(
+            "limit".to_string(),
+            serde_json::json!(query.pagination.page_size),
+        );
         logger.debug("Getting tasks with client data", Some(context));
 
         let mut sql = format!(
@@ -89,8 +92,8 @@ impl TaskClientIntegrationService {
         sql.push_str(" ORDER BY t.created_at DESC");
 
         // Add pagination
-        let page = query.page.unwrap_or(1);
-        let limit = query.limit.unwrap_or(DEFAULT_PAGE_SIZE);
+        let page = query.pagination.page();
+        let limit = query.pagination.page_size();
         let offset = calculate_offset(page, limit);
 
         sql.push_str(" LIMIT ? OFFSET ?");

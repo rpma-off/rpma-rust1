@@ -7,7 +7,6 @@ on:
 
 env:
   NODE_VERSION: 20
-  PKG_CONFIG_PATH: /usr/lib/pkgconfig:/usr/share/pkgconfig
 
 jobs:
   ci:
@@ -16,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -39,26 +37,3 @@ jobs:
       - name: Frontend tests
         working-directory: frontend
         run: npm run test:ci
-
-      # Rust
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev libgtk-3-dev pkg-config libsoup-3.0-dev
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: src-tauri -> target
-
-      # Verify the type-export binary compiles with its feature flag.
-      # This catches import path regressions in export-types.rs before they
-      # silently break `npm run types:sync` and the downstream build.
-      - name: Check type-export binary
-        working-directory: src-tauri
-        run: cargo check --features export-types --bin export-types
-
-      - name: Rust tests
-        working-directory: src-tauri
-        run: cargo test

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   User,
   Info,
@@ -29,7 +29,6 @@ export const CustomerStep: React.FC<FormStepProps> = ({
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [useExistingClient, setUseExistingClient] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Use domain hooks instead of raw useQuery
   const { clients = [] } = useClients();
@@ -61,25 +60,6 @@ export const CustomerStep: React.FC<FormStepProps> = ({
       });
     }
   }, [formData.client_id, clients, prefilledClient, selectedClient, onChange]);
-
-  // Filter clients based on search query
-  const filteredClients = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return clients;
-    } else {
-      return clients.filter(
-        (client: Client) =>
-          client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (client.email &&
-            client.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (client.phone && client.phone.includes(searchQuery)) ||
-          (client.company_name &&
-            client.company_name
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())),
-      );
-    }
-  }, [searchQuery, clients]);
 
   // Handle client selection
   const handleClientSelect = (client: Client) => {
@@ -211,10 +191,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
               {/* Select Existing Client */}
               <button
                 type="button"
-                onClick={() => {
-                  setShowClientSelector(true);
-                  setSearchQuery("");
-                }}
+                onClick={() => setShowClientSelector(true)}
                 className={`
                   flex-1 flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all duration-200
                   ${
@@ -286,9 +263,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
           {/* Client Selector Modal */}
           {showClientSelector && (
             <ClientSelectorModal
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              filteredClients={filteredClients}
+              clients={clients}
               selectedClientId={selectedClient?.id}
               onSelect={handleClientSelect}
               onClose={() => setShowClientSelector(false)}

@@ -4,10 +4,10 @@
  * These types help in creating more specific and safe type definitions, reducing the need for `any`.
  */
 
-import type { JsonValue } from './json';
+import type { JsonValue } from "./json";
 
 // #region JSON Types
-export type { JsonPrimitive, JsonValue, JsonArray, JsonObject } from './json';
+export type { JsonPrimitive, JsonValue, JsonArray, JsonObject } from "./json";
 // #endregion
 
 // #region Record Utility Types
@@ -53,7 +53,8 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 /**
  * Makes specified keys of an interface required.
  */
-export type Required<T, K extends keyof T> = Omit<T, K> & NonNullable<Pick<T, K>>;
+export type Required<T, K extends keyof T> = Omit<T, K> &
+  NonNullable<Pick<T, K>>;
 
 /**
  * Represents a value that can be either a single item or an array of that item.
@@ -118,7 +119,14 @@ export interface ApiResponse<T = unknown> {
 /**
  * HTTP method types for type-safe API calls.
  */
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
+export type HttpMethod =
+  | "GET"
+  | "POST"
+  | "PUT"
+  | "DELETE"
+  | "PATCH"
+  | "HEAD"
+  | "OPTIONS";
 
 /**
  * Request configuration type for API calls.
@@ -139,7 +147,10 @@ export type HeadersRecord = Record<string, string>;
 /**
  * Query parameters type for API requests.
  */
-export type QueryParamsRecord = Record<string, string | number | boolean | undefined>;
+export type QueryParamsRecord = Record<
+  string,
+  string | number | boolean | undefined
+>;
 // #endregion
 
 // #region Database and Storage Types
@@ -163,14 +174,22 @@ export interface AuditFields {
 }
 
 /**
- * Pagination parameters for database queries.
+ * Pagination input parameters — mirrors the Rust `PaginationParams` struct.
+ * Use `page_size` (not `limit`) for the items-per-page count.
+ *
+ * @deprecated For new code, import from `@/shared/types/pagination.types`.
+ * This re-export exists for backward compatibility.
  */
 export interface PaginationParams {
-  offset?: number;
-  limit?: number;
   page?: number;
+  /** Items per page. Use `page_size` — `limit` is kept for backward compatibility. */
+  page_size?: number;
+  /** @deprecated Use `page_size` instead. */
+  limit?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
+  /** @deprecated Use page-based pagination; offset is computed from page × page_size. */
+  offset?: number;
 }
 
 /**
@@ -197,7 +216,15 @@ export type FilterParams = Record<string, JsonValue>;
  */
 export interface FormFieldConfig {
   name: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'textarea' | 'checkbox' | 'date';
+  type:
+    | "text"
+    | "email"
+    | "password"
+    | "number"
+    | "select"
+    | "textarea"
+    | "checkbox"
+    | "date";
   label: string;
   required?: boolean;
   placeholder?: string;
@@ -210,7 +237,7 @@ export interface FormFieldConfig {
  * Validation rule for form fields.
  */
 export interface ValidationRule {
-  type: 'required' | 'email' | 'min' | 'max' | 'pattern' | 'custom';
+  type: "required" | "email" | "min" | "max" | "pattern" | "custom";
   value?: JsonValue;
   message: string;
 }
@@ -263,7 +290,7 @@ export interface AsyncResult<T = unknown> {
  * Environment configuration type.
  */
 export interface EnvironmentConfig {
-  NODE_ENV: 'development' | 'production' | 'test';
+  NODE_ENV: "development" | "production" | "test";
   API_URL: string;
   DATABASE_URL?: string;
   [key: string]: string | undefined;
@@ -302,16 +329,16 @@ export const normalizeError = (error: unknown): Error => {
   if (error instanceof Error) {
     return error;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return new Error(error);
   }
-  if (typeof error === 'object' && error !== null) {
-    if ('message' in error && typeof error.message === 'string') {
+  if (typeof error === "object" && error !== null) {
+    if ("message" in error && typeof error.message === "string") {
       return new Error(error.message);
     }
     return new Error(JSON.stringify(error));
   }
-  return new Error('Unknown error occurred');
+  return new Error("Unknown error occurred");
 };
 
 /**
@@ -321,32 +348,33 @@ export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
   }
-  if (typeof error === 'string') {
+  if (typeof error === "string") {
     return error;
   }
-  if (typeof error === 'object' && error !== null) {
-    if ('message' in error && typeof error.message === 'string') {
+  if (typeof error === "object" && error !== null) {
+    if ("message" in error && typeof error.message === "string") {
       return error.message;
     }
-    if ('error' in error && typeof error.error === 'string') {
+    if ("error" in error && typeof error.error === "string") {
       return error.error;
     }
   }
-  return 'An unknown error occurred';
+  return "An unknown error occurred";
 };
 
 /**
  * Safely converts a value to a string
  */
 export const safeString = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'object') {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") {
     try {
       return JSON.stringify(value);
     } catch {
-      return '[Object]';
+      return "[Object]";
     }
   }
   return String(value);
@@ -356,19 +384,21 @@ export const safeString = (value: unknown): string => {
  * Safely converts a value to a number
  */
 export const safeNumber = (value: unknown): number | null => {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
     const num = Number(value);
     return isNaN(num) ? null : num;
   }
-  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === "boolean") return value ? 1 : 0;
   return null;
 };
 
 /**
  * Type guard to check if a value is a non-null object
  */
-export const isNonNullObject = (value: unknown): value is Record<string, unknown> => {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
+export const isNonNullObject = (
+  value: unknown,
+): value is Record<string, unknown> => {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 };
 // #endregion

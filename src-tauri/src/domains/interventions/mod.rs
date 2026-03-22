@@ -19,6 +19,7 @@ pub use infrastructure::intervention_types::{
     FinalizeInterventionResponse, GpsCoordinates, InterventionMetrics, InterventionStepWithPhotos,
     InterventionWithDetails, SaveStepProgressRequest, SaveStepProgressResponse,
     StartInterventionRequest, StartInterventionResponse, StepRequirement,
+    UpdateInterventionRequest,
 };
 
 #[cfg(feature = "export-types")]

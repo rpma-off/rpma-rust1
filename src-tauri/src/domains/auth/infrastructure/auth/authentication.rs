@@ -58,13 +58,7 @@ impl super::AuthService {
             [&validated_email],
             |row| {
                 let role_str: String = row.get(7)?;
-                let role = match role_str.as_str() {
-                    "admin" => UserRole::Admin,
-                    "technician" => UserRole::Technician,
-                    "supervisor" => UserRole::Supervisor,
-                    "viewer" => UserRole::Viewer,
-                    _ => UserRole::Viewer,
-                };
+                let role = role_str.parse::<UserRole>().unwrap_or(UserRole::Viewer);
 
                 Ok(UserAccount {
                     id: row.get(0)?,

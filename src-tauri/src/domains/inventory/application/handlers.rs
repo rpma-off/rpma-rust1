@@ -54,6 +54,9 @@ impl DomainEventHandler for InterventionFinalizedHandler {
     }
 
     fn interested_events(&self) -> Vec<&'static str> {
-        vec!["InterventionFinalized", "InterventionCancelled"]
+        vec![
+            DomainEvent::INTERVENTION_FINALIZED,
+            DomainEvent::INTERVENTION_CANCELLED,
+        ]
     }
 }

@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus, Task,
-    TaskStatus, ValidationResult,
+    AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
+    IssueSeverity, Task, TaskStatus, ValidationResult,
 };
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
@@ -128,16 +128,11 @@ impl TasksFacade {
         Ok(mt)
     }
 
-    /// Validate an issue severity and return the canonical lowercase form.
-    pub fn validate_severity(raw: Option<&str>) -> Result<String, AppError> {
-        let sev = raw.unwrap_or("medium").to_lowercase();
-        if !matches!(sev.as_str(), "low" | "medium" | "high" | "critical") {
-            return Err(AppError::Validation(format!(
-                "Unsupported severity: {}",
-                sev
-            )));
-        }
-        Ok(sev)
+    /// Validate an issue severity and return the typed `IssueSeverity`.
+    pub fn validate_severity(raw: Option<&str>) -> Result<IssueSeverity, AppError> {
+        let sev = raw.unwrap_or("medium");
+        sev.parse::<IssueSeverity>()
+            .map_err(|_| AppError::Validation(format!("Unsupported severity: {}", sev)))
     }
 
     /// Validate that issue_type and description are non-empty.

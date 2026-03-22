@@ -235,16 +235,15 @@ pub async fn intervention_management(
                     AppError::Validation(format!("Invalid bulk update data: {}", e))
                 })?;
 
-            let normalized_updates = serde_json::json!({
-                "status": update_request.status,
-                "technician_id": update_request.technician_id,
-                "priority": update_request.priority,
-            });
-
-            // Bulk update delegated to the service layer.
+            // Bulk update delegated to the service layer — typed fields passed directly,
+            // removing the Value → struct → Value round-trip that silently dropped fields.
             let updated_count = state
                 .intervention_service
-                .bulk_update_interventions(&intervention_ids, normalized_updates)
+                .bulk_update_interventions(
+                    &intervention_ids,
+                    update_request.status,
+                    update_request.technician_id,
+                )
                 .map_err(|e| AppError::db_sanitized("bulk_update_interventions", &e))?;
 
             Ok(

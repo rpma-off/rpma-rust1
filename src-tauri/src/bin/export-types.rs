@@ -62,9 +62,9 @@ use rpma_ppf_intervention::domains::tasks::domain::models::status::{
 use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     AssignmentCheckResponse, AssignmentStatus, AvailabilityCheckResponse, AvailabilityStatus,
     BulkImportResponse, ChecklistItem, CreateChecklistItemRequest, CreateTaskRequest,
-    DeleteTaskRequest, PaginationInfo, SortOrder, Task, TaskHistory, TaskListResponse, TaskPhoto,
-    TaskPriority, TaskQuery, TaskStatistics, TaskStatus, TaskWithDetails, UpdateChecklistItemRequest,
-    UpdateTaskRequest,
+    DeleteTaskRequest, IssueSeverity, PaginationInfo, SortOrder, Task, TaskHistory,
+    TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
+    TaskWithDetails, UpdateChecklistItemRequest, UpdateTaskRequest,
 };
 use rpma_ppf_intervention::shared::contracts::auth::{UserAccount, UserRole, UserSession};
 use rpma_ppf_intervention::shared::contracts::common::{
@@ -75,12 +75,15 @@ use rpma_ppf_intervention::shared::contracts::sync::{
     EntityType, OperationType, SyncOperation, SyncQueueMetrics, SyncStatus,
 };
 
-use rpma_ppf_intervention::shared::repositories::{base::PaginatedResult, cache::CacheStats};
+use rpma_ppf_intervention::shared::repositories::{
+    base::{PaginatedResult, PaginationParams},
+    cache::CacheStats,
+};
 
 // Import service request types from canonical domain paths
 use rpma_ppf_intervention::domains::interventions::{
     AdvanceStepRequest, FinalizeInterventionRequest, GpsCoordinates, SaveStepProgressRequest,
-    StartInterventionRequest,
+    StartInterventionRequest, UpdateInterventionRequest,
 };
 use rpma_ppf_intervention::domains::interventions::{
     AdvanceStepResponse, FinalizeInterventionResponse, InterventionMetrics,
@@ -345,6 +348,9 @@ fn main() {
         .push_str(&TaskPriority::export_to_string().expect("Failed to export TaskPriority type"));
     type_definitions.push_str("\n");
     type_definitions
+        .push_str(&IssueSeverity::export_to_string().expect("Failed to export IssueSeverity type"));
+    type_definitions.push_str("\n");
+    type_definitions
         .push_str(&TaskHistory::export_to_string().expect("Failed to export TaskHistory type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -412,6 +418,10 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &PaginationParams::export_to_string().expect("Failed to export PaginationParams type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &TaskStatistics::export_to_string().expect("Failed to export TaskStatistics type"),
     );
     type_definitions.push_str("\n");
@@ -472,9 +482,8 @@ fn main() {
         &QuoteMonthlyCount::export_to_string().expect("Failed to export QuoteMonthlyCount type"),
     );
     type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &QuoteStats::export_to_string().expect("Failed to export QuoteStats type"),
-    );
+    type_definitions
+        .push_str(&QuoteStats::export_to_string().expect("Failed to export QuoteStats type"));
     type_definitions.push_str("\n");
     type_definitions.push_str(
         &CreateQuoteRequest::export_to_string().expect("Failed to export CreateQuoteRequest type"),
@@ -609,6 +618,11 @@ fn main() {
     type_definitions.push_str(
         &FinalizeInterventionRequest::export_to_string()
             .expect("Failed to export FinalizeInterventionRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateInterventionRequest::export_to_string()
+            .expect("Failed to export UpdateInterventionRequest type"),
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
@@ -790,9 +804,8 @@ fn main() {
         &UserListResponse::export_to_string().expect("Failed to export UserListResponse type"),
     );
     type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &UserResponse::export_to_string().expect("Failed to export UserResponse type"),
-    );
+    type_definitions
+        .push_str(&UserResponse::export_to_string().expect("Failed to export UserResponse type"));
     type_definitions.push_str("\n\n");
 
     // Domain: navigation / global search
@@ -803,7 +816,8 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
-        &GlobalSearchResponse::export_to_string().expect("Failed to export GlobalSearchResponse type"),
+        &GlobalSearchResponse::export_to_string()
+            .expect("Failed to export GlobalSearchResponse type"),
     );
     type_definitions.push_str("\n\n");
 
@@ -1036,6 +1050,7 @@ fn main() {
         "DeleteTaskRequest",
         "TaskListResponse",
         "PaginationInfo",
+        "PaginationParams",
         "PaginatedResult",
         "CacheStats",
         "TaskStatistics",
@@ -1062,6 +1077,7 @@ fn main() {
         "AdvanceStepRequest",
         "SaveStepProgressRequest",
         "FinalizeInterventionRequest",
+        "UpdateInterventionRequest",
         "StartInterventionResponse",
         "AdvanceStepResponse",
         "SaveStepProgressResponse",
