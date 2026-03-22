@@ -339,7 +339,7 @@ impl ServiceBuilder {
 
         // Initialize Quote Service (depends on QuoteRepository)
         let quote_service = Arc::new(
-            crate::domains::quotes::infrastructure::quote::QuoteService::new(
+            crate::domains::quotes::application::quote_service::QuoteService::new(
                 self.repositories.quote.clone()
                     as Arc<dyn crate::domains::quotes::domain::models::quote::IQuoteRepository>,
                 quote_event_bus,

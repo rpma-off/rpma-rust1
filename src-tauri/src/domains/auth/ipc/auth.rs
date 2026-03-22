@@ -36,19 +36,14 @@ pub async fn auth_login(
 
     let auth_service = state.auth_service.clone();
     let auth_facade = AuthFacade::new();
+    let sec_svc = AuthSecurityService::new(state.session_service.clone());
 
     debug!(
         correlation_id = %correlation_id,
         "Auth service acquired, attempting authentication"
     );
-    // ARCH VIOLATION: input validation is business logic and must not execute at the IPC boundary.
-    // `AuthFacade::validate_login_input` performs email/password rules that belong in
-    // `application::auth_security_service` (or a dedicated `AuthApplicationService`).
-    // TODO: Move validate_login_input (and the AuthFacade validation helpers it calls) into
-    // the application layer; IPC should call `auth_service.authenticate(...)` directly after
-    // forwarding the raw strings, letting the application/domain services validate them.
     let (validated_email, validated_password) =
-        auth_facade.validate_login_input(&request.email, &request.password)?;
+        sec_svc.validate_login_input(&request.email, &request.password)?;
     let auth_result =
         auth_service.authenticate(&validated_email, &validated_password, ip_address.as_deref());
     let session = match auth_facade.map_authentication_result(auth_result) {
@@ -79,26 +74,21 @@ pub async fn auth_create_account(
 ) -> Result<ApiResponse<crate::domains::auth::domain::models::auth::UserSession>, AppError> {
     let correlation_id = crate::commands::init_correlation_context(&request.correlation_id, None);
     let auth_facade = AuthFacade::new();
+    let sec_svc = AuthSecurityService::new(state.session_service.clone());
 
     info!(
         correlation_id = %correlation_id,
         "Account creation attempt"
     );
 
-    // ARCH VIOLATION: signup input validation is business logic and must not execute at the IPC
-    // boundary.  `AuthFacade::validate_signup_input` owns email/name/password rules that belong
-    // in the application layer.
-    // TODO: Move validate_signup_input into `application::auth_security_service` (or a new
-    // `AuthApplicationService`); the IPC handler should pass the raw `SignupRequest` straight
-    // to `auth_service.create_account_from_signup(...)` and let the service validate it.
-    let validated_request = auth_facade.validate_signup_input(&request)?;
+    let validated_request = sec_svc.validate_signup_input(&request)?;
     let validated_email = validated_request.email.clone();
     let validated_password = validated_request.password.clone();
 
     let auth_service = state.auth_service.clone();
 
-    let account = auth_service
-        .create_account_from_signup(&validated_request)
+    let account = auth_facade
+        .create_account_from_signup(&validated_request, &auth_service)
         .map_err(|e| {
             warn!("Account creation failed: {}", e);
             auth_facade.map_signup_error(&e)

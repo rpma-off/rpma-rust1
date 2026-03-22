@@ -1,11 +1,22 @@
 use crate::domains::auth::AuthFacade;
 use crate::shared::contracts::auth::{UserAccount, UserRole};
 
-#[test]
-fn validate_login_input_normalizes_email() {
-    let facade = AuthFacade::new();
+#[tokio::test]
+async fn validate_login_input_normalizes_email() {
+    use crate::db::Database;
+    use crate::domains::auth::application::auth_security_service::AuthSecurityService;
+    use crate::domains::auth::infrastructure::session::SessionService;
+    use std::sync::Arc;
 
-    let (email, password) = facade
+    let db = Arc::new(
+        Database::new_in_memory()
+            .await
+            .expect("in-memory DB for test"),
+    );
+    let session_service = Arc::new(SessionService::new(db));
+    let sec_svc = AuthSecurityService::new(session_service);
+
+    let (email, password) = sec_svc
         .validate_login_input("User@Example.com", "StrongPass123!")
         .expect("login input should be valid");
 

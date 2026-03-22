@@ -6,18 +6,8 @@
 use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
 use serde::Deserialize;
 
-/// Narrow application-layer contract for quote-driven intervention creation.
-///
-/// This trait breaks the direct dependency between the application-layer event
-/// handlers and the infrastructure-layer `InterventionWorkflowService`, keeping
-/// the application layer free of infrastructure knowledge.
-pub trait InterventionCreator: Send + Sync {
-    /// Create an intervention from an accepted/converted quote.
-    ///
-    /// Returns `Ok(())` when the intervention was created or already existed.
-    /// Returns `Err(String)` on unexpected failures.
-    fn create_from_quote(&self, task_id: &str, quote_id: &str) -> Result<(), String>;
-}
+// Re-export from domain so all existing callers continue to work unchanged.
+pub use crate::domains::interventions::domain::contracts::InterventionCreator;
 
 /// Workflow action types
 #[derive(Deserialize, Debug)]

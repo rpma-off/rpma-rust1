@@ -17,6 +17,18 @@ use chrono::{Datelike, Timelike, Utc};
 use rusqlite::params;
 use std::sync::Arc;
 
+// ── ClientStat row mapping (ADR-001: DB mapping belongs in infrastructure) ────
+
+impl crate::db::FromSqlRow for crate::domains::clients::application::client_service::ClientStat {
+    fn from_row(row: &rusqlite::Row) -> rusqlite::Result<Self> {
+        Ok(Self {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            total_tasks: row.get(2)?,
+        })
+    }
+}
+
 // ── SQL helpers ───────────────────────────────────────────────────────────────
 
 /// Column list shared by every `SELECT … FROM clients` query.

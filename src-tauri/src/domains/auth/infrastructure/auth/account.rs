@@ -1,12 +1,5 @@
 //! Account creation and signup processing.
 
-// ARCH VIOLATION: `SignupRequest` is imported from the application layer into infrastructure.
-// Infrastructure must only depend on the domain layer (or shared kernel), never on
-// application/. The dependency rule (ADR-001) is: IPC → Application → Domain ← Infrastructure.
-// TODO: Move `SignupRequest` to `domain/models/auth.rs` (or `shared/contracts/`) so that
-// both the application layer and infrastructure can import it from a shared, inward-facing
-// location; then remove this `use crate::domains::auth::application::SignupRequest` import.
-use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::{UserAccount, UserRole};
 use rusqlite::params;
 use tracing::{debug, error, info, instrument, warn};
@@ -259,51 +252,5 @@ impl super::AuthService {
                 Err(format!("Failed to create user settings: {}", e))
             }
         }
-    }
-
-    /// Create new user account from signup request (handles validation, role mapping, username generation)
-    #[instrument(skip(self, request), fields(first_name = %request.first_name, last_name = %request.last_name))]
-    pub fn create_account_from_signup(
-        &self,
-        request: &SignupRequest,
-    ) -> Result<UserAccount, String> {
-        debug!("Processing signup request");
-
-        // Validate input
-        if request.email.trim().is_empty() {
-            return Err("Email is required".to_string());
-        }
-        if request.first_name.trim().is_empty() {
-            return Err("First name is required".to_string());
-        }
-        if request.last_name.trim().is_empty() {
-            return Err("Last name is required".to_string());
-        }
-        if request.password.trim().is_empty() {
-            return Err("Password is required".to_string());
-        }
-
-        // New users always start with 'viewer' role - admin must approve
-        let role = UserRole::Viewer;
-
-        // Generate username
-        let username = self
-            .generate_username_from_names(&request.first_name, &request.last_name)
-            .map_err(|e| format!("Failed to generate username: {}", e))?;
-
-        debug!(
-            "Generated username: {} for email: {}",
-            username, request.email
-        );
-
-        // Create account
-        self.create_account(
-            &request.email,
-            &username,
-            &request.first_name,
-            &request.last_name,
-            role,
-            &request.password,
-        )
     }
 }

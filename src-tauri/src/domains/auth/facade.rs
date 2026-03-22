@@ -1,10 +1,10 @@
-use crate::domains::auth::application::SignupRequest;
 use crate::domains::auth::domain::models::auth::UserSession;
 use crate::domains::auth::domain::AuthErrorPolicy;
 use crate::shared::ipc::errors::AppError;
-use regex::Regex;
 
-/// TODO: document
+/// Thin facade that maps raw infrastructure/domain results into IPC-ready
+/// `AppError` variants.  Input validation has been moved to
+/// `application::auth_security_service::AuthSecurityService` (ADR-001).
 #[derive(Debug, Clone)]
 pub struct AuthFacade;
 
@@ -20,50 +20,7 @@ impl AuthFacade {
         Self
     }
 
-    // ARCH VIOLATION: input validation is business logic and must not live at the IPC/facade
-    // boundary. `validate_login_input` orchestrates `validate_email` + `validate_password` rules
-    // that belong in the application layer.
-    // TODO: Move this method (and its callers in ipc/auth.rs) to
-    //       `application/auth_security_service.rs` or a new
-    //       `application/auth_input_validator.rs`.
-    /// TODO: document
-    pub fn validate_login_input(
-        &self,
-        email: &str,
-        password: &str,
-    ) -> Result<(String, String), AppError> {
-        let validated_email = self.validate_email(email)?;
-        let validated_password = self.validate_password(password)?;
-
-        Ok((validated_email, validated_password))
-    }
-
-    // ARCH VIOLATION: signup input validation (field presence, format, password strength) is
-    // business logic that must not live at the IPC/facade boundary.
-    // TODO: Move `validate_signup_input` to `application/auth_security_service.rs` (or a
-    //       dedicated `application/auth_input_validator.rs`) and call it from there, not
-    //       directly from `ipc/auth.rs`.
-    /// TODO: document
-    pub fn validate_signup_input(
-        &self,
-        request: &SignupRequest,
-    ) -> Result<SignupRequest, AppError> {
-        let validated_email = self.validate_email(&request.email)?;
-        let validated_first_name = self.validate_name(&request.first_name, "first_name")?;
-        let validated_last_name = self.validate_name(&request.last_name, "last_name")?;
-        let validated_password = self.validate_password(&request.password)?;
-
-        Ok(SignupRequest {
-            email: validated_email,
-            first_name: validated_first_name,
-            last_name: validated_last_name,
-            password: validated_password,
-            role: request.role.clone(),
-            correlation_id: request.correlation_id.clone(),
-        })
-    }
-
-    /// TODO: document
+    /// Map an authentication result into a typed `AppError` on failure.
     pub fn map_authentication_result(
         &self,
         result: Result<UserSession, String>,
@@ -71,12 +28,12 @@ impl AuthFacade {
         result.map_err(|e| AuthErrorPolicy::authentication_error(&e))
     }
 
-    /// TODO: document
+    /// Map a raw signup error string into a typed `AppError`.
     pub fn map_signup_error(&self, raw_error: &str) -> AppError {
         AuthErrorPolicy::signup_error(raw_error)
     }
 
-    /// TODO: document
+    /// Return an error if `token` is empty or whitespace-only.
     pub fn ensure_session_token(&self, token: &str) -> Result<(), AppError> {
         if token.trim().is_empty() {
             return Err(AppError::Authentication(
@@ -86,67 +43,41 @@ impl AuthFacade {
         Ok(())
     }
 
-    // ARCH VIOLATION: email format/length rules are domain validation logic and must not reside
-    // in the facade root (IPC boundary).
-    // TODO: Extract `validate_email` into `application/auth_input_validator.rs` or
-    //       `domain/` (pure rule, no side-effects) and remove from this facade.
-    fn validate_email(&self, email: &str) -> Result<String, AppError> {
-        let trimmed = email.trim().to_lowercase();
-        if trimmed.is_empty() || trimmed.len() > 254 {
-            return Err(AppError::Validation(
-                "Email validation failed: invalid length".to_string(),
-            ));
-        }
-        let email_regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .map_err(|e| AppError::Internal(format!("Email validation regex error: {}", e)))?;
-        if !email_regex.is_match(&trimmed) {
-            return Err(AppError::Validation(
-                "Email validation failed: invalid format".to_string(),
-            ));
-        }
-        Ok(trimmed)
-    }
+    /// Orchestrate signup: validate input, assign Viewer role, generate username, delegate to infrastructure.
+    pub fn create_account_from_signup(
+        &self,
+        request: &crate::domains::auth::application::SignupRequest,
+        auth_service: &crate::domains::auth::infrastructure::auth::AuthService,
+    ) -> Result<crate::domains::auth::domain::models::auth::UserAccount, String> {
+        use crate::domains::auth::domain::models::auth::UserRole;
 
-    // ARCH VIOLATION: name presence/length rules are domain validation logic that must not live
-    // at the IPC boundary.
-    // TODO: Move `validate_name` to `application/auth_input_validator.rs` or `domain/`.
-    fn validate_name(&self, name: &str, field: &str) -> Result<String, AppError> {
-        let trimmed = name.trim();
-        if trimmed.is_empty() {
-            return Err(AppError::Validation(format!(
-                "{} validation failed: required",
-                field
-            )));
+        if request.email.trim().is_empty() {
+            return Err("Email is required".to_string());
         }
-        if trimmed.len() > 100 {
-            return Err(AppError::Validation(format!(
-                "{} validation failed: exceeds max length",
-                field
-            )));
+        if request.first_name.trim().is_empty() {
+            return Err("First name is required".to_string());
         }
-        Ok(trimmed.to_string())
-    }
-
-    // ARCH VIOLATION: password-strength rules (min length, upper/lower/digit requirements) are
-    // pure business logic and must not be embedded in the IPC/facade layer.
-    // TODO: Move `validate_password` to `application/auth_input_validator.rs` or
-    //       `domain/policy.rs` and remove from this facade.
-    fn validate_password(&self, password: &str) -> Result<String, AppError> {
-        if password.trim().is_empty() || password.len() > 128 {
-            return Err(AppError::Validation(
-                "Password validation failed: invalid length".to_string(),
-            ));
+        if request.last_name.trim().is_empty() {
+            return Err("Last name is required".to_string());
+        }
+        if request.password.trim().is_empty() {
+            return Err("Password is required".to_string());
         }
 
-        let has_upper = password.chars().any(|c| c.is_uppercase());
-        let has_lower = password.chars().any(|c| c.is_lowercase());
-        let has_digit = password.chars().any(|c| c.is_ascii_digit());
-        if password.len() < 8 || !has_upper || !has_lower || !has_digit {
-            return Err(AppError::Validation(
-                "Password validation failed: weak password".to_string(),
-            ));
-        }
+        // New users always start with 'viewer' role — admin must approve
+        let role = UserRole::Viewer;
 
-        Ok(password.to_string())
+        let username = auth_service
+            .generate_username_from_names(&request.first_name, &request.last_name)
+            .map_err(|e| format!("Failed to generate username: {}", e))?;
+
+        auth_service.create_account(
+            &request.email,
+            &username,
+            &request.first_name,
+            &request.last_name,
+            role,
+            &request.password,
+        )
     }
 }

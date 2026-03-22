@@ -8,14 +8,7 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-// ARCH VIOLATION: `InterventionCreator` is a contract (trait) defined in the application layer
-// but implemented here in infrastructure. Per ADR-001, infrastructure may only depend on
-// domain/; contracts that infrastructure must implement should be defined in domain/.
-// TODO: Move `InterventionCreator` from `application/contracts.rs` to
-//       `domain/services/mod.rs` (or a new `domain/contracts.rs`), update the import path
-//       here and in all application-layer call sites, then remove the application-layer
-//       definition.
-use crate::domains::interventions::application::contracts::InterventionCreator;
+use crate::domains::interventions::domain::contracts::InterventionCreator;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::domains::interventions::infrastructure::workflow_validation::WorkflowValidationService;
 

@@ -209,3 +209,19 @@ impl std::fmt::Debug for UserAccount {
             .finish()
     }
 }
+
+/// Input DTO for the signup flow.
+///
+/// Defined in domain/ so both application and infrastructure layers can reference
+/// it without creating an upward dependency.
+#[derive(Clone, Debug, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SignupRequest {
+    pub email: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub password: String,
+    pub role: Option<String>,
+    #[serde(default)]
+    pub correlation_id: Option<String>,
+}

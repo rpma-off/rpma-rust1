@@ -41,7 +41,7 @@ pub struct AppStateType {
     pub inventory_service: Arc<InventoryFacade>,
     pub message_service: Arc<crate::domains::notifications::MessageService>,
     pub photo_service: Arc<crate::domains::documents::PhotoService>,
-    pub quote_service: Arc<crate::domains::quotes::infrastructure::quote::QuoteService>,
+    pub quote_service: Arc<crate::domains::quotes::application::quote_service::QuoteService>,
     pub auth_service: Arc<crate::domains::auth::infrastructure::auth::AuthService>,
     pub session_service: Arc<crate::domains::auth::infrastructure::session::SessionService>,
     pub session_store: Arc<SessionStore>,

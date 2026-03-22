@@ -28,6 +28,25 @@ impl RequestContext {
         }
     }
 
+    /// Create a minimal context for pre-authentication (bootstrap) checks.
+    ///
+    /// Intended for IPC commands that run before any session exists (e.g.
+    /// `HasAdmins`).  The resulting context carries an empty `AuthContext`
+    /// with `UserRole::Viewer` and must NEVER be used for RBAC-enforcing
+    /// commands.
+    pub fn unauthenticated(correlation_id: String) -> Self {
+        Self {
+            auth: AuthContext {
+                user_id: String::new(),
+                role: UserRole::Viewer,
+                session_id: String::new(),
+                username: String::new(),
+                email: String::new(),
+            },
+            correlation_id,
+        }
+    }
+
     // ── convenience accessors ────────────────────────────────────────
 
     /// Shorthand for `self.auth.user_id`.
@@ -63,5 +82,13 @@ mod tests {
         assert_eq!(ctx.user_id(), "u1");
         assert_eq!(*ctx.role(), UserRole::Admin);
         assert_eq!(ctx.correlation_id, "corr-1");
+    }
+
+    #[test]
+    fn unauthenticated_context_has_empty_auth() {
+        let ctx = RequestContext::unauthenticated("corr-bootstrap".into());
+        assert_eq!(ctx.user_id(), "");
+        assert_eq!(*ctx.role(), UserRole::Viewer);
+        assert_eq!(ctx.correlation_id, "corr-bootstrap");
     }
 }

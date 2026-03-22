@@ -110,27 +110,31 @@ pub async fn bootstrap_first_admin(
 /// Check if any admin users exist in the system.
 ///
 /// This is a pre-authentication bootstrap check — no session is required.
-/// It calls the user service directly without a request context.
+/// Delegates to `UsersFacade` via `UsersCommand::HasAdmins`; the facade
+/// branch does not inspect the context, so an unauthenticated context is safe.
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn has_admins(
     state: AppState<'_>,
     correlation_id: Option<String>,
 ) -> Result<ApiResponse<bool>, AppError> {
-    // ARCH VIOLATION: `has_admins` bypasses `resolve_context!` entirely and calls
-    // `state.user_service.has_admins()` directly from the IPC handler, embedding both
-    // auth-bypass logic and a direct application-service call at the IPC boundary without
-    // going through the façade/command pattern used by every other handler in this file.
-    // TODO: If this endpoint is intentionally unauthenticated (bootstrap check), introduce
-    //       a dedicated `UsersCommand::HasAdmins` variant in `domain/action.rs`, handle it
-    //       in `UsersFacade::execute`, and document the auth exemption explicitly.  The IPC
-    //       handler should remain a thin delegate: resolve (or explicitly skip) context, then
-    //       call the façade.
     let corr = crate::commands::init_correlation_context(&correlation_id, None);
-    debug!("Checking if admin users exist");
-    let has_admin = state.user_service.has_admins().await?;
-    debug!("Admin check completed: has_admins={}", has_admin);
-    Ok(ApiResponse::success(has_admin).with_correlation_id(Some(corr)))
+    // Intentionally unauthenticated: this is a pre-login bootstrap check.
+    // UsersCommand::HasAdmins does not inspect the context.
+    let ctx = crate::shared::context::RequestContext::unauthenticated(corr.clone());
+    let facade = UsersFacade::new();
+    let services = UsersServices {
+        account_manager: state.auth_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::user_account::UserAccountManager>,
+        user_service: state.user_service.clone(),
+        event_bus: state.event_bus.clone(),
+    };
+    match facade.execute(UsersCommand::HasAdmins, &ctx, &services).await? {
+        UsersDomainResponse::HasAdmins(v) => {
+            Ok(ApiResponse::success(v).with_correlation_id(Some(corr)))
+        }
+        _ => Err(AppError::Internal("Unexpected response from has_admins".to_string())),
+    }
 }
 
 /// TODO: document

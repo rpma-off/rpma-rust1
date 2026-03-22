@@ -2,6 +2,8 @@
 //!
 //! Encapsulates session ownership verification, timeout validation,
 //! and session revocation logic that was previously inline in IPC handlers.
+//!
+//! Input validation is delegated to `AuthInputValidator` (ADR-001).
 
 use std::sync::Arc;
 use tracing::{error, info};
@@ -104,5 +106,29 @@ impl AuthSecurityService {
             }
             None => Err(AppError::Authentication("Not authenticated".to_string())),
         }
+    }
+}
+
+// ── Input validation — delegated to AuthInputValidator (ADR-001) ──────────────
+
+impl AuthSecurityService {
+    /// Validate and normalise login inputs.
+    /// Returns `(validated_email, validated_password)` or an `AppError::Validation`.
+    pub fn validate_login_input(
+        &self,
+        email: &str,
+        password: &str,
+    ) -> Result<(String, String), AppError> {
+        crate::domains::auth::application::auth_input_validator::AuthInputValidator::new()
+            .validate_login_input(email, password)
+    }
+
+    /// Validate signup fields and return a sanitised `SignupRequest`.
+    pub fn validate_signup_input(
+        &self,
+        request: &crate::domains::auth::domain::models::auth::SignupRequest,
+    ) -> Result<crate::domains::auth::domain::models::auth::SignupRequest, AppError> {
+        crate::domains::auth::application::auth_input_validator::AuthInputValidator::new()
+            .validate_signup_input(request)
     }
 }

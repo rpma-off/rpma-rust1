@@ -1,5 +1,5 @@
 use crate::db::Database;
-use crate::domains::quotes::infrastructure::quote::QuoteService;
+use crate::domains::quotes::application::quote_service::QuoteService;
 use crate::domains::quotes::infrastructure::quote_repository::QuoteRepository;
 use crate::domains::quotes::QuotesFacade;
 use crate::shared::ipc::errors::AppError;

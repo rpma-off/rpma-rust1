@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
+use crate::domains::quotes::application::quote_service::QuoteService;
 use crate::domains::quotes::domain::models::quote::*;
-use crate::domains::quotes::infrastructure::quote::QuoteService;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
 
