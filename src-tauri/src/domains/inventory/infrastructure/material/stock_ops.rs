@@ -323,8 +323,8 @@ impl super::MaterialService {
             }
         }
 
-        let now = crate::shared::contracts::common::now();
         let total_cost = request.unit_cost.map(|uc| uc * request.quantity);
+        let now = crate::shared::contracts::common::now();
 
         let transaction = InventoryTransaction {
             id: crate::shared::utils::uuid::generate_uuid_string(),
