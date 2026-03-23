@@ -65,6 +65,7 @@ export function ClientCard({
 
   return (
     <Card
+      data-testid="client-card"
       className={cn(
         'group relative overflow-hidden bg-white border-border/20 hover:border-[hsl(var(--rpma-teal))]/30 transition-all duration-300 cursor-pointer hover:shadow-sm',
         selectable && selected && 'ring-2 ring-[hsl(var(--rpma-teal))]/50 border-[hsl(var(--rpma-teal))]',

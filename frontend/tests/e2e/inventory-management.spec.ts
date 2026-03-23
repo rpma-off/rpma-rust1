@@ -85,7 +85,7 @@ test.describe('Inventory Management', () => {
 
   test('settings tab create category flow works', async ({ page }) => {
     await page.getByRole('tab', { name: /Param.tres|Settings/i }).click();
-    await expect(page.getByText(/Cat.gories|Categories/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('heading', { name: /Cat.gories|Categories/i })).toBeVisible({ timeout: 10000 });
 
     const categoryName = `E2E Category ${Date.now()}`;
     await page.fill('#categoryName', categoryName);

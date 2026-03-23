@@ -43,13 +43,17 @@ export function useNewClientPage() {
         return;
       }
 
+      console.log('Creating client with data:', formData);
       const response = await clientService.createClient(formData, user.token);
-      if (response.error) {
-        setErrors({ general: response.error });
+      console.log('Create client response:', response);
+      if (!response.success || response.error) {
+        console.error('Client creation failed:', response.error);
+        setErrors({ general: response.error || t('errors.unexpectedError') });
         return;
       }
 
       if (response.data) {
+        console.log('Client created successfully, redirecting to:', `/clients/${response.data.id}`);
         toast.success(t('clients.clientCreated'));
         router.push(`/clients/${response.data.id}`);
       }
