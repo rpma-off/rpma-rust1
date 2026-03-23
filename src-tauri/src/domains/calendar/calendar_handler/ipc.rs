@@ -11,6 +11,7 @@ fn calendar_context(
     correlation_id: &Option<String>,
 ) -> Result<RequestContext, AppError> {
     let ctx = resolve_context!(state, correlation_id);
+    // TODO(ADR-001): extract business logic to application/
     let rate_limiter = state.auth_service.rate_limiter();
     let rate_limit_key = format!("calendar_ops:{}", ctx.auth.user_id);
     if !rate_limiter
@@ -289,6 +290,7 @@ pub async fn calendar_schedule_task(
         .await?
     {
         CalendarResponse::Conflict(result) => {
+            // TODO(ADR-001): extract business logic to application/
             if result.has_conflict {
                 let msg = result.message.unwrap_or_else(|| {
                     format!(

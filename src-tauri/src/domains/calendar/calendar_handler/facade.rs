@@ -66,33 +66,35 @@ pub enum CalendarResponse {
 
 // ── Private helpers ───────────────────────────────────────────────────────────
 
-/// Convert an ISO-8601 date or datetime string (from IPC) to epoch milliseconds.
-///
-/// Accepts the formats the frontend typically sends: `"YYYY-MM-DD"`,
-/// `"YYYY-MM-DDTHH:MM:SS"`, and `"YYYY-MM-DDTHH:MM:SSZ"`.
-///
-/// When `end_of_day` is `true` a bare date (`"YYYY-MM-DD"`) is treated as
-/// `23:59:59` on that day so that the range bound is inclusive.
-fn date_str_to_epoch_ms(s: &str, end_of_day: bool) -> i64 {
-    use chrono::NaiveDateTime;
+mod helpers {
+    /// Convert an ISO-8601 date or datetime string (from IPC) to epoch milliseconds.
+    ///
+    /// Accepts the formats the frontend typically sends: `"YYYY-MM-DD"`,
+    /// `"YYYY-MM-DDTHH:MM:SS"`, and `"YYYY-MM-DDTHH:MM:SSZ"`.
+    ///
+    /// When `end_of_day` is `true` a bare date (`"YYYY-MM-DD"`) is treated as
+    /// `23:59:59` on that day so that the range bound is inclusive.
+    pub(super) fn date_str_to_epoch_ms(s: &str, end_of_day: bool) -> i64 {
+        use chrono::NaiveDateTime;
 
-    // Try full datetime with trailing Z.
-    if let Ok(dt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ") {
-        return dt.and_utc().timestamp_millis();
-    }
-    // Try full datetime without Z.
-    if let Ok(dt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
-        return dt.and_utc().timestamp_millis();
-    }
-    // Try date-only: append 00:00:00 or 23:59:59 depending on the bound.
-    let suffix = if end_of_day { "T23:59:59" } else { "T00:00:00" };
-    let with_time = format!("{}{}", s, suffix);
-    if let Ok(dt) = NaiveDateTime::parse_from_str(&with_time, "%Y-%m-%dT%H:%M:%S") {
-        return dt.and_utc().timestamp_millis();
-    }
+        // Try full datetime with trailing Z.
+        if let Ok(dt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%SZ") {
+            return dt.and_utc().timestamp_millis();
+        }
+        // Try full datetime without Z.
+        if let Ok(dt) = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S") {
+            return dt.and_utc().timestamp_millis();
+        }
+        // Try date-only: append 00:00:00 or 23:59:59 depending on the bound.
+        let suffix = if end_of_day { "T23:59:59" } else { "T00:00:00" };
+        let with_time = format!("{}{}", s, suffix);
+        if let Ok(dt) = NaiveDateTime::parse_from_str(&with_time, "%Y-%m-%dT%H:%M:%S") {
+            return dt.and_utc().timestamp_millis();
+        }
 
-    // Last resort: fall back to epoch boundaries so the query stays safe.
-    if end_of_day { i64::MAX / 2 } else { 0 }
+        // Last resort: fall back to epoch boundaries so the query stays safe.
+        if end_of_day { i64::MAX / 2 } else { 0 }
+    }
 }
 
 /// Facade for the Calendar bounded context.
@@ -123,6 +125,7 @@ impl CalendarFacade {
         &self.calendar_service
     }
 
+    // TODO(ADR-001): extract business logic to application/
     pub fn validate_date_range(&self, start_date: &str, end_date: &str) -> Result<(), IpcAppError> {
         if start_date.trim().is_empty() || end_date.trim().is_empty() {
             return Err(IpcAppError::Validation(
@@ -164,6 +167,7 @@ impl CalendarFacade {
                 Ok(CalendarResponse::OptionalEvent(event))
             }
             CalendarCommand::CreateEvent { event_data } => {
+                // TODO(ADR-001): extract business logic to application/
                 if event_data.title.trim().is_empty() {
                     return Err(IpcAppError::Validation(
                         "Event title cannot be empty".to_string(),
@@ -182,6 +186,7 @@ impl CalendarFacade {
                 Ok(CalendarResponse::Event(event))
             }
             CalendarCommand::UpdateEvent { id, event_data } => {
+                // TODO(ADR-001): extract business logic to application/
                 if let (Some(start), Some(end)) =
                     (&event_data.start_datetime, &event_data.end_datetime)
                 {
@@ -229,8 +234,8 @@ impl CalendarFacade {
             } => {
                 self.validate_date_range(&start_date, &end_date)?;
                 let repo = CalendarRepository::new(self.db.clone());
-                let from = date_str_to_epoch_ms(&start_date, false);
-                let to = date_str_to_epoch_ms(&end_date, true);
+                let from = helpers::date_str_to_epoch_ms(&start_date, false);
+                let to = helpers::date_str_to_epoch_ms(&end_date, true);
                 let tech_id = technician_id.as_deref();
                 let events = repo
                     .find_events_in_range(from, to, tech_id)

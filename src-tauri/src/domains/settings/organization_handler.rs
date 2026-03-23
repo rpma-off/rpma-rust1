@@ -79,6 +79,7 @@ pub async fn upload_logo(
 ) -> Result<ApiResponse<Organization>, AppError> {
     let ctx = resolve_context!(&state, &request.correlation_id, UserRole::Admin);
     let service = SettingsService::new(state.db.clone());
+    // TODO(ADR-001): extract business logic to application/
     let update_request = UpdateOrganizationRequest {
         logo_url: request.file_path,
         logo_data: request.base64_data,

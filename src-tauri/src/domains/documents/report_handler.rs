@@ -20,6 +20,7 @@ use crate::shared::services::document_storage::DocumentStorageService;
 
 // ── Report Repository ───────────────────────────────────────────────────────
 
+// TODO(ADR-005): move to infrastructure repository
 pub struct ReportRepository {
     db: Arc<Database>,
 }
@@ -29,31 +30,11 @@ impl ReportRepository {
         Self { db }
     }
 
-    fn row_to_report(row: &rusqlite::Row<'_>) -> rusqlite::Result<InterventionReport> {
-        let generated_at: i64 = row.get(3)?;
-        let file_size: Option<i64> = row.get(8)?;
-
-        Ok(InterventionReport {
-            id: row.get(0)?,
-            intervention_id: row.get(1)?,
-            report_number: row.get(2)?,
-            generated_at,
-            technician_id: row.get(4)?,
-            technician_name: row.get(5)?,
-            file_path: row.get(6)?,
-            file_name: row.get(7)?,
-            file_size: file_size.map(|s| s as u64),
-            format: row.get(9)?,
-            status: row.get(10)?,
-            created_at: row.get(11)?,
-            updated_at: row.get(12)?,
-        })
-    }
-
     pub fn generate_report_number(&self) -> Result<String, AppError> {
         let year = Utc::now().year();
         let prefix = format!("INT-{}-", year);
 
+        // TODO(ADR-005): move to infrastructure repository
         let count: i32 = self
             .db
             .query_single_value(
@@ -67,6 +48,7 @@ impl ReportRepository {
     }
 
     pub fn save(&self, report: &InterventionReport) -> Result<(), AppError> {
+        // TODO(ADR-005): move to infrastructure repository
         self.db
             .execute(
                 "INSERT INTO intervention_reports (id, intervention_id, report_number, generated_at, technician_id, technician_name, file_path, file_name, file_size, format, status, created_at, updated_at)
@@ -98,12 +80,13 @@ impl ReportRepository {
             .get_connection()
             .map_err(|e| AppError::Database(format!("Failed to get connection: {}", e)))?;
 
+        // TODO(ADR-005): move to infrastructure repository
         let result = conn
             .query_row(
                 "SELECT id, intervention_id, report_number, generated_at, technician_id, technician_name, file_path, file_name, file_size, format, status, created_at, updated_at
                  FROM intervention_reports WHERE id = ?1",
                 params![id],
-                |row| Self::row_to_report(row),
+                |row| helpers::row_to_report(row),
             );
 
         match result {
@@ -122,12 +105,13 @@ impl ReportRepository {
             .get_connection()
             .map_err(|e| AppError::Database(format!("Failed to get connection: {}", e)))?;
 
+        // TODO(ADR-005): move to infrastructure repository
         let result = conn
             .query_row(
                 "SELECT id, intervention_id, report_number, generated_at, technician_id, technician_name, file_path, file_name, file_size, format, status, created_at, updated_at
                  FROM intervention_reports WHERE intervention_id = ?1 ORDER BY created_at DESC LIMIT 1",
                 params![intervention_id],
-                |row| Self::row_to_report(row),
+                |row| helpers::row_to_report(row),
             );
 
         match result {
@@ -138,14 +122,43 @@ impl ReportRepository {
     }
 
     pub fn list(&self, limit: i32, offset: i32) -> Result<Vec<InterventionReport>, AppError> {
+        // TODO(ADR-005): move to infrastructure repository
         self.db
             .query_multiple(
                 "SELECT id, intervention_id, report_number, generated_at, technician_id, technician_name, file_path, file_name, file_size, format, status, created_at, updated_at
                  FROM intervention_reports ORDER BY created_at DESC LIMIT ?1 OFFSET ?2",
                 params![limit, offset],
-                |row| Self::row_to_report(row),
+                |row| helpers::row_to_report(row),
             )
             .map_err(|e| AppError::Database(format!("Failed to list reports: {}", e)))
+    }
+}
+
+// ── Private helpers ──────────────────────────────────────────────────────────
+
+mod helpers {
+    use super::InterventionReport;
+
+    /// Map a single SQLite row to an [`InterventionReport`].
+    pub(super) fn row_to_report(row: &rusqlite::Row<'_>) -> rusqlite::Result<InterventionReport> {
+        let generated_at: i64 = row.get(3)?;
+        let file_size: Option<i64> = row.get(8)?;
+
+        Ok(InterventionReport {
+            id: row.get(0)?,
+            intervention_id: row.get(1)?,
+            report_number: row.get(2)?,
+            generated_at,
+            technician_id: row.get(4)?,
+            technician_name: row.get(5)?,
+            file_path: row.get(6)?,
+            file_name: row.get(7)?,
+            file_size: file_size.map(|s| s as u64),
+            format: row.get(9)?,
+            status: row.get(10)?,
+            created_at: row.get(11)?,
+            updated_at: row.get(12)?,
+        })
     }
 }
 
@@ -181,6 +194,7 @@ pub async fn report_generate(
     let current_user = ctx.auth.to_user_session();
     let facade = DocumentsFacade::new(state.photo_service.clone(), state.db.clone());
 
+    // TODO(ADR-001): extract business logic to application/
     // 1. Fetch intervention data
     let intervention_data = report_export_service::get_intervention_with_details(
         &intervention_id,

@@ -10,10 +10,9 @@
 // Next step: extract `PhotoService` into `infrastructure/photo_service.rs` (no API break needed)
 // and leave only thin `document_*` IPC wrappers here.
 
-use image::{GenericImageView, ImageEncoder, ImageFormat};
+use image::ImageFormat;
 use rusqlite::params;
 use std::collections::HashMap;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::fs;
@@ -187,6 +186,7 @@ pub enum CloudProvider {
 
 // ── Photo Service ────────────────────────────────────────────────────────────
 
+// TODO(ADR-001): extract business logic to application/
 #[derive(Debug)]
 pub struct PhotoService {
     db: Database,
@@ -378,9 +378,9 @@ impl PhotoService {
         let metadata = tokio::fs::metadata(&file_path).await?;
         let file_size = metadata.len() as i64;
 
-        let (width, height) = self.extract_image_dimensions(&compressed_data)?;
+        let (width, height) = helpers::extract_image_dimensions(&compressed_data)?;
         let (quality_score, blur_score, exposure_score, composition_score) =
-            self.calculate_photo_quality_scores(&compressed_data)?;
+            helpers::calculate_photo_quality_scores(&compressed_data)?;
 
         let mut photo = Photo::new(
             request.intervention_id.clone(),
@@ -510,6 +510,7 @@ impl PhotoService {
 
     // ── Metadata Logic ──
 
+    // TODO(ADR-005): move to infrastructure repository
     pub fn get_photos(&self, request: GetPhotosRequest) -> PhotoResult<GetPhotosResponse> {
         let mut conditions = Vec::new();
         let mut params_vec = Vec::new();
@@ -565,12 +566,14 @@ impl PhotoService {
         Ok(GetPhotosResponse { photos, total })
     }
 
+    // TODO(ADR-005): move to infrastructure repository
     pub fn get_photo(&self, id: &str) -> PhotoResult<Option<Photo>> {
         Ok(self
             .db
             .query_single_as::<Photo>("SELECT * FROM photos WHERE id = ?", params![id])?)
     }
 
+    // TODO(ADR-005): move to infrastructure repository
     pub fn delete_photo(&self, id: &str) -> PhotoResult<()> {
         let photo = self
             .get_photo(id)?
@@ -616,6 +619,7 @@ impl PhotoService {
         Ok(photo)
     }
 
+    // TODO(ADR-005): move to infrastructure repository
     fn save_photo_record(&self, photo: &Photo) -> PhotoResult<()> {
         let exists: i32 = self.db.query_single_value(
             "SELECT COUNT(*) FROM photos WHERE id = ?",
@@ -637,6 +641,7 @@ impl PhotoService {
 
     // ── Processing Logic ──
 
+    // TODO(ADR-001): extract business logic to application/
     pub async fn compress_image_if_needed(&self, data: Vec<u8>) -> PhotoResult<Vec<u8>> {
         if data.len() <= self.max_file_size {
             return Ok(data);
@@ -649,165 +654,25 @@ impl PhotoService {
             .map_err(|e| PhotoError::Processing(format!("Semaphore error: {}", e)))?;
         let quality = self.jpeg_quality;
         let max_size = self.max_file_size;
-        tokio::task::spawn_blocking(move || Self::compress_image_blocking(&data, quality, max_size))
+        tokio::task::spawn_blocking(move || helpers::compress_image_blocking(&data, quality, max_size))
             .await
             .map_err(|e| PhotoError::Processing(e.to_string()))?
     }
 
-    fn compress_image_blocking(data: &[u8], quality: u8, max_size: usize) -> PhotoResult<Vec<u8>> {
-        let img =
-            image::load_from_memory(data).map_err(|e| PhotoError::Processing(e.to_string()))?;
-        let mut output = Cursor::new(Vec::new());
-        let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut output, quality);
-        encoder
-            .write_image(
-                img.as_bytes(),
-                img.width(),
-                img.height(),
-                img.color().into(),
-            )
-            .map_err(|e| PhotoError::Processing(e.to_string()))?;
-        let compressed = output.into_inner();
-        if compressed.len() > max_size && quality > 20 {
-            return Self::compress_image_blocking(data, quality / 2, max_size);
-        }
-        Ok(compressed)
-    }
-
-    pub fn extract_image_dimensions(&self, data: &[u8]) -> PhotoResult<(Option<i32>, Option<i32>)> {
-        match image::load_from_memory(data) {
-            Ok(img) => {
-                let (w, h) = img.dimensions();
-                Ok((Some(w as i32), Some(h as i32)))
-            }
-            Err(_) => Ok((None, None)),
-        }
-    }
-
-    pub fn calculate_photo_quality_scores(
-        &self,
-        data: &[u8],
-    ) -> PhotoResult<(Option<i32>, Option<i32>, Option<i32>, Option<i32>)> {
-        match image::load_from_memory(data) {
-            Ok(img) => {
-                let gray = img.to_luma8();
-                let (w, h) = gray.dimensions();
-                let blur = self.calculate_blur_score(&gray, w, h);
-                let exposure = self.calculate_exposure_score(&gray);
-                let composition = self.calculate_composition_score(&gray, w, h);
-                let overall = ((blur as f32 * 0.4)
-                    + (exposure as f32 * 0.3)
-                    + (composition as f32 * 0.3)) as i32;
-                Ok((Some(overall), Some(blur), Some(exposure), Some(composition)))
-            }
-            Err(_) => Ok((None, None, None, None)),
-        }
-    }
-
-    fn calculate_blur_score(&self, gray: &image::GrayImage, w: u32, h: u32) -> i32 {
-        let mut variance = 0.0;
-        let mut count = 0;
-        for y in 1..h.saturating_sub(1) {
-            for x in 1..w.saturating_sub(1) {
-                let center = gray.get_pixel(x, y).0[0] as f32;
-                let top = gray.get_pixel(x, y - 1).0[0] as f32;
-                let bottom = gray.get_pixel(x, y + 1).0[0] as f32;
-                let left = gray.get_pixel(x - 1, y).0[0] as f32;
-                let right = gray.get_pixel(x + 1, y).0[0] as f32;
-                let laplacian = center * 4.0 - top - bottom - left - right;
-                variance += laplacian * laplacian;
-                count += 1;
-            }
-        }
-        if count > 0 {
-            ((variance / count as f32) / 1000.0).min(1.0) as i32 * 100
-        } else {
-            50
-        }
-    }
-
-    fn calculate_exposure_score(&self, gray: &image::GrayImage) -> i32 {
-        let mut hist = [0u32; 256];
-        for p in gray.pixels() {
-            hist[p.0[0] as usize] += 1;
-        }
-        let total = gray.width() * gray.height();
-        let over: u32 = hist[241..].iter().sum();
-        let under: u32 = hist[..16].iter().sum();
-        let penalty = (over as f32 / total as f32 + under as f32 / total as f32) * 100.0;
-        (100.0 - penalty.min(100.0)) as i32
-    }
-
-    fn calculate_composition_score(&self, gray: &image::GrayImage, w: u32, h: u32) -> i32 {
-        let tw = w / 3;
-        let th = h / 3;
-        let mut thirds_pixels = 0;
-        let mut total_important = 0;
-        for y in 0..h {
-            for x in 0..w {
-                let val = gray.get_pixel(x, y).0[0];
-                if !(64..=192).contains(&val) {
-                    total_important += 1;
-                    let near_v = (x as i32 - tw as i32).abs() < 10
-                        || (x as i32 - (tw * 2) as i32).abs() < 10;
-                    let near_h = (y as i32 - th as i32).abs() < 10
-                        || (y as i32 - (th * 2) as i32).abs() < 10;
-                    if near_v || near_h {
-                        thirds_pixels += 1;
-                    }
-                }
-            }
-        }
-        if total_important > 0 {
-            (thirds_pixels as f32 / total_important as f32 * 100.0) as i32
-        } else {
-            50
-        }
-    }
-
+    // TODO(ADR-001): extract business logic to application/
     pub async fn generate_thumbnail(&self, data: &[u8], path: &Path) -> PhotoResult<PathBuf> {
         let data = data.to_vec();
-        let thumb_path = self.thumbnail_path(path);
+        let thumb_path = helpers::thumbnail_path(path);
         let target = thumb_path.clone();
-        tokio::task::spawn_blocking(move || Self::generate_thumbnail_blocking(&data, &target))
+        tokio::task::spawn_blocking(move || helpers::generate_thumbnail_blocking(&data, &target))
             .await
             .map_err(|e| PhotoError::Processing(e.to_string()))??;
         Ok(thumb_path)
     }
 
-    fn thumbnail_path(&self, path: &Path) -> PathBuf {
-        let stem = path.file_stem().unwrap_or_default().to_string_lossy();
-        let ext = path.extension().unwrap_or_default().to_string_lossy();
-        path.with_file_name(format!("{}_thumb.{}", stem, ext))
-    }
-
-    fn generate_thumbnail_blocking(data: &[u8], path: &Path) -> PhotoResult<()> {
-        let img =
-            image::load_from_memory(data).map_err(|e| PhotoError::Processing(e.to_string()))?;
-        let thumb = img.thumbnail(300, 300);
-        let format = match path
-            .extension()
-            .and_then(|e| e.to_str())
-            .map(|e| e.to_lowercase())
-            .as_deref()
-        {
-            Some("png") => ImageFormat::Png,
-            Some("webp") => ImageFormat::WebP,
-            _ => ImageFormat::Jpeg,
-        };
-        let tmp = path.with_extension("tmp");
-        thumb
-            .save_with_format(&tmp, format)
-            .map_err(|e| PhotoError::Processing(e.to_string()))?;
-        std::fs::rename(&tmp, path).map_err(|e| {
-            let _ = std::fs::remove_file(&tmp);
-            PhotoError::from(e)
-        })?;
-        Ok(())
-    }
-
     // ── Statistics Logic ──
 
+    // TODO(ADR-005): move to infrastructure repository
     pub fn get_stats(&self) -> PhotoResult<PhotoStats> {
         let total: i32 = self
             .db
@@ -1300,5 +1165,179 @@ pub async fn save_intervention_report(
             Ok(ApiResponse::success(path).with_correlation_id(Some(ctx.correlation_id)))
         }
         _ => Err(AppError::Internal("Unexpected response".into())),
+    }
+}
+
+// ── Private helpers ──────────────────────────────────────────────────────────
+
+/// Pure image-processing helpers extracted from [`PhotoService`].
+///
+/// All functions here are stateless (no DB, no I/O semaphore) so they can be
+/// unit-tested and, when the domain migrates to the four-layer structure, moved
+/// into `application/` without any call-site changes other than the path prefix.
+mod helpers {
+    use super::{ImageFormat, PhotoError, PhotoResult};
+    use image::{GenericImageView, ImageEncoder};
+    use std::io::Cursor;
+    use std::path::{Path, PathBuf};
+
+    /// Compress `data` to JPEG at the given `quality`, recursively halving
+    /// quality until the output fits within `max_size`.
+    pub(super) fn compress_image_blocking(
+        data: &[u8],
+        quality: u8,
+        max_size: usize,
+    ) -> PhotoResult<Vec<u8>> {
+        let img =
+            image::load_from_memory(data).map_err(|e| PhotoError::Processing(e.to_string()))?;
+        let mut output = Cursor::new(Vec::new());
+        let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut output, quality);
+        encoder
+            .write_image(
+                img.as_bytes(),
+                img.width(),
+                img.height(),
+                img.color().into(),
+            )
+            .map_err(|e| PhotoError::Processing(e.to_string()))?;
+        let compressed = output.into_inner();
+        if compressed.len() > max_size && quality > 20 {
+            return compress_image_blocking(data, quality / 2, max_size);
+        }
+        Ok(compressed)
+    }
+
+    /// Return `(width, height)` from raw image bytes, or `(None, None)` on error.
+    pub(super) fn extract_image_dimensions(
+        data: &[u8],
+    ) -> PhotoResult<(Option<i32>, Option<i32>)> {
+        match image::load_from_memory(data) {
+            Ok(img) => {
+                let (w, h) = img.dimensions();
+                Ok((Some(w as i32), Some(h as i32)))
+            }
+            Err(_) => Ok((None, None)),
+        }
+    }
+
+    /// Compute (overall, blur, exposure, composition) quality scores (0–100).
+    pub(super) fn calculate_photo_quality_scores(
+        data: &[u8],
+    ) -> PhotoResult<(Option<i32>, Option<i32>, Option<i32>, Option<i32>)> {
+        match image::load_from_memory(data) {
+            Ok(img) => {
+                let gray = img.to_luma8();
+                let (w, h) = gray.dimensions();
+                let blur = calculate_blur_score(&gray, w, h);
+                let exposure = calculate_exposure_score(&gray);
+                let composition = calculate_composition_score(&gray, w, h);
+                let overall = ((blur as f32 * 0.4)
+                    + (exposure as f32 * 0.3)
+                    + (composition as f32 * 0.3)) as i32;
+                Ok((Some(overall), Some(blur), Some(exposure), Some(composition)))
+            }
+            Err(_) => Ok((None, None, None, None)),
+        }
+    }
+
+    /// Laplacian-variance sharpness score (higher = sharper).
+    pub(super) fn calculate_blur_score(gray: &image::GrayImage, w: u32, h: u32) -> i32 {
+        let mut variance = 0.0;
+        let mut count = 0;
+        for y in 1..h.saturating_sub(1) {
+            for x in 1..w.saturating_sub(1) {
+                let center = gray.get_pixel(x, y).0[0] as f32;
+                let top = gray.get_pixel(x, y - 1).0[0] as f32;
+                let bottom = gray.get_pixel(x, y + 1).0[0] as f32;
+                let left = gray.get_pixel(x - 1, y).0[0] as f32;
+                let right = gray.get_pixel(x + 1, y).0[0] as f32;
+                let laplacian = center * 4.0 - top - bottom - left - right;
+                variance += laplacian * laplacian;
+                count += 1;
+            }
+        }
+        if count > 0 {
+            ((variance / count as f32) / 1000.0).min(1.0) as i32 * 100
+        } else {
+            50
+        }
+    }
+
+    /// Penalise over- and under-exposed pixels.
+    pub(super) fn calculate_exposure_score(gray: &image::GrayImage) -> i32 {
+        let mut hist = [0u32; 256];
+        for p in gray.pixels() {
+            hist[p.0[0] as usize] += 1;
+        }
+        let total = gray.width() * gray.height();
+        let over: u32 = hist[241..].iter().sum();
+        let under: u32 = hist[..16].iter().sum();
+        let penalty = (over as f32 / total as f32 + under as f32 / total as f32) * 100.0;
+        (100.0 - penalty.min(100.0)) as i32
+    }
+
+    /// Reward important pixels near the rule-of-thirds lines.
+    pub(super) fn calculate_composition_score(
+        gray: &image::GrayImage,
+        w: u32,
+        h: u32,
+    ) -> i32 {
+        let tw = w / 3;
+        let th = h / 3;
+        let mut thirds_pixels = 0;
+        let mut total_important = 0;
+        for y in 0..h {
+            for x in 0..w {
+                let val = gray.get_pixel(x, y).0[0];
+                if !(64..=192).contains(&val) {
+                    total_important += 1;
+                    let near_v = (x as i32 - tw as i32).abs() < 10
+                        || (x as i32 - (tw * 2) as i32).abs() < 10;
+                    let near_h = (y as i32 - th as i32).abs() < 10
+                        || (y as i32 - (th * 2) as i32).abs() < 10;
+                    if near_v || near_h {
+                        thirds_pixels += 1;
+                    }
+                }
+            }
+        }
+        if total_important > 0 {
+            (thirds_pixels as f32 / total_important as f32 * 100.0) as i32
+        } else {
+            50
+        }
+    }
+
+    /// Derive the thumbnail path for an original photo path.
+    pub(super) fn thumbnail_path(path: &Path) -> PathBuf {
+        let stem = path.file_stem().unwrap_or_default().to_string_lossy();
+        let ext = path.extension().unwrap_or_default().to_string_lossy();
+        path.with_file_name(format!("{}_thumb.{}", stem, ext))
+    }
+
+    /// Synchronous thumbnail generation (suitable for `spawn_blocking`).
+    pub(super) fn generate_thumbnail_blocking(data: &[u8], path: &Path) -> PhotoResult<()> {
+        let img =
+            image::load_from_memory(data).map_err(|e| PhotoError::Processing(e.to_string()))?;
+        let thumb = img.thumbnail(300, 300);
+        let format = match path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e.to_lowercase())
+            .as_deref()
+        {
+            Some("png") => ImageFormat::Png,
+            Some("webp") => ImageFormat::WebP,
+            _ => ImageFormat::Jpeg,
+        };
+        let tmp = path.with_extension("tmp");
+        thumb
+            .save_with_format(&tmp, format)
+            .map_err(|e| PhotoError::Processing(e.to_string()))?;
+        std::fs::rename(&tmp, path).map_err(|e| {
+            let _ = std::fs::remove_file(&tmp);
+            PhotoError::from(e)
+        })?;
+        Ok(())
     }
 }

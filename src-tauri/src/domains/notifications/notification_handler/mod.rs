@@ -171,6 +171,7 @@ pub async fn initialize_notification_service(
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = resolve_context!(&state, &config.correlation_id);
+    // TODO(ADR-001): extract business logic to application/
     let notification_config = NotificationConfig {
         quiet_hours_start: config.quiet_hours_start.clone(),
         quiet_hours_end: config.quiet_hours_end.clone(),
@@ -193,6 +194,7 @@ pub async fn get_notification_status(
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
+    // TODO(ADR-001): extract business logic to application/
     let service_guard = NOTIFICATION_SERVICE.lock().await;
     let config = if service_guard.is_some() {
         serde_json::json!({ "initialized": true, "channels": ["in_app"] })
@@ -293,6 +295,7 @@ pub async fn create_notification(
     let correlation_id = init_correlation_context(&request.correlation_id, None);
     let user_id = request.user_id.clone();
     let notification_type = request.r#type.clone();
+    // TODO(ADR-001): extract business logic to application/
     let notification = Notification::new(
         user_id.clone(),
         notification_type.clone(),
@@ -315,18 +318,7 @@ pub async fn create_notification(
         notification_id = %created.id,
         "Notification created"
     );
-    let notif_event = event_factory::notification_received(
-        created.id.clone(),
-        created.user_id.clone(),
-        created.message.clone(),
-    );
-    if let Err(e) = state.event_bus.publish(notif_event) {
-        tracing::warn!(
-            notification_id = %created.id,
-            "Failed to publish NotificationReceived event: {}",
-            e
-        );
-    }
+    helpers::publish_notification_event(&state.event_bus, &created);
     Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
 }
 
@@ -342,6 +334,7 @@ pub async fn send_notification(
     let correlation_id = init_correlation_context(&request.correlation_id, None);
     let user_id = request.user_id.clone();
     let notification_type = request.notification_type.clone();
+    // TODO(ADR-001): extract business logic to application/
     let notification = Notification::new(
         user_id.clone(),
         notification_type.clone(),
@@ -364,17 +357,37 @@ pub async fn send_notification(
         notification_id = %created.id,
         "Notification sent"
     );
-    let notif_event = event_factory::notification_received(
-        created.id.clone(),
-        created.user_id.clone(),
-        created.message.clone(),
-    );
-    if let Err(e) = state.event_bus.publish(notif_event) {
-        tracing::warn!(
-            notification_id = %created.id,
-            "Failed to publish NotificationReceived event: {}",
-            e
-        );
-    }
+    helpers::publish_notification_event(&state.event_bus, &created);
     Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
+}
+
+// ── Private helpers ──────────────────────────────────────────────────────────
+
+mod helpers {
+    use super::super::models::Notification;
+    use crate::shared::services::event_bus::{event_factory, EventPublisher, InMemoryEventBus};
+    use std::sync::Arc;
+
+    /// Build and publish a `NotificationReceived` domain event.
+    ///
+    /// Extracted from `create_notification` / `send_notification` to eliminate
+    /// duplication.  When the domain gains a full application layer
+    /// (TODO(ADR-001)) this should move there.
+    pub(super) fn publish_notification_event(
+        event_bus: &Arc<InMemoryEventBus>,
+        notification: &Notification,
+    ) {
+        let notif_event = event_factory::notification_received(
+            notification.id.clone(),
+            notification.user_id.clone(),
+            notification.message.clone(),
+        );
+        if let Err(e) = event_bus.publish(notif_event) {
+            tracing::warn!(
+                notification_id = %notification.id,
+                "Failed to publish NotificationReceived event: {}",
+                e
+            );
+        }
+    }
 }
