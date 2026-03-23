@@ -1,6 +1,5 @@
 //! Domain events owned by the quotes bounded context.
 
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 pub use crate::shared::services::domain_event::DomainEvent;
@@ -26,31 +25,23 @@ pub struct QuoteCustomerResponded {
 
 impl From<QuoteShared> for DomainEvent {
     fn from(event: QuoteShared) -> Self {
-        DomainEvent::QuoteShared {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            quote_id: event.quote_id,
-            quote_number: event.quote_number,
-            shared_by: event.shared_by,
-            shared_at_ms: event.shared_at_ms,
-            timestamp: chrono::DateTime::from_timestamp_millis(event.shared_at_ms)
-                .unwrap_or_else(|| Utc::now()),
-            metadata: None,
-        }
+        crate::shared::services::event_bus::event_factory::quote_shared(
+            event.quote_id,
+            event.quote_number,
+            event.shared_by,
+            event.shared_at_ms,
+        )
     }
 }
 
 impl From<QuoteCustomerResponded> for DomainEvent {
     fn from(event: QuoteCustomerResponded) -> Self {
-        DomainEvent::QuoteCustomerResponded {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            quote_id: event.quote_id,
-            quote_number: event.quote_number,
-            action: event.action,
-            customer_id: event.customer_id,
-            responded_at_ms: event.responded_at_ms,
-            timestamp: chrono::DateTime::from_timestamp_millis(event.responded_at_ms)
-                .unwrap_or_else(|| Utc::now()),
-            metadata: None,
-        }
+        crate::shared::services::event_bus::event_factory::quote_customer_responded(
+            event.quote_id,
+            event.quote_number,
+            event.action,
+            event.customer_id,
+            event.responded_at_ms,
+        )
     }
 }

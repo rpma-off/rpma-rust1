@@ -154,15 +154,13 @@ impl UsersFacade {
                             })?;
 
                         let event =
-                            crate::shared::services::domain_event::DomainEvent::UserCreated {
-                                id: uuid::Uuid::new_v4().to_string(),
-                                user_id: user.id.clone(),
-                                email: user.email.clone(),
-                                role: user.role.to_string(),
-                                timestamp: chrono::Utc::now(),
-                                created_by: ctx.auth.user_id.clone(),
-                                metadata: None,
-                            };
+                            crate::shared::services::event_bus::event_factory::user_created_with_ctx(
+                                user.id.clone(),
+                                user.email.clone(),
+                                user.role.to_string(),
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
                         if let Err(e) = services.event_bus.publish(event) {
                             tracing::warn!("Failed to publish UserCreated event: {}", e);
                         }
