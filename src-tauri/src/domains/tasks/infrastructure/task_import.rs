@@ -86,118 +86,16 @@ impl TaskImportService {
                 continue;
             }
 
-            // Parse CSV line (simple parsing - assumes no quoted fields with commas)
-            let fields: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
-
-            if fields.len() < 8 {
-                failed += 1;
-                errors.push(format!(
-                    "Line {}: Insufficient fields (expected at least 8, got {})",
-                    line_num + 2,
-                    fields.len()
-                ));
-                continue;
-            }
-
-            // Extract basic task data
-            let title = fields.get(1).unwrap_or(&"").trim();
-            let description = fields.get(2).unwrap_or(&"").trim();
-            let status_str = fields.get(3).unwrap_or(&"pending").trim();
-            let priority_str = fields.get(4).unwrap_or(&"medium").trim();
-            let client_name = fields.get(5).unwrap_or(&"").trim();
-            let client_email = fields.get(6).unwrap_or(&"").trim();
-
-            if title.is_empty() {
-                failed += 1;
-                errors.push(format!("Line {}: Title is required", line_num + 2));
-                continue;
-            }
-
-            // Validate status
-            let status = match status_str.to_lowercase().as_str() {
-                "pending" => TaskStatus::Pending,
-                "in_progress" => TaskStatus::InProgress,
-                "completed" => TaskStatus::Completed,
-                "cancelled" => TaskStatus::Cancelled,
-                "on_hold" => TaskStatus::OnHold,
-                _ => {
-                    failed += 1;
-                    errors.push(format!(
-                        "Line {}: Invalid status '{}'",
-                        line_num + 2,
-                        status_str
-                    ));
-                    continue;
+            match Self::parse_csv_line(line, line_num, user_id) {
+                Ok(_create_request) => {
+                    successful += 1;
+                    // Store for return (actual creation happens at higher level)
                 }
-            };
-
-            // Validate priority
-            let priority = match priority_str.to_lowercase().as_str() {
-                "low" => TaskPriority::Low,
-                "medium" => TaskPriority::Medium,
-                "high" => TaskPriority::High,
-                "urgent" => TaskPriority::Urgent,
-                _ => {
+                Err(msg) => {
                     failed += 1;
-                    errors.push(format!(
-                        "Line {}: Invalid priority '{}'",
-                        line_num + 2,
-                        priority_str
-                    ));
-                    continue;
+                    errors.push(msg);
                 }
-            };
-
-            // Create task request
-            let _create_request = CreateTaskRequest {
-                title: Some(title.to_string()),
-                description: Some(description.to_string()),
-                status: Some(status),
-                priority: Some(priority),
-                // Set required fields to defaults for CSV import
-                vehicle_plate: "TBD".to_string(),
-                vehicle_model: "Unknown".to_string(),
-                ppf_zones: vec!["unknown".to_string()],
-                scheduled_date: "2024-01-01T00:00:00Z".to_string(),
-                // Optional fields
-                vehicle_year: None,
-                vin: None,
-                custom_ppf_zones: None,
-                technician_id: Some(user_id.to_string()),
-                client_id: None,
-                customer_name: if !client_name.is_empty() {
-                    Some(client_name.to_string())
-                } else {
-                    None
-                },
-                customer_email: if !client_email.is_empty() {
-                    Some(client_email.to_string())
-                } else {
-                    None
-                },
-                customer_phone: None,
-                customer_address: None,
-                start_time: None,
-                end_time: None,
-                created_by: Some(user_id.to_string()),
-                // Set all other optional fields to None
-                external_id: None,
-                checklist_completed: Some(false),
-                notes: None,
-                vehicle_make: None,
-                date_rdv: None,
-                heure_rdv: None,
-                lot_film: None,
-                template_id: None,
-                workflow_id: None,
-                task_number: None,
-                creator_id: Some(user_id.to_string()),
-                estimated_duration: None,
-                tags: None,
-            };
-
-            successful += 1;
-            // Store for return (actual creation happens at higher level)
+            }
         }
 
         info!(
@@ -213,6 +111,112 @@ impl TaskImportService {
             errors,
             duplicates_skipped,
         })
+    }
+
+    /// Parse a single CSV line into a `CreateTaskRequest`.
+    ///
+    /// Returns `Ok(request)` on success or `Err(message)` with a human-readable
+    /// error for the import report.
+    fn parse_csv_line(
+        line: &str,
+        line_num: usize,
+        user_id: &str,
+    ) -> Result<CreateTaskRequest, String> {
+        let display_line = line_num + 2; // +2 for header row + 0-indexed
+
+        let fields: Vec<&str> = line.split(',').map(|s| s.trim()).collect();
+
+        if fields.len() < 8 {
+            return Err(format!(
+                "Line {}: Insufficient fields (expected at least 8, got {})",
+                display_line,
+                fields.len()
+            ));
+        }
+
+        let title = fields.get(1).unwrap_or(&"").trim();
+        let description = fields.get(2).unwrap_or(&"").trim();
+        let status_str = fields.get(3).unwrap_or(&"pending").trim();
+        let priority_str = fields.get(4).unwrap_or(&"medium").trim();
+        let client_name = fields.get(5).unwrap_or(&"").trim();
+        let client_email = fields.get(6).unwrap_or(&"").trim();
+
+        if title.is_empty() {
+            return Err(format!("Line {}: Title is required", display_line));
+        }
+
+        let status = Self::parse_task_status(status_str)
+            .ok_or_else(|| format!("Line {}: Invalid status '{}'", display_line, status_str))?;
+
+        let priority = Self::parse_task_priority(priority_str)
+            .ok_or_else(|| format!("Line {}: Invalid priority '{}'", display_line, priority_str))?;
+
+        Ok(CreateTaskRequest {
+            title: Some(title.to_string()),
+            description: Some(description.to_string()),
+            status: Some(status),
+            priority: Some(priority),
+            vehicle_plate: "TBD".to_string(),
+            vehicle_model: "Unknown".to_string(),
+            ppf_zones: vec!["unknown".to_string()],
+            scheduled_date: "2024-01-01T00:00:00Z".to_string(),
+            vehicle_year: None,
+            vin: None,
+            custom_ppf_zones: None,
+            technician_id: Some(user_id.to_string()),
+            client_id: None,
+            customer_name: if !client_name.is_empty() {
+                Some(client_name.to_string())
+            } else {
+                None
+            },
+            customer_email: if !client_email.is_empty() {
+                Some(client_email.to_string())
+            } else {
+                None
+            },
+            customer_phone: None,
+            customer_address: None,
+            start_time: None,
+            end_time: None,
+            created_by: Some(user_id.to_string()),
+            external_id: None,
+            checklist_completed: Some(false),
+            notes: None,
+            vehicle_make: None,
+            date_rdv: None,
+            heure_rdv: None,
+            lot_film: None,
+            template_id: None,
+            workflow_id: None,
+            task_number: None,
+            creator_id: Some(user_id.to_string()),
+            estimated_duration: None,
+            tags: None,
+        })
+    }
+
+    /// Map a status string (case-insensitive) to `TaskStatus`.
+    fn parse_task_status(s: &str) -> Option<TaskStatus> {
+        match s.to_lowercase().as_str() {
+            "pending" => Some(TaskStatus::Pending),
+            "in_progress" => Some(TaskStatus::InProgress),
+            "completed" => Some(TaskStatus::Completed),
+            "cancelled" => Some(TaskStatus::Cancelled),
+            "on_hold" => Some(TaskStatus::OnHold),
+            _ => None,
+        }
+    }
+
+    /// Map a priority string (case-insensitive) to `TaskPriority`.
+    fn parse_task_priority(s: &str) -> Option<TaskPriority> {
+        match s.to_lowercase().as_str() {
+            "low" => Some(TaskPriority::Low),
+            "medium" => Some(TaskPriority::Medium),
+            "high" => Some(TaskPriority::High),
+            "urgent" => Some(TaskPriority::Urgent),
+            _ => None,
+        }
     }
 
     /// Export tasks to CSV format

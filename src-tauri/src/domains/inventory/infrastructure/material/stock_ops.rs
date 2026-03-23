@@ -104,132 +104,19 @@ impl super::MaterialService {
             )));
         }
 
-        let intervention_id = request.intervention_id.clone();
-        let material_id = request.material_id.clone();
-        let recorded_by = recorded_by.clone();
-
-        let id = crate::shared::utils::uuid::generate_uuid_string();
-        let mut consumption = MaterialConsumption::new(
-            id,
-            intervention_id.clone(),
-            material_id.clone(),
-            request.quantity_used,
-        );
-
-        consumption.step_id = request.step_id;
-        consumption.step_number = request.step_number;
-        consumption.waste_quantity = waste_quantity;
-        consumption.waste_reason = request.waste_reason;
-        consumption.batch_used = request.batch_used;
-        consumption.quality_notes = request.quality_notes;
-        consumption.recorded_by = Some(recorded_by.clone());
-        consumption.unit_cost = material.unit_cost;
-        consumption.calculate_total_cost();
-
+        let consumption =
+            Self::build_consumption_record(&request, &recorded_by, &material, waste_quantity);
         let new_stock = material.current_stock - total_needed;
-        let material_id_for_update = material_id.clone();
-        let recorded_by_for_update = recorded_by.clone();
         let now = crate::shared::contracts::common::now();
-        let total_used = total_needed;
-        let transaction = InventoryTransaction {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            material_id: material_id.clone(),
-            transaction_type: InventoryTransactionType::StockOut,
-            quantity: total_used,
-            previous_stock: material.current_stock,
-            new_stock,
-            reference_number: Some(consumption.id.clone()),
-            reference_type: Some("consumption".to_string()),
-            notes: Some("Intervention consumption".to_string()),
-            unit_cost: material.unit_cost,
-            total_cost: consumption.total_cost,
-            warehouse_id: material.warehouse_id.clone(),
-            location_from: None,
-            location_to: None,
-            batch_number: consumption.batch_used.clone(),
-            expiry_date: consumption.expiry_used,
-            quality_status: None,
-            intervention_id: Some(consumption.intervention_id.clone()),
-            step_id: consumption.step_id.clone(),
-            performed_by: recorded_by.clone(),
-            performed_at: now,
-            created_at: now,
-            updated_at: now,
-            synced: false,
-            last_synced_at: None,
-        };
+        let transaction =
+            Self::build_consumption_transaction(&consumption, &material, total_needed, new_stock, &recorded_by, now);
+
+        let material_id_for_update = request.material_id.clone();
+        let recorded_by_for_update = recorded_by.clone();
         self.db
             .with_transaction(|tx| {
-                tx.execute(
-                    r#"
-                    INSERT INTO material_consumption (
-                        id, intervention_id, material_id, step_id, quantity_used, unit_cost,
-                        total_cost, waste_quantity, waste_reason, batch_used, expiry_used,
-                        quality_notes, step_number, recorded_by, recorded_at, created_at,
-                        updated_at, synced, last_synced_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    "#,
-                    params![
-                        consumption.id,
-                        consumption.intervention_id,
-                        consumption.material_id,
-                        consumption.step_id,
-                        consumption.quantity_used,
-                        consumption.unit_cost,
-                        consumption.total_cost,
-                        consumption.waste_quantity,
-                        consumption.waste_reason,
-                        consumption.batch_used,
-                        consumption.expiry_used,
-                        consumption.quality_notes,
-                        consumption.step_number,
-                        consumption.recorded_by,
-                        consumption.recorded_at,
-                        consumption.created_at,
-                        consumption.updated_at,
-                        consumption.synced,
-                        consumption.last_synced_at,
-                    ],
-                )
-                .map_err(|e| e.to_string())?;
-                tx.execute(
-                    r#"
-                    INSERT INTO inventory_transactions (
-                        id, material_id, transaction_type, quantity, previous_stock, new_stock,
-                        reference_number, reference_type, notes, unit_cost, total_cost,
-                        warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
-                        intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    "#,
-                    params![
-                        transaction.id,
-                        transaction.material_id,
-                        transaction.transaction_type.to_string(),
-                        transaction.quantity,
-                        transaction.previous_stock,
-                        transaction.new_stock,
-                        transaction.reference_number,
-                        transaction.reference_type,
-                        transaction.notes,
-                        transaction.unit_cost,
-                        transaction.total_cost,
-                        transaction.warehouse_id,
-                        transaction.location_from,
-                        transaction.location_to,
-                        transaction.batch_number,
-                        transaction.expiry_date,
-                        transaction.quality_status,
-                        transaction.intervention_id,
-                        transaction.step_id,
-                        transaction.performed_by,
-                        transaction.performed_at,
-                        transaction.created_at,
-                        transaction.updated_at,
-                        transaction.synced,
-                        transaction.last_synced_at,
-                    ],
-                )
-                .map_err(|e| e.to_string())?;
+                Self::insert_consumption(tx, &consumption)?;
+                Self::insert_inventory_transaction(tx, &transaction)?;
                 tx.execute(
                     "UPDATE materials SET current_stock = ?, updated_at = ?, updated_by = ? WHERE id = ?",
                     params![
@@ -253,6 +140,157 @@ impl super::MaterialService {
         Ok(consumption)
     }
 
+    /// Build a `MaterialConsumption` record from the request and fetched material.
+    fn build_consumption_record(
+        request: &RecordConsumptionRequest,
+        recorded_by: &str,
+        material: &Material,
+        waste_quantity: f64,
+    ) -> MaterialConsumption {
+        let id = crate::shared::utils::uuid::generate_uuid_string();
+        let mut consumption = MaterialConsumption::new(
+            id,
+            request.intervention_id.clone(),
+            request.material_id.clone(),
+            request.quantity_used,
+        );
+
+        consumption.step_id = request.step_id.clone();
+        consumption.step_number = request.step_number;
+        consumption.waste_quantity = waste_quantity;
+        consumption.waste_reason = request.waste_reason.clone();
+        consumption.batch_used = request.batch_used.clone();
+        consumption.quality_notes = request.quality_notes.clone();
+        consumption.recorded_by = Some(recorded_by.to_string());
+        consumption.unit_cost = material.unit_cost;
+        consumption.calculate_total_cost();
+        consumption
+    }
+
+    /// Build the audit `InventoryTransaction` that accompanies a consumption record.
+    fn build_consumption_transaction(
+        consumption: &MaterialConsumption,
+        material: &Material,
+        total_used: f64,
+        new_stock: f64,
+        recorded_by: &str,
+        now: i64,
+    ) -> InventoryTransaction {
+        InventoryTransaction {
+            id: crate::shared::utils::uuid::generate_uuid_string(),
+            material_id: consumption.material_id.clone(),
+            transaction_type: InventoryTransactionType::StockOut,
+            quantity: total_used,
+            previous_stock: material.current_stock,
+            new_stock,
+            reference_number: Some(consumption.id.clone()),
+            reference_type: Some("consumption".to_string()),
+            notes: Some("Intervention consumption".to_string()),
+            unit_cost: material.unit_cost,
+            total_cost: consumption.total_cost,
+            warehouse_id: material.warehouse_id.clone(),
+            location_from: None,
+            location_to: None,
+            batch_number: consumption.batch_used.clone(),
+            expiry_date: consumption.expiry_used,
+            quality_status: None,
+            intervention_id: Some(consumption.intervention_id.clone()),
+            step_id: consumption.step_id.clone(),
+            performed_by: recorded_by.to_string(),
+            performed_at: now,
+            created_at: now,
+            updated_at: now,
+            synced: false,
+            last_synced_at: None,
+        }
+    }
+
+    /// Insert a `MaterialConsumption` row within an existing transaction.
+    fn insert_consumption(
+        tx: &rusqlite::Transaction<'_>,
+        c: &MaterialConsumption,
+    ) -> Result<(), String> {
+        tx.execute(
+            r#"
+            INSERT INTO material_consumption (
+                id, intervention_id, material_id, step_id, quantity_used, unit_cost,
+                total_cost, waste_quantity, waste_reason, batch_used, expiry_used,
+                quality_notes, step_number, recorded_by, recorded_at, created_at,
+                updated_at, synced, last_synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                c.id,
+                c.intervention_id,
+                c.material_id,
+                c.step_id,
+                c.quantity_used,
+                c.unit_cost,
+                c.total_cost,
+                c.waste_quantity,
+                c.waste_reason,
+                c.batch_used,
+                c.expiry_used,
+                c.quality_notes,
+                c.step_number,
+                c.recorded_by,
+                c.recorded_at,
+                c.created_at,
+                c.updated_at,
+                c.synced,
+                c.last_synced_at,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Insert an `InventoryTransaction` row within an existing transaction.
+    fn insert_inventory_transaction(
+        tx: &rusqlite::Transaction<'_>,
+        t: &InventoryTransaction,
+    ) -> Result<(), String> {
+        tx.execute(
+            r#"
+            INSERT INTO inventory_transactions (
+                id, material_id, transaction_type, quantity, previous_stock, new_stock,
+                reference_number, reference_type, notes, unit_cost, total_cost,
+                warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
+                intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            "#,
+            params![
+                t.id,
+                t.material_id,
+                t.transaction_type.to_string(),
+                t.quantity,
+                t.previous_stock,
+                t.new_stock,
+                t.reference_number,
+                t.reference_type,
+                t.notes,
+                t.unit_cost,
+                t.total_cost,
+                t.warehouse_id,
+                t.location_from,
+                t.location_to,
+                t.batch_number,
+                t.expiry_date,
+                t.quality_status,
+                t.intervention_id,
+                t.step_id,
+                t.performed_by,
+                t.performed_at,
+                t.created_at,
+                t.updated_at,
+                t.synced,
+                t.last_synced_at,
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     /// Create an inventory transaction and atomically update stock.
     pub fn create_inventory_transaction(
         &self,
@@ -265,30 +303,7 @@ impl super::MaterialService {
             quantity = request.quantity,
             "Creating inventory transaction"
         );
-        if request.quantity.is_nan() || request.quantity.is_infinite() {
-            return Err(MaterialError::Validation(
-                "Transaction quantity must be a finite number".to_string(),
-            ));
-        }
-
-        // Validate quantity against transaction type.
-        // - Adjustment and all other types are movements: qty must be > 0.
-        match request.transaction_type {
-            InventoryTransactionType::Adjustment => {
-                if request.quantity <= 0.0 {
-                    return Err(MaterialError::Validation(
-                        "Adjustment quantity must be greater than 0".to_string(),
-                    ));
-                }
-            }
-            _ => {
-                if request.quantity <= 0.0 {
-                    return Err(MaterialError::Validation(
-                        "Transaction quantity must be greater than 0".to_string(),
-                    ));
-                }
-            }
-        }
+        Self::validate_transaction_quantity(&request)?;
 
         let material = self.get_material(&request.material_id)?.ok_or_else(|| {
             MaterialError::NotFound(format!("Material {} not found", request.material_id))
@@ -296,31 +311,8 @@ impl super::MaterialService {
         self.ensure_material_active(&material)?;
 
         let previous_stock = material.current_stock;
-
-        let new_stock = match request.transaction_type {
-            InventoryTransactionType::StockIn | InventoryTransactionType::Return => {
-                previous_stock + request.quantity
-            }
-            InventoryTransactionType::StockOut
-            | InventoryTransactionType::Waste
-            | InventoryTransactionType::Transfer => {
-                if previous_stock < request.quantity {
-                    return Err(MaterialError::InsufficientStock(format!(
-                        "Insufficient stock: {} available, {} requested",
-                        previous_stock, request.quantity
-                    )));
-                }
-                previous_stock - request.quantity
-            }
-            InventoryTransactionType::Adjustment => request.quantity,
-        };
-
-        if new_stock < 0.0 {
-            return Err(MaterialError::InsufficientStock(format!(
-                "Cannot set stock below 0. Current: {}, Requested: {}",
-                previous_stock, new_stock
-            )));
-        }
+        let new_stock =
+            Self::calculate_new_stock(previous_stock, &request.transaction_type, request.quantity)?;
 
         if let Some(max_stock) = material.maximum_stock {
             if new_stock > max_stock {
@@ -331,11 +323,11 @@ impl super::MaterialService {
             }
         }
 
-        let id = crate::shared::utils::uuid::generate_uuid_string();
         let total_cost = request.unit_cost.map(|uc| uc * request.quantity);
+        let now = crate::shared::contracts::common::now();
 
         let transaction = InventoryTransaction {
-            id,
+            id: crate::shared::utils::uuid::generate_uuid_string(),
             material_id: request.material_id.clone(),
             transaction_type: request.transaction_type.clone(),
             quantity: request.quantity,
@@ -355,55 +347,17 @@ impl super::MaterialService {
             intervention_id: request.intervention_id.clone(),
             step_id: request.step_id.clone(),
             performed_by: user_id.to_string(),
-            performed_at: crate::shared::contracts::common::now(),
-            created_at: crate::shared::contracts::common::now(),
-            updated_at: crate::shared::contracts::common::now(),
+            performed_at: now,
+            created_at: now,
+            updated_at: now,
             synced: false,
             last_synced_at: None,
         };
 
         let material_id_for_update = request.material_id.clone();
         let updated_by = user_id.to_string();
-        let now = crate::shared::contracts::common::now();
         self.db.with_transaction(|tx| {
-            tx.execute(
-                r#"
-                INSERT INTO inventory_transactions (
-                    id, material_id, transaction_type, quantity, previous_stock, new_stock,
-                    reference_number, reference_type, notes, unit_cost, total_cost,
-                    warehouse_id, location_from, location_to, batch_number, expiry_date, quality_status,
-                    intervention_id, step_id, performed_by, performed_at, created_at, updated_at, synced, last_synced_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                "#,
-                params![
-                    transaction.id,
-                    transaction.material_id,
-                    transaction.transaction_type.to_string(),
-                    transaction.quantity,
-                    transaction.previous_stock,
-                    transaction.new_stock,
-                    transaction.reference_number,
-                    transaction.reference_type,
-                    transaction.notes,
-                    transaction.unit_cost,
-                    transaction.total_cost,
-                    transaction.warehouse_id,
-                    transaction.location_from,
-                    transaction.location_to,
-                    transaction.batch_number,
-                    transaction.expiry_date,
-                    transaction.quality_status,
-                    transaction.intervention_id,
-                    transaction.step_id,
-                    transaction.performed_by,
-                    transaction.performed_at,
-                    transaction.created_at,
-                    transaction.updated_at,
-                    transaction.synced,
-                    transaction.last_synced_at,
-                ],
-            )
-            .map_err(|e| e.to_string())?;
+            Self::insert_inventory_transaction(tx, &transaction)?;
             tx.execute(
                 "UPDATE materials SET current_stock = ?, updated_at = ?, updated_by = ? WHERE id = ?",
                 params![new_stock, now, Some(updated_by), material_id_for_update],
@@ -420,6 +374,73 @@ impl super::MaterialService {
             "Inventory transaction committed"
         );
         Ok(transaction)
+    }
+
+    /// Validate that the transaction quantity is a valid positive finite number.
+    fn validate_transaction_quantity(
+        request: &CreateInventoryTransactionRequest,
+    ) -> MaterialResult<()> {
+        if request.quantity.is_nan() || request.quantity.is_infinite() {
+            return Err(MaterialError::Validation(
+                "Transaction quantity must be a finite number".to_string(),
+            ));
+        }
+
+        match request.transaction_type {
+            InventoryTransactionType::Adjustment => {
+                if request.quantity <= 0.0 {
+                    return Err(MaterialError::Validation(
+                        "Adjustment quantity must be greater than 0".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                if request.quantity <= 0.0 {
+                    return Err(MaterialError::Validation(
+                        "Transaction quantity must be greater than 0".to_string(),
+                    ));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Calculate the resulting stock level after applying a transaction.
+    ///
+    /// Returns `Err` if the operation would cause insufficient stock or a
+    /// negative balance.
+    fn calculate_new_stock(
+        previous_stock: f64,
+        transaction_type: &InventoryTransactionType,
+        quantity: f64,
+    ) -> MaterialResult<f64> {
+        let new_stock = match transaction_type {
+            InventoryTransactionType::StockIn | InventoryTransactionType::Return => {
+                previous_stock + quantity
+            }
+            InventoryTransactionType::StockOut
+            | InventoryTransactionType::Waste
+            | InventoryTransactionType::Transfer => {
+                if previous_stock < quantity {
+                    return Err(MaterialError::InsufficientStock(format!(
+                        "Insufficient stock: {} available, {} requested",
+                        previous_stock, quantity
+                    )));
+                }
+                previous_stock - quantity
+            }
+            InventoryTransactionType::Adjustment => quantity,
+        };
+
+        if new_stock < 0.0 {
+            return Err(MaterialError::InsufficientStock(format!(
+                "Cannot set stock below 0. Current: {}, Requested: {}",
+                previous_stock, new_stock
+            )));
+        }
+
+        Ok(new_stock)
     }
 
     // ── Private stock helpers ─────────────────────────────────────────────────
