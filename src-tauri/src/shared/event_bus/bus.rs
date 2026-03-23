@@ -108,7 +108,6 @@ mod tests {
     use crate::shared::event_bus::events::DomainEvent;
     use crate::shared::services::event_bus::InMemoryEventBus;
     use async_trait::async_trait;
-    use chrono::Utc;
     use std::sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -122,15 +121,11 @@ mod tests {
     async fn test_publish_event_before_init_does_not_panic() {
         // The OnceLock may or may not already be set by a prior test.
         // Either way, calling `publish_event` must never panic.
-        let event = DomainEvent::TaskCreated {
-            id: "test-id".to_string(),
-            task_id: "task-1".to_string(),
-            task_number: "T-001".to_string(),
-            title: "Test task".to_string(),
-            user_id: "user-1".to_string(),
-            timestamp: Utc::now(),
-            metadata: None,
-        };
+        let event = crate::shared::services::event_bus::event_factory::task_created(
+            "task-1".to_string(),
+            "Test task".to_string(),
+            Some("user-1".to_string()),
+        );
         // Must not panic regardless of bus initialisation state.
         super::publish_event(event);
     }
@@ -156,15 +151,11 @@ mod tests {
         }
 
         DomainEventBus::subscribe(bus.as_ref(), Arc::new(TestHandler(received_clone)));
-        let event = DomainEvent::TaskCreated {
-            id: "e1".to_string(),
-            task_id: "t1".to_string(),
-            task_number: "T-001".to_string(),
-            title: "Hello".to_string(),
-            user_id: "u1".to_string(),
-            timestamp: Utc::now(),
-            metadata: None,
-        };
+        let event = crate::shared::services::event_bus::event_factory::task_created(
+            "t1".to_string(),
+            "Hello".to_string(),
+            Some("u1".to_string()),
+        );
         DomainEventBus::publish(bus.as_ref(), event);
 
         // Give the spawned task time to run.

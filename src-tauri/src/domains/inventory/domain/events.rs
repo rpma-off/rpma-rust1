@@ -1,6 +1,5 @@
 //! Domain events owned by the inventory bounded context.
 
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 
 pub use crate::shared::services::domain_event::DomainEvent;
@@ -17,16 +16,11 @@ pub struct MaterialConsumed {
 
 impl From<MaterialConsumed> for DomainEvent {
     fn from(event: MaterialConsumed) -> Self {
-        DomainEvent::MaterialConsumed {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            material_id: event.material_id,
-            intervention_id: event.intervention_id,
-            quantity: event.quantity,
-            unit: event.unit.unwrap_or_else(|| "unit".to_string()),
-            consumed_by: "system".to_string(),
-            timestamp: chrono::DateTime::from_timestamp_millis(event.at_ms)
-                .unwrap_or_else(|| Utc::now()),
-            metadata: None,
-        }
+        crate::shared::services::event_bus::event_factory::material_consumed(
+            event.material_id,
+            event.intervention_id,
+            event.quantity,
+            event.unit.unwrap_or_else(|| "unit".to_string()),
+        )
     }
 }

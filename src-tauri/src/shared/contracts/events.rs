@@ -21,15 +21,11 @@ pub struct InterventionFinalized {
 
 impl From<InterventionFinalized> for DomainEvent {
     fn from(e: InterventionFinalized) -> Self {
-        DomainEvent::InterventionFinalized {
-            id: crate::shared::utils::uuid::generate_uuid_string(),
-            intervention_id: e.intervention_id,
-            task_id: e.task_id,
-            technician_id: e.technician_id,
-            completed_at_ms: e.completed_at_ms,
-            timestamp: chrono::DateTime::from_timestamp_millis(e.completed_at_ms)
-                .unwrap_or_else(chrono::Utc::now),
-            metadata: None,
-        }
+        crate::shared::services::event_bus::event_factory::intervention_finalized(
+            e.intervention_id,
+            e.task_id,
+            e.technician_id,
+            e.completed_at_ms,
+        )
     }
 }

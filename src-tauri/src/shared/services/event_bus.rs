@@ -610,6 +610,68 @@ pub mod event_factory {
             metadata: None,
         }
     }
+
+    // ── User events ───────────────────────────────────────────────────────────
+
+    /// Create a `UserCreated` domain event with actor + correlation context
+    /// (ADR-017, ADR-020).
+    pub fn user_created_with_ctx(
+        user_id: String,
+        email: String,
+        role: String,
+        created_by: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::UserCreated {
+            id: Uuid::new_v4().to_string(),
+            user_id,
+            email,
+            role,
+            created_by,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
+        }
+    }
+
+    // ── Quote sharing events ──────────────────────────────────────────────────
+
+    /// Create a `QuoteShared` domain event (ADR-017).
+    pub fn quote_shared(
+        quote_id: String,
+        quote_number: String,
+        shared_by: String,
+        shared_at_ms: i64,
+    ) -> DomainEvent {
+        DomainEvent::QuoteShared {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            shared_by,
+            shared_at_ms,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a `QuoteCustomerResponded` domain event (ADR-017).
+    pub fn quote_customer_responded(
+        quote_id: String,
+        quote_number: String,
+        action: String,
+        customer_id: Option<String>,
+        responded_at_ms: i64,
+    ) -> DomainEvent {
+        DomainEvent::QuoteCustomerResponded {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            action,
+            customer_id,
+            responded_at_ms,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
 }
 
 #[cfg(test)]
