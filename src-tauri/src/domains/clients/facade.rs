@@ -4,7 +4,7 @@
 //! Prefer `shared/contracts/` for type-only sharing.
 
 use crate::domains::clients::application::client_service::{ClientStat, ClientService};
-use crate::domains::clients::client_handler::{Client, ClientQuery};
+use crate::domains::clients::domain::models::{Client, ClientQuery};
 
 use std::sync::Arc;
 

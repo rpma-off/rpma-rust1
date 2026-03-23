@@ -1,6 +1,12 @@
 pub mod application;
 pub use application::SettingsService;
 
+// ── 4-Layer structure (ADR-001) ───────────────────────────────────────────────
+pub mod domain;
+pub mod infrastructure;
+pub mod ipc;
+
+// ── Flat files kept at root (incrementally migrated via the layers above) ─────
 pub mod models;
 pub mod organization_handler;
 pub mod organization_repository;

@@ -1,6 +1,12 @@
 mod facade;
 pub use facade::DocumentsFacade;
 
+// ── 4-Layer structure (ADR-001) ───────────────────────────────────────────────
+pub mod application;
+pub mod domain;
+pub mod infrastructure;
+pub mod ipc;
+
 pub mod document_storage;
 pub mod models;
 pub mod photo_handler;
