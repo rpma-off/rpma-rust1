@@ -20,7 +20,9 @@ pub use crate::domains::clients::client_handler::{CreateClientRequest, CustomerT
 pub use crate::domains::clients::ClientsFacade;
 
 // Settings domain
+pub use crate::domains::settings::models::{UserNotificationSettings, UserSettings};
 pub use crate::domains::settings::settings_repository::SettingsRepository;
+pub use crate::domains::settings::UserSettingsRepository;
 
 // Calendar domain
 pub use crate::domains::calendar::calendar_handler::CalendarService;

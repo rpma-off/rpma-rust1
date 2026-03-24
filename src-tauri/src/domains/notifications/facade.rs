@@ -7,7 +7,7 @@
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::settings::{models::UserSettings, UserSettingsRepository};
+use crate::shared::services::cross_domain::{UserSettings, UserSettingsRepository};
 use crate::shared::ipc::errors::AppError;
 use crate::shared::repositories::cache::Cache;
 

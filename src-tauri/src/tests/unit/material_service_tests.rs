@@ -562,7 +562,7 @@ mod tests {
         request.expiry_date = Some(
             Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
                 .unwrap()
-                .timestamp(),
+                .timestamp_millis(),
         );
         let material = service
             .create_material(request, Some("test_user".to_string()))
@@ -751,7 +751,7 @@ mod tests {
         expired_request.expiry_date = Some(
             Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
                 .unwrap()
-                .timestamp(),
+                .timestamp_millis(),
         );
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
@@ -817,7 +817,7 @@ mod tests {
         expired_request.expiry_date = Some(
             Utc.with_ymd_and_hms(2023, 1, 1, 0, 0, 0)
                 .unwrap()
-                .timestamp(),
+                .timestamp_millis(),
         );
         let _expired_material = service
             .create_material(expired_request, Some("test_user".to_string()))
@@ -989,7 +989,7 @@ mod tests {
             expiry_date: Some(
                 Utc.with_ymd_and_hms(2025, 12, 31, 0, 0, 0)
                     .unwrap()
-                    .timestamp(),
+                    .timestamp_millis(),
             ),
             quality_status: Some("Good".to_string()),
             intervention_id: None,

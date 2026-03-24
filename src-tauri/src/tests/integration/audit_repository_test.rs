@@ -31,7 +31,7 @@ mod tests {
             details: Some("User logged in successfully".to_string()),
             ip_address: Some("192.168.1.100".to_string()),
             user_agent: Some("Mozilla/5.0...".to_string()),
-            created_at: chrono::Utc::now().timestamp(),
+            created_at: chrono::Utc::now().timestamp_millis(),
         }
     }
 
@@ -211,7 +211,7 @@ mod tests {
 
         for (days_offset, description) in time_offsets {
             let mut event = create_test_audit_event();
-            event.created_at = (now + chrono::Duration::days(days_offset)).timestamp();
+            event.created_at = (now + chrono::Duration::days(days_offset)).timestamp_millis();
             event.details = Some(format!("Event {}", description));
 
             repo.create(&event).expect("Should create audit event");
@@ -222,14 +222,19 @@ mod tests {
         let end_date = now + chrono::Duration::days(1);
 
         let date_range_events = repo
-            .find_by_date_range(start_date.timestamp(), end_date.timestamp(), 10, 0)
+            .find_by_date_range(
+                start_date.timestamp_millis(),
+                end_date.timestamp_millis(),
+                10,
+                0,
+            )
             .expect("Should find events in date range");
 
         assert_eq!(date_range_events.len(), 3); // 1 day ago, now, 1 day from now
 
         for event in &date_range_events {
-            assert!(event.created_at >= start_date.timestamp());
-            assert!(event.created_at <= end_date.timestamp());
+            assert!(event.created_at >= start_date.timestamp_millis());
+            assert!(event.created_at <= end_date.timestamp_millis());
         }
     }
 
@@ -389,7 +394,7 @@ mod tests {
 
         for (days_offset, description) in time_offsets {
             let mut event = create_test_audit_event();
-            event.created_at = (now + chrono::Duration::days(days_offset)).timestamp();
+            event.created_at = (now + chrono::Duration::days(days_offset)).timestamp_millis();
             event.details = Some(format!("Sort test {}", description));
 
             repo.create(&event).expect("Should create audit event");
@@ -433,7 +438,7 @@ mod tests {
 
         for i in 0..5 {
             let mut event = create_test_audit_event();
-            event.created_at = old_threshold.timestamp();
+            event.created_at = old_threshold.timestamp_millis();
             event.details = Some(format!("Old event {}", i));
 
             repo.create(&event).expect("Should create audit event");
@@ -444,7 +449,7 @@ mod tests {
 
         for i in 0..3 {
             let mut event = create_test_audit_event();
-            event.created_at = recent_threshold.timestamp();
+            event.created_at = recent_threshold.timestamp_millis();
             event.details = Some(format!("Recent event {}", i));
 
             repo.create(&event).expect("Should create audit event");
@@ -452,7 +457,7 @@ mod tests {
 
         // Delete events older than 30 days
         let delete_count = repo
-            .delete_before_date((now - chrono::Duration::days(30)).timestamp())
+            .delete_before_date((now - chrono::Duration::days(30)).timestamp_millis())
             .expect("Should delete old events");
 
         assert_eq!(delete_count, 5, "Should delete 5 old events");
@@ -524,8 +529,8 @@ mod tests {
         let mut stmt = conn
             .prepare(
                 "
-            SELECT COUNT(*) FROM audit_events a 
-            LEFT JOIN users u ON a.user_id = u.id 
+            SELECT COUNT(*) FROM audit_events a
+            LEFT JOIN users u ON a.user_id = u.id
             WHERE a.id = ?1 AND a.user_id IS NOT NULL AND u.id IS NULL
         ",
             )
@@ -623,7 +628,7 @@ mod tests {
         let mut stmt = conn
             .prepare(
                 "
-            SELECT COUNT(*) FROM audit_events 
+            SELECT COUNT(*) FROM audit_events
             WHERE id = ?1 AND (event_type IS NULL OR created_at IS NULL)
         ",
             )

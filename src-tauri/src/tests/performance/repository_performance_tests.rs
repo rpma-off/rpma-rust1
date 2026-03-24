@@ -289,8 +289,8 @@ mod tests {
                 actual_end: None,
                 assigned_to: None,
                 created_by: "test_user".to_string(),
-                created_at: Utc::now().timestamp(),
-                updated_at: Utc::now().timestamp(),
+                created_at: Utc::now().timestamp_millis(),
+                updated_at: Utc::now().timestamp_millis(),
             }));
             let _ = intervention_service
                 .create_intervention(intervention, "test_user")

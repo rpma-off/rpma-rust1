@@ -32,7 +32,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             deleted_at INTEGER
         );
-        
+
         -- Tasks table for testing message context
         CREATE TABLE IF NOT EXISTS tasks (
             id TEXT PRIMARY KEY,
@@ -53,7 +53,7 @@ async fn create_test_db() -> Database {
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
             FOREIGN KEY (intervention_id) REFERENCES interventions(id) ON DELETE CASCADE
         );
-        
+
         -- Clients table for testing message context
         CREATE TABLE IF NOT EXISTS clients (
             id TEXT PRIMARY KEY,
@@ -66,7 +66,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL,
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
         );
-        
+
         -- Interventions table for testing message context
         CREATE TABLE IF NOT EXISTS interventions (
             id TEXT PRIMARY KEY,
@@ -86,7 +86,7 @@ async fn create_test_db() -> Database {
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
             FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
         );
-        
+
         -- Messages table
         CREATE TABLE IF NOT EXISTS messages (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -113,7 +113,7 @@ async fn create_test_db() -> Database {
             FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (template_id) REFERENCES message_templates(id) ON DELETE SET NULL
         );
-        
+
         -- Message templates table
         CREATE TABLE IF NOT EXISTS message_templates (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -130,7 +130,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
         );
-        
+
         -- Notification preferences table
         CREATE TABLE IF NOT EXISTS notification_preferences (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -179,7 +179,7 @@ Please review the task details and begin work as scheduled.
 Best regards,
 RPMA System',
              '["technician_name", "task_number", "task_title", "client_name", "vehicle_plate", "vehicle_model", "scheduled_date", "start_time", "priority"]', 'task'),
-            
+
             ('Task Completed', 'Notification when a task is marked as completed', 'email',
              'Task Completed: {{task_number}}',
              'Hello,
@@ -194,7 +194,7 @@ Thank you for using RPMA services.
 Best regards,
 RPMA System',
              '["task_number", "task_title", "technician_name", "completed_at"]', 'task'),
-            
+
             ('Task Overdue Reminder', 'Reminder for overdue tasks', 'sms',
              NULL,
              'URGENT: Task {{task_number}} - {{task_title}} is overdue. Please complete immediately. Client: {{client_name}}',
@@ -212,7 +212,7 @@ fn create_test_users(db: &Database) -> (String, String, String) {
 
     db.execute(r#"
         INSERT OR IGNORE INTO users (id, email, username, password_hash, first_name, last_name, role, is_active, created_at, updated_at)
-        VALUES 
+        VALUES
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -339,9 +339,10 @@ async fn test_task_assignment_notification_workflow() {
         read_at: None,
         error_message: None,
         metadata: Some(r#"{"template_variables": {"task_number": "TASK-001", "task_title": "Test Assignment Task", "client_name": "Test Client", "technician_name": "John Technician"}}"#.to_string()),
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save message
     repo.save(message).await.unwrap();
@@ -444,9 +445,10 @@ async fn test_task_completion_notification_workflow() {
         read_at: None,
         error_message: None,
         metadata: Some(r#"{"template_variables": {"task_number": "TASK-002", "task_title": "Test Completion Task", "technician_name": "John Technician", "completed_at": "2023-10-01T10:00:00Z"}}"#.to_string()),
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save message
     repo.save(message).await.unwrap();
@@ -585,9 +587,10 @@ async fn test_overdue_task_reminder_workflow() {
         read_at: None,
         error_message: None,
         metadata: Some(r#"{"template_variables": {"task_number": "TASK-003", "task_title": "Overdue Task", "client_name": "Test Client"}}"#.to_string()),
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save message
     repo.save(message).await.unwrap();
@@ -743,9 +746,10 @@ async fn test_multi_channel_notification_preferences() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Create in-app notification
     let in_app_message = Message {
@@ -767,9 +771,10 @@ async fn test_multi_channel_notification_preferences() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save both messages
     repo.save(email_message).await.unwrap();
@@ -881,9 +886,10 @@ async fn test_quiet_hours_notification_filtering() {
         read_at: None,
         error_message: None,
         metadata: Some(r#"{"quiet_hours_deferred": true}"#.to_string()),
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save message
     repo.save(message).await.unwrap();
@@ -937,9 +943,10 @@ async fn test_message_delivery_with_retry_logic() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
+
 
     // Save message
     repo.save(message).await.unwrap();
@@ -1033,17 +1040,17 @@ async fn test_message_performance_with_large_dataset() {
                 "normal"
             },
             scheduled_at: if i % 20 == 0 {
-                Some(chrono::Utc::now().timestamp() + 3600)
+                Some(chrono::Utc::now().timestamp_millis() + 3_600_000)
             } else {
                 None
             },
             sent_at: if i % 10 == 0 {
-                Some(chrono::Utc::now().timestamp())
+                Some(chrono::Utc::now().timestamp_millis())
             } else {
                 None
             },
             read_at: if i % 30 == 0 {
-                Some(chrono::Utc::now().timestamp())
+                Some(chrono::Utc::now().timestamp_millis())
             } else {
                 None
             },
@@ -1053,8 +1060,8 @@ async fn test_message_performance_with_large_dataset() {
                 None
             },
             metadata: Some(format!(r#"{{"test_index": {}}}"#, i)),
-            created_at: chrono::Utc::now().timestamp() - (i as i64 * 60), // 1 minute apart
-            updated_at: chrono::Utc::now().timestamp() - (i as i64 * 60),
+            created_at: chrono::Utc::now().timestamp_millis() - (i as i64 * 60_000), // 1 minute apart
+            updated_at: chrono::Utc::now().timestamp_millis() - (i as i64 * 60_000),
         };
 
         repo.save(message).await.unwrap();
@@ -1162,8 +1169,8 @@ async fn test_concurrent_message_operations() {
                 read_at: None,
                 error_message: None,
                 metadata: Some(format!(r#"{{"thread": {}}}"#, i)),
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
+                created_at: chrono::Utc::now().timestamp_millis(),
+                updated_at: chrono::Utc::now().timestamp_millis(),
             };
 
             // Save message

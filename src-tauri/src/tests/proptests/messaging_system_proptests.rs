@@ -32,7 +32,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             deleted_at INTEGER
         );
-        
+
         CREATE TABLE IF NOT EXISTS messages (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
             message_type TEXT NOT NULL CHECK (message_type IN ('email', 'sms', 'in_app')),
@@ -55,7 +55,7 @@ async fn create_test_db() -> Database {
             created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
         );
-        
+
         CREATE TABLE IF NOT EXISTS message_templates (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
             name TEXT NOT NULL UNIQUE,
@@ -70,7 +70,7 @@ async fn create_test_db() -> Database {
             created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
         );
-        
+
         CREATE TABLE IF NOT EXISTS notification_preferences (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
             user_id TEXT NOT NULL UNIQUE,
@@ -112,8 +112,8 @@ fn create_test_user(db: &Database, user_id: &str, email: &str) {
         "User",
         "technician",
         1,
-        chrono::Utc::now().timestamp(),
-        chrono::Utc::now().timestamp()
+        chrono::Utc::now().timestamp_millis(),
+        chrono::Utc::now().timestamp_millis()
     ]).unwrap();
 }
 
@@ -148,8 +148,8 @@ fn create_default_notification_preferences(db: &Database, user_id: &str) {
             "08:00",
             "immediate",
             "09:00",
-            chrono::Utc::now().timestamp(),
-            chrono::Utc::now().timestamp()
+            chrono::Utc::now().timestamp_millis(),
+            chrono::Utc::now().timestamp_millis()
         ],
     )
     .unwrap();
@@ -211,8 +211,8 @@ fn body_strategy() -> impl Strategy<Value = String> {
 // Strategy for generating valid dates (now +/- 1 year)
 fn date_strategy() -> impl Strategy<Value = Option<i64>> {
     let now = chrono::Utc::now();
-    let year_ago = (now - chrono::Duration::days(365)).timestamp();
-    let year_ahead = (now + chrono::Duration::days(365)).timestamp();
+    let year_ago = (now - chrono::Duration::days(365)).timestamp_millis();
+    let year_ahead = (now + chrono::Duration::days(365)).timestamp_millis();
 
     prop_oneof![Just(None), (year_ago..=year_ahead).prop_map(Some)]
 }
@@ -288,8 +288,8 @@ proptest! {
                 read_at: None,
                 error_message: None,
                 metadata: Some(r#"{"test": "random"}"#.to_string()),
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
+                created_at: chrono::Utc::now().timestamp_millis(),
+                updated_at: chrono::Utc::now().timestamp_millis(),
             };
 
             // Save message
@@ -354,8 +354,8 @@ proptest! {
                 read_at: None,
                 error_message: None,
                 metadata: None,
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
+                created_at: chrono::Utc::now().timestamp_millis(),
+                updated_at: chrono::Utc::now().timestamp_millis(),
             };
 
             repo.save(message).await.unwrap();
@@ -510,8 +510,8 @@ proptest! {
                 quiet_hours_enabled as i32,
                 quiet_hours_start.clone(),
                 quiet_hours_end.clone(),
-                chrono::Utc::now().timestamp(),
-                chrono::Utc::now().timestamp()
+                chrono::Utc::now().timestamp_millis(),
+                chrono::Utc::now().timestamp_millis()
             ]).unwrap();
 
             // Retrieve preferences
@@ -588,8 +588,8 @@ proptest! {
                     read_at: None,
                     error_message: None,
                     metadata: None,
-                    created_at: chrono::Utc::now().timestamp() + (i as i64),
-                    updated_at: chrono::Utc::now().timestamp() + (i as i64),
+                    created_at: chrono::Utc::now().timestamp_millis() + (i as i64),
+                    updated_at: chrono::Utc::now().timestamp_millis() + (i as i64),
                 };
 
                 repo.save(message).await.unwrap();
@@ -639,7 +639,7 @@ proptest! {
 
     #[test]
     fn test_message_scheduling_with_random_times(
-        scheduled_offset in 0i64..=86400i64 // 0 to 24 hours from now
+        scheduled_offset in 0i64..=86_400_000i64 // 0 to 24 hours from now (millis)
     ) {
         let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async {
@@ -650,7 +650,7 @@ proptest! {
             create_test_user(&repo.db.get_connection().unwrap(), "sender_schedule", "sender@example.com");
             create_test_user(&repo.db.get_connection().unwrap(), "recipient_schedule", "recipient@example.com");
 
-            let scheduled_time = chrono::Utc::now().timestamp() + scheduled_offset;
+            let scheduled_time = chrono::Utc::now().timestamp_millis() + scheduled_offset;
 
             // Create a scheduled message
             let message = Message {
@@ -672,8 +672,8 @@ proptest! {
                 read_at: None,
                 error_message: None,
                 metadata: Some(r#"{"scheduled": true}"#.to_string()),
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
+                created_at: chrono::Utc::now().timestamp_millis(),
+                updated_at: chrono::Utc::now().timestamp_millis(),
             };
 
             // Save message
@@ -686,10 +686,10 @@ proptest! {
             prop_assert!(saved_message.sent_at.is_none());
 
             // Should not be in unsent messages if scheduled for future
-            if scheduled_offset > 3600 { // More than 1 hour in future
+            if scheduled_offset > 3_600_000 { // More than 1 hour in future (millis)
                 // In a real implementation, we might filter out future-scheduled messages
                 // For this test, we just verify the scheduling data
-                prop_assert!(saved_message.scheduled_at.unwrap() > chrono::Utc::now().timestamp());
+                prop_assert!(saved_message.scheduled_at.unwrap() > chrono::Utc::now().timestamp_millis());
             }
         });
     }
@@ -732,8 +732,8 @@ proptest! {
                     read_at: None,
                     error_message: None,
                     metadata: None,
-                    created_at: chrono::Utc::now().timestamp() + (i as i64),
-                    updated_at: chrono::Utc::now().timestamp() + (i as i64),
+                    created_at: chrono::Utc::now().timestamp_millis() + (i as i64),
+                    updated_at: chrono::Utc::now().timestamp_millis() + (i as i64),
                 };
 
                 repo.save(message).await.unwrap();
@@ -820,8 +820,8 @@ proptest! {
                 read_at: None,
                 error_message: None,
                 metadata: metadata_content.clone(),
-                created_at: chrono::Utc::now().timestamp(),
-                updated_at: chrono::Utc::now().timestamp(),
+                created_at: chrono::Utc::now().timestamp_millis(),
+                updated_at: chrono::Utc::now().timestamp_millis(),
             };
 
             // Save message

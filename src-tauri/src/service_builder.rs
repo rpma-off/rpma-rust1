@@ -96,6 +96,8 @@ const DOCUMENTED_SERVICE_INIT_ORDER: &[&str] = &[
     "InterventionFinalizedHandler",
     "QuoteAcceptedHandler",
     "QuoteConvertedHandler",
+    "TrashService",
+    "GlobalSearchService",
 ];
 
 #[cfg(test)]
@@ -149,6 +151,8 @@ const DOCUMENTED_SERVICE_DEPENDENCIES: &[(&str, &[&str])] = &[
         "QuoteConvertedHandler",
         &["InterventionWorkflowService", "EventBus"],
     ),
+    ("TrashService", &["Database"]),
+    ("GlobalSearchService", &["Repositories"]),
 ];
 
 /// Service Builder

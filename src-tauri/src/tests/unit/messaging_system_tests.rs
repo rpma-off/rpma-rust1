@@ -33,7 +33,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             deleted_at INTEGER
         );
-        
+
         -- Messages table
         CREATE TABLE IF NOT EXISTS messages (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -60,7 +60,7 @@ async fn create_test_db() -> Database {
             FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (template_id) REFERENCES message_templates(id) ON DELETE SET NULL
         );
-        
+
         -- Message templates table
         CREATE TABLE IF NOT EXISTS message_templates (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -77,7 +77,7 @@ async fn create_test_db() -> Database {
             updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
             FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
         );
-        
+
         -- Notification preferences table
         CREATE TABLE IF NOT EXISTS notification_preferences (
             id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))),
@@ -121,8 +121,8 @@ fn create_test_user(db: &Database, user_id: &str, email: &str) {
         "User",
         "technician",
         1,
-        chrono::Utc::now().timestamp(),
-        chrono::Utc::now().timestamp()
+        chrono::Utc::now().timestamp_millis(),
+        chrono::Utc::now().timestamp_millis()
     ]).unwrap();
 }
 
@@ -157,8 +157,8 @@ fn create_default_notification_preferences(db: &Database, user_id: &str) {
             "08:00",
             "immediate",
             "09:00",
-            chrono::Utc::now().timestamp(),
-            chrono::Utc::now().timestamp()
+            chrono::Utc::now().timestamp_millis(),
+            chrono::Utc::now().timestamp_millis()
         ],
     )
     .unwrap();
@@ -204,8 +204,8 @@ async fn test_message_repository_crud() {
         read_at: None,
         error_message: None,
         metadata: Some(r#"{"key": "value"}"#.to_string()),
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     // Save message
@@ -284,8 +284,8 @@ async fn test_message_type_filtering() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     let sms_message = Message {
@@ -307,8 +307,8 @@ async fn test_message_type_filtering() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     let in_app_message = Message {
@@ -330,8 +330,8 @@ async fn test_message_type_filtering() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     // Save messages
@@ -396,14 +396,14 @@ async fn test_message_status_transitions() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     repo.save(message).await.unwrap();
 
     // Test status transitions
-    let now = chrono::Utc::now().timestamp();
+    let now = chrono::Utc::now().timestamp_millis();
 
     // Pending -> Sent
     repo.update_status("msg_status", MessageStatus::Sent)
@@ -496,8 +496,8 @@ async fn test_message_priority_filtering() {
             read_at: None,
             error_message: None,
             metadata: None,
-            created_at: chrono::Utc::now().timestamp() + (i as i64),
-            updated_at: chrono::Utc::now().timestamp() + (i as i64),
+            created_at: chrono::Utc::now().timestamp_millis() + (i as i64),
+            updated_at: chrono::Utc::now().timestamp_millis() + (i as i64),
         };
 
         repo.save(message).await.unwrap();
@@ -573,8 +573,8 @@ async fn test_message_recipient_filtering() {
             read_at: None,
             error_message: None,
             metadata: None,
-            created_at: chrono::Utc::now().timestamp() + (i as i64),
-            updated_at: chrono::Utc::now().timestamp() + (i as i64),
+            created_at: chrono::Utc::now().timestamp_millis() + (i as i64),
+            updated_at: chrono::Utc::now().timestamp_millis() + (i as i64),
         };
 
         repo.save(message).await.unwrap();
@@ -638,15 +638,15 @@ async fn test_unsent_messages_filter() {
             priority: "normal".to_string(),
             scheduled_at: None,
             sent_at: if *status == "sent" {
-                Some(chrono::Utc::now().timestamp())
+                Some(chrono::Utc::now().timestamp_millis())
             } else {
                 None
             },
             read_at: None,
             error_message: None,
             metadata: None,
-            created_at: chrono::Utc::now().timestamp(),
-            updated_at: chrono::Utc::now().timestamp(),
+            created_at: chrono::Utc::now().timestamp_millis(),
+            updated_at: chrono::Utc::now().timestamp_millis(),
         };
 
         repo.save(message).await.unwrap();
@@ -683,11 +683,11 @@ async fn test_message_date_filtering() {
         "recipient@example.com",
     );
 
-    let now = chrono::Utc::now().timestamp();
+    let now = chrono::Utc::now().timestamp_millis();
 
     // Create messages with different timestamps
     for i in 0..5 {
-        let created_at = now - (i as i64 * 86400); // i days ago
+        let created_at = now - (i as i64 * 86_400_000); // i days ago
 
         let message = Message {
             id: format!("msg_date_{}", i),
@@ -718,7 +718,7 @@ async fn test_message_date_filtering() {
     // Search messages from last 3 days
     let recent_messages = repo
         .search(MessageQuery {
-            date_from: Some(now - (3 * 86400)),
+            date_from: Some(now - (3 * 86_400_000)),
             ..Default::default()
         })
         .await
@@ -729,7 +729,7 @@ async fn test_message_date_filtering() {
     // Search messages older than 2 days
     let old_messages = repo
         .search(MessageQuery {
-            date_to: Some(now - (2 * 86400)),
+            date_to: Some(now - (2 * 86_400_000)),
             ..Default::default()
         })
         .await
@@ -792,7 +792,7 @@ async fn test_message_template_crud() {
     // Update template
     db.execute(
         r#"
-        UPDATE message_templates SET 
+        UPDATE message_templates SET
             name = ?, description = ?, subject = ?, updated_at = ?
         WHERE id = ?
     "#,
@@ -916,8 +916,8 @@ async fn test_notification_preferences_crud() {
     // Update preferences
     db.execute(
         r#"
-        UPDATE notification_preferences SET 
-            email_enabled = ?, task_updated = ?, system_alerts = ?, 
+        UPDATE notification_preferences SET
+            email_enabled = ?, task_updated = ?, system_alerts = ?,
             quiet_hours_enabled = ?, updated_at = ?
         WHERE user_id = ?
     "#,
@@ -967,7 +967,7 @@ async fn test_message_scheduling() {
         "recipient@example.com",
     );
 
-    let future_time = chrono::Utc::now().timestamp() + 3600; // 1 hour from now
+    let future_time = chrono::Utc::now().timestamp_millis() + 3_600_000; // 1 hour from now
 
     // Create a scheduled message
     let message = Message {
@@ -989,8 +989,8 @@ async fn test_message_scheduling() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     repo.save(message).await.unwrap();
@@ -1058,8 +1058,8 @@ async fn test_message_error_handling() {
         read_at: None,
         error_message: None,
         metadata: None,
-        created_at: chrono::Utc::now().timestamp(),
-        updated_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp_millis(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     };
 
     repo.save(message).await.unwrap();
