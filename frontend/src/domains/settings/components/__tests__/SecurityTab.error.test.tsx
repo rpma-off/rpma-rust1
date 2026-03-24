@@ -1,7 +1,17 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { UserSession } from '@/lib/backend';
 import { SecurityTab } from '../SecurityTab';
+
+// Create a new QueryClient instance for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 const loggerMock = {
   logInfo: jest.fn(),
@@ -32,15 +42,22 @@ describe('SecurityTab error handling', () => {
     token: 'token-1',
   } as UserSession;
 
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient = createTestQueryClient();
   });
 
   it('logs error when getActiveSessions fails', async () => {
     mockGetActiveSessions.mockRejectedValue(new Error('IPC failed'));
     mockGetSessionTimeoutConfig.mockResolvedValue({ timeout_minutes: 30 });
 
-    render(<SecurityTab user={user} />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SecurityTab user={user} />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => {
       expect(loggerMock.logError).toHaveBeenCalled();

@@ -40,6 +40,13 @@ export function useSecurityTabData(user: UserSession) {
     },
   });
 
+  // Log session load errors
+  useEffect(() => {
+    if (sessionsQuery.error) {
+      logger.logError("Impossible de charger les sessions actives", sessionsQuery.error);
+    }
+  }, [sessionsQuery.error, logger]);
+
   // ── Server state: session timeout config (ADR-014) ──────────────────────
   const timeoutQuery = useQuery<number>({
     queryKey: securityKeys.timeoutConfig(),

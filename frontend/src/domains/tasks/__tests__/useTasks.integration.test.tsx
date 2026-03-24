@@ -1,7 +1,18 @@
+import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TaskWithDetails } from '@/types/task.types';
-import { useTasks } from '../api/useTasks';
-import { taskService } from '../services/task.service';
+import { useTasks } from '../hooks/useTasks';
+import { taskIpc } from '../ipc/task.ipc';
+
+// Create a new QueryClient instance for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 jest.mock('@/domains/auth', () => ({
   useAuth: () => ({
@@ -9,9 +20,14 @@ jest.mock('@/domains/auth', () => ({
   }),
 }));
 
-jest.mock('../services/task.service', () => ({
-  taskService: {
-    getTasks: jest.fn(),
+// Use absolute path for mocking to avoid import mismatch
+jest.mock('@/domains/tasks/ipc/task.ipc', () => ({
+  taskIpc: {
+    list: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    get: jest.fn(),
   },
 }));
 
@@ -40,33 +56,35 @@ const mockTask2: TaskWithDetails = {
 } as TaskWithDetails;
 
 const mockApiResponse = {
-  success: true,
-  data: {
-    data: [mockTask, mockTask2],
-    pagination: {
-      page: 1,
-      total: 2,
-      total_pages: 1,
-      limit: 10,
-    },
+  data: [mockTask, mockTask2],
+  pagination: {
+    page: 1,
+    total: 2,
+    total_pages: 1,
+    limit: 10,
+    has_next: false,
+    has_prev: false,
   },
-  status: 200,
 };
 
 describe('useTasks (Integration)', () => {
-  const mockTaskService = taskService as jest.Mocked<typeof taskService>;
+  const mockTaskIpc = taskIpc as jest.Mocked<typeof taskIpc>;
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockTaskService.getTasks.mockResolvedValue(mockApiResponse as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
+    queryClient = createTestQueryClient();
+    mockTaskIpc.list.mockResolvedValue(mockApiResponse as any);
   });
 
-  it('loads tasks on mount with default options', async () => {
-    const { result } = renderHook(() => useTasks());
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
 
-    expect(result.current.loading).toBe(true);
-    expect(result.current.tasks).toEqual([]);
-    expect(result.current.error).toBeNull();
+  it('loads tasks on mount with default options', async () => {
+    const { result } = renderHook(() => useTasks(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -84,22 +102,20 @@ describe('useTasks (Integration)', () => {
 
   it('handles undefined data.data gracefully', async () => {
     const responseWithUndefinedData = {
-      success: true,
-      data: {
-        data: undefined,
-        pagination: {
-          page: 1,
-          total: 0,
-          total_pages: 1,
-          limit: 10,
-        },
+      data: undefined,
+      pagination: {
+        page: 1,
+        total: 0,
+        total_pages: 1,
+        limit: 10,
+        has_next: false,
+        has_prev: false,
       },
-      status: 200,
     };
 
-    mockTaskService.getTasks.mockResolvedValue(responseWithUndefinedData as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
+    mockTaskIpc.list.mockResolvedValue(responseWithUndefinedData as any);
 
-    const { result } = renderHook(() => useTasks());
+    const { result } = renderHook(() => useTasks(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

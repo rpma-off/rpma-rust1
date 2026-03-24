@@ -1,7 +1,18 @@
+import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { TaskWithDetails } from '@/types/task.types';
 import { TaskProvider, useTaskContext } from '../api/TaskProvider';
-import { taskService } from '../services/task.service';
+import { taskIpc } from '../ipc/task.ipc';
+
+// Create a new QueryClient instance for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 jest.mock('@/domains/auth', () => ({
   useAuth: () => ({
@@ -9,15 +20,13 @@ jest.mock('@/domains/auth', () => ({
   }),
 }));
 
-jest.mock('../services/task.service', () => ({
-  taskService: {
-    getTasks: jest.fn(),
-  },
-  TaskService: {
-    getInstance: () => ({
-      getTaskById: jest.fn(),
-      updateTask: jest.fn(),
-    }),
+jest.mock('../ipc/task.ipc', () => ({
+  taskIpc: {
+    list: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    get: jest.fn(),
   },
 }));
 
@@ -39,10 +48,12 @@ const TaskConsumer = () => {
 };
 
 describe('TaskProvider', () => {
-  const mockTaskService = taskService as jest.Mocked<typeof taskService>;
+  const mockTaskIpc = taskIpc as jest.Mocked<typeof taskIpc>;
+  let queryClient: QueryClient;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient = createTestQueryClient();
   });
 
   it('provides task data to consumers', async () => {
@@ -54,24 +65,24 @@ describe('TaskProvider', () => {
       priority: 'medium',
     } as TaskWithDetails;
 
-    mockTaskService.getTasks.mockResolvedValue({
-      success: true,
-      data: {
-        data: [mockTask],
-        pagination: {
-          page: 1,
-          total: 1,
-          total_pages: 1,
-          limit: 10,
-        },
+    mockTaskIpc.list.mockResolvedValue({
+      data: [mockTask],
+      pagination: {
+        page: 1,
+        total: 1,
+        total_pages: 1,
+        limit: 10,
+        has_next: false,
+        has_prev: false,
       },
-      status: 200,
-    } as Awaited<ReturnType<typeof mockTaskService.getTasks>>);
+    } as any);
 
     render(
-      <TaskProvider>
-        <TaskConsumer />
-      </TaskProvider>
+      <QueryClientProvider client={queryClient}>
+        <TaskProvider>
+          <TaskConsumer />
+        </TaskProvider>
+      </QueryClientProvider>
     );
 
     await waitFor(() => {

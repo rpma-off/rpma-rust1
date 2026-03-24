@@ -8,7 +8,7 @@ use ts_rs::TS;
 
 /// Enumerates soft-deletable entity kinds. Must stay aligned with trash repository table mappings.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "frontend/src/types/EntityType.ts")]
+#[ts(export, export_to = "EntityType.ts")]
 pub enum EntityType {
     Task,
     Client,
@@ -49,7 +49,7 @@ impl EntityType {
 
 /// Represents an item in the trash.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "frontend/src/types/DeletedItem.ts")]
+#[ts(export, export_to = "DeletedItem.ts")]
 pub struct DeletedItem {
     pub id: String,
     pub entity_type: EntityType,

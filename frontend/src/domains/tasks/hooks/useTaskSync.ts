@@ -132,7 +132,7 @@ export function useTaskSync({
 
   useEffect(() => {
     if (data) {
-      const tasks = data.data as TaskWithDetails[];
+      const tasks = (data.data as TaskWithDetails[]) ?? [];
       const pagination: TaskPagination = {
         page: data.pagination.page,
         total: Number(data.pagination.total),

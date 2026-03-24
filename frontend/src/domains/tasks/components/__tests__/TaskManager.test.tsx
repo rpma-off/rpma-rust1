@@ -1,8 +1,19 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ipcClient } from "@/lib/ipc";
+import { taskIpc } from "../../ipc/task.ipc";
 import TaskManager from "../TaskManager";
+
+// Create a new QueryClient instance for each test
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 jest.mock("@/domains/auth", () => ({
   useAuth: () => ({
@@ -12,15 +23,18 @@ jest.mock("@/domains/auth", () => ({
 
 jest.mock("@/lib/ipc", () => ({
   ipcClient: {
-    tasks: {
-      list: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
     clients: {
       list: jest.fn(),
     },
+  },
+}));
+
+jest.mock("../../ipc/task.ipc", () => ({
+  taskIpc: {
+    list: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
 }));
 
@@ -64,22 +78,26 @@ jest.mock("@/shared/ui", () => ({
   ),
 }));
 
-const mockTasksList = ipcClient.tasks.list as jest.MockedFunction<
-  typeof ipcClient.tasks.list
+const mockTasksList = taskIpc.list as jest.MockedFunction<
+  typeof taskIpc.list
 >;
-const mockTasksCreate = ipcClient.tasks.create as jest.MockedFunction<
-  typeof ipcClient.tasks.create
+const mockTasksCreate = taskIpc.create as jest.MockedFunction<
+  typeof taskIpc.create
 >;
-const mockTasksDelete = ipcClient.tasks.delete as jest.MockedFunction<
-  typeof ipcClient.tasks.delete
+const mockTasksDelete = taskIpc.delete as jest.MockedFunction<
+  typeof taskIpc.delete
 >;
 const mockClientsList = ipcClient.clients.list as jest.MockedFunction<
   typeof ipcClient.clients.list
 >;
 
 describe("TaskManager", () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    queryClient = createTestQueryClient();
+
     mockTasksList.mockResolvedValue({
       data: [
         {
@@ -124,33 +142,22 @@ describe("TaskManager", () => {
   });
 
   it("loads tasks and clients on mount", async () => {
-    render(<TaskManager />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TaskManager />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => {
       expect(mockTasksList).toHaveBeenCalledWith({
-        pagination: {
-          page: 1,
-          page_size: 100,
-          sort_by: "created_at",
-          sort_order: "desc",
-        },
-        status: null,
-        technician_id: null,
-        client_id: null,
-        priority: null,
-        search: null,
-        from_date: null,
-        to_date: null,
+        page: 1,
+        limit: 100,
       });
       expect(mockClientsList).toHaveBeenCalledWith({
-        pagination: {
-          page: 1,
-          page_size: 100,
-          sort_by: "created_at",
-          sort_order: "desc",
-        },
-        search: null,
-        customer_type: null,
+        page: 1,
+        limit: 100,
+        sort_by: "created_at",
+        sort_order: "desc",
       });
     });
 
@@ -160,7 +167,11 @@ describe("TaskManager", () => {
 
   it("opens the create form when clicking the add button", async () => {
     const user = userEvent.setup();
-    render(<TaskManager />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TaskManager />
+      </QueryClientProvider>
+    );
 
     const addButton = await screen.findByRole("button", {
       name: /nouvelle tâche/i,
@@ -172,7 +183,11 @@ describe("TaskManager", () => {
 
   it("calls delete when confirming removal", async () => {
     const user = userEvent.setup();
-    render(<TaskManager />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <TaskManager />
+      </QueryClientProvider>
+    );
 
     await screen.findByText("Test Task");
     const deleteButton = await screen.findByRole("button", {
