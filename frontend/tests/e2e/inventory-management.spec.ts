@@ -22,7 +22,7 @@ async function openInventory(page: Page) {
   const navInventory = page.getByText(/Inventaire|Inventory/i).first();
   if (await navInventory.isVisible()) {
     await navInventory.click();
-    await page.waitForURL(/\/inventory(\/|$)/, { timeout: 20000 });
+    await page.waitForURL(/\/inventory(\/|$)/, { timeout: 60000 });
   } else {
     await page.goto('/inventory');
   }

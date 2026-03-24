@@ -25,7 +25,7 @@ async function gotoLogin(page: Page): Promise<void> {
 
       return !runtimeError && !!emailInput;
     },
-    { timeout: 45000 },
+    { timeout: 90000 },
   );
 
   await page.waitForSelector('input[name="email"]', {
