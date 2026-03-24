@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::warn;
+use ts_rs::TS;
 
 use crate::domains::clients::client_handler::repository::ClientRepository;
 use crate::db::Database;
@@ -25,7 +26,8 @@ use crate::db::Database;
 // ── ClientStats / ClientStat ──────────────────────────────────────────────────
 
 /// Client statistics returned by the service
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct ClientStats {
     pub total_clients: i32,
     pub individual_clients: i32,
@@ -36,7 +38,8 @@ pub struct ClientStats {
 }
 
 /// Individual client stat
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct ClientStat {
     pub id: String,
     pub name: String,

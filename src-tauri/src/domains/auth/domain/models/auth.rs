@@ -59,7 +59,8 @@ impl std::str::FromStr for UserRole {
 }
 
 /// Kept for backward-compatible IPC responses; session timeout is fixed at 8h.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, TS)]
+#[ts(export)]
 pub struct SessionTimeoutConfig {
     pub default_timeout_minutes: u32,
     pub max_timeout_minutes: u32,

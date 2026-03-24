@@ -66,6 +66,10 @@ use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
     TaskWithDetails, UpdateChecklistItemRequest, UpdateTaskRequest,
 };
+use rpma_ppf_intervention::domains::auth::{
+    SecurityAlert, SecurityEventRecord, SecurityMetrics, SessionTimeoutConfig,
+};
+use rpma_ppf_intervention::domains::clients::application::client_service::{ClientStat, ClientStats};
 use rpma_ppf_intervention::shared::contracts::auth::{UserAccount, UserRole, UserSession};
 use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
@@ -155,6 +159,26 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&UserSession::export_to_string().expect("Failed to export UserSession type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SessionTimeoutConfig::export_to_string()
+            .expect("Failed to export SessionTimeoutConfig type"),
+    );
+    type_definitions.push_str("\n");
+    // Security audit types
+    type_definitions.push_str("// Security audit types\n");
+    type_definitions.push_str(
+        &SecurityMetrics::export_to_string().expect("Failed to export SecurityMetrics type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SecurityEventRecord::export_to_string()
+            .expect("Failed to export SecurityEventRecord type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SecurityAlert::export_to_string().expect("Failed to export SecurityAlert type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: calendar
@@ -248,6 +272,12 @@ fn main() {
     type_definitions.push_str(
         &ClientStatistics::export_to_string().expect("Failed to export ClientStatistics type"),
     );
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&ClientStats::export_to_string().expect("Failed to export ClientStats type"));
+    type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&ClientStat::export_to_string().expect("Failed to export ClientStat type"));
     type_definitions.push_str("\n\n");
 
     // Domain: inventory

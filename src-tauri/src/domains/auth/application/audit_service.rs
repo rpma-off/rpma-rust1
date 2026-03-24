@@ -11,6 +11,7 @@ use std::sync::Arc;
 use chrono::Utc;
 use serde::Serialize;
 use tracing::instrument;
+use ts_rs::TS;
 
 use crate::db::Database;
 use crate::domains::auth::infrastructure::audit_repository::AuditRepository;
@@ -45,7 +46,8 @@ pub fn severity_for(event_type: &str) -> &'static str {
 // ── Response DTOs ─────────────────────────────────────────────────────────────
 
 /// Security KPI counters for the admin dashboard.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct SecurityMetrics {
     pub total_events_today: i64,
     pub critical_alerts_today: i64,
@@ -56,7 +58,8 @@ pub struct SecurityMetrics {
 }
 
 /// A single audit event record.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct SecurityEventRecord {
     pub id: String,
     pub event_type: String,
@@ -69,7 +72,8 @@ pub struct SecurityEventRecord {
 }
 
 /// A derived security alert.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
 pub struct SecurityAlert {
     pub id: String,
     pub event_id: String,
