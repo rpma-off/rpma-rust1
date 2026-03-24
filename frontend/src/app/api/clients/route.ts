@@ -1,21 +1,21 @@
- import { NextRequest, NextResponse } from 'next/server';
-import { ApiResponseFactory } from '@/lib/http-status';
-import { getAuthenticatedUser } from '@/lib/api-auth';
- import { CreateClientRequest } from '@/types/client.types';
- import { ClientService } from '@/domains/clients/server';
+import { NextRequest, NextResponse } from "next/server";
+import { ApiResponseFactory } from "@/lib/http-status";
+import { getAuthenticatedUser } from "@/lib/api-auth";
+import type { CreateClientDTO } from "@/types/client.types";
+import { ClientService } from "@/domains/clients/server";
 
- export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ClientQueryParams {
   search?: string;
-  customer_type?: 'individual' | 'business';
+  customer_type?: "individual" | "business";
   has_tasks?: boolean;
   created_after?: string;
   created_before?: string;
   page: number;
   pageSize: number;
   sortBy: string;
-  sortOrder: 'asc' | 'desc';
+  sortOrder: "asc" | "desc";
 }
 
 /**
@@ -27,19 +27,19 @@ export async function GET(request: NextRequest) {
     // Validate authentication
     const { user, error } = await getAuthenticatedUser(request);
     if (error || !user) {
-      return NextResponse.json(ApiResponseFactory.error(
-        error || 'Unauthorized',
-        401
-      ), { status: 401 });
+      return NextResponse.json(
+        ApiResponseFactory.error(error || "Unauthorized", 401),
+        { status: 401 },
+      );
     }
 
     // Extract session token from Authorization header
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(ApiResponseFactory.error(
-        'No session token provided',
-        401
-      ), { status: 401 });
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json(
+        ApiResponseFactory.error("No session token provided", 401),
+        { status: 401 },
+      );
     }
     const sessionToken = authHeader.substring(7);
 
@@ -47,15 +47,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const params: ClientQueryParams = {
-      search: searchParams.get('search') || undefined,
-      customer_type: searchParams.get('customer_type') as 'individual' | 'business' || undefined,
-      has_tasks: searchParams.get('has_tasks') === 'true' || undefined,
-      created_after: searchParams.get('created_after') || undefined,
-      created_before: searchParams.get('created_before') || undefined,
-      page: parseInt(searchParams.get('page') || '1'),
-      pageSize: parseInt(searchParams.get('pageSize') || '20'),
-      sortBy: searchParams.get('sortBy') || 'created_at',
-      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+      search: searchParams.get("search") || undefined,
+      customer_type:
+        (searchParams.get("customer_type") as "individual" | "business") ||
+        undefined,
+      has_tasks: searchParams.get("has_tasks") === "true" || undefined,
+      created_after: searchParams.get("created_after") || undefined,
+      created_before: searchParams.get("created_before") || undefined,
+      page: parseInt(searchParams.get("page") || "1"),
+      pageSize: parseInt(searchParams.get("pageSize") || "20"),
+      sortBy: searchParams.get("sortBy") || "created_at",
+      sortOrder: (searchParams.get("sortOrder") as "asc" | "desc") || "desc",
     };
 
     // Get clients
@@ -68,15 +70,19 @@ export async function GET(request: NextRequest) {
       customer_type: params.customer_type,
       has_tasks: params.has_tasks,
       created_after: params.created_after,
-      created_before: params.created_before
+      created_before: params.created_before,
     };
 
     const result = await ClientService.getClients(sessionToken, filters);
 
-    return NextResponse.json(ApiResponseFactory.success(result), { status: 200 });
-
+    return NextResponse.json(ApiResponseFactory.success(result), {
+      status: 200,
+    });
   } catch (_error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -89,27 +95,33 @@ export async function POST(request: NextRequest) {
     // Validate authentication
     const { user, error } = await getAuthenticatedUser(request);
     if (error || !user) {
-      return NextResponse.json(ApiResponseFactory.error(
-        error || 'Unauthorized',
-        401
-      ), { status: 401 });
+      return NextResponse.json(
+        ApiResponseFactory.error(error || "Unauthorized", 401),
+        { status: 401 },
+      );
     }
 
     const body = await request.json();
 
     if (!body) {
-      return NextResponse.json(ApiResponseFactory.error(
-        'Request body is required',
-        400
-      ), { status: 400 });
+      return NextResponse.json(
+        ApiResponseFactory.error("Request body is required", 400),
+        { status: 400 },
+      );
     }
 
-    const client = await ClientService.createClient(body as CreateClientRequest, user.id);
+    const client = await ClientService.createClient(
+      body as CreateClientDTO,
+      user.id,
+    );
 
-    return NextResponse.json(ApiResponseFactory.success(client), { status: 201 });
-
+    return NextResponse.json(ApiResponseFactory.success(client), {
+      status: 201,
+    });
   } catch (_error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
-

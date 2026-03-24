@@ -174,23 +174,12 @@ export interface AuditFields {
 }
 
 /**
- * Pagination input parameters — mirrors the Rust `PaginationParams` struct.
- * Use `page_size` (not `limit`) for the items-per-page count.
+ * Pagination input parameters — canonical shared pagination contract.
  *
  * @deprecated For new code, import from `@/shared/types/pagination.types`.
  * This re-export exists for backward compatibility.
  */
-export interface PaginationParams {
-  page?: number;
-  /** Items per page. Use `page_size` — `limit` is kept for backward compatibility. */
-  page_size?: number;
-  /** @deprecated Use `page_size` instead. */
-  limit?: number;
-  sort_by?: string;
-  sort_order?: "asc" | "desc";
-  /** @deprecated Use page-based pagination; offset is computed from page × page_size. */
-  offset?: number;
-}
+export type { PaginationParams } from "@/shared/types/pagination.types";
 
 /**
  * Paginated response wrapper for lists.

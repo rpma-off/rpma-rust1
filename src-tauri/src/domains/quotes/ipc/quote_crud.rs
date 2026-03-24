@@ -103,7 +103,7 @@ pub async fn quote_update(
     let correlation_id = ctx.correlation_id.clone();
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.update(&ctx.auth.role, &request.id, request.data) {
+    match facade.update(&ctx.auth.role, &ctx.auth.user_id, &request.id, request.data) {
         Ok(quote) => {
             info!(quote_id = %quote.id, "Quote updated successfully");
             Ok(ApiResponse::success(quote).with_correlation_id(Some(correlation_id.clone())))
@@ -127,7 +127,7 @@ pub async fn quote_delete(
     let correlation_id = ctx.correlation_id.clone();
     let facade = QuotesFacade::new(state.quote_service.clone());
 
-    match facade.delete(&ctx.auth.role, &request.id) {
+    match facade.delete(&ctx.auth.role, &ctx.auth.user_id, &request.id) {
         Ok(deleted) => {
             info!(quote_id = %request.id, "Quote deleted");
             Ok(ApiResponse::success(deleted).with_correlation_id(Some(correlation_id.clone())))

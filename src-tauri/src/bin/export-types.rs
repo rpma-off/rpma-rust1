@@ -3,11 +3,19 @@
 // Note: serde_json::Value is handled via #[ts(type = "JsonValue")] attributes in the model definitions
 use ts_rs::TS;
 
+use rpma_ppf_intervention::commands::system::{DeviceInfo, HealthStatus};
+
 // Import models from canonical domain paths
+use rpma_ppf_intervention::domains::auth::{
+    SecurityAlert, SecurityEventRecord, SecurityMetrics, SessionTimeoutConfig,
+};
 use rpma_ppf_intervention::domains::calendar::models::{
     CalendarDateRange, CalendarEvent, CalendarFilter, CalendarTask, CalendarTaskPriority,
     CalendarTaskStatus, ConflictDetection, CreateEventInput, EventParticipant, EventStatus,
     EventType, ParticipantStatus, UpdateEventInput,
+};
+use rpma_ppf_intervention::domains::clients::application::client_service::{
+    ClientStat, ClientStats,
 };
 use rpma_ppf_intervention::domains::clients::client_handler::{
     Client, ClientListResponse, ClientQuery, ClientStatistics, ClientWithTasks,
@@ -66,10 +74,6 @@ use rpma_ppf_intervention::domains::tasks::domain::models::task::{
     TaskListResponse, TaskPhoto, TaskPriority, TaskQuery, TaskStatistics, TaskStatus,
     TaskWithDetails, UpdateChecklistItemRequest, UpdateTaskRequest,
 };
-use rpma_ppf_intervention::domains::auth::{
-    SecurityAlert, SecurityEventRecord, SecurityMetrics, SessionTimeoutConfig,
-};
-use rpma_ppf_intervention::domains::clients::application::client_service::{ClientStat, ClientStats};
 use rpma_ppf_intervention::shared::contracts::auth::{UserAccount, UserRole, UserSession};
 use rpma_ppf_intervention::shared::contracts::common::{
     FilmType, GpsLocation, LightingCondition, TimestampString, WeatherCondition, WorkLocation,
@@ -144,7 +148,16 @@ fn main() {
     type_definitions.push_str("// Error types\n");
     type_definitions
         .push_str(&ApiError::export_to_string().expect("Failed to export ApiError type"));
+    type_definitions.push_str("\n\n");
+
+    // Domain: system
+    type_definitions.push_str("// @domain:system\n");
+    type_definitions.push_str("// System command response types\n");
+    type_definitions
+        .push_str(&DeviceInfo::export_to_string().expect("Failed to export DeviceInfo type"));
     type_definitions.push_str("\n");
+    type_definitions
+        .push_str(&HealthStatus::export_to_string().expect("Failed to export HealthStatus type"));
     type_definitions.push_str("\n\n");
 
     // Domain: auth
@@ -176,9 +189,8 @@ fn main() {
             .expect("Failed to export SecurityEventRecord type"),
     );
     type_definitions.push_str("\n");
-    type_definitions.push_str(
-        &SecurityAlert::export_to_string().expect("Failed to export SecurityAlert type"),
-    );
+    type_definitions
+        .push_str(&SecurityAlert::export_to_string().expect("Failed to export SecurityAlert type"));
     type_definitions.push_str("\n\n");
 
     // Domain: calendar
@@ -1039,6 +1051,8 @@ fn main() {
     // List of all types we're exporting to filter out invalid imports
     let exported_types = vec![
         "ApiError",
+        "DeviceInfo",
+        "HealthStatus",
         "UserAccount",
         "UserRole",
         "UserSession",

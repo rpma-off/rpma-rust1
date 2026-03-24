@@ -4,9 +4,9 @@
  * Concrete implementation using Tauri's invoke and safeInvoke
  */
 
-import type { JsonObject } from '@/types/json';
-import { safeInvoke, PUBLIC_COMMANDS } from './utils';
-import type { IpcAdapter, IpcInvokeOptions } from './adapter';
+import type { JsonObject } from "@/types/json";
+import { safeInvoke, PUBLIC_COMMANDS } from "./utils";
+import type { IpcAdapter, IpcInvokeOptions } from "./adapter";
 
 /**
  * Real adapter implementation for production use
@@ -18,18 +18,21 @@ export class TauriAdapter implements IpcAdapter {
   async invoke<T>(
     _command: string,
     args?: JsonObject,
-    options?: IpcInvokeOptions
+    options?: IpcInvokeOptions,
   ): Promise<T> {
-    const argsWithCorrelation: JsonObject = {
-      ...(args ?? {}),
-      correlation_id: options?.correlationId,
-    };
+    const argsWithCorrelation: JsonObject =
+      options?.correlationId !== undefined
+        ? {
+            ...(args ?? {}),
+            correlation_id: options.correlationId,
+          }
+        : { ...(args ?? {}) };
 
     return safeInvoke<T>(
       _command,
       argsWithCorrelation,
       options?.validator as (data: unknown) => T,
-      options?.timeoutMs
+      options?.timeoutMs,
     );
   }
 

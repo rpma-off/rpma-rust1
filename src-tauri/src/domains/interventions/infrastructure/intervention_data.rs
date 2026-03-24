@@ -590,7 +590,7 @@ impl InterventionDataService {
         // If task has workflow_id, verify intervention exists and is active
         if let Some(intervention_id) = &workflow_id {
             let intervention_count: i64 = self.db.query_single_value(
-                "SELECT COUNT(*) FROM interventions WHERE id = ? AND status IN ('pending', 'in_progress', 'paused')",
+                "SELECT COUNT(*) FROM interventions WHERE id = ? AND status IN ('pending', 'in_progress', 'paused') AND deleted_at IS NULL",
                 params![intervention_id],
             )?;
 
@@ -628,7 +628,7 @@ impl InterventionDataService {
 
             // Sync task status with intervention status
             let intervention_status: Option<String> = self.db.query_single_value(
-                "SELECT status FROM interventions WHERE id = ?",
+                "SELECT status FROM interventions WHERE id = ? AND deleted_at IS NULL",
                 params![intervention_id],
             )?;
 

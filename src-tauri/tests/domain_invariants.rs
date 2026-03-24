@@ -833,7 +833,7 @@ mod quote_invariants {
         let result = app
             .state
             .quote_service
-            .update_quote(&quote.id, update, &UserRole::Admin);
+            .update_quote(&quote.id, update, "test_user", &UserRole::Admin);
         assert!(result.is_ok(), "Draft update must succeed: {:?}", result);
     }
 
@@ -873,7 +873,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .update_quote(&quote.id, update, &UserRole::Admin)
+            .update_quote(&quote.id, update, "test_user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -897,7 +897,7 @@ mod quote_invariants {
         let result = app
             .state
             .quote_service
-            .delete_quote(&quote.id, &UserRole::Admin);
+            .delete_quote(&quote.id, "test_user", &UserRole::Admin);
         assert!(result.is_ok(), "Draft delete must succeed: {:?}", result);
     }
 
@@ -923,7 +923,7 @@ mod quote_invariants {
         let err = app
             .state
             .quote_service
-            .delete_quote(&quote.id, &UserRole::Admin)
+            .delete_quote(&quote.id, "test_user", &UserRole::Admin)
             .unwrap_err();
 
         assert!(
@@ -1043,7 +1043,7 @@ mod quote_invariants {
         let _ = app
             .state
             .quote_service
-            .delete_quote(&quote.id, &UserRole::Admin);
+            .delete_quote(&quote.id, "test_user", &UserRole::Admin);
 
         let count_after: i64 = app
             .db

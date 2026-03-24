@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { UserSession } from '@/lib/backend';
-import { useIpcClient } from '@/lib/ipc/client';
-import { LogDomain } from '@/lib/logging/types';
-import { useLogger } from '@/shared/hooks/useLogger';
+import { useCallback, useEffect, useState } from "react";
+import type { SessionTimeoutConfig, UserSession } from "@/lib/backend";
+import { useIpcClient } from "@/lib/ipc/client";
+import { LogDomain } from "@/lib/logging/types";
+import { useLogger } from "@/shared/hooks/useLogger";
 
 export interface ActiveSession {
   id: string;
@@ -13,12 +13,11 @@ export interface ActiveSession {
   is_current?: boolean;
 }
 
-interface SessionTimeoutConfig {
-  timeout_minutes?: number;
-}
-
 export function useSecurityTabData(user: UserSession) {
-  const logger = useLogger({ context: LogDomain.SECURITY, component: 'SecurityTab' });
+  const logger = useLogger({
+    context: LogDomain.SECURITY,
+    component: "SecurityTab",
+  });
   const ipcClient = useIpcClient();
 
   const [sessions, setSessions] = useState<ActiveSession[]>([]);
@@ -46,21 +45,22 @@ export function useSecurityTabData(user: UserSession) {
 
         if (Array.isArray(sessionsResult)) {
           setSessions(sessionsResult as unknown as ActiveSession[]);
-        } else if (sessionsResult && typeof sessionsResult === 'object' && 'data' in sessionsResult) {
+        } else if (
+          sessionsResult &&
+          typeof sessionsResult === "object" &&
+          "data" in sessionsResult
+        ) {
           const data = (sessionsResult as { data: unknown }).data;
           setSessions(Array.isArray(data) ? (data as ActiveSession[]) : []);
         }
 
-        if (
-          timeoutResult &&
-          typeof timeoutResult === 'object' &&
-          'timeout_minutes' in (timeoutResult as object)
-        ) {
-          setTimeoutMinutes((timeoutResult as SessionTimeoutConfig).timeout_minutes ?? 480);
+        if (timeoutResult && typeof timeoutResult === "object") {
+          const config = timeoutResult as SessionTimeoutConfig;
+          setTimeoutMinutes(config.default_timeout_minutes ?? 480);
         }
       } catch (error) {
-        logger.logError('Failed to fetch security settings', error);
-        setSessionsError('Impossible de charger les sessions actives');
+        logger.logError("Failed to fetch security settings", error);
+        setSessionsError("Impossible de charger les sessions actives");
       } finally {
         if (!cancelled) {
           setIsLoadingSessions(false);
@@ -80,11 +80,13 @@ export function useSecurityTabData(user: UserSession) {
       setIsRevokingId(sessionId);
       try {
         await ipcClient.settings.revokeSession(sessionId);
-        setSessions((prev) => prev.filter((session) => session.id !== sessionId));
-        logger.logInfo('Session revoked', { sessionId });
+        setSessions((prev) =>
+          prev.filter((session) => session.id !== sessionId),
+        );
+        logger.logInfo("Session revoked", { sessionId });
       } catch (error) {
-        logger.logError('Failed to revoke session', error);
-        setSessionsError('Impossible de révoquer la session');
+        logger.logError("Failed to revoke session", error);
+        setSessionsError("Impossible de révoquer la session");
       } finally {
         setIsRevokingId(null);
       }
@@ -97,10 +99,10 @@ export function useSecurityTabData(user: UserSession) {
     try {
       await ipcClient.settings.revokeAllSessionsExceptCurrent();
       setSessions((prev) => prev.filter((session) => session.is_current));
-      logger.logInfo('All other sessions revoked');
+      logger.logInfo("All other sessions revoked");
     } catch (error) {
-      logger.logError('Failed to revoke all sessions', error);
-      setSessionsError('Impossible de révoquer les sessions');
+      logger.logError("Failed to revoke all sessions", error);
+      setSessionsError("Impossible de révoquer les sessions");
     } finally {
       setIsRevokingAll(false);
     }
@@ -110,9 +112,9 @@ export function useSecurityTabData(user: UserSession) {
     setIsSavingTimeout(true);
     try {
       await ipcClient.settings.updateSessionTimeout(timeoutMinutes);
-      logger.logInfo('Session timeout updated', { timeoutMinutes });
+      logger.logInfo("Session timeout updated", { timeoutMinutes });
     } catch (error) {
-      logger.logError('Failed to update session timeout', error);
+      logger.logError("Failed to update session timeout", error);
     } finally {
       setIsSavingTimeout(false);
     }
@@ -125,7 +127,7 @@ export function useSecurityTabData(user: UserSession) {
       confirm_password: string;
     }) => {
       await ipcClient.settings.changeUserPassword(request);
-      logger.logInfo('Password changed successfully', { userId: user.user_id });
+      logger.logInfo("Password changed successfully", { userId: user.user_id });
     },
     [ipcClient, logger, user.user_id],
   );

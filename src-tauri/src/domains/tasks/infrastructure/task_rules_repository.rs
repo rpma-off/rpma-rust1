@@ -160,7 +160,7 @@ impl TaskRulesRepository {
 
         // Check if user exists and is active
         let mut stmt = conn
-            .prepare("SELECT role, is_active FROM users WHERE id = ?")
+            .prepare("SELECT role, is_active FROM users WHERE id = ? AND deleted_at IS NULL")
             .map_err(|e| format!("Failed to query user: {}", e))?;
 
         let (role, is_active): (String, i32) = stmt
@@ -175,7 +175,12 @@ impl TaskRulesRepository {
         // Check if user has valid role for task assignment
         let can_be_assigned = role
             .parse::<UserRole>()
-            .map(|r| matches!(r, UserRole::Technician | UserRole::Admin | UserRole::Supervisor))
+            .map(|r| {
+                matches!(
+                    r,
+                    UserRole::Technician | UserRole::Admin | UserRole::Supervisor
+                )
+            })
             .unwrap_or(false);
         if !can_be_assigned {
             return Err(format!(

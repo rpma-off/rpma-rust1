@@ -1,5 +1,11 @@
-﻿import type { UpdateTaskRequest, TaskQuery, CreateTaskRequest, PaginationInfo, JsonValue } from '@/lib/backend';
-import { AuthSecureStorage } from '@/lib/secureStorage';
+﻿import type {
+  UpdateTaskRequest,
+  TaskQuery,
+  CreateTaskRequest,
+  PaginationInfo,
+  JsonValue,
+} from "@/lib/backend";
+import { AuthSecureStorage } from "@/lib/secureStorage";
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
@@ -8,9 +14,9 @@ import {
   type CreateTaskInput,
   type UpdateTaskInput,
   type TaskQueryInput,
-} from '@/lib/validation/api-schemas';
-import type { TaskWithDetails } from '@/types/task.types';
-import type { ServiceResponse } from '@/types/unified.types';
+} from "@/lib/validation/api-schemas";
+import type { TaskWithDetails } from "@/types/task.types";
+import type { ServiceResponse } from "@/types/unified.types";
 // DEBT: Cross-domain import — tasks service directly imports `interventionsIpc` from the
 // interventions domain, coupling two bounded contexts at the service layer.
 // Rationale: violates ADR-003 (cross-domain communication must go through the event bus or
@@ -18,12 +24,12 @@ import type { ServiceResponse } from '@/types/unified.types';
 // Next step: expose the needed intervention lookup via a shared contract or an event (ADR-016)
 // and remove this direct import.
 // ❌ CROSS-DOMAIN IMPORT
-import { interventionsIpc } from '@/domains/interventions';
-import { taskIpc } from '../ipc/task.ipc';
+import { interventionsIpc } from "@/domains/interventions";
+import { taskIpc } from "../ipc/task.ipc";
 import {
   generateUniqueTaskNumber,
   isValidTaskNumberFormat,
-} from '../utils/number-generator';
+} from "../utils/number-generator";
 
 /**
  * Frontend Task Service - Client-side task management
@@ -53,7 +59,9 @@ export class TaskService {
   }
 
   private normalizeStepData(data: unknown): Record<string, unknown> {
-    return typeof data === 'object' && data !== null ? { ...(data as Record<string, unknown>) } : {};
+    return typeof data === "object" && data !== null
+      ? { ...(data as Record<string, unknown>) }
+      : {};
   }
 
   private toJsonValue(value: unknown): JsonValue {
@@ -63,12 +71,14 @@ export class TaskService {
   private async getSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
     if (!session.token) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
     return session.token;
   }
 
-  private buildUpdateRequest(partial: Partial<UpdateTaskRequest>): UpdateTaskRequest {
+  private buildUpdateRequest(
+    partial: Partial<UpdateTaskRequest>,
+  ): UpdateTaskRequest {
     return {
       id: null,
       title: null,
@@ -104,8 +114,6 @@ export class TaskService {
       ...partial,
     };
   }
-
-
 
   /**
    * Sets the user context for the service
@@ -151,10 +159,21 @@ export class TaskService {
    * }
    * ```
    */
-  async getTasks(query?: Partial<TaskQuery>): Promise<ServiceResponse<{ data: TaskWithDetails[], pagination: PaginationInfo }>> {
+  async getTasks(
+    query?: Partial<TaskQuery>,
+  ): Promise<
+    ServiceResponse<{ data: TaskWithDetails[]; pagination: PaginationInfo }>
+  > {
     try {
       const result = await taskIpc.list(query || {});
-      return { success: true, data: { data: result.data as TaskWithDetails[], pagination: result.pagination }, status: 200 };
+      return {
+        success: true,
+        data: {
+          data: result.data as TaskWithDetails[],
+          pagination: result.pagination,
+        },
+        status: 200,
+      };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -188,7 +207,9 @@ export class TaskService {
    * });
    * ```
    */
-  async createTask(data: CreateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
+  async createTask(
+    data: CreateTaskRequest,
+  ): Promise<ServiceResponse<{ id: string }>> {
     try {
       const result = await taskIpc.create(data);
       return { success: true, data: { id: result.id }, status: 200 };
@@ -226,7 +247,10 @@ export class TaskService {
    * });
    * ```
    */
-  async updateTask(id: string, data: UpdateTaskRequest): Promise<ServiceResponse<{ id: string }>> {
+  async updateTask(
+    id: string,
+    data: UpdateTaskRequest,
+  ): Promise<ServiceResponse<{ id: string }>> {
     try {
       await taskIpc.update(id, data);
       return { success: true, data: { id }, status: 200 };
@@ -243,9 +267,14 @@ export class TaskService {
    * @param technicianId - Technician user ID to assign
    * @returns Promise resolving to service response with updated task
    */
-  async assignTask(taskId: string, technicianId: string): Promise<ServiceResponse<TaskWithDetails>> {
+  async assignTask(
+    taskId: string,
+    technicianId: string,
+  ): Promise<ServiceResponse<TaskWithDetails>> {
     try {
-      const updateData = this.buildUpdateRequest({ technician_id: technicianId });
+      const updateData = this.buildUpdateRequest({
+        technician_id: technicianId,
+      });
       const result = await taskIpc.update(taskId, updateData);
       return { success: true, data: result as TaskWithDetails, status: 200 };
     } catch (error) {
@@ -261,20 +290,23 @@ export class TaskService {
    * @param reason - Optional reason
    * @returns Promise resolving to service response
    */
-  async markTaskInvalid(taskId: string, reason?: string): Promise<ServiceResponse<unknown>> {
+  async markTaskInvalid(
+    taskId: string,
+    reason?: string,
+  ): Promise<ServiceResponse<unknown>> {
     try {
       const task = await taskIpc.get(taskId);
       if (!task) {
-        return { success: false, error: 'Task not found', status: 404 };
+        return { success: false, error: "Task not found", status: 404 };
       }
 
-      const existingNotes = task.notes ? String(task.notes) : '';
+      const existingNotes = task.notes ? String(task.notes) : "";
       const appendedNotes = reason
-        ? `${existingNotes}${existingNotes ? '\n' : ''}Invalid: ${reason}`
+        ? `${existingNotes}${existingNotes ? "\n" : ""}Invalid: ${reason}`
         : existingNotes || null;
 
       const updateData = this.buildUpdateRequest({
-        status: 'invalid',
+        status: "invalid",
         notes: appendedNotes,
       });
 
@@ -315,24 +347,50 @@ export class TaskService {
    * @param updatedAt - Optional update timestamp
    * @returns Promise resolving to service response
    */
-  async updateTaskStepData(taskId: string, stepId: string, data: unknown, _userId?: string, _updatedAt?: string): Promise<ServiceResponse<unknown>> {
+  async updateTaskStepData(
+    taskId: string,
+    stepId: string,
+    data: unknown,
+    _userId?: string,
+    _updatedAt?: string,
+  ): Promise<ServiceResponse<unknown>> {
     try {
       // First, get the active intervention for this task
-      const interventionResponse = await interventionsIpc.getActiveByTask(taskId);
+      const interventionResponse =
+        await interventionsIpc.getActiveByTask(taskId);
       let interventionId: string | null = null;
 
-      if (interventionResponse && typeof interventionResponse === 'object') {
-        if ('intervention' in interventionResponse) {
-          const intervention = (interventionResponse as { intervention?: { id?: string } }).intervention;
+      if (interventionResponse && typeof interventionResponse === "object") {
+        if ("intervention" in interventionResponse) {
+          const intervention = (
+            interventionResponse as { intervention?: { id?: string } }
+          ).intervention;
           interventionId = intervention?.id ?? null;
-        } else if ('interventions' in interventionResponse && Array.isArray((interventionResponse as { interventions?: unknown }).interventions)) {
-          const interventions = (interventionResponse as { interventions: Array<{ id?: string }> }).interventions;
+        } else if (
+          "interventions" in interventionResponse &&
+          Array.isArray(
+            (interventionResponse as { interventions?: unknown }).interventions,
+          )
+        ) {
+          const interventions = (
+            interventionResponse as { interventions: Array<{ id?: string }> }
+          ).interventions;
           interventionId = interventions[0]?.id ?? null;
-        } else if ('type' in interventionResponse) {
-          const typedResponse = interventionResponse as { type?: string; intervention?: { id?: string }; interventions?: Array<{ id?: string }> };
-          if (typedResponse.type === 'ActiveRetrieved' && typedResponse.intervention?.id) {
+        } else if ("type" in interventionResponse) {
+          const typedResponse = interventionResponse as {
+            type?: string;
+            intervention?: { id?: string };
+            interventions?: Array<{ id?: string }>;
+          };
+          if (
+            typedResponse.type === "ActiveRetrieved" &&
+            typedResponse.intervention?.id
+          ) {
             interventionId = typedResponse.intervention.id;
-          } else if (typedResponse.type === 'ActiveByTask' && typedResponse.interventions?.length) {
+          } else if (
+            typedResponse.type === "ActiveByTask" &&
+            typedResponse.interventions?.length
+          ) {
             interventionId = typedResponse.interventions[0]?.id ?? null;
           }
         }
@@ -342,7 +400,7 @@ export class TaskService {
         return {
           success: false,
           error: `No active intervention found for task ${taskId}. Please start the intervention first.`,
-          status: 404
+          status: 404,
         };
       }
 
@@ -353,17 +411,34 @@ export class TaskService {
         intervention_id: interventionId,
         step_id: stepId,
         progress_data: normalizedData,
-        notes: typeof normalizedData.notes === 'string' ? normalizedData.notes : '',
+        notes:
+          typeof normalizedData.notes === "string" ? normalizedData.notes : "",
         quality_score: normalizedData.quality_score ?? null,
-        completion_percentage: typeof normalizedData.completion_percentage === 'number' ? normalizedData.completion_percentage : 0,
-        estimated_time_remaining: normalizedData.estimated_time_remaining ?? null,
-        issues_encountered: Array.isArray(normalizedData.issues_encountered) ? normalizedData.issues_encountered : [],
-        materials_used: Array.isArray(normalizedData.materials_used) ? normalizedData.materials_used : [],
-        photos_taken: Array.isArray(normalizedData.photos_taken) ? normalizedData.photos_taken : [],
+        completion_percentage:
+          typeof normalizedData.completion_percentage === "number"
+            ? normalizedData.completion_percentage
+            : 0,
+        estimated_time_remaining:
+          normalizedData.estimated_time_remaining ?? null,
+        issues_encountered: Array.isArray(normalizedData.issues_encountered)
+          ? normalizedData.issues_encountered
+          : [],
+        materials_used: Array.isArray(normalizedData.materials_used)
+          ? normalizedData.materials_used
+          : [],
+        photos_taken: Array.isArray(normalizedData.photos_taken)
+          ? normalizedData.photos_taken
+          : [],
         location_data: normalizedData.location_data ?? null,
         weather_conditions: normalizedData.weather_conditions ?? null,
-        equipment_used: Array.isArray(normalizedData.equipment_used) ? normalizedData.equipment_used : [],
-        safety_checks_completed: Array.isArray(normalizedData.safety_checks_completed) ? normalizedData.safety_checks_completed : [],
+        equipment_used: Array.isArray(normalizedData.equipment_used)
+          ? normalizedData.equipment_used
+          : [],
+        safety_checks_completed: Array.isArray(
+          normalizedData.safety_checks_completed,
+        )
+          ? normalizedData.safety_checks_completed
+          : [],
         customer_feedback: normalizedData.customer_feedback ?? null,
       };
 
@@ -371,16 +446,18 @@ export class TaskService {
       const savedStep = await interventionsIpc.saveStepProgress({
         step_id: stepId,
         collected_data: this.toJsonValue(stepProgressData),
-        notes: typeof stepProgressData.notes === 'string' ? stepProgressData.notes : null,
+        notes:
+          typeof stepProgressData.notes === "string"
+            ? stepProgressData.notes
+            : null,
         photos: null,
       });
 
       return {
         success: true,
         data: savedStep,
-        status: 200
+        status: 200,
       };
-
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -397,8 +474,14 @@ export class TaskService {
   async getTaskStepData(
     taskId: string,
     stepId: string,
-    _userId?: string
-  ): Promise<ServiceResponse<{ stepData: unknown; lastUpdated: string | null; taskStatus: string | null }>> {
+    _userId?: string,
+  ): Promise<
+    ServiceResponse<{
+      stepData: unknown;
+      lastUpdated: string | null;
+      taskStatus: string | null;
+    }>
+  > {
     try {
       // Get step data directly using intervention service
       const stepData = await interventionsIpc.getStep(stepId);
@@ -411,9 +494,8 @@ export class TaskService {
           lastUpdated: stepData.updated_at ? String(stepData.updated_at) : null,
           taskStatus: stepData.step_status ?? null,
         },
-        status: 200
+        status: 200,
       };
-
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -441,7 +523,7 @@ export class TaskService {
       const result = await taskIpc.get(id);
 
       if (result === null) {
-        return { success: false, error: 'Task not found', status: 404 };
+        return { success: false, error: "Task not found", status: 404 };
       }
 
       return { success: true, data: result as TaskWithDetails, status: 200 };
@@ -454,13 +536,23 @@ export class TaskService {
   /**
    * Generates a unique task number using API route (web backend flow)
    */
-  async generateTaskNumber(): Promise<ServiceResponse<{ task_number: string }>> {
+  async generateTaskNumber(): Promise<
+    ServiceResponse<{ task_number: string }>
+  > {
     try {
       const result = generateUniqueTaskNumber({ maxRetries: 1 }, null);
       if (!result.success || !result.taskNumber) {
-        return { success: false, error: result.error || 'Failed to generate task number', status: 500 };
+        return {
+          success: false,
+          error: result.error || "Failed to generate task number",
+          status: 500,
+        };
       }
-      return { success: true, data: { task_number: result.taskNumber }, status: 200 };
+      return {
+        success: true,
+        data: { task_number: result.taskNumber },
+        status: 200,
+      };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -470,10 +562,16 @@ export class TaskService {
   /**
    * Validates a task number format using API route (web backend flow)
    */
-  async validateTaskNumber(taskNumber: string): Promise<ServiceResponse<{ task_number: string; is_valid: boolean }>> {
+  async validateTaskNumber(
+    taskNumber: string,
+  ): Promise<ServiceResponse<{ task_number: string; is_valid: boolean }>> {
     try {
       const isValid = isValidTaskNumberFormat(taskNumber);
-      return { success: true, data: { task_number: taskNumber, is_valid: isValid }, status: 200 };
+      return {
+        success: true,
+        data: { task_number: taskNumber, is_valid: isValid },
+        status: 200,
+      };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
@@ -483,15 +581,21 @@ export class TaskService {
   /**
    * Retrieves tasks from validated API route (web backend flow)
    */
-  async getValidatedTasks(query: Partial<TaskQueryInput> = {}): Promise<ServiceResponse<unknown>> {
+  async getValidatedTasks(
+    query: Partial<TaskQueryInput> = {},
+  ): Promise<ServiceResponse<unknown>> {
     try {
       const validated = validateAndSanitizeInput(TaskQuerySchema, query);
       const limit = validated.limit ?? 20;
       const offset = validated.offset ?? 0;
       const page = Math.floor(offset / limit) + 1;
       const result = await taskIpc.list({
-        page,
-        limit,
+        pagination: {
+          page,
+          page_size: limit,
+          sort_by: null,
+          sort_order: null,
+        },
         status: validated.status ?? null,
         priority: validated.priority ?? null,
         technician_id: validated.technician_id ?? null,
@@ -509,7 +613,9 @@ export class TaskService {
   /**
    * Creates a task through validated API route (web backend flow)
    */
-  async createValidatedTask(data: CreateTaskInput): Promise<ServiceResponse<unknown>> {
+  async createValidatedTask(
+    data: CreateTaskInput,
+  ): Promise<ServiceResponse<unknown>> {
     try {
       const validated = validateAndSanitizeInput(CreateTaskSchema, data);
       const result = await taskIpc.create(validated as CreateTaskRequest);
@@ -523,7 +629,10 @@ export class TaskService {
   /**
    * Updates a task through validated API route (web backend flow)
    */
-  async updateValidatedTask(taskId: string, data: UpdateTaskInput): Promise<ServiceResponse<unknown>> {
+  async updateValidatedTask(
+    taskId: string,
+    data: UpdateTaskInput,
+  ): Promise<ServiceResponse<unknown>> {
     try {
       const validated = validateAndSanitizeInput(UpdateTaskSchema, data);
       const updateData = this.buildUpdateRequest({
@@ -546,7 +655,8 @@ export class TaskService {
    */
   async syncTaskWorkflow(taskId: string): Promise<ServiceResponse<unknown>> {
     try {
-      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
+      const { TaskWorkflowSyncService } =
+        await import("./task-workflow-sync.service");
       const result = await TaskWorkflowSyncService.syncTaskWithWorkflow(taskId);
       return { success: true, data: result, status: 200 };
     } catch (error) {
@@ -558,10 +668,14 @@ export class TaskService {
   /**
    * Retrieves task with workflow progress via API route (web backend flow)
    */
-  async getTaskWorkflowProgress(taskId: string): Promise<ServiceResponse<unknown>> {
+  async getTaskWorkflowProgress(
+    taskId: string,
+  ): Promise<ServiceResponse<unknown>> {
     try {
-      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
-      const result = await TaskWorkflowSyncService.getTaskWithWorkflowProgress(taskId);
+      const { TaskWorkflowSyncService } =
+        await import("./task-workflow-sync.service");
+      const result =
+        await TaskWorkflowSyncService.getTaskWithWorkflowProgress(taskId);
       return { success: true, data: result, status: 200 };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -574,7 +688,8 @@ export class TaskService {
    */
   async syncAllTaskWorkflows(): Promise<ServiceResponse<unknown>> {
     try {
-      const { TaskWorkflowSyncService } = await import('./task-workflow-sync.service');
+      const { TaskWorkflowSyncService } =
+        await import("./task-workflow-sync.service");
       const result = await TaskWorkflowSyncService.syncAllTasksWithWorkflows();
       return { success: true, data: result, status: 200 };
     } catch (error) {
@@ -588,5 +703,3 @@ export const taskService = TaskService.getInstance();
 
 // Re-export types for convenience
 export type { TaskWithDetails };
-
-

@@ -1,43 +1,48 @@
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { settingsOperations } from '@/shared/utils';
-import { SystemSettingsTab } from '../SystemSettingsTab';
-import { MonitoringTab } from '../MonitoringTab';
-import { BusinessRulesTab } from '../BusinessRulesTab';
+import React from "react";
+import { render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import userEvent from "@testing-library/user-event";
+import { settingsOperations } from "@/shared/utils";
+import { SystemSettingsTab } from "../SystemSettingsTab";
+import { MonitoringTab } from "../MonitoringTab";
+import { BusinessRulesTab } from "../BusinessRulesTab";
 
-jest.mock('@/domains/auth', () => ({
-  useAuth: () => ({ session: { token: 'test-token' } }),
+jest.mock("@/shared/hooks/useAuth", () => ({
+  useAuth: () => ({ session: { token: "test-token" } }),
 }));
 
-jest.mock('@/shared/utils', () => ({
+jest.mock("@/shared/utils", () => ({
   settingsOperations: {
     getAppSettings: jest.fn(),
     updateGeneralSettings: jest.fn(),
     updateBusinessRules: jest.fn(),
   },
   LogDomain: {
-    AUTH: 'AUTH',
-    TASK: 'TASK',
-    CLIENT: 'CLIENT',
-    PHOTO: 'PHOTO',
-    SYNC: 'SYNC',
-    UI: 'UI',
-    API: 'API',
-    SYSTEM: 'SYSTEM',
-    USER: 'USER',
-    PERFORMANCE: 'PERFORMANCE',
-    SECURITY: 'SECURITY',
+    AUTH: "AUTH",
+    TASK: "TASK",
+    CLIENT: "CLIENT",
+    PHOTO: "PHOTO",
+    SYNC: "SYNC",
+    UI: "UI",
+    API: "API",
+    SYSTEM: "SYSTEM",
+    USER: "USER",
+    PERFORMANCE: "PERFORMANCE",
+    SECURITY: "SECURITY",
   },
 }));
 
-jest.mock('@/shared/hooks', () => ({
+jest.mock("@/domains/admin/hooks/useSystemHealth", () => ({
   useSystemHealth: () => ({
-    systemStatus: 'healthy',
+    systemStatus: "healthy",
     statusDetails: {
-      status: 'healthy',
+      status: "healthy",
       components: {
-        database: { status: 'healthy', message: 'OK', lastChecked: new Date().toISOString() },
+        database: {
+          status: "healthy",
+          message: "OK",
+          lastChecked: new Date().toISOString(),
+        },
       },
       timestamp: new Date().toISOString(),
     },
@@ -47,7 +52,7 @@ jest.mock('@/shared/hooks', () => ({
   }),
 }));
 
-jest.mock('@/components/ui/confirm-dialog', () => ({
+jest.mock("@/components/ui/confirm-dialog", () => ({
   ConfirmDialog: ({
     open,
     title,
@@ -70,7 +75,7 @@ jest.mock('@/components/ui/confirm-dialog', () => ({
     ) : null,
 }));
 
-jest.mock('@/shared/hooks/useLogger', () => ({
+jest.mock("@/shared/hooks/useLogger", () => ({
   useLogger: () => ({
     logDebug: jest.fn(),
     logInfo: jest.fn(),
@@ -91,7 +96,7 @@ jest.mock('@/shared/hooks/useLogger', () => ({
   }),
 }));
 
-jest.mock('sonner', () => ({
+jest.mock("sonner", () => ({
   toast: {
     error: jest.fn(),
     success: jest.fn(),
@@ -100,10 +105,31 @@ jest.mock('sonner', () => ({
 }));
 
 const mockGetAppSettings = settingsOperations.getAppSettings as jest.Mock;
-const mockUpdateGeneralSettings = settingsOperations.updateGeneralSettings as jest.Mock;
-const mockUpdateBusinessRules = settingsOperations.updateBusinessRules as jest.Mock;
+const mockUpdateGeneralSettings =
+  settingsOperations.updateGeneralSettings as jest.Mock;
+const mockUpdateBusinessRules =
+  settingsOperations.updateBusinessRules as jest.Mock;
 
-describe('Configuration tabs regressions', () => {
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+      mutations: {
+        retry: false,
+      },
+    },
+  });
+
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+
+  return Wrapper;
+};
+
+describe("Configuration tabs regressions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetAppSettings.mockResolvedValue({ general: {} });
@@ -111,25 +137,27 @@ describe('Configuration tabs regressions', () => {
     mockUpdateBusinessRules.mockResolvedValue({});
   });
 
-  it('renders business hours schedule entries', async () => {
-    render(<SystemSettingsTab />);
+  it("renders business hours schedule entries", async () => {
+    render(<SystemSettingsTab />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText(/Paramètres Système/i)).toBeInTheDocument();
     });
 
-    const businessHoursTab = screen.getByRole('tab', { name: /Heures d'ouverture/i });
+    const businessHoursTab = screen.getByRole("tab", {
+      name: /Heures d'ouverture/i,
+    });
     const user = userEvent.setup();
     await user.click(businessHoursTab);
 
     await waitFor(() => {
-      expect(screen.getByText('monday')).toBeInTheDocument();
+      expect(screen.getByText("monday")).toBeInTheDocument();
     });
-    expect(screen.getAllByText('08:00 - 18:00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText("08:00 - 18:00").length).toBeGreaterThan(0);
   });
 
-  it('does not render removed static monitoring placeholders', async () => {
-    render(<MonitoringTab />);
+  it("does not render removed static monitoring placeholders", async () => {
+    render(<MonitoringTab />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText(/État du Système/i)).toBeInTheDocument();
@@ -139,19 +167,21 @@ describe('Configuration tabs regressions', () => {
     expect(screen.queryByText(/Alertes Récentes/i)).not.toBeInTheDocument();
   });
 
-  it('opens confirm dialog before deleting a business rule', async () => {
+  it("opens confirm dialog before deleting a business rule", async () => {
     mockGetAppSettings.mockResolvedValue({
       business_rules: [
         {
-          id: 'rule-1',
-          name: 'Règle Test',
-          description: 'Description',
-          category: 'task_assignment',
+          id: "rule-1",
+          name: "Règle Test",
+          description: "Description",
+          category: "task_assignment",
           priority: 1,
           is_active: true,
           isActive: true,
-          conditions: [{ field: 'status', operator: 'equals', value: 'open' }],
-          actions: [{ type: 'send_notification', target: 'manager', value: 'msg' }],
+          conditions: [{ field: "status", operator: "equals", value: "open" }],
+          actions: [
+            { type: "send_notification", target: "manager", value: "msg" },
+          ],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           createdAt: new Date().toISOString(),
@@ -159,19 +189,23 @@ describe('Configuration tabs regressions', () => {
       ],
     });
 
-    render(<BusinessRulesTab />);
+    render(<BusinessRulesTab />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText(/Règles Métier/i)).toBeInTheDocument();
     });
 
     const user = userEvent.setup();
-    await user.click(await screen.findByLabelText(/Supprimer la règle Règle Test/i));
+    await user.click(
+      await screen.findByLabelText(/Supprimer la règle Règle Test/i),
+    );
 
-    expect(screen.getByTestId('confirm-dialog')).toBeInTheDocument();
-    expect(screen.getByTestId('confirm-dialog')).toHaveTextContent('Supprimer la règle');
+    expect(screen.getByTestId("confirm-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("confirm-dialog")).toHaveTextContent(
+      "Supprimer la règle",
+    );
 
-    await user.click(screen.getByRole('button', { name: /Confirmer/i }));
+    await user.click(screen.getByRole("button", { name: /Confirmer/i }));
 
     await waitFor(() => {
       expect(mockUpdateBusinessRules).toHaveBeenCalled();

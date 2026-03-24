@@ -1,20 +1,20 @@
-// =============================================================================
+/// =============================================================================
 // QUOTE TYPES
 //
-// Enum types and pure-DTO response types are re-exported from the auto-generated
-// backend contract (`@/lib/backend`) so they never drift from the Rust source.
+// Frontend transport-safe compatibility layer for quote contracts.
 //
-// Monetary-field entity/request types intentionally use `number` instead of
-// `bigint` because Tauri's IPC layer serialises Rust i64 values via JSON, which
-// means the runtime value that arrives in the browser is always a JS `number`.
-// Using `bigint` here would compile but fail at runtime.  If the serialisation
-// strategy ever changes (e.g. BSON / structured clone), revisit these types.
+// ADR-015 source of truth remains Rust + generated `@/lib/backend` types, but
+// several quote payloads include `i64` fields that generate as `bigint` in TS.
+// At runtime over JSON/Tauri IPC, those values are consumed as JS `number`.
+//
+// This file therefore:
+// - re-exports enum-like/generated-safe types directly from `@/lib/backend`
+// - defines transport-safe aliases for bigint-bearing quote entities/requests
+// - keeps frontend-only UI helper types local
 // =============================================================================
 
-// ── Re-exports from generated backend contract ────────────────────────────────
-// Safe re-exports: pure enum / structural types with no bigint fields.
-// Types that reference monetary fields (Quote, QuoteItem, etc.) are kept as
-// local definitions below so they use `number` instead of `bigint`.
+// ── Safe re-exports from generated backend contract ───────────────────────────
+
 export type {
   QuoteStatus,
   QuoteItemKind,
@@ -22,32 +22,43 @@ export type {
   QuoteExportResponse,
 } from "@/lib/backend";
 
+// ── Transport-safe compatibility contracts ────────────────────────────────────
+
 /**
  * Update quote attachment request.
- * Fields are optional so callers can patch a single field without providing
- * the full object.  The backend accepts null for fields that are not changing.
+ *
+ * Generated backend contract uses required nullable fields; frontend callers
+ * often patch one field at a time. Keep this compatibility shape permissive.
  */
 export interface UpdateQuoteAttachmentRequest {
   description?: string | null;
   attachment_type?: import("@/lib/backend").AttachmentType | null;
 }
 
-// ── Types kept local because they embed bigint-bearing entity types ───────────
-
-/** Quote query parameters for listing (frontend optional-field variant). */
+/**
+ * Frontend query shape used by list screens and hooks.
+ *
+ * The generated backend contract nests pagination under `pagination`, but the
+ * existing frontend uses flat query params. Keep this transport-safe adapter
+ * shape here for compatibility.
+ */
 export interface QuoteQuery {
   page?: number;
   limit?: number;
   search?: string;
   client_id?: string;
-  status?: import("@/lib/backend").QuoteStatus;
+  status?: import("@/lib/backend").QuoteStatus | null;
   date_from?: string;
   date_to?: string;
   sort_by?: string;
-  sort_order?: string;
+  sort_order?: "asc" | "desc";
 }
 
-/** Quote list response – `total` is a JSON number despite Rust i64. */
+/**
+ * Quote list response consumed by list hooks/pages.
+ *
+ * Numeric totals are JS numbers at the frontend boundary.
+ */
 export interface QuoteListResponse {
   data: Quote[];
   total: number;
@@ -56,18 +67,15 @@ export interface QuoteListResponse {
 }
 
 /**
- * One month's quote count – `count` is a JSON number despite Rust i64.
+ * Monthly aggregate count.
  */
 export interface QuoteMonthlyCount {
-  /** e.g. "2026-03" */
   month: string;
-  /** Serialised as JSON number despite Rust i64. */
   count: number;
 }
 
 /**
- * Aggregate statistics for all quotes – all numeric fields are JSON numbers
- * despite Rust i64 at the backend.
+ * Quote statistics payload consumed by dashboards/hooks.
  */
 export interface QuoteStats {
   total: number;
@@ -80,24 +88,27 @@ export interface QuoteStats {
   monthly_counts: QuoteMonthlyCount[];
 }
 
-/** Response for the accept-quote action. */
+/**
+ * Response for quote acceptance workflow.
+ */
 export interface QuoteAcceptResponse {
   quote: Quote;
   task_created: { task_id: string } | null;
 }
 
-/** Response for the convert-to-task action. */
+/**
+ * Response for quote-to-task conversion workflow.
+ */
 export interface ConvertQuoteToTaskResponse {
   quote: Quote;
   task_id: string;
   task_number: string;
 }
 
-// ── Entity types (monetary fields kept as `number` for JSON transport) ────────
-
 /**
- * Quote entity – monetary fields are `number` at the JS boundary even though
- * the Rust struct uses `i64` (serialised as a JSON number, not a BigInt).
+ * Quote entity.
+ *
+ * All monetary / i64-like fields are numbers in frontend code.
  */
 export interface Quote {
   id: string;
@@ -106,21 +117,14 @@ export interface Quote {
   task_id: string | null;
   status: import("@/lib/backend").QuoteStatus;
   valid_until: string | null;
-  /** Public-facing description shown to the customer. */
   description: string | null;
-  /** Internal notes (staff only). */
   notes: string | null;
   terms: string | null;
-  /** Serialised as JSON number despite Rust i64. */
   subtotal: number;
-  /** Serialised as JSON number despite Rust i64. */
   tax_total: number;
-  /** Serialised as JSON number despite Rust i64. */
   total: number;
   discount_type: string | null;
-  /** Serialised as JSON number despite Rust i64. */
   discount_value: number | null;
-  /** Serialised as JSON number despite Rust i64. */
   discount_amount: number | null;
   vehicle_plate: string | null;
   vehicle_make: string | null;
@@ -134,7 +138,7 @@ export interface Quote {
 }
 
 /**
- * Quote item entity – `unit_price` is `number` at the JS boundary.
+ * Quote item entity.
  */
 export interface QuoteItem {
   id: string;
@@ -143,7 +147,6 @@ export interface QuoteItem {
   label: string;
   description: string | null;
   qty: number;
-  /** Serialised as JSON number despite Rust i64. */
   unit_price: number;
   tax_rate: number | null;
   material_id: string | null;
@@ -153,14 +156,13 @@ export interface QuoteItem {
 }
 
 /**
- * Quote attachment entity – `file_size` is `number` at the JS boundary.
+ * Quote attachment entity.
  */
 export interface QuoteAttachment {
   id: string;
   quote_id: string;
   file_name: string;
   file_path: string;
-  /** Serialised as JSON number despite Rust i64. */
   file_size: number;
   mime_type: string;
   attachment_type: import("@/lib/backend").AttachmentType;
@@ -169,11 +171,10 @@ export interface QuoteAttachment {
   created_by: string | null;
 }
 
-// ── Request types (outbound – numeric fields stay as `number`) ────────────────
-
 /**
- * Create quote request.  `valid_until` is a Unix timestamp in seconds; sent
- * as a JSON number rather than BigInt.
+ * Create quote request.
+ *
+ * `valid_until` and discount values are numbers at the frontend boundary.
  */
 export interface CreateQuoteRequest {
   client_id: string;
@@ -187,12 +188,14 @@ export interface CreateQuoteRequest {
   vehicle_model?: string | null;
   vehicle_year?: string | null;
   vehicle_vin?: string | null;
-  discount_type?: "none" | "percentage" | "fixed" | null;
+  discount_type?: "none" | "percentage" | "fixed" | string | null;
   discount_value?: number | null;
   items?: CreateQuoteItemRequest[];
 }
 
-/** Update quote request. */
+/**
+ * Update quote request.
+ */
 export interface UpdateQuoteRequest {
   valid_until?: number | null;
   description?: string | null;
@@ -207,46 +210,51 @@ export interface UpdateQuoteRequest {
   vehicle_vin?: string | null;
 }
 
-/** Create quote item request. */
+/**
+ * Create quote item request.
+ */
 export interface CreateQuoteItemRequest {
   kind: import("@/lib/backend").QuoteItemKind;
   label: string;
   description?: string | null;
   qty: number;
-  /** Serialised as JSON number despite Rust i64. */
   unit_price: number;
   tax_rate?: number | null;
   material_id?: string | null;
   position?: number;
 }
 
-/** Update quote item request. */
+/**
+ * Update quote item request.
+ */
 export interface UpdateQuoteItemRequest {
   kind?: import("@/lib/backend").QuoteItemKind;
   label?: string;
   description?: string | null;
   qty?: number;
-  /** Serialised as JSON number despite Rust i64. */
   unit_price?: number;
   tax_rate?: number | null;
   material_id?: string | null;
   position?: number;
 }
 
-/** Create quote attachment request. */
+/**
+ * Create quote attachment request.
+ */
 export interface CreateQuoteAttachmentRequest {
   file_name: string;
   file_path: string;
-  /** Serialised as JSON number despite Rust i64. */
   file_size: number;
   mime_type: string;
   attachment_type?: import("@/lib/backend").AttachmentType | null;
   description?: string | null;
 }
 
-// ── Frontend-only types (no backend equivalent) ───────────────────────────────
+// ── Frontend-only helper/view-model types ─────────────────────────────────────
 
-/** Frontend filter state for the quotes list page. */
+/**
+ * Frontend filter state for quote list pages.
+ */
 export interface QuoteFilters {
   search?: string;
   status?: import("@/lib/backend").QuoteStatus | null;
@@ -258,7 +266,9 @@ export interface QuoteFilters {
   [key: string]: string | number | null | undefined;
 }
 
-/** Aggregate stats displayed in the status tab bar of the quotes list page. */
+/**
+ * UI stats shown in quote page status summaries.
+ */
 export interface QuotePageStats {
   total: number;
   draft: number;
@@ -270,7 +280,9 @@ export interface QuotePageStats {
   changes_requested: number;
 }
 
-/** Part line item used in the quote builder UI. */
+/**
+ * Quote builder part line item.
+ */
 export interface QuotePart {
   id: string;
   name: string;
@@ -279,7 +291,9 @@ export interface QuotePart {
   price: number;
 }
 
-/** Labor line item used in the quote builder UI. */
+/**
+ * Quote builder labor line item.
+ */
 export interface QuoteLaborItem {
   id: string;
   name: string;
@@ -288,7 +302,9 @@ export interface QuoteLaborItem {
   hourlyRate: number;
 }
 
-/** Input shape for the parts section of the quote form. */
+/**
+ * Parts section input model.
+ */
 export interface QuotePartInput {
   part_number: string | null;
   name: string;
@@ -297,7 +313,9 @@ export interface QuotePartInput {
   total: number;
 }
 
-/** Input shape for the labor section of the quote form. */
+/**
+ * Labor section input model.
+ */
 export interface QuoteLaborInput {
   description: string;
   hours: number;

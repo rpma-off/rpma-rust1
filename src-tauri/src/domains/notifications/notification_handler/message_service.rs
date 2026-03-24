@@ -44,7 +44,7 @@ impl MessageService {
         notification_kind: Option<&str>,
     ) -> Result<Message, AppError> {
         let id = format!("{:x}", rand::random::<u128>());
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         let message = Message {
             id,
             message_type: request.message_type.clone(),

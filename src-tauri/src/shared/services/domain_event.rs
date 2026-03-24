@@ -180,7 +180,46 @@ pub enum DomainEvent {
         metadata: Option<serde_json::Value>,
     },
 
-    // Quote Events
+    // Quote CRUD Events
+    QuoteCreated {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        task_id: Option<String>,
+        created_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteUpdated {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        updated_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteDeleted {
+        id: String,
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        deleted_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    QuoteDuplicated {
+        id: String,
+        source_quote_id: String,
+        new_quote_id: String,
+        new_quote_number: String,
+        client_id: String,
+        duplicated_by: String,
+        timestamp: DateTime<Utc>,
+        metadata: Option<serde_json::Value>,
+    },
+    // Quote Status Events
     QuoteShared {
         id: String,
         quote_id: String,
@@ -388,6 +427,10 @@ impl DomainEvent {
     pub const SYSTEM_MAINTENANCE: &'static str = "SystemMaintenance";
     pub const PERFORMANCE_ALERT: &'static str = "PerformanceAlert";
     pub const NOTIFICATION_RECEIVED: &'static str = "NotificationReceived";
+    pub const QUOTE_CREATED: &'static str = "QuoteCreated";
+    pub const QUOTE_UPDATED: &'static str = "QuoteUpdated";
+    pub const QUOTE_DELETED: &'static str = "QuoteDeleted";
+    pub const QUOTE_DUPLICATED: &'static str = "QuoteDuplicated";
     pub const QUOTE_ACCEPTED: &'static str = "QuoteAccepted";
     pub const QUOTE_REJECTED: &'static str = "QuoteRejected";
     pub const QUOTE_CONVERTED: &'static str = "QuoteConverted";
@@ -436,6 +479,10 @@ impl DomainEvent {
             DomainEvent::SystemMaintenance { .. } => Self::SYSTEM_MAINTENANCE,
             DomainEvent::PerformanceAlert { .. } => Self::PERFORMANCE_ALERT,
             DomainEvent::NotificationReceived { .. } => Self::NOTIFICATION_RECEIVED,
+            DomainEvent::QuoteCreated { .. } => Self::QUOTE_CREATED,
+            DomainEvent::QuoteUpdated { .. } => Self::QUOTE_UPDATED,
+            DomainEvent::QuoteDeleted { .. } => Self::QUOTE_DELETED,
+            DomainEvent::QuoteDuplicated { .. } => Self::QUOTE_DUPLICATED,
             DomainEvent::QuoteAccepted { .. } => Self::QUOTE_ACCEPTED,
             DomainEvent::QuoteRejected { .. } => Self::QUOTE_REJECTED,
             DomainEvent::QuoteConverted { .. } => Self::QUOTE_CONVERTED,
@@ -476,6 +523,10 @@ impl DomainEvent {
             DomainEvent::SystemMaintenance { timestamp, .. } => *timestamp,
             DomainEvent::PerformanceAlert { timestamp, .. } => *timestamp,
             DomainEvent::NotificationReceived { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteCreated { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteUpdated { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteDeleted { timestamp, .. } => *timestamp,
+            DomainEvent::QuoteDuplicated { timestamp, .. } => *timestamp,
             DomainEvent::QuoteAccepted { timestamp, .. } => *timestamp,
             DomainEvent::QuoteRejected { timestamp, .. } => *timestamp,
             DomainEvent::QuoteConverted { timestamp, .. } => *timestamp,

@@ -1,6 +1,6 @@
 /**
  * Configuration Types
- * 
+ *
  * Type definitions for configuration management
  */
 
@@ -10,7 +10,7 @@ export interface ConfigurationItem {
   key: string;
   value: string | number | boolean;
   description?: string;
-  data_type: 'string' | 'number' | 'boolean' | 'json';
+  data_type: "string" | "number" | "boolean" | "json";
   is_required: boolean;
   isRequired?: boolean;
   default_value?: string;
@@ -34,23 +34,40 @@ export interface ConfigurationCategory {
 }
 
 export interface BusinessRule {
-   id: string;
-   name: string;
-   category: string;
-   description?: string;
-   conditions: RuleCondition[];
-   actions: RuleAction[];
-   priority: number;
-   is_active: boolean;
-   isActive?: boolean;
-   created_at: string;
-   updated_at: string;
-   createdAt?: string;
+  id: string;
+  name: string;
+  category: string;
+  description?: string;
+  conditions: RuleCondition[];
+  actions: RuleAction[];
+  priority: number;
+  is_active: boolean;
+  isActive?: boolean;
+  created_at: string;
+  updated_at: string;
+  createdAt?: string;
 }
 
-export type RuleOperator = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'not_contains' | 'in' | 'not_in' | 'is_null' | 'is_not_null';
+export type RuleOperator =
+  | "equals"
+  | "not_equals"
+  | "greater_than"
+  | "less_than"
+  | "contains"
+  | "not_contains"
+  | "in"
+  | "not_in"
+  | "is_null"
+  | "is_not_null";
 
-export type RuleActionType = 'set_field' | 'send_notification' | 'create_task' | 'assign_user' | 'change_status' | 'execute_workflow' | 'log_event';
+export type RuleActionType =
+  | "set_field"
+  | "send_notification"
+  | "create_task"
+  | "assign_user"
+  | "change_status"
+  | "execute_workflow"
+  | "log_event";
 
 export interface RuleCondition {
   field: string;
@@ -64,37 +81,54 @@ export interface RuleAction {
   value: string | number | boolean | Record<string, unknown>;
 }
 
-export type BusinessRuleCategory = 'task' | 'client' | 'workflow' | 'system' | 'task_assignment';
+export type BusinessRuleCategory =
+  | "task"
+  | "client"
+  | "workflow"
+  | "system"
+  | "task_assignment";
 
 export interface IntegrationConfig {
-    id: string;
-    type: IntegrationType;
-    name: string;
-    config: Record<string, string | number | boolean>;
-    status: IntegrationStatus;
-    last_sync?: string;
-    lastSync?: string;
-    provider?: string;
-    isActive?: boolean;
-    settings?: Record<string, string | number | boolean>;
-    credentials?: {
-        encrypted: boolean;
-        data: string;
-    };
-    createdAt?: string;
-    updatedAt?: string;
-     healthCheck?: {
-        status: 'healthy' | 'unhealthy' | 'warning';
-        lastChecked: string;
-        responseTime?: number;
-        error?: string;
-        details?: Record<string, unknown>;
-     };
+  id: string;
+  type: IntegrationType;
+  name: string;
+  config: Record<string, string | number | boolean>;
+  status: IntegrationStatus;
+  last_sync?: string;
+  lastSync?: string;
+  provider?: string;
+  isActive?: boolean;
+  settings?: Record<string, string | number | boolean>;
+  credentials?: {
+    encrypted: boolean;
+    data: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  healthCheck?: {
+    status: "healthy" | "unhealthy" | "warning";
+    lastChecked: string;
+    responseTime?: number;
+    error?: string;
+    details?: Record<string, unknown>;
+  };
 }
 
-export type IntegrationType = 'email' | 'sms' | 'calendar' | 'webhook' | 'api' | 'backup' | 'sync';
+export type IntegrationType =
+  | "email"
+  | "sms"
+  | "calendar"
+  | "webhook"
+  | "api"
+  | "backup"
+  | "sync";
 
-export type IntegrationStatus = 'active' | 'inactive' | 'error' | 'pending' | 'testing';
+export type IntegrationStatus =
+  | "active"
+  | "inactive"
+  | "error"
+  | "pending"
+  | "testing";
 
 export interface MonitoringConfig {
   id: string;
@@ -105,43 +139,55 @@ export interface MonitoringConfig {
 }
 
 export interface SecurityPolicy {
-    id: string;
-    name: string;
-    description: string;
-    policy_type: SecurityPolicyType;
-    type: SecurityPolicyType;
-    is_active: boolean;
-    isActive?: boolean;
-    applies_to: string[];
-    appliesTo?: string[];
-    settings: Record<string, unknown>;
-    exceptions?: SecurityPolicyException[];
-    created_at: string;
-    updated_at: string;
-    createdAt?: string;
-    updatedAt?: string;
+  id: string;
+  name: string;
+  description: string;
+  policy_type: SecurityPolicyType;
+  type: SecurityPolicyType;
+  is_active: boolean;
+  isActive?: boolean;
+  applies_to: string[];
+  appliesTo?: string[];
+  settings: Record<string, unknown>;
+  exceptions?: SecurityPolicyException[];
+  created_at: string;
+  updated_at: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SecurityPolicyException {
-    id: string;
-    user_id?: string;
-    role?: string;
-    condition: string;
-    reason: string;
-    created_at: string;
-    expires_at?: string;
+  id: string;
+  user_id?: string;
+  role?: string;
+  condition: string;
+  reason: string;
+  created_at: string;
+  expires_at?: string;
 }
 
-export type SecurityPolicyType = 'password' | 'session' | 'api_rate_limit' | 'encryption' | 'access_control' | 'authentication' | 'authorization' | 'data_protection' | 'compliance';
+export type SecurityPolicyType =
+  | "password"
+  | "session"
+  | "api_rate_limit"
+  | "encryption"
+  | "access_control"
+  | "authentication"
+  | "authorization"
+  | "data_protection"
+  | "compliance";
 
 export interface SystemStatus {
-   status: 'healthy' | 'warning' | 'error';
-   components: Record<string, {
-      status: 'healthy' | 'warning' | 'error';
+  status: "healthy" | "warning" | "error";
+  components: Record<
+    string,
+    {
+      status: "healthy" | "warning" | "error";
       message?: string;
       lastChecked: string;
-   }>;
-   timestamp: string;
+    }
+  >;
+  timestamp: string;
 }
 
 export interface ConfigurationFilters {
@@ -161,8 +207,8 @@ export interface ConfigurationFilters {
 export interface BusinessRuleFilters {
   search?: string;
   category?: string;
-  status?: 'active' | 'inactive' | 'all';
-  priority?: 'low' | 'medium' | 'high' | 'all';
+  status?: "active" | "inactive" | "all";
+  priority?: "low" | "medium" | "high" | "all";
   page?: number;
   limit?: number;
   pageSize?: number;
@@ -184,9 +230,7 @@ export interface BusinessHoursConfig {
   schedule: Record<string, { start: string; end: string; enabled: boolean }>;
 }
 
-export interface SystemConfiguration extends ConfigurationItem {
-  system_level: boolean;
-}
+export type { SystemConfiguration } from "@/lib/backend";
 
 export interface ConfigurationFiltersData extends ConfigurationFilters {
   pageSize?: number;
@@ -198,51 +242,59 @@ export interface BusinessRuleFiltersData extends BusinessRuleFilters {
 
 export type PerformanceThreshold = {
   value: number;
-  unit: 'ms' | 'percent' | 'mb' | 'seconds';
+  unit: "ms" | "percent" | "mb" | "seconds";
   description?: string;
 };
 
 export interface PerformanceMonitoring {
-    enabled: boolean;
-    interval: number;
-    intervalSeconds?: number;
-    retention_days: number;
-    metrics?: string[];
+  enabled: boolean;
+  interval: number;
+  intervalSeconds?: number;
+  retention_days: number;
+  metrics?: string[];
 }
 
 export interface PerformanceAlert {
-    enabled?: boolean;
-    channels?: string[];
-    cooldown_minutes?: number;
-    metric?: string;
-    threshold?: number;
-    action?: string;
-    recipients?: string[];
+  enabled?: boolean;
+  channels?: string[];
+  cooldown_minutes?: number;
+  metric?: string;
+  threshold?: number;
+  action?: string;
+  recipients?: string[];
 }
 
 export interface PerformanceConfig {
-    id: string;
-    category: PerformanceCategory;
-    name: string;
-    value: unknown;
-    isActive: boolean;
-    settings?: Record<string, string | number | boolean>;
-    thresholds?: Record<string, PerformanceThreshold>;
-    monitoring?: PerformanceMonitoring;
-    alerts?: PerformanceAlert[];
-    createdAt?: string;
-    updatedAt?: string;
+  id: string;
+  category: PerformanceCategory;
+  name: string;
+  value: unknown;
+  isActive: boolean;
+  settings?: Record<string, string | number | boolean>;
+  thresholds?: Record<string, PerformanceThreshold>;
+  monitoring?: PerformanceMonitoring;
+  alerts?: PerformanceAlert[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export type PerformanceCategory = 'cache' | 'database' | 'network' | 'ui' | 'caching' | 'file_upload' | 'api' | 'monitoring';
+export type PerformanceCategory =
+  | "cache"
+  | "database"
+  | "network"
+  | "ui"
+  | "caching"
+  | "file_upload"
+  | "api"
+  | "monitoring";
 
 export interface CreatePerformanceConfigDTO {
-   category: PerformanceCategory;
-   name: string;
-   value: unknown;
-   isActive: boolean;
-   settings?: Record<string, string | number | boolean>;
-   thresholds?: Record<string, PerformanceThreshold>;
-   monitoring?: PerformanceMonitoring;
-    alerts?: PerformanceAlert[];
+  category: PerformanceCategory;
+  name: string;
+  value: unknown;
+  isActive: boolean;
+  settings?: Record<string, string | number | boolean>;
+  thresholds?: Record<string, PerformanceThreshold>;
+  monitoring?: PerformanceMonitoring;
+  alerts?: PerformanceAlert[];
 }

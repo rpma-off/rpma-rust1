@@ -1,9 +1,13 @@
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
-import type { DeletedItem, EntityType } from '@/types/trash';
+import { safeInvoke } from "@/lib/ipc/core";
+import { IPC_COMMANDS } from "@/lib/ipc/commands";
+import type { DeletedItem, EntityType } from "@/types/trash";
 
 export const trashIpc = {
-  list: async (entityType: EntityType, limit: number, offset: number): Promise<DeletedItem[]> => {
+  list: async (
+    entityType: EntityType,
+    limit: number,
+    offset: number,
+  ): Promise<DeletedItem[]> => {
     return safeInvoke<DeletedItem[]>(IPC_COMMANDS.LIST_TRASH, {
       entityType,
       limit,
@@ -26,8 +30,9 @@ export const trashIpc = {
   },
 
   emptyTrash: async (entityType?: EntityType): Promise<number> => {
-    return safeInvoke<number>(IPC_COMMANDS.EMPTY_TRASH, {
-      entityType,
-    });
+    return safeInvoke<number>(
+      IPC_COMMANDS.EMPTY_TRASH,
+      entityType ? { entityType } : {},
+    );
   },
 };

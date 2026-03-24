@@ -1,9 +1,9 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PAGINATION } from "@/lib/constants";
-import { useAuth } from "@/shared/hooks/useAuth";
 import { quoteKeys } from "@/lib/query-keys";
-import type { JsonObject } from "@/types/json";
+import { useAuth } from "@/shared/hooks/useAuth";
+import type { JsonObject, JsonValue } from "@/types/json";
 import type {
   Quote,
   QuoteListResponse,
@@ -12,6 +12,15 @@ import type {
   UpdateQuoteRequest,
 } from "@/types/quote.types";
 import { quotesIpc } from "@/domains/quotes/ipc/quotes.ipc";
+
+const compactJsonObject = (
+  value: Record<string, JsonValue | undefined>,
+): JsonObject => {
+  const entries = Object.entries(value).filter(
+    ([, fieldValue]) => fieldValue !== undefined,
+  ) as Array<[string, JsonValue]>;
+  return Object.fromEntries(entries);
+};
 
 // --- useQuotesList ---
 
@@ -41,7 +50,7 @@ export function useQuotesList(options: UseQuotesListOptions = {}) {
   } = useQuery({
     queryKey: [...quoteKeys.lists(), filters],
     queryFn: async () => {
-      const result = await quotesIpc.list(filters);
+      const result = await quotesIpc.list(compactJsonObject(filters));
       return result as unknown as QuoteListResponse;
     },
     enabled: autoFetch && !!user?.token,

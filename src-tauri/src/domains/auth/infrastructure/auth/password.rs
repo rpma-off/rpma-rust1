@@ -38,7 +38,7 @@ impl super::AuthService {
         let conn = self.db.get_connection()?;
         let stored_hash: String = conn
             .query_row(
-                "SELECT password_hash FROM users WHERE id = ? AND is_active = 1",
+                "SELECT password_hash FROM users WHERE id = ? AND is_active = 1 AND deleted_at IS NULL",
                 [user_id],
                 |row| row.get(0),
             )

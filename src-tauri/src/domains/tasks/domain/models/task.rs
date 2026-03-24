@@ -595,7 +595,7 @@ impl TaskHistory {
             old_status,
             new_status,
             reason,
-            changed_at: chrono::Utc::now().timestamp(),
+            changed_at: chrono::Utc::now().timestamp_millis(),
             changed_by,
         }
     }

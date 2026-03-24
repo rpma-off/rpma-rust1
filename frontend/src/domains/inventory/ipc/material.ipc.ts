@@ -1,6 +1,15 @@
-import { safeInvoke, invalidatePattern } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
-import type { JsonValue } from '@/types/json';
+import { safeInvoke, invalidatePattern } from "@/lib/ipc/core";
+import { IPC_COMMANDS } from "@/lib/ipc/commands";
+import type { JsonObject, JsonValue } from "@/types/json";
+
+const compactJsonObject = (
+  value: Record<string, JsonValue | undefined>,
+): JsonObject => {
+  const entries = Object.entries(value).filter(
+    ([, fieldValue]) => fieldValue !== undefined,
+  ) as Array<[string, JsonValue]>;
+  return Object.fromEntries(entries);
+};
 
 export interface MaterialQueryParams {
   page?: number;
@@ -37,7 +46,7 @@ export interface MaterialUpdateRequest {
 export interface StockUpdateRequest {
   material_id: string;
   quantity: number;
-  operation: 'add' | 'subtract' | 'set';
+  operation: "add" | "subtract" | "set";
   reason?: string;
   [key: string]: JsonValue | undefined;
 }
@@ -98,7 +107,7 @@ export const materialIpc = {
    */
   list: (query: MaterialQueryParams = {}) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_LIST, {
-      ...query
+      ...query,
     }),
 
   /**
@@ -108,7 +117,7 @@ export const materialIpc = {
    */
   create: (data: MaterialCreateRequest) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_CREATE, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     }),
 
   /**
@@ -118,11 +127,11 @@ export const materialIpc = {
    * @returns Promise resolving to updated material
    */
   update: (id: string, data: MaterialUpdateRequest) => {
-    invalidatePattern('materials:*');
-    invalidatePattern('material:*');
+    invalidatePattern("materials:*");
+    invalidatePattern("material:*");
     return safeInvoke(IPC_COMMANDS.MATERIAL_UPDATE, {
       id,
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     });
   },
 
@@ -131,8 +140,7 @@ export const materialIpc = {
    * @param id - Material ID
    * @returns Promise resolving to material details
    */
-  get: (id: string) =>
-    safeInvoke(IPC_COMMANDS.MATERIAL_GET, { id }),
+  get: (id: string) => safeInvoke(IPC_COMMANDS.MATERIAL_GET, { id }),
 
   /**
    * Deletes a material
@@ -140,8 +148,8 @@ export const materialIpc = {
    * @returns Promise resolving to deletion result
    */
   delete: (id: string) => {
-    invalidatePattern('materials:*');
-    invalidatePattern('material:*');
+    invalidatePattern("materials:*");
+    invalidatePattern("material:*");
     return safeInvoke(IPC_COMMANDS.MATERIAL_DELETE, { id });
   },
 
@@ -151,10 +159,10 @@ export const materialIpc = {
    * @returns Promise resolving to updated material with current stock
    */
   updateStock: (data: StockUpdateRequest) => {
-    invalidatePattern('materials:*');
-    invalidatePattern('material:*');
+    invalidatePattern("materials:*");
+    invalidatePattern("material:*");
     return safeInvoke(IPC_COMMANDS.MATERIAL_UPDATE_STOCK, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     });
   },
 
@@ -165,7 +173,7 @@ export const materialIpc = {
    */
   adjustStock: (data: StockAdjustmentRequest) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_ADJUST_STOCK, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     }),
 
   /**
@@ -174,10 +182,10 @@ export const materialIpc = {
    * @returns Promise resolving to consumption record
    */
   recordConsumption: (data: ConsumptionRecordRequest) => {
-    invalidatePattern('materials:*');
-    invalidatePattern('material:*');
+    invalidatePattern("materials:*");
+    invalidatePattern("material:*");
     return safeInvoke(IPC_COMMANDS.MATERIAL_RECORD_CONSUMPTION, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     });
   },
 
@@ -187,7 +195,10 @@ export const materialIpc = {
    * @param query - Query parameters for pagination and filtering
    * @returns Promise resolving to consumption history
    */
-  getConsumptionHistory: (materialId: string, query?: ConsumptionHistoryQuery) =>
+  getConsumptionHistory: (
+    materialId: string,
+    query?: ConsumptionHistoryQuery,
+  ) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_GET_CONSUMPTION_HISTORY, {
       material_id: materialId,
       page: query?.page || 1,
@@ -200,10 +211,10 @@ export const materialIpc = {
    * @returns Promise resolving to created transaction
    */
   createInventoryTransaction: (data: InventoryTransactionRequest) => {
-    invalidatePattern('materials:*');
-    invalidatePattern('material:*');
+    invalidatePattern("materials:*");
+    invalidatePattern("material:*");
     return safeInvoke(IPC_COMMANDS.MATERIAL_CREATE_INVENTORY_TRANSACTION, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     });
   },
 
@@ -213,7 +224,10 @@ export const materialIpc = {
    * @param query - Query parameters for pagination and filtering
    * @returns Promise resolving to transaction history
    */
-  getTransactionHistory: (materialId: string, query?: TransactionHistoryQuery) =>
+  getTransactionHistory: (
+    materialId: string,
+    query?: TransactionHistoryQuery,
+  ) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_GET_TRANSACTION_HISTORY, {
       material_id: materialId,
       page: query?.page || 1,
@@ -227,15 +241,14 @@ export const materialIpc = {
    */
   createCategory: (data: CategoryCreateRequest) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_CREATE_CATEGORY, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     }),
 
   /**
    * Lists all material categories
    * @returns Promise resolving to category list
    */
-  listCategories: () =>
-    safeInvoke(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {}),
+  listCategories: () => safeInvoke(IPC_COMMANDS.MATERIAL_LIST_CATEGORIES, {}),
 
   /**
    * Creates a new supplier
@@ -244,22 +257,20 @@ export const materialIpc = {
    */
   createSupplier: (data: SupplierCreateRequest) =>
     safeInvoke(IPC_COMMANDS.MATERIAL_CREATE_SUPPLIER, {
-      request: { ...data }
+      request: compactJsonObject({ ...data }),
     }),
 
   /**
    * Lists all suppliers
    * @returns Promise resolving to supplier list
    */
-  listSuppliers: () =>
-    safeInvoke(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {}),
+  listSuppliers: () => safeInvoke(IPC_COMMANDS.MATERIAL_LIST_SUPPLIERS, {}),
 
   /**
    * Gets material statistics
    * @returns Promise resolving to material statistics
    */
-  getStats: () =>
-    safeInvoke(IPC_COMMANDS.MATERIAL_GET_STATS, {}),
+  getStats: () => safeInvoke(IPC_COMMANDS.MATERIAL_GET_STATS, {}),
 
   /**
    * Gets materials with low stock levels

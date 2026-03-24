@@ -175,7 +175,7 @@ pub async fn export_intervention_report(
         &format!(
             "intervention_report_{}_{}",
             intervention_id,
-            Utc::now().timestamp()
+            Utc::now().timestamp_millis()
         ),
         "pdf",
     );

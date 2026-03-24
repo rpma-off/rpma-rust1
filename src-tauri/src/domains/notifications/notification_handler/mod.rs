@@ -23,9 +23,8 @@ use tokio::sync::Mutex;
 use tracing::{error, info, instrument};
 use ts_rs::TS;
 
-use crate::commands::{init_correlation_context, ApiResponse, AppError, AppState};
+use crate::commands::{ApiResponse, AppError, AppState};
 use crate::resolve_context;
-use crate::shared::services::event_bus::{event_factory, EventPublisher};
 
 use super::models::*;
 
@@ -292,7 +291,7 @@ pub async fn create_notification(
     request: CreateNotificationRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Notification>, AppError> {
-    let correlation_id = init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     let user_id = request.user_id.clone();
     let notification_type = request.r#type.clone();
     // TODO(ADR-001): extract business logic to application/
@@ -319,7 +318,7 @@ pub async fn create_notification(
         "Notification created"
     );
     helpers::publish_notification_event(&state.event_bus, &created);
-    Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(created).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Send a notification — accepts the TS-exported `SendNotificationRequest` shape.
@@ -331,7 +330,7 @@ pub async fn send_notification(
     request: crate::domains::notifications::models::SendNotificationRequest,
     state: AppState<'_>,
 ) -> Result<ApiResponse<Notification>, AppError> {
-    let correlation_id = init_correlation_context(&request.correlation_id, None);
+    let ctx = resolve_context!(&state, &request.correlation_id);
     let user_id = request.user_id.clone();
     let notification_type = request.notification_type.clone();
     // TODO(ADR-001): extract business logic to application/
@@ -358,7 +357,7 @@ pub async fn send_notification(
         "Notification sent"
     );
     helpers::publish_notification_event(&state.event_bus, &created);
-    Ok(ApiResponse::success(created).with_correlation_id(Some(correlation_id)))
+    Ok(ApiResponse::success(created).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 // ── Private helpers ──────────────────────────────────────────────────────────

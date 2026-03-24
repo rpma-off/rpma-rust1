@@ -194,7 +194,8 @@ fn test_hard_delete_task() -> Result<(), AppError> {
     let task_id = create_test_task(db.clone(), "user-1")?;
     let deletion_service = TaskDeletionService::new(db.clone());
 
-    // Hard delete task
+    // ADR-011: must soft-delete first, then hard-delete
+    deletion_service.soft_delete_task(&task_id, "user-1")?;
     tokio_test::block_on(deletion_service.hard_delete_task_async(&task_id, "user-1"))?;
 
     // Verify task is completely removed
@@ -219,7 +220,8 @@ fn test_hard_delete_ownership_check() -> Result<(), AppError> {
     let task_id = create_test_task(db.clone(), "user-1")?;
     let deletion_service = TaskDeletionService::new(db.clone());
 
-    // Try to hard delete as different user - should fail
+    // ADR-011: soft-delete first (by the owner), then attempt hard-delete as different user
+    deletion_service.soft_delete_task(&task_id, "user-1")?;
     let result = tokio_test::block_on(deletion_service.hard_delete_task_async(&task_id, "user-2"));
     assert!(
         result.is_err(),
@@ -270,7 +272,8 @@ fn test_delete_task_async_force_hard_delete() -> Result<(), AppError> {
     let task_id = create_test_task(db.clone(), "user-1")?;
     let deletion_service = TaskDeletionService::new(db.clone());
 
-    // Delete task with force=true (hard delete)
+    // ADR-011: soft-delete first, then hard-delete
+    deletion_service.soft_delete_task(&task_id, "user-1")?;
     tokio_test::block_on(deletion_service.delete_task_async(&task_id, "user-1", true))?;
 
     // Verify task is completely removed

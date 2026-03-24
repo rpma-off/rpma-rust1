@@ -19,10 +19,12 @@
 
 import type {
   UserRole,
-  PhotoType,
   TaskPriority,
-  TaskStatus
-} from '@/lib/backend';
+  TaskStatus,
+  Task as BackendTask,
+  Client as BackendClient,
+  TaskPhoto as BackendTaskPhoto,
+} from "@/lib/backend";
 
 import {
   WorkflowExecutionStatus,
@@ -31,77 +33,20 @@ import {
   AuditEventType,
   AuditCategory,
   AuditSeverity,
-  PPFZone} from './enums';
+  PPFZone,
+} from "./enums";
 
 // ===== CORE ENTITIES =====
 
 /**
  * Tâche unifiée - Interface principale des tâches
  */
-export interface Task {
-  id: string;
-  taskNumber: string;
-  title?: string;
-  
-  // Relations
-  clientId?: string;
-  technicianId?: string;
-  templateId?: string;
-  createdBy: string;
-  
-  // Véhicule
-  vehicleMake?: string;
-  vehicleModel?: string;
-  vehicleYear?: string;
-  vehiclePlate?: string;
-  vin?: string;
-  
-  // PPF zones
-  ppfZone?: PPFZone;
-  customPpfZones: string[];
-  
-  // Planification
-  scheduledDate?: string;
-  scheduledAt?: string;
-  priority?: TaskPriority;
-  
-  // État et progression
-  status: TaskStatus;
-  
-  // Métadonnées
-  note?: string;
-  createdAt: string;
-  updatedAt: string;
-  
-  // Relations optionnelles (pour les vues enrichies)
-  client?: Client;
-  technician?: Technician;
-  execution?: TaskExecution;
-  photos?: TaskPhoto[];
-  history?: TaskFieldChange[];
-}
+export type Task = BackendTask;
 
 /**
  * Client unifié
  */
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  company_name?: string;
-  customer_type: 'individual' | 'business' | null;
-  notes?: string;
-  created_by?: string | null;
-  created_at: string;
-  updated_at: string;
-
-  // Computed fields
-  task_count?: number;
-  last_task_date?: string;
-  total_spent?: number;
-}
+export type Client = BackendClient;
 
 /**
  * Technicien unifié
@@ -113,14 +58,12 @@ export interface Technician {
   email: string;
   role: UserRole;
   createdAt: string;
-  
+
   // Informations étendues
   skills?: string[];
   availability?: TechnicianAvailability;
   performance?: TechnicianPerformance;
 }
-
-
 
 // ===== WORKFLOW EXECUTION =====
 
@@ -138,19 +81,19 @@ export interface TaskExecution {
   resumedAt?: string;
   completedAt?: string;
   createdBy: string;
-  
+
   // Contexte d'exécution
   executionContext: ExecutionContext;
-  
+
   // Relations
   currentStep?: TaskStepProgress;
   steps: TaskStepProgress[];
-  
+
   // Progression calculée
   progressPercentage: number;
   estimatedCompletionTime?: string;
   totalDuration?: number;
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -170,24 +113,24 @@ export interface TaskStepProgress {
   completedAt?: string;
   durationSeconds?: number;
   notes?: string;
-  
+
   // Documentation
   photos: string[];
   checklistCompletion: Record<string, boolean>;
-  
+
   // Contrôle qualité
   requiresQC: boolean;
   qcApprovedAt?: string;
   qcApprovedBy?: string;
-  
+
   // Utilisateurs
   startedBy?: string;
   completedBy?: string;
-  
+
   // Relations
   timings: WorkflowTiming[];
   checklistItems: WorkflowChecklistItem[];
-  
+
   // Timestamps
   createdAt: string;
   updatedAt: string;
@@ -229,46 +172,7 @@ export interface WorkflowChecklistItem {
 /**
  * Photo de tâche unifiée
  */
-export interface TaskPhoto {
-  id: string;
-  
-  // Relations hiérarchiques
-  taskId: string;
-  taskExecutionId?: string;
-  stepId?: string;
-  stepProgressId?: string;
-  
-  // Fichier
-  url: string;
-  filename: string;
-  fileSize: number;
-  mimeType: string;
-  width?: number;
-  height?: number;
-  
-  // Classification
-  photoType: PhotoType;
-  captureContext: PhotoContext;
-  
-  // Contenu
-  title?: string;
-  description?: string;
-  notes?: string;
-  
-  // Métadonnées techniques
-  metadata: PhotoMetadata;
-  
-  // Validation et approbation
-  isRequired: boolean;
-  isApproved: boolean;
-  approvedBy?: string;
-  approvedAt?: string;
-  
-  // Traçabilité
-  uploadedBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type TaskPhoto = BackendTaskPhoto;
 
 /**
  * Métadonnées des photos
@@ -278,7 +182,7 @@ export interface PhotoMetadata {
   captureContext: PhotoContext;
   stepId?: string;
   checklistItemId?: string;
-  
+
   // Informations techniques
   cameraSettings?: {
     iso?: number;
@@ -286,17 +190,17 @@ export interface PhotoMetadata {
     shutterSpeed?: string;
     flash?: boolean;
   };
-  
+
   // Géolocalisation (avec consentement)
   location?: {
     latitude: number;
     longitude: number;
     accuracy: number;
   };
-  
+
   // Annotations
   annotations?: Array<{
-    type: 'arrow' | 'circle' | 'text';
+    type: "arrow" | "circle" | "text";
     position: { x: number; y: number };
     content?: string;
   }>;
@@ -329,7 +233,7 @@ export interface QueryParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   search?: string;
   filters?: Record<string, unknown>;
 }
@@ -341,45 +245,45 @@ export interface QueryParams {
  */
 export interface AuditEvent {
   id: string;
-  
+
   // Contexte événement
   eventId: string;
   eventType: AuditEventType;
   eventCategory: AuditCategory;
-  
+
   // Entité concernée
   entityType: string;
   entityId: string;
   parentEntityType?: string;
   parentEntityId?: string;
-  
-   // Utilisateur et session
-   userId: string | null;
+
+  // Utilisateur et session
+  userId: string | null;
   sessionId?: string;
   requestId?: string;
-  
+
   // Données de changement
   oldValues?: Record<string, unknown>;
   newValues?: Record<string, unknown>;
   changedFields?: string[];
-  
+
   // Contexte technique
   ipAddress?: string;
   userAgent?: string;
   apiEndpoint?: string;
   httpMethod?: string;
-  
+
   // Métadonnées métier
   businessContext: Record<string, unknown>;
   complianceTags?: string[];
   severity: AuditSeverity;
-  
+
   // Performance et résultat
   durationMs?: number;
   success: boolean;
   errorMessage?: string;
   errorCode?: string;
-  
+
   // Temporalité
   occurredAt: string;
   processedAt?: string;
@@ -391,9 +295,9 @@ export interface AuditEvent {
 export interface AuditConfiguration {
   id: string;
   entityType: string;
-  auditLevel: 'minimal' | 'standard' | 'detailed' | 'full';
+  auditLevel: "minimal" | "standard" | "detailed" | "full";
   includedFields?: string[];
-  excludedFields?: string[] ;
+  excludedFields?: string[];
   sensitiveFields?: string[];
   trackedEvents: AuditEventType[];
   createSnapshots: boolean;
@@ -414,27 +318,27 @@ export interface AuditConfiguration {
  */
 export interface ExecutionContext {
   // Environnement
-  workspaceType: 'indoor' | 'outdoor' | 'mobile';
-  lighting: 'natural' | 'artificial' | 'mixed';
+  workspaceType: "indoor" | "outdoor" | "mobile";
+  lighting: "natural" | "artificial" | "mixed";
   temperature?: number;
   humidity?: number;
-  
+
   // Véhicule
   vehiclePosition: string;
   vehicleCondition: string;
-  
+
   // Équipe
   primaryTechnician: string;
   assistants?: string[];
-  
+
   // Équipements
   tools: string[];
   materials: string[];
-  
+
   // Client
   customerPresent: boolean;
   specialRequirements?: string[];
-  
+
   // Métadonnées
   notes?: string;
   photos?: string[];
@@ -444,7 +348,7 @@ export interface ExecutionContext {
  * Disponibilité technicien
  */
 export interface TechnicianAvailability {
-  status: 'available' | 'busy' | 'offline' | 'vacation';
+  status: "available" | "busy" | "offline" | "vacation";
   currentTaskId?: string;
   nextAvailable?: string;
   workingHours: {
@@ -494,30 +398,30 @@ export interface CreateTaskDTO {
   title: string;
   clientId?: string;
   templateId?: string;
-  
+
   // Véhicule
   vehicleMake?: string;
   vehicleModel?: string;
   vehicleYear?: string;
   vehiclePlate?: string;
   vin?: string;
-  
+
   // PPF
   ppfZone?: PPFZone;
   customPpfZones?: string[];
-  
+
   // Planification
   technicianId?: string;
   scheduledDate?: string;
   scheduledAt?: string;
   priority?: TaskPriority;
-  
+
   // Client (si pas de clientId)
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
   customerAddress?: string;
-  
+
   // Métadonnées
   note?: string;
 }
@@ -533,15 +437,13 @@ export interface UpdateTaskDTO {
   scheduledAt?: string;
   priority?: TaskPriority;
   note?: string;
-  
+
   // Client
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
   customerAddress?: string;
 }
-
-
 
 /**
  * DTO de création d'item de checklist
@@ -558,9 +460,12 @@ export interface CreateChecklistItemDTO {
 // ===== STATISTIQUES =====
 
 /**
- * Statistiques des tâches
+ * Statistiques des tâches (frontend unified view-model shape).
+ *
+ * Kept distinct from the generated backend `TaskStatistics` contract to avoid
+ * ADR-015 shadowing and naming drift.
  */
-export interface TaskStatistics {
+export interface UnifiedTaskStatistics {
   total: number;
   byStatus: Record<TaskStatus, number>;
   byPriority: Record<TaskPriority, number>;

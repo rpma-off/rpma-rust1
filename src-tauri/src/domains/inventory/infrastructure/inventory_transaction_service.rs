@@ -81,7 +81,10 @@ impl InventoryTransactionService {
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
         let total_materials: i32 = self
             .db
-            .query_single_value("SELECT COUNT(*) FROM materials WHERE is_active = 1", [])
+            .query_single_value(
+                "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
+                [],
+            )
             .unwrap_or(0);
 
         let active_materials = total_materials;
@@ -91,7 +94,7 @@ impl InventoryTransactionService {
             .query_single_value(
                 r#"
                 SELECT COUNT(*) FROM materials
-                WHERE is_active = 1
+                WHERE is_active = 1 AND deleted_at IS NULL
                   AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
                 "#,
                 params![DEFAULT_LOW_STOCK_THRESHOLD],
@@ -103,8 +106,8 @@ impl InventoryTransactionService {
             .query_single_value(
                 r#"
                 SELECT COUNT(*) FROM materials
-                WHERE is_active = 1 AND expiry_date IS NOT NULL
-                  AND expiry_date <= ?
+                WHERE is_active = 1 AND deleted_at IS NULL
+                  AND expiry_date IS NOT NULL AND expiry_date <= ?
                 "#,
                 params![crate::shared::contracts::common::now()],
             )
@@ -116,7 +119,7 @@ impl InventoryTransactionService {
                 r#"
                 SELECT COALESCE(SUM(current_stock * unit_cost), 0.0)
                 FROM materials
-                WHERE unit_cost IS NOT NULL AND is_active = 1
+                WHERE unit_cost IS NOT NULL AND is_active = 1 AND deleted_at IS NULL
                 "#,
                 [],
             )
@@ -130,7 +133,7 @@ impl InventoryTransactionService {
                     SELECT COALESCE(mc.name, 'Uncategorized') as cat_name, COUNT(*)
                     FROM materials m
                     LEFT JOIN material_categories mc ON m.category_id = mc.id
-                    WHERE m.is_active = 1
+                    WHERE m.is_active = 1 AND m.deleted_at IS NULL
                     GROUP BY cat_name
                     "#,
                 ) {

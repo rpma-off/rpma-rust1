@@ -1,17 +1,17 @@
-import { clientIpc as clientOperations } from '../domains/clients';
+import { clientIpc as clientOperations } from "../domains/clients";
 
-jest.mock('../core', () => ({
+jest.mock("../core", () => ({
   safeInvoke: jest.fn(),
   cachedInvoke: jest.fn(),
   extractAndValidate: jest.fn(),
   invalidatePattern: jest.fn(),
 }));
 
-jest.mock('@/lib/data-freshness', () => ({
+jest.mock("@/lib/data-freshness", () => ({
   signalMutation: jest.fn(),
 }));
 
-jest.mock('@/lib/validation/backend-type-guards', () => ({
+jest.mock("@/lib/validation/backend-type-guards", () => ({
   validateClient: jest.fn((data) => data),
   validateClientWithTasks: jest.fn((data) => data),
   validateClientListResponse: jest.fn((data) => data),
@@ -20,23 +20,24 @@ jest.mock('@/lib/validation/backend-type-guards', () => ({
   validateClientStatistics: jest.fn((data) => data),
 }));
 
-jest.mock('../utils/crud-helpers', () => ({
+jest.mock("../utils/crud-helpers", () => ({
   ResponseHandlers: {
     discriminatedUnion: jest.fn(),
     discriminatedUnionNullable: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn()
+    statistics: jest.fn(),
   },
 }));
 
-const { safeInvoke, cachedInvoke, invalidatePattern, extractAndValidate } = jest.requireMock('../core') as {
-  safeInvoke: jest.Mock;
-  cachedInvoke: jest.Mock;
-  invalidatePattern: jest.Mock;
-  extractAndValidate: jest.Mock;
-};
+const { safeInvoke, cachedInvoke, invalidatePattern, extractAndValidate } =
+  jest.requireMock("../core") as {
+    safeInvoke: jest.Mock;
+    cachedInvoke: jest.Mock;
+    invalidatePattern: jest.Mock;
+    extractAndValidate: jest.Mock;
+  };
 
-const { ResponseHandlers } = jest.requireMock('../utils/crud-helpers') as {
+const { ResponseHandlers } = jest.requireMock("../utils/crud-helpers") as {
   ResponseHandlers: {
     discriminatedUnion: jest.Mock;
     discriminatedUnionNullable: jest.Mock;
@@ -45,22 +46,22 @@ const { ResponseHandlers } = jest.requireMock('../utils/crud-helpers') as {
   };
 };
 
-const { 
-  validateClient, 
-  validateClientWithTasks, 
-  validateClientListResponse, 
+const {
+  validateClient,
+  validateClientWithTasks,
+  validateClientListResponse,
   parseClientStatistics,
-} = jest.requireMock('@/lib/validation/backend-type-guards') as {
+} = jest.requireMock("@/lib/validation/backend-type-guards") as {
   validateClient: jest.Mock;
   validateClientWithTasks: jest.Mock;
   validateClientListResponse: jest.Mock;
   parseClientStatistics: jest.Mock;
 };
 
-describe('clientOperations IPC contract tests', () => {
+describe("clientOperations IPC contract tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mock returns
     safeInvoke.mockResolvedValue([]);
     cachedInvoke.mockResolvedValue({
@@ -70,333 +71,360 @@ describe('clientOperations IPC contract tests', () => {
         limit: 20,
         total: 0,
         has_next: false,
-        has_prev: false
-      }
+        has_prev: false,
+      },
     });
-    
+
     // Setup ResponseHandlers mocks
-    ResponseHandlers.discriminatedUnion.mockImplementation((_type, _validator) => (result) => result);
-    ResponseHandlers.discriminatedUnionNullable.mockImplementation((_type, _validator) => (result) => result);
-    ResponseHandlers.list.mockImplementation((_processor) => (result) => result);
+    ResponseHandlers.discriminatedUnion.mockImplementation(
+      (_type, _validator) => (result) => result,
+    );
+    ResponseHandlers.discriminatedUnionNullable.mockImplementation(
+      (_type, _validator) => (result) => result,
+    );
+    ResponseHandlers.list.mockImplementation(
+      (_processor) => (result) => result,
+    );
     ResponseHandlers.statistics.mockImplementation(() => (result) => result);
-    
-    extractAndValidate.mockImplementation((result, validator, _options) => (validator ? validator(result) : result));
+
+    extractAndValidate.mockImplementation((result, validator, _options) =>
+      validator ? validator(result) : result,
+    );
   });
 
-  describe('CRUD Operations', () => {
-    it('calls safeInvoke with correct parameters for create', async () => {
+  describe("CRUD Operations", () => {
+    it("calls safeInvoke with correct parameters for create", async () => {
       const createData = {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '555-1234',
-        address_city: 'Paris',
-        customer_type: 'individual'
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "555-1234",
+        address_city: "Paris",
+        customer_type: "individual",
       };
-      
+
       await clientOperations.create(createData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: createData,
       });
-      expect(invalidatePattern).toHaveBeenCalledWith('client:');
+      expect(invalidatePattern).toHaveBeenCalledWith("client:");
     });
 
-    it('calls cachedInvoke with correct parameters for get', async () => {
-      await clientOperations.get('client-123');
+    it("calls cachedInvoke with correct parameters for get", async () => {
+      await clientOperations.get("client-123");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client:client-123',
-        'client_get',
-        { id: 'client-123' },
-        expect.any(Function)
+        "client:client-123",
+        "client_get",
+        { id: "client-123" },
+        expect.any(Function),
       );
     });
 
-    it('calls safeInvoke with correct parameters for update', async () => {
+    it("calls safeInvoke with correct parameters for update", async () => {
       const updateData = {
-        name: 'John Doe Smith',
-        phone: '555-5678',
-        address_street: '456 Oak Ave'
+        name: "John Doe Smith",
+        phone: "555-5678",
+        address_street: "456 Oak Ave",
       };
-      
-      await clientOperations.update('client-123', updateData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_update', {
-        id: 'client-123',
+      await clientOperations.update("client-123", updateData);
+
+      expect(safeInvoke).toHaveBeenCalledWith("client_update", {
+        id: "client-123",
         data: updateData,
       });
-      expect(invalidatePattern).toHaveBeenCalledWith('client:');
+      expect(invalidatePattern).toHaveBeenCalledWith("client:");
     });
 
-    it('calls safeInvoke with correct parameters for delete', async () => {
-      await clientOperations.delete('client-123');
+    it("calls safeInvoke with correct parameters for delete", async () => {
+      await clientOperations.delete("client-123");
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_delete', {
-        id: 'client-123',
+      expect(safeInvoke).toHaveBeenCalledWith("client_delete", {
+        id: "client-123",
       });
-      expect(invalidatePattern).toHaveBeenCalledWith('client:');
+      expect(invalidatePattern).toHaveBeenCalledWith("client:");
     });
 
-    it('calls safeInvoke with correct parameters for list', async () => {
+    it("calls safeInvoke with correct parameters for list", async () => {
       const filters = {
         page: 1,
         limit: 20,
-        search: 'john',
-        status: 'active',
-        customer_type: 'individual'
+        search: "john",
+        status: "active",
+        customer_type: "individual",
       };
-      
+
       await clientOperations.list(filters);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_list', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_list", {
         filters: {
-          page: 1,
-          limit: 20,
-          search: 'john',
-          customer_type: 'individual',
-          sort_by: 'created_at',
-          sort_order: 'desc'
-        }
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
+          search: "john",
+          customer_type: "individual",
+        },
       });
     });
   });
 
-  describe('Specialized Operations', () => {
-    it('calls safeInvoke and extracts valid response for getWithTasks', async () => {
+  describe("Specialized Operations", () => {
+    it("calls safeInvoke and extracts valid response for getWithTasks", async () => {
       const mockResponse = {
-        type: 'FoundWithTasks',
-        client: { id: 'client-123', name: 'John Doe' },
-        tasks: [{ id: 'task-123', title: 'PPF Installation' }]
+        type: "FoundWithTasks",
+        client: { id: "client-123", name: "John Doe" },
+        tasks: [{ id: "task-123", title: "PPF Installation" }],
       };
 
       cachedInvoke.mockResolvedValue(validateClientWithTasks(mockResponse));
 
-      await clientOperations.getWithTasks('client-123');
+      await clientOperations.getWithTasks("client-123");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client-with-tasks:client-123',
-        'client_get_with_tasks',
-        { id: 'client-123' },
-        expect.any(Function)
+        "client-with-tasks:client-123",
+        "client_get_with_tasks",
+        { id: "client-123" },
+        expect.any(Function),
       );
     });
 
-    it('handles not found case for getWithTasks', async () => {
+    it("handles not found case for getWithTasks", async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await clientOperations.getWithTasks('nonexistent-client');
+      const result = await clientOperations.getWithTasks("nonexistent-client");
 
       expect(result).toBeNull();
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client-with-tasks:nonexistent-client',
-        'client_get_with_tasks',
-        { id: 'nonexistent-client' },
-        expect.any(Function)
+        "client-with-tasks:nonexistent-client",
+        "client_get_with_tasks",
+        { id: "nonexistent-client" },
+        expect.any(Function),
       );
     });
 
-    it('calls safeInvoke and processes search response', async () => {
+    it("calls safeInvoke and processes search response", async () => {
       const mockResponse = [
-        { id: 'client-123', name: 'John Doe', email: 'john@example.com' },
-        { id: 'client-456', name: 'Jane Smith', email: 'jane@example.com' }
+        { id: "client-123", name: "John Doe", email: "john@example.com" },
+        { id: "client-456", name: "Jane Smith", email: "jane@example.com" },
       ];
 
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue(mockResponse);
 
-      const result = await clientOperations.search('john', 10);
+      const result = await clientOperations.search("john", 10);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_search', {
-        query: 'john',
+      expect(safeInvoke).toHaveBeenCalledWith("client_search", {
+        query: "john",
         limit: 10,
       });
       expect(result).toEqual(mockResponse);
     });
 
-    it('handles empty search results', async () => {
+    it("handles empty search results", async () => {
       const mockResponse = [];
       safeInvoke.mockResolvedValue(mockResponse);
       extractAndValidate.mockReturnValue([]);
 
-      const result = await clientOperations.search('nonexistent', 10);
+      const result = await clientOperations.search("nonexistent", 10);
 
       expect(result).toEqual([]);
     });
 
-    it('calls safeInvoke and processes listWithTasks response', async () => {
+    it("calls safeInvoke and processes listWithTasks response", async () => {
       const filters = {
         page: 1,
         limit: 20,
-        search: 'test'
+        search: "test",
       };
-      
+
       const mockClients = [
-        { id: 'client-123', name: 'John Doe', email: 'john@example.com', tasks: [] },
-        { id: 'client-456', name: 'Jane Smith', email: 'jane@example.com', tasks: [] }
+        {
+          id: "client-123",
+          name: "John Doe",
+          email: "john@example.com",
+          tasks: [],
+        },
+        {
+          id: "client-456",
+          name: "Jane Smith",
+          email: "jane@example.com",
+          tasks: [],
+        },
       ];
 
       safeInvoke.mockResolvedValue(mockClients);
 
       const result = await clientOperations.listWithTasks(filters, 5);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_list_with_tasks', {
-        filters: expect.objectContaining({
-          page: 1,
-          limit: 20,
-          search: 'test',
-        }),
+      expect(safeInvoke).toHaveBeenCalledWith("client_list_with_tasks", {
+        filters: {
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
+          search: "test",
+          customer_type: null,
+        },
         limit_tasks: 5,
       });
       expect(result).toEqual(mockClients);
     });
 
-    it('calls safeInvoke and extracts valid response for stats', async () => {
+    it("calls safeInvoke and extracts valid response for stats", async () => {
       const mockResponse = {
-        type: 'Statistics',
+        type: "Statistics",
         total_clients: 150,
         active_clients: 120,
         new_clients_this_month: 15,
         customer_type_breakdown: {
           individual: 120,
-          business: 30
-        }
+          business: 30,
+        },
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
       await clientOperations.stats();
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_get_stats', {});
+      expect(safeInvoke).toHaveBeenCalledWith("client_get_stats", {});
       expect(extractAndValidate).toHaveBeenCalledWith(mockResponse);
     });
   });
 
-  describe('Request Validation', () => {
-    it('validates required fields for create operation', async () => {
+  describe("Request Validation", () => {
+    it("validates required fields for create operation", async () => {
       const invalidData = {
         // Missing required name and email
-        phone: '555-1234',
-        address_city: 'Paris'
+        phone: "555-1234",
+        address_city: "Paris",
       };
 
       await clientOperations.create(invalidData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: invalidData,
       });
     });
 
-    it('validates email format for create operation', async () => {
+    it("validates email format for create operation", async () => {
       const invalidEmailData = {
-        name: 'John Doe',
-        email: 'invalid-email-format',
-        phone: '555-1234'
+        name: "John Doe",
+        email: "invalid-email-format",
+        phone: "555-1234",
       };
 
       await clientOperations.create(invalidEmailData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: invalidEmailData,
       });
     });
 
-    it('validates client ID format for get operation', async () => {
-      await clientOperations.get('');
+    it("validates client ID format for get operation", async () => {
+      await clientOperations.get("");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client:',
-        'client_get',
-        { id: '' },
-        expect.any(Function)
+        "client:",
+        "client_get",
+        { id: "" },
+        expect.any(Function),
       );
     });
 
-    it('validates search query parameters', async () => {
+    it("validates search query parameters", async () => {
       safeInvoke.mockResolvedValue([]);
-      await clientOperations.search('', 0);
+      await clientOperations.search("", 0);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_search', {
-        query: '',
+      expect(safeInvoke).toHaveBeenCalledWith("client_search", {
+        query: "",
         limit: 0,
       });
     });
 
-    it('validates list filters structure', async () => {
+    it("validates list filters structure", async () => {
       const invalidFilters = {
         page: -1,
         limit: -1,
-        status: 'invalid_status',
-        customer_type: 'invalid_type'
+        status: "invalid_status",
+        customer_type: "invalid_type",
       };
 
       await clientOperations.list(invalidFilters);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_list', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_list", {
         filters: {
-          page: -1,
-          limit: -1,
+          pagination: {
+            page: -1,
+            page_size: -1,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
           search: null,
-          customer_type: 'invalid_type',
-          sort_by: 'created_at',
-          sort_order: 'desc'
-        }
+          customer_type: "invalid_type",
+        },
       });
     });
   });
 
-  describe('Response Shape Validation', () => {
-    it('validates complete response structure for create', async () => {
+  describe("Response Shape Validation", () => {
+    it("validates complete response structure for create", async () => {
       const mockResponse = {
-        type: 'Created',
+        type: "Created",
         data: {
-          id: 'client-123',
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '555-1234',
-          address_city: 'Paris',
-          customer_type: 'individual',
-          status: 'active',
-          created_at: '2025-02-09T10:00:00Z',
-          updated_at: '2025-02-09T10:00:00Z'
-        }
+          id: "client-123",
+          name: "John Doe",
+          email: "john@example.com",
+          phone: "555-1234",
+          address_city: "Paris",
+          customer_type: "individual",
+          status: "active",
+          created_at: "2025-02-09T10:00:00Z",
+          updated_at: "2025-02-09T10:00:00Z",
+        },
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
       const result = await clientOperations.create({
-        name: 'John Doe',
-        email: 'john@example.com'
+        name: "John Doe",
+        email: "john@example.com",
       });
 
       expect(validateClient).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(validateClient(mockResponse));
     });
 
-    it('validates response structure for list operation', async () => {
+    it("validates response structure for list operation", async () => {
       const mockResponse = {
         data: [
           {
-            id: 'client-123',
-            name: 'John Doe',
-            email: 'john@example.com',
-            status: 'active',
-            customer_type: 'individual'
+            id: "client-123",
+            name: "John Doe",
+            email: "john@example.com",
+            status: "active",
+            customer_type: "individual",
           },
           {
-            id: 'client-456',
-            name: 'Jane Smith',
-            email: 'jane@example.com',
-            status: 'active',
-            customer_type: 'business'
-          }
+            id: "client-456",
+            name: "Jane Smith",
+            email: "jane@example.com",
+            status: "active",
+            customer_type: "business",
+          },
         ],
         pagination: {
           page: 1,
           limit: 20,
           total: 2,
           has_next: false,
-          has_prev: false
-        }
+          has_prev: false,
+        },
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -407,43 +435,43 @@ describe('clientOperations IPC contract tests', () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it('validates getWithTasks response with nested data', async () => {
+    it("validates getWithTasks response with nested data", async () => {
       const mockResponse = {
-        type: 'FoundWithTasks',
+        type: "FoundWithTasks",
         client: {
-          id: 'client-123',
-          name: 'John Doe',
-          email: 'john@example.com',
-          customer_type: 'individual',
-          status: 'active'
+          id: "client-123",
+          name: "John Doe",
+          email: "john@example.com",
+          customer_type: "individual",
+          status: "active",
         },
         tasks: [
           {
-            id: 'task-123',
-            title: 'PPF Installation',
-            status: 'completed',
-            scheduled_date: '2025-01-15',
-            vehicle_plate: 'ABC-123'
-          }
-        ]
+            id: "task-123",
+            title: "PPF Installation",
+            status: "completed",
+            scheduled_date: "2025-01-15",
+            vehicle_plate: "ABC-123",
+          },
+        ],
       };
 
       cachedInvoke.mockResolvedValue(validateClientWithTasks(mockResponse));
 
-      const result = await clientOperations.getWithTasks('client-123');
+      const result = await clientOperations.getWithTasks("client-123");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client-with-tasks:client-123',
-        'client_get_with_tasks',
-        { id: 'client-123' },
-        expect.any(Function)
+        "client-with-tasks:client-123",
+        "client_get_with_tasks",
+        { id: "client-123" },
+        expect.any(Function),
       );
       expect(result).toEqual(validateClientWithTasks(mockResponse));
     });
 
-    it('validates statistics response structure', async () => {
+    it("validates statistics response structure", async () => {
       const mockResponse = {
-        type: 'Statistics',
+        type: "Statistics",
         total_clients: 150,
         active_clients: 120,
         new_clients_this_month: 15,
@@ -451,17 +479,17 @@ describe('clientOperations IPC contract tests', () => {
         customer_type_breakdown: {
           individual: 120,
           business: 25,
-          fleet: 5
+          fleet: 5,
         },
         status_breakdown: {
           active: 120,
           inactive: 25,
-          vip: 5
+          vip: 5,
         },
         monthly_growth: [
-          { month: '2025-01', new_clients: 12, total_clients: 145 },
-          { month: '2025-02', new_clients: 5, total_clients: 150 }
-        ]
+          { month: "2025-01", new_clients: 12, total_clients: 145 },
+          { month: "2025-02", new_clients: 5, total_clients: 150 },
+        ],
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -472,27 +500,27 @@ describe('clientOperations IPC contract tests', () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it('validates search response with array of clients', async () => {
+    it("validates search response with array of clients", async () => {
       const mockResponse = [
         {
-          id: 'client-123',
-          name: 'John Doe',
-          email: 'john@example.com',
-          phone: '555-1234',
-          customer_type: 'individual'
+          id: "client-123",
+          name: "John Doe",
+          email: "john@example.com",
+          phone: "555-1234",
+          customer_type: "individual",
         },
         {
-          id: 'client-456',
-          name: 'Johnny Smith',
-          email: 'johnny@example.com',
-          phone: '555-5678',
-          customer_type: 'individual'
-        }
+          id: "client-456",
+          name: "Johnny Smith",
+          email: "johnny@example.com",
+          phone: "555-5678",
+          customer_type: "individual",
+        },
       ];
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await clientOperations.search('john', 10);
+      const result = await clientOperations.search("john", 10);
 
       expect(validateClient).toHaveBeenCalledTimes(2);
       expect(Array.isArray(result)).toBe(true);
@@ -500,16 +528,16 @@ describe('clientOperations IPC contract tests', () => {
     });
   });
 
-  describe('Authentication and Authorization', () => {
-    it('requires session token for all operations', async () => {
+  describe("Authentication and Authorization", () => {
+    it("requires session token for all operations", async () => {
       const operations = [
-        () => clientOperations.create({ name: 'Test' }, ''),
-        () => clientOperations.get('client-123', ''),
-        () => clientOperations.update('client-123', {}, ''),
-        () => clientOperations.delete('client-123', ''),
-        () => clientOperations.list({}, ''),
-        () => clientOperations.stats(''),
-        () => clientOperations.search('test', 10, ''),
+        () => clientOperations.create({ name: "Test" }, ""),
+        () => clientOperations.get("client-123", ""),
+        () => clientOperations.update("client-123", {}, ""),
+        () => clientOperations.delete("client-123", ""),
+        () => clientOperations.list({}, ""),
+        () => clientOperations.stats(""),
+        () => clientOperations.search("test", 10, ""),
       ];
 
       for (const operation of operations) {
@@ -524,191 +552,199 @@ describe('clientOperations IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledTimes(1);
     });
 
-    it('passes no session token in nested requests (safeInvoke injects it)', async () => {
-      await clientOperations.getWithTasks('client-123');
-      await clientOperations.search('john', 10);
+    it("passes no session token in nested requests (safeInvoke injects it)", async () => {
+      await clientOperations.getWithTasks("client-123");
+      await clientOperations.search("john", 10);
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'client-with-tasks:client-123',
-        'client_get_with_tasks',
-        { id: 'client-123' },
-        expect.any(Function)
+        "client-with-tasks:client-123",
+        "client_get_with_tasks",
+        { id: "client-123" },
+        expect.any(Function),
       );
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_search', {
-        query: 'john',
+      expect(safeInvoke).toHaveBeenCalledWith("client_search", {
+        query: "john",
         limit: 10,
       });
     });
   });
 
-  describe('Error Response Handling', () => {
-    it('handles validation errors from backend for create', async () => {
+  describe("Error Response Handling", () => {
+    it("handles validation errors from backend for create", async () => {
       const errorResponse = {
-        type: 'ValidationError',
+        type: "ValidationError",
         error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid client data',
+          code: "VALIDATION_ERROR",
+          message: "Invalid client data",
           details: {
-            field: 'email',
-            issue: 'invalid email format'
-          }
-        }
+            field: "email",
+            issue: "invalid email format",
+          },
+        },
       };
 
       safeInvoke.mockRejectedValue(errorResponse);
 
       try {
         await clientOperations.create({
-          name: 'Test',
-          email: 'invalid-email'
+          name: "Test",
+          email: "invalid-email",
         });
       } catch (error) {
         expect(error).toEqual(errorResponse);
       }
     });
 
-    it('handles duplicate email errors', async () => {
+    it("handles duplicate email errors", async () => {
       const duplicateError = {
-        type: 'DuplicateError',
+        type: "DuplicateError",
         error: {
-          code: 'DUPLICATE_EMAIL',
-          message: 'Client with this email already exists',
+          code: "DUPLICATE_EMAIL",
+          message: "Client with this email already exists",
           details: {
-            email: 'john@example.com',
-            existing_client_id: 'client-456'
-          }
-        }
+            email: "john@example.com",
+            existing_client_id: "client-456",
+          },
+        },
       };
 
       safeInvoke.mockRejectedValue(duplicateError);
 
       try {
         await clientOperations.create({
-          name: 'John Doe',
-          email: 'john@example.com'
+          name: "John Doe",
+          email: "john@example.com",
         });
       } catch (error) {
         expect(error).toEqual(duplicateError);
       }
     });
 
-    it('handles not found errors for get operation', async () => {
+    it("handles not found errors for get operation", async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await clientOperations.get('nonexistent-client');
+      const result = await clientOperations.get("nonexistent-client");
 
       expect(result).toBeNull();
     });
 
-    it('handles permission errors', async () => {
+    it("handles permission errors", async () => {
       const permissionError = {
-        type: 'PermissionError',
+        type: "PermissionError",
         error: {
-          code: 'PERMISSION_DENIED',
-          message: 'Insufficient permissions to access this client'
-        }
+          code: "PERMISSION_DENIED",
+          message: "Insufficient permissions to access this client",
+        },
       };
 
       cachedInvoke.mockRejectedValue(permissionError);
 
       try {
-        await clientOperations.get('client-123');
+        await clientOperations.get("client-123");
       } catch (error) {
         expect(error).toEqual(permissionError);
       }
     });
   });
 
-  describe('Edge Cases and Boundary Conditions', () => {
-    it('handles extremely long client names', async () => {
-      const longName = 'a'.repeat(500);
+  describe("Edge Cases and Boundary Conditions", () => {
+    it("handles extremely long client names", async () => {
+      const longName = "a".repeat(500);
       const clientData = {
         name: longName,
-        email: 'test@example.com'
+        email: "test@example.com",
       };
 
       await clientOperations.create(clientData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: clientData,
       });
     });
 
-    it('handles special characters in names', async () => {
-      const specialName = 'Client with special chars: éàüß@#$%^&*()';
+    it("handles special characters in names", async () => {
+      const specialName = "Client with special chars: éàüß@#$%^&*()";
       const clientData = {
         name: specialName,
-        email: 'test@example.com'
+        email: "test@example.com",
       };
 
       await clientOperations.create(clientData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: clientData,
       });
     });
 
-    it('handles empty list filters', async () => {
+    it("handles empty list filters", async () => {
       await clientOperations.list({});
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_list', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_list", {
         filters: {
-          page: 1,
-          limit: 20,
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
           search: null,
           customer_type: null,
-          sort_by: 'created_at',
-          sort_order: 'desc'
-        }
+        },
       });
     });
 
-    it('handles null values in optional fields', async () => {
+    it("handles null values in optional fields", async () => {
       const clientWithNulls = {
-        name: 'John Doe',
-        email: 'john@example.com',
+        name: "John Doe",
+        email: "john@example.com",
         phone: null,
         address_street: null,
         address_city: null,
-        notes: null
+        notes: null,
       };
 
       await clientOperations.create(clientWithNulls);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("client_create", {
         data: clientWithNulls,
       });
     });
 
-    it('handles maximum search limit', async () => {
-      await clientOperations.search('test', 1000);
+    it("handles maximum search limit", async () => {
+      await clientOperations.search("test", 1000);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_search', {
-        query: 'test',
+      expect(safeInvoke).toHaveBeenCalledWith("client_search", {
+        query: "test",
         limit: 1000,
       });
     });
 
-    it('handles search with empty query', async () => {
-      await clientOperations.search('', 10);
+    it("handles search with empty query", async () => {
+      await clientOperations.search("", 10);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_search', {
-        query: '',
+      expect(safeInvoke).toHaveBeenCalledWith("client_search", {
+        query: "",
         limit: 10,
       });
     });
 
-    it('handles listWithTasks with zero task limit', async () => {
+    it("handles listWithTasks with zero task limit", async () => {
       const filters = { page: 1, limit: 20 };
-      
+
       await clientOperations.listWithTasks(filters, 0);
 
-      expect(safeInvoke).toHaveBeenCalledWith('client_list_with_tasks', {
-        filters: expect.objectContaining({
-          page: 1,
-          limit: 20,
-        }),
+      expect(safeInvoke).toHaveBeenCalledWith("client_list_with_tasks", {
+        filters: {
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
+          search: null,
+          customer_type: null,
+        },
         limit_tasks: 0,
       });
     });

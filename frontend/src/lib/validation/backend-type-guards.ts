@@ -5,7 +5,7 @@
  * to ensure they match the expected backend types from Rust.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // Import backend types for reference
 import type {
@@ -13,9 +13,9 @@ import type {
   Client,
   UserSession,
   Intervention,
-  InterventionStep
-} from '@/lib/backend';
-import type { UserAccount } from '@/lib/types';
+  InterventionStep,
+  UserAccount,
+} from "@/lib/backend";
 
 /**
  * Zod schemas for backend types
@@ -24,30 +24,37 @@ import type { UserAccount } from '@/lib/types';
 
 // Task-related schemas
 const TaskStatusSchema = z.enum([
-  'draft',
-  'scheduled',
-  'in_progress',
-  'completed',
-  'cancelled',
-  'on_hold',
-  'pending',
-  'invalid',
-  'archived',
-  'failed',
-  'overdue',
-  'assigned',
-  'paused'
+  "draft",
+  "scheduled",
+  "in_progress",
+  "completed",
+  "cancelled",
+  "on_hold",
+  "pending",
+  "invalid",
+  "archived",
+  "failed",
+  "overdue",
+  "assigned",
+  "paused",
 ]);
 
-const TaskPrioritySchema = z.enum(['low', 'medium', 'high', 'urgent']);
+const TaskPrioritySchema = z.enum(["low", "medium", "high", "urgent"]);
 
 // Client-related schemas (defined early to avoid circular dependencies)
-export const CustomerTypeSchema = z.enum(['individual', 'business']);
+export const CustomerTypeSchema = z.enum(["individual", "business"]);
 
 const BigIntLikeSchema = z.union([
   z.bigint(),
-  z.number().int().nonnegative().transform((value) => BigInt(value)),
-  z.string().regex(/^\d+$/).transform((value) => BigInt(value)),
+  z
+    .number()
+    .int()
+    .nonnegative()
+    .transform((value) => BigInt(value)),
+  z
+    .string()
+    .regex(/^\d+$/)
+    .transform((value) => BigInt(value)),
 ]);
 const PaginationInfoSchema = z.object({
   page: z.number(),
@@ -67,40 +74,64 @@ const TaskSchema = z.object({
   vehicle_year: z.string().nullable(),
   vehicle_make: z.string().nullable(),
   vin: z.string().nullable(),
-   ppf_zones: z.array(z.string()).nullable(),
-   custom_ppf_zones: z.array(z.string()).nullable(),
+  ppf_zones: z.array(z.string()).nullable(),
+  custom_ppf_zones: z.array(z.string()).nullable(),
   status: TaskStatusSchema,
   priority: TaskPrioritySchema,
   technician_id: z.string().nullable(),
-  assigned_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  assigned_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   assigned_by: z.string().nullable(),
-  scheduled_date: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  start_time: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  end_time: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  date_rdv: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  heure_rdv: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  scheduled_date: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  start_time: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  end_time: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  date_rdv: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  heure_rdv: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   template_id: z.string().nullable(),
   workflow_id: z.string().nullable(),
   workflow_status: z.string().nullable(),
   current_workflow_step_id: z.string().nullable(),
-  started_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  completed_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  started_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  completed_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   completed_steps: z.string().nullable(),
   client_id: z.string().nullable(),
   customer_name: z.string().nullable(),
@@ -117,13 +148,13 @@ const TaskSchema = z.object({
   created_at: z.string(),
   updated_at: z.string(),
   creator_id: z.string().nullable(),
-   created_by: z.string().nullable(),
-   updated_by: z.string().nullable(),
-   deleted_at: z.string().nullable(),
-   deleted_by: z.string().nullable(),
-   synced: z.boolean(),
-   last_synced_at: z.string().nullable(),
- });
+  created_by: z.string().nullable(),
+  updated_by: z.string().nullable(),
+  deleted_at: z.string().nullable(),
+  deleted_by: z.string().nullable(),
+  synced: z.boolean(),
+  last_synced_at: z.string().nullable(),
+});
 
 // Client-related schemas
 export const ClientSchema = z.object({
@@ -145,24 +176,37 @@ export const ClientSchema = z.object({
   total_tasks: z.number(),
   active_tasks: z.number(),
   completed_tasks: z.number(),
-  last_task_date: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_task_date: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   created_by: z.string().nullable(),
-  deleted_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  deleted_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   deleted_by: z.string().nullable(),
   synced: z.boolean(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_synced_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 const ClientStatisticsSchema = z.object({
@@ -202,24 +246,37 @@ const ClientWithTasksSchema = z.object({
   total_tasks: z.number(),
   active_tasks: z.number(),
   completed_tasks: z.number(),
-  last_task_date: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_task_date: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   created_by: z.string().nullable(),
-  deleted_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  deleted_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   deleted_by: z.string().nullable(),
   synced: z.boolean(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_synced_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   tasks: z.array(TaskSchema).nullable(),
 });
 
@@ -230,7 +287,12 @@ const TaskListResponseSchema = z.object({
 });
 
 // User-related schemas
-export const UserRoleSchema = z.enum(['admin', 'technician', 'supervisor', 'viewer']);
+export const UserRoleSchema = z.enum([
+  "admin",
+  "technician",
+  "supervisor",
+  "viewer",
+]);
 
 export const UserAccountSchema = z.object({
   id: z.string(),
@@ -239,26 +301,15 @@ export const UserAccountSchema = z.object({
   first_name: z.string(),
   last_name: z.string(),
   role: UserRoleSchema,
-  password_hash: z.string(),
-  salt: z.string().nullable(),
   phone: z.string().nullable(),
   is_active: z.boolean(),
-  last_login: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_login: BigIntLikeSchema.nullable(),
   login_count: z.number(),
   preferences: z.string().nullable(),
   synced: z.boolean(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  name: z.string().optional(), // backward compatibility
+  last_synced_at: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
 
 export const UserSessionSchema = z.object({
@@ -268,31 +319,37 @@ export const UserSessionSchema = z.object({
   email: z.string(),
   role: UserRoleSchema,
   token: z.string(),
-  expires_at: z.union([z.string(), z.number()]).transform(val =>
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  last_activity: z.union([z.string(), z.number()]).transform(val =>
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  created_at: z.union([z.string(), z.number()]).transform(val =>
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  expires_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  last_activity: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 // Intervention schemas
 export const InterventionStatusSchema = z.enum([
-  'pending',
-  'in_progress',
-  'paused',
-  'completed',
-  'cancelled'
+  "pending",
+  "in_progress",
+  "paused",
+  "completed",
+  "cancelled",
 ]);
 
 export const InterventionTypeSchema = z.enum([
-  'ppf',
-  'ceramic',
-  'detailing',
-  'other'
+  "ppf",
+  "ceramic",
+  "detailing",
+  "other",
 ]);
 
 export const InterventionSchema = z.object({
@@ -318,18 +375,30 @@ export const InterventionSchema = z.object({
   film_type: z.string().nullable(), // FilmType enum
   film_brand: z.string().nullable(),
   film_model: z.string().nullable(),
-  scheduled_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  started_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  completed_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  paused_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  scheduled_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  started_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  completed_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  paused_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   estimated_duration: z.number().nullable(),
   actual_duration: z.number().nullable(),
   weather_condition: z.string().nullable(), // WeatherCondition enum
@@ -352,36 +421,43 @@ export const InterventionSchema = z.object({
   special_instructions: z.string().nullable(),
   app_version: z.string().nullable(),
   synced: z.boolean(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_synced_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   sync_error: z.string().nullable(),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   created_by: z.string().nullable(),
   updated_by: z.string().nullable(),
 });
 
 // Step schemas
 export const StepTypeSchema = z.enum([
-  'inspection',
-  'preparation',
-  'installation',
-  'finalization'
+  "inspection",
+  "preparation",
+  "installation",
+  "finalization",
 ]);
 
 export const StepStatusSchema = z.enum([
-  'pending',
-  'in_progress',
-  'paused',
-  'completed',
-  'failed',
-  'skipped',
-  'rework'
+  "pending",
+  "in_progress",
+  "paused",
+  "completed",
+  "failed",
+  "skipped",
+  "rework",
 ]);
 
 export const InterventionStepSchema = z.object({
@@ -397,15 +473,24 @@ export const InterventionStepSchema = z.object({
   requires_photos: z.boolean(),
   min_photos_required: z.number(),
   max_photos_allowed: z.number(),
-  started_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  completed_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  paused_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  started_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  completed_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  paused_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   duration_seconds: z.number().nullable(),
   estimated_duration_seconds: z.number().nullable(),
   observations: z.array(z.string()).nullable(),
@@ -416,51 +501,73 @@ export const InterventionStepSchema = z.object({
   validation_score: z.number().nullable(),
   requires_supervisor_approval: z.boolean(),
   approved_by: z.string().nullable(),
-  approved_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  approved_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   rejection_reason: z.string().nullable(),
   location_lat: z.number().nullable(),
   location_lon: z.number().nullable(),
   location_accuracy: z.number().nullable(),
-  device_timestamp: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  server_timestamp: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  device_timestamp: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  server_timestamp: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   title: z.string().nullable(),
   notes: z.string().nullable(),
   synced: z.boolean(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_synced_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   created_at: z.string(),
   updated_at: z.string(),
 });
 
 // Notification schemas
-export const NotificationChannelSchema = z.enum(['Email', 'Sms', 'Push']);
+export const NotificationChannelSchema = z.enum(["Email", "Sms", "Push"]);
 
 export const NotificationTypeSchema = z.enum([
-  'TaskAssignment',
-  'TaskUpdate',
-  'TaskCompletion',
-  'StatusChange',
-  'OverdueWarning',
-  'SystemAlert',
-  'NewAssignment',
-  'DeadlineReminder',
-  'QualityApproval'
+  "TaskAssignment",
+  "TaskUpdate",
+  "TaskCompletion",
+  "StatusChange",
+  "OverdueWarning",
+  "SystemAlert",
+  "NewAssignment",
+  "DeadlineReminder",
+  "QualityApproval",
 ]);
 
-export const NotificationPrioritySchema = z.enum(['Low', 'Normal', 'High', 'Critical']);
+export const NotificationPrioritySchema = z.enum([
+  "Low",
+  "Normal",
+  "High",
+  "Critical",
+]);
 
-export const NotificationStatusSchema = z.enum(['Pending', 'Sent', 'Failed', 'Cancelled']);
+export const NotificationStatusSchema = z.enum([
+  "Pending",
+  "Sent",
+  "Failed",
+  "Cancelled",
+]);
 
-export const EmailProviderSchema = z.enum(['SendGrid', 'Mailgun', 'Smtp']);
+export const EmailProviderSchema = z.enum(["SendGrid", "Mailgun", "Smtp"]);
 
-export const SmsProviderSchema = z.enum(['Twilio', 'AwsSns']);
+export const SmsProviderSchema = z.enum(["Twilio", "AwsSns"]);
 
 export const NotificationTemplateSchema = z.object({
   id: z.string(),
@@ -471,12 +578,16 @@ export const NotificationTemplateSchema = z.object({
   body_template: z.string(),
   variables: z.array(z.string()),
   is_active: z.boolean(),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 export const NotificationMessageSchema = z.object({
@@ -489,19 +600,29 @@ export const NotificationMessageSchema = z.object({
   body: z.string(),
   priority: NotificationPrioritySchema,
   status: NotificationStatusSchema,
-  scheduled_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  sent_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  scheduled_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  sent_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   error_message: z.string().nullable(),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 export const EmailConfigSchema = z.object({
@@ -539,15 +660,15 @@ export const TemplateVariablesSchema = z.object({
 });
 
 // Photo schemas (corrected to match backend.ts)
-export const PhotoTypeSchema = z.enum(['before', 'during', 'after']);
+export const PhotoTypeSchema = z.enum(["before", "during", "after"]);
 
 export const PhotoCategorySchema = z.enum([
-  'vehicle_condition',
-  'workspace',
-  'step_progress',
-  'qc_check',
-  'final_result',
-  'other'
+  "vehicle_condition",
+  "workspace",
+  "step_progress",
+  "qc_check",
+  "final_result",
+  "other",
 ]);
 
 export const PhotoSchema = z.object({
@@ -568,11 +689,13 @@ export const PhotoSchema = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
   notes: z.string().nullable(),
-  gps_location: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-    accuracy: z.number().nullable()
-  }).nullable(),
+  gps_location: z
+    .object({
+      latitude: z.number(),
+      longitude: z.number(),
+      accuracy: z.number().nullable(),
+    })
+    .nullable(),
   quality_score: z.number().nullable(),
   blur_score: z.number().nullable(),
   exposure_score: z.number().nullable(),
@@ -580,29 +703,45 @@ export const PhotoSchema = z.object({
   is_required: z.boolean(),
   is_approved: z.boolean(),
   approved_by: z.string().nullable(),
-  approved_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  approved_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   rejection_reason: z.string().nullable(),
   synced: z.boolean(),
   storage_url: z.string().nullable(),
   upload_retry_count: z.number(),
   upload_error: z.string().nullable(),
-  last_synced_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  captured_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  uploaded_at: z.union([z.string(), z.number()]).nullable().transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  last_synced_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  captured_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  uploaded_at: z
+    .union([z.string(), z.number()])
+    .nullable()
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 // Settings schemas
@@ -704,7 +843,12 @@ export const SystemConfigurationSchema = z.object({
 });
 
 // Common schemas
-export const FilmTypeSchema = z.enum(['standard', 'premium', 'matte', 'colored']);
+export const FilmTypeSchema = z.enum([
+  "standard",
+  "premium",
+  "matte",
+  "colored",
+]);
 
 export const GpsLocationSchema = z.object({
   latitude: z.number(),
@@ -712,37 +856,67 @@ export const GpsLocationSchema = z.object({
   accuracy: z.number().nullable(),
 });
 
-export const LightingConditionSchema = z.enum(['natural', 'artificial', 'mixed']);
+export const LightingConditionSchema = z.enum([
+  "natural",
+  "artificial",
+  "mixed",
+]);
 
-export const WeatherConditionSchema = z.enum(['sunny', 'cloudy', 'rainy', 'foggy', 'windy', 'other']);
+export const WeatherConditionSchema = z.enum([
+  "sunny",
+  "cloudy",
+  "rainy",
+  "foggy",
+  "windy",
+  "other",
+]);
 
-export const WorkLocationSchema = z.enum(['indoor', 'outdoor', 'semi_covered']);
+export const WorkLocationSchema = z.enum(["indoor", "outdoor", "semi_covered"]);
 
 // Sync schemas (corrected)
-export const EntityTypeSchema = z.enum(['task', 'client', 'intervention', 'step', 'photo', 'user']);
+export const EntityTypeSchema = z.enum([
+  "task",
+  "client",
+  "intervention",
+  "step",
+  "photo",
+  "user",
+]);
 
-export const OperationTypeSchema = z.enum(['create', 'update', 'delete']);
+export const OperationTypeSchema = z.enum(["create", "update", "delete"]);
 
-export const SyncStatusSchema = z.enum(['pending', 'processing', 'completed', 'failed', 'abandoned']);
+export const SyncStatusSchema = z.enum([
+  "pending",
+  "processing",
+  "completed",
+  "failed",
+  "abandoned",
+]);
 
 export const SyncOperationSchema = z.object({
   operation_type: OperationTypeSchema,
   entity_type: EntityTypeSchema,
   entity_id: z.string(),
   dependencies: z.array(z.string()),
-  timestamp_utc: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  timestamp_utc: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
   retry_count: z.number(),
   max_retries: z.number(),
   last_error: z.string().nullable(),
   status: SyncStatusSchema,
-  created_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
-  updated_at: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'number' ? new Date(val).toISOString() : val
-  ),
+  created_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
+  updated_at: z
+    .union([z.string(), z.number()])
+    .transform((val) =>
+      typeof val === "number" ? new Date(val).toISOString() : val,
+    ),
 });
 
 export const SyncQueueMetricsSchema = z.object({
@@ -759,26 +933,26 @@ export const SyncQueueMetricsSchema = z.object({
 export const StartInterventionResponseSchema = z.object({
   type: z.literal("Started"),
   intervention: InterventionSchema,
-  steps: z.array(InterventionStepSchema)
+  steps: z.array(InterventionStepSchema),
 });
 export const AdvanceStepResponseSchema = z.object({
   step: InterventionStepSchema,
   next_step: InterventionStepSchema.nullable(),
-  progress_percentage: z.number()
+  progress_percentage: z.number(),
 });
 export const FinalizeInterventionMetricsSchema = z.object({
   total_duration_minutes: z.number().nullable(),
   efficiency_score: z.number().nullable(),
   quality_score: z.number().nullable(),
-  certificates_generated: z.boolean().nullable()
+  certificates_generated: z.boolean().nullable(),
 });
 export const FinalizeInterventionResponseSchema = z.object({
   intervention: InterventionSchema,
-  metrics: FinalizeInterventionMetricsSchema
+  metrics: FinalizeInterventionMetricsSchema,
 });
 export const GetProgressResponseSchema = z.object({
   steps: z.array(InterventionStepSchema),
-  progress_percentage: z.number()
+  progress_percentage: z.number(),
 });
 
 /**
@@ -914,23 +1088,26 @@ export function validateTaskDetailed(data: unknown): ValidationResult<Task> {
     } else {
       return {
         success: false,
-        error: 'Task validation failed',
-        details: result.error.issues.map(issue => ({
-          field: issue.path.join('.'),
+        error: "Task validation failed",
+        details: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
           message: issue.message,
-          value: issue.code === 'invalid_type' ? data : undefined
-        }))
+          value: issue.code === "invalid_type" ? data : undefined,
+        })),
       };
     }
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown validation error'
+      error:
+        error instanceof Error ? error.message : "Unknown validation error",
     };
   }
 }
 
-export function validateClientDetailed(data: unknown): ValidationResult<Client> {
+export function validateClientDetailed(
+  data: unknown,
+): ValidationResult<Client> {
   try {
     const result = ClientSchema.safeParse(data);
     if (result.success) {
@@ -938,23 +1115,26 @@ export function validateClientDetailed(data: unknown): ValidationResult<Client> 
     } else {
       return {
         success: false,
-        error: 'Client validation failed',
-        details: result.error.issues.map(issue => ({
-          field: issue.path.join('.'),
+        error: "Client validation failed",
+        details: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
           message: issue.message,
-          value: issue.code === 'invalid_type' ? data : undefined
-        }))
+          value: issue.code === "invalid_type" ? data : undefined,
+        })),
       };
     }
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown validation error'
+      error:
+        error instanceof Error ? error.message : "Unknown validation error",
     };
   }
 }
 
-export function validateUserAccountDetailed(data: unknown): ValidationResult<UserAccount> {
+export function validateUserAccountDetailed(
+  data: unknown,
+): ValidationResult<UserAccount> {
   try {
     const result = UserAccountSchema.safeParse(data);
     if (result.success) {
@@ -962,18 +1142,19 @@ export function validateUserAccountDetailed(data: unknown): ValidationResult<Use
     } else {
       return {
         success: false,
-        error: 'UserAccount validation failed',
-        details: result.error.issues.map(issue => ({
-          field: issue.path.join('.'),
+        error: "UserAccount validation failed",
+        details: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
           message: issue.message,
-          value: issue.code === 'invalid_type' ? data : undefined
-        }))
+          value: issue.code === "invalid_type" ? data : undefined,
+        })),
       };
     }
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown validation error'
+      error:
+        error instanceof Error ? error.message : "Unknown validation error",
     };
   }
 }
@@ -995,7 +1176,9 @@ export function assertIsClient(data: unknown): asserts data is Client {
   }
 }
 
-export function assertIsUserAccount(data: unknown): asserts data is UserAccount {
+export function assertIsUserAccount(
+  data: unknown,
+): asserts data is UserAccount {
   const result = validateUserAccountDetailed(data);
   if (!result.success) {
     throw new Error(`Type assertion failed: ${result.error}`);
@@ -1005,12 +1188,15 @@ export function assertIsUserAccount(data: unknown): asserts data is UserAccount 
 /**
  * Utility functions for common validation patterns
  */
-export function validateRequiredString(value: unknown, fieldName: string): ValidationResult<string> {
-  if (typeof value !== 'string') {
+export function validateRequiredString(
+  value: unknown,
+  fieldName: string,
+): ValidationResult<string> {
+  if (typeof value !== "string") {
     return {
       success: false,
       error: `${fieldName} must be a string`,
-      details: [{ field: fieldName, message: 'Must be a string', value }]
+      details: [{ field: fieldName, message: "Must be a string", value }],
     };
   }
 
@@ -1018,30 +1204,38 @@ export function validateRequiredString(value: unknown, fieldName: string): Valid
     return {
       success: false,
       error: `${fieldName} cannot be empty`,
-      details: [{ field: fieldName, message: 'Cannot be empty', value }]
+      details: [{ field: fieldName, message: "Cannot be empty", value }],
     };
   }
 
   return { success: true, data: value.trim() };
 }
 
-export function validateOptionalString(value: unknown, fieldName: string): ValidationResult<string | null> {
+export function validateOptionalString(
+  value: unknown,
+  fieldName: string,
+): ValidationResult<string | null> {
   if (value === null || value === undefined) {
     return { success: true, data: null };
   }
 
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return {
       success: false,
       error: `${fieldName} must be a string or null`,
-      details: [{ field: fieldName, message: 'Must be a string or null', value }]
+      details: [
+        { field: fieldName, message: "Must be a string or null", value },
+      ],
     };
   }
 
   return { success: true, data: value.trim() };
 }
 
-export function validateEmail(value: unknown, fieldName: string): ValidationResult<string> {
+export function validateEmail(
+  value: unknown,
+  fieldName: string,
+): ValidationResult<string> {
   const stringResult = validateRequiredString(value, fieldName);
   if (!stringResult.success) {
     return stringResult;
@@ -1052,7 +1246,13 @@ export function validateEmail(value: unknown, fieldName: string): ValidationResu
     return {
       success: false,
       error: `${fieldName} must be a valid email address`,
-      details: [{ field: fieldName, message: 'Must be a valid email address', value: stringResult.data }]
+      details: [
+        {
+          field: fieldName,
+          message: "Must be a valid email address",
+          value: stringResult.data,
+        },
+      ],
     };
   }
 
@@ -1062,19 +1262,21 @@ export function validateEmail(value: unknown, fieldName: string): ValidationResu
 export function validateEnum<T extends Record<string, string | number>>(
   value: unknown,
   enumObject: T,
-  fieldName: string
+  fieldName: string,
 ): ValidationResult<T[keyof T]> {
   const validValues = Object.values(enumObject);
 
   if (!validValues.includes(value as T[keyof T])) {
     return {
       success: false,
-      error: `${fieldName} must be one of: ${validValues.join(', ')}`,
-      details: [{
-        field: fieldName,
-        message: `Must be one of: ${validValues.join(', ')}`,
-        value
-      }]
+      error: `${fieldName} must be one of: ${validValues.join(", ")}`,
+      details: [
+        {
+          field: fieldName,
+          message: `Must be one of: ${validValues.join(", ")}`,
+          value,
+        },
+      ],
     };
   }
 
@@ -1086,7 +1288,7 @@ export function validateEnum<T extends Record<string, string | number>>(
  */
 export function validateMultiple<T>(
   items: unknown[],
-  validator: (item: unknown) => ValidationResult<T>
+  validator: (item: unknown) => ValidationResult<T>,
 ): ValidationResult<T[]> {
   const results: T[] = [];
   const errors: ValidationError[] = [];
@@ -1096,10 +1298,12 @@ export function validateMultiple<T>(
     if (result.success && result.data !== undefined) {
       results.push(result.data);
     } else {
-      errors.push(...(result.details || []).map(error => ({
-        ...error,
-        field: `[${i}].${error.field}`
-      })));
+      errors.push(
+        ...(result.details || []).map((error) => ({
+          ...error,
+          field: `[${i}].${error.field}`,
+        })),
+      );
     }
   }
 
@@ -1107,7 +1311,7 @@ export function validateMultiple<T>(
     return {
       success: false,
       error: `Validation failed for ${errors.length} item(s)`,
-      details: errors
+      details: errors,
     };
   }
 
@@ -1175,7 +1379,9 @@ export function safeValidateInterventionStep(data: unknown): unknown | null {
   }
 }
 
-export function safeValidateNotificationTemplate(data: unknown): unknown | null {
+export function safeValidateNotificationTemplate(
+  data: unknown,
+): unknown | null {
   try {
     return NotificationTemplateSchema.parse(data);
   } catch {
@@ -1223,85 +1429,119 @@ export function safeValidateGpsLocation(data: unknown): unknown | null {
   }
 }
 
-export function validateFinalizeInterventionResponse(data: unknown): z.infer<typeof FinalizeInterventionResponseSchema> {
+export function validateFinalizeInterventionResponse(
+  data: unknown,
+): z.infer<typeof FinalizeInterventionResponseSchema> {
   return FinalizeInterventionResponseSchema.parse(data);
 }
 
-export function validateGetProgressResponse(data: unknown): z.infer<typeof GetProgressResponseSchema> {
+export function validateGetProgressResponse(
+  data: unknown,
+): z.infer<typeof GetProgressResponseSchema> {
   return GetProgressResponseSchema.parse(data);
 }
 
-export function validateStartInterventionResponse(data: unknown): z.infer<typeof StartInterventionResponseSchema> {
+export function validateStartInterventionResponse(
+  data: unknown,
+): z.infer<typeof StartInterventionResponseSchema> {
   return StartInterventionResponseSchema.parse(data);
 }
 
-export function safeValidateStartInterventionResponse(data: unknown): z.infer<typeof StartInterventionResponseSchema> {
+export function safeValidateStartInterventionResponse(
+  data: unknown,
+): z.infer<typeof StartInterventionResponseSchema> {
   try {
     return StartInterventionResponseSchema.parse(data);
   } catch (error) {
-    console.error('StartInterventionResponse validation failed:', error);
-    throw new Error(`Invalid start intervention response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("StartInterventionResponse validation failed:", error);
+    throw new Error(
+      `Invalid start intervention response: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
-export function safeValidateAdvanceStepResponse(data: unknown): z.infer<typeof AdvanceStepResponseSchema> {
+export function safeValidateAdvanceStepResponse(
+  data: unknown,
+): z.infer<typeof AdvanceStepResponseSchema> {
   try {
     return AdvanceStepResponseSchema.parse(data);
   } catch (error) {
-    console.error('AdvanceStepResponse validation failed:', error);
-    throw new Error(`Invalid advance step response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("AdvanceStepResponse validation failed:", error);
+    throw new Error(
+      `Invalid advance step response: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
-export function safeValidateFinalizeInterventionResponse(data: unknown): z.infer<typeof FinalizeInterventionResponseSchema> {
+export function safeValidateFinalizeInterventionResponse(
+  data: unknown,
+): z.infer<typeof FinalizeInterventionResponseSchema> {
   try {
     return FinalizeInterventionResponseSchema.parse(data);
   } catch (error) {
-    console.error('FinalizeInterventionResponse validation failed:', error);
-    throw new Error(`Invalid finalize intervention response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("FinalizeInterventionResponse validation failed:", error);
+    throw new Error(
+      `Invalid finalize intervention response: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
-export function safeValidateGetProgressResponse(data: unknown): z.infer<typeof GetProgressResponseSchema> {
+export function safeValidateGetProgressResponse(
+  data: unknown,
+): z.infer<typeof GetProgressResponseSchema> {
   try {
     return GetProgressResponseSchema.parse(data);
   } catch (error) {
-    console.error('GetProgressResponse validation failed:', error);
-    throw new Error(`Invalid get progress response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error("GetProgressResponse validation failed:", error);
+    throw new Error(
+      `Invalid get progress response: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
 export function validateIpcResponse<T>(
   response: unknown,
-  typeGuard: (data: unknown) => data is T
+  typeGuard: (data: unknown) => data is T,
 ): ValidationResult<T> {
   // Check if it's a valid IPC response structure
-  if (!response || typeof response !== 'object') {
+  if (!response || typeof response !== "object") {
     return {
       success: false,
-      error: 'Invalid IPC response structure',
-      details: [{ field: 'response', message: 'Must be an object', value: response }]
+      error: "Invalid IPC response structure",
+      details: [
+        { field: "response", message: "Must be an object", value: response },
+      ],
     };
   }
 
   const resp = response as Record<string, unknown>;
 
   // Check for ApiResponse structure
-  if (typeof resp.success === 'boolean') {
+  if (typeof resp.success === "boolean") {
     if (!resp.success) {
-      const errorMessage = typeof resp.error === 'string' ? resp.error : 'IPC call failed';
+      const errorMessage =
+        typeof resp.error === "string" ? resp.error : "IPC call failed";
       return {
         success: false,
         error: errorMessage,
-        details: typeof resp.error === 'string' ? [{ field: 'error', message: resp.error }] : undefined
+        details:
+          typeof resp.error === "string"
+            ? [{ field: "error", message: resp.error }]
+            : undefined,
       };
     }
 
     if (!typeGuard(resp.data)) {
       return {
         success: false,
-        error: 'Response data does not match expected type',
-        details: [{ field: 'data', message: 'Type validation failed', value: resp.data }]
+        error: "Response data does not match expected type",
+        details: [
+          {
+            field: "data",
+            message: "Type validation failed",
+            value: resp.data,
+          },
+        ],
       };
     }
 
@@ -1309,56 +1549,83 @@ export function validateIpcResponse<T>(
   }
 
   // Check for tagged union response (like ClientResponse)
-  if (resp.type && typeof resp.type === 'string') {
-    const successTypes = ['Created', 'Found', 'Updated', 'List', 'SearchResults', 'Stats'];
+  if (resp.type && typeof resp.type === "string") {
+    const successTypes = [
+      "Created",
+      "Found",
+      "Updated",
+      "List",
+      "SearchResults",
+      "Stats",
+    ];
     if (successTypes.includes(resp.type)) {
       const { type, ...data } = resp;
       if (!typeGuard(data)) {
         return {
           success: false,
           error: `Response data does not match expected type for ${type}`,
-          details: [{ field: 'data', message: 'Type validation failed', value: data }]
+          details: [
+            { field: "data", message: "Type validation failed", value: data },
+          ],
         };
       }
       return { success: true, data };
-    } else if (resp.type === 'NotFound') {
+    } else if (resp.type === "NotFound") {
       return {
         success: false,
-        error: 'Not found',
-        details: [{ field: 'type', message: 'Resource not found' }]
+        error: "Not found",
+        details: [{ field: "type", message: "Resource not found" }],
       };
     }
   }
 
   return {
     success: false,
-    error: 'Unknown IPC response format',
-    details: [{ field: 'response', message: 'Unrecognized response structure', value: response }]
+    error: "Unknown IPC response format",
+    details: [
+      {
+        field: "response",
+        message: "Unrecognized response structure",
+        value: response,
+      },
+    ],
   };
 }
 
 // Additional validation functions for IPC responses
-export function validateClientWithTasks(data: unknown): data is import('@/lib/backend').ClientWithTasks {
+export function validateClientWithTasks(
+  data: unknown,
+): data is import("@/lib/backend").ClientWithTasks {
   return ClientWithTasksSchema.safeParse(data).success;
 }
 
-export function validateClientListResponse(data: unknown): data is import('@/lib/backend').ClientListResponse {
+export function validateClientListResponse(
+  data: unknown,
+): data is import("@/lib/backend").ClientListResponse {
   return ClientListResponseSchema.safeParse(data).success;
 }
 
-export function validateClientWithTasksList(data: unknown): data is Array<import('@/lib/backend').ClientWithTasks> {
+export function validateClientWithTasksList(
+  data: unknown,
+): data is Array<import("@/lib/backend").ClientWithTasks> {
   return z.array(ClientWithTasksSchema).safeParse(data).success;
 }
 
-export function parseClientStatistics(data: unknown): import('@/lib/backend').ClientStatistics {
+export function parseClientStatistics(
+  data: unknown,
+): import("@/lib/backend").ClientStatistics {
   return ClientStatisticsSchema.parse(data);
 }
 
-export function validateClientStatistics(data: unknown): data is import('@/lib/backend').ClientStatistics {
+export function validateClientStatistics(
+  data: unknown,
+): data is import("@/lib/backend").ClientStatistics {
   return ClientStatisticsSchema.safeParse(data).success;
 }
 
-export function validateTaskListResponse(data: unknown): data is import('@/lib/backend').TaskListResponse {
+export function validateTaskListResponse(
+  data: unknown,
+): data is import("@/lib/backend").TaskListResponse {
   return TaskListResponseSchema.safeParse(data).success;
 }
 
@@ -1369,7 +1636,7 @@ export function validateTaskListResponse(data: unknown): data is import('@/lib/b
 const QuoteItemSchema = z.object({
   id: z.string(),
   quote_id: z.string(),
-  kind: z.enum(['labor', 'material', 'service', 'discount']),
+  kind: z.enum(["labor", "material", "service", "discount"]),
   label: z.string(),
   description: z.string().nullable(),
   qty: z.number(),
@@ -1386,7 +1653,15 @@ export const QuoteSchema = z.object({
   quote_number: z.string(),
   client_id: z.string(),
   task_id: z.string().nullable(),
-  status: z.enum(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted', 'changes_requested']),
+  status: z.enum([
+    "draft",
+    "sent",
+    "accepted",
+    "rejected",
+    "expired",
+    "converted",
+    "changes_requested",
+  ]),
   valid_until: z.string().nullable(),
   description: z.string().nullable(),
   notes: z.string().nullable(),
@@ -1420,14 +1695,26 @@ const QuoteAcceptResponseSchema = z.object({
   task_created: z.object({ task_id: z.string() }).nullable(),
 });
 
-export function validateQuote(data: unknown): import('@/types/quote.types').Quote {
-  return QuoteSchema.parse(data) as unknown as import('@/types/quote.types').Quote;
+export function validateQuote(
+  data: unknown,
+): import("@/types/quote.types").Quote {
+  return QuoteSchema.parse(
+    data,
+  ) as unknown as import("@/types/quote.types").Quote;
 }
 
-export function validateQuoteList(data: unknown): import('@/types/quote.types').QuoteListResponse {
-  return QuoteListResponseSchema.parse(data) as unknown as import('@/types/quote.types').QuoteListResponse;
+export function validateQuoteList(
+  data: unknown,
+): import("@/types/quote.types").QuoteListResponse {
+  return QuoteListResponseSchema.parse(
+    data,
+  ) as unknown as import("@/types/quote.types").QuoteListResponse;
 }
 
-export function validateQuoteAcceptResponse(data: unknown): import('@/types/quote.types').QuoteAcceptResponse {
-  return QuoteAcceptResponseSchema.parse(data) as unknown as import('@/types/quote.types').QuoteAcceptResponse;
+export function validateQuoteAcceptResponse(
+  data: unknown,
+): import("@/types/quote.types").QuoteAcceptResponse {
+  return QuoteAcceptResponseSchema.parse(
+    data,
+  ) as unknown as import("@/types/quote.types").QuoteAcceptResponse;
 }

@@ -66,6 +66,10 @@ pub trait SettingsRepository: Send + Sync {
 
     /// Return `true` if at least one active Admin user exists.
     fn has_admin_users(&self) -> Result<bool, AppError>;
+
+    /// Promote the earliest active user to Admin role.
+    /// Called once during the onboarding flow.
+    fn promote_first_user_to_admin(&self) -> Result<(), AppError>;
 }
 
 /// Repository contract for application-wide settings persistence.
@@ -135,6 +139,10 @@ impl SettingsRepository for OrganizationRepository {
 
     fn has_admin_users(&self) -> Result<bool, AppError> {
         self.has_admin_users()
+    }
+
+    fn promote_first_user_to_admin(&self) -> Result<(), AppError> {
+        self.promote_first_user_to_admin()
     }
 }
 
@@ -498,24 +506,7 @@ impl SettingsService {
     }
 
     fn promote_first_user_to_admin(&self) -> Result<(), AppError> {
-        let conn = self.db.get_connection().map_err(|e| {
-            AppError::Database(format!("Failed to get database connection: {}", e))
-        })?;
-        
-        conn.execute(
-            "UPDATE users SET role = 'admin', updated_at = ? WHERE id = (
-                SELECT id FROM users 
-                WHERE is_active = 1 AND deleted_at IS NULL 
-                ORDER BY created_at ASC LIMIT 1
-            )",
-            rusqlite::params![chrono::Utc::now().timestamp_millis()],
-        ).map_err(|e| {
-            tracing::error!("Failed to promote first user to admin: {}", e);
-            AppError::Database(format!("Failed to promote user: {}", e))
-        })?;
-        
-        info!("Promoted first user to Admin role");
-        Ok(())
+        self.org_repo().promote_first_user_to_admin()
     }
 
     /// Retrieve the organization record.  Requires at least Viewer.

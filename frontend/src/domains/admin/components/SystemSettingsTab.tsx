@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 // RESOLVED(ADR-014 partial): Data-fetching, transformation and persistence extracted into
 // `hooks/useSystemSettings.ts`. This component is now a pure presentational layer.
 // Note: the hook uses useState/useEffect rather than TanStack Query; a full TanStack Query
 // migration is tracked separately.
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Settings,
   Clock,
@@ -24,19 +24,30 @@ import {
   Calendar,
   Timer,
   Languages,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { SystemConfiguration } from '@/shared/types';
-import { useSystemSettings } from '../hooks/useSystemSettings';
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert } from "@/components/ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ConfigurationItem } from "@/shared/types";
+import { useSystemSettings } from "../hooks/useSystemSettings";
 
 const ConfigurationSkeleton = () => (
   <div className="space-y-4">
@@ -54,7 +65,10 @@ const ConfigurationSkeleton = () => (
 const BusinessHoursSkeleton = () => (
   <div className="space-y-4">
     {[...Array(7)].map((_, i) => (
-      <div key={i} className="flex items-center justify-between p-4 border border-[hsl(var(--rpma-border))] rounded-lg">
+      <div
+        key={i}
+        className="flex items-center justify-between p-4 border border-[hsl(var(--rpma-border))] rounded-lg"
+      >
         <div className="flex items-center gap-3">
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-16" />
@@ -72,7 +86,7 @@ const EmptyConfigState = ({ message }: { message: string }) => (
 );
 
 export function SystemSettingsTab() {
-  const [activeSubTab, setActiveSubTab] = useState('general');
+  const [activeSubTab, setActiveSubTab] = useState("general");
 
   const {
     configurations,
@@ -88,34 +102,51 @@ export function SystemSettingsTab() {
     setHasChanges,
   } = useSystemSettings();
 
-  const renderConfigurationField = (config: SystemConfiguration) => {
-    const onChange = (e: React.ChangeEvent<HTMLInputElement> | string | number | boolean) =>
-      updateConfiguration(config.id, typeof e === 'object' && 'target' in e ? e.target?.value : e);
+  const renderConfigurationField = (config: ConfigurationItem) => {
+    const onChange = (
+      e: React.ChangeEvent<HTMLInputElement> | string | number | boolean,
+    ) =>
+      updateConfiguration(
+        config.id,
+        typeof e === "object" && "target" in e ? e.target?.value : e,
+      );
 
     switch (config.data_type) {
-      case 'boolean':
+      case "boolean":
         return (
           <div className="flex items-center space-x-2">
             <Switch
-              checked={config.data_type === 'boolean' ? Boolean(config.value) : false}
-              onCheckedChange={(checked) => updateConfiguration(config.id, checked)}
+              checked={
+                config.data_type === "boolean" ? Boolean(config.value) : false
+              }
+              onCheckedChange={(checked) =>
+                updateConfiguration(config.id, checked)
+              }
             />
             <span className="text-sm text-muted-foreground">
-              {config.data_type === 'boolean' ? (Boolean(config.value) ? 'Activé' : 'Désactivé') : 'N/A'}
+              {config.data_type === "boolean"
+                ? Boolean(config.value)
+                  ? "Activé"
+                  : "Désactivé"
+                : "N/A"}
             </span>
           </div>
         );
-      case 'number':
+      case "number":
         return (
           <Input
-            value={typeof config.value === 'number' ? config.value : Number(config.value) || 0}
+            value={
+              typeof config.value === "number"
+                ? config.value
+                : Number(config.value) || 0
+            }
             onChange={onChange}
             className="transition-colors"
             type="number"
             placeholder="Entrez une valeur numérique"
           />
         );
-      case 'json':
+      case "json":
         return (
           <div className="space-y-2">
             <Textarea
@@ -131,17 +162,27 @@ export function SystemSettingsTab() {
               className="font-mono text-sm"
               rows={4}
             />
-            <p className="text-xs text-muted-foreground">Format JSON valide requis</p>
+            <p className="text-xs text-muted-foreground">
+              Format JSON valide requis
+            </p>
           </div>
         );
       default:
         return (
           <Input
-            value={typeof config.value === 'string' ? config.value : String(config.value || '')}
+            value={
+              typeof config.value === "string"
+                ? config.value
+                : String(config.value || "")
+            }
             onChange={onChange}
             className="transition-colors"
-            type={config.key.toLowerCase().includes('password') ? 'password' : 'text'}
-            placeholder={`Entrez ${config.description?.toLowerCase() || 'une valeur'}`}
+            type={
+              config.key.toLowerCase().includes("password")
+                ? "password"
+                : "text"
+            }
+            placeholder={`Entrez ${config.description?.toLowerCase() || "une valeur"}`}
           />
         );
     }
@@ -149,38 +190,45 @@ export function SystemSettingsTab() {
 
   const subTabs = [
     {
-      id: 'general',
-      label: 'Général',
+      id: "general",
+      label: "Général",
       icon: Settings,
       description: "Paramètres de base de l'entreprise",
     },
     {
-      id: 'business-hours',
+      id: "business-hours",
       label: "Heures d'ouverture",
       icon: Clock,
-      description: 'Configuration des horaires de travail',
+      description: "Configuration des horaires de travail",
     },
     {
-      id: 'localization',
-      label: 'Localisation',
+      id: "localization",
+      label: "Localisation",
       icon: Globe,
-      description: 'Langue, fuseau horaire et format',
+      description: "Langue, fuseau horaire et format",
     },
     {
-      id: 'notifications',
-      label: 'Notifications',
+      id: "notifications",
+      label: "Notifications",
       icon: Bell,
-      description: 'Préférences de notification',
+      description: "Préférences de notification",
     },
   ];
 
   const companyConfigurations = configurations.filter((config) =>
-    ['company_name', 'company_email', 'company_phone', 'company_address'].includes(config.key)
+    [
+      "company_name",
+      "company_email",
+      "company_phone",
+      "company_address",
+    ].includes(config.key),
   );
   const localizationConfigurations = configurations.filter((config) =>
-    ['timezone', 'language', 'date_format', 'currency'].includes(config.key)
+    ["timezone", "language", "date_format", "currency"].includes(config.key),
   );
-  const notificationConfigurations = configurations.filter((config) => config.key.includes('notification'));
+  const notificationConfigurations = configurations.filter((config) =>
+    config.key.includes("notification"),
+  );
 
   if (loading) {
     return (
@@ -206,8 +254,12 @@ export function SystemSettingsTab() {
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Paramètres Système</h2>
-            <p className="text-muted-foreground mt-1">Configurez les paramètres généraux de votre système</p>
+            <h2 className="text-2xl font-bold text-foreground">
+              Paramètres Système
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              Configurez les paramètres généraux de votre système
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -224,18 +276,32 @@ export function SystemSettingsTab() {
               disabled={!hasChanges || saving || resetting}
               className="flex items-center gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} />
-              {resetting ? 'Réinitialisation...' : 'Annuler'}
+              <RefreshCw
+                className={`h-4 w-4 ${resetting ? "animate-spin" : ""}`}
+              />
+              {resetting ? "Réinitialisation..." : "Annuler"}
             </Button>
 
-            <Button onClick={saveConfigurations} disabled={!hasChanges || saving || resetting} className="flex items-center gap-2">
-              {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? 'Sauvegarde...' : 'Enregistrer'}
+            <Button
+              onClick={saveConfigurations}
+              disabled={!hasChanges || saving || resetting}
+              className="flex items-center gap-2"
+            >
+              {saving ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? "Sauvegarde..." : "Enregistrer"}
             </Button>
           </div>
         </motion.div>
 
-        <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className="w-full">
+        <Tabs
+          value={activeSubTab}
+          onValueChange={setActiveSubTab}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1 bg-[hsl(var(--rpma-surface))] border border-[hsl(var(--rpma-border))] rounded-lg">
             {subTabs.map((tab) => {
               const Icon = tab.icon;
@@ -249,21 +315,29 @@ export function SystemSettingsTab() {
                     <Icon className="h-4 w-4" />
                     <span className="font-medium">{tab.label}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground hidden md:block text-center">{tab.description}</span>
+                  <span className="text-xs text-muted-foreground hidden md:block text-center">
+                    {tab.description}
+                  </span>
                 </TabsTrigger>
               );
             })}
           </TabsList>
 
           <TabsContent value="general" className="mt-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Informations de l&apos;Entreprise
                   </CardTitle>
-                  <CardDescription>Configurez les informations de base de votre entreprise</CardDescription>
+                  <CardDescription>
+                    Configurez les informations de base de votre entreprise
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -275,13 +349,31 @@ export function SystemSettingsTab() {
                         transition={{ duration: 0.2 }}
                         className="space-y-2"
                       >
-                        <Label htmlFor={config.id} className="flex items-center gap-2">
-                          {config.key === 'company_name' && <Building2 className="h-4 w-4" />}
-                          {config.key === 'company_email' && <Mail className="h-4 w-4" />}
-                          {config.key === 'company_phone' && <Phone className="h-4 w-4" />}
-                          {config.key === 'company_address' && <MapPin className="h-4 w-4" />}
+                        <Label
+                          htmlFor={config.id}
+                          className="flex items-center gap-2"
+                        >
+                          {config.key === "company_name" && (
+                            <Building2 className="h-4 w-4" />
+                          )}
+                          {config.key === "company_email" && (
+                            <Mail className="h-4 w-4" />
+                          )}
+                          {config.key === "company_phone" && (
+                            <Phone className="h-4 w-4" />
+                          )}
+                          {config.key === "company_address" && (
+                            <MapPin className="h-4 w-4" />
+                          )}
                           {config.description}
-                          {config.isRequired && <span className="text-red-500" aria-label="Champ obligatoire">*</span>}
+                          {config.isRequired && (
+                            <span
+                              className="text-red-500"
+                              aria-label="Champ obligatoire"
+                            >
+                              *
+                            </span>
+                          )}
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
@@ -289,7 +381,9 @@ export function SystemSettingsTab() {
                             <TooltipContent>
                               <p>Configuration: {config.key}</p>
                               <p>Type: {config.data_type}</p>
-                              {config.isRequired && <p>Ce champ est obligatoire</p>}
+                              {config.isRequired && (
+                                <p>Ce champ est obligatoire</p>
+                              )}
                             </TooltipContent>
                           </Tooltip>
                         </Label>
@@ -312,54 +406,68 @@ export function SystemSettingsTab() {
           </TabsContent>
 
           <TabsContent value="business-hours" className="mt-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Heures d&apos;Ouverture
                   </CardTitle>
-                  <CardDescription>Définissez les heures de travail pour votre entreprise</CardDescription>
+                  <CardDescription>
+                    Définissez les heures de travail pour votre entreprise
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {businessHours ? (
                     <div className="space-y-4">
-                      {Object.entries(businessHours.schedule).map(([day, hours]) => (
-                        <motion.div
-                          key={day}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex items-center justify-between p-4 border border-[hsl(var(--rpma-border))] rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium capitalize">{day}</span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <Timer className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">{hours.enabled ? `${hours.start} - ${hours.end}` : 'Fermé'}</span>
+                      {Object.entries(businessHours.schedule).map(
+                        ([day, hours]) => (
+                          <motion.div
+                            key={day}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-between p-4 border border-[hsl(var(--rpma-border))] rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium capitalize">
+                                {day}
+                              </span>
                             </div>
-                            <Switch
-                              checked={hours.enabled}
-                              onCheckedChange={(enabled) => {
-                                setBusinessHours((prev) => {
-                                  if (!prev) return prev;
-                                  return {
-                                    ...prev,
-                                    schedule: {
-                                      ...prev.schedule,
-                                      [day]: { ...hours, enabled },
-                                    },
-                                  };
-                                });
-                                setHasChanges(true);
-                              }}
-                            />
-                          </div>
-                        </motion.div>
-                      ))}
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <Timer className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">
+                                  {hours.enabled
+                                    ? `${hours.start} - ${hours.end}`
+                                    : "Fermé"}
+                                </span>
+                              </div>
+                              <Switch
+                                checked={hours.enabled}
+                                onCheckedChange={(enabled) => {
+                                  setBusinessHours((prev) => {
+                                    if (!prev) return prev;
+                                    return {
+                                      ...prev,
+                                      schedule: {
+                                        ...prev.schedule,
+                                        [day]: { ...hours, enabled },
+                                      },
+                                    };
+                                  });
+                                  setHasChanges(true);
+                                }}
+                              />
+                            </div>
+                          </motion.div>
+                        ),
+                      )}
                     </div>
                   ) : (
                     <BusinessHoursSkeleton />
@@ -370,14 +478,20 @@ export function SystemSettingsTab() {
           </TabsContent>
 
           <TabsContent value="localization" className="mt-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Localisation
                   </CardTitle>
-                  <CardDescription>Configurez la langue, le fuseau horaire et les formats</CardDescription>
+                  <CardDescription>
+                    Configurez la langue, le fuseau horaire et les formats
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -389,11 +503,22 @@ export function SystemSettingsTab() {
                         transition={{ duration: 0.2 }}
                         className="space-y-2"
                       >
-                        <Label htmlFor={config.id} className="flex items-center gap-2">
-                          {config.key === 'timezone' && <Clock className="h-4 w-4" />}
-                          {config.key === 'language' && <Languages className="h-4 w-4" />}
-                          {config.key === 'date_format' && <Calendar className="h-4 w-4" />}
-                          {config.key === 'currency' && <span className="text-lg">€</span>}
+                        <Label
+                          htmlFor={config.id}
+                          className="flex items-center gap-2"
+                        >
+                          {config.key === "timezone" && (
+                            <Clock className="h-4 w-4" />
+                          )}
+                          {config.key === "language" && (
+                            <Languages className="h-4 w-4" />
+                          )}
+                          {config.key === "date_format" && (
+                            <Calendar className="h-4 w-4" />
+                          )}
+                          {config.key === "currency" && (
+                            <span className="text-lg">€</span>
+                          )}
                           {config.description}
                         </Label>
                         {renderConfigurationField(config)}
@@ -409,14 +534,20 @@ export function SystemSettingsTab() {
           </TabsContent>
 
           <TabsContent value="notifications" className="mt-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Bell className="h-5 w-5 text-[hsl(var(--rpma-teal))]" />
                     Notifications
                   </CardTitle>
-                  <CardDescription>Configurez les préférences de notification</CardDescription>
+                  <CardDescription>
+                    Configurez les préférences de notification
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -428,7 +559,10 @@ export function SystemSettingsTab() {
                         transition={{ duration: 0.2 }}
                         className="space-y-2"
                       >
-                        <Label htmlFor={config.id} className="flex items-center gap-2">
+                        <Label
+                          htmlFor={config.id}
+                          className="flex items-center gap-2"
+                        >
                           <Bell className="h-4 w-4" />
                           {config.description}
                         </Label>
@@ -448,4 +582,3 @@ export function SystemSettingsTab() {
     </TooltipProvider>
   );
 }
-

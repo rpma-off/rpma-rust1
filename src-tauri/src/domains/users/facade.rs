@@ -195,6 +195,20 @@ impl UsersFacade {
                             .map_err(|e| {
                                 AppError::Database(format!("User update failed: {}", e))
                             })?;
+                        let event =
+                            crate::shared::services::event_bus::event_factory::user_updated_with_ctx(
+                                user.id.clone(),
+                                data.role.iter().map(|_| "role".to_string())
+                                    .chain(data.email.iter().map(|_| "email".to_string()))
+                                    .chain(data.first_name.iter().map(|_| "first_name".to_string()))
+                                    .chain(data.last_name.iter().map(|_| "last_name".to_string()))
+                                    .collect(),
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
+                        if let Err(e) = services.event_bus.publish(event) {
+                            tracing::warn!("Failed to publish UserUpdated event: {}", e);
+                        }
                         UserResponse::Updated(user)
                     }
                     UserAction::Delete { id } => {
@@ -206,6 +220,15 @@ impl UsersFacade {
                         services.account_manager.delete_user(&id).map_err(|e| {
                             AppError::Database(format!("User deletion failed: {}", e))
                         })?;
+                        let event =
+                            crate::shared::services::event_bus::event_factory::user_deleted_with_ctx(
+                                id.clone(),
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
+                        if let Err(e) = services.event_bus.publish(event) {
+                            tracing::warn!("Failed to publish UserDeleted event: {}", e);
+                        }
                         UserResponse::Deleted
                     }
                     UserAction::List {
@@ -257,8 +280,18 @@ impl UsersFacade {
                         )?;
                         services
                             .user_service
-                            .change_role(&id, new_role, &ctx.auth.user_id)
+                            .change_role(&id, new_role.clone(), &ctx.auth.user_id)
                             .await?;
+                        let event =
+                            crate::shared::services::event_bus::event_factory::user_updated_with_ctx(
+                                id.clone(),
+                                vec!["role".to_string()],
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
+                        if let Err(e) = services.event_bus.publish(event) {
+                            tracing::warn!("Failed to publish UserRoleChanged event: {}", e);
+                        }
                         UserResponse::RoleChanged
                     }
                     UserAction::Ban { id } => {
@@ -267,6 +300,16 @@ impl UsersFacade {
                             .user_service
                             .ban_user(&id, &ctx.auth.user_id)
                             .await?;
+                        let event =
+                            crate::shared::services::event_bus::event_factory::user_updated_with_ctx(
+                                id.clone(),
+                                vec!["is_active".to_string()],
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
+                        if let Err(e) = services.event_bus.publish(event) {
+                            tracing::warn!("Failed to publish UserBanned event: {}", e);
+                        }
                         UserResponse::UserBanned
                     }
                     UserAction::Unban { id } => {
@@ -274,6 +317,16 @@ impl UsersFacade {
                             .user_service
                             .unban_user(&id, &ctx.auth.user_id)
                             .await?;
+                        let event =
+                            crate::shared::services::event_bus::event_factory::user_updated_with_ctx(
+                                id.clone(),
+                                vec!["is_active".to_string()],
+                                ctx.auth.user_id.clone(),
+                                ctx.correlation_id.clone(),
+                            );
+                        if let Err(e) = services.event_bus.publish(event) {
+                            tracing::warn!("Failed to publish UserUnbanned event: {}", e);
+                        }
                         UserResponse::UserUnbanned
                     }
                     UserAction::AdminResetPassword { id } => {

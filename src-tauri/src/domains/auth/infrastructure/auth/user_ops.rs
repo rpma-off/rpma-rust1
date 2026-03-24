@@ -17,7 +17,7 @@ impl super::AuthService {
 
         let mut stmt = conn.prepare(
             "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
-              FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?"
+              FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ?"
         ).map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
         let users = stmt
@@ -60,7 +60,7 @@ impl super::AuthService {
 
         let user = conn.query_row(
             "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
-              FROM users WHERE id = ?",
+              FROM users WHERE id = ? AND deleted_at IS NULL",
             [user_id],
             |row| {
                 let role = row.get::<_, String>(7)?
@@ -163,7 +163,7 @@ impl super::AuthService {
     ) -> Result<Vec<UserAccount>, String> {
         let conn = self.db.get_connection()?;
 
-        let mut where_parts: Vec<String> = Vec::new();
+        let mut where_parts: Vec<String> = vec!["deleted_at IS NULL".to_string()];
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
         if let Some(q) = search {
@@ -184,11 +184,7 @@ impl super::AuthService {
             }
         }
 
-        let where_sql = if where_parts.is_empty() {
-            String::new()
-        } else {
-            format!("WHERE {}", where_parts.join(" AND "))
-        };
+        let where_sql = format!("WHERE {}", where_parts.join(" AND "));
 
         params.push((limit as i64).into());
         params.push((offset as i64).into());

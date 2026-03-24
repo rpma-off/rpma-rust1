@@ -346,7 +346,8 @@ impl InterventionRepository {
     pub fn get_intervention(&self, id: &str) -> InterventionResult<Option<Intervention>> {
         let conn = self.db.get_connection()?;
 
-        let mut stmt = conn.prepare("SELECT * FROM interventions WHERE id = ?")?;
+        let mut stmt =
+            conn.prepare("SELECT * FROM interventions WHERE id = ? AND deleted_at IS NULL")?;
 
         let intervention = stmt
             .query_row([id], |row| Intervention::from_row(row))
@@ -372,7 +373,7 @@ impl InterventionRepository {
         let conn = self.db.get_connection()?;
 
         let mut stmt = conn.prepare(
-            "SELECT * FROM interventions WHERE task_id = ? ORDER BY created_at DESC LIMIT 1",
+            "SELECT * FROM interventions WHERE task_id = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1",
         )?;
 
         let intervention = stmt
@@ -388,7 +389,7 @@ impl InterventionRepository {
         task_id: &str,
     ) -> InterventionResult<Option<Intervention>> {
         let mut stmt = conn.prepare(
-            "SELECT * FROM interventions WHERE task_id = ? AND status IN ('pending', 'in_progress', 'paused') ORDER BY created_at DESC LIMIT 1"
+            "SELECT * FROM interventions WHERE task_id = ? AND deleted_at IS NULL AND status IN ('pending', 'in_progress', 'paused') ORDER BY created_at DESC LIMIT 1"
         )?;
 
         let intervention = stmt
@@ -689,7 +690,8 @@ impl InterventionRepository {
         let conn = self.db.get_connection()?;
 
         // First, get total count
-        let mut count_sql = "SELECT COUNT(*) FROM interventions WHERE 1=1".to_string();
+        let mut count_sql =
+            "SELECT COUNT(*) FROM interventions WHERE 1=1 AND deleted_at IS NULL".to_string();
         let mut count_params: Vec<rusqlite::types::Value> = Vec::new();
 
         if let Some(status) = status {
@@ -707,7 +709,7 @@ impl InterventionRepository {
             count_stmt.query_row(rusqlite::params_from_iter(count_params), |row| row.get(0))?;
 
         // Then, get the paginated results
-        let mut sql = "SELECT * FROM interventions WHERE 1=1".to_string();
+        let mut sql = "SELECT * FROM interventions WHERE 1=1 AND deleted_at IS NULL".to_string();
         let mut params: Vec<rusqlite::types::Value> = Vec::new();
 
         if let Some(status) = status {
@@ -777,8 +779,8 @@ impl InterventionRepository {
             .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
 
         conn.query_row(
-            "SELECT COUNT(*) FROM interventions i 
-             LEFT JOIN tasks t ON i.task_id = t.id 
+            "SELECT COUNT(*) FROM interventions i
+             LEFT JOIN tasks t ON i.task_id = t.id
              WHERE t.id IS NULL OR t.deleted_at IS NOT NULL",
             [],
             |row| row.get(0),
@@ -802,8 +804,8 @@ impl InterventionRepository {
 
             tx.execute(
                 "DELETE FROM intervention_steps WHERE intervention_id IN (
-                    SELECT i.id FROM interventions i 
-                    LEFT JOIN tasks t ON i.task_id = t.id 
+                    SELECT i.id FROM interventions i
+                    LEFT JOIN tasks t ON i.task_id = t.id
                     WHERE t.id IS NULL OR t.deleted_at IS NOT NULL
                 )",
                 [],
@@ -814,8 +816,8 @@ impl InterventionRepository {
 
             tx.execute(
                 "DELETE FROM interventions WHERE id IN (
-                    SELECT i.id FROM interventions i 
-                    LEFT JOIN tasks t ON i.task_id = t.id 
+                    SELECT i.id FROM interventions i
+                    LEFT JOIN tasks t ON i.task_id = t.id
                     WHERE t.id IS NULL OR t.deleted_at IS NOT NULL
                 )",
                 [],
@@ -873,8 +875,8 @@ impl InterventionRepository {
             .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
 
         conn.query_row(
-            "SELECT COUNT(*) FROM intervention_steps s 
-             LEFT JOIN interventions i ON s.intervention_id = i.id 
+            "SELECT COUNT(*) FROM intervention_steps s
+             LEFT JOIN interventions i ON s.intervention_id = i.id
              WHERE i.id IS NULL",
             [],
             |row| row.get(0),
@@ -890,7 +892,7 @@ impl InterventionRepository {
             .map_err(|e| InterventionError::Database(format!("Failed to get connection: {}", e)))?;
 
         conn.query_row(
-            "SELECT COUNT(*) FROM interventions WHERE status = 'archived'",
+            "SELECT COUNT(*) FROM interventions WHERE status = 'archived' AND deleted_at IS NULL",
             [],
             |row| row.get(0),
         )

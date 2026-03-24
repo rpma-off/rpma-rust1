@@ -275,7 +275,7 @@ impl PhotoRepository {
         is_approved: bool,
         approved_by: Option<String>,
     ) -> RepoResult<Photo> {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
 
         self.db
             .execute(
@@ -407,7 +407,7 @@ impl Repository<Photo, String> for PhotoRepository {
         let exists = self.exists_by_id(entity.id.clone()).await?;
 
         if exists {
-            let now = chrono::Utc::now().timestamp();
+            let now = chrono::Utc::now().timestamp_millis();
 
             self.db
                 .execute(

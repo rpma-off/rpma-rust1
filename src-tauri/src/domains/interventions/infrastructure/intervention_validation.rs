@@ -99,7 +99,8 @@ impl InterventionValidationService {
         let active_count: i64 = self.db.query_single_value(
             "SELECT COUNT(*) FROM interventions
              WHERE task_id = ?
-             AND status IN ('pending', 'in_progress', 'paused')",
+             AND status IN ('pending', 'in_progress', 'paused')
+             AND deleted_at IS NULL",
             [task_id],
         )?;
 
@@ -120,7 +121,7 @@ impl InterventionValidationService {
     ) -> InterventionResult<()> {
         // Check if technician exists
         let technician_exists: bool = self.db.query_single_value(
-            "SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)",
+            "SELECT EXISTS(SELECT 1 FROM users WHERE id = ? AND deleted_at IS NULL)",
             [technician_id],
         )?;
         if !technician_exists {
@@ -131,9 +132,10 @@ impl InterventionValidationService {
         }
 
         // Get user role
-        let user_role: String = self
-            .db
-            .query_single_value("SELECT role FROM users WHERE id = ?", [user_id])?;
+        let user_role: String = self.db.query_single_value(
+            "SELECT role FROM users WHERE id = ? AND deleted_at IS NULL",
+            [user_id],
+        )?;
         let user_role = crate::shared::contracts::auth::UserRole::from_str(&user_role)
             .map_err(|_| InterventionError::Validation("Invalid user role".to_string()))?;
 

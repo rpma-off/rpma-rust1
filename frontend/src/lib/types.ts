@@ -1,42 +1,31 @@
 // Frontend-specific type extensions and utilities
 // This file provides type fixes and utilities for the auto-generated backend types
 
-import type { Task as BaseTask, Client as BaseClient, UserRole } from './backend';
+import type {
+  Task as BaseTask,
+  Client as BaseClient,
+  UserAccount as BackendUserAccount,
+} from "./backend";
 
-// Base UserAccount type (matches Rust model)
-export type BaseUserAccount = {
-  id: string;
-  email: string;
-  username: string;
-  first_name: string;
-  last_name: string;
-  role: UserRole;
-  password_hash: string;
-  salt: string | null;
-  phone: string | null;
-  is_active: boolean;
-  last_login: string | null;
-  login_count: number;
-  preferences: string | null;
-  synced: boolean;
-  last_synced_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+// Base UserAccount type (matches the sanitized Rust contract)
+export type BaseUserAccount = BackendUserAccount;
 
 // Extended UserAccount with computed name property
-export interface UserAccount extends Omit<BaseUserAccount, 'created_at' | 'updated_at' | 'last_login' | 'last_synced_at'> {
-  created_at: string;
-  updated_at: string;
-  last_login: string | null;
-  last_synced_at: string | null;
+export interface UserAccount extends BackendUserAccount {
   // Computed property for full name
   name?: string;
 }
 
 // Extended Task with string timestamps
-export interface Task extends Omit<BaseTask,
-  'created_at' | 'updated_at' | 'assigned_at' | 'started_at' | 'completed_at' | 'last_synced_at'> {
+export interface Task extends Omit<
+  BaseTask,
+  | "created_at"
+  | "updated_at"
+  | "assigned_at"
+  | "started_at"
+  | "completed_at"
+  | "last_synced_at"
+> {
   created_at: string;
   updated_at: string;
   assigned_at: string | null;
@@ -49,8 +38,10 @@ export interface Task extends Omit<BaseTask,
 }
 
 // Extended Client with string timestamps
-export interface Client extends Omit<BaseClient,
-  'created_at' | 'updated_at' | 'deleted_at' | 'last_synced_at'> {
+export interface Client extends Omit<
+  BaseClient,
+  "created_at" | "updated_at" | "deleted_at" | "last_synced_at"
+> {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -67,25 +58,32 @@ export interface ClientWithTasks extends Client {
   last_task_date: string | null;
 }
 
-
-
 // Utility function to get user full name
 export function getUserFullName(user: BaseUserAccount | UserAccount): string {
-  if ('name' in user && user.name) {
+  if ("name" in user && user.name) {
     return user.name;
   }
-  const firstName = user.first_name || '';
-  const lastName = user.last_name || '';
+  const firstName = user.first_name || "";
+  const lastName = user.last_name || "";
   return `${firstName} ${lastName}`.trim() || user.username;
 }
 
 // Utility function to convert BigInt timestamps to strings
 export function convertTimestamps<T extends object>(obj: T): T {
   const result = { ...(obj as Record<string, unknown>) };
-  const timestampFields = ['created_at', 'updated_at', 'assigned_at', 'started_at', 'completed_at', 'last_synced_at', 'deleted_at', 'last_login'];
+  const timestampFields = [
+    "created_at",
+    "updated_at",
+    "assigned_at",
+    "started_at",
+    "completed_at",
+    "last_synced_at",
+    "deleted_at",
+    "last_login",
+  ];
 
   for (const field of timestampFields) {
-    if (field in result && typeof result[field] === 'bigint') {
+    if (field in result && typeof result[field] === "bigint") {
       result[field] = new Date(Number(result[field])).toISOString();
     }
   }
@@ -95,15 +93,27 @@ export function convertTimestamps<T extends object>(obj: T): T {
 
 // Type guards
 export function isUserAccount(obj: unknown): obj is UserAccount {
-  return !!obj && typeof obj === 'object' && 'id' in obj && 'email' in obj && 'username' in obj;
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    "id" in obj &&
+    "email" in obj &&
+    "username" in obj
+  );
 }
 
 export function isTask(obj: unknown): obj is Task {
-  return !!obj && typeof obj === 'object' && 'id' in obj && 'title' in obj && 'status' in obj;
+  return (
+    !!obj &&
+    typeof obj === "object" &&
+    "id" in obj &&
+    "title" in obj &&
+    "status" in obj
+  );
 }
 
 export function isClient(obj: unknown): obj is Client {
-  return !!obj && typeof obj === 'object' && 'id' in obj && 'name' in obj;
+  return !!obj && typeof obj === "object" && "id" in obj && "name" in obj;
 }
 
 // Runtime enum object for UserRole (type is imported from backend)

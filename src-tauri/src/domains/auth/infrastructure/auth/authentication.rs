@@ -54,7 +54,7 @@ impl super::AuthService {
 
         let account = conn.query_row(
             "SELECT id, email, username, password_hash, salt, first_name, last_name, role, phone, is_active, last_login_at, login_count, preferences, synced, last_synced_at, created_at, updated_at
-              FROM users WHERE email = ? AND is_active = 1",
+              FROM users WHERE email = ? AND is_active = 1 AND deleted_at IS NULL",
             [&validated_email],
             |row| {
                 let role_str: String = row.get(7)?;

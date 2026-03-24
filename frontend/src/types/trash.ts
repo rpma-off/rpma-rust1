@@ -1,4 +1,11 @@
-export type EntityType = 'Task' | 'Client' | 'Quote' | 'Material' | 'Intervention' | 'Photo' | 'Rapport';
+export type EntityType =
+  | "Task"
+  | "Client"
+  | "Quote"
+  | "Material"
+  | "Intervention"
+  | "Photo"
+  | "Rapport";
 
 export interface DeletedItem {
   id: string;

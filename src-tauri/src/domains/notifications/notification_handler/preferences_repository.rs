@@ -118,7 +118,7 @@ impl NotificationPreferencesRepository {
         task_completed: bool,
         task_overdue: bool,
     ) -> RepoResult<NotificationPreferences> {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         self.db.execute(
             "UPDATE notification_preferences SET task_assigned=?, task_updated=?, task_completed=?, task_overdue=?, updated_at=? WHERE user_id=?",
             params![if task_assigned{1}else{0}, if task_updated{1}else{0}, if task_completed{1}else{0}, if task_overdue{1}else{0}, now, user_id],
@@ -135,7 +135,7 @@ impl NotificationPreferencesRepository {
         client_created: bool,
         client_updated: bool,
     ) -> RepoResult<NotificationPreferences> {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         self.db.execute(
             "UPDATE notification_preferences SET client_created=?, client_updated=?, updated_at=? WHERE user_id=?",
             params![if client_created{1}else{0}, if client_updated{1}else{0}, now, user_id],
@@ -152,7 +152,7 @@ impl NotificationPreferencesRepository {
         system_alerts: bool,
         maintenance_notifications: bool,
     ) -> RepoResult<NotificationPreferences> {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         self.db.execute(
             "UPDATE notification_preferences SET system_alerts=?, maintenance_notifications=?, updated_at=? WHERE user_id=?",
             params![if system_alerts{1}else{0}, if maintenance_notifications{1}else{0}, now, user_id],
@@ -170,7 +170,7 @@ impl NotificationPreferencesRepository {
         start_time: Option<String>,
         end_time: Option<String>,
     ) -> RepoResult<NotificationPreferences> {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         self.db.execute(
             "UPDATE notification_preferences SET quiet_hours_enabled=?, quiet_hours_start=?, quiet_hours_end=?, updated_at=? WHERE user_id=?",
             params![if enabled{1}else{0}, start_time, end_time, now, user_id],
@@ -263,7 +263,7 @@ impl Repository<NotificationPreferences, String> for NotificationPreferencesRepo
     async fn save(&self, entity: NotificationPreferences) -> RepoResult<NotificationPreferences> {
         let exists = self.exists_by_id(entity.id.clone()).await?;
         if exists {
-            let now = chrono::Utc::now().timestamp();
+            let now = chrono::Utc::now().timestamp_millis();
             self.db.execute(
                 "UPDATE notification_preferences SET user_id=?, in_app_enabled=?, task_assigned=?, task_updated=?, task_completed=?, task_overdue=?, client_created=?, client_updated=?, system_alerts=?, maintenance_notifications=?, quiet_hours_enabled=?, quiet_hours_start=?, quiet_hours_end=?, updated_at=? WHERE id=?",
                 params![entity.user_id, if entity.in_app_enabled{1}else{0}, if entity.task_assigned{1}else{0}, if entity.task_updated{1}else{0}, if entity.task_completed{1}else{0}, if entity.task_overdue{1}else{0}, if entity.client_created{1}else{0}, if entity.client_updated{1}else{0}, if entity.system_alerts{1}else{0}, if entity.maintenance_notifications{1}else{0}, if entity.quiet_hours_enabled{1}else{0}, entity.quiet_hours_start, entity.quiet_hours_end, now, entity.id],

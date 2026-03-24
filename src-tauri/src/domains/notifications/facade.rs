@@ -230,6 +230,6 @@ fn map_user_settings_to_preferences(
         quiet_hours_start: Some(settings.notifications.quiet_hours_start.clone()),
         quiet_hours_end: Some(settings.notifications.quiet_hours_end.clone()),
         created_at: 0,
-        updated_at: chrono::Utc::now().timestamp(),
+        updated_at: chrono::Utc::now().timestamp_millis(),
     }
 }

@@ -1,6 +1,16 @@
 export * from "@/types";
 
 export type {
+  Task,
+  Client,
+  ClientWithTasks,
+  TaskPhoto,
+  TaskStatistics,
+  TaskListResponse,
+  ClientListResponse,
+} from "@/lib/backend";
+
+export type {
   ClientType,
   ClientFilters,
   ClientSearchResult,

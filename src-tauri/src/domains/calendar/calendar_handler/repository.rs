@@ -103,7 +103,7 @@ impl CalendarRepository {
 
         let technician_id: Option<String> = conn
             .query_row(
-                "SELECT technician_id FROM tasks WHERE id = ?1",
+                "SELECT technician_id FROM tasks WHERE id = ?1 AND deleted_at IS NULL",
                 [task_id],
                 |row| row.get(0),
             )
@@ -221,7 +221,7 @@ impl CalendarRepository {
                     let event_id = crate::shared::utils::uuid::generate_uuid_string();
                     let (task_title, technician_id): (String, Option<String>) = tx
                         .query_row(
-                            "SELECT COALESCE(title, task_number), technician_id FROM tasks WHERE id = ?1",
+                            "SELECT COALESCE(title, task_number), technician_id FROM tasks WHERE id = ?1 AND deleted_at IS NULL",
                             rusqlite::params![task_id],
                             |row| Ok((row.get(0)?, row.get(1)?)),
                         )

@@ -470,6 +470,82 @@ pub mod event_factory {
         }
     }
 
+    /// Create a QuoteCreated event.
+    pub fn quote_created(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        created_by: String,
+        task_id: Option<String>,
+    ) -> DomainEvent {
+        DomainEvent::QuoteCreated {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            task_id,
+            created_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a QuoteUpdated event.
+    pub fn quote_updated(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        updated_by: String,
+    ) -> DomainEvent {
+        DomainEvent::QuoteUpdated {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            updated_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a QuoteDeleted event.
+    pub fn quote_deleted(
+        quote_id: String,
+        quote_number: String,
+        client_id: String,
+        deleted_by: String,
+    ) -> DomainEvent {
+        DomainEvent::QuoteDeleted {
+            id: Uuid::new_v4().to_string(),
+            quote_id,
+            quote_number,
+            client_id,
+            deleted_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
+    /// Create a QuoteDuplicated event.
+    pub fn quote_duplicated(
+        source_quote_id: String,
+        new_quote_id: String,
+        new_quote_number: String,
+        client_id: String,
+        duplicated_by: String,
+    ) -> DomainEvent {
+        DomainEvent::QuoteDuplicated {
+            id: Uuid::new_v4().to_string(),
+            source_quote_id,
+            new_quote_id,
+            new_quote_number,
+            client_id,
+            duplicated_by,
+            timestamp: Utc::now(),
+            metadata: None,
+        }
+    }
+
     /// Create a QuoteAccepted event.
     pub fn quote_accepted(
         quote_id: String,
@@ -628,6 +704,42 @@ pub mod event_factory {
             email,
             role,
             created_by,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
+        }
+    }
+
+    /// Create a `UserUpdated` domain event with actor + correlation context (ADR-017, ADR-020).
+    pub fn user_updated_with_ctx(
+        user_id: String,
+        changed_fields: Vec<String>,
+        updated_by: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::UserUpdated {
+            id: Uuid::new_v4().to_string(),
+            user_id,
+            previous_state: None,
+            new_state: None,
+            changed_fields,
+            updated_by,
+            timestamp: Utc::now(),
+            metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
+        }
+    }
+
+    /// Create a `UserDeleted` domain event reusing the generic `EntityHardDeleted`
+    /// variant (ADR-017, ADR-020).
+    pub fn user_deleted_with_ctx(
+        user_id: String,
+        deleted_by: String,
+        correlation_id: String,
+    ) -> DomainEvent {
+        DomainEvent::EntityHardDeleted {
+            id: Uuid::new_v4().to_string(),
+            entity_id: user_id,
+            entity_type: "user".to_string(),
+            deleted_by,
             timestamp: Utc::now(),
             metadata: Some(serde_json::json!({ "correlation_id": correlation_id })),
         }

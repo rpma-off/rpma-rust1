@@ -181,7 +181,7 @@ impl MessageRepository {
     }
 
     pub async fn update_status(&self, message_id: &str, status: MessageStatus) -> RepoResult<()> {
-        let timestamp = chrono::Utc::now().timestamp();
+        let timestamp = chrono::Utc::now().timestamp_millis();
         let (sent_at, read_at) = match status {
             MessageStatus::Sent | MessageStatus::Delivered => (Some(timestamp), None),
             MessageStatus::Read => (Some(timestamp), Some(timestamp)),

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { convertTimestamps } from '@/lib/types';
-import { UpdateTaskRequest, CreateTaskRequest } from '@/lib/backend';
-import { ipcClient } from '@/lib/ipc';
-import { handleError } from '@/lib/utils/error-handler';
-import { LogDomain } from '@/lib/logging/types';
-import { Task, Client } from '@/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useCallback, useEffect, useState } from "react";
+import { convertTimestamps } from "@/lib/types";
+import { UpdateTaskRequest, CreateTaskRequest } from "@/lib/backend";
+import { ipcClient } from "@/lib/ipc";
+import { handleError } from "@/lib/utils/error-handler";
+import { LogDomain } from "@/lib/logging/types";
+import { Task, Client } from "@/types";
+import { useAuth } from "@/shared/hooks/useAuth";
 
 export interface TaskWithClient extends Task {
   client_name?: string;
@@ -29,8 +29,12 @@ export function useTaskManager() {
       setIsLoading(true);
       const [tasksResult, clientsResult] = await Promise.all([
         ipcClient.tasks.list({
-          page: 1,
-          limit: 100,
+          pagination: {
+            page: 1,
+            page_size: 100,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
           status: null,
           technician_id: null,
           client_id: null,
@@ -38,19 +42,25 @@ export function useTaskManager() {
           search: null,
           from_date: null,
           to_date: null,
-          sort_by: 'created_at',
-          sort_order: 'desc',
         }),
         ipcClient.clients.list({
-          page: 1,
-          limit: 100,
-          sort_by: 'created_at',
-          sort_order: 'desc',
+          pagination: {
+            page: 1,
+            page_size: 100,
+            sort_by: "created_at",
+            sort_order: "desc",
+          },
+          search: null,
+          customer_type: null,
         }),
       ]);
 
-      const convertedTasks = tasksResult.data.map((task) => convertTimestamps(task));
-      const convertedClients = clientsResult.data.map((client) => convertTimestamps(client));
+      const convertedTasks = tasksResult.data.map((task) =>
+        convertTimestamps(task),
+      );
+      const convertedClients = clientsResult.data.map((client) =>
+        convertTimestamps(client),
+      );
 
       const clientNamesById = new Map(
         convertedClients.map((client) => [client.id, client.name]),
@@ -58,17 +68,18 @@ export function useTaskManager() {
 
       const tasksWithClients = convertedTasks.map((task) => ({
         ...task,
-        client_name: clientNamesById.get(task.client_id ?? '') || 'Client inconnu',
+        client_name:
+          clientNamesById.get(task.client_id ?? "") || "Client inconnu",
       })) as TaskWithClient[];
 
       setTasks(tasksWithClients);
       setClients(convertedClients as Client[]);
     } catch (error) {
-      handleError(error, 'Failed to load tasks and clients', {
+      handleError(error, "Failed to load tasks and clients", {
         domain: LogDomain.TASK,
         userId: user?.user_id,
-        component: 'TaskManager',
-        toastMessage: 'Erreur lors du chargement des données',
+        component: "TaskManager",
+        toastMessage: "Erreur lors du chargement des données",
       });
     } finally {
       setIsLoading(false);
@@ -85,11 +96,11 @@ export function useTaskManager() {
         await ipcClient.tasks.create(taskData);
         await refresh();
       } catch (error) {
-        handleError(error, 'Task creation failed', {
+        handleError(error, "Task creation failed", {
           domain: LogDomain.TASK,
           userId: user?.user_id,
-          component: 'TaskManager',
-          toastMessage: 'Erreur lors de la création de la tâche',
+          component: "TaskManager",
+          toastMessage: "Erreur lors de la création de la tâche",
         });
         throw error;
       }
@@ -103,11 +114,11 @@ export function useTaskManager() {
         await ipcClient.tasks.update(taskId, updateData);
         await refresh();
       } catch (error) {
-        handleError(error, 'Task update failed', {
+        handleError(error, "Task update failed", {
           domain: LogDomain.TASK,
           userId: user?.user_id,
-          component: 'TaskManager',
-          toastMessage: 'Erreur lors de la mise à jour de la tâche',
+          component: "TaskManager",
+          toastMessage: "Erreur lors de la mise à jour de la tâche",
         });
         throw error;
       }
@@ -121,11 +132,11 @@ export function useTaskManager() {
         await ipcClient.tasks.delete(taskId);
         await refresh();
       } catch (error) {
-        handleError(error, 'Task deletion failed', {
+        handleError(error, "Task deletion failed", {
           domain: LogDomain.TASK,
           userId: user?.user_id,
-          component: 'TaskManager',
-          toastMessage: 'Erreur lors de la suppression de la tâche',
+          component: "TaskManager",
+          toastMessage: "Erreur lors de la suppression de la tâche",
         });
         throw error;
       }

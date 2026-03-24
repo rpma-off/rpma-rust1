@@ -321,7 +321,7 @@ pub struct NotificationPreferences {
 
 impl NotificationPreferences {
     pub fn new(user_id: String) -> Self {
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         Self {
             id: crate::shared::utils::uuid::generate_uuid_string(),
             user_id,

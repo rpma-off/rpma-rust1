@@ -1,61 +1,65 @@
-import { taskIpc as taskOperations } from '../domains/tasks';
+import { taskIpc as taskOperations } from "../domains/tasks";
 
 // Mock the modules and dependencies
-jest.mock('@/lib/validation/backend-type-guards', () => ({
+jest.mock("@/lib/validation/backend-type-guards", () => ({
   validateTask: jest.fn((data) => data),
   validateTaskListResponse: jest.fn((data) => data),
 }));
 
 // Mock the crud helpers to prevent import issues
-jest.mock('../utils/crud-helpers', () => ({
+jest.mock("../utils/crud-helpers", () => ({
   createCrudOperations: jest.fn().mockImplementation(() => ({
     create: jest.fn(),
     get: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn()
+    statistics: jest.fn(),
   })),
   ResponseHandlers: {
     discriminatedUnion: jest.fn(),
     discriminatedUnionNullable: jest.fn(),
     list: jest.fn(),
-    statistics: jest.fn()
+    statistics: jest.fn(),
   },
 }));
 
-jest.mock('../core', () => ({
+jest.mock("../core", () => ({
   safeInvoke: jest.fn(),
   cachedInvoke: jest.fn(),
   extractAndValidate: jest.fn(),
   invalidatePattern: jest.fn(),
 }));
 
-jest.mock('@/lib/data-freshness', () => ({
+jest.mock("@/lib/data-freshness", () => ({
   signalMutation: jest.fn(),
 }));
 
 // Get mock references
-const { safeInvoke, cachedInvoke, invalidatePattern } = jest.requireMock('../core') as {
+const { safeInvoke, cachedInvoke, invalidatePattern } = jest.requireMock(
+  "../core",
+) as {
   safeInvoke: jest.Mock;
   cachedInvoke: jest.Mock;
   invalidatePattern: jest.Mock;
 };
 
-const { ResponseHandlers } = jest.requireMock('../utils/crud-helpers') as {
+const { ResponseHandlers } = jest.requireMock("../utils/crud-helpers") as {
   ResponseHandlers: {
-    discriminatedUnion: jest.Mock,
-    discriminatedUnionNullable: jest.Mock,
-    list: jest.Mock,
-    statistics: jest.Mock
+    discriminatedUnion: jest.Mock;
+    discriminatedUnionNullable: jest.Mock;
+    list: jest.Mock;
+    statistics: jest.Mock;
   };
 };
 
-const { extractAndValidate } = jest.requireMock('../core') as {
+const { extractAndValidate } = jest.requireMock("../core") as {
   extractAndValidate: jest.Mock;
 };
 
-const { validateTask, validateTaskListResponse } = jest.requireMock('@/lib/validation/backend-type-guards') as {
+const { validateTask, validateTaskListResponse } = jest.requireMock(
+  "@/lib/validation/backend-type-guards",
+) as {
   validateTask: jest.Mock;
   validateTaskListResponse: jest.Mock;
 };
@@ -70,12 +74,12 @@ const mockTaskCrud = {
   statistics: jest.fn(),
 };
 
-describe('taskOperations IPC contract tests', () => {
+describe("taskOperations IPC contract tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup default mock returns
-    safeInvoke.mockResolvedValue('ok');
+    safeInvoke.mockResolvedValue("ok");
     cachedInvoke.mockResolvedValue({
       data: [],
       pagination: {
@@ -83,243 +87,271 @@ describe('taskOperations IPC contract tests', () => {
         limit: 20,
         total: 0,
         has_next: false,
-        has_prev: false
-      }
+        has_prev: false,
+      },
     });
-    
+
     // Setup ResponseHandlers mocks
-    ResponseHandlers.discriminatedUnion.mockImplementation((_type, _validator) => (result) => result);
-    ResponseHandlers.discriminatedUnionNullable.mockImplementation((_type, _validator) => (result) => result);
-    ResponseHandlers.list.mockImplementation((_processor) => (result) => result);
+    ResponseHandlers.discriminatedUnion.mockImplementation(
+      (_type, _validator) => (result) => result,
+    );
+    ResponseHandlers.discriminatedUnionNullable.mockImplementation(
+      (_type, _validator) => (result) => result,
+    );
+    ResponseHandlers.list.mockImplementation(
+      (_processor) => (result) => result,
+    );
     ResponseHandlers.statistics.mockImplementation(() => (result) => result);
-    
-    extractAndValidate.mockImplementation((result, validator) => (validator ? validator(result) : result));
-    
+
+    extractAndValidate.mockImplementation((result, validator) =>
+      validator ? validator(result) : result,
+    );
+
     // Setup crud operations mock returns
-    mockTaskCrud.create.mockResolvedValue({ id: 'task-123' });
-    mockTaskCrud.get.mockResolvedValue({ id: 'task-123', title: 'Test Task' });
-    mockTaskCrud.update.mockResolvedValue({ id: 'task-123', title: 'Updated Task' });
+    mockTaskCrud.create.mockResolvedValue({ id: "task-123" });
+    mockTaskCrud.get.mockResolvedValue({ id: "task-123", title: "Test Task" });
+    mockTaskCrud.update.mockResolvedValue({
+      id: "task-123",
+      title: "Updated Task",
+    });
     mockTaskCrud.delete.mockResolvedValue(undefined);
     mockTaskCrud.list.mockResolvedValue({
       data: [],
-      pagination: { page: 1, limit: 20, total: 0, has_next: false, has_prev: false }
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        has_next: false,
+        has_prev: false,
+      },
     });
     mockTaskCrud.statistics.mockResolvedValue({ total: 100, completed: 80 });
   });
 
-  describe('CRUD Operations', () => {
-    it('calls safeInvoke with correct parameters for create', async () => {
+  describe("CRUD Operations", () => {
+    it("calls safeInvoke with correct parameters for create", async () => {
       const createData = {
-        title: 'New Task',
-        description: 'Task description',
-        vehicle_plate: 'ABC-123'
+        title: "New Task",
+        description: "Task description",
+        vehicle_plate: "ABC-123",
       };
-      
+
       await taskOperations.create(createData);
 
-       expect(safeInvoke).toHaveBeenCalledWith('task_create', {
-         data: createData,
-       });
-      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+      expect(safeInvoke).toHaveBeenCalledWith("task_create", {
+        data: createData,
+      });
+      expect(invalidatePattern).toHaveBeenCalledWith("task:");
     });
 
-    it('calls cachedInvoke with correct parameters for get', async () => {
-      await taskOperations.get('task-123');
+    it("calls cachedInvoke with correct parameters for get", async () => {
+      await taskOperations.get("task-123");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'task:task-123',
-        'task_get',
-        { id: 'task-123' },
-        expect.any(Function)
+        "task:task-123",
+        "task_get",
+        { id: "task-123" },
+        expect.any(Function),
       );
     });
 
-    it('calls safeInvoke with correct parameters for update', async () => {
+    it("calls safeInvoke with correct parameters for update", async () => {
       const updateData = {
-        title: 'Updated Task',
-        status: 'completed'
+        title: "Updated Task",
+        status: "completed",
       };
-      
-      await taskOperations.update('task-123', updateData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_update', {
-        id: 'task-123',
+      await taskOperations.update("task-123", updateData);
+
+      expect(safeInvoke).toHaveBeenCalledWith("task_update", {
+        id: "task-123",
         data: updateData,
       });
-      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+      expect(invalidatePattern).toHaveBeenCalledWith("task:");
     });
 
-    it('calls safeInvoke with correct parameters for delete', async () => {
-      await taskOperations.delete('task-123');
+    it("calls safeInvoke with correct parameters for delete", async () => {
+      await taskOperations.delete("task-123");
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_delete', {
-        id: 'task-123',
+      expect(safeInvoke).toHaveBeenCalledWith("task_delete", {
+        id: "task-123",
       });
-      expect(invalidatePattern).toHaveBeenCalledWith('task:');
+      expect(invalidatePattern).toHaveBeenCalledWith("task:");
     });
 
-    it('calls safeInvoke with correct parameters for list', async () => {
+    it("calls safeInvoke with correct parameters for list", async () => {
       const filters = {
         page: 1,
         limit: 20,
-        status: 'pending',
-        technician_id: 'tech-123'
+        status: "pending",
+        technician_id: "tech-123",
       };
-      
+
       await taskOperations.list(filters);
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_list', {
-        filter: {
-          assigned_to: 'tech-123',
+      expect(safeInvoke).toHaveBeenCalledWith("task_list", {
+        filters: {
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: null,
+            sort_order: null,
+          },
+          status: "pending",
+          technician_id: "tech-123",
           client_id: null,
-          status: 'pending',
           priority: null,
-          region: null,
-          include_completed: false,
-          date_from: null,
-          date_to: null,
+          search: null,
+          from_date: null,
+          to_date: null,
         },
-        page: 1,
-        limit: 20,
       });
     });
   });
 
-  describe('Specialized Operations', () => {
-    it('calls safeInvoke with correct parameters for statistics', async () => {
+  describe("Specialized Operations", () => {
+    it("calls safeInvoke with correct parameters for statistics", async () => {
       await taskOperations.statistics();
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_statistics', {});
+      expect(safeInvoke).toHaveBeenCalledWith("task_statistics", {});
     });
 
-    it('calls safeInvoke with correct parameters for checkTaskAssignment', async () => {
-      await taskOperations.checkTaskAssignment('task-123', 'user-456');
+    it("calls safeInvoke with correct parameters for checkTaskAssignment", async () => {
+      await taskOperations.checkTaskAssignment("task-123", "user-456");
 
-      expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
+      expect(safeInvoke).toHaveBeenCalledWith("check_task_assignment", {
         request: {
-          task_id: 'task-123',
-          user_id: 'user-456'
-        }
+          task_id: "task-123",
+          user_id: "user-456",
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for checkTaskAvailability', async () => {
-      await taskOperations.checkTaskAvailability('task-123');
+    it("calls safeInvoke with correct parameters for checkTaskAvailability", async () => {
+      await taskOperations.checkTaskAvailability("task-123");
 
-      expect(safeInvoke).toHaveBeenCalledWith('check_task_availability', {
+      expect(safeInvoke).toHaveBeenCalledWith("check_task_availability", {
         request: {
-          task_id: 'task-123'
-        }
+          task_id: "task-123",
+        },
       });
     });
 
+    it("calls safeInvoke and extractAndValidate for editTask", async () => {
+      const updates = { title: "Updated Task" };
 
-    it('calls safeInvoke and extractAndValidate for editTask', async () => {
-      const updates = { title: 'Updated Task' };
-      
-      await taskOperations.editTask('task-123', updates);
+      await taskOperations.editTask("task-123", updates);
 
-      expect(safeInvoke).toHaveBeenCalledWith('edit_task', {
+      expect(safeInvoke).toHaveBeenCalledWith("edit_task", {
         request: {
-          task_id: 'task-123',
-          data: updates
-        }
+          task_id: "task-123",
+          data: updates,
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for addTaskNote', async () => {
-      await taskOperations.addTaskNote('task-123', 'Test note');
+    it("calls safeInvoke with correct parameters for addTaskNote", async () => {
+      await taskOperations.addTaskNote("task-123", "Test note");
 
-      expect(safeInvoke).toHaveBeenCalledWith('add_task_note', {
+      expect(safeInvoke).toHaveBeenCalledWith("add_task_note", {
         request: {
-          task_id: 'task-123',
-          note: 'Test note'
-        }
+          task_id: "task-123",
+          note: "Test note",
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for sendTaskMessage', async () => {
-      await taskOperations.sendTaskMessage('task-123', 'Test message', 'info');
+    it("calls safeInvoke with correct parameters for sendTaskMessage", async () => {
+      await taskOperations.sendTaskMessage("task-123", "Test message", "info");
 
-      expect(safeInvoke).toHaveBeenCalledWith('send_task_message', {
+      expect(safeInvoke).toHaveBeenCalledWith("send_task_message", {
         request: {
-          task_id: 'task-123',
-          message: 'Test message',
-          message_type: 'info'
-        }
+          task_id: "task-123",
+          message: "Test message",
+          message_type: "info",
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for delayTask', async () => {
-      await taskOperations.delayTask('task-123', '2025-03-01', 'Customer request');
+    it("calls safeInvoke with correct parameters for delayTask", async () => {
+      await taskOperations.delayTask(
+        "task-123",
+        "2025-03-01",
+        "Customer request",
+      );
 
-      expect(safeInvoke).toHaveBeenCalledWith('delay_task', {
+      expect(safeInvoke).toHaveBeenCalledWith("delay_task", {
         request: {
-          task_id: 'task-123',
-          new_scheduled_date: '2025-03-01',
-          reason: 'Customer request'
-        }
+          task_id: "task-123",
+          new_scheduled_date: "2025-03-01",
+          reason: "Customer request",
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for reportTaskIssue', async () => {
-      await taskOperations.reportTaskIssue('task-123', 'material', 'high', 'Issue description');
+    it("calls safeInvoke with correct parameters for reportTaskIssue", async () => {
+      await taskOperations.reportTaskIssue(
+        "task-123",
+        "material",
+        "high",
+        "Issue description",
+      );
 
-      expect(safeInvoke).toHaveBeenCalledWith('report_task_issue', {
+      expect(safeInvoke).toHaveBeenCalledWith("report_task_issue", {
         request: {
-          task_id: 'task-123',
-          issue_type: 'material',
-          severity: 'high',
-          description: 'Issue description'
-        }
+          task_id: "task-123",
+          issue_type: "material",
+          severity: "high",
+          description: "Issue description",
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for exportTasksCsv', async () => {
+    it("calls safeInvoke with correct parameters for exportTasksCsv", async () => {
       const options = {
         include_notes: true,
         date_range: {
-          start_date: '2025-01-01',
-          end_date: '2025-01-31'
-        }
+          start_date: "2025-01-01",
+          end_date: "2025-01-31",
+        },
       };
-      
+
       await taskOperations.exportTasksCsv(options);
 
-      expect(safeInvoke).toHaveBeenCalledWith('export_tasks_csv', {
+      expect(safeInvoke).toHaveBeenCalledWith("export_tasks_csv", {
         request: {
           include_client_data: true,
           filter: {
-            date_from: '2025-01-01',
-            date_to: '2025-01-31'
-          }
-        }
+            date_from: "2025-01-01",
+            date_to: "2025-01-31",
+          },
+        },
       });
     });
 
-    it('calls safeInvoke with correct parameters for importTasksBulk', async () => {
+    it("calls safeInvoke with correct parameters for importTasksBulk", async () => {
       const options = {
-        csv_lines: ['line1', 'line2'],
+        csv_lines: ["line1", "line2"],
         skip_duplicates: true,
-        update_existing: false
+        update_existing: false,
       };
-      
+
       await taskOperations.importTasksBulk(options);
 
-      expect(safeInvoke).toHaveBeenCalledWith('import_tasks_bulk', {
+      expect(safeInvoke).toHaveBeenCalledWith("import_tasks_bulk", {
         request: {
-          csv_data: 'line1\nline2',
-          update_existing: false
-        }
+          csv_data: "line1\nline2",
+          update_existing: false,
+        },
       });
     });
   });
 
-  describe('Request Validation', () => {
-    it('validates required fields for create operation', async () => {
+  describe("Request Validation", () => {
+    it("validates required fields for create operation", async () => {
       const invalidData = {
         // Missing required title
-        description: 'Task without title'
+        description: "Task without title",
       };
 
       try {
@@ -328,78 +360,80 @@ describe('taskOperations IPC contract tests', () => {
         expect(error).toBeDefined();
       }
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("task_create", {
         data: invalidData,
       });
     });
 
-    it('validates task ID format for get operation', async () => {
-      await taskOperations.get('');
+    it("validates task ID format for get operation", async () => {
+      await taskOperations.get("");
 
       expect(cachedInvoke).toHaveBeenCalledWith(
-        'task:',
-        'task_get',
-        { id: '' },
-        expect.any(Function)
+        "task:",
+        "task_get",
+        { id: "" },
+        expect.any(Function),
       );
     });
 
-    it('validates update data structure', async () => {
+    it("validates update data structure", async () => {
       const invalidUpdateData = {
-        invalid_field: 'should not exist'
+        invalid_field: "should not exist",
       };
 
-      await taskOperations.update('task-123', invalidUpdateData);
+      await taskOperations.update("task-123", invalidUpdateData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_update', {
-        id: 'task-123',
+      expect(safeInvoke).toHaveBeenCalledWith("task_update", {
+        id: "task-123",
         data: invalidUpdateData,
       });
     });
   });
 
-  describe('Response Shape Validation', () => {
-    it('validates response structure for create operation', async () => {
+  describe("Response Shape Validation", () => {
+    it("validates response structure for create operation", async () => {
       const mockResponse = {
-        id: 'task-123',
-        title: 'New Task',
-        status: 'pending',
-        created_at: '2025-02-09T10:00:00Z'
+        id: "task-123",
+        title: "New Task",
+        status: "pending",
+        created_at: "2025-02-09T10:00:00Z",
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
-      const result = await taskOperations.create({ title: 'New Task' });
+      const result = await taskOperations.create({ title: "New Task" });
 
       expect(validateTask).toHaveBeenCalledWith(mockResponse);
       expect(result).toEqual(mockResponse);
     });
 
-    it('validates response structure for list operation', async () => {
+    it("validates response structure for list operation", async () => {
       const mockResponse = {
         data: [
           {
-            id: 'task-123',
-            title: 'Task 1',
-            status: 'pending'
+            id: "task-123",
+            title: "Task 1",
+            status: "pending",
           },
           {
-            id: 'task-456',
-            title: 'Task 2',
-            status: 'completed'
-          }
+            id: "task-456",
+            title: "Task 2",
+            status: "completed",
+          },
         ],
         pagination: {
           page: 1,
           limit: 20,
           total: 2,
           has_next: false,
-          has_prev: false
-        }
+          has_prev: false,
+        },
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      ResponseHandlers.list.mockReturnValue((result) => validateTaskListResponse(result));
+      ResponseHandlers.list.mockReturnValue((result) =>
+        validateTaskListResponse(result),
+      );
 
       const result = await taskOperations.list({ page: 1 });
 
@@ -407,25 +441,25 @@ describe('taskOperations IPC contract tests', () => {
       expect(result).toEqual(validateTaskListResponse(mockResponse));
     });
 
-    it('handles null response for get operation', async () => {
+    it("handles null response for get operation", async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await taskOperations.get('nonexistent-task');
+      const result = await taskOperations.get("nonexistent-task");
 
       expect(result).toBeNull();
     });
   });
 
-  describe('Authentication and Authorization', () => {
-    it('requires session token for all operations', async () => {
+  describe("Authentication and Authorization", () => {
+    it("requires session token for all operations", async () => {
       const operations = [
-        () => taskOperations.create({ title: 'Test' }, ''),
-        () => taskOperations.get('task-123', ''),
-        () => taskOperations.update('task-123', {}, ''),
-        () => taskOperations.delete('task-123', ''),
-        () => taskOperations.list({}, ''),
-        () => taskOperations.statistics(''),
-        () => taskOperations.checkTaskAssignment('task-123', 'user-123', ''),
+        () => taskOperations.create({ title: "Test" }, ""),
+        () => taskOperations.get("task-123", ""),
+        () => taskOperations.update("task-123", {}, ""),
+        () => taskOperations.delete("task-123", ""),
+        () => taskOperations.list({}, ""),
+        () => taskOperations.statistics(""),
+        () => taskOperations.checkTaskAssignment("task-123", "user-123", ""),
       ];
 
       for (const operation of operations) {
@@ -440,30 +474,30 @@ describe('taskOperations IPC contract tests', () => {
       expect(cachedInvoke).toHaveBeenCalledTimes(1);
     });
 
-    it('passes no session token in nested requests (safeInvoke injects it)', async () => {
-      await taskOperations.checkTaskAssignment('task-123', 'user-456');
+    it("passes no session token in nested requests (safeInvoke injects it)", async () => {
+      await taskOperations.checkTaskAssignment("task-123", "user-456");
 
-      expect(safeInvoke).toHaveBeenCalledWith('check_task_assignment', {
+      expect(safeInvoke).toHaveBeenCalledWith("check_task_assignment", {
         request: {
-          task_id: 'task-123',
-          user_id: 'user-456',
-        }
+          task_id: "task-123",
+          user_id: "user-456",
+        },
       });
     });
   });
 
-  describe('Error Response Handling', () => {
-    it('handles validation errors from backend', async () => {
+  describe("Error Response Handling", () => {
+    it("handles validation errors from backend", async () => {
       const errorResponse = {
-        type: 'ValidationError',
+        type: "ValidationError",
         error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Invalid task data',
+          code: "VALIDATION_ERROR",
+          message: "Invalid task data",
           details: {
-            field: 'title',
-            issue: 'required field missing'
-          }
-        }
+            field: "title",
+            issue: "required field missing",
+          },
+        },
       };
 
       safeInvoke.mockRejectedValue(errorResponse);
@@ -475,88 +509,91 @@ describe('taskOperations IPC contract tests', () => {
       }
     });
 
-    it('handles not found errors for get operation', async () => {
+    it("handles not found errors for get operation", async () => {
       cachedInvoke.mockResolvedValue(null);
 
-      const result = await taskOperations.get('nonexistent-task');
+      const result = await taskOperations.get("nonexistent-task");
 
       expect(result).toBeNull();
     });
 
-    it('handles permission errors', async () => {
+    it("handles permission errors", async () => {
       const permissionError = {
-        type: 'PermissionError',
+        type: "PermissionError",
         error: {
-          code: 'PERMISSION_DENIED',
-          message: 'Insufficient permissions to perform this operation'
-        }
+          code: "PERMISSION_DENIED",
+          message: "Insufficient permissions to perform this operation",
+        },
       };
 
       safeInvoke.mockRejectedValue(permissionError);
 
       try {
-        await taskOperations.delete('task-123', 'unauthorized-token');
+        await taskOperations.delete("task-123", "unauthorized-token");
       } catch (error) {
         expect(error).toEqual(permissionError);
       }
     });
   });
 
-  describe('Edge Cases and Boundary Conditions', () => {
-    it('handles extremely long task descriptions', async () => {
-      const longDescription = 'a'.repeat(10000);
+  describe("Edge Cases and Boundary Conditions", () => {
+    it("handles extremely long task descriptions", async () => {
+      const longDescription = "a".repeat(10000);
       const taskData = {
-        title: 'Task with long description',
-        description: longDescription
+        title: "Task with long description",
+        description: longDescription,
       };
 
       await taskOperations.create(taskData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("task_create", {
         data: taskData,
       });
     });
 
-    it('handles special characters in task titles', async () => {
-      const specialTitle = 'Task with special chars: éàüß@#$%^&*()';
-      
+    it("handles special characters in task titles", async () => {
+      const specialTitle = "Task with special chars: éàüß@#$%^&*()";
+
       await taskOperations.create({ title: specialTitle });
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("task_create", {
         data: { title: specialTitle },
       });
     });
 
-    it('handles empty list filters', async () => {
+    it("handles empty list filters", async () => {
       await taskOperations.list({});
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_list', {
-        filter: {
-          assigned_to: null,
-          client_id: null,
+      expect(safeInvoke).toHaveBeenCalledWith("task_list", {
+        filters: {
+          pagination: {
+            page: 1,
+            page_size: 20,
+            sort_by: null,
+            sort_order: null,
+          },
           status: null,
+          technician_id: null,
+          client_id: null,
           priority: null,
-          region: null,
-          include_completed: false,
-          date_from: null,
-          date_to: null,
+          search: null,
+          from_date: null,
+          to_date: null,
         },
-        page: 1,
-        limit: 20,
       });
     });
 
-    it('handles null values in optional fields', async () => {
+    it("handles null values in optional fields", async () => {
       const taskWithNulls = {
-        title: 'Task with null fields',
+        title: "Task with null fields",
         description: null,
         technician_id: null,
-        scheduled_date: null
+        scheduled_date: null,
       };
 
       await taskOperations.create(taskWithNulls);
 
-      expect(safeInvoke).toHaveBeenCalledWith('task_create', {
+      expect(safeInvoke).toHaveBeenCalledWith("task_create", {
         data: taskWithNulls,
       });
     });

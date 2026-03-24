@@ -95,7 +95,7 @@ impl TaskRepository {
             .get_connection()
             .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
 
-        conn.query_row("SELECT status FROM tasks WHERE id = ?1", [task_id], |row| {
+        conn.query_row("SELECT status FROM tasks WHERE id = ?1 AND deleted_at IS NULL", [task_id], |row| {
             row.get(0)
         })
         .map_err(|e| RepoError::NotFound(format!("Task not found: {}", e)))
@@ -115,7 +115,7 @@ impl TaskRepository {
             .get_connection()
             .map_err(|e| RepoError::Database(format!("Database connection failed: {}", e)))?;
 
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
 
         let tx = conn
             .transaction()
@@ -139,7 +139,7 @@ impl TaskRepository {
 
         let updated_task: Task = conn
             .query_row(
-                "SELECT * FROM tasks WHERE id = ?1",
+                "SELECT * FROM tasks WHERE id = ?1 AND deleted_at IS NULL",
                 [task_id],
                 Task::from_row,
             )

@@ -111,6 +111,7 @@ fn test_percentage_discount_rounds_correctly() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();
@@ -157,6 +158,7 @@ fn test_fixed_discount_capped_at_subtotal() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();

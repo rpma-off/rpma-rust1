@@ -1,7 +1,7 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { getAuthenticatedUser } from '@/lib/api-auth';
-import { SystemConfiguration } from '@/types/configuration.types';
-import { configurationService } from '@/domains/admin/server';
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getAuthenticatedUser } from "@/lib/api-auth";
+import type { SystemConfiguration } from "@/lib/backend";
+import { configurationService } from "@/domains/admin/server";
 
 /**
  * POST /api/admin/configuration/validate
@@ -11,13 +11,16 @@ export async function POST(request: NextRequest) {
   try {
     const { user, error: authError } = await getAuthenticatedUser(request);
     if (authError || !user) {
-      return NextResponse.json({ error: authError || 'Unauthorized' }, { status: 401 });
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 },
+      );
     }
 
-    if (!['admin', 'supervisor'].includes(user.role)) {
+    if (!["admin", "supervisor"].includes(user.role)) {
       return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
+        { error: "Forbidden - Admin access required" },
+        { status: 403 },
       );
     }
 
@@ -26,21 +29,19 @@ export async function POST(request: NextRequest) {
 
     if (!config) {
       return NextResponse.json(
-        { error: 'Configuration object is required' },
-        { status: 400 }
+        { error: "Configuration object is required" },
+        { status: 400 },
       );
     }
 
     const result = await configurationService.validateConfiguration(config);
 
     return NextResponse.json(result);
-
   } catch (error) {
-    console.error('Error in POST /api/admin/configuration/validate:', error);
+    console.error("Error in POST /api/admin/configuration/validate:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
-

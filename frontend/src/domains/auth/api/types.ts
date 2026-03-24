@@ -5,8 +5,10 @@ export type {
   LoginCredentials,
   SignupCredentials,
   AuthenticatedRequest,
-} from '@/types/auth.types';
+} from "@/types/auth.types";
 
-export type { UserSession, UserRole } from '@/lib/backend';
-export type { UserAccount } from '@/lib/types';
-export type { PasswordValidationResult, PasswordPolicy } from '@/lib/auth/password-validator';
+export type { UserSession, UserRole, UserAccount } from "@/lib/backend";
+export type {
+  PasswordValidationResult,
+  PasswordPolicy,
+} from "@/lib/auth/password-validator";

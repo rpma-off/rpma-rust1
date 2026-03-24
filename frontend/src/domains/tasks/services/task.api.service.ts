@@ -1,11 +1,8 @@
-
-
-
 interface GetTasksParams {
   page: number;
   pageSize: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   technician_id?: string;
 }
 
@@ -21,9 +18,9 @@ interface PaginatedResponse<T> {
   pageSize: number;
 }
 
-import { TaskWithDetails, UpdateTaskRequest } from '@/lib/backend';
-import { AuthSecureStorage } from '@/lib/secureStorage';
-import { ipcClient } from '@/lib/ipc';
+import { TaskWithDetails, UpdateTaskRequest } from "@/lib/backend";
+import { AuthSecureStorage } from "@/lib/secureStorage";
+import { ipcClient } from "@/lib/ipc";
 
 export class TaskApiService {
   private static instance: TaskApiService;
@@ -35,34 +32,36 @@ export class TaskApiService {
     return TaskApiService.instance;
   }
 
-  async getTasks(params: GetTasksParams): Promise<ApiResponse<PaginatedResponse<TaskWithDetails>>> {
+  async getTasks(
+    params: GetTasksParams,
+  ): Promise<ApiResponse<PaginatedResponse<TaskWithDetails>>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
-        return { error: new Error('Authentication required') };
+        return { error: new Error("Authentication required") };
       }
 
-      const filters = {
-        page: params.page,
-        limit: params.pageSize,
-        sort_by: params.sortBy || 'created_at',
-        sort_order: params.sortOrder || 'desc',
-        technician_id: params.technician_id
-      };
-
       const result = await ipcClient.tasks.list({
-        page: filters.page,
-        limit: filters.limit,
-        sort_by: filters.sort_by,
-        sort_order: filters.sort_order,
-        technician_id: filters.technician_id
+        pagination: {
+          page: params.page,
+          page_size: params.pageSize,
+          sort_by: params.sortBy || "created_at",
+          sort_order: params.sortOrder || "desc",
+        },
+        status: null,
+        technician_id: params.technician_id ?? null,
+        client_id: null,
+        priority: null,
+        search: null,
+        from_date: null,
+        to_date: null,
       });
 
       const response: PaginatedResponse<TaskWithDetails> = {
         data: result.data || [],
         total: Number(result.pagination?.total) || 0,
         page: Number(result.pagination?.page) || params.page,
-        pageSize: Number(result.pagination?.limit) || params.pageSize
+        pageSize: Number(result.pagination?.limit) || params.pageSize,
       };
       return { data: response };
     } catch (error) {
@@ -70,11 +69,14 @@ export class TaskApiService {
     }
   }
 
-  async updateTask(id: string, updates: Partial<TaskWithDetails>): Promise<ApiResponse<TaskWithDetails>> {
+  async updateTask(
+    id: string,
+    updates: Partial<TaskWithDetails>,
+  ): Promise<ApiResponse<TaskWithDetails>> {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
-        return { error: new Error('Authentication required') };
+        return { error: new Error("Authentication required") };
       }
 
       // Convert updates to the format expected by IPC
@@ -123,7 +125,7 @@ export class TaskApiService {
     try {
       const session = await AuthSecureStorage.getSession();
       if (!session.token) {
-        return { error: new Error('Authentication required') };
+        return { error: new Error("Authentication required") };
       }
 
       await ipcClient.tasks.delete(id);

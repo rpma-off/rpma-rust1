@@ -130,7 +130,9 @@ impl Database {
         let mut count = 0;
 
         for task in tasks {
-            let task_id = task["id"].as_str().expect("Task ID should be a string");
+            let task_id = task["id"]
+                .as_str()
+                .ok_or_else(|| "Task ID should be a string".to_string())?;
             let ppf = ppf_map.get(task_id);
 
             tx.execute(

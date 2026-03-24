@@ -9,8 +9,10 @@ use serde::Serialize;
 use std::process::Command;
 use std::time::Duration;
 use tracing;
+use ts_rs::TS;
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
+#[ts(export)]
 pub struct DeviceInfo {
     pub hostname: Option<String>,
     pub platform: String,
@@ -18,7 +20,8 @@ pub struct DeviceInfo {
     pub id: Option<String>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, PartialEq, Eq, TS)]
+#[ts(export)]
 pub struct HealthStatus {
     pub db: bool,
     pub version: &'static str,

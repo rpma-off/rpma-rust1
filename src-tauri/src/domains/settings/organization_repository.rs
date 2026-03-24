@@ -469,4 +469,32 @@ impl OrganizationRepository {
 
         Ok(count > 0)
     }
+
+    /// Promote the earliest active user to Admin role during onboarding.
+    ///
+    /// Queries the `users` table directly because the users domain is a
+    /// peer bounded context — this operation intentionally crosses the
+    /// boundary only during the one-time onboarding flow.
+    pub fn promote_first_user_to_admin(&self) -> Result<(), AppError> {
+        let conn = self.db.get_connection().map_err(|e| {
+            error!("Failed to get database connection: {}", e);
+            AppError::Database(format!("Failed to get database connection: {}", e))
+        })?;
+
+        conn.execute(
+            "UPDATE users SET role = 'admin', updated_at = ? WHERE id = (
+                SELECT id FROM users
+                WHERE is_active = 1 AND deleted_at IS NULL
+                ORDER BY created_at ASC LIMIT 1
+            )",
+            params![chrono::Utc::now().timestamp_millis()],
+        )
+        .map_err(|e| {
+            error!("Failed to promote first user to admin: {}", e);
+            AppError::Database(format!("Failed to promote user: {}", e))
+        })?;
+
+        info!("Promoted first user to Admin role");
+        Ok(())
+    }
 }

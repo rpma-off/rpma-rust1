@@ -250,14 +250,21 @@ export class ClientService {
     }
 
     try {
-      // Convert string types to proper enum types
-      const clientQuery: Partial<ClientQuery> = {
-        ...query,
+      const clientQuery: Partial<ClientQuery> & {
+        page?: number;
+        limit?: number;
+        sort_by?: string;
+        sort_order?: "asc" | "desc";
+      } = {
+        search: query?.search,
         customer_type: query?.customer_type as
           | "individual"
           | "business"
           | null
           | undefined,
+        page: query?.page,
+        limit: query?.limit,
+        sort_by: query?.sort_by,
         sort_order: query?.sort_order as "asc" | "desc" | undefined,
       };
       const clientListResponse = await ipcClient.clients.list(clientQuery);
@@ -306,13 +313,21 @@ export class ClientService {
     }
 
     try {
-      const clientQuery: Partial<ClientQuery> = {
-        ...query,
+      const clientQuery: Partial<ClientQuery> & {
+        page?: number;
+        limit?: number;
+        sort_by?: string;
+        sort_order?: "asc" | "desc";
+      } = {
+        search: query?.search,
         customer_type: query?.customer_type as
           | "individual"
           | "business"
           | null
           | undefined,
+        page: query?.page,
+        limit: query?.limit,
+        sort_by: query?.sort_by,
         sort_order: query?.sort_order as "asc" | "desc" | undefined,
       };
       try {

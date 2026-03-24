@@ -206,6 +206,7 @@ fn test_update_forbidden_when_not_draft() {
             vehicle_year: None,
             vehicle_vin: None,
         },
+        "test_user",
         &UserRole::Admin,
     );
     assert!(result.is_err());
@@ -388,7 +389,7 @@ fn test_soft_delete_preserves_data() {
     let quote_id = quote.id.clone();
 
     // Delete (soft)
-    let deleted = service.delete_quote(&quote_id, &UserRole::Admin).unwrap();
+    let deleted = service.delete_quote(&quote_id, "test_user", &UserRole::Admin).unwrap();
     assert!(deleted);
 
     // Not visible via service
@@ -522,6 +523,7 @@ fn test_discount_calculation_percentage() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();
@@ -589,6 +591,7 @@ fn test_discount_calculation_fixed() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();
@@ -628,6 +631,7 @@ fn test_discount_validation_percentage_over_100() {
             vehicle_year: None,
             vehicle_vin: None,
         },
+        "test_user",
         &UserRole::Admin,
     );
 
@@ -686,6 +690,7 @@ fn test_remove_discount() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();
@@ -710,6 +715,7 @@ fn test_remove_discount() {
                 vehicle_year: None,
                 vehicle_vin: None,
             },
+            "test_user",
             &UserRole::Admin,
         )
         .unwrap();
@@ -732,7 +738,7 @@ fn test_quote_number_uses_max_not_count() {
         .unwrap();
     assert_eq!(q1.quote_number, "DEV-00001");
 
-    service.delete_quote(&q1.id, &UserRole::Admin).unwrap();
+    service.delete_quote(&q1.id, "test_user", &UserRole::Admin).unwrap();
 
     // Next quote should be DEV-00002, not DEV-00001 (COUNT vs MAX)
     let req2 = make_quote_req("test-client");

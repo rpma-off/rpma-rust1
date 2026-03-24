@@ -187,7 +187,7 @@ impl SettingsRepository {
         let int = Self::to_json_str(&settings.integrations, "integrations")?;
         let pc = Self::to_json_str(&settings.performance_configs, "performance_configs")?;
         let bh = Self::to_json_str(&settings.business_hours, "business_hours")?;
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
 
         tx.execute(
             "INSERT INTO app_settings
@@ -338,7 +338,7 @@ impl SettingsRepository {
             AppError::Database("Failed to start transaction".to_string())
         })?;
 
-        let now = chrono::Utc::now().timestamp();
+        let now = chrono::Utc::now().timestamp_millis();
         let sql = format!(
             "UPDATE app_settings SET {} = ?, updated_at = ?, updated_by = ? WHERE id = 'global'",
             col_name

@@ -5,31 +5,35 @@ import type {
   MessageListResponse,
   MessageTemplate,
   NotificationPreferences,
-  UpdateNotificationPreferencesRequest
-} from '@/lib/backend';
-import type { JsonObject } from '@/types/json';
-import { safeInvoke } from './utils';
+  UpdateNotificationPreferencesRequest,
+} from "@/lib/backend";
+import type { JsonObject } from "@/types/json";
+import { safeInvoke } from "./utils";
 
 export const messageApi = {
   /**
    * Send a new message
    */
   send: async (request: SendMessageRequest): Promise<Message> => {
-    return safeInvoke('message_send', { request: request as unknown as JsonObject });
+    return safeInvoke("message_send", {
+      request: request as unknown as JsonObject,
+    });
   },
 
   /**
    * Get messages with filtering
    */
   getList: async (query: MessageQuery): Promise<MessageListResponse> => {
-    return safeInvoke('message_get_list', { query: query as unknown as JsonObject });
+    return safeInvoke("message_get_list", {
+      query: query as unknown as JsonObject,
+    });
   },
 
   /**
    * Mark message as read
    */
   markRead: async (messageId: string): Promise<void> => {
-    return safeInvoke('message_mark_read', { messageId });
+    return safeInvoke("message_mark_read", { messageId });
   },
 
   /**
@@ -39,14 +43,22 @@ export const messageApi = {
     category: string | undefined,
     messageType: string | undefined,
   ): Promise<MessageTemplate[]> => {
-    return safeInvoke('message_get_templates', { category, messageType });
+    return safeInvoke(
+      "message_get_templates",
+      category !== undefined || messageType !== undefined
+        ? {
+            ...(category !== undefined ? { category } : {}),
+            ...(messageType !== undefined ? { messageType } : {}),
+          }
+        : {},
+    );
   },
 
   /**
    * Get user notification preferences
    */
   getPreferences: async (userId: string): Promise<NotificationPreferences> => {
-    return safeInvoke('message_get_preferences', { userId });
+    return safeInvoke("message_get_preferences", { userId });
   },
 
   /**
@@ -56,7 +68,7 @@ export const messageApi = {
     userId: string,
     updates: UpdateNotificationPreferencesRequest,
   ): Promise<NotificationPreferences> => {
-    return safeInvoke('message_update_preferences', {
+    return safeInvoke("message_update_preferences", {
       userId,
       updates: updates as unknown as JsonObject,
     });

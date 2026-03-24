@@ -1,11 +1,11 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { SystemConfiguration, BusinessHoursConfig } from "@/shared/types";
-import { settingsOperations } from "@/shared/utils";
 import { adminKeys } from "@/lib/query-keys";
-import type { JsonValue, JsonObject } from "@/shared/types";
 import { useAuth } from "@/shared/hooks/useAuth";
+import { ConfigurationItem, BusinessHoursConfig } from "@/shared/types";
+import type { JsonValue, JsonObject } from "@/shared/types";
+import { settingsOperations } from "@/shared/utils";
 
 const inferDataType = (value: JsonValue): "boolean" | "number" | "string" => {
   if (typeof value === "boolean") return "boolean";
@@ -31,7 +31,7 @@ export function useSystemSettings() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const [pendingConfigurations, setPendingConfigurations] = useState<
-    SystemConfiguration[] | null
+    ConfigurationItem[] | null
   >(null);
   const [pendingBusinessHours, setPendingBusinessHours] =
     useState<BusinessHoursConfig | null>(null);
@@ -49,23 +49,23 @@ export function useSystemSettings() {
         string,
         JsonValue
       >;
-      const configs: SystemConfiguration[] = Object.entries(
-        generalSettings,
-      ).map(([key, value]) => ({
-        id: `general-${key}`,
-        category: "general",
-        key,
-        value: value as string | number | boolean,
-        description: key
-          .replace(/_/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase()),
-        data_type: inferDataType(value),
-        is_required: false,
-        isRequired: false,
-        system_level: true,
-        created_at: "",
-        updated_at: "",
-      }));
+      const configs: ConfigurationItem[] = Object.entries(generalSettings).map(
+        ([key, value]) => ({
+          id: `general-${key}`,
+          category: "general",
+          key,
+          value: value as string | number | boolean,
+          description: key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase()),
+          data_type: inferDataType(value),
+          is_required: false,
+          isRequired: false,
+          system_level: true,
+          created_at: "",
+          updated_at: "",
+        }),
+      );
       const storedHours = appSettings?.business_hours as unknown as
         | BusinessHoursConfig
         | undefined;

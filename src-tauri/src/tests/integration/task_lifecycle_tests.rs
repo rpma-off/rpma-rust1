@@ -158,7 +158,8 @@ fn test_complete_task_lifecycle() -> Result<(), AppError> {
     let restored_task = restored_task.unwrap();
     assert_eq!(restored_task.id, task.id);
 
-    // Step 7: Hard delete task
+    // Step 7: Hard delete task (ADR-011: must soft-delete first)
+    deletion_service.soft_delete_task(&task.id, "admin-1")?;
     tokio_test::block_on(deletion_service.hard_delete_task_async(&task.id, "admin-1"))?;
 
     // Verify task is permanently deleted

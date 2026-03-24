@@ -15,11 +15,25 @@ import type {
   AvailabilityCheckResponse,
   Client,
   ChecklistItem,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskStatistics,
+  TaskQuery,
+  TaskListResponse,
 } from "@/lib/backend";
 import type { Photo } from "./photo.types";
 
-// Re-export for backward compatibility
-export type { Task, TaskStatus, TaskPriority };
+// Re-export generated backend contracts for backward compatibility
+export type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskStatistics,
+  TaskQuery,
+  TaskListResponse,
+};
 
 // Re-export shared entity types from the generated backend contract so there
 // is a single source of truth.  Do NOT redefine these here.
@@ -99,117 +113,6 @@ export interface TaskFilters {
 }
 
 /**
- * Task creation request for Tauri command - matches Rust CreateTaskRequest exactly
- */
-export interface CreateTaskRequest {
-  // Required fields (matching Rust CreateTaskRequest)
-  vehicle_plate: string;
-  vehicle_model: string;
-  ppf_zones: string[];
-  scheduled_date: string;
-
-  // Optional fields
-  external_id?: string;
-  status?: string;
-  technician_id?: string;
-  start_time?: string;
-  end_time?: string;
-  checklist_completed?: boolean;
-  notes?: string;
-
-  // Additional fields for frontend compatibility
-  title?: string;
-  vehicle_make?: string;
-  vehicle_year?: string; // String to match backend
-  vin?: string;
-  date_rdv?: string;
-  heure_rdv?: string;
-  lot_film?: string;
-  note?: string; // Alternative to notes
-  customer_name?: string;
-  customer_email?: string;
-  customer_phone?: string;
-  customer_address?: string;
-  custom_ppf_zones?: string[]; // JSON array of custom zones
-  template_id?: string;
-  workflow_id?: string;
-  task_number?: string;
-  creator_id?: string;
-  created_by?: string;
-
-  // Legacy fields for compatibility
-  description?: string;
-  priority?: string;
-  client_id?: string;
-  estimated_duration?: number;
-  tags?: string; // JSON string
-}
-
-/**
- * Task update request for Tauri command
- */
-export interface UpdateTaskRequest {
-  id?: string | null;
-  title?: string | null;
-  description?: string | null;
-  status?: TaskStatus | null;
-  priority?: TaskPriority | null;
-  technician_id?: string | null;
-  assigned_at?: string | null;
-  scheduled_date?: string | null;
-  start_time?: string | null;
-  end_time?: string | null;
-  notes?: string | null;
-  tags?: string | null;
-  estimated_duration?: number | null;
-  actual_duration?: number | null;
-  // Additional fields for compatibility
-  vin?: string | null;
-  date_rdv?: string | null;
-  heure_rdv?: string | null;
-  lot_film?: string | null;
-  ppf_zones?: string[] | null;
-  checklist_completed?: boolean | null;
-}
-
-/**
- * Task statistics interface
- */
-export interface TaskStatistics {
-  total_tasks: number;
-  draft_tasks: number;
-  scheduled_tasks: number;
-  in_progress_tasks: number;
-  completed_tasks: number;
-  cancelled_tasks: number;
-  on_hold_tasks: number;
-  pending_tasks: number;
-  invalid_tasks: number;
-  archived_tasks: number;
-  failed_tasks: number;
-  overdue_tasks: number;
-  assigned_tasks: number;
-  paused_tasks: number;
-}
-
-/**
- * Task query interface for filtering
- */
-export interface TaskQuery {
-  status?: string | "all";
-  priority?: string | "all";
-  search?: string;
-  assignedTo?: string;
-  vehicleId?: string;
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
-  page?: number;
-  sort_by?: string;
-  sort_order?: "asc" | "desc";
-}
-
-/**
  * Task action types for Tauri commands
  */
 export type TaskAction =
@@ -219,20 +122,6 @@ export type TaskAction =
   | { action: "Delete"; id: string }
   | { action: "List"; filters: TaskQuery }
   | { action: "GetStatistics" };
-
-/**
- * Task list response from Tauri command
- */
-export interface TaskListResponse {
-  data: TaskWithDetails[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    total_pages: number;
-  };
-  statistics?: TaskStatistics;
-}
 
 /**
  * Task CRUD response types

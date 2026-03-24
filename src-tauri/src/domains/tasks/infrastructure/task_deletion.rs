@@ -75,8 +75,8 @@ impl TaskDeletionService {
 
     /// Hard delete a task (sync version) - permanently removes task from database
     pub fn hard_delete_task_sync(&self, id: &str, user_id: &str) -> Result<(), AppError> {
-        // Check if task exists and get it for ownership check
-        let task = self.get_task_sync(id)?;
+        // Check if task exists (including soft-deleted) and get it for ownership + guard check
+        let task = self.get_task_including_deleted_sync(id)?;
         let task = match task {
             Some(t) => t,
             None => {
@@ -95,16 +95,27 @@ impl TaskDeletionService {
             ));
         }
 
-        // Delete from database
+        // ADR-011: Hard delete requires the task to be soft-deleted first
+        // so it has been through the trash lifecycle and the deletion intent is explicit.
+        if task.deleted_at.is_none() {
+            return Err(AppError::Validation(
+                "Task must be soft-deleted before permanent removal. Use soft_delete_task first.".to_string(),
+            ));
+        }
+
+        // Delete from database — task is already soft-deleted, safe to purge.
         let conn = self.db.get_connection()?;
-        conn.execute("DELETE FROM tasks WHERE id = ?", params![id])
-            .map_err(|e| {
-                error!(
-                    "TaskDeletionService: failed to hard delete task {}: {}",
-                    id, e
-                );
-                AppError::Database(format!("Failed to hard delete task: {}", e))
-            })?;
+        conn.execute(
+            "DELETE FROM tasks WHERE id = ? AND deleted_at IS NOT NULL",
+            params![id],
+        )
+        .map_err(|e| {
+            error!(
+                "TaskDeletionService: failed to hard delete task {}: {}",
+                id, e
+            );
+            AppError::Database(format!("Failed to hard delete task: {}", e))
+        })?;
 
         Ok(())
     }
@@ -150,6 +161,22 @@ impl TaskDeletionService {
         })?;
 
         Ok(())
+    }
+
+    /// Get a single task by ID regardless of soft-delete status (sync version).
+    /// Used by the hard-delete guard to inspect `deleted_at`.
+    fn get_task_including_deleted_sync(&self, id: &str) -> Result<Option<Task>, AppError> {
+        let sql = format!(
+            r#"
+            SELECT{}
+            FROM tasks WHERE id = ?
+        "#,
+            TASK_QUERY_COLUMNS
+        );
+
+        self.db
+            .query_single_as::<Task>(&sql, params![id])
+            .map_err(|e| AppError::Database(format!("Failed to get task: {}", e)))
     }
 
     /// Get a single task by ID (sync version)

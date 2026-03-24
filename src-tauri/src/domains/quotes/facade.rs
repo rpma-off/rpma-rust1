@@ -105,20 +105,21 @@ impl QuotesFacade {
     pub fn update(
         &self,
         role: &UserRole,
+        user_id: &str,
         id: &str,
         data: UpdateQuoteRequest,
     ) -> Result<Quote, AppError> {
         self.check_permission(role, "update")?;
         self.quote_service
-            .update_quote(id, data, role)
+            .update_quote(id, data, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
     /// TODO: document
-    pub fn delete(&self, role: &UserRole, id: &str) -> Result<bool, AppError> {
+    pub fn delete(&self, role: &UserRole, user_id: &str, id: &str) -> Result<bool, AppError> {
         self.check_permission(role, "delete")?;
         self.quote_service
-            .delete_quote(id, role)
+            .delete_quote(id, user_id, role)
             .map_err(|e| self.map_quote_service_error(e))
     }
 
