@@ -4,11 +4,26 @@
  * Types that match the Rust backend task models
  */
 
-import type { Task, TaskStatus, TaskPriority, TaskPhoto, AssignmentStatus, AvailabilityStatus, AssignmentCheckResponse, AvailabilityCheckResponse } from '@/lib/backend';
-import type { Photo } from './photo.types';
+import type {
+  Task,
+  TaskStatus,
+  TaskPriority,
+  TaskPhoto,
+  AssignmentStatus,
+  AvailabilityStatus,
+  AssignmentCheckResponse,
+  AvailabilityCheckResponse,
+  Client,
+  ChecklistItem,
+} from "@/lib/backend";
+import type { Photo } from "./photo.types";
 
 // Re-export for backward compatibility
 export type { Task, TaskStatus, TaskPriority };
+
+// Re-export shared entity types from the generated backend contract so there
+// is a single source of truth.  Do NOT redefine these here.
+export type { Client, ChecklistItem };
 
 // Re-export auto-generated assignment/availability types with domain-friendly names
 export type TaskAssignmentStatus = AssignmentStatus;
@@ -17,7 +32,12 @@ export type TaskAssignmentCheckResponse = AssignmentCheckResponse;
 export type TaskAvailabilityCheckResponse = AvailabilityCheckResponse;
 
 /**
- * Task status change history entry - matches Rust TaskHistory model
+ * Task status change history entry - matches Rust TaskHistory model.
+ *
+ * `changed_at` is typed as `number | string` rather than `bigint` because
+ * Tauri serialises Rust i64 timestamps to JSON numbers.  The union with
+ * `string` preserves compatibility with legacy ISO-string values already
+ * stored in some records.
  */
 export interface TaskHistoryEntry {
   id: string;
@@ -25,6 +45,7 @@ export interface TaskHistoryEntry {
   old_status?: string | null;
   new_status: string;
   reason?: string | null;
+  /** JSON number at runtime even though the Rust field is i64. */
   changed_at: number | string;
   changed_by?: string | null;
 }
@@ -33,41 +54,41 @@ export interface TaskHistoryEntry {
  * Task with full details including related data
  */
 export interface TaskWithDetails extends Task {
-   // Related data
-   client?: Client;
-   technician?: import('./auth.types').UserAccount;
-   checklist_items?: ChecklistItem[];
-   checklist?: ChecklistItem[];
-   workflow_execution?: WorkflowExecution;
+  // Related data
+  client?: Client;
+  technician?: import("./auth.types").UserAccount;
+  checklist_items?: ChecklistItem[];
+  checklist?: ChecklistItem[];
+  workflow_execution?: WorkflowExecution;
 
-    // Photo arrays extensions
-    photos_before?: Photo[] | null;
-    photos_after?: Photo[] | null;
-    photos?: { before: Photo[], after: Photo[], during: Photo[] };
+  // Photo arrays extensions
+  photos_before?: Photo[] | null;
+  photos_after?: Photo[] | null;
+  photos?: { before: Photo[]; after: Photo[]; during: Photo[] };
 
-   // Additional fields for compatibility
-   note?: string | null; // Alias for notes
-   customer_comments?: string | null;
-   special_instructions?: string | null;
+  // Additional fields for compatibility
+  note?: string | null; // Alias for notes
+  customer_comments?: string | null;
+  special_instructions?: string | null;
 
-   // Computed and extra fields not in base Task
-   assigned_user_name?: string;
-   client_name?: string;
-   is_available?: boolean;
-   estimated_duration_minutes?: number | null; // Alias for estimated_duration
-   progress: number;
-   checklist_completed: boolean;
-   duration?: string | null;
-   is_overdue: boolean;
-   estimated_completion?: string | null;
+  // Computed and extra fields not in base Task
+  assigned_user_name?: string;
+  client_name?: string;
+  is_available?: boolean;
+  estimated_duration_minutes?: number | null; // Alias for estimated_duration
+  progress: number;
+  checklist_completed: boolean;
+  duration?: string | null;
+  is_overdue: boolean;
+  estimated_completion?: string | null;
 }
 
 /**
  * Task filter options for Tauri commands
  */
 export interface TaskFilters {
-  status?: string | 'all';
-  priority?: string | 'all';
+  status?: string | "all";
+  priority?: string | "all";
   search?: string;
   assignedTo?: string;
   vehicleId?: string;
@@ -89,39 +110,39 @@ export interface CreateTaskRequest {
 
   // Optional fields
   external_id?: string;
-   status?: string;
-   technician_id?: string;
-   start_time?: string;
-   end_time?: string;
-   checklist_completed?: boolean;
-   notes?: string;
+  status?: string;
+  technician_id?: string;
+  start_time?: string;
+  end_time?: string;
+  checklist_completed?: boolean;
+  notes?: string;
 
-   // Additional fields for frontend compatibility
-   title?: string;
-   vehicle_make?: string;
-   vehicle_year?: string; // String to match backend
-   vin?: string;
-   date_rdv?: string;
-   heure_rdv?: string;
-   lot_film?: string;
-   note?: string; // Alternative to notes
-   customer_name?: string;
-   customer_email?: string;
-   customer_phone?: string;
-   customer_address?: string;
-   custom_ppf_zones?: string[]; // JSON array of custom zones
-   template_id?: string;
-   workflow_id?: string;
-   task_number?: string;
-   creator_id?: string;
-   created_by?: string;
+  // Additional fields for frontend compatibility
+  title?: string;
+  vehicle_make?: string;
+  vehicle_year?: string; // String to match backend
+  vin?: string;
+  date_rdv?: string;
+  heure_rdv?: string;
+  lot_film?: string;
+  note?: string; // Alternative to notes
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  customer_address?: string;
+  custom_ppf_zones?: string[]; // JSON array of custom zones
+  template_id?: string;
+  workflow_id?: string;
+  task_number?: string;
+  creator_id?: string;
+  created_by?: string;
 
-   // Legacy fields for compatibility
-   description?: string;
-   priority?: string;
-   client_id?: string;
-   estimated_duration?: number;
-   tags?: string; // JSON string
+  // Legacy fields for compatibility
+  description?: string;
+  priority?: string;
+  client_id?: string;
+  estimated_duration?: number;
+  tags?: string; // JSON string
 }
 
 /**
@@ -137,10 +158,10 @@ export interface UpdateTaskRequest {
   assigned_at?: string | null;
   scheduled_date?: string | null;
   start_time?: string | null;
-   end_time?: string | null;
-   notes?: string | null;
-   tags?: string | null;
-   estimated_duration?: number | null;
+  end_time?: string | null;
+  notes?: string | null;
+  tags?: string | null;
+  estimated_duration?: number | null;
   actual_duration?: number | null;
   // Additional fields for compatibility
   vin?: string | null;
@@ -155,28 +176,28 @@ export interface UpdateTaskRequest {
  * Task statistics interface
  */
 export interface TaskStatistics {
-   total_tasks: number;
-   draft_tasks: number;
-   scheduled_tasks: number;
-   in_progress_tasks: number;
-   completed_tasks: number;
-   cancelled_tasks: number;
-   on_hold_tasks: number;
-   pending_tasks: number;
-   invalid_tasks: number;
-   archived_tasks: number;
-   failed_tasks: number;
-   overdue_tasks: number;
-   assigned_tasks: number;
-   paused_tasks: number;
+  total_tasks: number;
+  draft_tasks: number;
+  scheduled_tasks: number;
+  in_progress_tasks: number;
+  completed_tasks: number;
+  cancelled_tasks: number;
+  on_hold_tasks: number;
+  pending_tasks: number;
+  invalid_tasks: number;
+  archived_tasks: number;
+  failed_tasks: number;
+  overdue_tasks: number;
+  assigned_tasks: number;
+  paused_tasks: number;
 }
 
 /**
  * Task query interface for filtering
  */
 export interface TaskQuery {
-  status?: string | 'all';
-  priority?: string | 'all';
+  status?: string | "all";
+  priority?: string | "all";
   search?: string;
   assignedTo?: string;
   vehicleId?: string;
@@ -185,19 +206,19 @@ export interface TaskQuery {
   limit?: number;
   page?: number;
   sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  sort_order?: "asc" | "desc";
 }
 
 /**
  * Task action types for Tauri commands
  */
 export type TaskAction =
-  | { action: 'Create', data: CreateTaskRequest }
-  | { action: 'Get', id: string }
-  | { action: 'Update', id: string, data: UpdateTaskRequest }
-  | { action: 'Delete', id: string }
-  | { action: 'List', filters: TaskQuery }
-  | { action: 'GetStatistics' };
+  | { action: "Create"; data: CreateTaskRequest }
+  | { action: "Get"; id: string }
+  | { action: "Update"; id: string; data: UpdateTaskRequest }
+  | { action: "Delete"; id: string }
+  | { action: "List"; filters: TaskQuery }
+  | { action: "GetStatistics" };
 
 /**
  * Task list response from Tauri command
@@ -217,13 +238,13 @@ export interface TaskListResponse {
  * Task CRUD response types
  */
 export type TaskResponse =
-  | { type: 'Created'; data: TaskWithDetails }
-  | { type: 'Found'; data: TaskWithDetails }
-  | { type: 'Updated'; data: TaskWithDetails }
-  | { type: 'Deleted' }
-  | { type: 'NotFound' }
-  | { type: 'List'; data: TaskListResponse }
-  | { type: 'Statistics'; data: TaskStatistics };
+  | { type: "Created"; data: TaskWithDetails }
+  | { type: "Found"; data: TaskWithDetails }
+  | { type: "Updated"; data: TaskWithDetails }
+  | { type: "Deleted" }
+  | { type: "NotFound" }
+  | { type: "List"; data: TaskListResponse }
+  | { type: "Statistics"; data: TaskStatistics };
 
 /**
  * Photo metadata for uploads - matches backend PhotoMetadata
@@ -238,23 +259,8 @@ export interface PhotoMetadata {
   is_required: boolean;
 }
 
-
-
-/**
- * Checklist item interface — mirrors the backend ChecklistItem struct.
- */
-export interface ChecklistItem {
-  id: string;
-  task_id: string;
-  description: string;
-  position: number;
-  is_completed: boolean;
-  completed_at: string | null;
-  completed_by: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// ChecklistItem is re-exported from '@/lib/backend' at the top of this file.
+// Do not redefine it here — keep the generated type as the single source of truth.
 
 /**
  * Workflow execution interface
@@ -263,7 +269,7 @@ export interface WorkflowExecution {
   id: string;
   workflowId: string;
   taskId: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+  status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
   currentStepId?: string;
   startedAt?: string;
   completedAt?: string;
@@ -275,34 +281,18 @@ export interface WorkflowExecution {
   updatedAt: string;
 }
 
-/**
- * Client interface (simplified for task context)
- */
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  customer_type: 'individual' | 'business';
-  company_name?: string;
-  contact_person?: string;
-  address_street?: string;
-  address_city?: string;
-  address_state?: string;
-  address_zip?: string;
-   address_country?: string;
-   notes?: string;
-   tags?: string;
-   total_tasks?: number;
-  created_at: string; // ISO datetime
-  updated_at: string; // ISO datetime
-}
+// Client is re-exported from '@/lib/backend' at the top of this file.
+// Do not redefine it here — keep the generated type as the single source of truth.
 
 /**
  * Check if task is overdue
  */
 export function isTaskOverdue(task: Task): boolean {
-  if (!task.scheduled_date || task.status === 'completed' || task.status === 'cancelled') {
+  if (
+    !task.scheduled_date ||
+    task.status === "completed" ||
+    task.status === "cancelled"
+  ) {
     return false;
   }
   return new Date(task.scheduled_date) < new Date();
@@ -312,10 +302,11 @@ export function isTaskOverdue(task: Task): boolean {
  * Calculate task progress
  */
 export function calculateTaskProgress(task: TaskWithDetails): number {
-  if (task.status === 'completed') return 100;
-  if (task.status === 'cancelled') return 0;
+  if (task.status === "completed") return 100;
+  if (task.status === "cancelled") return 0;
 
-  const completedChecklistItems = task.checklist_items?.filter(item => item.is_completed).length || 0;
+  const completedChecklistItems =
+    task.checklist_items?.filter((item) => item.is_completed).length || 0;
   const totalChecklistItems = task.checklist_items?.length || 1;
 
   return Math.round((completedChecklistItems / totalChecklistItems) * 100);
@@ -337,44 +328,44 @@ export interface TaskDisplay {
   vehicleInfo?: string;
   vehicle_model?: string;
   vehicle_make?: string;
-    vehicle_year?: string | null;
-    vehicle_plate?: string;
-     vin?: string;
-     lot_film?: string;
-     date_rdv?: string;
-     heure_rdv?: string;
-     ppf_zones?: string[];
-   progress?: number;
+  vehicle_year?: string | null;
+  vehicle_plate?: string;
+  vin?: string;
+  lot_film?: string;
+  date_rdv?: string;
+  heure_rdv?: string;
+  ppf_zones?: string[];
+  progress?: number;
   is_overdue?: boolean;
-    created_at: string;
-    updated_at: string;
-    location?: string;
-    current_workflow_step_id?: string | null;
-    assigned_to?: string | null;
-    creator_id?: string | null;
-    checklist_id?: string | null;
-     external_id?: string | null;
-     template_id?: string | null;
-    started_at?: string | null;
-    completed_at?: string | null;
- completed_steps?: string[];
-     custom_ppf_zones?: string[];
-     customer_address?: string | null;
-     scheduled_at?: string;
-     // Additional properties for compatibility
-    checklist_items?: ChecklistItem[];
-    checklist?: ChecklistItem[];
-    checklist_completed?: boolean | number;
-    note?: string;
-   assigned_at?: string;
-   technician_id?: string;
-   is_available?: boolean;
-   workflow_status?: string;
-   start_time?: string;
-   end_time?: string;
-   scheduled_date?: string;
-   photos_before?: TaskPhoto[] | null;
-   photos_after?: TaskPhoto[] | null;
+  created_at: string;
+  updated_at: string;
+  location?: string;
+  current_workflow_step_id?: string | null;
+  assigned_to?: string | null;
+  creator_id?: string | null;
+  checklist_id?: string | null;
+  external_id?: string | null;
+  template_id?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  completed_steps?: string[];
+  custom_ppf_zones?: string[];
+  customer_address?: string | null;
+  scheduled_at?: string;
+  // Additional properties for compatibility
+  checklist_items?: ChecklistItem[];
+  checklist?: ChecklistItem[];
+  checklist_completed?: boolean | number;
+  note?: string;
+  assigned_at?: string;
+  technician_id?: string;
+  is_available?: boolean;
+  workflow_status?: string;
+  start_time?: string;
+  end_time?: string;
+  scheduled_date?: string;
+  photos_before?: TaskPhoto[] | null;
+  photos_after?: TaskPhoto[] | null;
 }
 
 /**

@@ -1,148 +1,171 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { SystemConfiguration, BusinessHoursConfig } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue, JsonObject } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { SystemConfiguration, BusinessHoursConfig } from "@/shared/types";
+import { settingsOperations } from "@/shared/utils";
+import { adminKeys } from "@/lib/query-keys";
+import type { JsonValue, JsonObject } from "@/shared/types";
+import { useAuth } from "@/shared/hooks/useAuth";
 
-const inferDataType = (value: JsonValue): 'boolean' | 'number' | 'string' => {
-  if (typeof value === 'boolean') return 'boolean';
-  if (typeof value === 'number') return 'number';
-  return 'string';
+const inferDataType = (value: JsonValue): "boolean" | "number" | "string" => {
+  if (typeof value === "boolean") return "boolean";
+  if (typeof value === "number") return "number";
+  return "string";
 };
 
 export const DEFAULT_BUSINESS_HOURS: BusinessHoursConfig = {
   enabled: true,
-  timezone: 'Europe/Paris',
+  timezone: "Europe/Paris",
   schedule: {
-    monday: { start: '08:00', end: '18:00', enabled: true },
-    tuesday: { start: '08:00', end: '18:00', enabled: true },
-    wednesday: { start: '08:00', end: '18:00', enabled: true },
-    thursday: { start: '08:00', end: '18:00', enabled: true },
-    friday: { start: '08:00', end: '18:00', enabled: true },
-    saturday: { start: '09:00', end: '13:00', enabled: false },
-    sunday: { start: '00:00', end: '00:00', enabled: false },
+    monday: { start: "08:00", end: "18:00", enabled: true },
+    tuesday: { start: "08:00", end: "18:00", enabled: true },
+    wednesday: { start: "08:00", end: "18:00", enabled: true },
+    thursday: { start: "08:00", end: "18:00", enabled: true },
+    friday: { start: "08:00", end: "18:00", enabled: true },
+    saturday: { start: "09:00", end: "13:00", enabled: false },
+    sunday: { start: "00:00", end: "00:00", enabled: false },
   },
 };
 
 export function useSystemSettings() {
-  const [configurations, setConfigurations] = useState<SystemConfiguration[]>([]);
-  const [businessHours, setBusinessHours] = useState<BusinessHoursConfig | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [resetting, setResetting] = useState(false);
+  const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const [pendingConfigurations, setPendingConfigurations] = useState<
+    SystemConfiguration[] | null
+  >(null);
+  const [pendingBusinessHours, setPendingBusinessHours] =
+    useState<BusinessHoursConfig | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { session } = useAuth();
-
-  const loadConfigurations = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await settingsOperations.getAppSettings();
+  // ── Query ──────────────────────────────────────────────────────────────────
+  const { data: serverData, isLoading: loading } = useQuery({
+    queryKey: adminKeys.appSettings(),
+    queryFn: () => settingsOperations.getAppSettings(),
+    enabled: !!session?.token,
+    staleTime: 60_000,
+    select: (data) => {
       const appSettings = data as Record<string, JsonValue>;
-      const generalSettings = (appSettings?.general || {}) as Record<string, JsonValue>;
-      const configs: SystemConfiguration[] = Object.entries(generalSettings).map(([key, value]) => ({
+      const generalSettings = (appSettings?.general || {}) as Record<
+        string,
+        JsonValue
+      >;
+      const configs: SystemConfiguration[] = Object.entries(
+        generalSettings,
+      ).map(([key, value]) => ({
         id: `general-${key}`,
-        category: 'general',
+        category: "general",
         key,
         value: value as string | number | boolean,
-        description: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+        description: key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
         data_type: inferDataType(value),
         is_required: false,
         isRequired: false,
         system_level: true,
-        created_at: '',
-        updated_at: '',
+        created_at: "",
+        updated_at: "",
       }));
-      setConfigurations(configs);
-    } catch (error) {
-      console.error('Error loading configurations:', error);
-      toast.error('Erreur lors du chargement des configurations');
-    } finally {
-      setLoading(false);
-    }
-  // session?.token triggers a re-fetch when the active session changes.
-  // settingsOperations reads the session internally via the IPC layer.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.token]);
+      const storedHours = appSettings?.business_hours as unknown as
+        | BusinessHoursConfig
+        | undefined;
+      const businessHours = storedHours?.schedule
+        ? storedHours
+        : DEFAULT_BUSINESS_HOURS;
+      return { configs, businessHours };
+    },
+  });
 
-  const loadBusinessHours = useCallback(async () => {
-    try {
-      const data = await settingsOperations.getAppSettings();
-      const appSettings = data as Record<string, JsonValue>;
-      const stored = appSettings?.business_hours as unknown as BusinessHoursConfig | undefined;
-      setBusinessHours(stored && stored.schedule ? stored : DEFAULT_BUSINESS_HOURS);
-    } catch (error) {
-      console.error('Error loading business hours:', error);
-      setBusinessHours(DEFAULT_BUSINESS_HOURS);
-    }
-  // session?.token triggers a re-fetch when the active session changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.token]);
+  // Prefer locally-edited state; fall back to server data
+  const configurations = pendingConfigurations ?? serverData?.configs ?? [];
+  const businessHours =
+    pendingBusinessHours ?? serverData?.businessHours ?? DEFAULT_BUSINESS_HOURS;
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!cancelled) await loadConfigurations();
-      if (!cancelled) await loadBusinessHours();
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [loadConfigurations, loadBusinessHours]);
+  // ── Mutations ──────────────────────────────────────────────────────────────
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const updateRequest: Record<
+        string,
+        string | number | boolean | undefined
+      > = {};
+      for (const config of configurations) {
+        updateRequest[config.key] = config.value;
+      }
+      await settingsOperations.updateGeneralSettings(
+        updateRequest as unknown as JsonObject,
+      );
+      if (businessHours) {
+        await settingsOperations.updateBusinessHours(
+          businessHours as unknown as JsonObject,
+        );
+      }
+    },
+    onSuccess: () => {
+      toast.success("Configurations sauvegardées avec succès");
+      setHasChanges(false);
+      setPendingConfigurations(null);
+      setPendingBusinessHours(null);
+      void queryClient.invalidateQueries({ queryKey: adminKeys.appSettings() });
+    },
+    onError: (error) => {
+      toast.error(
+        `Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : "Erreur inconnue"}`,
+      );
+    },
+  });
 
-  const updateConfiguration = (id: string, value: string | number | boolean) => {
-    setConfigurations((prev) =>
-      prev.map((configItem) => (configItem.id === id ? { ...configItem, value } : configItem)),
+  const reset = async () => {
+    setPendingConfigurations(null);
+    setPendingBusinessHours(null);
+    setHasChanges(false);
+    await queryClient.invalidateQueries({ queryKey: adminKeys.appSettings() });
+  };
+
+  const updateConfiguration = (
+    id: string,
+    value: string | number | boolean,
+  ) => {
+    setPendingConfigurations((prev) =>
+      (prev ?? configurations).map((c) => (c.id === id ? { ...c, value } : c)),
     );
     setHasChanges(true);
   };
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      const updateRequest: Record<string, string | number | boolean | undefined> = {};
-      for (const config of configurations) {
-        updateRequest[config.key] = config.value;
-      }
-      await settingsOperations.updateGeneralSettings(updateRequest as unknown as JsonObject);
-      if (businessHours) {
-        await settingsOperations.updateBusinessHours(businessHours as unknown as JsonObject);
-      }
-      toast.success('Configurations sauvegardées avec succès');
-      setHasChanges(false);
-    } catch (error) {
-      toast.error(`Erreur lors de la sauvegarde: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const reset = async () => {
-    setResetting(true);
-    try {
-      await loadConfigurations();
-      await loadBusinessHours();
-      setHasChanges(false);
-    } finally {
-      setResetting(false);
-    }
+  const setBusinessHoursLocal = (
+    update: SetStateAction<BusinessHoursConfig>,
+  ) => {
+    setPendingBusinessHours((prev) => {
+      const current =
+        prev ?? serverData?.businessHours ?? DEFAULT_BUSINESS_HOURS;
+      const next = typeof update === "function" ? update(current) : update;
+      return next;
+    });
+    setHasChanges(true);
   };
 
   return {
     configurations,
     businessHours,
     loading,
-    saving,
-    resetting,
+    saving: saveMutation.isPending,
+    resetting: false,
     hasChanges,
-    loadConfigurations,
-    loadBusinessHours,
-    save,
+    loadConfigurations: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: adminKeys.appSettings(),
+      });
+    },
+    loadBusinessHours: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: adminKeys.appSettings(),
+      });
+    },
+    save: () => saveMutation.mutateAsync(),
     reset,
     updateConfiguration,
-    setBusinessHours,
+    setBusinessHours: setBusinessHoursLocal as Dispatch<
+      SetStateAction<BusinessHoursConfig>
+    >,
     setHasChanges,
   };
 }

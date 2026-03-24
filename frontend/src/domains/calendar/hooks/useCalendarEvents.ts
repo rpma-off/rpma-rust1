@@ -1,9 +1,16 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { format, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { getCalendarTasks } from '../ipc/calendar';
-import { useCalendarStore } from '../stores/calendarStore';
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  addMonths,
+  subMonths,
+} from "date-fns";
+import { calendarKeys } from "@/lib/query-keys";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { getCalendarTasks } from "../ipc/calendar";
+import { useCalendarStore } from "../stores/calendarStore";
 
 export function useCalendarEvents() {
   const { user } = useAuth();
@@ -12,10 +19,10 @@ export function useCalendarEvents() {
   const dateRange = React.useMemo(() => {
     const start = startOfMonth(subMonths(currentDate, 1));
     const end = endOfMonth(addMonths(currentDate, 1));
-    
+
     return {
-      start: format(start, 'yyyy-MM-dd'),
-      end: format(end, 'yyyy-MM-dd'),
+      start: format(start, "yyyy-MM-dd"),
+      end: format(end, "yyyy-MM-dd"),
     };
   }, [currentDate]);
 
@@ -36,7 +43,7 @@ export function useCalendarEvents() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['calendar-events', calendarFilter],
+    queryKey: calendarKeys.events(calendarFilter),
     queryFn: async () => {
       return await getCalendarTasks(calendarFilter);
     },
@@ -47,21 +54,19 @@ export function useCalendarEvents() {
 
   const filteredEvents = React.useMemo(() => {
     let result = events;
-    
-    // intervention_type filter not available on CalendarTask, filtering disabled for now
-    
+
     if (filters.clientId) {
-      result = result.filter(event => event.client_id === filters.clientId);
+      result = result.filter((event) => event.client_id === filters.clientId);
     }
-    
+
     if (filters.dateRange) {
-      const start = format(filters.dateRange.start, 'yyyy-MM-dd');
-      const end = format(filters.dateRange.end, 'yyyy-MM-dd');
-      result = result.filter(event => 
-        event.scheduled_date >= start && event.scheduled_date <= end
+      const start = format(filters.dateRange.start, "yyyy-MM-dd");
+      const end = format(filters.dateRange.end, "yyyy-MM-dd");
+      result = result.filter(
+        (event) => event.scheduled_date >= start && event.scheduled_date <= end,
       );
     }
-    
+
     return result;
   }, [events, filters]);
 

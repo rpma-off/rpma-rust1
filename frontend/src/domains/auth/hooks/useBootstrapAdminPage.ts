@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { useTranslation } from '@/shared/hooks/useTranslation';
-import { structuredLogger as logger, LogDomain } from '@/shared/utils';
-import { authBootstrap } from '../api/bootstrapAdmin';
-import { useAuth } from '../api/useAuth';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { authKeys } from "@/lib/query-keys";
+import { useTranslation } from "@/shared/hooks/useTranslation";
+import { structuredLogger as logger, LogDomain } from "@/shared/utils";
+import { authBootstrap } from "../api/bootstrapAdmin";
+import { useAuth } from "../api/useAuth";
 
 export function useBootstrapAdminPage() {
   const { t } = useTranslation();
@@ -15,7 +16,7 @@ export function useBootstrapAdminPage() {
   const router = useRouter();
 
   const { data: hasAdmins, isLoading: checkingAdmins } = useQuery({
-    queryKey: ['hasAdmins'],
+    queryKey: authKeys.hasAdmins(),
     queryFn: () => authBootstrap.hasAdmins(),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
@@ -23,7 +24,7 @@ export function useBootstrapAdminPage() {
 
   useEffect(() => {
     if (!checkingAdmins) {
-      logger.debug(LogDomain.AUTH, 'Bootstrap admin status loaded', {
+      logger.debug(LogDomain.AUTH, "Bootstrap admin status loaded", {
         has_admins: hasAdmins,
         user_id: user?.user_id,
       });
@@ -34,23 +35,29 @@ export function useBootstrapAdminPage() {
     mutationFn: ({ userId }: { userId: string }) =>
       authBootstrap.bootstrapFirstAdmin(userId),
     onSuccess: async () => {
-      logger.info(LogDomain.AUTH, 'Bootstrap admin succeeded', { user_id: user?.user_id });
+      logger.info(LogDomain.AUTH, "Bootstrap admin succeeded", {
+        user_id: user?.user_id,
+      });
       await refreshSession();
-      toast.success('Administrateur créé avec succès. Redirection en cours...');
-      router.push('/dashboard');
+      toast.success("Administrateur créé avec succès. Redirection en cours...");
+      router.push("/dashboard");
     },
     onError: (error) => {
       const message =
-        error instanceof Error ? error.message : "Échec de la création de l'admin.";
+        error instanceof Error
+          ? error.message
+          : "Échec de la création de l'admin.";
       toast.error(message);
-      logger.error(LogDomain.AUTH, 'Bootstrap admin failed', error, { user_id: user?.user_id });
+      logger.error(LogDomain.AUTH, "Bootstrap admin failed", error, {
+        user_id: user?.user_id,
+      });
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.user_id || !user?.token) {
-      logger.warn(LogDomain.AUTH, 'Bootstrap admin blocked: missing session', {
+      logger.warn(LogDomain.AUTH, "Bootstrap admin blocked: missing session", {
         user_id: user?.user_id,
       });
       return;
@@ -58,7 +65,7 @@ export function useBootstrapAdminPage() {
     bootstrapMutation.mutate({ userId: user.user_id });
   };
 
-  const handleGoToLogin = () => router.push('/login');
+  const handleGoToLogin = () => router.push("/login");
 
   return {
     t,

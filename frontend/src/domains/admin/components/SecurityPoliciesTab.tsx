@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 // RESOLVED(ADR-014): Data-fetching operations extracted into `hooks/useSecurityPolicies.ts`.
 // Component now consumes the hook and contains only UI state and thin operation wrappers.
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Shield,
   Plus,
@@ -17,35 +17,59 @@ import {
   Clock,
   Globe,
   Key,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SecurityPolicy, SecurityPolicyType } from '@/shared/types';
-import { useSecurityPolicies } from '../hooks/useSecurityPolicies';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SecurityPolicy, SecurityPolicyType } from "@/shared/types";
+import { useSecurityPolicies } from "../hooks/useSecurityPolicies";
 
 export function SecurityPoliciesTab() {
-  const { policies: securityPolicies, loading, saving, save: savePolicyData, remove: removePolicyData, toggle: togglePolicyData } = useSecurityPolicies();
+  const {
+    policies: securityPolicies,
+    loading,
+    saving,
+    save: savePolicyData,
+    remove: removePolicyData,
+    toggle: togglePolicyData,
+  } = useSecurityPolicies();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState('password');
+  const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(
+    null,
+  );
+  const [activeSubTab, setActiveSubTab] = useState("password");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [policyToDelete, setPolicyToDelete] = useState<SecurityPolicy | null>(null);
+  const [policyToDelete, setPolicyToDelete] = useState<SecurityPolicy | null>(
+    null,
+  );
 
   // Form state for creating/editing policies
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    type: 'password' as SecurityPolicyType,
+    name: "",
+    description: "",
+    type: "password" as SecurityPolicyType,
     isActive: true,
     settings: {
       minLength: 8,
@@ -62,10 +86,10 @@ export function SecurityPoliciesTab() {
       allowedIPs: [] as string[],
       blockedIPs: [] as string[],
       rateLimit: 100,
-      rateLimitWindow: 15
+      rateLimitWindow: 15,
     },
     appliesTo: [] as string[],
-    exceptions: [] as string[]
+    exceptions: [] as string[],
   });
 
   const saveSecurityPolicy = async () => {
@@ -84,9 +108,9 @@ export function SecurityPoliciesTab() {
       created_at: editingPolicy?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
       createdAt: editingPolicy?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    await savePolicyData(newPolicy, !!editingPolicy, securityPolicies);
+    await savePolicyData(newPolicy, !!editingPolicy);
     setShowCreateDialog(false);
     setEditingPolicy(null);
     resetForm();
@@ -94,13 +118,13 @@ export function SecurityPoliciesTab() {
 
   const deleteSecurityPolicy = async () => {
     if (!policyToDelete) return;
-    await removePolicyData(policyToDelete.id, securityPolicies);
+    await removePolicyData(policyToDelete.id);
     setDeleteConfirmOpen(false);
     setPolicyToDelete(null);
   };
 
   const togglePolicyStatus = async (policy: SecurityPolicy) => {
-    await togglePolicyData(policy, securityPolicies);
+    await togglePolicyData(policy);
   };
 
   const confirmDeleteSecurityPolicy = (policy: SecurityPolicy) => {
@@ -110,9 +134,9 @@ export function SecurityPoliciesTab() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
-      type: 'password',
+      name: "",
+      description: "",
+      type: "password",
       isActive: true,
       settings: {
         minLength: 8,
@@ -129,10 +153,10 @@ export function SecurityPoliciesTab() {
         allowedIPs: [],
         blockedIPs: [],
         rateLimit: 100,
-        rateLimitWindow: 15
+        rateLimitWindow: 15,
       },
       appliesTo: [],
-      exceptions: []
+      exceptions: [],
     });
   };
 
@@ -140,42 +164,42 @@ export function SecurityPoliciesTab() {
     setEditingPolicy(policy);
     setFormData({
       name: policy.name,
-      description: policy.description || '',
+      description: policy.description || "",
       type: policy.type as SecurityPolicyType,
       isActive: policy.isActive || policy.is_active || false,
       settings: { ...formData.settings, ...policy.settings },
       appliesTo: policy.appliesTo || policy.applies_to || [],
-      exceptions: (policy.exceptions || []).map(e => e.id)
+      exceptions: (policy.exceptions || []).map((e) => e.id),
     });
     setShowCreateDialog(true);
   };
 
   const getPolicyTypeLabel = (type: SecurityPolicyType) => {
     const labels = {
-      password: 'Mot de passe',
-      session: 'Session',
-      api_rate_limit: 'Limite API',
-      encryption: 'Chiffrement',
-      access_control: 'Contrôle d\'accès',
-      authentication: 'Authentification',
-      authorization: 'Autorisation',
-      data_protection: 'Protection des données',
-      compliance: 'Conformité'
+      password: "Mot de passe",
+      session: "Session",
+      api_rate_limit: "Limite API",
+      encryption: "Chiffrement",
+      access_control: "Contrôle d'accès",
+      authentication: "Authentification",
+      authorization: "Autorisation",
+      data_protection: "Protection des données",
+      compliance: "Conformité",
     };
     return labels[type] || type;
   };
 
   const getPolicyTypeIcon = (type: SecurityPolicyType) => {
     switch (type) {
-      case 'password':
+      case "password":
         return <Key className="h-4 w-4" />;
-      case 'session':
+      case "session":
         return <Clock className="h-4 w-4" />;
-      case 'api_rate_limit':
+      case "api_rate_limit":
         return <Globe className="h-4 w-4" />;
-      case 'encryption':
+      case "encryption":
         return <Lock className="h-4 w-4" />;
-      case 'access_control':
+      case "access_control":
         return <Shield className="h-4 w-4" />;
       default:
         return <Shield className="h-4 w-4" />;
@@ -202,7 +226,12 @@ export function SecurityPoliciesTab() {
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setEditingPolicy(null); }}>
+            <Button
+              onClick={() => {
+                resetForm();
+                setEditingPolicy(null);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Nouvelle Politique
             </Button>
@@ -210,10 +239,13 @@ export function SecurityPoliciesTab() {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingPolicy ? 'Modifier la Politique' : 'Nouvelle Politique de Sécurité'}
+                {editingPolicy
+                  ? "Modifier la Politique"
+                  : "Nouvelle Politique de Sécurité"}
               </DialogTitle>
               <DialogDescription>
-                Créez ou modifiez une politique de sécurité pour protéger votre système
+                Créez ou modifiez une politique de sécurité pour protéger votre
+                système
               </DialogDescription>
             </DialogHeader>
 
@@ -225,7 +257,9 @@ export function SecurityPoliciesTab() {
                   <Input
                     id="policy-name"
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     placeholder="Nom de la politique"
                   />
                 </div>
@@ -234,7 +268,12 @@ export function SecurityPoliciesTab() {
                   <Label htmlFor="policy-type">Type de politique</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, type: value as SecurityPolicyType }))}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        type: value as SecurityPolicyType,
+                      }))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -244,7 +283,9 @@ export function SecurityPoliciesTab() {
                       <SelectItem value="session">Session</SelectItem>
                       <SelectItem value="api_rate_limit">Limite API</SelectItem>
                       <SelectItem value="encryption">Chiffrement</SelectItem>
-                      <SelectItem value="access_control">Contrôle d&apos;accès</SelectItem>
+                      <SelectItem value="access_control">
+                        Contrôle d&apos;accès
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -253,7 +294,9 @@ export function SecurityPoliciesTab() {
               <div className="flex items-center space-x-2">
                 <Switch
                   checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, isActive: checked }))
+                  }
                 />
                 <Label>Politique active</Label>
               </div>
@@ -276,10 +319,15 @@ export function SecurityPoliciesTab() {
                         min="6"
                         max="32"
                         value={formData.settings.minLength}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, minLength: parseInt(e.target.value) || 8 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              minLength: parseInt(e.target.value) || 8,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
@@ -291,10 +339,15 @@ export function SecurityPoliciesTab() {
                         min="30"
                         max="365"
                         value={formData.settings.maxAge}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, maxAge: parseInt(e.target.value) || 90 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              maxAge: parseInt(e.target.value) || 90,
+                            },
+                          }))
+                        }
                       />
                     </div>
                   </div>
@@ -304,10 +357,15 @@ export function SecurityPoliciesTab() {
                       <Label>Exiger des majuscules</Label>
                       <Switch
                         checked={formData.settings.requireUppercase}
-                        onCheckedChange={(checked) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, requireUppercase: checked }
-                        }))}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              requireUppercase: checked,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
@@ -315,10 +373,15 @@ export function SecurityPoliciesTab() {
                       <Label>Exiger des minuscules</Label>
                       <Switch
                         checked={formData.settings.requireLowercase}
-                        onCheckedChange={(checked) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, requireLowercase: checked }
-                        }))}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              requireLowercase: checked,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
@@ -326,10 +389,15 @@ export function SecurityPoliciesTab() {
                       <Label>Exiger des chiffres</Label>
                       <Switch
                         checked={formData.settings.requireNumbers}
-                        onCheckedChange={(checked) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, requireNumbers: checked }
-                        }))}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              requireNumbers: checked,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
@@ -337,10 +405,15 @@ export function SecurityPoliciesTab() {
                       <Label>Exiger des caractères spéciaux</Label>
                       <Switch
                         checked={formData.settings.requireSpecialChars}
-                        onCheckedChange={(checked) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, requireSpecialChars: checked }
-                        }))}
+                        onCheckedChange={(checked) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              requireSpecialChars: checked,
+                            },
+                          }))
+                        }
                       />
                     </div>
                   </div>
@@ -349,17 +422,24 @@ export function SecurityPoliciesTab() {
                 <TabsContent value="session" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="session-timeout">Timeout de session (minutes)</Label>
+                      <Label htmlFor="session-timeout">
+                        Timeout de session (minutes)
+                      </Label>
                       <Input
                         id="session-timeout"
                         type="number"
                         min="5"
                         max="480"
                         value={formData.settings.sessionTimeout}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, sessionTimeout: parseInt(e.target.value) || 30 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              sessionTimeout: parseInt(e.target.value) || 30,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
@@ -371,22 +451,34 @@ export function SecurityPoliciesTab() {
                         min="3"
                         max="10"
                         value={formData.settings.maxLoginAttempts}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, maxLoginAttempts: parseInt(e.target.value) || 5 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              maxLoginAttempts: parseInt(e.target.value) || 5,
+                            },
+                          }))
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <Label>Exiger l&apos;authentification à deux facteurs</Label>
+                    <Label>
+                      Exiger l&apos;authentification à deux facteurs
+                    </Label>
                     <Switch
                       checked={formData.settings.requireTwoFactor}
-                      onCheckedChange={(checked) => setFormData(prev => ({
-                        ...prev,
-                        settings: { ...prev.settings, requireTwoFactor: checked }
-                      }))}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          settings: {
+                            ...prev.settings,
+                            requireTwoFactor: checked,
+                          },
+                        }))
+                      }
                     />
                   </div>
                 </TabsContent>
@@ -394,32 +486,46 @@ export function SecurityPoliciesTab() {
                 <TabsContent value="access" className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="rate-limit">Limite de taux (requêtes/heure)</Label>
+                      <Label htmlFor="rate-limit">
+                        Limite de taux (requêtes/heure)
+                      </Label>
                       <Input
                         id="rate-limit"
                         type="number"
                         min="10"
                         max="10000"
                         value={formData.settings.rateLimit}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, rateLimit: parseInt(e.target.value) || 100 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              rateLimit: parseInt(e.target.value) || 100,
+                            },
+                          }))
+                        }
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="lockout-duration">Durée de verrouillage (minutes)</Label>
+                      <Label htmlFor="lockout-duration">
+                        Durée de verrouillage (minutes)
+                      </Label>
                       <Input
                         id="lockout-duration"
                         type="number"
                         min="5"
                         max="60"
                         value={formData.settings.lockoutDuration}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          settings: { ...prev.settings, lockoutDuration: parseInt(e.target.value) || 15 }
-                        }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            settings: {
+                              ...prev.settings,
+                              lockoutDuration: parseInt(e.target.value) || 15,
+                            },
+                          }))
+                        }
                       />
                     </div>
                   </div>
@@ -428,7 +534,10 @@ export function SecurityPoliciesTab() {
 
               {/* Actions */}
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCreateDialog(false)}
+                >
                   Annuler
                 </Button>
                 <Button onClick={saveSecurityPolicy} disabled={saving}>
@@ -437,7 +546,7 @@ export function SecurityPoliciesTab() {
                   ) : (
                     <Save className="h-4 w-4 mr-2" />
                   )}
-                  {editingPolicy ? 'Mettre à jour' : 'Créer'}
+                  {editingPolicy ? "Mettre à jour" : "Créer"}
                 </Button>
               </div>
             </div>
@@ -455,19 +564,26 @@ export function SecurityPoliciesTab() {
                   <div className="flex items-center space-x-3 mb-2">
                     {getPolicyTypeIcon(policy.type as SecurityPolicyType)}
                     <h3 className="text-lg font-semibold">{policy.name}</h3>
-                    <Badge variant="outline">{getPolicyTypeLabel(policy.type as SecurityPolicyType)}</Badge>
-                    <Badge variant={policy.isActive ? 'default' : 'secondary'}>
-                      {policy.isActive ? 'Actif' : 'Inactif'}
+                    <Badge variant="outline">
+                      {getPolicyTypeLabel(policy.type as SecurityPolicyType)}
+                    </Badge>
+                    <Badge variant={policy.isActive ? "default" : "secondary"}>
+                      {policy.isActive ? "Actif" : "Inactif"}
                     </Badge>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <h4 className="font-medium mb-2">Paramètres:</h4>
                       <ul className="space-y-1">
                         {Object.entries(policy.settings).map(([key, value]) => (
                           <li key={key} className="text-gray-600">
-                            {key}: {typeof value === 'boolean' ? (value ? 'Oui' : 'Non') : String(value)}
+                            {key}:{" "}
+                            {typeof value === "boolean"
+                              ? value
+                                ? "Oui"
+                                : "Non"
+                              : String(value)}
                           </li>
                         ))}
                       </ul>
@@ -475,7 +591,9 @@ export function SecurityPoliciesTab() {
                     <div>
                       <h4 className="font-medium mb-2">Appliquer à:</h4>
                       <p className="text-gray-600">
-                        {policy.appliesTo?.length ? policy.appliesTo.join(', ') : 'Tous les utilisateurs'}
+                        {policy.appliesTo?.length
+                          ? policy.appliesTo.join(", ")
+                          : "Tous les utilisateurs"}
                       </p>
                     </div>
                   </div>
@@ -493,7 +611,7 @@ export function SecurityPoliciesTab() {
                       <Play className="h-4 w-4" />
                     )}
                   </Button>
-                  
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -501,7 +619,7 @@ export function SecurityPoliciesTab() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  
+
                   <Button
                     size="sm"
                     variant="outline"
@@ -523,7 +641,8 @@ export function SecurityPoliciesTab() {
                 Aucune politique de sécurité
               </h3>
               <p className="text-gray-600 mb-4">
-                Créez votre première politique de sécurité pour protéger votre système
+                Créez votre première politique de sécurité pour protéger votre
+                système
               </p>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -538,7 +657,7 @@ export function SecurityPoliciesTab() {
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         title="Supprimer la politique"
-        description={`Voulez-vous vraiment supprimer la politique "${policyToDelete?.name || ''}" ?`}
+        description={`Voulez-vous vraiment supprimer la politique "${policyToDelete?.name || ""}" ?`}
         confirmText="Supprimer"
         cancelText="Annuler"
         variant="destructive"
@@ -547,4 +666,3 @@ export function SecurityPoliciesTab() {
     </div>
   );
 }
-

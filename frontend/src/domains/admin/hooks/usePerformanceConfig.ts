@@ -1,100 +1,97 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { PerformanceConfig, PerformanceCategory, CreatePerformanceConfigDTO } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import {
+  PerformanceConfig,
+  PerformanceCategory,
+  CreatePerformanceConfigDTO,
+} from "@/shared/types";
+import { settingsOperations } from "@/shared/utils";
+import { adminKeys } from "@/lib/query-keys";
+import type { JsonValue } from "@/shared/types";
+import { useAuth } from "@/shared/hooks/useAuth";
 
 const DEFAULT_FORM_DATA: CreatePerformanceConfigDTO = {
-  category: 'caching' as PerformanceCategory,
-  name: '',
+  category: "caching" as PerformanceCategory,
+  name: "",
   value: null,
   isActive: true,
   settings: {
     enabled: true,
     ttlSeconds: 3600,
     maxSizeMb: 100,
-    strategy: 'lru' as const,
+    strategy: "lru" as const,
     connectionPoolSize: 10,
     queryTimeoutSeconds: 30,
     maxConnections: 100,
     compressionEnabled: true,
     rateLimitPerHour: 1000,
-    timeoutSeconds: 30
+    timeoutSeconds: 30,
   },
   thresholds: {
-    queryTimeThreshold: { value: 200, unit: 'ms' },
-    connectionUsageThreshold: { value: 80, unit: 'percent' },
-    hitRateThreshold: { value: 85, unit: 'percent' },
-    missRateThreshold: { value: 15, unit: 'percent' },
-    uploadTimeThreshold: { value: 30, unit: 'seconds' },
-    fileSizeThreshold: { value: 10, unit: 'mb' }
+    queryTimeThreshold: { value: 200, unit: "ms" },
+    connectionUsageThreshold: { value: 80, unit: "percent" },
+    hitRateThreshold: { value: 85, unit: "percent" },
+    missRateThreshold: { value: 15, unit: "percent" },
+    uploadTimeThreshold: { value: 30, unit: "seconds" },
+    fileSizeThreshold: { value: 10, unit: "mb" },
   },
   monitoring: {
     enabled: true,
     interval: 60,
     intervalSeconds: 60,
     retention_days: 30,
-    metrics: ['response_time', 'cpu_usage', 'memory_usage', 'error_rate']
+    metrics: ["response_time", "cpu_usage", "memory_usage", "error_rate"],
   },
   alerts: [
     {
-      metric: 'cpu_usage',
+      metric: "cpu_usage",
       threshold: 80,
-      action: 'alert' as const,
-      recipients: ['admin@company.com']
+      action: "alert" as const,
+      recipients: ["admin@company.com"],
     },
     {
-      metric: 'memory_usage',
+      metric: "memory_usage",
       threshold: 85,
-      action: 'email' as const,
-      recipients: ['admin@company.com']
-    }
-  ]
+      action: "email" as const,
+      recipients: ["admin@company.com"],
+    },
+  ],
 };
 
 export function usePerformanceConfig() {
-  const [performanceConfigs, setPerformanceConfigs] = useState<PerformanceConfig[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingConfig, setEditingConfig] = useState<PerformanceConfig | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState('caching');
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [configToDelete, setConfigToDelete] = useState<PerformanceConfig | null>(null);
   const { session } = useAuth();
+  const queryClient = useQueryClient();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<PerformanceConfig | null>(
+    null,
+  );
+  const [activeSubTab, setActiveSubTab] = useState("caching");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [configToDelete, setConfigToDelete] =
+    useState<PerformanceConfig | null>(null);
+  const [formData, setFormData] = useState<CreatePerformanceConfigDTO>({
+    ...DEFAULT_FORM_DATA,
+  });
 
-  const [formData, setFormData] = useState<CreatePerformanceConfigDTO>({ ...DEFAULT_FORM_DATA });
-
-  const loadPerformanceConfigs = useCallback(async () => {
-    try {
-      setLoading(true);
-      const _sessionToken = session?.token || '';
-      const data = await settingsOperations.getAppSettings();
+  const { data: performanceConfigs = [], isLoading: loading } = useQuery({
+    queryKey: adminKeys.appSettings(),
+    queryFn: () => settingsOperations.getAppSettings(),
+    enabled: !!session?.token,
+    staleTime: 60_000,
+    select: (data) => {
       const appSettings = data as Record<string, JsonValue>;
-      const configs = (appSettings?.performance_configs || []) as unknown as PerformanceConfig[];
-      setPerformanceConfigs(Array.isArray(configs) ? configs : []);
-    } catch (error) {
-      console.error('Error loading performance configs:', error);
-      toast.error('Erreur lors du chargement des configurations de performance');
-      setPerformanceConfigs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.token]);
+      const configs = (appSettings?.performance_configs ||
+        []) as unknown as PerformanceConfig[];
+      return Array.isArray(configs) ? configs : [];
+    },
+  });
 
-  useEffect(() => {
-    loadPerformanceConfigs();
-  }, [loadPerformanceConfigs]);
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: adminKeys.appSettings() });
 
-  const resetForm = () => {
-    setFormData({ ...DEFAULT_FORM_DATA });
-  };
-
-  const savePerformanceConfig = async () => {
-    setSaving(true);
-    try {
-      const _sessionToken = session?.token || '';
+  const saveConfigMutation = useMutation({
+    mutationFn: async () => {
       const newConfig: PerformanceConfig = {
         id: editingConfig?.id || crypto.randomUUID(),
         category: formData.category,
@@ -106,70 +103,76 @@ export function usePerformanceConfig() {
         monitoring: formData.monitoring,
         alerts: formData.alerts,
         createdAt: editingConfig?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-
-      let updatedConfigs: PerformanceConfig[];
-      if (editingConfig) {
-        updatedConfigs = performanceConfigs.map(c => c.id === editingConfig.id ? newConfig : c);
-      } else {
-        updatedConfigs = [...performanceConfigs, newConfig];
-      }
-
+      const updatedConfigs = editingConfig
+        ? performanceConfigs.map((c) =>
+            c.id === editingConfig.id ? newConfig : c,
+          )
+        : [...performanceConfigs, newConfig];
       await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[]);
-
-      toast.success(editingConfig ? 'Configuration mise à jour avec succès' : 'Configuration créée avec succès');
+        updatedConfigs as unknown as JsonValue[],
+      );
+    },
+    onSuccess: () => {
+      toast.success(
+        editingConfig
+          ? "Configuration mise à jour avec succès"
+          : "Configuration créée avec succès",
+      );
       setShowCreateDialog(false);
       setEditingConfig(null);
-      resetForm();
-      await loadPerformanceConfigs();
-    } catch (error) {
-      console.error('Error saving performance config:', error);
-      toast.error('Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
-    }
-  };
+      setFormData({ ...DEFAULT_FORM_DATA });
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error saving performance config:", error);
+      toast.error("Erreur lors de la sauvegarde");
+    },
+  });
 
-  const deletePerformanceConfig = async () => {
-    if (!configToDelete) return;
-    try {
-      const _sessionToken = session?.token || '';
-      const updatedConfigs = performanceConfigs.filter((config) => config.id !== configToDelete.id);
-      await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[]);
-      toast.success('Configuration supprimée avec succès');
-      await loadPerformanceConfigs();
-    } catch (error) {
-      console.error('Error deleting performance config:', error);
-      toast.error('Erreur lors de la suppression');
-    } finally {
-      setDeleteConfirmOpen(false);
-      setConfigToDelete(null);
-    }
-  };
-
-  const confirmDeletePerformanceConfig = (config: PerformanceConfig) => {
-    setConfigToDelete(config);
-    setDeleteConfirmOpen(true);
-  };
-
-  const toggleConfigStatus = async (config: PerformanceConfig) => {
-    try {
-      const _sessionToken = session?.token || '';
-      const updatedConfigs = performanceConfigs.map(c =>
-        c.id === config.id ? { ...c, isActive: !c.isActive } : c
+  const deleteConfigMutation = useMutation({
+    mutationFn: async (configId: string) => {
+      const updatedConfigs = performanceConfigs.filter(
+        (c) => c.id !== configId,
       );
       await settingsOperations.updatePerformanceConfigs(
-        updatedConfigs as unknown as JsonValue[]);
-      toast.success(`Configuration ${config.isActive ? 'désactivée' : 'activée'} avec succès`);
-      await loadPerformanceConfigs();
-    } catch (error) {
-      console.error('Error updating config status:', error);
-      toast.error('Erreur lors de la mise à jour');
-    }
-  };
+        updatedConfigs as unknown as JsonValue[],
+      );
+    },
+    onSuccess: () => {
+      toast.success("Configuration supprimée avec succès");
+      setDeleteConfirmOpen(false);
+      setConfigToDelete(null);
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error deleting performance config:", error);
+      toast.error("Erreur lors de la suppression");
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (config: PerformanceConfig) => {
+      const updatedConfigs = performanceConfigs.map((c) =>
+        c.id === config.id ? { ...c, isActive: !c.isActive } : c,
+      );
+      await settingsOperations.updatePerformanceConfigs(
+        updatedConfigs as unknown as JsonValue[],
+      );
+      return config.isActive;
+    },
+    onSuccess: (wasActive) => {
+      toast.success(
+        `Configuration ${wasActive ? "désactivée" : "activée"} avec succès`,
+      );
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error updating config status:", error);
+      toast.error("Erreur lors de la mise à jour");
+    },
+  });
 
   const openEditDialog = (config: PerformanceConfig) => {
     setEditingConfig(config);
@@ -185,9 +188,9 @@ export function usePerformanceConfig() {
         interval: config.monitoring?.interval ?? 60,
         intervalSeconds: config.monitoring?.intervalSeconds ?? 60,
         retention_days: config.monitoring?.retention_days ?? 30,
-        metrics: config.monitoring?.metrics ?? ['response_time']
+        metrics: config.monitoring?.metrics ?? ["response_time"],
       },
-      alerts: config.alerts || []
+      alerts: config.alerts || [],
     });
     setShowCreateDialog(true);
   };
@@ -195,7 +198,7 @@ export function usePerformanceConfig() {
   return {
     performanceConfigs,
     loading,
-    saving,
+    saving: saveConfigMutation.isPending,
     showCreateDialog,
     setShowCreateDialog,
     editingConfig,
@@ -207,11 +210,16 @@ export function usePerformanceConfig() {
     configToDelete,
     formData,
     setFormData,
-    savePerformanceConfig,
-    deletePerformanceConfig,
-    confirmDeletePerformanceConfig,
-    toggleConfigStatus,
-    resetForm,
+    savePerformanceConfig: () => saveConfigMutation.mutateAsync(),
+    deletePerformanceConfig: () =>
+      configToDelete && deleteConfigMutation.mutateAsync(configToDelete.id),
+    confirmDeletePerformanceConfig: (config: PerformanceConfig) => {
+      setConfigToDelete(config);
+      setDeleteConfirmOpen(true);
+    },
+    toggleConfigStatus: (config: PerformanceConfig) =>
+      toggleStatusMutation.mutateAsync(config),
+    resetForm: () => setFormData({ ...DEFAULT_FORM_DATA }),
     openEditDialog,
   };
 }

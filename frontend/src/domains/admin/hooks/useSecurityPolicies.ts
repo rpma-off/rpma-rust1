@@ -1,96 +1,130 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { SecurityPolicy } from '@/shared/types';
-import { settingsOperations } from '@/shared/utils';
-import type { JsonValue } from '@/shared/types';
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { SecurityPolicy } from "@/shared/types";
+import { settingsOperations } from "@/shared/utils";
+import { adminKeys } from "@/lib/query-keys";
+import type { JsonValue } from "@/shared/types";
 
 export function useSecurityPolicies() {
-  const [policies, setPolicies] = useState<SecurityPolicy[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  const reload = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await settingsOperations.getAppSettings();
+  const {
+    data: policies = [],
+    isLoading: loading,
+    refetch: reload,
+  } = useQuery({
+    queryKey: adminKeys.appSettings(),
+    queryFn: () => settingsOperations.getAppSettings(),
+    staleTime: 60_000,
+    select: (data) => {
       const appSettings = data as Record<string, JsonValue>;
-      const raw = (appSettings?.security_policies || []) as unknown as SecurityPolicy[];
-      setPolicies(Array.isArray(raw) ? raw : []);
-    } catch (error) {
-      console.error('Error loading security policies:', error);
-      toast.error('Erreur lors du chargement des politiques de sécurité');
-      setPolicies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      const raw = (appSettings?.security_policies ||
+        []) as unknown as SecurityPolicy[];
+      return Array.isArray(raw) ? raw : [];
+    },
+  });
 
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: adminKeys.appSettings() });
 
-  const save = useCallback(async (
-    policy: SecurityPolicy,
-    isEditing: boolean,
-    existingPolicies: SecurityPolicy[],
-  ) => {
-    setSaving(true);
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async ({
+      policy,
+      isEditing,
+    }: {
+      policy: SecurityPolicy;
+      isEditing: boolean;
+    }) => {
       const updatedPolicies = isEditing
-        ? existingPolicies.map((p) => (p.id === policy.id ? policy : p))
-        : [...existingPolicies, policy];
-
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
+        ? policies.map((p) => (p.id === policy.id ? policy : p))
+        : [...policies, policy];
+      await settingsOperations.updateGeneralSettings({
+        security_policies: updatedPolicies as unknown as JsonValue,
+      } as Record<string, JsonValue>);
+      return isEditing;
+    },
+    onSuccess: (isEditing) => {
+      toast.success(
+        isEditing
+          ? "Politique mise à jour avec succès"
+          : "Politique créée avec succès",
       );
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error saving security policy:", error);
+      toast.error("Erreur lors de la sauvegarde");
+    },
+  });
 
-      toast.success(isEditing ? 'Politique mise à jour avec succès' : 'Politique créée avec succès');
-      await reload();
-    } catch (error) {
-      console.error('Error saving security policy:', error);
-      toast.error('Erreur lors de la sauvegarde');
-    } finally {
-      setSaving(false);
-    }
-  }, [reload]);
+  const removeMutation = useMutation({
+    mutationFn: async (policyId: string) => {
+      const updatedPolicies = policies.filter((p) => p.id !== policyId);
+      await settingsOperations.updateGeneralSettings({
+        security_policies: updatedPolicies as unknown as JsonValue,
+      } as Record<string, JsonValue>);
+    },
+    onSuccess: () => {
+      toast.success("Politique supprimée avec succès");
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error deleting security policy:", error);
+      toast.error("Erreur lors de la suppression");
+    },
+  });
 
-  const remove = useCallback(async (
-    policyId: string,
-    existingPolicies: SecurityPolicy[],
-  ) => {
-    try {
-      const updatedPolicies = existingPolicies.filter((p) => p.id !== policyId);
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
-      );
-      toast.success('Politique supprimée avec succès');
-      await reload();
-    } catch (error) {
-      console.error('Error deleting security policy:', error);
-      toast.error('Erreur lors de la suppression');
-    }
-  }, [reload]);
-
-  const toggle = useCallback(async (
-    policy: SecurityPolicy,
-    allPolicies: SecurityPolicy[],
-  ) => {
-    try {
-      const updatedPolicies = allPolicies.map((p) =>
+  const toggleMutation = useMutation({
+    mutationFn: async (policy: SecurityPolicy) => {
+      const updatedPolicies = policies.map((p) =>
         p.id === policy.id
           ? { ...p, is_active: !p.is_active, isActive: !p.is_active }
           : p,
       );
-      await settingsOperations.updateGeneralSettings(
-        { security_policies: updatedPolicies as unknown as JsonValue } as Record<string, JsonValue>,
+      await settingsOperations.updateGeneralSettings({
+        security_policies: updatedPolicies as unknown as JsonValue,
+      } as Record<string, JsonValue>);
+      return policy.is_active;
+    },
+    onSuccess: (wasActive) => {
+      toast.success(
+        `Politique ${wasActive ? "désactivée" : "activée"} avec succès`,
       );
-      toast.success(`Politique ${policy.is_active ? 'désactivée' : 'activée'} avec succès`);
-      await reload();
-    } catch (error) {
-      console.error('Error updating policy status:', error);
-      toast.error('Erreur lors de la mise à jour');
-    }
-  }, [reload]);
+      void invalidate();
+    },
+    onError: (error) => {
+      console.error("Error updating policy status:", error);
+      toast.error("Erreur lors de la mise à jour");
+    },
+  });
 
-  return { policies, loading, saving, reload, save, remove, toggle };
+  const save = useCallback(
+    (policy: SecurityPolicy, isEditing: boolean) =>
+      saveMutation.mutateAsync({ policy, isEditing }),
+    [saveMutation],
+  );
+
+  const remove = useCallback(
+    (policyId: string) => removeMutation.mutateAsync(policyId),
+    [removeMutation],
+  );
+
+  const toggle = useCallback(
+    (policy: SecurityPolicy) => toggleMutation.mutateAsync(policy),
+    [toggleMutation],
+  );
+
+  return {
+    policies,
+    loading,
+    saving:
+      saveMutation.isPending ||
+      removeMutation.isPending ||
+      toggleMutation.isPending,
+    reload,
+    save,
+    remove,
+    toggle,
+  };
 }

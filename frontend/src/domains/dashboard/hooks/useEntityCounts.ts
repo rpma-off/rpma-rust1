@@ -1,15 +1,14 @@
-import { useState, useEffect } from 'react';
-import { AuthSecureStorage } from '@/lib/secureStorage';
-import { safeInvoke } from '@/lib/ipc/core';
-import { IPC_COMMANDS } from '@/lib/ipc/commands';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ipcClient } from "@/lib/ipc";
+import { dashboardKeys } from "@/lib/query-keys";
 
-interface EntityCounts {
+export interface EntityCounts {
   tasks: number;
   clients: number;
   interventions: number;
 }
 
-interface UseEntityCountsReturn {
+export interface UseEntityCountsReturn {
   counts: EntityCounts | null;
   loading: boolean;
   error: string | null;
@@ -17,45 +16,32 @@ interface UseEntityCountsReturn {
 }
 
 export function useEntityCounts(): UseEntityCountsReturn {
-  const [counts, setCounts] = useState<EntityCounts | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchCounts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: dashboardKeys.entityCounts(),
+    queryFn: async () => {
+      const response = await ipcClient.entityCounts.getCounts();
+      return {
+        tasks: response.tasks ?? 0,
+        clients: response.clients ?? 0,
+        interventions: response.interventions ?? 0,
+      } satisfies EntityCounts;
+    },
+    staleTime: 60_000,
+    retry: 2,
+  });
 
-      const session = await AuthSecureStorage.getSession();
-      if (!session?.token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await safeInvoke<EntityCounts>(IPC_COMMANDS.GET_ENTITY_COUNTS, {
-        sessionToken: session.token,
-      });
-      setCounts({
-        tasks: response.tasks || 0,
-        clients: response.clients || 0,
-        interventions: response.interventions || 0,
-      });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch entity counts';
-      setError(errorMessage);
-      console.error('Entity counts error:', err);
-    } finally {
-      setLoading(false);
-    }
+  const handleRefetch = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: dashboardKeys.entityCounts(),
+    });
   };
 
-  useEffect(() => {
-    void fetchCounts();
-  }, []);
-
   return {
-    counts,
-    loading,
-    error,
-    refetch: fetchCounts,
+    counts: data ?? null,
+    loading: isLoading,
+    error: error instanceof Error ? error.message : null,
+    refetch: handleRefetch,
   };
 }

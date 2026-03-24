@@ -1,9 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useEffect } from 'react';
-import { ipcClient, convertTimestamps } from '@/shared/utils';
-import type { CreateUserRequest, UserAccount } from '@/shared/types';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ipcClient, convertTimestamps } from "@/shared/utils";
+import { adminKeys } from "@/lib/query-keys";
+import { useDebounce } from "@/shared/hooks/useDebounce";
+import type { CreateUserRequest, UserAccount } from "@/shared/types";
+import { useAuth } from "@/shared/hooks/useAuth";
 
 export interface UseAdminUserManagementReturn {
   users: UserAccount[];
@@ -23,83 +26,78 @@ export interface UseAdminUserManagementReturn {
 
 /**
  * Manages admin user CRUD operations, filtering, and search.
- * Centralizes all user management IPC calls and state.
+ * Uses TanStack Query for server-state management and cache invalidation.
  */
 export function useAdminUserManagement(): UseAdminUserManagementReturn {
   const { user } = useAuth();
-  const [users, setUsers] = useState<UserAccount[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const loadUsers = useCallback(async () => {
-    if (!user?.token) return;
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
-    try {
-      setIsLoading(true);
-      const result = await ipcClient.users.list(50, 0, searchQuery || undefined, roleFilter);
-      if (result && result.data) {
-        const normalizedUsers = (result.data || []).map(u => convertTimestamps(u));
-        setUsers(normalizedUsers as UserAccount[]);
-      }
-    } catch (error) {
-      console.error('Failed to load users:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.token, searchQuery, roleFilter]);
+  const usersQuery = useQuery({
+    queryKey: adminKeys.usersFiltered(debouncedSearch, roleFilter),
+    queryFn: async () => {
+      const result = await ipcClient.users.list(
+        50,
+        0,
+        debouncedSearch || undefined,
+        roleFilter,
+      );
+      return (result?.data || []).map((u) =>
+        convertTimestamps(u),
+      ) as UserAccount[];
+    },
+    enabled: !!user?.token,
+    staleTime: 30_000,
+  });
 
-  const addUser = useCallback(async (userData: CreateUserRequest) => {
-    if (!user?.token) return;
+  const invalidateUsers = () =>
+    queryClient.invalidateQueries({ queryKey: adminKeys.users() });
 
-    try {
-      await ipcClient.users.create(userData);
+  const addUserMutation = useMutation({
+    mutationFn: (userData: CreateUserRequest) =>
+      ipcClient.users.create(userData),
+    onSuccess: () => {
       setShowAddModal(false);
-      loadUsers();
-    } catch (error) {
-      console.error('Failed to add user:', error);
-    }
-  }, [user?.token, loadUsers]);
+      void invalidateUsers();
+    },
+    onError: (error) => console.error("Failed to add user:", error),
+  });
 
-  const deleteUser = useCallback(async (userId: string) => {
-    if (!user?.token) return;
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId: string) => ipcClient.users.delete(userId),
+    onSuccess: () => void invalidateUsers(),
+    onError: (error) => console.error("Failed to delete user:", error),
+  });
 
-    try {
-      await ipcClient.users.delete(userId);
-      loadUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
-  }, [user?.token, loadUsers]);
+  const updateUserStatusMutation = useMutation({
+    mutationFn: ({
+      userId,
+      isActive,
+    }: {
+      userId: string;
+      isActive: boolean;
+    }) =>
+      isActive
+        ? ipcClient.users.unbanUser(userId)
+        : ipcClient.users.banUser(userId),
+    onSuccess: () => void invalidateUsers(),
+    onError: (error) => console.error("Failed to update user status:", error),
+  });
 
-  const updateUserStatus = useCallback(async (userId: string, isActive: boolean) => {
-    if (!user?.token) return;
+  const loadUsers = async () => {
+    await invalidateUsers();
+  };
 
-    try {
-      if (isActive) {
-        await ipcClient.users.unbanUser(userId);
-      } else {
-        await ipcClient.users.banUser(userId);
-      }
-      loadUsers();
-    } catch (error) {
-      console.error('Failed to update user status:', error);
-    }
-  }, [user?.token, loadUsers]);
-
-  // Re-run search whenever filters change (debounced via useEffect)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadUsers();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, roleFilter, loadUsers]);
+  const users = usersQuery.data ?? [];
 
   return {
     users,
     filteredUsers: users,
-    isLoading,
+    isLoading: usersQuery.isLoading || usersQuery.isFetching,
     searchQuery,
     roleFilter,
     showAddModal,
@@ -107,8 +105,14 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     setRoleFilter,
     setShowAddModal,
     loadUsers,
-    addUser,
-    deleteUser,
-    updateUserStatus,
+    addUser: async (userData) => {
+      await addUserMutation.mutateAsync(userData);
+    },
+    deleteUser: async (userId) => {
+      await deleteUserMutation.mutateAsync(userId);
+    },
+    updateUserStatus: async (userId, isActive) => {
+      await updateUserStatusMutation.mutateAsync({ userId, isActive });
+    },
   };
 }

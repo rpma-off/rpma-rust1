@@ -1,14 +1,15 @@
-'use client';
+"use client";
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { signalMutation } from '@/lib/data-freshness';
-import { useIpcClient } from '@/lib/ipc/client';
-import type { OnboardingData, OnboardingStatus } from '@/lib/backend';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { signalMutation } from "@/lib/data-freshness";
+import { useIpcClient } from "@/lib/ipc/client";
+import { onboardingKeys, organizationKeys } from "@/lib/query-keys";
+import type { OnboardingData, OnboardingStatus } from "@/lib/backend";
 
 export function useOnboardingStatus() {
   const ipcClient = useIpcClient();
   return useQuery({
-    queryKey: ['onboarding', 'status'],
+    queryKey: onboardingKeys.status(),
     queryFn: () => ipcClient.organization.getOnboardingStatus(),
     staleTime: 0,
     retry: false,
@@ -20,17 +21,18 @@ export function useCompleteOnboarding() {
   const ipcClient = useIpcClient();
 
   return useMutation({
-    mutationFn: (data: OnboardingData) => ipcClient.organization.completeOnboarding(data),
+    mutationFn: (data: OnboardingData) =>
+      ipcClient.organization.completeOnboarding(data),
     onSuccess: (result) => {
-      queryClient.setQueryData(['onboarding', 'status'], {
+      queryClient.setQueryData(onboardingKeys.status(), {
         completed: true,
         current_step: 0,
         has_organization: true,
         has_admin_user: true,
       } as OnboardingStatus);
-      queryClient.setQueryData(['organization'], result);
-      queryClient.invalidateQueries({ queryKey: ['organization'] });
-      signalMutation('organization');
+      queryClient.setQueryData(organizationKeys.all, result);
+      queryClient.invalidateQueries({ queryKey: organizationKeys.all });
+      signalMutation("organization");
     },
   });
 }

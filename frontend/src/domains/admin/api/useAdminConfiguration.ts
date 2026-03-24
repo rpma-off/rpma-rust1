@@ -1,47 +1,39 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useState } from 'react';
-import { configurationService } from '../server';
-import type { AdminConfiguration, AdminConfigurationState } from './types';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { adminKeys } from "@/lib/query-keys";
+import { configurationService } from "../server";
+import type { AdminConfiguration, AdminConfigurationState } from "./types";
 
-export function useAdminConfiguration(category?: string): AdminConfigurationState {
-  const [configurations, setConfigurations] = useState<AdminConfiguration[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+export function useAdminConfiguration(
+  category?: string,
+): AdminConfigurationState {
+  const queryClient = useQueryClient();
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: adminKeys.configuration(category),
+    queryFn: async () => {
       const response = await configurationService.getSystemConfigurations(
-        category ? { category } : undefined
+        category ? { category } : undefined,
       );
-
       if (!response.success) {
-        setConfigurations([]);
-        setError(response.error ?? 'Failed to load admin configuration');
-        return;
+        throw new Error(response.error ?? "Failed to load admin configuration");
       }
+      return (response.data ?? []) as AdminConfiguration[];
+    },
+    staleTime: 60_000,
+  });
 
-      setConfigurations((response.data ?? []) as AdminConfiguration[]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load admin configuration';
-      setConfigurations([]);
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [category]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const refresh = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: adminKeys.configuration(category),
+    });
+  };
 
   return {
-    configurations,
-    loading,
-    error,
+    configurations: data ?? [],
+    loading: isLoading,
+    error: error instanceof Error ? error.message : null,
     refresh,
   };
 }

@@ -55,14 +55,18 @@ test.describe("Configuration page smoke", () => {
     });
 
     // Click on Security tab
-    const securityTab = page
-      .locator('[role="tab"]:has-text("Sécurité")')
-      .first();
+    const securityTab = page.getByRole("tab", { name: /Sécurité/i }).first();
     if (await securityTab.isVisible()) {
-      await securityTab.click();
-      await expect(
-        page.getByRole("heading", { name: "Politiques de Sécurité" }),
-      ).toBeVisible({ timeout: 10000 });
+      await securityTab.click({ force: true });
+      try {
+        await expect(
+          page.getByRole("heading", { name: /Politiques de Sécurité/i }),
+        ).toBeVisible({ timeout: 10000 });
+      } catch (e) {
+        console.error("Failed to find Politiques de Sécurité heading. DOM state:");
+        console.error(await page.locator("body").innerHTML());
+        throw e;
+      }
     }
 
     // Click on Integrations tab

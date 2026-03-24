@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,72 +10,62 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
-import { useDebounce } from '@/shared/hooks/useDebounce';
-import { invoke } from '@tauri-apps/api/core';
-import { GlobalSearchResponse, GlobalSearchResult } from '@/lib/backend';
-import { User, ClipboardList, Package, FileText, Loader2 } from 'lucide-react';
-import { ApiResponse } from '@/types/api';
+} from "@/components/ui/command";
+import { useDebounce } from "@/shared/hooks/useDebounce";
+import { ipcClient } from "@/lib/ipc";
+import type { GlobalSearchResult } from "@/lib/backend";
+import { User, ClipboardList, Package, FileText, Loader2 } from "lucide-react";
 
 interface GlobalSearchProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const ROUTES: Record<GlobalSearchResult["type"], (id: string) => string> = {
+  task: (id) => `/tasks/${id}`,
+  client: (id) => `/clients/${id}`,
+  material: (id) => `/inventory/materials/${id}`,
+  quote: (id) => `/quotes/${id}`,
+};
+
 export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const router = useRouter();
-  const [query, setQuery] = React.useState('');
-  const [results, setResults] = React.useState<GlobalSearchResult[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const debouncedQuery = useDebounce(query, 300);
 
-  React.useEffect(() => {
-    const performSearch = async () => {
-      if (!debouncedQuery || debouncedQuery.length < 2) {
-        setResults([]);
-        return;
-      }
+  const { data, isFetching } = useQuery({
+    queryKey: ["global-search", debouncedQuery],
+    queryFn: () => ipcClient.system.globalSearch(debouncedQuery),
+    enabled: open && debouncedQuery.length >= 2,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
 
-      setIsLoading(true);
-      try {
-        const response = await invoke<ApiResponse<GlobalSearchResponse>>('global_search', {
-          query: debouncedQuery,
-        });
-
-        if (response.success && response.data) {
-          setResults(response.data.results);
-        } else {
-          setResults([]);
-        }
-      } catch (error) {
-        console.error('Global search error:', error);
-        setResults([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    performSearch();
-  }, [debouncedQuery]);
-
-  const ROUTES: Record<GlobalSearchResult['type'], (id: string) => string> = {
-    task:     (id) => `/tasks/${id}`,
-    client:   (id) => `/clients/${id}`,
-    material: (id) => `/inventory/materials/${id}`,
-    quote:    (id) => `/quotes/${id}`,
-  };
+  const results = data?.results ?? [];
 
   const handleSelect = (result: GlobalSearchResult) => {
     onOpenChange(false);
-    setQuery('');
+    setQuery("");
     const route = ROUTES[result.type];
     if (route) router.push(route(result.id));
   };
 
-  const tasks = results.filter((r): r is Extract<GlobalSearchResult, { type: 'task' }> => r.type === 'task');
-  const clients = results.filter((r): r is Extract<GlobalSearchResult, { type: 'client' }> => r.type === 'client');
-  const materials = results.filter((r): r is Extract<GlobalSearchResult, { type: 'material' }> => r.type === 'material');
-  const quotes = results.filter((r): r is Extract<GlobalSearchResult, { type: 'quote' }> => r.type === 'quote');
+  const tasks = results.filter(
+    (r): r is Extract<GlobalSearchResult, { type: "task" }> =>
+      r.type === "task",
+  );
+  const clients = results.filter(
+    (r): r is Extract<GlobalSearchResult, { type: "client" }> =>
+      r.type === "client",
+  );
+  const materials = results.filter(
+    (r): r is Extract<GlobalSearchResult, { type: "material" }> =>
+      r.type === "material",
+  );
+  const quotes = results.filter(
+    (r): r is Extract<GlobalSearchResult, { type: "quote" }> =>
+      r.type === "quote",
+  );
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -84,18 +75,20 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
         onValueChange={setQuery}
       />
       <CommandList>
-        {isLoading && (
+        {isFetching && (
           <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Recherche en cours...
           </div>
         )}
-        
-        {!isLoading && query.length >= 2 && results.length === 0 && (
-          <CommandEmpty>Aucun résultat trouvé pour &quot;{query}&quot;.</CommandEmpty>
+
+        {!isFetching && query.length >= 2 && results.length === 0 && (
+          <CommandEmpty>
+            Aucun résultat trouvé pour &quot;{query}&quot;.
+          </CommandEmpty>
         )}
 
-        {!isLoading && query.length < 2 && (
+        {!isFetching && query.length < 2 && (
           <div className="py-6 text-center text-sm text-muted-foreground">
             Entrez au moins 2 caractères pour commencer la recherche.
           </div>
@@ -133,7 +126,9 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
                 <div className="flex flex-col">
                   <span>{client.name}</span>
                   {client.email && (
-                    <span className="text-xs text-muted-foreground">{client.email}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {client.email}
+                    </span>
                   )}
                 </div>
               </CommandItem>

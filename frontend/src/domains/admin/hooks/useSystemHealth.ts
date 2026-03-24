@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { IPC_COMMANDS } from '@/lib/ipc';
-import { safeInvoke } from '@/lib/ipc';
-import type { SystemStatus } from '@/shared/types';
-import type { JsonValue } from '@/shared/types';
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ipcClient } from "@/lib/ipc";
+import type { SystemStatus } from "@/shared/types";
+import type { JsonValue } from "@/shared/types";
+import { adminKeys } from "@/lib/query-keys";
 
 export interface UseSystemHealthOptions {
   /** Polling interval in ms (default: 30000) */
@@ -12,7 +13,7 @@ export interface UseSystemHealthOptions {
 }
 
 export interface UseSystemHealthReturn {
-  systemStatus: 'healthy' | 'warning' | 'error';
+  systemStatus: "healthy" | "warning" | "error";
   statusDetails: SystemStatus | null;
   loading: boolean;
   refreshing: boolean;
@@ -20,35 +21,39 @@ export interface UseSystemHealthReturn {
 }
 
 function parseHealthResult(result: JsonValue | null): SystemStatus | null {
-  if (!result || typeof result !== 'object' || !('status' in result)) {
+  if (!result || typeof result !== "object" || !("status" in result)) {
     return null;
   }
 
   const healthData = result as Record<string, JsonValue>;
   const overallStatus =
-    (healthData.status as string) === 'healthy'
-      ? ('healthy' as const)
-      : ('warning' as const);
+    (healthData.status as string) === "healthy"
+      ? ("healthy" as const)
+      : ("warning" as const);
   const now = new Date().toISOString();
 
   const components: Record<
     string,
-    { status: 'healthy' | 'warning' | 'error'; message?: string; lastChecked: string }
+    {
+      status: "healthy" | "warning" | "error";
+      message?: string;
+      lastChecked: string;
+    }
   > = {};
 
-  if (healthData.components && typeof healthData.components === 'object') {
+  if (healthData.components && typeof healthData.components === "object") {
     for (const [key, val] of Object.entries(
       healthData.components as Record<string, JsonValue>,
     )) {
       const comp = val as Record<string, JsonValue>;
       components[key] = {
         status:
-          (comp.status as string) === 'healthy'
-            ? 'healthy'
-            : (comp.status as string) === 'warning'
-              ? 'warning'
-              : 'error',
-        message: (comp.message as string) || '',
+          (comp.status as string) === "healthy"
+            ? "healthy"
+            : (comp.status as string) === "warning"
+              ? "warning"
+              : "error",
+        message: (comp.message as string) || "",
         lastChecked: (comp.lastChecked as string) || now,
       };
     }
@@ -57,73 +62,43 @@ function parseHealthResult(result: JsonValue | null): SystemStatus | null {
   return { status: overallStatus, components, timestamp: now };
 }
 
+const HEALTH_QUERY_KEY = [...adminKeys.all, "system-health"] as const;
+
 export function useSystemHealth(
   options: UseSystemHealthOptions = {},
 ): UseSystemHealthReturn {
-  const { pollInterval = 30000, autoStart = true } = options;
+  const { pollInterval = 30_000, autoStart = true } = options;
+  const queryClient = useQueryClient();
 
-  const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'error'>('healthy');
-  const [statusDetails, setStatusDetails] = useState<SystemStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data, isLoading, isFetching, isError } = useQuery({
+    queryKey: HEALTH_QUERY_KEY,
+    queryFn: () => ipcClient.system.getHealthStatus(),
+    enabled: autoStart,
+    staleTime: Math.max(pollInterval - 5_000, 5_000),
+    // TanStack Query stops polling when the browser tab is hidden by default
+    // when refetchIntervalInBackground is false (the default), matching the
+    // previous `document.visibilityState === 'visible'` guard.
+    refetchInterval: autoStart ? pollInterval : false,
+    refetchIntervalInBackground: false,
+  });
 
-  const checkHealth = useCallback(async () => {
-    try {
-      const result = await safeInvoke<JsonValue>(IPC_COMMANDS.HEALTH_CHECK, {});
-      const parsed = parseHealthResult(result);
-      if (parsed) {
-        setStatusDetails(parsed);
-        setSystemStatus(parsed.status);
-      } else {
-        setSystemStatus('healthy');
-      }
-    } catch {
-      setSystemStatus('error');
-      setStatusDetails({
-        status: 'error',
-        components: {
-          system: {
-            status: 'error',
-            message: 'Impossible de contacter le backend',
-            lastChecked: new Date().toISOString(),
-          },
-        },
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!autoStart) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const run = async () => {
-      await checkHealth();
-      if (!cancelled) setLoading(false);
-    };
-
-    run();
-
-    // S-2 perf: skip poll when tab is hidden.
-    const interval = setInterval(() => {
-      if (!cancelled && document.visibilityState === 'visible') checkHealth();
-    }, pollInterval);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [autoStart, pollInterval, checkHealth]);
+  const statusDetails = parseHealthResult((data as JsonValue) ?? null);
+  const systemStatus: "healthy" | "warning" | "error" = isError
+    ? "error"
+    : (statusDetails?.status ?? "healthy");
 
   const refresh = useCallback(async () => {
-    setRefreshing(true);
-    await checkHealth();
-    setRefreshing(false);
-  }, [checkHealth]);
+    await queryClient.invalidateQueries({ queryKey: HEALTH_QUERY_KEY });
+  }, [queryClient]);
 
-  return { systemStatus, statusDetails, loading, refreshing, refresh };
+  return {
+    systemStatus,
+    statusDetails,
+    // `isLoading` is true only for the very first fetch (no cached data).
+    loading: isLoading,
+    // `isFetching && !isLoading` means a background refetch / manual refresh
+    // is in flight while stale data is already shown.
+    refreshing: isFetching && !isLoading,
+    refresh,
+  };
 }

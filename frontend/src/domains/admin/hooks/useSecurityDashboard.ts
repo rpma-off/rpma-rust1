@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { ipcClient } from '@/lib/ipc';
-import { useAuth } from '@/shared/hooks/useAuth';
+import { useCallback, useMemo } from "react";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ipcClient } from "@/lib/ipc";
+import { adminKeys } from "@/lib/query-keys";
+import { useAuth } from "@/shared/hooks/useAuth";
 
 export interface SecurityMetrics {
   total_events_today: number;
@@ -37,63 +39,68 @@ export interface ActiveSecuritySession {
 
 export function useSecurityDashboard() {
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
-  const [sessions, setSessions] = useState<ActiveSecuritySession[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const enabled = !!user?.token;
+
+  const [metricsQuery, alertsQuery, sessionsQuery] = useQueries({
+    queries: [
+      {
+        queryKey: adminKeys.securityMetrics(),
+        queryFn: () => ipcClient.audit.getMetrics(),
+        enabled,
+        staleTime: 30_000,
+      },
+      {
+        queryKey: adminKeys.securityAlerts(),
+        queryFn: () => ipcClient.audit.getAlerts(),
+        enabled,
+        staleTime: 30_000,
+      },
+      {
+        queryKey: adminKeys.sessions(),
+        queryFn: () => ipcClient.settings.getActiveSessions(),
+        enabled,
+        staleTime: 30_000,
+      },
+    ],
+  });
+
+  const loading =
+    metricsQuery.isLoading || alertsQuery.isLoading || sessionsQuery.isLoading;
+  const error = metricsQuery.error || alertsQuery.error || sessionsQuery.error;
+
+  const metrics =
+    (metricsQuery.data as unknown as SecurityMetrics | null) ?? null;
+  const alerts = (alertsQuery.data as unknown as SecurityAlert[]) ?? [];
+  const sessions =
+    (sessionsQuery.data as unknown as ActiveSecuritySession[]) ?? [];
 
   const refresh = useCallback(async () => {
-    if (!user?.token) {
-      setMetrics(null);
-      setAlerts([]);
-      setSessions([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [metricsData, alertsData, sessionsData] = await Promise.all([
-        ipcClient.audit.getMetrics(),
-        ipcClient.audit.getAlerts(),
-        ipcClient.settings.getActiveSessions(),
-      ]);
-
-      setMetrics(metricsData as unknown as SecurityMetrics);
-      setAlerts(alertsData as unknown as SecurityAlert[]);
-      setSessions(sessionsData as unknown as ActiveSecuritySession[]);
-    } catch (err) {
-      console.error('Failed to load security data:', err);
-      setError('Erreur lors du chargement des données de sécurité');
-      toast.error('Erreur lors du chargement des données de sécurité');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.token]);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: adminKeys.securityMetrics() }),
+      queryClient.invalidateQueries({ queryKey: adminKeys.securityAlerts() }),
+      queryClient.invalidateQueries({ queryKey: adminKeys.sessions() }),
+    ]);
+  }, [queryClient]);
 
   const acknowledgeAlert = useCallback(
     async (alertId: string) => {
       await ipcClient.audit.acknowledgeAlert(alertId);
-      toast.success('Alerte acquittée');
-      await refresh();
+      toast.success("Alerte acquittée");
+      await queryClient.invalidateQueries({
+        queryKey: adminKeys.securityAlerts(),
+      });
     },
-    [refresh],
+    [queryClient],
   );
 
   const revokeSession = useCallback(
     async (sessionId: string) => {
       await ipcClient.settings.revokeSession(sessionId);
-      toast.success('Session révoquée');
-      await refresh();
+      toast.success("Session révoquée");
+      await queryClient.invalidateQueries({ queryKey: adminKeys.sessions() });
     },
-    [refresh],
+    [queryClient],
   );
 
   const unresolvedAlerts = useMemo(
@@ -107,7 +114,7 @@ export function useSecurityDashboard() {
     sessions,
     unresolvedAlerts,
     loading,
-    error,
+    error: error instanceof Error ? error.message : null,
     refresh,
     acknowledgeAlert,
     revokeSession,
