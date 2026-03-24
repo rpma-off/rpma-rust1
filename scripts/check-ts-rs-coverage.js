@@ -261,6 +261,46 @@ const commandReturnTypes = parseCommandReturnTypes(SRC_DIR);
 checkT1(exportedTypes, tsAnnotatedTypes);
 checkT2(commandReturnTypes, exportedTypes);
 
+// T3 — Detect handwritten type definitions in frontend/src/types/ that shadow
+//       names already present in the generated backend.ts file (ADR-015).
+const TYPES_DIR   = path.join(ROOT, 'frontend', 'src', 'types');
+const BACKEND_TS  = path.join(ROOT, 'frontend', 'src', 'lib', 'backend.ts');
+
+function checkT3() {
+  if (!fs.existsSync(BACKEND_TS) || !fs.existsSync(TYPES_DIR)) return;
+
+  const backendContent = fs.readFileSync(BACKEND_TS, 'utf8');
+  const generatedNames = new Set();
+  const exportRe = /export\s+type\s+(\w+)\s*=/g;
+  let m;
+  while ((m = exportRe.exec(backendContent)) !== null) generatedNames.add(m[1]);
+
+  const files = fs.readdirSync(TYPES_DIR).filter(f => f.endsWith('.ts'));
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(TYPES_DIR, file), 'utf8');
+    const ifaceRe = /(?:export\s+)?(?:interface|type)\s+(\w+)\s*(?:=|\{|extends)/g;
+    let hit;
+    while ((hit = ifaceRe.exec(content)) !== null) {
+      const name = hit[1];
+      if (generatedNames.has(name)) {
+        // Skip if it's a pure re-export line (e.g. "export type { Foo } from ...")
+        const lineStart = content.lastIndexOf('\n', hit.index) + 1;
+        const lineEnd   = content.indexOf('\n', hit.index);
+        const line       = content.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+        if (/export\s+type\s*\{/.test(line)) continue;
+
+        addWarning(
+          `[ADR-015] T3 — Type '${name}' is defined in frontend/src/types/${file} ` +
+          `but already exists in generated backend.ts\n` +
+          `  → Remove the handwritten definition and import from '@/lib/backend' instead`
+        );
+      }
+    }
+  }
+}
+
+checkT3();
+
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 console.log('\n── ts-rs Coverage Check ────────────────────────────────────');
