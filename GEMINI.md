@@ -29,6 +29,24 @@ Use the real command surfaces below; do not invent shortcuts.
 - **Integration Tests (Harness)**: `cd src-tauri && cargo test --test integration`.
 * **Backend tests (domain):** `cd src-tauri && cargo test <domain> -- --nocapture`
 
+### Doctor Command (Comprehensive Health Check)
+
+`npm run doctor` runs all verification checks in one command. Use this before declaring a task complete.
+
+| Command | Purpose |
+|---------|---------|
+| `npm run doctor` | Run fast checks (cargo check, tsc, lint, architecture, schema drift) |
+| `npm run doctor -- --fix` | Auto-fix fixable issues (e.g., types:sync) |
+| `npm run doctor -- --full` | Include slow checks (cargo test, frontend tests) |
+| `npm run doctor -- --json` | JSON output (auto-detected for non-TTY/agents) |
+
+**Exit codes:**
+- `0`: All checks passed
+- `1`: One or more failures
+- `2`: Warnings only (no failures)
+
+**For AI agents:** Always run `npm run doctor` after making code changes. If fixable failures occur, run `npm run doctor -- --fix` and re-verify.
+
 ## Useful Scripts (`scripts/`)
 - `validate-migration-system.js`: Ensures migrations are consistent and applied correctly.
 - `detect-schema-drift.js`: Compares local DB schema with migrations.
