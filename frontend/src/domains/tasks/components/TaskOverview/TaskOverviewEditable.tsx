@@ -16,6 +16,7 @@ import {
   Phone
 } from 'lucide-react';
 import { getUserFullName } from '@/lib/types';
+import { taskPriorityLabels } from '@/lib/i18n/status-labels';
 import { Badge } from '@/components/ui/badge';
 import {
   InlineEditableText,
@@ -26,7 +27,6 @@ import {
 } from '@/shared/ui/inline-edit';
 import { TaskWithDetails } from '@/types/task.types';
 import { useInlineEditTask } from '../../hooks/useInlineEditTask';
-import { taskPriorityLabels } from '@/lib/i18n/status-labels';
 
 interface TaskOverviewEditableProps {
   task: TaskWithDetails;

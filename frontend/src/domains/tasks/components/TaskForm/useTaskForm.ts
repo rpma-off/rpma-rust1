@@ -15,8 +15,8 @@ import {
   validateYear,
   createValidationResult
 } from '@/lib/utils/validation-utils';
-import { TaskFormData, FormStep } from './types';
 import { taskIpc } from '../../ipc/task.ipc';
+import { TaskFormData, FormStep } from './types';
 
 const logger = createLogger('useTaskForm');
 

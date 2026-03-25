@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ipcClient } from "@/lib/ipc";
+import { adminKeys } from "@/lib/query-keys";
 import type { SystemStatus } from "@/shared/types";
 import type { JsonValue } from "@/shared/types";
-import { adminKeys } from "@/lib/query-keys";
 
 export interface UseSystemHealthOptions {
   /** Polling interval in ms (default: 30000) */

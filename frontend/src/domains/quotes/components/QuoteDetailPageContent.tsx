@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -51,10 +52,9 @@ import { ErrorState, LoadingState } from "@/shared/ui/facade";
 import type { QuoteItemKind } from "@/shared/types";
 import { FadeIn } from "@/shared/ui/animations/FadeIn";
 import { formatDate } from "@/shared/utils/date-formatters";
-import type { ActiveTab } from "../hooks/useQuoteDetailPage";
-import { useMemo } from "react";
-// ❌ CROSS-DOMAIN IMPORT — TODO(ADR-002): Move to shared/ or use public index
 import { PPF_ZONES } from "@/domains/tasks";
+import type { ActiveTab } from "../hooks/useQuoteDetailPage";
+// ❌ CROSS-DOMAIN IMPORT — TODO(ADR-002): Move to shared/ or use public index
 import { useQuoteDetailPage } from "../hooks/useQuoteDetailPage";
 import { QuoteWorkflowPanel } from "./QuoteWorkflowPanel";
 import { QuoteStatusBadge } from "./QuoteStatusBadge";

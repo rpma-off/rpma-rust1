@@ -3,6 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { User, ClipboardList, Package, FileText, Loader2 } from "lucide-react";
+import { ipcClient } from "@/lib/ipc";
+import type { GlobalSearchResult } from "@/lib/backend";
 import {
   CommandDialog,
   CommandEmpty,
@@ -12,9 +15,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { ipcClient } from "@/lib/ipc";
-import type { GlobalSearchResult } from "@/lib/backend";
-import { User, ClipboardList, Package, FileText, Loader2 } from "lucide-react";
 
 interface GlobalSearchProps {
   open: boolean;

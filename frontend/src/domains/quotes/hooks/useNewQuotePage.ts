@@ -16,7 +16,7 @@ import { useCreateQuote } from "./useQuotes";
 
 export function useNewQuotePage() {
   const router = useRouter();
-  const { createQuote, loading, error } = useCreateQuote();
+  const { createQuote, loading } = useCreateQuote();
   const submittingRef = useRef(false);
   const { user } = useAuth();
   const { clients, refetch: refetchClients } = useClients({ autoFetch: true });

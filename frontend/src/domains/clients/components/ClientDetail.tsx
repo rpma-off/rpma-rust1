@@ -15,6 +15,7 @@ import {
   User
 } from 'lucide-react';
 import { ClientWithTasks } from '@/lib/backend';
+import { taskStatusLabels } from '@/lib/i18n/status-labels';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { formatDateTime } from '@/shared/utils/date-formatters';
-import { taskStatusLabels } from '@/lib/i18n/status-labels';
 
 interface ClientDetailProps {
   client: ClientWithTasks;

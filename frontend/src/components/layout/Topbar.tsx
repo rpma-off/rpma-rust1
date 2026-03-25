@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, Search, X, CalendarDays, Wrench, FileText, Users } from 'lucide-react';
@@ -8,7 +9,6 @@ import { useTranslation } from '@/shared/hooks/useTranslation';
 import { ROUTES } from '@/constants/routes';
 import { NotificationBell } from '@/domains/notifications';
 import { GlobalSearch } from './GlobalSearch';
-import * as React from 'react';
 
 interface TopbarProps {
   onMenuToggle: () => void;

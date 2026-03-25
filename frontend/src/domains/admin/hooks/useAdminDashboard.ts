@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { ipcClient } from "@/shared/utils";
 import { adminKeys, dashboardKeys } from "@/lib/query-keys";
+import { ipcClient } from "@/shared/utils";
 import { useAuth } from "@/shared/hooks/useAuth";
 
 export interface SystemStats {

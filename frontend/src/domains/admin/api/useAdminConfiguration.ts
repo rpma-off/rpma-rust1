@@ -10,7 +10,7 @@ export function useAdminConfiguration(
 ): AdminConfigurationState {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: adminKeys.configuration(category),
     queryFn: async () => {
       const response = await configurationService.getSystemConfigurations(

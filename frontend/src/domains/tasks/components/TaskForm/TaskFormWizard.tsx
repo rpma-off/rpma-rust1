@@ -14,7 +14,7 @@ import { useTaskFormSteps } from './TaskFormSteps';
 
 const TaskFormWizard: React.FC<TaskFormProps> = React.memo(({
   onSuccess,
-  onCancel,
+  _onCancel,
   initialData,
   isEditing = false,
   className = '',

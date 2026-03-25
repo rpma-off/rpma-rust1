@@ -2,8 +2,8 @@ import { safeInvoke, invalidatePattern } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { signalMutation } from '@/lib/data-freshness';
 import { validateQuote, validateQuoteList, validateQuoteAcceptResponse } from '@/lib/validation/backend-type-guards';
-import type { Quote, QuoteListResponse, QuoteAcceptResponse } from '@/types/quote.types';
 import type { QuoteStats } from '@/lib/backend';
+import type { Quote, QuoteListResponse, QuoteAcceptResponse } from '@/types/quote.types';
 import type { JsonObject, JsonValue } from '@/types/json';
 
 export const quotesIpc = {

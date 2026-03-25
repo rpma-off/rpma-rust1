@@ -12,10 +12,10 @@ import {
   User
 } from 'lucide-react';
 import { getUserFullName } from '@/lib/types';
+import { taskPriorityLabels } from '@/lib/i18n/status-labels';
 import { Badge } from '@/components/ui/badge';
 import { TaskWithDetails } from '@/types/task.types';
 import { formatDate, formatTime } from '@/shared/utils/date-formatters';
-import { taskPriorityLabels } from '@/lib/i18n/status-labels';
 
 interface TaskOverviewProps {
   task: TaskWithDetails;

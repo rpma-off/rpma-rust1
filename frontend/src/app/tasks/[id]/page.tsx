@@ -1,6 +1,9 @@
 "use client";
 
 import { ArrowLeft, AlertCircle, Settings } from "lucide-react";
+import { Button, TaskErrorBoundary } from "@/shared/ui";
+import { PageShell } from "@/shared/ui/layout/PageShell";
+import { LoadingState } from "@/shared/ui/layout/LoadingState";
 import {
   TaskOverviewEditable,
   TaskHeaderBand,
@@ -11,9 +14,6 @@ import {
 } from "@/domains/tasks";
 import { useInterventionData } from "@/domains/interventions";
 import { InterventionReportSection } from "@/domains/reports";
-import { Button, TaskErrorBoundary } from "@/shared/ui";
-import { PageShell } from "@/shared/ui/layout/PageShell";
-import { LoadingState } from "@/shared/ui/layout/LoadingState";
 
 export default function TaskDetailPage() {
   const {
