@@ -769,12 +769,12 @@ mod tests {
         let mut req = make_start_request(task_id);
         req.technician_id = tech_id.to_string();
 
-        let mut raw_conn = db.get_connection().unwrap();
-        let tx = raw_conn.transaction().expect("open tx");
+        // Use the public API rather than manually opening a pool connection +
+        // transaction: holding raw_conn open while the service also borrows from
+        // the pool triggers SQLITE_LOCKED under parallel test execution.
         let intervention = service
-            .create_intervention_with_tx(&tx, &req, tech_id)
-            .expect("create_intervention_with_tx failed");
-        tx.commit().expect("commit tx");
+            .create_intervention(&req, tech_id)
+            .expect("create_intervention failed");
 
         assert_eq!(
             intervention.vehicle_model.as_deref(),
