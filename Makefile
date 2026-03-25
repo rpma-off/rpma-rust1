@@ -47,3 +47,6 @@ format:
 
 clean:
 	cd src-tauri && cargo clean
+
+doctor:
+	npm run doctor

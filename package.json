@@ -49,6 +49,9 @@
     "git:finish-feature": "node scripts/git-workflow.js finish-feature",
     "git:cleanup-feature": "node scripts/git-workflow.js cleanup-feature",
     "git:guard-main": "node scripts/git-workflow.js guard-main",
+    "doctor": "node scripts/doctor.mjs",
+    "doctor:fix": "node scripts/doctor.mjs --fix",
+    "doctor:full": "node scripts/doctor.mjs --full",
     "prepare": "husky"
   },
   "devDependencies": {
