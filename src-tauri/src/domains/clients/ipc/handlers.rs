@@ -166,8 +166,7 @@ pub async fn client_get_with_tasks(
             let tasks_response = state
                 .task_service
                 .get_tasks_async(task_query)
-                .await
-                .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+                .await?;
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
             let client_with_tasks = client_into_client_with_tasks(client, tasks);
             Ok(ApiResponse::success(Some(client_with_tasks))
@@ -276,8 +275,7 @@ pub async fn client_list_with_tasks(
         let tasks_response = state
             .task_service
             .get_tasks_async(task_query)
-            .await
-            .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+            .await?;
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
         clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
     }
@@ -533,8 +531,7 @@ async fn handle_client_with_tasks_retrieval(
             };
             let tasks_response = task_service
                 .get_tasks_async(task_query)
-                .await
-                .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+                .await?;
             let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
             let client_with_tasks = client_into_client_with_tasks(client, tasks);
             Ok(
@@ -628,8 +625,7 @@ async fn handle_client_listing_with_tasks(
         };
         let tasks_response = task_service
             .get_tasks_async(task_query)
-            .await
-            .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
+            .await?;
         let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
         clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
     }
