@@ -38,31 +38,10 @@ pub struct CreateMaterialRequest {
     pub is_discontinued: Option<bool>,
 }
 
-/// Request to update material stock.
-#[derive(Debug, serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct UpdateStockRequest {
-    pub material_id: String,
-    pub quantity_change: f64,
-    pub reason: String,
-    pub recorded_by: Option<String>,
-}
-
-/// Request to record material consumption.
-#[derive(Debug, serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct RecordConsumptionRequest {
-    pub intervention_id: String,
-    pub material_id: String,
-    pub step_id: Option<String>,
-    pub step_number: Option<i32>,
-    pub quantity_used: f64,
-    pub waste_quantity: Option<f64>,
-    pub waste_reason: Option<String>,
-    pub batch_used: Option<String>,
-    pub quality_notes: Option<String>,
-    pub recorded_by: Option<String>,
-}
+// Re-exported from domain layer per ADR-001: request types belong in domain
+pub use crate::domains::inventory::domain::models::requests::{
+    RecordConsumptionRequest, UpdateStockRequest,
+};
 
 /// Request to create a material category.
 #[derive(Debug, serde::Deserialize)]

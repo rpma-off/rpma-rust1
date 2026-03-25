@@ -7,9 +7,6 @@ use crate::domains::tasks::ipc::task_types::TaskFilter;
 use serde::Deserialize;
 use std::fmt::Debug;
 
-// Re-export the domain-layer response type so callers of this module see no change.
-pub use crate::domains::tasks::domain::models::task::BulkImportResponse;
-
 /// Task CRUD request (dispatched by action enum)
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]

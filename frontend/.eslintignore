@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+.next
+dist
+out
+
+# Build artifacts and tools
+coverage
+playwright-report
+test-results
+test-results-full
+.swc
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Public assets (images, fonts, etc.)
+public
+
+# Auto-generated types (optional, but they are often large)
+# src/types/generated-types.ts
+
+# Ignore root config files in frontend
+*.config.js
+*.config.ts
+*.config.cjs
+next-env.d.ts

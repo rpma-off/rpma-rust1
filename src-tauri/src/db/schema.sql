@@ -1064,7 +1064,7 @@ CREATE TABLE IF NOT EXISTS cache_metadata (
   cache_type TEXT NOT NULL, -- 'query_result', 'image_thumbnail', 'computed_analytics', 'api_response'
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at INTEGER DEFAULT (unixepoch() * 1000),
   access_count INTEGER DEFAULT 0,
   size_bytes INTEGER NOT NULL,
   ttl_seconds INTEGER, -- NULL means no expiration
@@ -1665,7 +1665,7 @@ GROUP BY c.id, c.name, c.customer_type, c.created_at;
 
 -- View for calendar tasks (kept in sync with migration 020)
 CREATE VIEW IF NOT EXISTS calendar_tasks AS
-SELECT 
+SELECT
   t.id,
   t.task_number,
   t.title,

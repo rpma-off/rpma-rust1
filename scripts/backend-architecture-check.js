@@ -24,26 +24,28 @@
  * With --strict the script also fails on warnings.
  */
 
-'use strict';
+"use strict";
 
-const fs   = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // ─── Config ─────────────────────────────────────────────────────────────────
 
-const ROOT        = path.resolve(__dirname, '..');
-const DOMAINS_DIR = path.join(ROOT, 'src-tauri', 'src', 'domains');
-const STRICT      = process.argv.includes('--strict');
+const ROOT = path.resolve(__dirname, "..");
+const DOMAINS_DIR = path.join(ROOT, "src-tauri", "src", "domains");
+const STRICT = process.argv.includes("--strict");
 
 // Cross-domain imports that are intentionally accepted (documented exceptions).
 // Format: "SOURCE_DOMAIN -> TARGET_DOMAIN : reason"
 const ALLOWED_CROSS_DOMAIN = [
   // Documents application layer needs Interventions types for PDF rendering
-  { from: 'documents', to: 'interventions', layer: 'application' },
+  { from: "documents", to: "interventions", layer: "application" },
   // Documents application layer needs Clients types for report view-model tests
-  { from: 'documents', to: 'clients',       layer: 'application' },
+  { from: "documents", to: "clients", layer: "application" },
   // Reports application layer delegates PDF generation to Documents service
-  { from: 'reports',   to: 'documents',     layer: 'application' },
+  { from: "reports", to: "documents", layer: "application" },
+  // Users infrastructure needs auth sessions to revoke on ban/role change
+  { from: "users", to: "auth", layer: "infrastructure" },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -56,7 +58,7 @@ function collectRustFiles(dir) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       results.push(...collectRustFiles(full));
-    } else if (entry.isFile() && entry.name.endsWith('.rs')) {
+    } else if (entry.isFile() && entry.name.endsWith(".rs")) {
       results.push(full);
     }
   }
@@ -72,26 +74,32 @@ function collectRustFiles(dir) {
  *  - Repository/query files inside handler directories are skipped (infrastructure).
  */
 function layerOf(filePath) {
-  const rel   = path.relative(DOMAINS_DIR, filePath);
+  const rel = path.relative(DOMAINS_DIR, filePath);
   const parts = rel.split(path.sep);
   // parts[0] = domain name, parts[1] = layer folder or handler dir or handler file
 
   if (parts.length < 2) return null;
 
-  const second   = parts[1];
+  const second = parts[1];
   const filename = parts[parts.length - 1];
 
   // Standard layers
-  const STANDARD_LAYERS = new Set(['domain', 'application', 'ipc', 'infrastructure', 'tests']);
+  const STANDARD_LAYERS = new Set([
+    "domain",
+    "application",
+    "ipc",
+    "infrastructure",
+    "tests",
+  ]);
   if (STANDARD_LAYERS.has(second)) return second;
 
   // Flat handler *file* at domain root: settings_handler.rs, user_settings_handler.rs …
   // (e.g. settings/settings_handler.rs, documents/photo_handler.rs)
-  if (parts.length === 2 && second.endsWith('_handler.rs')) return 'ipc';
+  if (parts.length === 2 && second.endsWith("_handler.rs")) return "ipc";
 
   // Files explicitly named ipc.rs inside a handler directory
   // (e.g. clients/client_handler/ipc.rs, calendar/calendar_handler/ipc.rs)
-  if (second.endsWith('_handler') && filename === 'ipc.rs') return 'ipc';
+  if (second.endsWith("_handler") && filename === "ipc.rs") return "ipc";
 
   // Everything else inside *_handler/ directories (repository.rs, mod.rs, etc.)
   // contains infrastructure/application code — skip to avoid false positives.
@@ -108,30 +116,37 @@ function domainOf(filePath) {
 /** Check whether a cross-domain import is explicitly allowed. */
 function isCrossDomainAllowed(fromDomain, toDomain, layer) {
   return ALLOWED_CROSS_DOMAIN.some(
-    (e) => e.from === fromDomain && e.to === toDomain && e.layer === layer
+    (e) => e.from === fromDomain && e.to === toDomain && e.layer === layer,
   );
 }
 
 // ─── Checks ──────────────────────────────────────────────────────────────────
 
-const errors   = [];
+const errors = [];
 const warnings = [];
 
-function addError(msg)   { errors.push(msg); }
-function addWarning(msg) { warnings.push(msg); }
+function addError(msg) {
+  errors.push(msg);
+}
+function addWarning(msg) {
+  warnings.push(msg);
+}
 
 /** 1. Detect `rusqlite` imports in domain/ or application/ layers. */
 function checkRusqliteInDomainOrApp(file, lines, domain, layer) {
-  if (layer !== 'domain' && layer !== 'application') return;
+  if (layer !== "domain" && layer !== "application") return;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (/^\s*use\s+rusqlite/.test(line) || /^\s*use\s+crate::db::FromSqlRow/.test(line)) {
+    if (
+      /^\s*use\s+rusqlite/.test(line) ||
+      /^\s*use\s+crate::db::FromSqlRow/.test(line)
+    ) {
       addError(
         `[ADR-002] rusqlite/FromSqlRow import in ${layer}/ layer:\n` +
-        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-        `  ${line.trim()}\n` +
-        `  → Move row-mapping impls to infrastructure/ (see tasks domain pilot in task_row_mapping.rs)`
+          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+          `  ${line.trim()}\n` +
+          `  → Move row-mapping impls to infrastructure/ (see tasks domain pilot in task_row_mapping.rs)`,
       );
     }
   }
@@ -140,18 +155,19 @@ function checkRusqliteInDomainOrApp(file, lines, domain, layer) {
 /** 2. Detect raw SQL keywords in domain/, application/, or ipc/ layers.
  *     (ipc/ includes flat domain handler files — Gap A fix.) */
 function checkSqlInDomainOrApp(file, lines, domain, layer) {
-  if (layer !== 'domain' && layer !== 'application' && layer !== 'ipc') return;
+  if (layer !== "domain" && layer !== "application" && layer !== "ipc") return;
 
   // Require paired SQL keywords to avoid false positives:
   //   SELECT ... FROM, INSERT INTO, UPDATE ... SET, DELETE FROM
-  const sqlPattern = /["'`]\s*(SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\s/i;
+  const sqlPattern =
+    /["'`]\s*(SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\s/i;
   for (let i = 0; i < lines.length; i++) {
     if (sqlPattern.test(lines[i])) {
       addError(
         `[ADR-002] SQL statement found in ${layer}/ layer:\n` +
-        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-        `  ${lines[i].trim()}\n` +
-        `  → Move SQL to infrastructure/ repositories`
+          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+          `  ${lines[i].trim()}\n` +
+          `  → Move SQL to infrastructure/ repositories`,
       );
     }
   }
@@ -162,7 +178,7 @@ function checkSqlInDomainOrApp(file, lines, domain, layer) {
  *     prefer relative paths such as `super::` over full `crate::domains::`
  *     paths within the same domain). */
 function checkCrossDomainImports(file, lines, fromDomain, layer) {
-  if (layer === 'tests') return; // test helpers are allowed to cross domains
+  if (layer === "tests") return; // test helpers are allowed to cross domains
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -178,9 +194,9 @@ function checkCrossDomainImports(file, lines, fromDomain, layer) {
       // for cross-domain references.
       addWarning(
         `[ADR-002/ADR-003] Same-domain absolute import (prefer relative path) in ${layer}/:\n` +
-        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-        `  ${line.trim()}\n` +
-        `  → Replace \`crate::domains::${fromDomain}::\` with a relative path (e.g. \`super::\`)`
+          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+          `  ${line.trim()}\n` +
+          `  → Replace \`crate::domains::${fromDomain}::\` with a relative path (e.g. \`super::\`)`,
       );
       continue;
     }
@@ -188,9 +204,9 @@ function checkCrossDomainImports(file, lines, fromDomain, layer) {
     if (!isCrossDomainAllowed(fromDomain, toDomain, layer)) {
       addError(
         `[ADR-001] Cross-domain import not in allowlist (${fromDomain} → ${toDomain}) in ${layer}/:\n` +
-        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-        `  ${line.trim()}\n` +
-        `  → Use shared contracts, events, or add an entry to ALLOWED_CROSS_DOMAIN if justified`
+          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+          `  ${line.trim()}\n` +
+          `  → Use shared contracts, events, or add an entry to ALLOWED_CROSS_DOMAIN if justified`,
       );
     }
   }
@@ -204,32 +220,32 @@ function checkCrossDomainImports(file, lines, fromDomain, layer) {
 // Paths are relative to DOMAINS_DIR or SRC_DIR root.
 const PUBLIC_HANDLER_FILES = new Set([
   // Authentication flows — callers are not yet authenticated
-  path.join('auth', 'ipc', 'auth.rs'),
-  path.join('auth', 'ipc', 'auth_security.rs'),
+  path.join("auth", "ipc", "auth.rs"),
+  path.join("auth", "ipc", "auth_security.rs"),
   // System / navigation commands do not touch domain data
-  path.join('..', 'commands', 'navigation.rs'),
-  path.join('..', 'commands', 'system.rs'),
-  path.join('..', 'commands', 'mod.rs'),
+  path.join("..", "commands", "navigation.rs"),
+  path.join("..", "commands", "system.rs"),
+  path.join("..", "commands", "mod.rs"),
   // Correlation ID passthrough — no business data
-  path.join('..', 'shared', 'ipc', 'correlation.rs'),
+  path.join("..", "shared", "ipc", "correlation.rs"),
   // Logging endpoint — no auth gate needed
-  path.join('..', 'logging', 'mod.rs'),
+  path.join("..", "logging", "mod.rs"),
 ]);
 
 function checkResolveContext(file, content, layer) {
-  if (layer !== 'ipc') return;
-  if (!content.includes('#[tauri::command]')) return;
+  if (layer !== "ipc") return;
+  if (!content.includes("#[tauri::command]")) return;
 
   // Skip files listed as intentionally public
   const relFromDomains = path.relative(DOMAINS_DIR, file);
   if (PUBLIC_HANDLER_FILES.has(relFromDomains)) return;
 
-  if (!content.includes('resolve_context!')) {
+  if (!content.includes("resolve_context!")) {
     addWarning(
       `[ADR-006] CHECK-5 — IPC handler file has #[tauri::command] but no resolve_context! call:\n` +
-      `  ${path.relative(ROOT, file)}\n` +
-      `  → Either add resolve_context! to authenticate the request, or add this file\n` +
-      `    to PUBLIC_HANDLER_FILES in backend-architecture-check.js if auth is intentionally skipped`
+        `  ${path.relative(ROOT, file)}\n` +
+        `  → Either add resolve_context! to authenticate the request, or add this file\n` +
+        `    to PUBLIC_HANDLER_FILES in backend-architecture-check.js if auth is intentionally skipped`,
     );
   }
 }
@@ -246,25 +262,25 @@ function checkPubUseInternals(file, lines, layer) {
     let violation = null;
 
     // ipc/ files must not re-export from domain/ or infrastructure/
-    if (layer === 'ipc') {
+    if (layer === "ipc") {
       if (/::domain::/.test(line) || /::infrastructure::/.test(line)) {
-        violation = 'ipc/ leaks domain/infrastructure internals';
+        violation = "ipc/ leaks domain/infrastructure internals";
       }
     }
 
     // application/ files must not re-export from infrastructure/
-    if (layer === 'application') {
+    if (layer === "application") {
       if (/::infrastructure::/.test(line)) {
-        violation = 'application/ leaks infrastructure internals';
+        violation = "application/ leaks infrastructure internals";
       }
     }
 
     if (violation) {
       addError(
         `[ADR-001] CHECK-6 — pub use leaks layer internals (${violation}):\n` +
-        `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-        `  ${line.trim()}\n` +
-        `  → Remove pub use or move the type to a shared contract`
+          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+          `  ${line.trim()}\n` +
+          `  → Remove pub use or move the type to a shared contract`,
       );
     }
   }
@@ -273,18 +289,22 @@ function checkPubUseInternals(file, lines, layer) {
 /** 4. Warn when an ipc/ handler contains substantial business logic heuristics
  *     (complex match arms, domain-type construction, etc.). */
 function checkBusinessLogicInIpc(file, lines, domain, layer) {
-  if (layer !== 'ipc') return;
+  if (layer !== "ipc") return;
 
   // Heuristic: constructing a domain struct from another domain inside IPC
   for (let i = 0; i < lines.length; i++) {
-    if (/crate::domains::[a-z_]+::domain::models::[a-z_]+::[A-Z][A-Za-z]+\s*\{/.test(lines[i])) {
+    if (
+      /crate::domains::[a-z_]+::domain::models::[a-z_]+::[A-Z][A-Za-z]+\s*\{/.test(
+        lines[i],
+      )
+    ) {
       const match = lines[i].match(/crate::domains::([a-z_]+)::domain/);
       if (match && match[1] !== domain) {
         addWarning(
           `[ADR-005] Cross-domain domain-model construction in ipc/ handler:\n` +
-          `  ${path.relative(ROOT, file)}:${i + 1}\n` +
-          `  ${lines[i].trim()}\n` +
-          `  → Move orchestration/conversion to the application/ layer`
+            `  ${path.relative(ROOT, file)}:${i + 1}\n` +
+            `  ${lines[i].trim()}\n` +
+            `  → Move orchestration/conversion to the application/ layer`,
         );
       }
     }
@@ -313,8 +333,8 @@ for (const domain of allDomains) {
     const layer = layerOf(file);
     if (!layer) continue;
 
-    const content = fs.readFileSync(file, 'utf8');
-    const lines   = content.split('\n');
+    const content = fs.readFileSync(file, "utf8");
+    const lines = content.split("\n");
 
     checkRusqliteInDomainOrApp(file, lines, domain, layer);
     checkSqlInDomainOrApp(file, lines, domain, layer);
@@ -330,7 +350,9 @@ for (const domain of allDomains) {
 // ─── Report ──────────────────────────────────────────────────────────────────
 
 console.log(`\n── Backend Architecture Check ──────────────────────────────`);
-console.log(`Checked ${filesChecked} Rust source files across ${allDomains.length} domains.\n`);
+console.log(
+  `Checked ${filesChecked} Rust source files across ${allDomains.length} domains.\n`,
+);
 
 if (warnings.length > 0) {
   console.log(`WARNINGS (${warnings.length}):`);
@@ -340,14 +362,18 @@ if (warnings.length > 0) {
 if (errors.length > 0) {
   console.log(`ERRORS (${errors.length}):`);
   for (const e of errors) console.log(`  ✖  ${e}\n`);
-  console.log(`\nBackend architecture check FAILED with ${errors.length} error(s).`);
+  console.log(
+    `\nBackend architecture check FAILED with ${errors.length} error(s).`,
+  );
   process.exit(1);
 }
 
 if (STRICT && warnings.length > 0) {
-  console.log(`\nBackend architecture check FAILED in strict mode (${warnings.length} warning(s)).`);
+  console.log(
+    `\nBackend architecture check FAILED in strict mode (${warnings.length} warning(s)).`,
+  );
   process.exit(1);
 }
 
-console.log('Backend architecture check PASSED ✓');
+console.log("Backend architecture check PASSED ✓");
 process.exit(0);

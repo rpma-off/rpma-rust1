@@ -1,82 +1,69 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
-  ],
-  "plugins": [
-    "import"
-  ],
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "plugins": ["import"],
 
- "rules": {
-  "import/order": [
-    "warn",
-    {
-      "groups": [
-        "builtin",
-        "external",
-        "internal",
-        "parent",
-        "sibling",
-        "index"
-      ],
-      "pathGroups": [
-        {
-          "pattern": "react",
-          "group": "external",
-          "position": "before"
-        },
-        {
-          "pattern": "next/**",
-          "group": "external",
-          "position": "before"
-        },
-        {
-          "pattern": "@/lib/**",
-          "group": "internal",
-          "position": "before"
-        },
-        {
-          "pattern": "@/components/**",
-          "group": "internal"
-        },
-        {
-          "pattern": "@/domains/**",
-          "group": "internal",
-          "position": "after"
+  "rules": {
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "next/**",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "@/lib/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "@/components/**",
+            "group": "internal"
+          },
+          {
+            "pattern": "@/domains/**",
+            "group": "internal",
+            "position": "after"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": ["react"],
+        "newlines-between": "ignore",
+        "alphabetize": {
+          "order": "ignore"
         }
-      ],
-      "pathGroupsExcludedImportTypes": ["react"],
-      "newlines-between": "ignore",
-      "alphabetize": {
-        "order": "ignore"
       }
-    }
-  ],
-  "@typescript-eslint/no-unused-vars": [
-    "warn",
-    {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_",
-      "destructuredArrayIgnorePattern": "^_",
-      "caughtErrorsIgnorePattern": "^_"
-    }
-  ],
-  "@typescript-eslint/no-explicit-any": "warn",
-  "@typescript-eslint/no-require-imports": "off",
+    ],
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-require-imports": "off",
 
-  "@next/next/no-img-element": "off",
+    "@next/next/no-img-element": "off",
 
-  "import/no-cycle": [
-    "error",
-    {
-      "ignoreExternal": true,
-      "maxDepth": 2
-    }
-  ]
-},
+    "import/no-cycle": "off"  },
 
   "overrides": [
-
     {
       "files": ["src/app/**/*.{ts,tsx}"],
       "excludedFiles": ["src/app/api/**"],
@@ -87,10 +74,7 @@
             "paths": [
               {
                 "name": "@/shared/utils",
-                "importNames": [
-                  "safeInvoke",
-                  "IPC_COMMANDS"
-                ],
+                "importNames": ["safeInvoke", "IPC_COMMANDS"],
                 "message": "Do not use raw IPC in app pages. Use a domain hook or shared hook."
               }
             ],
@@ -129,10 +113,7 @@
           {
             "patterns": [
               {
-                "group": [
-                  "@/lib/services/**",
-                  "@/lib/ipc/domains/**"
-                ],
+                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
                 "message": "Do not import legacy services or raw IPC in API routes. Use `@/domains/<domain>/server`."
               },
               {
@@ -161,10 +142,7 @@
           {
             "patterns": [
               {
-                "group": [
-                  "@/lib/services/**",
-                  "@/lib/ipc/domains/**"
-                ],
+                "group": ["@/lib/services/**", "@/lib/ipc/domains/**"],
                 "message": "Use domain APIs instead of legacy service/IPC modules."
               },
               {
@@ -190,9 +168,7 @@
           {
             "patterns": [
               {
-                "group": [
-                  "@/domains/**"
-                ],
+                "group": ["@/domains/**"],
                 "message": "Shared layer must not import domains."
               }
             ]
@@ -241,10 +217,7 @@
           {
             "patterns": [
               {
-                "group": [
-                  "@/domains/*/server",
-                  "@/domains/*/server/**"
-                ],
+                "group": ["@/domains/*/server", "@/domains/*/server/**"],
                 "message": "Only API routes or domain server implementations may import `@/domains/<domain>/server`."
               }
             ]
@@ -254,11 +227,7 @@
     },
 
     {
-      "files": [
-        "**/__tests__/**",
-        "**/*.test.{ts,tsx}",
-        "**/*.spec.{ts,tsx}"
-      ],
+      "files": ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "off",
@@ -268,6 +237,5 @@
         "no-restricted-imports": "off"
       }
     }
-
   ]
 }

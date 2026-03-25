@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS cache_metadata (
     cache_type TEXT NOT NULL, -- 'query_result', 'image_thumbnail', 'computed_analytics', 'api_response'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at INTEGER DEFAULT (unixepoch() * 1000),
     access_count INTEGER DEFAULT 0,
     size_bytes INTEGER NOT NULL,
     ttl_seconds INTEGER, -- NULL means no expiration
