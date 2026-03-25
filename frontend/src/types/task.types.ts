@@ -46,12 +46,16 @@ export type TaskAssignmentCheckResponse = AssignmentCheckResponse;
 export type TaskAvailabilityCheckResponse = AvailabilityCheckResponse;
 
 /**
- * Task status change history entry - matches Rust TaskHistory model.
+ * Task status change history entry - transport-safe alias for the generated
+ * `TaskHistory` type in `@/lib/backend` (which uses `bigint` for `changed_at`).
  *
  * `changed_at` is typed as `number | string` rather than `bigint` because
  * Tauri serialises Rust i64 timestamps to JSON numbers.  The union with
  * `string` preserves compatibility with legacy ISO-string values already
  * stored in some records.
+ *
+ * UNUSED (generated): `TaskHistory` in `@/lib/backend` is not imported in any
+ * IPC file — verify with backend team if it should replace this alias.
  */
 export interface TaskHistoryEntry {
   id: string;

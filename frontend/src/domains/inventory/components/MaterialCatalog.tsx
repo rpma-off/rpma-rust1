@@ -208,7 +208,7 @@ export function MaterialCatalog() {
         width: 140,
         render: (_value: unknown, material: Material) => (
           <div className="text-foreground">
-            {formatCurrency(material.unit_cost, material.currency)}
+            {formatCurrency(material.unit_cost ?? undefined, material.currency)}
           </div>
         ),
       },
@@ -442,7 +442,7 @@ export function MaterialCatalog() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-foreground">{formatCurrency(material.unit_cost, material.currency)}</TableCell>
+                      <TableCell className="text-foreground">{formatCurrency(material.unit_cost ?? undefined, material.currency)}</TableCell>
                       <TableCell>
                         <Badge
                           variant={material.is_active ? 'default' : 'secondary'}
