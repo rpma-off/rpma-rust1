@@ -101,13 +101,7 @@ export function AdminUsersTab({
     <>
       <Card className="border-[hsl(var(--rpma-border))] bg-white">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-foreground">{t('admin.userManagement')}</CardTitle>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('users.createUser')}
-          </Button>
-        </div>
+        <CardTitle className="text-foreground">{t('admin.userManagement')}</CardTitle>
         <CardDescription className="text-muted-foreground">
           {t('users.title')}
         </CardDescription>

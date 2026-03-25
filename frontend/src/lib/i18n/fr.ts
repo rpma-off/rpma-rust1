@@ -699,6 +699,10 @@ export const fr = {
     userDetails: "Détails de l'utilisateur",
     newUser: "Nouvel utilisateur",
     allUsers: "Tous les utilisateurs",
+    generatePassword: "Générer",
+    passwordWarning: "Ce mot de passe ne sera affiché qu'une seule fois. Copiez-le maintenant.",
+    passwordPlaceholder: "Entrez un mot de passe ou générez-en un",
+    passwordRequirements: "Minimum 12 caractères, incluant majuscule, minuscule, chiffre et caractère spécial.",
     
     // Roles
     roleAdmin: "Administrateur",
