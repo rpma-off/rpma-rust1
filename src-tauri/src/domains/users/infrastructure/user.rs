@@ -262,6 +262,7 @@ mod tests {
     use super::*;
     use crate::domains::users::domain::models::user::{User as RepoUser, UserRole as RepoUserRole};
     use crate::shared::repositories::cache::Cache;
+    use crate::shared::repositories::factory::SessionRepository;
     use crate::test_utils::setup_test_db;
     use std::sync::Arc;
 
