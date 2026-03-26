@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Clock, FileText, FileUp } from "lucide-react";
 import { formatCents } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { QuoteStatusBadge } from "./QuoteStatusBadge";
-import { QuoteWorkflowPanel } from "./QuoteWorkflowPanel";
 import { formatDate } from "@/shared/utils/date-formatters";
 import type { Quote } from "@/types/quote.types";
+import { QuoteStatusBadge } from "./QuoteStatusBadge";
+import { QuoteWorkflowPanel } from "./QuoteWorkflowPanel";
 
 interface QuoteDetailsTabProps {
   quote: Quote;

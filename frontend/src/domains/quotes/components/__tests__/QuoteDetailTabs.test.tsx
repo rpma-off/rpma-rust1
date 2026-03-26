@@ -82,6 +82,8 @@ const baseQuote: Quote = {
   ],
 };
 
+const expectedTaskLinkText = `${baseQuote.task_id?.slice(0, 8)}...`;
+
 describe("QuoteItemsTab", () => {
   it("delegates add-item form and delete actions through props", () => {
     const onAddItem = jest.fn();
@@ -118,6 +120,48 @@ describe("QuoteItemsTab", () => {
     expect(onCancelAddItem).toHaveBeenCalled();
     expect(onDeleteItem).toHaveBeenCalledWith("item-1");
   });
+
+  it("truncates long delete labels for accessibility", () => {
+    const longLabel =
+      "Film de protection capot complet avec finition brillante premium";
+
+    render(
+      <QuoteItemsTab
+        quote={{
+          ...baseQuote,
+          items: [
+            {
+              ...baseQuote.items[0],
+              id: "item-long",
+              label: longLabel,
+            },
+          ],
+        }}
+        canEdit
+        showAddItem={false}
+        newLabel=""
+        newKind="service"
+        newQty={1}
+        newUnitPrice={0}
+        newDescription=""
+        onOpenAddItem={jest.fn()}
+        onCancelAddItem={jest.fn()}
+        onNewLabelChange={jest.fn()}
+        onNewKindChange={jest.fn()}
+        onNewQtyChange={jest.fn()}
+        onNewUnitPriceChange={jest.fn()}
+        onNewDescriptionChange={jest.fn()}
+        onAddItem={jest.fn()}
+        onDeleteItem={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: `Supprimer ${longLabel.slice(0, 37)}...`,
+      }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("QuoteDetailsTab", () => {
@@ -144,10 +188,9 @@ describe("QuoteDetailsTab", () => {
     );
 
     expect(screen.getByText("Informations générales")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /task-123/i })).toHaveAttribute(
-      "href",
-      "/tasks/task-12345678",
-    );
+    expect(
+      screen.getByRole("link", { name: expectedTaskLinkText }),
+    ).toHaveAttribute("href", "/tasks/task-12345678");
     expect(screen.getByText("Remember to inspect the roof.")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Open convert dialog/i }));

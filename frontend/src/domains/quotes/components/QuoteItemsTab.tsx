@@ -1,15 +1,15 @@
 "use client";
 
+import { FileText, Plus, Trash2 } from "lucide-react";
+import { formatCents } from "@/lib/format";
 import type { QuoteItemKind } from "@/shared/types";
 import type { Quote } from "@/types/quote.types";
-import { formatCents } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Plus, Trash2 } from "lucide-react";
 
 interface QuoteItemsTabProps {
   quote: Quote;
@@ -51,6 +51,9 @@ export function QuoteItemsTab({
   onDeleteItem,
 }: QuoteItemsTabProps) {
   const quoteItems = quote.items ?? [];
+
+  const getDeleteButtonLabel = (label: string) =>
+    label.length > 40 ? `${label.slice(0, 37)}...` : label;
 
   return (
     <Card>
@@ -206,7 +209,7 @@ export function QuoteItemsTab({
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`Supprimer ${item.label}`}
+                            aria-label={`Supprimer ${getDeleteButtonLabel(item.label)}`}
                             className="h-8 w-8 text-destructive hover:text-destructive"
                             onClick={() => onDeleteItem(item.id)}
                           >
