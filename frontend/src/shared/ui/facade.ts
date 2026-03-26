@@ -21,7 +21,7 @@ export { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 export { VirtualizedTable } from '@/components/ui/virtualized-table';
 export { FloatingActionButton, PullToRefresh } from '@/components/ui/mobile-components';
 export { Progress } from '@/components/ui/progress';
-export { PageHeader, StatCard } from '@/components/ui/page-header';
+export { PageHeader } from '@/components/ui/page-header';
 export { PageShell } from './layout/PageShell';
 export { LoadingState } from './layout/LoadingState';
 export { ErrorState } from './layout/ErrorState';

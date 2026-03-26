@@ -2,11 +2,11 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle, Users, FileText } from 'lucide-react';
+import { Plus, Search, SearchX, User, Building, ChevronDown, ArrowUpDown, AlertCircle } from 'lucide-react';
 import { ClientCardSkeleton } from '@/components/ui/skeleton';
 import { PullToRefresh, FloatingActionButton } from '@/components/ui/mobile-components';
 import { EmptyState } from '@/components/ui';
-import { PageHeader, StatCard } from '@/components/ui/page-header';
+import { PageHeader } from '@/components/ui/page-header';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { PageShell } from '@/shared/ui/layout/PageShell';
 import { ClientCard } from '@/domains/clients';
@@ -20,7 +20,6 @@ export default function ClientsPage() {
     clients,
     loading,
     error,
-    clientStats,
     searchQuery,
     uiFilters,
     isInitialLoading,
@@ -51,34 +50,7 @@ export default function ClientsPage() {
             <span className="font-medium">{t('clients.addClient')}</span>
           </Link>
         }
-        stats={
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard
-              value={clientStats.total}
-              label={t('clients.totalClients')}
-              icon={Users}
-              color="accent"
-            />
-            <StatCard
-              value={clientStats.withTasks}
-              label={t('clients.withTasks')}
-              icon={FileText}
-              color="green"
-            />
-            <StatCard
-              value={clientStats.individual}
-              label={t('clients.individual')}
-              icon={User}
-              color="blue"
-            />
-            <StatCard
-              value={clientStats.business}
-              label={t('clients.business')}
-              icon={Building}
-              color="purple"
-            />
-          </div>
-        }
+        
       />
 
       {/* Search and Filters */}

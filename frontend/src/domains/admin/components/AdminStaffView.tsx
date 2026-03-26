@@ -1,12 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Shield, Users, BarChart3, Server, UserCheck, Activity } from 'lucide-react';
+import { Shield, Users, BarChart3, Server } from 'lucide-react';
 import {
   ErrorState,
   PageHeader,
   PageShell,
-  StatCard,
   Tabs,
   TabsContent,
   TabsList,
@@ -66,19 +65,6 @@ export function AdminStaffView() {
         title={t('nav.employeesResources')}
         subtitle={t('admin.systemSettings')}
         icon={<Shield className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
-        stats={
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard value={stats.totalUsers} label={t('users.title')} icon={Users} color="accent" />
-            <StatCard value={stats.activeUsers} label={t('users.active')} icon={UserCheck} color="green" />
-            <StatCard value={stats.totalTasks} label={t('tasks.title')} icon={BarChart3} color="blue" />
-            <StatCard
-              value={stats.systemHealth === 'healthy' ? '✓' : '⚠'}
-              label={t('admin.systemHealth')}
-              icon={Activity}
-              color={stats.systemHealth === 'healthy' ? 'green' : 'yellow'}
-            />
-          </div>
-        }
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

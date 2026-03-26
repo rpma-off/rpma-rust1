@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Users, UserCheck, Search } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { useTranslation } from '@/shared/hooks';
 import {
   ErrorState,
   LoadingState,
   PageHeader,
   PageShell,
-  StatCard,
   Input,
 } from '@/shared/ui/facade';
 import { useUsersPage } from '@/domains/users';
@@ -38,13 +37,6 @@ export function StaffDirectoryView() {
     });
   }, [users, roleFilter, statusFilter, searchQuery]);
 
-  const stats = useMemo(() => ({
-    total: users.length,
-    active: users.filter(u => u.is_active).length,
-    inactive: users.filter(u => !u.is_active).length,
-    technicians: users.filter(u => u.role === 'technician').length,
-  }), [users]);
-
   if (loading) {
     return (
       <PageShell>
@@ -67,14 +59,6 @@ export function StaffDirectoryView() {
         title={t('nav.employeesResources')}
         subtitle={t('staff.directory')}
         icon={<Users className="w-6 h-6 text-[hsl(var(--rpma-teal))]" />}
-        stats={
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <StatCard value={stats.total} label={t('staff.total')} icon={Users} color="accent" />
-            <StatCard value={stats.active} label={t('staff.active')} icon={UserCheck} color="green" />
-            <StatCard value={stats.inactive} label={t('staff.inactive')} icon={Users} color="red" />
-            <StatCard value={stats.technicians} label={t('staff.technicians')} icon={Users} color="blue" />
-          </div>
-        }
       />
 
       <div className="flex items-center justify-between mb-6 gap-4">
