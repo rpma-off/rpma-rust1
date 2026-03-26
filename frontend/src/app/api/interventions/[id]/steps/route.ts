@@ -1,21 +1,21 @@
-﻿ /**
+/**
  * API Route: GET /api/interventions/[id]/steps
- * Rï¿½cupï¿½re les ï¿½tapes d'une intervention PPF
+ * Récupère les étapes d'une intervention PPF
  * @version 2.0
  * @date 2025-01-20
  */
 
- import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { interventionWorkflowService } from '@/domains/interventions/server';
 
- export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 
 
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // 1. Validation des paramï¿½tres de route
+    // 1. Validation des paramètres de route
     const interventionId = (await params).id;
     if (!interventionId) {
       return NextResponse.json(
@@ -24,13 +24,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 2. Validation de l'autorisation (optionnelle pour contourner les problï¿½mes de cookies)
+    // 2. Validation de l'autorisation (optionnelle pour contourner les problèmes de cookies)
     const authHeader = request.headers.get('authorization');
     console.info('[API] interventions/[id]/steps - Auth check:', { hasAuthHeader: !!authHeader });
 
     const _sessionToken = authHeader ? authHeader.replace('Bearer ', '') : '';
 
-    // 3. Appel du service mï¿½tier pour rï¿½cupï¿½rer les ï¿½tapes
+    // 3. Appel du service métier pour récupérer les étapes
     const result = await interventionWorkflowService.getInterventionSteps(interventionId);
 
     if (!result.success) {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // 4. Retour de la rï¿½ponse de succï¿½s
+    // 4. Retour de la réponse de succès
     return NextResponse.json(
       {
         success: true,
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// Gestion des autres mï¿½thodes HTTP
+// Gestion des autres méthodes HTTP
 export async function POST() {
   return NextResponse.json(
     { error: 'Method not allowed' },
@@ -86,5 +86,3 @@ export async function DELETE() {
     { status: 405 }
   );
 }
-
-

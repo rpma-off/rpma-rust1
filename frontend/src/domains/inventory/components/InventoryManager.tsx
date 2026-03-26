@@ -181,7 +181,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
     },
     {
       key: 'unit_cost',
-      header: 'CoÃ»t unitaire',
+      header: 'Coût unitaire',
       render: (_value: unknown, material: Material) => (
         <div>
           {material.unit_cost ? (
@@ -362,7 +362,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {lowStockMaterials.length} matériau(x) sont en stock faible. 
-            Pensez Ã  recommander prochainement pour éviter les ruptures.
+Pensez à recommander prochainement pour éviter les ruptures.
           </AlertDescription>
         </Alert>
       )}
@@ -478,7 +478,7 @@ export function InventoryManager({ className }: InventoryManagerProps) {
               <p className="text-muted-foreground mb-4">
                 {searchTerm || selectedType || selectedCategory
                   ? 'Essayez de modifier vos filtres ou termes de recherche.'
-                  : 'Commencez par ajouter votre premier matériau Ã  l\'inventaire.'
+: 'Commencez par ajouter votre premier matériau à l\'inventaire.'
                 }
               </p>
               {!searchTerm && !selectedType && !selectedCategory && (
