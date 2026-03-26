@@ -9,61 +9,12 @@ mod harness;
 
 use harness::app::TestApp;
 use harness::fixtures;
-use rpma_ppf_intervention::commands::client::{client_crud, ClientCrudRequest};
-use rpma_ppf_intervention::commands::ClientAction;
-use rpma_ppf_intervention::domains::clients::client_handler::{CreateClientRequest, CustomerType};
+use rpma_ppf_intervention::domains::clients::domain::models::{CreateClientRequest, CustomerType};
 use rpma_ppf_intervention::shared::auth_middleware::AuthMiddleware;
 use rpma_ppf_intervention::shared::context::session_resolver::resolve_request_context;
 use rpma_ppf_intervention::shared::contracts::auth::UserRole;
 use rpma_ppf_intervention::shared::ipc::errors::AppError;
 use rusqlite::params;
-
-// ── Structural tests (preserved from Phase 3) ─────────────────────────────────
-
-#[tokio::test]
-async fn test_client_crud_signature() {
-    // Verify that the function exists with the expected two-argument signature.
-    let _ = client_crud as fn(_, _) -> _;
-}
-
-#[tokio::test]
-async fn test_client_crud_request_structure() {
-    // Verify that the request envelope round-trips the command contract intact.
-    let req = ClientCrudRequest {
-        action: ClientAction::Create {
-            data: CreateClientRequest {
-                name: "Test Customer".to_string(),
-                email: Some("test@example.com".to_string()),
-                phone: Some("+1234567890".to_string()),
-                customer_type: CustomerType::Business,
-                address_street: Some("123 Main St".to_string()),
-                address_city: Some("Test City".to_string()),
-                address_state: Some("TS".to_string()),
-                address_zip: Some("12345".to_string()),
-                address_country: Some("Test".to_string()),
-                tax_id: None,
-                company_name: Some("Test Company".to_string()),
-                contact_person: Some("John Doe".to_string()),
-                notes: None,
-                tags: None,
-            },
-        },
-        correlation_id: Some("test-correlation-id".to_string()),
-    };
-
-    match req.action {
-        ClientAction::Create { data } => {
-            assert_eq!(data.name, "Test Customer");
-            assert_eq!(data.email.as_deref(), Some("test@example.com"));
-            assert_eq!(data.phone.as_deref(), Some("+1234567890"));
-            assert_eq!(data.customer_type, CustomerType::Business);
-            assert_eq!(data.company_name.as_deref(), Some("Test Company"));
-            assert_eq!(data.contact_person.as_deref(), Some("John Doe"));
-        }
-        _ => panic!("Expected ClientAction::Create"),
-    }
-    assert_eq!(req.correlation_id.as_deref(), Some("test-correlation-id"));
-}
 
 // ── 1. Service-layer tests ────────────────────────────────────────────────────
 

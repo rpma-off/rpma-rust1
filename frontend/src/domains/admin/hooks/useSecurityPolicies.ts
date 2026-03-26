@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { adminKeys } from "@/lib/query-keys";
 import { SecurityPolicy } from "@/shared/types";
 import { settingsOperations } from "@/shared/utils";
-import { adminKeys } from "@/lib/query-keys";
 import type { JsonValue } from "@/shared/types";
 
 export function useSecurityPolicies() {

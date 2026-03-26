@@ -168,6 +168,11 @@ export const adminKeys = {
   /** System-level configurations (AdminConfiguration[]) */
   configuration: (category?: string) =>
     [...adminKeys.all, "configuration", category ?? ""] as const,
+  /** Activity audit logs with filters */
+  activityAudit: (filters?: unknown) =>
+    [...adminKeys.all, "activity", filters ?? {}] as const,
+  /** Available event types for filtering */
+  eventTypes: () => [...adminKeys.all, "event-types"] as const,
 };
 
 /** System / health-check query keys */

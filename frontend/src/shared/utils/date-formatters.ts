@@ -9,17 +9,17 @@
 
 export type DateInput = string | Date | number | null | undefined;
 
-const LOCALE = 'fr-FR';
-const DEFAULT_EMPTY = '—';
+const LOCALE = "fr-FR";
+const DEFAULT_EMPTY = "—";
 
 /** Convert any DateInput to a valid Date, or null on failure. */
 function toDate(value: DateInput): Date | null {
-  if (value === null || value === undefined || value === '') return null;
+  if (value === null || value === undefined || value === "") return null;
   try {
     const d =
       value instanceof Date
         ? value
-        : new Date(typeof value === 'number' ? value : String(value));
+        : new Date(typeof value === "number" ? value : String(value));
     return isNaN(d.getTime()) ? null : d;
   } catch {
     return null;
@@ -37,9 +37,9 @@ export function formatDate(
   const d = toDate(date);
   if (!d) return fallback;
   return d.toLocaleDateString(LOCALE, {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   });
 }
 
@@ -54,11 +54,11 @@ export function formatDateTime(
   const d = toDate(date);
   if (!d) return fallback;
   return d.toLocaleString(LOCALE, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -73,10 +73,10 @@ export function formatDateTimeShort(
   const d = toDate(date);
   if (!d) return fallback;
   return d.toLocaleString(LOCALE, {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -91,11 +91,11 @@ export function formatDateTimeCompact(
   const d = toDate(date);
   if (!d) return fallback;
   return d.toLocaleDateString(LOCALE, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -106,14 +106,14 @@ export function formatDateTimeCompact(
  */
 export function formatTime(
   time: DateInput,
-  fallback: string = 'Non défini',
+  fallback: string = "Non défini",
 ): string {
   const d = toDate(time);
   if (!d) return fallback;
   try {
-    return d.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
   } catch {
-    return 'Heure invalide';
+    return "Heure invalide";
   }
 }
 
@@ -128,18 +128,27 @@ export function formatRelativeDate(
   const date = toDate(dateString);
   if (!date) return fallback;
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  const utcDate = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
 
-  if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
-  if (date.toDateString() === tomorrow.toDateString()) return 'Demain';
+  const now = new Date();
+  const utcToday = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  );
+
+  const utcTomorrow = new Date(utcToday);
+  utcTomorrow.setUTCDate(utcToday.getUTCDate() + 1);
+
+  if (utcDate.getTime() === utcToday.getTime()) return "Aujourd'hui";
+  if (utcDate.getTime() === utcTomorrow.getTime()) return "Demain";
 
   return new Intl.DateTimeFormat(LOCALE, {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  }).format(date);
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(utcDate);
 }
 
 /**
@@ -153,9 +162,9 @@ export function formatDateLong(
   const d = toDate(date);
   if (!d) return fallback;
   return new Intl.DateTimeFormat(LOCALE, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   }).format(d);
 }

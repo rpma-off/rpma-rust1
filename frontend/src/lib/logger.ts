@@ -102,6 +102,12 @@ class Logger {
           return;
         }
 
+        // Filter out Next.js internal control-flow errors
+        if (event.message && (event.message.includes('NEXT_REDIRECT') || event.message.includes('NEXT_NOT_FOUND'))) {
+          // Do not prevent default, let Next.js handle it, just don't log it as an error
+          return;
+        }
+
         this.error(LogContext.SYSTEM, 'Uncaught error', {
           message: event.message,
           filename: event.filename,
@@ -112,6 +118,13 @@ class Logger {
       });
 
       window.addEventListener('unhandledrejection', (event) => {
+        // Filter out Next.js internal control-flow errors in promises
+        const reason = event.reason;
+        if (reason && (reason.digest?.startsWith('NEXT_REDIRECT') || reason.digest?.startsWith('NEXT_NOT_FOUND') || 
+            (typeof reason.message === 'string' && (reason.message.includes('NEXT_REDIRECT') || reason.message.includes('NEXT_NOT_FOUND'))))) {
+          return;
+        }
+
         this.error(LogContext.SYSTEM, 'Unhandled promise rejection', {
           reason: event.reason,
           promise: event.promise
@@ -326,42 +339,44 @@ class Logger {
   info(context: LogContext, message: string, metadata?: LogMetadata): void;
   info(message: string, data?: unknown, context?: LogMetadata): void;
   info(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    if (typeof contextOrMessage === 'string') {
-      // info(message, data?, context?)
-      this.log(LogLevel.INFO, LogContext.SYSTEM, contextOrMessage, messageOrData, metadataOrContext);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    if (isContext) {
+      this.log(LogLevel.INFO, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
-      // info(context, message, metadata?)
-      this.log(LogLevel.INFO, contextOrMessage, messageOrData as string, undefined, metadataOrContext);
+      this.log(LogLevel.INFO, LogContext.SYSTEM, contextOrMessage as string, messageOrData, metadataOrContext);
     }
   }
 
   error(context: LogContext, message: string, metadata?: LogMetadata): void;
   error(message: string, error?: unknown, context?: LogMetadata): void;
   error(contextOrMessage: LogContext | string, messageOrError?: string | unknown, metadataOrContext?: LogMetadata): void {
-    if (typeof contextOrMessage === 'string') {
-      this.log(LogLevel.ERROR, LogContext.SYSTEM, contextOrMessage, messageOrError, metadataOrContext);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrError === 'string' || messageOrError === undefined);
+    if (isContext) {
+      this.log(LogLevel.ERROR, contextOrMessage as LogContext, messageOrError as string, undefined, metadataOrContext);
     } else {
-      this.log(LogLevel.ERROR, contextOrMessage, messageOrError as string, undefined, metadataOrContext);
+      this.log(LogLevel.ERROR, LogContext.SYSTEM, contextOrMessage as string, messageOrError, metadataOrContext);
     }
   }
 
   warn(context: LogContext, message: string, metadata?: LogMetadata): void;
   warn(message: string, data?: unknown, context?: LogMetadata): void;
   warn(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    if (typeof contextOrMessage === 'string') {
-      this.log(LogLevel.WARN, LogContext.SYSTEM, contextOrMessage, messageOrData, metadataOrContext);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    if (isContext) {
+      this.log(LogLevel.WARN, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
-      this.log(LogLevel.WARN, contextOrMessage, messageOrData as string, undefined, metadataOrContext);
+      this.log(LogLevel.WARN, LogContext.SYSTEM, contextOrMessage as string, messageOrData, metadataOrContext);
     }
   }
 
   debug(context: LogContext, message: string, metadata?: LogMetadata): void;
   debug(message: string, data?: unknown, context?: LogMetadata): void;
   debug(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    if (typeof contextOrMessage === 'string') {
-      this.log(LogLevel.DEBUG, LogContext.SYSTEM, contextOrMessage, messageOrData, metadataOrContext);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    if (isContext) {
+      this.log(LogLevel.DEBUG, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
-      this.log(LogLevel.DEBUG, contextOrMessage, messageOrData as string, undefined, metadataOrContext);
+      this.log(LogLevel.DEBUG, LogContext.SYSTEM, contextOrMessage as string, messageOrData, metadataOrContext);
     }
   }
 

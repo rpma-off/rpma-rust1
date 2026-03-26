@@ -71,9 +71,14 @@ export function useSecurityDashboard() {
 
   const metrics =
     (metricsQuery.data as unknown as SecurityMetrics | null) ?? null;
-  const alerts = (alertsQuery.data as unknown as SecurityAlert[]) ?? [];
-  const sessions =
-    (sessionsQuery.data as unknown as ActiveSecuritySession[]) ?? [];
+  const alerts = useMemo(
+    () => (alertsQuery.data as unknown as SecurityAlert[]) ?? [],
+    [alertsQuery.data],
+  );
+  const sessions = useMemo(
+    () => (sessionsQuery.data as unknown as ActiveSecuritySession[]) ?? [],
+    [sessionsQuery.data],
+  );
 
   const refresh = useCallback(async () => {
     await Promise.all([

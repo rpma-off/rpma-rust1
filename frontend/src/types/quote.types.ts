@@ -180,7 +180,6 @@ export interface CreateQuoteRequest {
   client_id: string;
   task_id?: string | null;
   valid_until?: number | null;
-  description?: string | null;
   notes?: string | null;
   terms?: string | null;
   vehicle_plate?: string | null;
@@ -188,7 +187,7 @@ export interface CreateQuoteRequest {
   vehicle_model?: string | null;
   vehicle_year?: string | null;
   vehicle_vin?: string | null;
-  discount_type?: "none" | "percentage" | "fixed" | string | null;
+  discount_type?: string | null;
   discount_value?: number | null;
   items?: CreateQuoteItemRequest[];
 }

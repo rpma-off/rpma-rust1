@@ -1,24 +1,26 @@
 import { safeInvoke, invalidatePattern } from '@/lib/ipc/core';
 import { IPC_COMMANDS } from '@/lib/ipc/commands';
 import { signalMutation } from '@/lib/data-freshness';
+import { runWithMutationEffects } from '@/lib/ipc/utils';
 import { validateQuote, validateQuoteList, validateQuoteAcceptResponse } from '@/lib/validation/backend-type-guards';
-import type { Quote, QuoteListResponse, QuoteAcceptResponse } from '@/types/quote.types';
 import type { QuoteStats } from '@/lib/backend';
+import type { Quote, QuoteListResponse, QuoteAcceptResponse } from '@/types/quote.types';
 import type { JsonObject, JsonValue } from '@/types/json';
+
+const quoteMutationEffects = {
+  invalidate: ['quote:'],
+  signal: ['quotes'],
+} as const;
 
 export const quotesIpc = {
   getStats: async (): Promise<QuoteStats> => {
     return safeInvoke<QuoteStats>(IPC_COMMANDS.QUOTE_GET_STATS, { request: {} });
   },
 
-  create: async (data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_CREATE, {
+  create: async (data: JsonObject): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_CREATE, {
       request: { data }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
   get: async (id: string): Promise<Quote | null> => {
     const result = await safeInvoke<JsonValue>(IPC_COMMANDS.QUOTE_GET, {
@@ -49,112 +51,65 @@ export const quotesIpc = {
     }, validateQuoteList);
   },
 
-  update: async (id: string, data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_UPDATE, {
+  update: async (id: string, data: JsonObject): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_UPDATE, {
       request: { id, data }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  delete: async (id: string): Promise<void> => {
-    await safeInvoke<void>(IPC_COMMANDS.QUOTE_DELETE, {
+  delete: async (id: string): Promise<void> =>
+    runWithMutationEffects(() => safeInvoke<void>(IPC_COMMANDS.QUOTE_DELETE, {
       request: { id }
-    });
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-  },
+    }), quoteMutationEffects),
 
-  addItem: async (quoteId: string, item: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_ADD, {
+  addItem: async (quoteId: string, item: JsonObject): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_ADD, {
       request: { quote_id: quoteId, item }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  updateItem: async (quoteId: string, itemId: string, data: JsonObject): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_UPDATE, {
+  updateItem: async (quoteId: string, itemId: string, data: JsonObject): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_UPDATE, {
       request: { quote_id: quoteId, item_id: itemId, data }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  deleteItem: async (quoteId: string, itemId: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_DELETE, {
+  deleteItem: async (quoteId: string, itemId: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_ITEM_DELETE, {
       request: { quote_id: quoteId, item_id: itemId }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  markSent: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_SENT, {
+  markSent: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_SENT, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  markAccepted: async (id: string): Promise<QuoteAcceptResponse> => {
-    const result = await safeInvoke<QuoteAcceptResponse>(IPC_COMMANDS.QUOTE_MARK_ACCEPTED, {
+  markAccepted: async (id: string): Promise<QuoteAcceptResponse> =>
+    runWithMutationEffects(() => safeInvoke<QuoteAcceptResponse>(IPC_COMMANDS.QUOTE_MARK_ACCEPTED, {
       request: { id }
-    }, validateQuoteAcceptResponse);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuoteAcceptResponse), quoteMutationEffects),
 
-  markRejected: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_REJECTED, {
+  markRejected: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_REJECTED, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  markExpired: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_EXPIRED, {
+  markExpired: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_EXPIRED, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  markChangesRequested: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_CHANGES_REQUESTED, {
+  markChangesRequested: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_MARK_CHANGES_REQUESTED, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  reopen: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_REOPEN, {
+  reopen: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_REOPEN, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
-  duplicate: async (id: string): Promise<Quote> => {
-    const result = await safeInvoke<Quote>(IPC_COMMANDS.QUOTE_DUPLICATE, {
+  duplicate: async (id: string): Promise<Quote> =>
+    runWithMutationEffects(() => safeInvoke<Quote>(IPC_COMMANDS.QUOTE_DUPLICATE, {
       request: { id }
-    }, validateQuote);
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }, validateQuote), quoteMutationEffects),
 
   exportPdf: async (id: string) => {
     return safeInvoke(IPC_COMMANDS.QUOTE_EXPORT_PDF, {
@@ -168,32 +123,20 @@ export const quotesIpc = {
     });
   },
 
-  createAttachment: async (quoteId: string, data: JsonObject) => {
-    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_CREATE, {
+  createAttachment: async (quoteId: string, data: JsonObject) =>
+    runWithMutationEffects(() => safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_CREATE, {
       request: { quote_id: quoteId, data }
-    });
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }), quoteMutationEffects),
 
-  updateAttachment: async (quoteId: string, attachmentId: string, data: JsonObject) => {
-    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_UPDATE, {
+  updateAttachment: async (quoteId: string, attachmentId: string, data: JsonObject) =>
+    runWithMutationEffects(() => safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_UPDATE, {
       request: { quote_id: quoteId, attachment_id: attachmentId, data }
-    });
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }), quoteMutationEffects),
 
-  deleteAttachment: async (quoteId: string, attachmentId: string) => {
-    const result = await safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_DELETE, {
+  deleteAttachment: async (quoteId: string, attachmentId: string) =>
+    runWithMutationEffects(() => safeInvoke(IPC_COMMANDS.QUOTE_ATTACHMENT_DELETE, {
       request: { quote_id: quoteId, attachment_id: attachmentId }
-    });
-    invalidatePattern('quote:');
-    signalMutation('quotes');
-    return result;
-  },
+    }), quoteMutationEffects),
 
   convertToTask: async (
     quoteId: string,

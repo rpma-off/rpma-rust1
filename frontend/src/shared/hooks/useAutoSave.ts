@@ -116,7 +116,7 @@ export function useAutoSave<T>(
       }, delay);
     }
 
-    // Mettre Ã  jour la référence des données précédentes
+// Mettre à jour la référence des données précédentes
     previousDataRef.current = data;
 
   }, [data, delay, enabled, immediate, performSave]);

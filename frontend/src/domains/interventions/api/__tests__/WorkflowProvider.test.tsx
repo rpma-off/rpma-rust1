@@ -7,13 +7,13 @@
  *
  * Business logic inside the provider is tested via integration / E2E tests.
  */
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { useWorkflow } from '../WorkflowProvider';
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { useWorkflow } from "../WorkflowProvider";
 
 // Silence console output produced by the error boundary in these tests.
 beforeEach(() => {
-  jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  jest.spyOn(console, "error").mockImplementation(() => undefined);
 });
 afterEach(() => {
   jest.restoreAllMocks();
@@ -49,16 +49,18 @@ class ErrorBoundary extends React.Component<
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe('useWorkflow', () => {
-  it('throws a descriptive error when used outside WorkflowProvider', () => {
+describe("useWorkflow", () => {
+  it("throws a descriptive error when used outside WorkflowProvider", () => {
     render(
       <ErrorBoundary>
         <WorkflowConsumer />
       </ErrorBoundary>,
     );
 
-    const errorEl = screen.getByTestId('error');
-    expect(errorEl.textContent).toMatch(/useWorkflow must be used within a WorkflowProvider/i);
-    expect(screen.queryByTestId('ok')).toBeNull();
+    const errorEl = screen.getByTestId("error");
+    expect(errorEl.textContent).toMatch(
+      /useWorkflow must be used within a WorkflowProvider/i,
+    );
+    expect(screen.queryByTestId("ok")).toBeNull();
   });
 });

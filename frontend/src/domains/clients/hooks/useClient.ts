@@ -2,8 +2,8 @@ import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { Client } from "@/lib/backend";
 import { LogDomain } from "@/lib/logging/types";
-import { useLogger } from "@/shared/hooks/useLogger";
 import { clientKeys } from "@/lib/query-keys";
+import { useLogger } from "@/shared/hooks/useLogger";
 import { useAuth } from "@/shared/hooks/useAuth";
 import { clientService } from "../services";
 

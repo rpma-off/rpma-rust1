@@ -5,6 +5,7 @@ import { getSessionToken } from '@/shared/contracts/session';
 import { logger } from '../logging';
 import { LogDomain, CorrelationContext } from '../logging/types';
 import { recordMetric } from './metrics';
+export { applyMutationEffects, runWithMutationEffects } from './utils/mutation-effects';
 
 /**
  * IPC commands that do not require an authenticated backend session.

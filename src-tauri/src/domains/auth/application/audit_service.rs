@@ -85,6 +85,49 @@ pub struct SecurityAlert {
     pub resolved: bool,
 }
 
+/// User activity record for the audit page.
+/// ADR-012: timestamp is i64 (milliseconds).
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
+pub struct UserActivityRecord {
+    pub id: String,
+    pub user_id: String,
+    pub username: String,
+    pub event_type: String,
+    pub action: String,
+    pub resource_type: Option<String>,
+    pub resource_id: Option<String>,
+    pub description: String,
+    pub result: String,
+    #[ts(type = "number")]
+    pub timestamp: i64,
+    pub ip_address: Option<String>,
+}
+
+/// Filter parameters for activity queries.
+#[derive(Debug, serde::Deserialize, TS)]
+#[ts(export)]
+pub struct AuditActivityFilter {
+    pub user_id: Option<String>,
+    pub event_type: Option<String>,
+    pub resource_type: Option<String>,
+    #[ts(optional, type = "number")]
+    pub start_date: Option<i64>,
+    #[ts(optional, type = "number")]
+    pub end_date: Option<i64>,
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
+}
+
+/// Paginated response for activity queries.
+#[derive(Debug, Serialize, TS)]
+#[ts(export)]
+pub struct PaginatedUserActivity {
+    pub records: Vec<UserActivityRecord>,
+    pub total: i32,
+    pub has_more: bool,
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 /// Application service that surfaces security audit data to the IPC layer.
@@ -174,5 +217,109 @@ impl AuditService {
             .collect();
 
         Ok(alerts)
+    }
+
+    /// Return paginated activity logs across all users with optional filters.
+    #[instrument(skip(self))]
+    pub fn get_all_activity(
+        &self,
+        filter: AuditActivityFilter,
+    ) -> Result<PaginatedUserActivity, String> {
+        let limit = filter.limit.unwrap_or(50);
+        let offset = filter.offset.unwrap_or(0);
+
+        let (rows, total) = self.repo.get_activity_logs(
+            filter.user_id,
+            filter.event_type,
+            filter.resource_type,
+            filter.start_date,
+            filter.end_date,
+            limit,
+            offset,
+        )?;
+
+        let records = rows
+            .into_iter()
+            .map(|r| UserActivityRecord {
+                id: r.id,
+                user_id: r.user_id,
+                username: r.username,
+                event_type: r.event_type,
+                action: r.action,
+                resource_type: r.resource_type,
+                resource_id: r.resource_id,
+                description: r.description,
+                result: r.result,
+                timestamp: r.timestamp_ms,
+                ip_address: r.ip_address,
+            })
+            .collect();
+
+        Ok(PaginatedUserActivity {
+            records,
+            total,
+            has_more: offset + limit < total,
+        })
+    }
+
+    /// Return available event types for activity audit filtering.
+    pub fn get_audit_event_types(&self) -> Vec<String> {
+        vec![
+            "AuthenticationSuccess".to_string(),
+            "AuthenticationFailure".to_string(),
+            "AuthorizationGranted".to_string(),
+            "AuthorizationDenied".to_string(),
+            "SessionCreated".to_string(),
+            "SessionExpired".to_string(),
+            "SessionInvalidated".to_string(),
+            "PasswordChanged".to_string(),
+            "PasswordResetRequested".to_string(),
+            "PasswordResetCompleted".to_string(),
+            "DataRead".to_string(),
+            "DataCreated".to_string(),
+            "DataUpdated".to_string(),
+            "DataDeleted".to_string(),
+            "DataExported".to_string(),
+            "DataImported".to_string(),
+            "TaskCreated".to_string(),
+            "TaskUpdated".to_string(),
+            "TaskDeleted".to_string(),
+            "TaskAssigned".to_string(),
+            "TaskCompleted".to_string(),
+            "TaskCancelled".to_string(),
+            "TaskStatusChanged".to_string(),
+            "ClientCreated".to_string(),
+            "ClientUpdated".to_string(),
+            "ClientDeleted".to_string(),
+            "ClientContactChanged".to_string(),
+            "InterventionCreated".to_string(),
+            "InterventionUpdated".to_string(),
+            "InterventionStarted".to_string(),
+            "InterventionCompleted".to_string(),
+            "InterventionStepCompleted".to_string(),
+            "InterventionWorkflowChanged".to_string(),
+            "SystemStartup".to_string(),
+            "SystemShutdown".to_string(),
+            "BackupStarted".to_string(),
+            "BackupCompleted".to_string(),
+            "BackupFailed".to_string(),
+            "MaintenanceStarted".to_string(),
+            "MaintenanceCompleted".to_string(),
+            "SecurityViolation".to_string(),
+            "SuspiciousActivity".to_string(),
+            "RateLimitExceeded".to_string(),
+            "BruteForceAttempt".to_string(),
+            "SqlInjectionAttempt".to_string(),
+            "XssAttempt".to_string(),
+            "PathTraversalAttempt".to_string(),
+            "SystemError".to_string(),
+            "DatabaseError".to_string(),
+            "NetworkError".to_string(),
+            "ValidationError".to_string(),
+            "ConfigurationChanged".to_string(),
+            "SettingUpdated".to_string(),
+            "RoleChanged".to_string(),
+            "PermissionChanged".to_string(),
+        ]
     }
 }

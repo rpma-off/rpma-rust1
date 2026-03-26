@@ -3,11 +3,12 @@ use std::sync::Arc;
 use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowResponse, StartInterventionRequest,
 };
-use crate::domains::interventions::domain::models::intervention::Intervention;
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionProgress};
+use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
 use crate::domains::interventions::infrastructure::intervention_types::{
-    AdvanceStepRequest, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
-    SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
+    AdvanceStepRequest, AdvanceStepResponse, FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
+    FinalizeInterventionResponse, SaveStepProgressRequest, StartInterventionRequest as ServiceStartInterventionRequest,
     UpdateInterventionRequest,
 };
 use crate::shared::context::RequestContext;
@@ -18,100 +19,6 @@ use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::event_bus::publish_event;
 use crate::shared::ipc::errors::AppError;
 use chrono::Utc;
-
-/// TODO: document
-#[derive(Debug)]
-pub enum InterventionsCommand {
-    Get {
-        intervention_id: String,
-    },
-    GetActiveByTask {
-        task_id: String,
-    },
-    GetLatestByTask {
-        task_id: String,
-    },
-    GetStep {
-        intervention_id: String,
-        step_id: String,
-    },
-    GetProgress {
-        intervention_id: String,
-    },
-    GetProgressWithSteps {
-        intervention_id: String,
-    },
-    AdvanceStep {
-        intervention_id: String,
-        step_id: String,
-        collected_data: serde_json::Value,
-        photos: Option<Vec<String>>,
-        notes: Option<String>,
-        quality_check_passed: bool,
-        issues: Option<Vec<String>>,
-    },
-    SaveStepProgress {
-        step_id: String,
-        intervention_id: Option<String>,
-        collected_data: serde_json::Value,
-        notes: Option<String>,
-        photos: Option<Vec<String>>,
-    },
-    Start {
-        request: StartInterventionRequest,
-    },
-    Update {
-        id: String,
-        data: UpdateInterventionRequest,
-    },
-    Delete {
-        id: String,
-    },
-    Finalize {
-        request: FinalizeInterventionRequest,
-    },
-    WorkflowStart {
-        request: StartInterventionRequest,
-    },
-    WorkflowGet {
-        id: String,
-    },
-    WorkflowGetActiveByTask {
-        task_id: String,
-    },
-    WorkflowUpdate {
-        id: String,
-        data: UpdateInterventionRequest,
-    },
-    WorkflowDelete {
-        id: String,
-    },
-    WorkflowFinalize {
-        request: FinalizeInterventionRequest,
-    },
-}
-
-/// TODO: document
-pub enum InterventionsResponse {
-    Intervention(Intervention),
-    InterventionList(Vec<Intervention>),
-    OptionalIntervention(Option<Intervention>),
-    Step(crate::domains::interventions::domain::models::step::InterventionStep),
-    Progress(crate::domains::interventions::domain::models::intervention::InterventionProgress),
-    ProgressWithSteps {
-        progress: crate::domains::interventions::domain::models::intervention::InterventionProgress,
-        steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
-    },
-    AdvancedStep(
-        crate::domains::interventions::infrastructure::intervention_types::AdvanceStepResponse,
-    ),
-    SavedStep(crate::domains::interventions::domain::models::step::InterventionStep),
-    Finalized(
-        crate::domains::interventions::infrastructure::intervention_types::FinalizeInterventionResponse,
-    ),
-    Workflow(InterventionWorkflowResponse),
-    Deleted,
-}
 
 /// Facade for the Interventions bounded context.
 ///
@@ -291,445 +198,512 @@ impl InterventionsFacade {
         }
     }
 
-    /// TODO: document
-    pub async fn execute(
+    pub async fn get(
         &self,
-        command: InterventionsCommand,
+        intervention_id: String,
+        ctx: &RequestContext,
+    ) -> Result<Intervention, AppError> {
+        self.validate_intervention_id(&intervention_id)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+        Ok(intervention)
+    }
+
+    pub async fn get_active_by_task(
+        &self,
+        task_id: String,
         ctx: &RequestContext,
         task_checker: &dyn TaskAssignmentChecker,
-    ) -> Result<InterventionsResponse, AppError> {
-        match command {
-            InterventionsCommand::Get { intervention_id } => {
-                self.validate_intervention_id(&intervention_id)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                    })?;
+    ) -> Result<Vec<Intervention>, AppError> {
+        self.validate_task_id(&task_id)?;
+        let task_access = task_checker
+            .check_task_assignment(&task_id, ctx.user_id())
+            .unwrap_or(false);
+        self.check_task_intervention_access(&ctx.auth.role, task_access)?;
 
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-                Ok(InterventionsResponse::Intervention(intervention))
-            }
-            InterventionsCommand::GetActiveByTask { task_id } => {
-                self.validate_task_id(&task_id)?;
-                let task_access = task_checker
-                    .check_task_assignment(&task_id, ctx.user_id())
-                    .unwrap_or(false);
-                self.check_task_intervention_access(&ctx.auth.role, task_access)?;
-
-                let payload = match self
-                    .intervention_service
-                    .get_active_intervention_by_task(&task_id)
-                {
-                    Ok(Some(intervention)) => vec![intervention],
-                    Ok(None) => vec![],
-                    Err(_) => {
-                        return Err(AppError::Database(
-                            "Failed to get active interventions".to_string(),
-                        ))
-                    }
-                };
-                Ok(InterventionsResponse::InterventionList(payload))
-            }
-            InterventionsCommand::GetLatestByTask { task_id } => {
-                self.validate_task_id(&task_id)?;
-                let task_access = task_checker
-                    .check_task_assignment(&task_id, ctx.user_id())
-                    .unwrap_or(false);
-                self.check_task_intervention_access(&ctx.auth.role, task_access)?;
-                let intervention = self
-                    .intervention_service
-                    .get_latest_intervention_by_task(&task_id)
-                    .map_err(|_| {
-                        AppError::Database("Failed to get latest intervention".to_string())
-                    })?;
-                Ok(InterventionsResponse::OptionalIntervention(intervention))
-            }
-            InterventionsCommand::GetStep {
-                intervention_id,
-                step_id,
-            } => {
-                self.validate_intervention_id(&intervention_id)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                    })?;
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-                let step = self
-                    .intervention_service
-                    .get_step(&step_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention step".to_string()))?
-                    .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
-                Ok(InterventionsResponse::Step(step))
-            }
-            InterventionsCommand::GetProgress { intervention_id } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.validate_intervention_id(&intervention_id)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                    })?;
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-                let progress = self
-                    .intervention_service
-                    .get_progress(&intervention_id)
-                    .map_err(|_| {
-                        AppError::Database("Failed to get intervention progress".to_string())
-                    })?;
-                Ok(InterventionsResponse::Progress(progress))
-            }
-            InterventionsCommand::GetProgressWithSteps { intervention_id } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.validate_intervention_id(&intervention_id)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                    })?;
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-                let progress = self
-                    .intervention_service
-                    .get_progress(&intervention_id)
-                    .map_err(|_| {
-                        AppError::Database("Failed to get intervention progress".to_string())
-                    })?;
-                let steps = self
-                    .intervention_service
-                    .get_intervention_steps(&intervention_id)
-                    .map_err(|_| {
-                        AppError::Database("Failed to get intervention steps".to_string())
-                    })?;
-                Ok(InterventionsResponse::ProgressWithSteps { progress, steps })
-            }
-            InterventionsCommand::AdvanceStep {
-                intervention_id,
-                step_id,
-                collected_data,
-                photos,
-                notes,
-                quality_check_passed,
-                issues,
-            } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.validate_intervention_id(&intervention_id)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!("Intervention {} not found", intervention_id))
-                    })?;
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-                let response = self
-                    .intervention_service
-                    .advance_step(
-                        AdvanceStepRequest {
-                            intervention_id,
-                            step_id,
-                            collected_data,
-                            photos,
-                            notes,
-                            quality_check_passed,
-                            issues,
-                        },
-                        &ctx.correlation_id,
-                        Some(ctx.user_id()),
-                    )
-                    .await
-                    .map_err(AppError::from)?;
-                Ok(InterventionsResponse::AdvancedStep(response))
-            }
-            InterventionsCommand::SaveStepProgress {
-                step_id,
-                intervention_id,
-                collected_data,
-                notes,
-                photos,
-            } => {
-                self.ensure_intervention_permission(ctx)?;
-                let step = self
-                    .intervention_service
-                    .get_step(&step_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention step".to_string()))?
-                    .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
-
-                let resolved_intervention_id =
-                    intervention_id.unwrap_or_else(|| step.intervention_id.clone());
-
-                if step.intervention_id != resolved_intervention_id {
-                    return Err(AppError::Validation(format!(
-                        "Step {} does not belong to intervention {}",
-                        step_id, resolved_intervention_id
-                    )));
-                }
-
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&resolved_intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!(
-                            "Intervention {} not found",
-                            resolved_intervention_id
-                        ))
-                    })?;
-                self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-
-                let step = self
-                    .intervention_service
-                    .save_step_progress(
-                        SaveStepProgressRequest {
-                            step_id,
-                            collected_data,
-                            notes,
-                            photos,
-                        },
-                        &ctx.correlation_id,
-                        Some(ctx.user_id()),
-                    )
-                    .await
-                    .map_err(AppError::from)?;
-                Ok(InterventionsResponse::SavedStep(step))
-            }
-            InterventionsCommand::Start { request } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.ensure_task_assignment(
-                    ctx,
-                    task_checker,
-                    &request.task_id,
-                    "start interventions",
-                )
-                .await?;
-                match self
-                    .intervention_service
-                    .get_active_intervention_by_task(&request.task_id)
-                {
-                    Ok(Some(_)) => {
-                        return Err(AppError::Validation(format!(
-                            "An active intervention already exists for task {}",
-                            request.task_id
-                        )))
-                    }
-                    Ok(None) => {}
-                    Err(_) => {
-                        return Err(AppError::Database(
-                            "Failed to validate existing interventions".to_string(),
-                        ))
-                    }
-                }
-                let response = self
-                    .intervention_service
-                    .start_intervention(
-                        self.to_service_start_request(&request, ctx.user_id()),
-                        ctx.user_id(),
-                        &ctx.correlation_id,
-                    )
-                    .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
-                Ok(InterventionsResponse::Intervention(response.intervention))
-            }
-            InterventionsCommand::Update { id, data } => {
-                self.ensure_intervention_permission(ctx)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
-                self.ensure_technician_assignment(
-                    &ctx.auth,
-                    intervention.technician_id.as_deref(),
-                    "update interventions",
-                )?;
-                let updated = self
-                    .intervention_service
-                    .update_intervention(&id, data)
-                    .map_err(|_| AppError::Database("Failed to update intervention".to_string()))?;
-                Ok(InterventionsResponse::Intervention(updated))
-            }
-            InterventionsCommand::Delete { id } => {
-                self.ensure_intervention_permission(ctx)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
-                if intervention.technician_id.as_deref() != Some(ctx.user_id())
-                    && !matches!(ctx.auth.role, UserRole::Admin | UserRole::Supervisor)
-                {
-                    return Err(AppError::Authorization(
-                        "Not authorized to delete this intervention".to_string(),
-                    ));
-                }
-                self.intervention_service
-                    .delete_intervention(&id)
-                    .map_err(|_| AppError::Database("Failed to delete intervention".to_string()))?;
-                Ok(InterventionsResponse::Deleted)
-            }
-            InterventionsCommand::Finalize { request } => {
-                self.ensure_intervention_permission(ctx)?;
-                let response = self
-                    .intervention_service
-                    .finalize_intervention(
-                        self.to_service_finalize_request(request),
-                        &ctx.correlation_id,
-                        Some(ctx.user_id()),
-                    )
-                    .map_err(|e| {
-                        AppError::Database(format!("Failed to finalize intervention: {e}"))
-                    })?;
-                // Emit here (application layer) — infrastructure must not publish events.
-                let completed_at_ms = response
-                    .intervention
-                    .completed_at
-                    .inner()
-                    .unwrap_or_else(now_ms);
-                let technician_id = response
-                    .intervention
-                    .technician_id
-                    .clone()
-                    .unwrap_or_else(|| ctx.user_id().to_string());
-                publish_event(
-                    InterventionFinalized {
-                        intervention_id: response.intervention.id.clone(),
-                        task_id: response.intervention.task_id.clone(),
-                        technician_id,
-                        completed_at_ms,
-                    }
-                    .into(),
-                );
-                Ok(InterventionsResponse::Finalized(response))
-            }
-            InterventionsCommand::WorkflowStart { request } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.ensure_task_assignment(
-                    ctx,
-                    task_checker,
-                    &request.task_id,
-                    "start interventions",
-                )
-                .await?;
-                match self
-                    .intervention_service
-                    .get_active_intervention_by_task(&request.task_id)
-                {
-                    Ok(Some(_)) => {
-                        return Err(AppError::Validation(format!(
-                            "An active intervention already exists for task {}",
-                            request.task_id
-                        )))
-                    }
-                    Ok(None) => {}
-                    Err(_) => {
-                        return Err(AppError::Database(
-                            "Failed to validate existing interventions".to_string(),
-                        ))
-                    }
-                }
-                let response = self
-                    .intervention_service
-                    .start_intervention(
-                        self.to_service_start_request(&request, ctx.user_id()),
-                        ctx.user_id(),
-                        &ctx.correlation_id,
-                    )
-                    .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::Started {
-                        intervention: response.intervention,
-                        steps: response.steps,
-                    },
+        let payload = match self
+            .intervention_service
+            .get_active_intervention_by_task(&task_id)
+        {
+            Ok(Some(intervention)) => vec![intervention],
+            Ok(None) => vec![],
+            Err(_) => {
+                return Err(AppError::Database(
+                    "Failed to get active interventions".to_string(),
                 ))
             }
-            InterventionsCommand::WorkflowGet { id } => {
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::Retrieved { intervention },
+        };
+        Ok(payload)
+    }
+
+    pub async fn get_latest_by_task(
+        &self,
+        task_id: String,
+        ctx: &RequestContext,
+        task_checker: &dyn TaskAssignmentChecker,
+    ) -> Result<Option<Intervention>, AppError> {
+        self.validate_task_id(&task_id)?;
+        let task_access = task_checker
+            .check_task_assignment(&task_id, ctx.user_id())
+            .unwrap_or(false);
+        self.check_task_intervention_access(&ctx.auth.role, task_access)?;
+        let intervention = self
+            .intervention_service
+            .get_latest_intervention_by_task(&task_id)
+            .map_err(|_| {
+                AppError::Database("Failed to get latest intervention".to_string())
+            })?;
+        Ok(intervention)
+    }
+
+    pub async fn get_step(
+        &self,
+        step_id: String,
+        ctx: &RequestContext,
+    ) -> Result<InterventionStep, AppError> {
+        let step = self
+            .intervention_service
+            .get_step(&step_id)
+            .map_err(|_| AppError::Database("Failed to get intervention step".to_string()))?
+            .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
+
+        let intervention = self
+            .intervention_service
+            .get_intervention(&step.intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Intervention {} not found", step.intervention_id))
+            })?;
+
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+        Ok(step)
+    }
+
+    pub async fn get_progress(
+        &self,
+        intervention_id: String,
+        ctx: &RequestContext,
+    ) -> Result<InterventionProgress, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.validate_intervention_id(&intervention_id)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+        let progress = self
+            .intervention_service
+            .get_progress(&intervention_id)
+            .map_err(|_| {
+                AppError::Database("Failed to get intervention progress".to_string())
+            })?;
+        Ok(progress)
+    }
+
+    pub async fn get_progress_with_steps(
+        &self,
+        intervention_id: String,
+        ctx: &RequestContext,
+    ) -> Result<(InterventionProgress, Vec<InterventionStep>), AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.validate_intervention_id(&intervention_id)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+        let progress = self
+            .intervention_service
+            .get_progress(&intervention_id)
+            .map_err(|_| {
+                AppError::Database("Failed to get intervention progress".to_string())
+            })?;
+        let steps = self
+            .intervention_service
+            .get_intervention_steps(&intervention_id)
+            .map_err(|_| {
+                AppError::Database("Failed to get intervention steps".to_string())
+            })?;
+        Ok((progress, steps))
+    }
+
+    pub async fn advance_step(
+        &self,
+        intervention_id: String,
+        step_id: String,
+        collected_data: serde_json::Value,
+        photos: Option<Vec<String>>,
+        notes: Option<String>,
+        quality_check_passed: bool,
+        issues: Option<Vec<String>>,
+        ctx: &RequestContext,
+    ) -> Result<AdvanceStepResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.validate_intervention_id(&intervention_id)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+        let response = self
+            .intervention_service
+            .advance_step(
+                AdvanceStepRequest {
+                    intervention_id,
+                    step_id,
+                    collected_data,
+                    photos,
+                    notes,
+                    quality_check_passed,
+                    issues,
+                },
+                &ctx.correlation_id,
+                Some(ctx.user_id()),
+            )
+            .await
+            .map_err(AppError::from)?;
+        Ok(response)
+    }
+
+    pub async fn save_step_progress(
+        &self,
+        step_id: String,
+        intervention_id: Option<String>,
+        collected_data: serde_json::Value,
+        notes: Option<String>,
+        photos: Option<Vec<String>>,
+        ctx: &RequestContext,
+    ) -> Result<InterventionStep, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        let step = self
+            .intervention_service
+            .get_step(&step_id)
+            .map_err(|_| AppError::Database("Failed to get intervention step".to_string()))?
+            .ok_or_else(|| AppError::NotFound(format!("Step {} not found", step_id)))?;
+
+        let resolved_intervention_id =
+            intervention_id.unwrap_or_else(|| step.intervention_id.clone());
+
+        if step.intervention_id != resolved_intervention_id {
+            return Err(AppError::Validation(format!(
+                "Step {} does not belong to intervention {}",
+                step_id, resolved_intervention_id
+            )));
+        }
+
+        let intervention = self
+            .intervention_service
+            .get_intervention(&resolved_intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!(
+                    "Intervention {} not found",
+                    resolved_intervention_id
                 ))
+            })?;
+        self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
+
+        let step = self
+            .intervention_service
+            .save_step_progress(
+                SaveStepProgressRequest {
+                    step_id,
+                    collected_data,
+                    notes,
+                    photos,
+                },
+                &ctx.correlation_id,
+                Some(ctx.user_id()),
+            )
+            .await
+            .map_err(AppError::from)?;
+        Ok(step)
+    }
+
+    pub async fn start(
+        &self,
+        request: StartInterventionRequest,
+        ctx: &RequestContext,
+        task_checker: &dyn TaskAssignmentChecker,
+    ) -> Result<Intervention, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.ensure_task_assignment(
+            ctx,
+            task_checker,
+            &request.task_id,
+            "start interventions",
+        )
+        .await?;
+        match self
+            .intervention_service
+            .get_active_intervention_by_task(&request.task_id)
+        {
+            Ok(Some(_)) => {
+                return Err(AppError::Validation(format!(
+                    "An active intervention already exists for task {}",
+                    request.task_id
+                )))
             }
-            InterventionsCommand::WorkflowGetActiveByTask { task_id } => {
-                let intervention = self
-                    .intervention_service
-                    .get_active_intervention_by_task(&task_id)
-                    .map_err(|_| {
-                        AppError::Database("Failed to get active intervention".to_string())
-                    })?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::ActiveByTask {
-                        interventions: intervention.map_or(vec![], |i| vec![i]),
-                    },
-                ))
-            }
-            InterventionsCommand::WorkflowUpdate { id, data } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.intervention_service
-                    .update_intervention(&id, data)
-                    .map_err(|_| AppError::Database("Failed to update intervention".to_string()))?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::Updated {
-                        id,
-                        message: "Intervention updated successfully".to_string(),
-                    },
-                ))
-            }
-            InterventionsCommand::WorkflowDelete { id } => {
-                self.ensure_intervention_permission(ctx)?;
-                self.intervention_service
-                    .delete_intervention(&id)
-                    .map_err(|_| AppError::Database("Failed to delete intervention".to_string()))?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::Deleted {
-                        id,
-                        message: "Intervention deleted".to_string(),
-                    },
-                ))
-            }
-            InterventionsCommand::WorkflowFinalize { request } => {
-                self.ensure_intervention_permission(ctx)?;
-                let intervention = self
-                    .intervention_service
-                    .get_intervention(&request.intervention_id)
-                    .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
-                    .ok_or_else(|| {
-                        AppError::NotFound(format!(
-                            "Intervention {} not found",
-                            request.intervention_id
-                        ))
-                    })?;
-                self.ensure_technician_assignment(
-                    &ctx.auth,
-                    intervention.technician_id.as_deref(),
-                    "finalize interventions",
-                )?;
-                let response = self
-                    .intervention_service
-                    .finalize_intervention(
-                        self.to_service_finalize_request(request),
-                        &ctx.correlation_id,
-                        Some(ctx.user_id()),
-                    )
-                    .map_err(|e| {
-                        AppError::Database(format!("Failed to finalize intervention: {e}"))
-                    })?;
-                Ok(InterventionsResponse::Workflow(
-                    InterventionWorkflowResponse::Finalized {
-                        intervention: response.intervention,
-                    },
+            Ok(None) => {}
+            Err(_) => {
+                return Err(AppError::Database(
+                    "Failed to validate existing interventions".to_string(),
                 ))
             }
         }
+        let response = self
+            .intervention_service
+            .start_intervention(
+                self.to_service_start_request(&request, ctx.user_id()),
+                ctx.user_id(),
+                &ctx.correlation_id,
+            )
+            .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
+        Ok(response.intervention)
+    }
+
+    pub async fn update(
+        &self,
+        id: String,
+        data: UpdateInterventionRequest,
+        ctx: &RequestContext,
+    ) -> Result<Intervention, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
+        self.ensure_technician_assignment(
+            &ctx.auth,
+            intervention.technician_id.as_deref(),
+            "update interventions",
+        )?;
+        let updated = self
+            .intervention_service
+            .update_intervention(&id, data)
+            .map_err(|_| AppError::Database("Failed to update intervention".to_string()))?;
+        Ok(updated)
+    }
+
+    pub async fn delete(
+        &self,
+        id: String,
+        ctx: &RequestContext,
+    ) -> Result<(), AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
+        if intervention.technician_id.as_deref() != Some(ctx.user_id())
+            && !matches!(ctx.auth.role, UserRole::Admin | UserRole::Supervisor)
+        {
+            return Err(AppError::Authorization(
+                "Not authorized to delete this intervention".to_string(),
+            ));
+        }
+        self.intervention_service
+            .delete_intervention(&id)
+            .map_err(|_| AppError::Database("Failed to delete intervention".to_string()))?;
+        Ok(())
+    }
+
+    pub async fn finalize(
+        &self,
+        request: FinalizeInterventionRequest,
+        ctx: &RequestContext,
+    ) -> Result<FinalizeInterventionResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        let response = self
+            .intervention_service
+            .finalize_intervention(
+                self.to_service_finalize_request(request),
+                &ctx.correlation_id,
+                Some(ctx.user_id()),
+            )
+            .map_err(|e| {
+                AppError::Database(format!("Failed to finalize intervention: {e}"))
+            })?;
+        // Emit here (application layer) — infrastructure must not publish events.
+        let completed_at_ms = response
+            .intervention
+            .completed_at
+            .inner()
+            .unwrap_or_else(now_ms);
+        let technician_id = response
+            .intervention
+            .technician_id
+            .clone()
+            .unwrap_or_else(|| ctx.user_id().to_string());
+        publish_event(
+            InterventionFinalized {
+                intervention_id: response.intervention.id.clone(),
+                task_id: response.intervention.task_id.clone(),
+                technician_id,
+                completed_at_ms,
+            }
+            .into(),
+        );
+        Ok(response)
+    }
+
+    pub async fn workflow_start(
+        &self,
+        request: StartInterventionRequest,
+        ctx: &RequestContext,
+        task_checker: &dyn TaskAssignmentChecker,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.ensure_task_assignment(
+            ctx,
+            task_checker,
+            &request.task_id,
+            "start interventions",
+        )
+        .await?;
+        match self
+            .intervention_service
+            .get_active_intervention_by_task(&request.task_id)
+        {
+            Ok(Some(_)) => {
+                return Err(AppError::Validation(format!(
+                    "An active intervention already exists for task {}",
+                    request.task_id
+                )))
+            }
+            Ok(None) => {}
+            Err(_) => {
+                return Err(AppError::Database(
+                    "Failed to validate existing interventions".to_string(),
+                ))
+            }
+        }
+        let response = self
+            .intervention_service
+            .start_intervention(
+                self.to_service_start_request(&request, ctx.user_id()),
+                ctx.user_id(),
+                &ctx.correlation_id,
+            )
+            .map_err(|_| AppError::Database("Failed to start intervention".to_string()))?;
+        Ok(InterventionWorkflowResponse::Started {
+            intervention: response.intervention,
+            steps: response.steps,
+        })
+    }
+
+    pub async fn workflow_get(
+        &self,
+        id: String,
+        _ctx: &RequestContext,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        let intervention = self
+            .intervention_service
+            .get_intervention(&id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| AppError::NotFound(format!("Intervention {} not found", id)))?;
+        Ok(InterventionWorkflowResponse::Retrieved { intervention })
+    }
+
+    pub async fn workflow_get_active_by_task(
+        &self,
+        task_id: String,
+        _ctx: &RequestContext,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        let intervention = self
+            .intervention_service
+            .get_active_intervention_by_task(&task_id)
+            .map_err(|_| {
+                AppError::Database("Failed to get active intervention".to_string())
+            })?;
+        Ok(InterventionWorkflowResponse::ActiveByTask {
+            interventions: intervention.map_or(vec![], |i| vec![i]),
+        })
+    }
+
+    pub async fn workflow_update(
+        &self,
+        id: String,
+        data: UpdateInterventionRequest,
+        ctx: &RequestContext,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.intervention_service
+            .update_intervention(&id, data)
+            .map_err(|_| AppError::Database("Failed to update intervention".to_string()))?;
+        Ok(InterventionWorkflowResponse::Updated {
+            id,
+            message: "Intervention updated successfully".to_string(),
+        })
+    }
+
+    pub async fn workflow_delete(
+        &self,
+        id: String,
+        ctx: &RequestContext,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        self.intervention_service
+            .delete_intervention(&id)
+            .map_err(|_| AppError::Database("Failed to delete intervention".to_string()))?;
+        Ok(InterventionWorkflowResponse::Deleted {
+            id,
+            message: "Intervention deleted".to_string(),
+        })
+    }
+
+    pub async fn workflow_finalize(
+        &self,
+        request: FinalizeInterventionRequest,
+        ctx: &RequestContext,
+    ) -> Result<InterventionWorkflowResponse, AppError> {
+        self.ensure_intervention_permission(ctx)?;
+        let intervention = self
+            .intervention_service
+            .get_intervention(&request.intervention_id)
+            .map_err(|_| AppError::Database("Failed to get intervention".to_string()))?
+            .ok_or_else(|| {
+                AppError::NotFound(format!(
+                    "Intervention {} not found",
+                    request.intervention_id
+                ))
+            })?;
+        self.ensure_technician_assignment(
+            &ctx.auth,
+            intervention.technician_id.as_deref(),
+            "finalize interventions",
+        )?;
+        let response = self
+            .intervention_service
+            .finalize_intervention(
+                self.to_service_finalize_request(request),
+                &ctx.correlation_id,
+                Some(ctx.user_id()),
+            )
+            .map_err(|e| {
+                AppError::Database(format!("Failed to finalize intervention: {e}"))
+            })?;
+        Ok(InterventionWorkflowResponse::Finalized {
+            intervention: response.intervention,
+        })
     }
 
     /// Enforce that the caller is an Admin or Supervisor for management operations.

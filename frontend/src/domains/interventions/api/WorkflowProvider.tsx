@@ -76,7 +76,7 @@ interface WorkflowContextType {
    updateStepData: (stepId: string, data: StepData) => Promise<void>;
   updateStepStatus: (stepId: string, status: WorkflowStepStatus, data?: StepStatusUpdateData) => void;
   
-  // Timing actions (Chronomï¿½tre)
+  // Timing actions (Chronomètre)
   startTiming: (stepId: string) => Promise<void>;
   pauseTiming: (stepId: string) => Promise<void>;
   resumeTiming: (stepId: string) => Promise<void>;

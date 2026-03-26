@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { settingsOperations } from "@/shared/utils";
 import { adminKeys } from "@/lib/query-keys";
+import { settingsOperations } from "@/shared/utils";
 import type { JsonValue } from "@/shared/types";
 import { IntegrationConfig } from "@/shared/types";
 import { useAuth } from "@/shared/hooks/useAuth";

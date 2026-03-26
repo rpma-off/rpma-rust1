@@ -8,8 +8,6 @@ import {
 import type { JsonValue } from '@/types/json';
 import { safeInvoke } from '../utils';
 import { cachedInvoke, invalidatePattern } from '../cache';
-import { extractAndValidate } from '../core';
-import { ResponseHandlers } from '../utils/crud-helpers';
 import { IPC_COMMANDS } from '../commands';
 
 /**
@@ -17,128 +15,80 @@ import { IPC_COMMANDS } from '../commands';
  */
 export const clientOperations = {
   create: async (data: Record<string, unknown>) => {
-    const validator = ResponseHandlers.discriminatedUnion('Created', validateClient);
-    const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Create', data: data as JsonValue }
-      },
-    }, validator);
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CREATE, { data: data as unknown as JsonValue });
     invalidatePattern('client:');
     signalMutation('clients');
-    return validator(rawResult);
+    return validateClient(result);
   },
 
   get: async (id: string) => {
-    const rawResult = await cachedInvoke(`client:${id}`, IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Get', id }
-      },
-    }, (r: JsonValue) => extractAndValidate(r, validateClient, { handleNotFound: true }));
-    if (rawResult && typeof rawResult === 'object' && (rawResult as { type?: string }).type === 'NotFound') {
-      return null;
-    }
-    return rawResult;
+    return await cachedInvoke(`client:${id}`, IPC_COMMANDS.CLIENT_GET, { id }, (r: JsonValue) => {
+        if (r === null) return null;
+        return validateClient(r);
+    });
   },
 
   update: async (id: string, data: Record<string, unknown>) => {
-    const validator = ResponseHandlers.discriminatedUnion('Updated', validateClient);
-    const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Update', id, data: data as JsonValue }
-      },
-    }, validator);
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_UPDATE, { id, data: data as unknown as JsonValue });
     invalidatePattern('client:');
     signalMutation('clients');
-    return validator(rawResult);
+    return validateClient(result);
   },
 
   delete: async (id: string) => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Delete', id }
-      },
-    });
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_DELETE, { id });
     invalidatePattern('client:');
     signalMutation('clients');
     return result;
   },
 
   list: async (filters: Record<string, unknown>) => {
-    const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
-    const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'List', filters: filters as JsonValue }
-      },
-    }, validator);
-    return validator(rawResult);
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_LIST, { filters: filters as unknown as JsonValue });
+    if (validateClientListResponse(result)) {
+        return result;
+    }
+    throw new Error('Invalid client list response');
   },
 
   getWithTasks: async (id: string) => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'GetWithTasks', id }
-      },
-    });
-    return extractAndValidate(result, validateClientWithTasks, {
-      handleNotFound: true,
-      expectedTypes: ['FoundWithTasks', 'NotFound'],
-    });
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_GET_WITH_TASKS, { id });
+    if (result === null) return null;
+    if (validateClientWithTasks(result)) return result;
+    throw new Error('Invalid client with tasks response');
   },
 
   search: async (query: string, limit: number) => {
-    const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Search', query, limit }
-      },
-    });
-    if (Array.isArray(rawResult)) {
-      return rawResult.map(item => validateClient(item));
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_SEARCH, { query, limit });
+    if (Array.isArray(result)) {
+      return result.map(item => validateClient(item));
     }
-    return rawResult;
+    throw new Error('Invalid client search response');
   },
 
   listWithTasks: async (
     filters: Record<string, unknown>,
     limitTasks: number,
   ) => {
-    if (limitTasks === 0) {
-      const validator = ResponseHandlers.list((r: JsonValue) => validateClientListResponse(r));
-      const rawResult = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-        request: {
-          action: { action: 'List', filters: filters as JsonValue }
-        },
-      }, validator);
-      return validator(rawResult);
-    }
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: {
-          action: 'ListWithTasks',
-          filters: {
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_LIST_WITH_TASKS, { 
+        filters: {
             page: (filters.page as number) ?? 1,
             limit: (filters.limit as number) ?? 20,
             search: (filters.search as string) ?? null,
             customer_type: (filters.customer_type as string) ?? null,
             sort_by: 'name',
             sort_order: 'asc',
-          },
-          limit_tasks: limitTasks,
-        }
-      },
+          } as unknown as JsonValue,
+          limit_tasks: limitTasks 
     });
-    if (result && typeof result === 'object' && 'data' in result && Array.isArray((result as Record<string, unknown>).data)) {
-      return ((result as Record<string, unknown>).data as Record<string, unknown>[]).map(client => ({ ...client, tasks: [] as unknown[] }));
+    if (Array.isArray(result)) {
+        return result.filter(validateClientWithTasks);
     }
     return [];
   },
 
   stats: async () => {
-    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_CRUD, {
-      request: {
-        action: { action: 'Stats' }
-      },
-    });
-    return extractAndValidate(result, parseClientStatistics);
+    const result = await safeInvoke<JsonValue>(IPC_COMMANDS.CLIENT_GET_STATS, {});
+    return parseClientStatistics(result);
   },
 };
 

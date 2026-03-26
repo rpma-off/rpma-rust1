@@ -21,6 +21,18 @@ impl TaskRepository {
     const DEFAULT_PAGE_SIZE: i32 = 20;
     const MAX_PAGE_SIZE: i32 = 100;
 
+    /// Canonical SELECT column list — single source of truth for task row mapping.
+    /// Mirrors the column order expected by `Task::from_row` / `TaskWithDetails`.
+    const TASK_SELECT_COLUMNS: &'static str =
+        "id, task_number, title, description, vehicle_plate, vehicle_model, \
+         vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id, \
+         assigned_at, assigned_by, scheduled_date, start_time, end_time, \
+         date_rdv, heure_rdv, template_id, workflow_id, workflow_status, \
+         current_workflow_step_id, started_at, completed_at, completed_steps, \
+         client_id, customer_name, customer_email, customer_phone, customer_address, \
+         external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration, \
+         created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at";
+
     /// Create a new TaskRepository
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
@@ -181,42 +193,11 @@ impl TaskRepository {
 
     /// Build SQL query for task retrieval
     fn build_task_query_sql(&self, query: &TaskQuery) -> (String, Vec<rusqlite::types::Value>) {
-        let mut qb = QueryBuilder::new(
-            r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
-            FROM tasks
-            WHERE deleted_at IS NULL
-            "#,
+        let base = format!(
+            "SELECT {} FROM tasks WHERE deleted_at IS NULL",
+            Self::TASK_SELECT_COLUMNS
         );
-
-        // Apply filters
-        if let Some(status) = &query.status {
-            qb = qb.and("status = ?").param(status.to_string());
-        }
-
-        if let Some(technician_id) = &query.technician_id {
-            qb = qb.and("technician_id = ?").param(technician_id.clone());
-        }
-
-        if let Some(client_id) = &query.client_id {
-            qb = qb.and("client_id = ?").param(client_id.clone());
-        }
-
-        if let Some(search) = &query.search {
-            qb = qb
-                .and("(title LIKE ? OR task_number LIKE ? OR customer_name LIKE ?)")
-                .param(format!("%{}%", search))
-                .param(format!("%{}%", search))
-                .param(format!("%{}%", search));
-        }
+        let mut qb = Self::apply_task_filters(QueryBuilder::new(&base), query);
 
         // Apply sorting
         let sort_by = query.pagination.sort_by_or("created_at");
@@ -225,30 +206,31 @@ impl TaskRepository {
 
         // Apply pagination
         qb = qb.limit(query.pagination.page_size() as i64);
-
-        let offset = query.pagination.offset();
-        qb = qb.offset(offset as i64);
+        qb = qb.offset(query.pagination.offset() as i64);
 
         qb.build()
     }
 
     /// Build SQL query for count
     fn build_count_query_sql(&self, query: &TaskQuery) -> (String, Vec<rusqlite::types::Value>) {
-        let mut qb = QueryBuilder::new("SELECT COUNT(*) FROM tasks WHERE deleted_at IS NULL");
+        let qb = QueryBuilder::new("SELECT COUNT(*) FROM tasks WHERE deleted_at IS NULL");
+        Self::apply_task_filters(qb, query).build()
+    }
 
-        // Apply same filters
+    /// Apply common task filters to a query builder.
+    ///
+    /// Used by both the data query and the count query so filter logic
+    /// stays in one place — adding a new filter field only requires one edit.
+    fn apply_task_filters(mut qb: QueryBuilder, query: &TaskQuery) -> QueryBuilder {
         if let Some(status) = &query.status {
             qb = qb.and("status = ?").param(status.to_string());
         }
-
         if let Some(technician_id) = &query.technician_id {
             qb = qb.and("technician_id = ?").param(technician_id.clone());
         }
-
         if let Some(client_id) = &query.client_id {
             qb = qb.and("client_id = ?").param(client_id.clone());
         }
-
         if let Some(search) = &query.search {
             qb = qb
                 .and("(title LIKE ? OR task_number LIKE ? OR customer_name LIKE ?)")
@@ -256,50 +238,30 @@ impl TaskRepository {
                 .param(format!("%{}%", search))
                 .param(format!("%{}%", search));
         }
-
-        qb.build()
+        qb
     }
 }
 
 #[async_trait]
 impl Repository<Task, String> for TaskRepository {
     async fn find_by_id(&self, id: String) -> RepoResult<Option<Task>> {
-        self.db.query_single_as(
-            r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
-            FROM tasks
-            WHERE id = ? AND deleted_at IS NULL
-            "#,
-            params![id]
-        ).map_err(|e| RepoError::Database(format!("Failed to find task by id: {}", e)))
+        let sql = format!(
+            "SELECT {} FROM tasks WHERE id = ? AND deleted_at IS NULL",
+            Self::TASK_SELECT_COLUMNS
+        );
+        self.db
+            .query_single_as(&sql, params![id])
+            .map_err(|e| RepoError::Database(format!("Failed to find task by id: {}", e)))
     }
 
     async fn find_all(&self) -> RepoResult<Vec<Task>> {
-        self.db.query_as(
-            r#"
-            SELECT
-                id, task_number, title, description, vehicle_plate, vehicle_model,
-                vehicle_year, vehicle_make, vin, ppf_zones, custom_ppf_zones, status, priority, technician_id,
-                assigned_at, assigned_by, scheduled_date, start_time, end_time,
-                date_rdv, heure_rdv, template_id, workflow_id, workflow_status,
-                current_workflow_step_id, started_at, completed_at, completed_steps,
-                client_id, customer_name, customer_email, customer_phone, customer_address,
-                external_id, lot_film, checklist_completed, notes, tags, estimated_duration, actual_duration,
-                created_at, updated_at, creator_id, created_by, updated_by, deleted_at, deleted_by, synced, last_synced_at
-            FROM tasks
-            WHERE deleted_at IS NULL
-            ORDER BY created_at DESC
-            "#,
-            []
-        ).map_err(|e| RepoError::Database(format!("Failed to find all tasks: {}", e)))
+        let sql = format!(
+            "SELECT {} FROM tasks WHERE deleted_at IS NULL ORDER BY created_at DESC",
+            Self::TASK_SELECT_COLUMNS
+        );
+        self.db
+            .query_as(&sql, [])
+            .map_err(|e| RepoError::Database(format!("Failed to find all tasks: {}", e)))
     }
 
     async fn save(&self, _entity: Task) -> RepoResult<Task> {

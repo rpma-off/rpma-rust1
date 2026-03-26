@@ -114,7 +114,7 @@ const ReportIssueModal: React.FC<ReportIssueModalProps> = ({ task, open, onOpenC
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Ce signalement sera transmis Ã  l&apos;équipe de support pour résolution.</p>
+<p>Ce signalement sera transmis à l&apos;équipe de support pour résolution.</p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-border">

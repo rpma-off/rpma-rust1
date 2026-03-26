@@ -1,26 +1,20 @@
 use crate::db::Database;
-use crate::domains::clients::client_handler::{ClientService, CreateClientRequest, CustomerType};
-use crate::domains::clients::client_handler::ClientsFacade;
+use crate::domains::clients::application::ClientService;
+use crate::domains::clients::domain::models::{CreateClientRequest, CustomerType};
 use crate::shared::ipc::errors::AppError;
 use std::sync::Arc;
 
 #[tokio::test]
 #[allow(deprecated)]
 async fn validate_client_id_rejects_empty_string() {
-    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
-    let service = Arc::new(ClientService::new_with_db(db));
-    let facade = ClientsFacade::new(service);
-    let err = facade.validate_client_id("").unwrap_err();
+    let err = ClientService::validate_client_id("").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
 
 #[tokio::test]
 #[allow(deprecated)]
-async fn validate_client_id_rejects_whitespace_only() {
-    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
-    let service = Arc::new(ClientService::new_with_db(db));
-    let facade = ClientsFacade::new(service);
-    let err = facade.validate_client_id("   ").unwrap_err();
+async fn validate_client_id_rejects_whitespace_string() {
+    let err = ClientService::validate_client_id("   ").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
 

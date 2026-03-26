@@ -26,15 +26,15 @@ export default function BootstrapAdminPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Administrateur déjÃ  existant</CardTitle>
+<CardTitle>Administrateur déjà existant</CardTitle>
             <CardDescription>
-              Un compte administrateur a déjÃ  été créé.
+              Un compte administrateur a déjà été créé.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertDescription>
-                Le système possède déjÃ  un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
+Le système possède déjà un utilisateur administrateur. Si vous devez gérer les rôles ou créer des administrateurs supplémentaires,
                 veuillez vous connecter avec un compte administrateur existant et utiliser le panneau d&apos;administration.
               </AlertDescription>
             </Alert>
@@ -90,7 +90,7 @@ export default function BootstrapAdminPage() {
                   {(() => {
                     const error = bootstrapMutation.error as { message?: string; error?: string };
                     return error?.message || (error as { error?: string })?.error ||
-                      'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjÃ .';
+'Échec de la création de l\'admin. L\'utilisateur peut ne pas exister ou l\'admin existe déjà.';
                   })()}
                 </AlertDescription>
               </Alert>

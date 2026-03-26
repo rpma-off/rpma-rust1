@@ -126,6 +126,32 @@ impl NotificationsFacade {
         Ok(saved)
     }
 
+    /// Construct a `Notification` from its constituent parts and persist it.
+    ///
+    /// Use this instead of calling `Notification::new()` in IPC handlers.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_notification_from_parts(
+        &self,
+        user_id: String,
+        notification_type: String,
+        title: String,
+        message: String,
+        entity_type: String,
+        entity_id: String,
+        entity_url: String,
+    ) -> Result<Notification, AppError> {
+        let notification = Notification::new(
+            user_id,
+            notification_type,
+            title,
+            message,
+            entity_type,
+            entity_id,
+            entity_url,
+        );
+        self.create_notification(notification).await
+    }
+
     // ── Messages ──────────────────────────────────────────────────────────────
 
     /// Send a message through the message service.

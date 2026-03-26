@@ -1,12 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { logger } from "@/lib/logging";
 import { LogDomain } from "@/lib/logging/types";
+import { clientKeys } from "@/lib/query-keys";
 import { ClientWithTasks, Task } from "@/shared/types";
 import { convertTimestamps } from "@/shared/utils";
 import { useTranslation } from "@/shared/hooks/useTranslation";
 import { useAuth } from "@/shared/hooks/useAuth";
-import { clientKeys } from "@/lib/query-keys";
 import { clientService } from "../server";
 
 interface UseClientDetailPageOptions {

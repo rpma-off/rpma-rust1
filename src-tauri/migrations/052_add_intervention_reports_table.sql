@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS intervention_reports (
     id TEXT PRIMARY KEY NOT NULL,
     intervention_id TEXT NOT NULL,
     report_number TEXT NOT NULL UNIQUE,
-    generated_at TEXT NOT NULL,
+    generated_at INTEGER NOT NULL,
     technician_id TEXT,
     technician_name TEXT,
     file_path TEXT,

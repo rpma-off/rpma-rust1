@@ -280,14 +280,15 @@ impl ServiceBuilder {
         );
 
         // ADR-005: inject repository trait objects — SettingsService no longer holds a Database handle.
+        // Traits are defined in infrastructure per ADR-005.
         let settings_service = Arc::new(
             crate::domains::settings::application::settings_service::SettingsService::new(
                 settings_repository.clone()
-                    as Arc<dyn crate::domains::settings::application::settings_service::AppSettingsRepository>,
+                    as Arc<dyn crate::domains::settings::infrastructure::AppSettingsRepository>,
                 user_settings_repository.clone()
-                    as Arc<dyn crate::domains::settings::application::settings_service::UserSettingsPort>,
+                    as Arc<dyn crate::domains::settings::infrastructure::UserSettingsPort>,
                 organization_repository
-                    as Arc<dyn crate::domains::settings::application::settings_service::SettingsRepository>,
+                    as Arc<dyn crate::domains::settings::infrastructure::SettingsRepository>,
             ),
         );
         let task_import_service = Arc::new(
@@ -437,14 +438,21 @@ impl ServiceBuilder {
         );
 
         // Build and return AppStateType
+        let db = self.db.clone();
+
         Ok(AppStateType {
-            db: self.db,
+            db,
             async_db,
             repositories: self.repositories,
             task_service,
             client_service,
             task_import_service,
-            calendar_service,
+            calendar_service: calendar_service.clone(),
+            calendar_event_repository: Arc::new(
+                crate::domains::calendar::calendar_handler::CalendarEventRepository::new(
+                    self.db.clone(),
+                ),
+            ),
             intervention_service,
             intervention_creator: intervention_workflow_service
                 as Arc<dyn crate::domains::interventions::application::InterventionCreator>,

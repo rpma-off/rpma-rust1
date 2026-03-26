@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Camera, Trash2, Upload, ImageIcon } from "lucide-react";
 import { addKeyboardNavigation } from "@/lib/accessibility.ts";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import {

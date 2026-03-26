@@ -16,8 +16,6 @@ pub mod user {
     };
 }
 pub mod client {
-    pub use crate::domains::clients::client_handler::client_crud;
-    pub use crate::domains::clients::client_handler::ClientCrudRequest;
 }
 pub mod auth {
     use crate::shared::app_state::AppState;

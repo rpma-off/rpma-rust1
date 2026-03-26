@@ -1,5 +1,5 @@
-import type { GetNotificationsResponse } from '@/lib/ipc/notification';
 import { toast } from 'sonner';
+import type { GetNotificationsResponse } from '@/lib/ipc/notification';
 import { notificationApi } from '@/lib/ipc/notification';
 
 type NotificationQueryResult =

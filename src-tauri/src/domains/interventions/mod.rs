@@ -1,5 +1,5 @@
 mod facade;
-pub(crate) use facade::{InterventionsCommand, InterventionsFacade, InterventionsResponse};
+pub(crate) use facade::InterventionsFacade;
 pub(crate) mod application;
 #[cfg(feature = "export-types")]
 pub mod domain;

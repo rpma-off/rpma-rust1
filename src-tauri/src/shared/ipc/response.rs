@@ -44,6 +44,11 @@ impl<T> ApiResponse<T> {
         }
     }
 
+    /// Creates a successful API response and overrides the correlation ID when one is available.
+    pub fn success_with_correlation(data: T, correlation_id: impl Into<Option<String>>) -> Self {
+        Self::success(data).with_correlation_id(correlation_id.into())
+    }
+
     /// Creates a failed API response from an application error. Sanitizes backend details before returning them.
     pub fn error(error: AppError) -> Self {
         let error_code = error.code().to_string();
@@ -117,6 +122,13 @@ mod tests {
         assert!(response.success);
         assert_eq!(response.message, None);
         assert_eq!(response.error_code, None);
+    }
+
+    #[test]
+    fn api_response_success_with_correlation_preserves_provided_value() {
+        let response = ApiResponse::success_with_correlation("ok", Some("corr-123".to_string()));
+        assert!(response.success);
+        assert_eq!(response.correlation_id.as_deref(), Some("corr-123"));
     }
 
     #[test]

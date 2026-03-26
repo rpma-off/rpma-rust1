@@ -304,20 +304,10 @@ impl Intervention {
 
         // GPS validation
         if let (Some(lat), Some(lon)) = (self.start_location_lat, self.start_location_lon) {
-            if !(-90.0..=90.0).contains(&lat) {
-                errors.push(format!("Invalid start_location_lat: {}", lat));
-            }
-            if !(-180.0..=180.0).contains(&lon) {
-                errors.push(format!("Invalid start_location_lon: {}", lon));
-            }
+            Self::validate_gps_point(lat, lon, "start", &mut errors);
         }
         if let (Some(lat), Some(lon)) = (self.end_location_lat, self.end_location_lon) {
-            if !(-90.0..=90.0).contains(&lat) {
-                errors.push(format!("Invalid end_location_lat: {}", lat));
-            }
-            if !(-180.0..=180.0).contains(&lon) {
-                errors.push(format!("Invalid end_location_lon: {}", lon));
-            }
+            Self::validate_gps_point(lat, lon, "end", &mut errors);
         }
 
         if errors.is_empty() {
@@ -356,6 +346,16 @@ impl Intervention {
         }
 
         Ok(())
+    }
+
+    /// Validate a GPS coordinate pair, pushing errors into `errors`.
+    fn validate_gps_point(lat: f64, lon: f64, prefix: &str, errors: &mut Vec<String>) {
+        if !(-90.0..=90.0).contains(&lat) {
+            errors.push(format!("Invalid {}_location_lat: {}", prefix, lat));
+        }
+        if !(-180.0..=180.0).contains(&lon) {
+            errors.push(format!("Invalid {}_location_lon: {}", prefix, lon));
+        }
     }
 }
 

@@ -7,11 +7,56 @@
 //! - Getting individual intervention steps
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{
-    InterventionsCommand, InterventionsFacade, InterventionsResponse,
-};
+use crate::domains::interventions::application::InterventionWorkflowResponse;
+use crate::domains::interventions::InterventionsFacade;
 use crate::resolve_context;
+use serde::Deserialize;
 use tracing::{error, info, instrument};
+
+/// Request for listing interventions with optional filters.
+#[derive(Debug, Deserialize)]
+pub struct ListInterventionsRequest {
+    pub status: Option<String>,
+    pub technician_id: Option<String>,
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
+    pub correlation_id: Option<String>,
+}
+
+/// List interventions with optional filters.
+#[tauri::command]
+#[instrument(skip(state), fields(user_id))]
+pub async fn intervention_list(
+    request: ListInterventionsRequest,
+    state: AppState<'_>,
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
+    let ctx = resolve_context!(&state, &request.correlation_id);
+    tracing::Span::current().record("user_id", ctx.user_id());
+
+    info!("Listing interventions");
+
+    let facade = InterventionsFacade::new(state.intervention_service.clone());
+    facade.ensure_management_access(&ctx)?;
+
+    match state
+        .intervention_service
+        .list_interventions(
+            request.status.as_deref(),
+            request.technician_id.as_deref(),
+            request.limit,
+            request.offset,
+        )
+    {
+        Ok((interventions, _total)) => Ok(ApiResponse::success(
+            InterventionWorkflowResponse::ActiveByTask { interventions },
+        )
+        .with_correlation_id(Some(ctx.correlation_id))),
+        Err(e) => {
+            error!(error = %e, "Failed to list interventions");
+            Err(AppError::Database(format!("Failed to list interventions: {e}")))
+        }
+    }
+}
 
 /// Get a specific intervention by ID
 /// ADR-018: Thin IPC layer
@@ -21,32 +66,19 @@ pub async fn intervention_get(
     id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     tracing::Span::current().record("user_id", ctx.user_id());
 
     info!(intervention_id = %id, "Getting intervention");
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());
-    let response = facade
-        .execute(
-            InterventionsCommand::Get {
-                intervention_id: id.clone(),
-            },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await;
+    let response = facade.get(id.clone(), &ctx).await;
     match response {
-        Ok(InterventionsResponse::Intervention(intervention)) => {
-            Ok(ApiResponse::success(intervention).with_correlation_id(Some(ctx.correlation_id)))
-        }
-        Ok(_) => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Ok(intervention) => Ok(ApiResponse::success(InterventionWorkflowResponse::Retrieved {
+            intervention,
+        })
+        .with_correlation_id(Some(ctx.correlation_id))),
         Err(e) => {
             error!(error = %e, intervention_id = %id, "Failed to get intervention");
             Err(e)
@@ -61,10 +93,7 @@ pub async fn intervention_get_active_by_task(
     task_id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<Vec<crate::domains::interventions::domain::models::intervention::Intervention>>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     tracing::Span::current().record("user_id", ctx.user_id());
 
@@ -72,21 +101,13 @@ pub async fn intervention_get_active_by_task(
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());
     match facade
-        .execute(
-            InterventionsCommand::GetActiveByTask {
-                task_id: task_id.clone(),
-            },
-            &ctx,
-            state.task_service.as_ref(),
-        )
+        .get_active_by_task(task_id.clone(), &ctx, state.task_service.as_ref())
         .await
     {
-        Ok(InterventionsResponse::InterventionList(items)) => {
-            Ok(ApiResponse::success(items).with_correlation_id(Some(ctx.correlation_id)))
-        }
-        Ok(_) => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Ok(interventions) => Ok(ApiResponse::success(InterventionWorkflowResponse::ActiveByTask {
+            interventions,
+        })
+        .with_correlation_id(Some(ctx.correlation_id))),
         Err(e) => {
             error!(error = %e, task_id = %task_id, "Failed to get active interventions");
             Err(e)
@@ -101,10 +122,7 @@ pub async fn intervention_get_latest_by_task(
     task_id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<Option<crate::domains::interventions::domain::models::intervention::Intervention>>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     tracing::Span::current().record("user_id", ctx.user_id());
 
@@ -112,63 +130,37 @@ pub async fn intervention_get_latest_by_task(
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());
     match facade
-        .execute(
-            InterventionsCommand::GetLatestByTask {
-                task_id: task_id.clone(),
-            },
-            &ctx,
-            state.task_service.as_ref(),
-        )
+        .get_latest_by_task(task_id.clone(), &ctx, state.task_service.as_ref())
         .await
     {
-        Ok(InterventionsResponse::OptionalIntervention(value)) => {
-            Ok(ApiResponse::success(value).with_correlation_id(Some(ctx.correlation_id)))
+        Ok(maybe_intervention) => {
+            Ok(ApiResponse::success(InterventionWorkflowResponse::ActiveByTask {
+                interventions: maybe_intervention.into_iter().collect(),
+            })
+            .with_correlation_id(Some(ctx.correlation_id)))
         }
-        Ok(_) => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
         Err(e) => {
             error!(error = %e, task_id = %task_id, "Failed to get latest intervention");
             Err(e)
         }
     }
 }
-
-/// Get a specific intervention step
+/// Get a specific intervention step by ID
 #[tauri::command]
 #[instrument(skip(state), fields(user_id))]
 pub async fn intervention_get_step(
-    intervention_id: String,
     step_id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>,
-    AppError,
-> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
     tracing::Span::current().record("user_id", ctx.user_id());
 
-    info!(intervention_id = %intervention_id, step_id = %step_id, "Getting intervention step");
+    info!(step_id = %step_id, "Getting intervention step");
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());
-    match facade
-        .execute(
-            InterventionsCommand::GetStep {
-                intervention_id: intervention_id.clone(),
-                step_id: step_id.clone(),
-            },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await
-    {
-        Ok(InterventionsResponse::Step(step)) => {
-            Ok(ApiResponse::success(step).with_correlation_id(Some(ctx.correlation_id)))
-        }
-        Ok(_) => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+    match facade.get_step(step_id.clone(), &ctx).await {
+        Ok(step) => Ok(ApiResponse::success(step).with_correlation_id(Some(ctx.correlation_id))),
         Err(e) => {
             error!(error = %e, step_id = %step_id, "Failed to get intervention step");
             Err(e)

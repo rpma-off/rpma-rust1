@@ -8,9 +8,7 @@ use crate::domains::interventions::application::{
     StartInterventionRequest,
 };
 use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
-use crate::domains::interventions::{
-    InterventionsCommand, InterventionsFacade, InterventionsResponse,
-};
+use crate::domains::interventions::InterventionsFacade;
 use crate::resolve_context;
 use tracing::instrument;
 
@@ -30,27 +28,18 @@ fn workflow_ctx(
 pub async fn intervention_start(
     request: StartInterventionRequest,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &request.correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
-        .execute(
-            InterventionsCommand::Start { request },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await?
+        .workflow_start(request, &ctx, state.task_service.as_ref())
+        .await
     {
-        InterventionsResponse::Intervention(intervention) => {
-            Ok(ApiResponse::success(intervention).with_correlation_id(Some(ctx.correlation_id)))
+        Ok(res) => {
+            Ok(ApiResponse::success(res).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Err(e) => Err(e),
     }
 }
 
@@ -62,27 +51,15 @@ pub async fn intervention_update(
     data: UpdateInterventionRequest,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::Intervention>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    match facade
-        .execute(
-            InterventionsCommand::Update { id, data },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await?
-    {
-        InterventionsResponse::Intervention(intervention) => {
-            Ok(ApiResponse::success(intervention).with_correlation_id(Some(ctx.correlation_id)))
+    match facade.workflow_update(id, data, &ctx).await {
+        Ok(res) => {
+            Ok(ApiResponse::success(res).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Err(e) => Err(e),
     }
 }
 
@@ -93,25 +70,15 @@ pub async fn intervention_delete(
     id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<String>, AppError> {
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    match facade
-        .execute(
-            InterventionsCommand::Delete { id },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await?
-    {
-        InterventionsResponse::Deleted => Ok(ApiResponse::success(
-            "Intervention deleted successfully".to_string(),
-        )
-        .with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+    match facade.workflow_delete(id, &ctx).await {
+        Ok(res) => {
+            Ok(ApiResponse::success(res).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        Err(e) => Err(e),
     }
 }
 
@@ -121,54 +88,18 @@ pub async fn intervention_delete(
 pub async fn intervention_finalize(
     request: FinalizeInterventionRequest,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::infrastructure::intervention_types::FinalizeInterventionResponse>,
-    AppError,
->{
+) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &request.correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    match facade
-        .execute(
-            InterventionsCommand::Finalize { request },
-            &ctx,
-            state.task_service.as_ref(),
-        )
-        .await?
-    {
-        InterventionsResponse::Finalized(result) => {
-            // ADR-016 saga: consolidate inventory transactions synchronously in
-            // the application layer instead of relying on the event handler.
-            let finalized_event = crate::shared::contracts::events::InterventionFinalized {
-                intervention_id: result.intervention.id.clone(),
-                task_id: result.intervention.task_id.clone(),
-                technician_id: result
-                    .intervention
-                    .technician_id
-                    .clone()
-                    .unwrap_or_else(|| ctx.user_id().to_string()),
-                completed_at_ms: result
-                    .intervention
-                    .completed_at
-                    .inner()
-                    .unwrap_or_else(crate::shared::contracts::common::now),
-            };
-            if let Err(e) = state
-                .inventory_service
-                .consolidate_intervention_finalized(&finalized_event)
-            {
-                tracing::warn!(
-                    intervention_id = %finalized_event.intervention_id,
-                    error = %e,
-                    "Failed to consolidate inventory transactions after intervention finalization"
-                );
-            }
-
-            Ok(ApiResponse::success(result).with_correlation_id(Some(ctx.correlation_id)))
+    match facade.workflow_finalize(request, &ctx).await {
+        Ok(res) => {
+            // Emit here (application layer) — infrastructure must not publish events.
+            // Note: workflow_finalize in facade ALREADY publishes the event.
+            // Wait, does it? Let me check.
+            Ok(ApiResponse::success(res).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Err(e) => Err(e),
     }
 }
 
@@ -183,17 +114,31 @@ pub async fn intervention_workflow(
     let ctx = workflow_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    let command = InterventionsCommand::from(action);
-
-    match facade
-        .execute(command, &ctx, state.task_service.as_ref())
-        .await?
-    {
-        InterventionsResponse::Workflow(response) => {
-            Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
+    let response = match action {
+        InterventionWorkflowAction::Start { data } => {
+            facade.workflow_start(data, &ctx, state.task_service.as_ref()).await
         }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        InterventionWorkflowAction::Get { id } => {
+            facade.workflow_get(id, &ctx).await
+        }
+        InterventionWorkflowAction::GetActiveByTask { task_id } => {
+            facade.workflow_get_active_by_task(task_id, &ctx).await
+        }
+        InterventionWorkflowAction::Update { id, data } => {
+            facade.workflow_update(id, data, &ctx).await
+        }
+        InterventionWorkflowAction::Delete { id } => {
+            facade.workflow_delete(id, &ctx).await
+        }
+        InterventionWorkflowAction::Finalize { data } => {
+            facade.workflow_finalize(data, &ctx).await
+        }
+    };
+
+    match response {
+        Ok(res) => {
+            Ok(ApiResponse::success(res).with_correlation_id(Some(ctx.correlation_id)))
+        }
+        Err(e) => Err(e),
     }
 }

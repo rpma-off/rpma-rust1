@@ -18,7 +18,7 @@ export interface UseEntityCountsReturn {
 export function useEntityCounts(): UseEntityCountsReturn {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: dashboardKeys.entityCounts(),
     queryFn: async () => {
       const response = await ipcClient.entityCounts.getCounts();

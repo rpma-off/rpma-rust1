@@ -18,10 +18,7 @@ pub use notification_service::*;
 pub use preferences_repository::*;
 pub use template_repository::*;
 
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::{error, info, instrument};
 use ts_rs::TS;
 
@@ -62,11 +59,6 @@ pub struct CreateNotificationRequest {
     pub entity_id: String,
     pub entity_url: String,
     pub correlation_id: Option<String>,
-}
-
-lazy_static! {
-    static ref NOTIFICATION_SERVICE: Arc<Mutex<Option<NotificationService>>> =
-        Arc::new(Mutex::new(None));
 }
 
 // ── IPC commands ──────────────────────────────────────────────────────────────
@@ -173,18 +165,12 @@ pub async fn initialize_notification_service(
     state: AppState<'_>,
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = resolve_context!(&state, &config.correlation_id);
-    // TODO(ADR-001): extract business logic to application/
-    let notification_config = NotificationConfig {
-        quiet_hours_start: config.quiet_hours_start.clone(),
-        quiet_hours_end: config.quiet_hours_end.clone(),
-        timezone: config
-            .timezone
-            .clone()
-            .unwrap_or_else(|| "Europe/Paris".to_string()),
-    };
-    let service = NotificationService::new(notification_config);
-    let mut global_service = NOTIFICATION_SERVICE.lock().await;
-    *global_service = Some(service);
+    NotificationService::initialize_global(NotificationConfig {
+        quiet_hours_start: config.quiet_hours_start,
+        quiet_hours_end: config.quiet_hours_end,
+        timezone: config.timezone.unwrap_or_else(|| "Europe/Paris".to_string()),
+    })
+    .await;
     info!("Notification service initialized (in-app only)");
     Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
 }
@@ -196,14 +182,8 @@ pub async fn get_notification_status(
     state: AppState<'_>,
 ) -> Result<ApiResponse<serde_json::Value>, AppError> {
     let ctx = resolve_context!(&state, &correlation_id);
-    // TODO(ADR-001): extract business logic to application/
-    let service_guard = NOTIFICATION_SERVICE.lock().await;
-    let config = if service_guard.is_some() {
-        serde_json::json!({ "initialized": true, "channels": ["in_app"] })
-    } else {
-        serde_json::json!({ "initialized": false })
-    };
-    Ok(ApiResponse::success(config).with_correlation_id(Some(ctx.correlation_id)))
+    let status = NotificationService::get_global_status().await;
+    Ok(ApiResponse::success(status).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 #[tauri::command]
@@ -297,18 +277,16 @@ pub async fn create_notification(
     let ctx = resolve_context!(&state, &request.correlation_id);
     let user_id = request.user_id.clone();
     let notification_type = request.r#type.clone();
-    // TODO(ADR-001): extract business logic to application/
-    let notification = Notification::new(
-        user_id.clone(),
-        notification_type.clone(),
-        request.title,
-        request.message,
-        request.entity_type,
-        request.entity_id,
-        request.entity_url,
-    );
     let created = notifications_facade(&state)
-        .create_notification(notification)
+        .create_notification_from_parts(
+            user_id.clone(),
+            notification_type.clone(),
+            request.title,
+            request.message,
+            request.entity_type,
+            request.entity_id,
+            request.entity_url,
+        )
         .await
         .map_err(|e| {
             error!(error = %e, user_id = %user_id, "Failed to create notification");
@@ -335,18 +313,16 @@ pub async fn send_notification(
     let ctx = resolve_context!(&state, &request.correlation_id);
     let user_id = request.user_id.clone();
     let notification_type = request.notification_type.clone();
-    // TODO(ADR-001): extract business logic to application/
-    let notification = Notification::new(
-        user_id.clone(),
-        notification_type.clone(),
-        request.title,
-        request.message,
-        request.entity_type,
-        request.entity_id,
-        request.entity_url,
-    );
     let created = notifications_facade(&state)
-        .create_notification(notification)
+        .create_notification_from_parts(
+            user_id.clone(),
+            notification_type.clone(),
+            request.title,
+            request.message,
+            request.entity_type,
+            request.entity_id,
+            request.entity_url,
+        )
         .await
         .map_err(|e| {
             error!(error = %e, user_id = %user_id, "Failed to send notification");

@@ -61,7 +61,10 @@ pub async fn user_crud(
         }
     };
 
-    Ok(ApiResponse::success(response).with_correlation_id(Some(ctx.correlation_id)))
+    Ok(ApiResponse::success_with_correlation(
+        response,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Bootstrap first admin user - only works if no admin exists
@@ -99,7 +102,10 @@ pub async fn bootstrap_first_admin(
                 session.role = crate::domains::auth::domain::models::auth::UserRole::Admin;
                 state.session_store.set(session);
             }
-            Ok(ApiResponse::success(message).with_correlation_id(Some(ctx.correlation_id)))
+            Ok(ApiResponse::success_with_correlation(
+                message,
+                Some(ctx.correlation_id),
+            ))
         }
         _ => Err(AppError::Internal(
             "Unexpected users facade response".to_string(),
@@ -129,11 +135,16 @@ pub async fn has_admins(
         user_service: state.user_service.clone(),
         event_bus: state.event_bus.clone(),
     };
-    match facade.execute(UsersCommand::HasAdmins, &ctx, &services).await? {
+    match facade
+        .execute(UsersCommand::HasAdmins, &ctx, &services)
+        .await?
+    {
         UsersDomainResponse::HasAdmins(v) => {
-            Ok(ApiResponse::success(v).with_correlation_id(Some(corr)))
+            Ok(ApiResponse::success_with_correlation(v, Some(corr)))
         }
-        _ => Err(AppError::Internal("Unexpected response from has_admins".to_string())),
+        _ => Err(AppError::Internal(
+            "Unexpected response from has_admins".to_string(),
+        )),
     }
 }
 
@@ -173,13 +184,15 @@ pub async fn get_users(
     {
         UserResponse::List(users) => {
             let total = users.data.len();
-            Ok(ApiResponse::success(serde_json::json!({
-                "users": users.data,
-                "total": total,
-                "page": page,
-                "page_size": page_size
-            }))
-        .with_correlation_id(Some(ctx.correlation_id)))
+            Ok(ApiResponse::success_with_correlation(
+                serde_json::json!({
+                    "users": users.data,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                Some(ctx.correlation_id),
+            ))
         }
         _ => Err(AppError::Internal("Unexpected response".to_string())),
     }
@@ -196,8 +209,10 @@ pub async fn create_user(
     let ctx = resolve_context!(&state, &correlation_id);
 
     match execute_user_action(UserAction::Create { data: user_data }, &ctx, state).await? {
-        UserResponse::Created(user) => Ok(ApiResponse::success(serde_json::json!(user))
-            .with_correlation_id(Some(ctx.correlation_id))),
+        UserResponse::Created(user) => Ok(ApiResponse::success_with_correlation(
+            serde_json::json!(user),
+            Some(ctx.correlation_id),
+        )),
         _ => Err(AppError::Internal("Failed to create user".to_string())),
     }
 }
@@ -223,8 +238,10 @@ pub async fn update_user(
     )
     .await?
     {
-        UserResponse::Updated(user) => Ok(ApiResponse::success(serde_json::json!(user))
-            .with_correlation_id(Some(ctx.correlation_id))),
+        UserResponse::Updated(user) => Ok(ApiResponse::success_with_correlation(
+            serde_json::json!(user),
+            Some(ctx.correlation_id),
+        )),
         _ => Err(AppError::Internal("Failed to update user".to_string())),
     }
 }
@@ -260,9 +277,10 @@ pub async fn update_user_status(
     )
     .await?
     {
-        UserResponse::Updated(_) => {
-            Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
-        }
+        UserResponse::Updated(_) => Ok(ApiResponse::success_with_correlation(
+            (),
+            Some(ctx.correlation_id),
+        )),
         _ => Err(AppError::Internal(
             "Failed to update user status".to_string(),
         )),
@@ -280,9 +298,10 @@ pub async fn delete_user(
     let ctx = resolve_context!(&state, &correlation_id);
 
     match execute_user_action(UserAction::Delete { id: user_id }, &ctx, state).await? {
-        UserResponse::Deleted => {
-            Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id)))
-        }
+        UserResponse::Deleted => Ok(ApiResponse::success_with_correlation(
+            (),
+            Some(ctx.correlation_id),
+        )),
         _ => Err(AppError::Internal("Failed to delete user".to_string())),
     }
 }

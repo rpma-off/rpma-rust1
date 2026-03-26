@@ -1,5 +1,5 @@
-import type { JsonValue } from "@/types/json";
 import type { GlobalSearchResponse } from "@/lib/backend";
+import type { JsonValue } from "@/types/json";
 import { safeInvoke } from "../core";
 import { IPC_COMMANDS } from "../commands";
 

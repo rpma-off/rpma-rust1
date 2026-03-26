@@ -1,8 +1,8 @@
 use crate::db::Database;
-use crate::domains::clients::client_handler::{
-    client_into_client_with_tasks, Client, ClientService, CreateClientRequest, CustomerType,
-};
-use crate::domains::clients::client_handler::ClientsFacade;
+use crate::domains::clients::application::client_orchestrator::client_into_client_with_tasks;
+use crate::domains::clients::application::ClientService;
+use crate::domains::clients::domain::models::{Client, CreateClientRequest, CustomerType};
+use crate::domains::clients::ClientsFacade;
 use crate::shared::services::event_bus::InMemoryEventBus;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -10,19 +10,13 @@ use std::sync::Arc;
 #[tokio::test]
 async fn clients_facade_is_ready() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
-    #[allow(deprecated)]
     let service = Arc::new(ClientService::new_with_db(db));
-    let facade = ClientsFacade::new(service);
-    let _ = facade.client_service(); // facade constructed successfully
+    let _facade = ClientsFacade::new(service);
 }
 
 #[tokio::test]
 async fn validate_client_id_accepts_valid_id() {
-    let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
-    #[allow(deprecated)]
-    let service = Arc::new(ClientService::new_with_db(db));
-    let facade = ClientsFacade::new(service);
-    assert!(facade.validate_client_id("client-123").is_ok());
+    assert!(ClientService::validate_client_id("client-123").is_ok());
 }
 
 /// Regression: `client_into_client_with_tasks` must attach all tasks and
@@ -115,7 +109,7 @@ async fn test_create_client_publishes_client_created_event() {
     event_bus.register_handler(counter);
 
     let cache = Arc::new(crate::shared::repositories::cache::Cache::new(256));
-    let repo = Arc::new(crate::domains::clients::client_handler::repository::ClientRepository::new(
+    let repo = Arc::new(crate::domains::clients::infrastructure::client_repository::SqliteClientRepository::new(
         db,
         cache,
     ));
@@ -161,7 +155,7 @@ async fn test_create_business_client_without_company_name_returns_error() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let event_bus = Arc::new(InMemoryEventBus::new());
     let cache = Arc::new(crate::shared::repositories::cache::Cache::new(256));
-    let repo = Arc::new(crate::domains::clients::client_handler::repository::ClientRepository::new(
+    let repo = Arc::new(crate::domains::clients::infrastructure::client_repository::SqliteClientRepository::new(
         db,
         cache,
     ));
@@ -197,7 +191,7 @@ async fn test_create_business_client_without_contact_person_returns_error() {
     let db = Arc::new(Database::new_in_memory().await.expect("in-memory database"));
     let event_bus = Arc::new(InMemoryEventBus::new());
     let cache = Arc::new(crate::shared::repositories::cache::Cache::new(256));
-    let repo = Arc::new(crate::domains::clients::client_handler::repository::ClientRepository::new(
+    let repo = Arc::new(crate::domains::clients::infrastructure::client_repository::SqliteClientRepository::new(
         db,
         cache,
     ));

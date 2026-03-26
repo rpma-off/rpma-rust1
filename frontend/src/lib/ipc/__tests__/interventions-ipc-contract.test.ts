@@ -46,55 +46,38 @@ const { validateIntervention, validateInterventionStep, validateStartInterventio
 describe('interventionOperations IPC contract tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Setup default mock returns
-    safeInvoke.mockImplementation(async (command: string, payload: Record<string, unknown>) => {
-      if (command === 'intervention_get_latest_by_task') {
-        return { id: 'intervention-latest', status: 'in_progress' };
+
+    // Setup default mock returns — individual commands (post-refactor)
+    safeInvoke.mockImplementation(async (command: string) => {
+      switch (command) {
+        case 'intervention_start':
+          return { intervention: { id: 'intervention-123' }, steps: [] };
+        case 'intervention_get':
+          return { intervention: { id: 'intervention-123', status: 'in_progress' } };
+        case 'intervention_get_active_by_task':
+          return { interventions: [{ id: 'intervention-123', status: 'in_progress' }] };
+        case 'intervention_get_latest_by_task':
+          return { id: 'intervention-latest', status: 'in_progress' };
+        case 'intervention_update':
+          return { intervention: { id: 'intervention-123' } };
+        case 'intervention_finalize':
+          return { type: 'Finalized', intervention: { id: 'intervention-123', status: 'completed' }, metrics: {} };
+        case 'intervention_advance_step':
+          return { type: 'StepAdvanced', step: { id: 'step-1' }, next_step: null, progress_percentage: 25 };
+        case 'intervention_get_step':
+          return { id: 'step-1' };
+        case 'intervention_get_progress':
+          return { progress: { completion_percentage: 50 }, steps: [] };
+        case 'intervention_save_step_progress':
+          return { id: 'step-1' };
+        case 'intervention_list':
+          return { interventions: [], total: 0 };
+        default:
+          return null;
       }
-
-      const action = (payload?.action as { action?: string } | undefined)?.action;
-
-      if (command === 'intervention_workflow') {
-        switch (action) {
-          case 'Start':
-            return { type: 'Started', intervention: { id: 'intervention-123' }, steps: [] };
-          case 'Get':
-            return { type: 'Retrieved', intervention: { id: 'intervention-123', status: 'in_progress' } };
-          case 'GetActiveByTask':
-            return { type: 'ActiveByTask', interventions: [{ id: 'intervention-123', status: 'in_progress' }] };
-          case 'Update':
-            return { type: 'Updated', intervention: { id: 'intervention-123' } };
-          case 'Finalize':
-            return { type: 'Finalized', intervention: { id: 'intervention-123', status: 'completed' }, metrics: {} };
-          default:
-            return { type: 'Unknown' };
-        }
-      }
-
-      if (command === 'intervention_progress') {
-        switch (action) {
-          case 'AdvanceStep':
-            return { type: 'StepAdvanced', step: { id: 'step-1' }, next_step: null, progress_percentage: 25 };
-          case 'GetStep':
-            return { type: 'StepRetrieved', step: { id: 'step-1' } };
-          case 'Get':
-            return { type: 'Retrieved', progress: { completion_percentage: 50 }, steps: [] };
-          case 'SaveStepProgress':
-            return { type: 'StepProgressSaved', step: { id: 'step-1' } };
-          default:
-            return { type: 'Unknown' };
-        }
-      }
-
-      if (command === 'intervention_management') {
-        return { type: 'List', interventions: [], total: 0 };
-      }
-
-      return { type: 'Unknown' };
     });
+
     cachedInvoke.mockResolvedValue(null);
-    
     extractAndValidate.mockImplementation((result, validator) => (validator ? validator(result) : result));
   });
 
@@ -106,22 +89,19 @@ describe('interventionOperations IPC contract tests', () => {
         technician_id: 'tech-456',
         scheduled_date: '2025-02-15'
       };
-      
+
       const mockResponse = {
-        type: 'Started',
         intervention: { id: 'intervention-123' },
         steps: [{ id: 'step-1', name: 'Preparation' }]
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateStartInterventionResponse(mockResponse));
 
-      await interventionOperations.start(startData);
+      const result = await interventionOperations.start(startData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: startData }
-      });
-      expect(validateStartInterventionResponse).toHaveBeenCalledWith(mockResponse);
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_start', { request: startData });
+      // result.intervention exists → returned directly without wrapping
+      expect(result).toEqual(mockResponse);
     });
 
     it('throws error for invalid response format on start', async () => {
@@ -137,17 +117,16 @@ describe('interventionOperations IPC contract tests', () => {
 
     it('calls safeInvoke and extracts valid response for get operation', async () => {
       const mockResponse = {
-        type: 'Retrieved',
         intervention: { id: 'intervention-123', status: 'in_progress' }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
       await interventionOperations.get('intervention-123');
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Get', id: 'intervention-123' }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get', {
+        id: 'intervention-123',
+        correlation_id: null,
       });
       expect(validateIntervention).toHaveBeenCalledWith(mockResponse.intervention);
     });
@@ -165,7 +144,6 @@ describe('interventionOperations IPC contract tests', () => {
 
     it('handles getActiveByTask with expected response structure', async () => {
       const mockResponse = {
-        type: 'ActiveByTask',
         interventions: [{ id: 'intervention-123', status: 'in_progress' }]
       };
 
@@ -173,8 +151,9 @@ describe('interventionOperations IPC contract tests', () => {
 
       const result = await interventionOperations.getActiveByTask('task-123');
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'GetActiveByTask', task_id: 'task-123' }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get_active_by_task', {
+        task_id: 'task-123',
+        correlation_id: null,
       });
       expect(result).toEqual({ intervention: mockResponse.interventions[0] });
     });
@@ -187,7 +166,8 @@ describe('interventionOperations IPC contract tests', () => {
       const result = await interventionOperations.getLatestByTask('task-123');
 
       expect(safeInvoke).toHaveBeenCalledWith('intervention_get_latest_by_task', {
-        taskId: 'task-123'
+        task_id: 'task-123',
+        correlation_id: null,
       });
       expect(result).toEqual({ intervention: mockResponse });
     });
@@ -195,17 +175,17 @@ describe('interventionOperations IPC contract tests', () => {
     it('calls safeInvoke and extracts valid response for updateWorkflow', async () => {
       const updateData = { notes: 'Updated notes' };
       const mockResponse = {
-        type: 'Updated',
         intervention: { id: 'intervention-123', notes: 'Updated notes' }
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateIntervention(mockResponse.intervention));
 
       await interventionOperations.updateWorkflow('intervention-123', updateData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Update', id: 'intervention-123', data: updateData }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_update', {
+        id: 'intervention-123',
+        data: updateData,
+        correlation_id: null,
       });
       expect(validateIntervention).toHaveBeenCalledWith(mockResponse.intervention);
     });
@@ -216,7 +196,7 @@ describe('interventionOperations IPC contract tests', () => {
         quality_score: 4.8,
         completion_notes: 'Successfully completed'
       };
-      
+
       const mockResponse = {
         type: 'Finalized',
         intervention: { id: 'intervention-123', status: 'completed' },
@@ -227,8 +207,8 @@ describe('interventionOperations IPC contract tests', () => {
 
       const result = await interventionOperations.finalize(finalizeData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Finalize', data: finalizeData }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_finalize', {
+        request: finalizeData,
       });
       expect(result).toEqual(mockResponse);
     });
@@ -245,7 +225,7 @@ describe('interventionOperations IPC contract tests', () => {
         quality_check_passed: true,
         issues: []
       };
-      
+
       const mockResponse = {
         type: 'StepAdvanced',
         step: { id: 'step-2', name: 'Next Step' },
@@ -257,17 +237,15 @@ describe('interventionOperations IPC contract tests', () => {
 
       const result = await interventionOperations.advanceStep(stepData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'AdvanceStep',
-          intervention_id: 'intervention-123',
-          step_id: 'step-1',
-          collected_data: { temperature: 22 },
-          notes: 'Step completed',
-          photos: ['photo-1.jpg'],
-          quality_check_passed: true,
-          issues: []
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_advance_step', {
+        intervention_id: 'intervention-123',
+        step_id: 'step-1',
+        collected_data: { temperature: 22 },
+        notes: 'Step completed',
+        photos: ['photo-1.jpg'],
+        quality_check_passed: true,
+        issues: [],
+        correlation_id: null,
       });
       expect(result).toEqual(mockResponse);
     });
@@ -284,20 +262,17 @@ describe('interventionOperations IPC contract tests', () => {
     });
 
     it('calls safeInvoke and extracts valid response for getStep', async () => {
-      const mockResponse = {
-        type: 'StepRetrieved',
-        step: { id: 'step-1', name: 'Preparation', status: 'completed' }
-      };
+      const mockStep = { id: 'step-1', name: 'Preparation', status: 'completed' };
 
-      safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
+      safeInvoke.mockResolvedValue(mockStep);
 
       await interventionOperations.getStep('step-1');
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: { action: 'GetStep', step_id: 'step-1' }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get_step', {
+        step_id: 'step-1',
+        correlation_id: null,
       });
-      expect(validateInterventionStep).toHaveBeenCalledWith(mockResponse.step);
+      expect(validateInterventionStep).toHaveBeenCalledWith(mockStep);
     });
 
     it('throws error for invalid response format on getStep', async () => {
@@ -313,7 +288,6 @@ describe('interventionOperations IPC contract tests', () => {
 
     it('calls safeInvoke and processes getProgress response', async () => {
       const mockResponse = {
-        type: 'Retrieved',
         progress: { completion_percentage: 65 },
         steps: [
           { id: 'step-1', status: 'completed' },
@@ -325,8 +299,9 @@ describe('interventionOperations IPC contract tests', () => {
 
       const result = await interventionOperations.getProgress('intervention-123');
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: { action: 'Get', intervention_id: 'intervention-123' }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get_progress', {
+        intervention_id: 'intervention-123',
+        correlation_id: null,
       });
       expect(result).toEqual({
         steps: mockResponse.steps,
@@ -352,27 +327,18 @@ describe('interventionOperations IPC contract tests', () => {
         notes: 'Progress saved',
         photos: ['photo-1.jpg']
       };
-      
-      const mockResponse = {
-        type: 'StepProgressSaved',
-        step: { id: 'step-1', progress_percentage: 75 }
-      };
 
-      safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateInterventionStep(mockResponse.step));
+      const mockStep = { id: 'step-1', progress_percentage: 75 };
+
+      safeInvoke.mockResolvedValue(mockStep);
 
       await interventionOperations.saveStepProgress(stepProgressData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'SaveStepProgress',
-          step_id: 'step-1',
-          collected_data: { temperature: 23 },
-          notes: 'Progress saved',
-          photos: ['photo-1.jpg']
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_save_step_progress', {
+        data: stepProgressData,
+        correlation_id: null,
       });
-      expect(validateInterventionStep).toHaveBeenCalledWith(mockResponse.step);
+      expect(validateInterventionStep).toHaveBeenCalledWith(mockStep);
     });
 
     it('throws error for invalid response format on saveStepProgress', async () => {
@@ -395,28 +361,31 @@ describe('interventionOperations IPC contract tests', () => {
         limit: 20,
         offset: 0
       };
-      
+
       const mockResponse = {
-        type: 'List',
         interventions: [
           { id: 'intervention-123', status: 'in_progress' },
           { id: 'intervention-456', status: 'in_progress' }
         ],
-        total: 2,
-        page: 1,
-        limit: 20
+        total: 2
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
 
       const result = await interventionOperations.list(filters);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { action: 'List', query: { status: 'in_progress', technician_id: 'tech-123', limit: 20, page: 1 } }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_list', {
+        request: {
+          status: 'in_progress',
+          technician_id: 'tech-123',
+          limit: 20,
+          offset: 0,
+          correlation_id: null,
+        },
       });
       expect(result).toEqual({
         interventions: mockResponse.interventions,
-        total: mockResponse.total
+        total: mockResponse.interventions.length
       });
     });
 
@@ -431,25 +400,20 @@ describe('interventionOperations IPC contract tests', () => {
       }
     });
 
-    it('sends correct action shape matching backend tagged enum', async () => {
+    it('sends correct arg shape for list — individual command, flat request', async () => {
       const mockResponse = {
-        type: 'List',
         interventions: [],
         total: 0,
-        page: 1,
-        limit: 50
       };
       safeInvoke.mockResolvedValue(mockResponse);
 
       await interventionOperations.list({ status: 'active' });
 
       const callArgs = safeInvoke.mock.calls[0];
-      expect(callArgs[0]).toBe('intervention_management');
-      // Verify the action shape uses tagged enum format: { action: "List", query: {...} }
-      // NOT the old format: { List: { filters: {...} } }
-      expect(callArgs[1].action).toHaveProperty('action', 'List');
-      expect(callArgs[1].action).toHaveProperty('query');
-      expect(callArgs[1].action).not.toHaveProperty('List');
+      expect(callArgs[0]).toBe('intervention_list');
+      // Verify flat request shape (not the old tagged-enum action shape)
+      expect(callArgs[1]).toHaveProperty('request');
+      expect(callArgs[1].request).toHaveProperty('status', 'active');
       // session_token is injected by safeInvoke automatically (not passed manually)
       expect(callArgs[1]).not.toHaveProperty('session_token');
       expect(callArgs[1]).not.toHaveProperty('sessionToken');
@@ -463,24 +427,21 @@ describe('interventionOperations IPC contract tests', () => {
         technician_id: 'tech-123'
       };
 
-      safeInvoke.mockResolvedValue({
-        type: 'Started',
-        intervention: { id: 'intervention-123' },
-        steps: []
-      });
+      safeInvoke.mockResolvedValue({ intervention: { id: 'intervention-123' }, steps: [] });
 
       await interventionOperations.start(invalidData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: invalidData }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_start', {
+        request: invalidData,
       });
     });
 
     it('validates intervention ID format for get operation', async () => {
       await interventionOperations.get('');
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Get', id: '' }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get', {
+        id: '',
+        correlation_id: null,
       });
     });
 
@@ -493,17 +454,15 @@ describe('interventionOperations IPC contract tests', () => {
 
       await interventionOperations.advanceStep(invalidStepData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'AdvanceStep',
-          intervention_id: '',
-          step_id: '',
-          collected_data: undefined,
-          notes: undefined,
-          photos: undefined,
-          quality_check_passed: undefined,
-          issues: undefined
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_advance_step', {
+        intervention_id: '',
+        step_id: '',
+        collected_data: undefined,
+        notes: undefined,
+        photos: undefined,
+        quality_check_passed: undefined,
+        issues: undefined,
+        correlation_id: null,
       });
     });
 
@@ -516,104 +475,15 @@ describe('interventionOperations IPC contract tests', () => {
 
       await interventionOperations.list(invalidFilters);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_management', {
-        action: { action: 'List', query: { status: 'invalid_status', limit: -1, page: 2 } }
-      });
-    });
-  });
-
-  describe('Response Shape Validation', () => {
-    it('validates complete response structure for start', async () => {
-      const mockResponse = {
-        type: 'Started',
-        intervention: {
-          id: 'intervention-123',
-          task_id: 'task-123',
-          status: 'in_progress',
-          technician_id: 'tech-123',
-          created_at: '2025-02-09T10:00:00Z'
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_list', {
+        request: {
+          status: 'invalid_status',
+          technician_id: null,
+          limit: -1,
+          offset: -1,
+          correlation_id: null,
         },
-        steps: [
-          {
-            id: 'step-1',
-            name: 'Preparation',
-            status: 'pending',
-            order: 1
-          }
-        ]
-      };
-
-      safeInvoke.mockResolvedValue(mockResponse);
-      extractAndValidate.mockReturnValue(validateStartInterventionResponse(mockResponse));
-
-      const result = await interventionOperations.start({
-        task_id: 'task-123',
-        technician_id: 'tech-123'
       });
-
-      expect(validateStartInterventionResponse).toHaveBeenCalledWith(mockResponse);
-      expect(result).toEqual(validateStartInterventionResponse(mockResponse));
-    });
-
-    it('validates progress response structure', async () => {
-      const mockResponse = {
-        type: 'Retrieved',
-        progress: {
-          intervention_id: 'intervention-123',
-          completion_percentage: 65,
-          current_step_id: 'step-2',
-          status: 'in_progress'
-        },
-        steps: [
-          {
-            id: 'step-1',
-            name: 'Preparation',
-            status: 'completed',
-            duration_minutes: 30,
-            completed_at: '2025-02-09T10:30:00Z'
-          },
-          {
-            id: 'step-2',
-            name: 'Application',
-            status: 'in_progress',
-            started_at: '2025-02-09T11:00:00Z'
-          }
-        ]
-      };
-
-      safeInvoke.mockResolvedValue(mockResponse);
-
-      const result = await interventionOperations.getProgress('intervention-123');
-
-      expect(result).toEqual({
-        steps: mockResponse.steps,
-        progress_percentage: 65
-      });
-    });
-
-    it('validates empty interventions list for getActiveByTask', async () => {
-      const mockResponse = {
-        type: 'ActiveByTask',
-        interventions: []
-      };
-
-      safeInvoke.mockResolvedValue(mockResponse);
-
-      const result = await interventionOperations.getActiveByTask('task-123');
-
-      expect(result).toEqual({ intervention: null });
-    });
-
-    it('validates null response for getLatestByTask', async () => {
-      const mockResponse = {
-        data: null
-      };
-
-      safeInvoke.mockResolvedValue(mockResponse);
-
-      const result = await interventionOperations.getLatestByTask('task-123');
-
-      expect(result).toEqual({ intervention: null });
     });
   });
 
@@ -646,25 +516,24 @@ describe('interventionOperations IPC contract tests', () => {
         step_id: 'step-1'
       });
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: { task_id: 'task-123' } },
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_start', {
+        request: { task_id: 'task-123' },
       });
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Get', id: 'intervention-123' },
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_get', {
+        id: 'intervention-123',
+        correlation_id: null,
       });
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'AdvanceStep',
-          intervention_id: 'intervention-123',
-          step_id: 'step-1',
-          collected_data: undefined,
-          notes: undefined,
-          photos: undefined,
-          quality_check_passed: undefined,
-          issues: undefined
-        },
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_advance_step', {
+        intervention_id: 'intervention-123',
+        step_id: 'step-1',
+        collected_data: undefined,
+        notes: undefined,
+        photos: undefined,
+        quality_check_passed: undefined,
+        issues: undefined,
+        correlation_id: null,
       });
     });
   });
@@ -755,6 +624,94 @@ describe('interventionOperations IPC contract tests', () => {
     });
   });
 
+  describe('Response Shape Validation', () => {
+    it('validates complete response structure for start', async () => {
+      const mockResponse = {
+        intervention: {
+          id: 'intervention-123',
+          task_id: 'task-123',
+          status: 'in_progress',
+          technician_id: 'tech-123',
+          created_at: '2025-02-09T10:00:00Z'
+        },
+        steps: [
+          {
+            id: 'step-1',
+            name: 'Preparation',
+            status: 'pending',
+            order: 1
+          }
+        ]
+      };
+
+      safeInvoke.mockResolvedValue(mockResponse);
+
+      const result = await interventionOperations.start({
+        task_id: 'task-123',
+        technician_id: 'tech-123'
+      });
+
+      // result.intervention exists → returned directly
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('validates progress response structure', async () => {
+      const mockResponse = {
+        progress: {
+          intervention_id: 'intervention-123',
+          completion_percentage: 65,
+          current_step_id: 'step-2',
+          status: 'in_progress'
+        },
+        steps: [
+          {
+            id: 'step-1',
+            name: 'Preparation',
+            status: 'completed',
+            duration_minutes: 30,
+            completed_at: '2025-02-09T10:30:00Z'
+          },
+          {
+            id: 'step-2',
+            name: 'Application',
+            status: 'in_progress',
+            started_at: '2025-02-09T11:00:00Z'
+          }
+        ]
+      };
+
+      safeInvoke.mockResolvedValue(mockResponse);
+
+      const result = await interventionOperations.getProgress('intervention-123');
+
+      expect(result).toEqual({
+        steps: mockResponse.steps,
+        progress_percentage: 65
+      });
+    });
+
+    it('validates empty interventions list for getActiveByTask', async () => {
+      const mockResponse = {
+        type: 'ActiveByTask',
+        interventions: []
+      };
+
+      safeInvoke.mockResolvedValue(mockResponse);
+
+      const result = await interventionOperations.getActiveByTask('task-123');
+
+      expect(result).toEqual({ intervention: null });
+    });
+
+    it('validates null response for getLatestByTask', async () => {
+      safeInvoke.mockResolvedValue(null);
+
+      const result = await interventionOperations.getLatestByTask('task-123');
+
+      expect(result).toEqual({ intervention: null });
+    });
+  });
+
   describe('Edge Cases and Boundary Conditions', () => {
     it('handles extremely long notes in start operation', async () => {
       const longNotes = 'a'.repeat(10000);
@@ -763,10 +720,12 @@ describe('interventionOperations IPC contract tests', () => {
         notes: longNotes
       };
 
+      safeInvoke.mockResolvedValue({ intervention: { id: 'intervention-123' }, steps: [] });
+
       await interventionOperations.start(startData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Start', data: startData }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_start', {
+        request: startData,
       });
     });
 
@@ -780,17 +739,15 @@ describe('interventionOperations IPC contract tests', () => {
 
       await interventionOperations.advanceStep(stepData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'AdvanceStep',
-          intervention_id: 'intervention-123',
-          step_id: 'step-1',
-          collected_data: undefined,
-          notes: specialNotes,
-          photos: undefined,
-          quality_check_passed: undefined,
-          issues: undefined
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_advance_step', {
+        intervention_id: 'intervention-123',
+        step_id: 'step-1',
+        collected_data: undefined,
+        notes: specialNotes,
+        photos: undefined,
+        quality_check_passed: undefined,
+        issues: undefined,
+        correlation_id: null,
       });
     });
 
@@ -803,17 +760,15 @@ describe('interventionOperations IPC contract tests', () => {
 
       await interventionOperations.advanceStep(stepData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'AdvanceStep',
-          intervention_id: 'intervention-123',
-          step_id: 'step-1',
-          collected_data: undefined,
-          notes: undefined,
-          photos: [],
-          quality_check_passed: undefined,
-          issues: undefined
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_advance_step', {
+        intervention_id: 'intervention-123',
+        step_id: 'step-1',
+        collected_data: undefined,
+        notes: undefined,
+        photos: [],
+        quality_check_passed: undefined,
+        issues: undefined,
+        correlation_id: null,
       });
     });
 
@@ -826,28 +781,26 @@ describe('interventionOperations IPC contract tests', () => {
 
       await interventionOperations.updateWorkflow('intervention-123', updateData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_workflow', {
-        action: { action: 'Update', id: 'intervention-123', data: updateData }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_update', {
+        id: 'intervention-123',
+        data: updateData,
+        correlation_id: null,
       });
     });
 
     it('handles maximum progress percentage', async () => {
       const stepProgressData = {
-        intervention_id: 'intervention-123',
         step_id: 'step-1',
-        progress_percentage: 100
+        collected_data: undefined,
+        notes: undefined,
+        photos: undefined,
       };
 
       await interventionOperations.saveStepProgress(stepProgressData);
 
-      expect(safeInvoke).toHaveBeenCalledWith('intervention_progress', {
-        action: {
-          action: 'SaveStepProgress',
-          step_id: 'step-1',
-          collected_data: undefined,
-          notes: undefined,
-          photos: undefined
-        }
+      expect(safeInvoke).toHaveBeenCalledWith('intervention_save_step_progress', {
+        data: stepProgressData,
+        correlation_id: null,
       });
     });
   });

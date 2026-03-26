@@ -12,6 +12,7 @@ default-run = "main"
 [lib]
 name = "rpma_ppf_intervention"
 path = "src/lib.rs"
+crate-type = ["rlib"]
 
 [[bin]]
 name = "main"

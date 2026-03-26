@@ -40,8 +40,8 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
 
     if (message.includes('chunkloaderror') || message.includes('loading chunk')) {
       return {
-        title: 'Mise Ã  jour de l\'application requise',
-        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises Ã  jour.',
+title: 'Mise à jour de l\'application requise',
+        description: 'Une nouvelle version de l\'application est disponible. Veuillez recharger la page pour obtenir les dernières mises à jour.',
         isRecoverable: true
       };
     }
@@ -49,7 +49,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
     if (message.includes('script error') || message.includes('unexpected token')) {
       return {
         title: 'Erreur de chargement de l\'application',
-        description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dÃ» Ã  un problème de réseau ou Ã  des fichiers corrompus.',
+description: 'Un problème est survenu lors du chargement de l\'application. Cela peut être dû à un problème de réseau ou à des fichiers corrompus.',
         isRecoverable: true
       };
     }
@@ -73,7 +73,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
     if (message.includes('unauthorized') || message.includes('forbidden')) {
       return {
         title: 'Erreur d\'authentification',
-        description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder Ã  cette application. Veuillez vous reconnecter.',
+description: 'Votre session a expiré ou vous n\'avez pas la permission d\'accéder à cette application. Veuillez vous reconnecter.',
         isRecoverable: false
       };
     }
@@ -88,7 +88,7 @@ const DefaultGlobalErrorFallback: React.FC<GlobalErrorFallbackProps> = ({
 
     return {
       title: 'Erreur de l\'application',
-      description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'Ã  ce qu\'elle soit rechargée.',
+description: 'Une erreur inattendue s\'est produite. L\'application peut ne pas fonctionner correctement jusqu\'à ce qu\'elle soit rechargée.',
       isRecoverable: true
     };
   };
@@ -186,7 +186,7 @@ Stack: ${error.stack}
                      size="lg"
                    >
                      <Home className="h-5 w-5" />
-                     <span>Aller Ã  la connexion</span>
+<span>Aller à la connexion</span>
                    </Button>
 
                    <Button
@@ -226,7 +226,7 @@ Stack: ${error.stack}
            {/* Application Info */}
            <div className="text-center text-xs text-gray-500 space-y-1">
              <p>RPMA v2 - Système de gestion des tâches PPF</p>
-             <p>Si cette erreur persiste, veuillez la signaler Ã  votre administrateur système</p>
+<p>Si cette erreur persiste, veuillez la signaler à votre administrateur système</p>
            </div>
          </CardContent>
       </Card>
@@ -239,6 +239,16 @@ export const GlobalErrorBoundary: React.FC<GlobalErrorBoundaryProps> = ({
   className
 }) => {
   const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
+    // If it's a Next.js internal control-flow error, don't log it
+    const isNextJsControlError = (error as any)?.digest?.startsWith('NEXT_REDIRECT') || 
+                                (error as any)?.digest?.startsWith('NEXT_NOT_FOUND') ||
+                                error.message?.includes('NEXT_REDIRECT') ||
+                                error.message?.includes('NEXT_NOT_FOUND');
+    
+    if (isNextJsControlError) {
+      return;
+    }
+
     // Log global error with extensive context using the new logging system
     logger.fatal(LogDomain.SYSTEM, 'Global application error', error, {
       component_stack: errorInfo.componentStack,

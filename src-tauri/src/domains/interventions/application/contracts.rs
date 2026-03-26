@@ -34,28 +34,6 @@ pub enum InterventionWorkflowAction {
     },
 }
 
-/// Convert an application-layer workflow action into the matching domain command.
-///
-/// This keeps the mapping out of the IPC handlers (ADR-018): each handler
-/// delegates to one facade call and should not contain branching command logic.
-impl From<InterventionWorkflowAction> for crate::domains::interventions::InterventionsCommand {
-    fn from(action: InterventionWorkflowAction) -> Self {
-        use crate::domains::interventions::InterventionsCommand as Cmd;
-        match action {
-            InterventionWorkflowAction::Start { data } => Cmd::WorkflowStart { request: data },
-            InterventionWorkflowAction::Get { id } => Cmd::WorkflowGet { id },
-            InterventionWorkflowAction::GetActiveByTask { task_id } => {
-                Cmd::WorkflowGetActiveByTask { task_id }
-            }
-            InterventionWorkflowAction::Update { id, data } => Cmd::WorkflowUpdate { id, data },
-            InterventionWorkflowAction::Delete { id } => Cmd::WorkflowDelete { id },
-            InterventionWorkflowAction::Finalize { data } => {
-                Cmd::WorkflowFinalize { request: data }
-            }
-        }
-    }
-}
-
 /// Workflow response types
 #[derive(serde::Serialize, Debug)]
 #[serde(tag = "type")]

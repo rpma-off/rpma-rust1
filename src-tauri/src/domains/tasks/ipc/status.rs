@@ -38,8 +38,7 @@ pub async fn task_transition_status(
     let old_status = state
         .task_service
         .get_task_async(&request.task_id)
-        .await
-        .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+        .await?
         .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?
         .status;
 
@@ -48,8 +47,7 @@ pub async fn task_transition_status(
         let task = state
             .task_service
             .get_task_async(&request.task_id)
-            .await
-            .map_err(|e| AppError::Database(format!("Failed to fetch task: {}", e)))?
+            .await?
             .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
 
         task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;

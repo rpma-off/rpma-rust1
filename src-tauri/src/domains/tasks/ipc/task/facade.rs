@@ -12,7 +12,7 @@ use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::tasks::application::services::task_command_service::TaskCommandService;
 use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::task::{
-    CreateTaskRequest, Task, TaskListResponse, UpdateTaskRequest,
+    BulkImportResponse, CreateTaskRequest, Task, TaskListResponse, UpdateTaskRequest,
 };
 use crate::domains::tasks::ipc::task::queries::{
     get_task_statistics, get_tasks_with_clients, GetTaskStatisticsRequest,
@@ -24,7 +24,7 @@ use tracing::{debug, info};
 
 // Re-export all request/response types so callers see no change.
 pub use super::types::{
-    AddTaskNoteRequest, BulkImportResponse, DelayTaskRequest, EditTaskRequest,
+    AddTaskNoteRequest, DelayTaskRequest, EditTaskRequest,
     ExportTasksCsvRequest, ImportTasksBulkRequest, ReportTaskIssueRequest, SendTaskMessageRequest,
     TaskCrudRequest,
 };

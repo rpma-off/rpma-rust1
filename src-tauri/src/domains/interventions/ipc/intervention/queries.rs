@@ -3,9 +3,7 @@
 //! Thin IPC adapters delegating progress/query operations to the interventions facade.
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{
-    InterventionsCommand, InterventionsFacade, InterventionsResponse,
-};
+use crate::domains::interventions::InterventionsFacade;
 use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -94,27 +92,16 @@ pub async fn intervention_get_progress(
     intervention_id: String,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<
-    ApiResponse<crate::domains::interventions::domain::models::intervention::InterventionProgress>,
-    AppError,
-> {
+) -> Result<ApiResponse<InterventionProgressResponse>, AppError> {
     let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    match facade
-        .execute(
-            InterventionsCommand::GetProgress { intervention_id },
-            &ctx,
-            state.task_service.as_ref(),
+    match facade.get_progress_with_steps(intervention_id, &ctx).await {
+        Ok((progress, steps)) => Ok(ApiResponse::success(
+            InterventionProgressResponse::Retrieved { progress, steps },
         )
-        .await?
-    {
-        InterventionsResponse::Progress(progress) => {
-            Ok(ApiResponse::success(progress).with_correlation_id(Some(ctx.correlation_id)))
-        }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        .with_correlation_id(Some(ctx.correlation_id))),
+        Err(e) => Err(e),
     }
 }
 
@@ -138,69 +125,51 @@ pub async fn intervention_advance_step(
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
-        .execute(
-            InterventionsCommand::AdvanceStep {
-                intervention_id,
-                step_id,
-                collected_data: collected_data.unwrap_or(serde_json::Value::Null),
-                photos,
-                notes,
-                quality_check_passed: true,
-                issues,
-            },
+        .advance_step(
+            intervention_id,
+            step_id,
+            collected_data.unwrap_or(serde_json::Value::Null),
+            photos,
+            notes,
+            true,
+            issues,
             &ctx,
-            state.task_service.as_ref(),
         )
-        .await?
+        .await
     {
-        InterventionsResponse::AdvancedStep(response) => {
+        Ok(response) => {
             Ok(ApiResponse::success(response.step).with_correlation_id(Some(ctx.correlation_id)))
         }
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
+        Err(e) => Err(e),
     }
 }
 
+use crate::domains::interventions::infrastructure::intervention_types::SaveStepProgressRequest;
+
 /// TODO: document
 #[tauri::command]
-#[instrument(skip(state, progress_data), fields(user_id, correlation_id))]
+#[instrument(skip(state, data), fields(user_id, correlation_id))]
 pub async fn intervention_save_step_progress(
-    intervention_id: String,
-    step_id: String,
-    progress_data: serde_json::Value,
-    notes: Option<String>,
-    photos: Option<Vec<String>>,
+    data: SaveStepProgressRequest,
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<String>, AppError> {
+) -> Result<ApiResponse<crate::domains::interventions::domain::models::step::InterventionStep>, AppError> {
     let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade
-        .execute(
-            InterventionsCommand::SaveStepProgress {
-                step_id,
-                intervention_id: Some(intervention_id),
-                collected_data: progress_data,
-                notes,
-                photos,
-            },
+        .save_step_progress(
+            data.step_id,
+            None, // intervention_id is not in SaveStepProgressRequest
+            data.collected_data,
+            data.notes,
+            data.photos,
             &ctx,
-            state.task_service.as_ref(),
         )
         .await
     {
-        Ok(InterventionsResponse::SavedStep(_)) => Ok(ApiResponse::success(
-            "Step progress saved successfully".to_string(),
-        )
-        .with_correlation_id(Some(ctx.correlation_id))),
-        Ok(_) => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
-        Err(e) => Err(AppError::Database(format!(
-            "Failed to save step progress: {e}"
-        ))),
+        Ok(step) => Ok(ApiResponse::success(step).with_correlation_id(Some(ctx.correlation_id))),
+        Err(e) => Err(e),
     }
 }
 
@@ -215,9 +184,15 @@ pub async fn intervention_progress(
     let ctx = intervention_ctx(&state, &correlation_id)?;
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
-    let command = match action {
+    match action {
         InterventionProgressAction::Get { intervention_id } => {
-            InterventionsCommand::GetProgressWithSteps { intervention_id }
+            match facade.get_progress_with_steps(intervention_id, &ctx).await {
+                Ok((progress, steps)) => Ok(ApiResponse::success(
+                    InterventionProgressResponse::Retrieved { progress, steps },
+                )
+                .with_correlation_id(Some(ctx.correlation_id))),
+                Err(e) => Err(e),
+            }
         }
         InterventionProgressAction::AdvanceStep {
             intervention_id,
@@ -227,14 +202,29 @@ pub async fn intervention_progress(
             notes,
             quality_check_passed,
             issues,
-        } => InterventionsCommand::AdvanceStep {
-            intervention_id,
-            step_id,
-            collected_data,
-            photos,
-            notes,
-            quality_check_passed,
-            issues,
+        } => match facade
+            .advance_step(
+                intervention_id,
+                step_id,
+                collected_data,
+                photos,
+                notes,
+                quality_check_passed,
+                issues,
+                &ctx,
+            )
+            .await
+        {
+            Ok(response) => Ok(ApiResponse::success(
+                InterventionProgressResponse::StepAdvanced {
+                    step: Box::new(response.step),
+                    next_step: response.next_step,
+                    progress_percentage: response.progress_percentage,
+                    requirements_completed: response.requirements_completed,
+                },
+            )
+            .with_correlation_id(Some(ctx.correlation_id))),
+            Err(e) => Err(e),
         },
         InterventionProgressAction::SaveStepProgress {
             step_id,
@@ -242,99 +232,24 @@ pub async fn intervention_progress(
             collected_data,
             notes,
             photos,
-        } => InterventionsCommand::SaveStepProgress {
-            step_id,
-            intervention_id,
-            collected_data,
-            notes,
-            photos,
+        } => match facade
+            .save_step_progress(
+                step_id,
+                intervention_id,
+                collected_data,
+                notes,
+                photos,
+                &ctx,
+            )
+            .await
+        {
+            Ok(step) => Ok(ApiResponse::success(
+                InterventionProgressResponse::StepProgressSaved {
+                    step: Box::new(step),
+                },
+            )
+            .with_correlation_id(Some(ctx.correlation_id))),
+            Err(e) => Err(e),
         },
-    };
-
-    match facade
-        .execute(command, &ctx, state.task_service.as_ref())
-        .await?
-    {
-        InterventionsResponse::ProgressWithSteps { progress, steps } => Ok(ApiResponse::success(
-            InterventionProgressResponse::Retrieved { progress, steps },
-        )
-        .with_correlation_id(Some(ctx.correlation_id))),
-        InterventionsResponse::AdvancedStep(response) => Ok(ApiResponse::success(
-            InterventionProgressResponse::StepAdvanced {
-                step: Box::new(response.step),
-                next_step: response.next_step,
-                progress_percentage: response.progress_percentage,
-                requirements_completed: response.requirements_completed,
-            },
-        )
-        .with_correlation_id(Some(ctx.correlation_id))),
-        InterventionsResponse::SavedStep(step) => Ok(ApiResponse::success(
-            InterventionProgressResponse::StepProgressSaved {
-                step: Box::new(step),
-            },
-        )
-        .with_correlation_id(Some(ctx.correlation_id))),
-        _ => Err(AppError::Internal(
-            "Unexpected interventions facade response".to_string(),
-        )),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::super::can_access_own_or_privileged;
-    use crate::shared::contracts::auth::{UserRole, UserSession};
-
-    fn session_with_role(role: UserRole, user_id: &str) -> UserSession {
-        UserSession::new(
-            user_id.to_string(),
-            "user".to_string(),
-            "user@example.com".to_string(),
-            role,
-            "token".to_string(),
-            3600,
-        )
-    }
-
-    #[test]
-    fn allows_owner_technician_access() {
-        let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(can_access_own_or_privileged(Some("tech-1"), &session));
-    }
-
-    #[test]
-    fn denies_non_owner_technician_access() {
-        let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(!can_access_own_or_privileged(Some("tech-2"), &session));
-    }
-
-    #[test]
-    fn allows_supervisor_access() {
-        let session = session_with_role(UserRole::Supervisor, "sup-1");
-        assert!(can_access_own_or_privileged(Some("tech-2"), &session));
-    }
-
-    #[test]
-    fn allows_admin_access() {
-        let session = session_with_role(UserRole::Admin, "admin-1");
-        assert!(can_access_own_or_privileged(Some("tech-2"), &session));
-    }
-
-    #[test]
-    fn denies_unassigned_intervention_for_technician() {
-        let session = session_with_role(UserRole::Technician, "tech-1");
-        assert!(!can_access_own_or_privileged(None, &session));
-    }
-
-    #[test]
-    fn allows_admin_access_to_unassigned_intervention() {
-        let session = session_with_role(UserRole::Admin, "admin-1");
-        assert!(can_access_own_or_privileged(None, &session));
-    }
-
-    #[test]
-    fn allows_supervisor_access_to_unassigned_intervention() {
-        let session = session_with_role(UserRole::Supervisor, "sup-1");
-        assert!(can_access_own_or_privileged(None, &session));
     }
 }

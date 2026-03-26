@@ -9,8 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { dashboardService } from "../services/dashboard.service";
 import { dashboardKeys } from "@/lib/query-keys";
+import { dashboardService } from "../services/dashboard.service";
 import type {
   DashboardContextValue,
   DashboardFilter,

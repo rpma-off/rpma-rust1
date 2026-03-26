@@ -31,6 +31,8 @@ pub struct AppStateType {
     pub task_import_service:
         Arc<crate::domains::tasks::infrastructure::task_import::TaskImportService>,
     pub calendar_service: Arc<crate::domains::calendar::calendar_handler::CalendarService>,
+    pub calendar_event_repository:
+        Arc<crate::domains::calendar::calendar_handler::CalendarEventRepository>,
     pub intervention_service:
         Arc<crate::domains::interventions::infrastructure::intervention::InterventionService>,
     /// ADR-016: Exposed for saga-style orchestration at the IPC layer

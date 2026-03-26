@@ -1,5 +1,4 @@
 ﻿import React from 'react';
-import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -8,12 +7,11 @@ export interface PageHeaderProps {
   subtitle?: string;
   icon?: React.ReactNode;
   actions?: React.ReactNode;
-  stats?: React.ReactNode;
   className?: string;
   children?: React.ReactNode;
 }
 
-export function PageHeader({ title, subtitle, icon, actions, stats, className, children }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, icon, actions, className, children }: PageHeaderProps) {
   return (
     <div className={cn('bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)]', className)}>
       <div className="px-5 py-4">
@@ -42,12 +40,6 @@ export function PageHeader({ title, subtitle, icon, actions, stats, className, c
             </div>
           )}
         </div>
-
-        {stats && (
-          <div className="mt-5 pt-5 border-t border-[hsl(var(--rpma-border))]">
-            {stats}
-          </div>
-        )}
 
         {children && (
           <div className="mt-4">
@@ -82,61 +74,5 @@ export function HeaderActionButton({ label, icon, onClick, variant = 'default', 
       <span className="hidden sm:inline">{label}</span>
       <span className="sm:hidden">{label.split(' ')[0]}</span>
     </Button>
-  );
-}
-
-export interface StatCardProps {
-  value: string | number;
-  label: string;
-  icon?: LucideIcon;
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'accent';
-  trend?: {
-    value: string;
-    direction: 'up' | 'down' | 'neutral';
-  };
-  className?: string;
-}
-
-export function StatCard({ value, label, icon: Icon, color = 'accent', trend, className }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600 border-blue-200',
-    green: 'bg-green-100 text-green-600 border-green-200',
-    yellow: 'bg-yellow-100 text-yellow-600 border-yellow-200',
-    red: 'bg-red-100 text-red-600 border-red-200',
-    purple: 'bg-purple-100 text-purple-600 border-purple-200',
-    accent: 'bg-[hsl(var(--rpma-teal))]/10 text-[hsl(var(--rpma-teal))] border-[hsl(var(--rpma-teal))]/30',
-  };
-
-  return (
-    <div className={cn('p-4 rounded-[10px] bg-white border border-[hsl(var(--rpma-border))] shadow-[var(--rpma-shadow-soft)]', className)}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">
-            {label}
-          </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground truncate">
-            {value}
-          </div>
-        </div>
-        {Icon && (
-          <div className={cn('p-2 rounded-[6px] flex-shrink-0', colorClasses[color])}>
-            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-          </div>
-        )}
-      </div>
-      {trend && (
-        <div className="mt-2 flex items-center gap-1 text-xs">
-          {trend.direction === 'up' && (
-            <span className="text-success">â†‘ {trend.value}</span>
-          )}
-          {trend.direction === 'down' && (
-            <span className="text-error">â†“ {trend.value}</span>
-          )}
-          {trend.direction === 'neutral' && (
-            <span className="text-muted-foreground">â†’ {trend.value}</span>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

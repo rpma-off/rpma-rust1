@@ -80,9 +80,10 @@ impl ClientService {
 
     /// Create a `ClientService` from a raw `Database` handle.
     ///
-    /// Intended for test helpers only.  Production code must call `new()` so
-    /// that a real event bus is wired in.
-    #[deprecated(note = "prefer new(repo, event_bus) with a shared repository and event bus")]
+    /// Legacy convenience constructor kept for backward compatibility and
+    /// transitional call sites. Prefer injecting the repository and event bus
+    /// through `new()` in production code to preserve ADR-004/005 dependency
+    /// wiring and avoid application-layer repository instantiation.
     pub fn new_with_db(db: Arc<Database>) -> Self {
         let cache = Arc::new(Cache::new(256));
         let repo = Arc::new(ClientRepository::new(db, cache));

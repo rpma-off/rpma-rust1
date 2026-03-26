@@ -6,7 +6,7 @@
 //! the service is invoked (IPC, background job, test).
 //!
 //! ADR-001: Application Layer
-//! ADR-005: Repository Pattern (traits defined here, impls in infrastructure)
+//! ADR-005: Repository Pattern (traits in infrastructure, impls here for transitional period)
 //! ADR-007: RBAC — Admin-only for app/org writes; any authenticated user for user-scoped ops.
 
 use std::sync::Arc;
@@ -17,6 +17,7 @@ use crate::shared::context::request_context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::ipc::errors::AppError;
 
+use super::super::infrastructure::{AppSettingsRepository, SettingsRepository, UserSettingsPort};
 use super::super::models::{
     AppSettings, CreateOrganizationRequest, DataConsent, GeneralSettings, NotificationSettings,
     OnboardingData, OnboardingStatus, Organization, OrganizationSettings, SecuritySettings,
@@ -28,77 +29,9 @@ use super::super::organization_repository::OrganizationRepository;
 use super::super::settings_repository::SettingsRepository as SqliteSettingsRepository;
 use super::super::user_settings_repository::UserSettingsRepository as SqliteUserSettingsRepository;
 
-// ── Repository Traits ─────────────────────────────────────────────────────────
-
-/// Repository contract for organization settings and onboarding persistence.
-///
-/// Concrete implementation: [`OrganizationRepository`].
-/// Tests may substitute a mock that implements this trait.
-pub trait SettingsRepository: Send + Sync {
-    /// Retrieve all organization key-value settings.
-    fn get_organization_settings(&self) -> Result<OrganizationSettings, AppError>;
-
-    /// Persist a batch of organization key-value settings.
-    fn update_organization_settings(
-        &self,
-        settings: &std::collections::HashMap<String, String>,
-    ) -> Result<(), AppError>;
-
-    /// Retrieve the organization record, or `None` before onboarding.
-    fn get_organization(&self) -> Result<Option<Organization>, AppError>;
-
-    /// Create the organization record during the onboarding flow.
-    fn create_organization(
-        &self,
-        data: &CreateOrganizationRequest,
-    ) -> Result<Organization, AppError>;
-
-    /// Update the organization record with partial data.
-    fn update_organization(
-        &self,
-        data: &UpdateOrganizationRequest,
-    ) -> Result<Organization, AppError>;
-
-    /// Retrieve onboarding status: `(completed, current_step)`.
-    fn get_onboarding_status(&self) -> Result<(bool, i32), AppError>;
-
-    /// Mark onboarding as complete.
-    fn complete_onboarding(&self) -> Result<(), AppError>;
-
-    /// Return `true` if at least one active Admin user exists.
-    fn has_admin_users(&self) -> Result<bool, AppError>;
-
-    /// Promote the earliest active user to Admin role.
-    /// Called once during the onboarding flow.
-    fn promote_first_user_to_admin(&self) -> Result<(), AppError>;
-}
-
-/// Repository contract for application-wide settings persistence.
-///
-/// Concrete implementation: [`SqliteSettingsRepository`].
-pub trait AppSettingsRepository: Send + Sync {
-    /// Retrieve the global application settings record.
-    fn get_app_settings(&self) -> Result<AppSettings, AppError>;
-
-    /// Persist the full application settings record atomically.
-    fn save_app_settings(&self, settings: &AppSettings, user_id: &str) -> Result<(), AppError>;
-}
-
-/// Repository contract for user-specific settings persistence.
-///
-/// Concrete implementation: [`SqliteUserSettingsRepository`].
-pub trait UserSettingsPort: Send + Sync {
-    /// Retrieve settings for a given user, creating defaults if absent.
-    fn get_user_settings(&self, user_id: &str) -> Result<UserSettings, AppError>;
-
-    /// Persist a user's settings record atomically.
-    fn save_user_settings(&self, user_id: &str, settings: &UserSettings) -> Result<(), AppError>;
-
-    /// Retrieve the GDPR data-consent record for a user.
-    fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError>;
-}
-
 // ── Trait impls on concrete repository structs ────────────────────────────────
+// NOTE: These implementations are kept here during the transitional migration.
+// Per ADR-005, implementations should eventually move to infrastructure layer.
 
 impl SettingsRepository for OrganizationRepository {
     fn get_organization_settings(&self) -> Result<OrganizationSettings, AppError> {
@@ -539,6 +472,21 @@ impl SettingsService {
         let org = self.org_repo.update_organization(data)?;
         info!("Organization updated by {}", ctx.auth.user_id);
         Ok(org)
+    }
+
+    /// Update only the organization's logo fields.  Requires Admin.
+    pub fn update_logo(
+        &self,
+        ctx: &RequestContext,
+        logo_url: Option<String>,
+        logo_data: Option<String>,
+    ) -> Result<Organization, AppError> {
+        let request = UpdateOrganizationRequest {
+            logo_url,
+            logo_data,
+            ..Default::default()
+        };
+        self.update_organization(ctx, &request)
     }
 
     /// Retrieve all organization key-value settings.  Requires at least Viewer.

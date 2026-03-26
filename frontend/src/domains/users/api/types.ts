@@ -1,4 +1,4 @@
-import type { UserAccount, UserRole } from '@/lib/backend';
+import type { UserAccount, UserRole } from "@/lib/backend";
 
 export type { UserAccount, UserRole };
 

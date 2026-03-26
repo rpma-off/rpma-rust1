@@ -461,37 +461,41 @@ function normalizeMaterial(input: Partial<Material>): Material {
     id: input.id || generateId('material'),
     sku: input.sku || `SKU-${Math.floor(Math.random() * 9000 + 1000)}`,
     name: input.name || 'Material',
-    description: input.description,
+    description: input.description ?? null,
     material_type: input.material_type || 'ppf_film',
-    category: input.category,
-    subcategory: input.subcategory,
-    category_id: input.category_id,
-    brand: input.brand,
-    model: input.model,
-    specifications: input.specifications,
+    category: input.category ?? null,
+    subcategory: input.subcategory ?? null,
+    category_id: input.category_id ?? null,
+    brand: input.brand ?? null,
+    model: input.model ?? null,
+    specifications: input.specifications ?? null,
     unit_of_measure: input.unit_of_measure || 'meter',
     current_stock: input.current_stock ?? 0,
-    minimum_stock: input.minimum_stock,
-    maximum_stock: input.maximum_stock,
-    reorder_point: input.reorder_point,
-    unit_cost: input.unit_cost,
+    minimum_stock: input.minimum_stock ?? null,
+    maximum_stock: input.maximum_stock ?? null,
+    reorder_point: input.reorder_point ?? null,
+    unit_cost: input.unit_cost ?? null,
     currency: input.currency || 'USD',
-    supplier_id: input.supplier_id,
-    supplier_name: input.supplier_name,
-    supplier_sku: input.supplier_sku,
-    quality_grade: input.quality_grade,
-    certification: input.certification,
-    expiry_date: input.expiry_date,
-    batch_number: input.batch_number,
-    serial_numbers: input.serial_numbers,
+    supplier_id: input.supplier_id ?? null,
+    supplier_name: input.supplier_name ?? null,
+    supplier_sku: input.supplier_sku ?? null,
+    quality_grade: input.quality_grade ?? null,
+    certification: input.certification ?? null,
+    expiry_date: input.expiry_date ?? null,
+    batch_number: input.batch_number ?? null,
+    serial_numbers: input.serial_numbers ?? null,
     is_active: input.is_active ?? true,
     is_discontinued: input.is_discontinued ?? false,
-    storage_location: input.storage_location,
-    warehouse_id: input.warehouse_id,
+    is_expired: input.is_expired ?? false,
+    is_low_stock: input.is_low_stock ?? false,
+    storage_location: input.storage_location ?? null,
+    warehouse_id: input.warehouse_id ?? null,
     created_at: input.created_at || now,
     updated_at: input.updated_at || now,
-    created_by: input.created_by,
-    updated_by: input.updated_by,
+    created_by: input.created_by ?? null,
+    updated_by: input.updated_by ?? null,
+    deleted_at: input.deleted_at ?? null,
+    deleted_by: input.deleted_by ?? null,
     synced: input.synced ?? true,
     last_synced_at: input.last_synced_at ?? now
   };
@@ -1034,37 +1038,150 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
           return { type: 'NotFound' };
       }
     }
+    // ── Individual intervention commands (post-refactor) ─────────────────────
+    case 'intervention_start': {
+      const req = (args?.request ?? {}) as AnyRecord;
+      const task = state.tasks.find(t => t.id === req.task_id) || normalizeTask({ id: req.task_id });
+      const intervention = normalizeIntervention(task, { status: 'in_progress' });
+      const steps = buildInterventionSteps(intervention.id);
+      state.interventions.push(intervention);
+      state.interventionSteps.push(...steps);
+      syncInterventionProgress(intervention.id);
+      return { intervention, steps };
+    }
+    case 'intervention_get': {
+      const intervention = state.interventions.find(i => i.id === args?.id);
+      return intervention ? { intervention } : null;
+    }
+    case 'intervention_update': {
+      const index = state.interventions.findIndex(i => i.id === args?.id);
+      if (index === -1) return null;
+      const current = state.interventions[index]!;
+      state.interventions[index] = {
+        ...current,
+        ...((args?.data as AnyRecord) ?? {}),
+        updated_at: nowIso()
+      } as MockIntervention;
+      return { intervention: state.interventions[index] };
+    }
+    case 'intervention_delete': {
+      const idx = state.interventions.findIndex(i => i.id === args?.id);
+      if (idx !== -1) state.interventions.splice(idx, 1);
+      return null;
+    }
+    case 'intervention_finalize': {
+      const req = (args?.request ?? {}) as AnyRecord;
+      const index = state.interventions.findIndex(i => i.id === req.intervention_id);
+      if (index === -1) return null;
+      const now = nowIso();
+      state.interventionSteps = state.interventionSteps.map(step =>
+        step.intervention_id === req.intervention_id
+          ? { ...step, step_status: 'completed', completed_at: now, updated_at: now }
+          : step
+      );
+      state.interventions[index] = {
+        ...state.interventions[index]!,
+        status: 'completed',
+        completion_percentage: 100,
+        completed_at: now,
+        customer_satisfaction: req.customer_satisfaction ?? null,
+        quality_score: req.quality_score ?? null,
+        final_observations: req.final_observations ?? null,
+        customer_signature: req.customer_signature ?? null,
+        customer_comments: req.customer_comments ?? null,
+        updated_at: now
+      };
+      return {
+        intervention: state.interventions[index],
+        metrics: {
+          total_duration_minutes: 60,
+          efficiency_score: null,
+          quality_score: req.quality_score ?? null,
+          certificates_generated: false
+        }
+      };
+    }
+    case 'intervention_advance_step': {
+      const stepIndex = state.interventionSteps.findIndex(step => step.id === args?.step_id);
+      if (stepIndex === -1) return null;
+      const now = nowIso();
+      const step = state.interventionSteps[stepIndex]!;
+      const nextPhotos = (args?.photos as string[] | undefined) ?? step.photo_urls ?? [];
+      const updatedStep = {
+        ...step,
+        collected_data: args?.collected_data ?? step.collected_data,
+        notes: args?.notes ?? step.notes,
+        photo_urls: nextPhotos,
+        photo_count: nextPhotos.length,
+        required_photos_completed: nextPhotos.length >= step.min_photos_required,
+        step_status: 'completed',
+        completed_at: now,
+        updated_at: now
+      };
+      state.interventionSteps[stepIndex] = updatedStep as MockInterventionStep;
+      const nextStepIndex = state.interventionSteps.findIndex(
+        s => s.intervention_id === step.intervention_id && s.step_number === step.step_number + 1
+      );
+      let nextStep: MockInterventionStep | null = null;
+      if (nextStepIndex !== -1) {
+        const next = state.interventionSteps[nextStepIndex]!;
+        nextStep = {
+          ...next,
+          step_status: next.step_status === 'pending' ? 'in_progress' : next.step_status,
+          started_at: next.started_at ?? now,
+          updated_at: now
+        } as MockInterventionStep;
+        state.interventionSteps[nextStepIndex] = nextStep;
+      }
+      syncInterventionProgress(step.intervention_id);
+      const progress = buildProgress(step.intervention_id, state.interventionSteps.filter(s => s.intervention_id === step.intervention_id));
+      return { step: updatedStep, next_step: nextStep, progress_percentage: progress.completion_percentage };
+    }
+    case 'intervention_list': {
+      const req = (args?.request ?? {}) as AnyRecord;
+      let interventions = [...state.interventions];
+      if (req.status) interventions = interventions.filter(i => i.status === req.status);
+      if (req.technician_id) interventions = interventions.filter(i => i.technician_id === req.technician_id);
+      const limit = typeof req.limit === 'number' ? req.limit : undefined;
+      const offset = typeof req.offset === 'number' ? req.offset : 0;
+      const paginated = limit !== undefined ? interventions.slice(offset, offset + limit) : interventions.slice(offset);
+      return { interventions: paginated, total: interventions.length };
+    }
+    // ── Individual intervention query commands ────────────────────────────────
     case 'intervention_get_active_by_task': {
       const taskId = args?.task_id ?? args?.taskId;
       const intervention = state.interventions.find(i => i.task_id === taskId && i.status !== 'completed') || null;
-      return { intervention };
+      // Return as array to match InterventionWorkflowResponse::ActiveByTask { interventions }
+      return { interventions: intervention ? [intervention] : [] };
     }
     case 'intervention_get_latest_by_task': {
-      const taskId = args?.taskId ?? args?.task_id;
-      const intervention = state.interventions.find(i => i.task_id === taskId) || null;
-      return { data: intervention };
+      const taskId = args?.task_id ?? args?.taskId;
+      // Return intervention directly (ApiResponse<Option<Intervention>> unwrapped by safeInvoke)
+      return state.interventions.find(i => i.task_id === taskId) || null;
     }
     case 'intervention_get_progress': {
       const interventionId = (args?.intervention_id ?? '') as string;
       const steps = state.interventionSteps.filter(step => step.intervention_id === interventionId);
       const progress = buildProgress(interventionId, steps);
-      return { steps, progress_percentage: progress.completion_percentage };
+      // Return { progress, steps } to match interventionsIpc.getProgress expectation
+      return { progress, steps };
     }
     case 'intervention_get_step': {
       const stepId = args?.step_id;
       return state.interventionSteps.find(step => step.id === stepId) || null;
     }
     case 'intervention_save_step_progress': {
-      const request = (args?.request ?? {}) as AnyRecord;
-      const stepIndex = state.interventionSteps.findIndex(step => step.id === request.step_id);
+      // interventionsIpc sends { data: stepData, correlation_id } (not { request: ... })
+      const req = (args?.data ?? args?.request ?? {}) as AnyRecord;
+      const stepIndex = state.interventionSteps.findIndex(step => step.id === req.step_id);
       if (stepIndex === -1) return null;
       const now = nowIso();
       const step = state.interventionSteps[stepIndex]!;
-      const nextPhotos = request.photos ?? step.photo_urls ?? [];
+      const nextPhotos = (req.photos as string[] | undefined) ?? step.photo_urls ?? [];
       const updatedStep = {
         ...step,
-        collected_data: request.collected_data ?? step.collected_data,
-        notes: request.notes ?? step.notes,
+        collected_data: req.collected_data ?? step.collected_data,
+        notes: req.notes ?? step.notes,
         photo_urls: nextPhotos,
         photo_count: nextPhotos.length,
         required_photos_completed: nextPhotos.length >= step.min_photos_required,
@@ -1096,15 +1213,16 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
       const category: MaterialCategory = {
         id: generateId('category'),
         name: request.name || 'Category',
-        code: request.code,
+        code: request.code ?? null,
+        parent_id: request.parent_id ?? null,
         level: request.level ?? 1,
-        description: request.description,
-        color: request.color,
+        description: request.description ?? null,
+        color: request.color ?? null,
         is_active: request.is_active ?? true,
         created_at: nowIso(),
         updated_at: nowIso(),
-        created_by: request.created_by,
-        updated_by: request.updated_by,
+        created_by: request.created_by ?? null,
+        updated_by: request.updated_by ?? null,
         synced: true,
         last_synced_at: nowIso()
       };
@@ -1193,7 +1311,7 @@ export async function handleInvoke(command: string, args?: JsonObject): Promise<
         step_id: request.step_id,
         quantity_used: request.quantity_used || 0,
         unit_cost: request.unit_cost,
-        total_cost: request.unit_cost ? request.unit_cost * request.quantity_used : undefined,
+        total_cost: request.unit_cost ? request.unit_cost * request.quantity_used : null,
         waste_quantity: request.waste_quantity || 0,
         waste_reason: request.waste_reason,
         batch_used: request.batch_used,

@@ -1,7 +1,13 @@
+use lazy_static::lazy_static;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::domains::notifications::models::NotificationConfig;
+
+lazy_static! {
+    static ref NOTIFICATION_SERVICE: Arc<Mutex<Option<NotificationService>>> =
+        Arc::new(Mutex::new(None));
+}
 
 #[derive(Clone)]
 pub struct NotificationService {
@@ -47,5 +53,20 @@ impl NotificationService {
 
     pub async fn get_config(&self) -> NotificationConfig {
         self.config.lock().await.clone()
+    }
+
+    /// Initialize the process-wide notification service with the given config.
+    pub async fn initialize_global(config: NotificationConfig) {
+        let service = NotificationService::new(config);
+        *NOTIFICATION_SERVICE.lock().await = Some(service);
+    }
+
+    /// Return the status of the process-wide notification service as JSON.
+    pub async fn get_global_status() -> serde_json::Value {
+        if NOTIFICATION_SERVICE.lock().await.is_some() {
+            serde_json::json!({ "initialized": true, "channels": ["in_app"] })
+        } else {
+            serde_json::json!({ "initialized": false })
+        }
     }
 }

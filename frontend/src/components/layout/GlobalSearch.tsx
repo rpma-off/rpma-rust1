@@ -3,6 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { User, ClipboardList, Package, FileText, Loader2 } from "lucide-react";
+import { systemOperations } from "@/lib/ipc/domains/system";
+import type { GlobalSearchResult } from "@/lib/backend";
 import {
   CommandDialog,
   CommandEmpty,
@@ -12,9 +15,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useDebounce } from "@/shared/hooks/useDebounce";
-import { ipcClient } from "@/lib/ipc";
-import type { GlobalSearchResult } from "@/lib/backend";
-import { User, ClipboardList, Package, FileText, Loader2 } from "lucide-react";
 
 interface GlobalSearchProps {
   open: boolean;
@@ -35,7 +35,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
 
   const { data, isFetching } = useQuery({
     queryKey: ["global-search", debouncedQuery],
-    queryFn: () => ipcClient.system.globalSearch(debouncedQuery),
+    queryFn: () => systemOperations.globalSearch(debouncedQuery),
     enabled: open && debouncedQuery.length >= 2,
     staleTime: 30_000,
     placeholderData: (prev) => prev,

@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
 import type { UserPreferences } from '@/lib/backend';
-import type { CalendarViewMode } from '../hooks/useCalendar';
 import { ipcClient } from '@/lib/ipc/client';
+import type { CalendarViewMode } from '../hooks/useCalendar';
 
 interface CalendarState {
   currentView: CalendarViewMode;

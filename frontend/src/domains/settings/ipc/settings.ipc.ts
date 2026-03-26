@@ -28,54 +28,60 @@ export const settingsIpc = {
     ),
 
   updateUserProfile: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_PROFILE,
-      { profile: request },
+      { profile: { ...current.profile, ...request } },
     );
     invalidateUserSettingsCache();
     return result;
   },
 
   updateUserPreferences: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_PREFERENCES,
-      { preferences: request },
+      { preferences: { ...current.preferences, ...request } },
     );
     invalidateUserSettingsCache();
     return result;
   },
 
   updateUserSecurity: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_SECURITY,
-      { security: request },
+      { security: { ...current.security, ...request } },
     );
     invalidateUserSettingsCache();
     return result;
   },
 
   updateUserPerformance: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_PERFORMANCE,
-      { performance: request },
+      { performance: { ...current.performance, ...request } },
     );
     invalidateUserSettingsCache();
     return result;
   },
 
   updateUserAccessibility: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_ACCESSIBILITY,
-      { accessibility: request },
+      { accessibility: { ...current.accessibility, ...request } },
     );
     invalidateUserSettingsCache();
     return result;
   },
 
   updateUserNotifications: async (request: JsonObject) => {
+    const current = await settingsIpc.getUserSettings();
     const result = await safeInvoke<JsonValue>(
       IPC_COMMANDS.UPDATE_USER_NOTIFICATIONS,
-      { notifications: request },
+      { notifications: { ...current.notifications, ...request } },
     );
     invalidateUserSettingsCache();
     return result;

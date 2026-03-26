@@ -125,44 +125,43 @@ export const ipcClient = {
   },
   interventions: {
     start: (data: JsonObject) =>
-      mockSafeInvoke("intervention_workflow", {
-        action: { action: "Start", data },
-      }),
+      mockSafeInvoke("intervention_start", { request: data }),
     get: (id: string) =>
-      mockSafeInvoke("intervention_workflow", {
-        action: { action: "Get", id },
-      }),
+      mockSafeInvoke("intervention_get", { id, correlation_id: null }),
     getActiveByTask: (taskId: string) =>
-      mockSafeInvoke("intervention_workflow", {
-        action: { action: "GetActiveByTask", task_id: taskId },
-      }),
+      mockSafeInvoke("intervention_get_active_by_task", { task_id: taskId, correlation_id: null }),
     getLatestByTask: (taskId: string) =>
-      mockSafeInvoke("intervention_get_latest_by_task", { taskId }),
+      mockSafeInvoke("intervention_get_latest_by_task", { task_id: taskId, correlation_id: null }),
     advanceStep: (stepData: JsonObject) =>
-      mockSafeInvoke("intervention_progress", {
-        action: { action: "AdvanceStep", ...stepData },
+      mockSafeInvoke("intervention_advance_step", {
+        intervention_id: stepData.intervention_id ?? null,
+        step_id: stepData.step_id ?? null,
+        collected_data: stepData.collected_data ?? null,
+        photos: stepData.photos ?? null,
+        notes: stepData.notes ?? null,
+        quality_check_passed: stepData.quality_check_passed ?? null,
+        issues: stepData.issues ?? null,
+        correlation_id: null,
       }),
     getStep: (stepId: string) =>
       mockSafeInvoke("intervention_get_step", { step_id: stepId }),
     getProgress: (interventionId: string) =>
-      mockSafeInvoke("intervention_progress", {
-        action: { action: "Get", intervention_id: interventionId },
-      }),
+      mockSafeInvoke("intervention_get_progress", { intervention_id: interventionId, correlation_id: null }),
     saveStepProgress: (stepData: JsonObject) =>
-      mockSafeInvoke("intervention_progress", {
-        action: { action: "SaveStepProgress", ...stepData },
-      }),
+      mockSafeInvoke("intervention_save_step_progress", { data: stepData, correlation_id: null }),
     updateWorkflow: (id: string, data: JsonObject) =>
-      mockSafeInvoke("intervention_workflow", {
-        action: { action: "Update", id, data },
-      }),
+      mockSafeInvoke("intervention_update", { id, data, correlation_id: null }),
     finalize: (data: JsonObject) =>
-      mockSafeInvoke("intervention_workflow", {
-        action: { action: "Finalize", data },
-      }),
+      mockSafeInvoke("intervention_finalize", { request: data }),
     list: (filters: JsonObject) =>
-      mockSafeInvoke("intervention_management", {
-        request: { action: { List: { filters } } },
+      mockSafeInvoke("intervention_list", {
+        request: {
+          status: filters.status ?? null,
+          technician_id: filters.technician_id ?? null,
+          limit: filters.limit ?? null,
+          offset: filters.offset ?? null,
+          correlation_id: null,
+        },
       }),
   },
   notifications: {

@@ -2,9 +2,12 @@
 
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { ipcClient } from "@/shared/utils";
-import { adminKeys, dashboardKeys } from "@/lib/query-keys";
 import { useAuth } from "@/shared/hooks/useAuth";
+import { dashboardIpc } from "@/domains/dashboard/ipc";
+import type { DashboardStats } from "@/domains/dashboard/api/types";
+import { adminIpc } from "@/domains/admin/ipc/admin.ipc";
+import { notificationsIpc } from "@/domains/notifications/ipc/notifications.ipc";
+import { adminKeys, dashboardKeys } from "@/lib/query-keys";
 
 export interface SystemStats {
   totalUsers: number;
@@ -32,8 +35,6 @@ export interface RecentActivity {
   user?: string;
   severity?: "low" | "medium" | "high";
 }
-
-type DashboardStats = Awaited<ReturnType<typeof ipcClient.dashboard.getStats>>;
 
 export interface UseAdminDashboardReturn {
   stats: SystemStats;
@@ -65,13 +66,13 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
     queries: [
       {
         queryKey: dashboardKeys.stats(),
-        queryFn: () => ipcClient.dashboard.getStats(),
+        queryFn: () => dashboardIpc.getStats(),
         enabled,
         staleTime: 60_000,
       },
       {
         queryKey: adminKeys.dashboard(),
-        queryFn: () => ipcClient.admin.healthCheck().catch(() => "unknown"),
+        queryFn: () => adminIpc.healthCheck().catch(() => "unknown"),
         enabled,
         staleTime: 30_000,
         retry: false,
@@ -79,14 +80,13 @@ export function useAdminDashboard(): UseAdminDashboardReturn {
       {
         queryKey: [...adminKeys.all, "db-stats"],
         queryFn: () =>
-          ipcClient.admin.getDatabaseStats().catch(() => ({ size_bytes: 0 })),
+          adminIpc.getDatabaseStats().catch(() => ({ size_bytes: 0 })),
         enabled,
         staleTime: 60_000,
       },
       {
         queryKey: [...adminKeys.all, "recent-activities"],
-        queryFn: () =>
-          ipcClient.notifications.getRecentActivities().catch(() => []),
+        queryFn: () => notificationsIpc.getRecentActivities().catch(() => []),
         enabled,
         staleTime: 30_000,
       },

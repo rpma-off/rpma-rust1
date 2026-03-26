@@ -6,9 +6,7 @@
 //! - Operations involving interventions, tasks, and users
 
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::interventions::{
-    InterventionsCommand, InterventionsFacade, InterventionsResponse,
-};
+use crate::domains::interventions::InterventionsFacade;
 use crate::resolve_context;
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument};
@@ -201,20 +199,20 @@ pub async fn intervention_management(
             let include_completed = include_completed.unwrap_or(true);
 
             // Data retrieval via facade command dispatch.
-            let command = if include_completed {
-                InterventionsCommand::GetLatestByTask { task_id }
+            let interventions = if include_completed {
+                match facade
+                    .get_latest_by_task(task_id, &ctx, state.task_service.as_ref())
+                    .await
+                    .map_err(|e| AppError::db_sanitized("get_interventions_by_task", &e))?
+                {
+                    Some(i) => vec![i],
+                    None => vec![],
+                }
             } else {
-                InterventionsCommand::GetActiveByTask { task_id }
-            };
-            let interventions = match facade
-                .execute(command, &ctx, state.task_service.as_ref())
-                .await
-                .map_err(|e| AppError::db_sanitized("get_interventions_by_task", &e))?
-            {
-                InterventionsResponse::OptionalIntervention(Some(i)) => vec![i],
-                InterventionsResponse::OptionalIntervention(None) => vec![],
-                InterventionsResponse::InterventionList(list) => list,
-                _ => vec![],
+                facade
+                    .get_active_by_task(task_id, &ctx, state.task_service.as_ref())
+                    .await
+                    .map_err(|e| AppError::db_sanitized("get_interventions_by_task", &e))?
             };
 
             Ok(

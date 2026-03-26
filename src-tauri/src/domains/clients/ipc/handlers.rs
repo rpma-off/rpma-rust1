@@ -1,80 +1,16 @@
 //! Client IPC handlers — thin Tauri command entry points (ADR-018).
 
 use crate::domains::clients::application::client_input_validator::{
-    required_permission, sanitize_client_action, sanitize_create_request, sanitize_update_request,
+    sanitize_create_request, sanitize_update_request,
 };
 use crate::domains::clients::application::client_service::{ClientService, ClientStats};
+use crate::domains::clients::application::ClientOrchestrator;
 use crate::domains::clients::domain::models::{
     Client, ClientListResponse, ClientQuery, ClientWithTasks, CreateClientRequest,
     UpdateClientRequest,
 };
-use crate::domains::clients::ipc::types::ClientCrudRequest;
-use crate::commands::{ApiResponse, AppError, AppState, ClientResponse};
-use crate::shared::ipc::errors::AppError as IpcAppError;
-use crate::shared::services::cross_domain::{Task, TaskQuery};
-use std::sync::Arc;
-use tracing::{debug, error, info, instrument, warn};
-
-// ── ClientsFacade ─────────────────────────────────────────────────────────────
-
-/// Facade for the Clients bounded context (IPC layer).
-#[derive(Debug)]
-pub struct ClientsFacade {
-    client_service: Arc<ClientService>,
-}
-
-impl ClientsFacade {
-    pub fn new(client_service: Arc<ClientService>) -> Self {
-        Self { client_service }
-    }
-
-    pub fn client_service(&self) -> &Arc<ClientService> {
-        &self.client_service
-    }
-
-    pub fn validate_client_id(&self, client_id: &str) -> Result<(), IpcAppError> {
-        ClientService::validate_client_id(client_id)
-    }
-
-    pub fn map_service_error(&self, context: &str, error: &str) -> IpcAppError {
-        ClientService::map_service_error(context, error)
-    }
-}
-
-// ── Helper ────────────────────────────────────────────────────────────────────
-
-/// Combine a `Client` with its resolved task list.
-pub(crate) fn client_into_client_with_tasks(client: Client, tasks: Vec<Task>) -> ClientWithTasks {
-    ClientWithTasks {
-        id: client.id,
-        name: client.name,
-        email: client.email,
-        phone: client.phone,
-        customer_type: client.customer_type,
-        address_street: client.address_street,
-        address_city: client.address_city,
-        address_state: client.address_state,
-        address_zip: client.address_zip,
-        address_country: client.address_country,
-        tax_id: client.tax_id,
-        company_name: client.company_name,
-        contact_person: client.contact_person,
-        notes: client.notes,
-        tags: client.tags,
-        total_tasks: client.total_tasks,
-        active_tasks: client.active_tasks,
-        completed_tasks: client.completed_tasks,
-        last_task_date: client.last_task_date,
-        created_at: client.created_at,
-        updated_at: client.updated_at,
-        created_by: client.created_by,
-        deleted_at: client.deleted_at,
-        deleted_by: client.deleted_by,
-        synced: client.synced,
-        last_synced_at: client.last_synced_at,
-        tasks: Some(tasks),
-    }
-}
+use crate::commands::{ApiResponse, AppError, AppState};
+use tracing::instrument;
 
 // ── Individual thin handlers (ADR-018) ────────────────────────────────────────
 
@@ -100,13 +36,15 @@ pub async fn client_create(
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "create")?;
     let sanitized = sanitize_create_request(data)?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    let client = facade
-        .client_service()
+    let client = state
+        .client_service
         .create_client_async(sanitized, ctx.user_id())
         .await
-        .map_err(|e| facade.map_service_error("create_client", &e))?;
-    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("create_client", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        client,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Get a single client by ID.
@@ -119,14 +57,16 @@ pub async fn client_get(
 ) -> Result<ApiResponse<Option<Client>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    facade.validate_client_id(&id)?;
-    let client = facade
-        .client_service()
+    ClientService::validate_client_id(&id)?;
+    let client = state
+        .client_service
         .get_client_async(&id)
         .await
-        .map_err(|e| facade.map_service_error("get_client", &e))?;
-    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("get_client", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        client,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Get a single client with its associated tasks.
@@ -139,42 +79,19 @@ pub async fn client_get_with_tasks(
 ) -> Result<ApiResponse<Option<ClientWithTasks>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    facade.validate_client_id(&id)?;
-    let client = facade
-        .client_service()
-        .get_client_async(&id)
+    ClientService::validate_client_id(&id)?;
+
+    let orchestrator =
+        ClientOrchestrator::new(state.client_service.clone(), state.task_service.clone());
+    let client_with_tasks = orchestrator
+        .get_client_with_tasks(&id)
         .await
-        .map_err(|e| facade.map_service_error("get_client", &e))?;
-    match client {
-        Some(client) => {
-            let task_query = TaskQuery {
-                client_id: Some(id.to_string()),
-                pagination: crate::shared::repositories::base::PaginationParams {
-                    page: Some(1),
-                    page_size: Some(1000),
-                    sort_by: Some("created_at".to_string()),
-                    sort_order: Some("desc".to_string()),
-                },
-                status: None,
-                technician_id: None,
-                priority: None,
-                search: None,
-                from_date: None,
-                to_date: None,
-            };
-            let tasks_response = state
-                .task_service
-                .get_tasks_async(task_query)
-                .await
-                .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
-            let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-            let client_with_tasks = client_into_client_with_tasks(client, tasks);
-            Ok(ApiResponse::success(Some(client_with_tasks))
-                .with_correlation_id(Some(ctx.correlation_id.clone())))
-        }
-        None => Ok(ApiResponse::success(None).with_correlation_id(Some(ctx.correlation_id.clone()))),
-    }
+        .map_err(|e| ClientService::map_service_error("get_client_with_tasks", &e))?;
+
+    Ok(ApiResponse::success_with_correlation(
+        client_with_tasks,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Update an existing client.
@@ -188,15 +105,17 @@ pub async fn client_update(
 ) -> Result<ApiResponse<Client>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "update")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    facade.validate_client_id(&id)?;
-    let sanitized = sanitize_update_request(id, data)?;
-    let client = facade
-        .client_service()
+    ClientService::validate_client_id(&id)?;
+    let sanitized = sanitize_update_request(id.clone(), data)?;
+    let client = state
+        .client_service
         .update_client_async(sanitized, ctx.user_id())
         .await
-        .map_err(|e| facade.map_service_error("update_client", &e))?;
-    Ok(ApiResponse::success(client).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("update_client", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        client,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Delete a client by ID.
@@ -209,14 +128,16 @@ pub async fn client_delete(
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "delete")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    facade.validate_client_id(&id)?;
-    facade
-        .client_service()
+    ClientService::validate_client_id(&id)?;
+    state
+        .client_service
         .delete_client_async(&id, ctx.user_id())
         .await
-        .map_err(|e| facade.map_service_error("delete_client", &e))?;
-    Ok(ApiResponse::success(()).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("delete_client", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        (),
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// List clients with optional filters and pagination.
@@ -229,13 +150,15 @@ pub async fn client_list(
 ) -> Result<ApiResponse<ClientListResponse>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    let clients = facade
-        .client_service()
+    let clients = state
+        .client_service
         .get_clients_async(filters)
         .await
-        .map_err(|e| facade.map_service_error("list_clients", &e))?;
-    Ok(ApiResponse::success(clients).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("list_clients", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        clients,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// List clients with their associated tasks.
@@ -249,39 +172,18 @@ pub async fn client_list_with_tasks(
 ) -> Result<ApiResponse<Vec<ClientWithTasks>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    let clients = facade
-        .client_service()
-        .get_clients_async(filters)
+
+    let orchestrator =
+        ClientOrchestrator::new(state.client_service.clone(), state.task_service.clone());
+    let clients_with_tasks = orchestrator
+        .get_clients_with_tasks(filters, limit_tasks)
         .await
-        .map_err(|e| facade.map_service_error("list_clients", &e))?;
-    let task_limit = limit_tasks.unwrap_or(5);
-    let mut clients_with_tasks = Vec::new();
-    for client in clients.data {
-        let task_query = TaskQuery {
-            client_id: Some(client.id.clone()),
-            pagination: crate::shared::repositories::base::PaginationParams {
-                page: Some(1),
-                page_size: Some(task_limit),
-                sort_by: Some("created_at".to_string()),
-                sort_order: Some("desc".to_string()),
-            },
-            status: None,
-            technician_id: None,
-            priority: None,
-            search: None,
-            from_date: None,
-            to_date: None,
-        };
-        let tasks_response = state
-            .task_service
-            .get_tasks_async(task_query)
-            .await
-            .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
-        let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-        clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
-    }
-    Ok(ApiResponse::success(clients_with_tasks).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("list_clients_with_tasks", &e))?;
+
+    Ok(ApiResponse::success_with_correlation(
+        clients_with_tasks,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Search clients by query string.
@@ -295,13 +197,15 @@ pub async fn client_search(
 ) -> Result<ApiResponse<Vec<Client>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    let clients = facade
-        .client_service()
+    let clients = state
+        .client_service
         .search_clients_async(&query, 1, limit)
         .await
-        .map_err(|e| facade.map_service_error("search_clients", &e))?;
-    Ok(ApiResponse::success(clients).with_correlation_id(Some(ctx.correlation_id.clone())))
+        .map_err(|e| ClientService::map_service_error("search_clients", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        clients,
+        Some(ctx.correlation_id),
+    ))
 }
 
 /// Get client statistics (counts by type, etc.).
@@ -313,357 +217,13 @@ pub async fn client_get_stats(
 ) -> Result<ApiResponse<ClientStats>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    let facade = ClientsFacade::new(state.client_service.clone());
-    let stats = facade
-        .client_service()
+    let stats = state
+        .client_service
         .get_client_stats_async()
         .await
-        .map_err(|e| facade.map_service_error("get_client_stats", &e))?;
-    Ok(ApiResponse::success(stats).with_correlation_id(Some(ctx.correlation_id.clone())))
-}
-
-// ── Deprecated unified handler ────────────────────────────────────────────────
-
-#[deprecated(note = "Use individual client_create/client_get/client_update/client_delete/client_list/client_search/client_get_stats commands")]
-#[tauri::command]
-#[instrument(skip(state))]
-pub async fn client_crud(
-    request: ClientCrudRequest,
-    state: AppState<'_>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let ctx = crate::resolve_context!(&state, &request.correlation_id);
-    let correlation_id = ctx.correlation_id.clone();
-    let action = request.action;
-    info!(correlation_id = %correlation_id, "client_crud command received - action: {:?}", action);
-    let permission = required_permission(&action);
-    let validated_action = sanitize_client_action(action)?;
-    let rate_limiter = state.auth_service.rate_limiter();
-    let rate_limit_key = format!("client_ops:{}", ctx.user_id());
-    if !rate_limiter
-        .check_and_record(&rate_limit_key, 100, 60)
-        .map_err(|e| AppError::internal_sanitized("rate_limit_check", &e))?
-    {
-        return Err(AppError::Validation(
-            "Rate limit exceeded. Please try again later.".to_string(),
-        ));
-    }
-    if let Some(perm) = permission {
-        if !crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(
-            &ctx.auth.role,
-            perm,
-        ) {
-            return Err(AppError::Authorization(format!(
-                "Insufficient permissions to {} clients",
-                perm
-            )));
-        }
-    }
-    let client_service = state.client_service.clone();
-    let clients_facade = ClientsFacade::new(client_service.clone());
-    let task_service = state.task_service.clone();
-    let result = tokio::time::timeout(
-        std::time::Duration::from_secs(crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS),
-        async {
-            match validated_action {
-                crate::commands::ClientAction::Create { data } => {
-                    handle_client_creation(
-                        &clients_facade,
-                        data,
-                        ctx.user_id(),
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::Get { id } => {
-                    handle_client_retrieval(&clients_facade, &id, Some(correlation_id.clone()))
-                        .await
-                }
-                crate::commands::ClientAction::GetWithTasks { id } => {
-                    handle_client_with_tasks_retrieval(
-                        &clients_facade,
-                        task_service,
-                        &id,
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::Update { id, data } => {
-                    handle_client_update(
-                        &clients_facade,
-                        &id,
-                        data,
-                        ctx.user_id(),
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::Delete { id } => {
-                    handle_client_deletion(
-                        &clients_facade,
-                        &id,
-                        ctx.user_id(),
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::List { filters } => {
-                    handle_client_listing(&clients_facade, filters, Some(correlation_id.clone()))
-                        .await
-                }
-                crate::commands::ClientAction::ListWithTasks {
-                    filters,
-                    limit_tasks,
-                } => {
-                    handle_client_listing_with_tasks(
-                        &clients_facade,
-                        task_service,
-                        filters,
-                        limit_tasks,
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::Search { query, limit } => {
-                    handle_client_search(
-                        &clients_facade,
-                        &query,
-                        limit,
-                        Some(correlation_id.clone()),
-                    )
-                    .await
-                }
-                crate::commands::ClientAction::Stats => {
-                    handle_client_statistics(&clients_facade, Some(correlation_id.clone())).await
-                }
-            }
-        },
-    )
-    .await;
-    match result {
-        Ok(response) => response,
-        Err(_) => {
-            error!(
-                "Client CRUD operation timed out after {} seconds",
-                crate::shared::constants::CLIENT_OPERATION_TIMEOUT_SECS
-            );
-            Err(AppError::Database(
-                "Client operation timed out - database may be locked. Please try again."
-                    .to_string(),
-            ))
-        }
-    }
-}
-
-// ── Handler helpers ───────────────────────────────────────────────────────────
-
-async fn handle_client_creation(
-    facade: &ClientsFacade,
-    data: CreateClientRequest,
-    user_id: &str,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    info!("Creating new client");
-    let client = facade
-        .client_service()
-        .create_client_async(data, user_id)
-        .await
-        .map_err(|e| {
-            error!("Failed to create client: {}", e);
-            facade.map_service_error("create_client", &e)
-        })?;
-    info!("Client created successfully with ID: {}", client.id);
-    Ok(ApiResponse::success(ClientResponse::Created(client)).with_correlation_id(correlation_id))
-}
-
-async fn handle_client_retrieval(
-    facade: &ClientsFacade,
-    id: &str,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    facade.validate_client_id(id)?;
-    debug!("Retrieving client with ID: {}", id);
-    let client = facade
-        .client_service()
-        .get_client_async(id)
-        .await
-        .map_err(|e| {
-            error!("Failed to retrieve client {}: {}", id, e);
-            facade.map_service_error("get_client", &e)
-        })?;
-    match client {
-        Some(client) => {
-            Ok(ApiResponse::success(ClientResponse::Found(client))
-                .with_correlation_id(correlation_id))
-        }
-        None => {
-            warn!("Client {} not found", id);
-            Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id))
-        }
-    }
-}
-
-async fn handle_client_with_tasks_retrieval(
-    facade: &ClientsFacade,
-    task_service: Arc<crate::shared::services::cross_domain::TaskService>,
-    id: &str,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    facade.validate_client_id(id)?;
-    let client = facade
-        .client_service()
-        .get_client_async(id)
-        .await
-        .map_err(|e| facade.map_service_error("get_client", &e))?;
-    match client {
-        Some(client) => {
-            let task_query = TaskQuery {
-                client_id: Some(id.to_string()),
-                pagination: crate::shared::repositories::base::PaginationParams {
-                    page: Some(1),
-                    page_size: Some(1000),
-                    sort_by: Some("created_at".to_string()),
-                    sort_order: Some("desc".to_string()),
-                },
-                status: None,
-                technician_id: None,
-                priority: None,
-                search: None,
-                from_date: None,
-                to_date: None,
-            };
-            let tasks_response = task_service
-                .get_tasks_async(task_query)
-                .await
-                .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
-            let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-            let client_with_tasks = client_into_client_with_tasks(client, tasks);
-            Ok(
-                ApiResponse::success(ClientResponse::FoundWithTasks(client_with_tasks))
-                    .with_correlation_id(correlation_id),
-            )
-        }
-        None => {
-            warn!("Client {} not found", id);
-            Ok(ApiResponse::success(ClientResponse::NotFound).with_correlation_id(correlation_id))
-        }
-    }
-}
-
-async fn handle_client_update(
-    facade: &ClientsFacade,
-    id: &str,
-    data: UpdateClientRequest,
-    user_id: &str,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    facade.validate_client_id(id)?;
-    info!("Updating client with ID: {}", id);
-    let client = facade
-        .client_service()
-        .update_client_async(data, user_id)
-        .await
-        .map_err(|e| facade.map_service_error("update_client", &e))?;
-    Ok(ApiResponse::success(ClientResponse::Updated(client)).with_correlation_id(correlation_id))
-}
-
-async fn handle_client_deletion(
-    facade: &ClientsFacade,
-    id: &str,
-    user_id: &str,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    facade.validate_client_id(id)?;
-    info!("Deleting client with ID: {}", id);
-    facade
-        .client_service()
-        .delete_client_async(id, user_id)
-        .await
-        .map_err(|e| facade.map_service_error("delete_client", &e))?;
-    Ok(ApiResponse::success(ClientResponse::Deleted).with_correlation_id(correlation_id))
-}
-
-async fn handle_client_listing(
-    facade: &ClientsFacade,
-    filters: ClientQuery,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    debug!("Listing clients with filters: {:?}", filters);
-    let clients = facade
-        .client_service()
-        .get_clients_async(filters)
-        .await
-        .map_err(|e| facade.map_service_error("list_clients", &e))?;
-    Ok(ApiResponse::success(ClientResponse::List(clients)).with_correlation_id(correlation_id))
-}
-
-async fn handle_client_listing_with_tasks(
-    facade: &ClientsFacade,
-    task_service: Arc<crate::shared::services::cross_domain::TaskService>,
-    filters: ClientQuery,
-    limit_tasks: Option<i32>,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let clients = facade
-        .client_service()
-        .get_clients_async(filters)
-        .await
-        .map_err(|e| facade.map_service_error("list_clients", &e))?;
-    let task_limit = limit_tasks.unwrap_or(5);
-    let mut clients_with_tasks = Vec::new();
-    for client in clients.data {
-        let task_query = TaskQuery {
-            client_id: Some(client.id.clone()),
-            pagination: crate::shared::repositories::base::PaginationParams {
-                page: Some(1),
-                page_size: Some(task_limit),
-                sort_by: Some("created_at".to_string()),
-                sort_order: Some("desc".to_string()),
-            },
-            status: None,
-            technician_id: None,
-            priority: None,
-            search: None,
-            from_date: None,
-            to_date: None,
-        };
-        let tasks_response = task_service
-            .get_tasks_async(task_query)
-            .await
-            .map_err(|e| facade.map_service_error("get_tasks", &e.to_string()))?;
-        let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
-        clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
-    }
-    Ok(ApiResponse::success(ClientResponse::ListWithTasks {
-        data: clients_with_tasks,
-    })
-    .with_correlation_id(correlation_id))
-}
-
-async fn handle_client_search(
-    facade: &ClientsFacade,
-    query: &str,
-    limit: i32,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let clients = facade
-        .client_service()
-        .search_clients_async(query, 1, limit)
-        .await
-        .map_err(|e| facade.map_service_error("search_clients", &e))?;
-    Ok(
-        ApiResponse::success(ClientResponse::SearchResults { data: clients })
-            .with_correlation_id(correlation_id),
-    )
-}
-
-async fn handle_client_statistics(
-    facade: &ClientsFacade,
-    correlation_id: Option<String>,
-) -> Result<ApiResponse<ClientResponse>, AppError> {
-    let stats = facade
-        .client_service()
-        .get_client_stats_async()
-        .await
-        .map_err(|e| facade.map_service_error("get_client_stats", &e))?;
-    Ok(ApiResponse::success(ClientResponse::Stats(stats)).with_correlation_id(correlation_id))
+        .map_err(|e| ClientService::map_service_error("get_client_stats", e.as_str()))?;
+    Ok(ApiResponse::success_with_correlation(
+        stats,
+        Some(ctx.correlation_id),
+    ))
 }
