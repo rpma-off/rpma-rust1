@@ -273,6 +273,8 @@ fn main() {
             domains::auth::ipc::audit_security_ipc::get_security_events,
             domains::auth::ipc::audit_security_ipc::get_security_alerts,
             domains::auth::ipc::audit_security_ipc::acknowledge_security_alert,
+            domains::auth::ipc::audit_security_ipc::get_all_user_activity,
+            domains::auth::ipc::audit_security_ipc::get_audit_event_types,
             // ── UI / Window ──────────────────────────────────────────────
             commands::ui::ui_window_minimize,
             commands::ui::ui_window_maximize,

@@ -272,4 +272,6 @@ export const IPC_COMMANDS = {
   GET_SECURITY_EVENTS: "get_security_events",
   GET_SECURITY_ALERTS: "get_security_alerts",
   ACKNOWLEDGE_SECURITY_ALERT: "acknowledge_security_alert",
+  GET_ALL_USER_ACTIVITY: "get_all_user_activity",
+  GET_AUDIT_EVENT_TYPES: "get_audit_event_types",
 } as const;

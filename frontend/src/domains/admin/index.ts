@@ -18,5 +18,6 @@ export { default as ConfigurationPageContent } from './components/ConfigurationP
 export { AdminOverviewTab } from './components/AdminOverviewTab';
 export { AdminUsersTab } from './components/AdminUsersTab';
 export { AdminSystemTab } from './components/AdminSystemTab';
+export { ActivityAuditTab } from './components/ActivityAuditTab';
 export { AddUserModal } from './components/AddUserModal';
 export type { AdminConfiguration, AdminBusinessRule, AdminConfigurationState, UseAdminActionsResult } from './api/types';

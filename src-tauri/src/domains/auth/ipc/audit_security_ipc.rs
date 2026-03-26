@@ -9,13 +9,56 @@ use crate::resolve_context;
 use crate::shared::contracts::auth::UserRole;
 use tracing::instrument;
 
-// Re-export response types so existing callers (if any) continue to work.
+#[allow(unused_imports)]
 pub use crate::domains::auth::application::audit_service::{
-    SecurityAlert, SecurityEventRecord, SecurityMetrics,
+    AuditActivityFilter, PaginatedUserActivity, SecurityAlert, SecurityEventRecord, SecurityMetrics,
+    UserActivityRecord,
 };
+
 
 fn audit_service(state: &AppState<'_>) -> AuditService {
     AuditService::new(state.db.clone())
+}
+
+/// Return paginated activity logs across all users with optional filters.
+/// ADR-018: Admin-only endpoint — thin delegate to AuditService.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn get_all_user_activity(
+    filter: Option<AuditActivityFilter>,
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<PaginatedUserActivity>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
+
+    let activity = audit_service(&state)
+        .get_all_activity(filter.unwrap_or(AuditActivityFilter {
+            user_id: None,
+            event_type: None,
+            resource_type: None,
+            start_date: None,
+            end_date: None,
+            limit: None,
+            offset: None,
+        }))
+        .map_err(|e| AppError::Database(e))?;
+
+    Ok(ApiResponse::success(activity).with_correlation_id(Some(ctx.correlation_id)))
+}
+
+/// Return available audit event types for filtering.
+/// ADR-018: Admin-only endpoint.
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn get_audit_event_types(
+    correlation_id: Option<String>,
+    state: AppState<'_>,
+) -> Result<ApiResponse<Vec<String>>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
+
+    let event_types = audit_service(&state).get_audit_event_types();
+
+    Ok(ApiResponse::success(event_types).with_correlation_id(Some(ctx.correlation_id)))
 }
 
 /// Return today's security KPIs.

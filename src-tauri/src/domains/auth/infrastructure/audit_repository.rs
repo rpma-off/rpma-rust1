@@ -39,6 +39,22 @@ pub struct SecurityAlertRow {
     pub timestamp_ms: i64,
 }
 
+/// Result of activity log query with user join.
+#[derive(Debug)]
+pub struct ActivityLogQueryResult {
+    pub id: String,
+    pub user_id: String,
+    pub username: String,
+    pub event_type: String,
+    pub action: String,
+    pub resource_type: Option<String>,
+    pub resource_id: Option<String>,
+    pub description: String,
+    pub result: String,
+    pub timestamp_ms: i64,
+    pub ip_address: Option<String>,
+}
+
 /// Repository for audit_events table queries.
 pub struct AuditRepository {
     db: Arc<Database>,
@@ -47,6 +63,103 @@ pub struct AuditRepository {
 impl AuditRepository {
     pub fn new(db: Arc<Database>) -> Self {
         Self { db }
+    }
+
+    /// Query activity logs with filters and pagination, joining with users table.
+    #[instrument(skip(self))]
+    pub fn get_activity_logs(
+        &self,
+        user_id: Option<String>,
+        event_type: Option<String>,
+        resource_type: Option<String>,
+        start_date: Option<i64>,
+        end_date: Option<i64>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<(Vec<ActivityLogQueryResult>, i64), String> {
+        let conn = self.db.get_connection().map_err(|e| e.to_string())?;
+
+        let mut where_clauses = Vec::new();
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
+
+        if let Some(uid) = user_id {
+            where_clauses.push("a.user_id = ?");
+            params.push(Box::new(uid));
+        }
+        if let Some(et) = event_type {
+            where_clauses.push("a.event_type = ?");
+            params.push(Box::new(et));
+        }
+        if let Some(rt) = resource_type {
+            where_clauses.push("a.resource_type = ?");
+            params.push(Box::new(rt));
+        }
+        if let Some(sd) = start_date {
+            where_clauses.push("a.timestamp >= ?");
+            params.push(Box::new(sd));
+        }
+        if let Some(ed) = end_date {
+            where_clauses.push("a.timestamp <= ?");
+            params.push(Box::new(ed));
+        }
+
+        let where_sql = if where_clauses.is_empty() {
+            String::new()
+        } else {
+            format!("WHERE {}", where_clauses.join(" AND "))
+        };
+
+        // Get total count
+        let count_sql = format!("SELECT COUNT(*) FROM audit_events a {}", where_sql);
+        let total: i64 = conn
+            .query_row(&count_sql, rusqlite::params_from_iter(params.iter()), |r| {
+                r.get(0)
+            })
+            .map_err(|e| e.to_string())?;
+
+        // Get records with join
+        let select_sql = format!(
+            r#"
+            SELECT 
+                a.id, a.user_id, 
+                COALESCE(u.first_name || ' ' || u.last_name, a.user_id) as username,
+                a.event_type, a.action, a.resource_type, a.resource_id, 
+                a.description, a.result, a.timestamp, a.ip_address
+            FROM audit_events a
+            LEFT JOIN users u ON a.user_id = u.id
+            {}
+            ORDER BY a.timestamp DESC
+            LIMIT ? OFFSET ?
+            "#,
+            where_sql
+        );
+
+        let mut select_params = params;
+        select_params.push(Box::new(limit));
+        select_params.push(Box::new(offset));
+
+        let mut stmt = conn.prepare(&select_sql).map_err(|e| e.to_string())?;
+        let rows = stmt
+            .query_map(rusqlite::params_from_iter(select_params.iter()), |row| {
+                Ok(ActivityLogQueryResult {
+                    id: row.get(0)?,
+                    user_id: row.get(1)?,
+                    username: row.get(2)?,
+                    event_type: row.get(3)?,
+                    action: row.get(4)?,
+                    resource_type: row.get(5)?,
+                    resource_id: row.get(6)?,
+                    description: row.get(7)?,
+                    result: row.get(8)?,
+                    timestamp_ms: row.get(9)?,
+                    ip_address: row.get(10)?,
+                })
+            })
+            .map_err(|e| e.to_string())?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok((rows, total))
     }
 
     #[instrument(skip(self))]

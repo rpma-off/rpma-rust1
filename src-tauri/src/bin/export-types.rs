@@ -7,7 +7,8 @@ use rpma_ppf_intervention::commands::system::{DeviceInfo, HealthStatus};
 
 // Import models from canonical domain paths
 use rpma_ppf_intervention::domains::auth::{
-    SecurityAlert, SecurityEventRecord, SecurityMetrics, SessionTimeoutConfig,
+    AuditActivityFilter, PaginatedUserActivity, SecurityAlert, SecurityEventRecord,
+    SecurityMetrics, SessionTimeoutConfig, UserActivityRecord,
 };
 use rpma_ppf_intervention::domains::calendar::models::{
     CalendarDateRange, CalendarEvent, CalendarFilter, CalendarTask, CalendarTaskPriority,
@@ -189,8 +190,23 @@ fn main() {
             .expect("Failed to export SecurityEventRecord type"),
     );
     type_definitions.push_str("\n");
-    type_definitions
-        .push_str(&SecurityAlert::export_to_string().expect("Failed to export SecurityAlert type"));
+    type_definitions.push_str(
+        &SecurityAlert::export_to_string().expect("Failed to export SecurityAlert type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UserActivityRecord::export_to_string().expect("Failed to export UserActivityRecord type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &AuditActivityFilter::export_to_string()
+            .expect("Failed to export AuditActivityFilter type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &PaginatedUserActivity::export_to_string()
+            .expect("Failed to export PaginatedUserActivity type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: calendar
@@ -1056,6 +1072,12 @@ fn main() {
         "UserAccount",
         "UserRole",
         "UserSession",
+        "SecurityMetrics",
+        "SecurityEventRecord",
+        "SecurityAlert",
+        "UserActivityRecord",
+        "AuditActivityFilter",
+        "PaginatedUserActivity",
         "CalendarEvent",
         "CalendarTask",
         "CalendarTaskStatus",

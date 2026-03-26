@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
+  Activity,
   CheckCircle,
   Copy,
   KeyRound,
@@ -44,6 +45,7 @@ interface AdminUsersTabProps {
   onAddUser: () => void;
   onUpdateUserStatus: (userId: string, isActive: boolean) => void;
   onDeleteUser: (userId: string) => void;
+  onViewActivity: (userId: string) => void;
   onReloadUsers?: () => void;
 }
 
@@ -57,6 +59,7 @@ export function AdminUsersTab({
   onAddUser,
   onUpdateUserStatus,
   onDeleteUser,
+  onViewActivity,
   onReloadUsers,
 }: AdminUsersTabProps) {
   const { t } = useTranslation();
@@ -171,6 +174,15 @@ export function AdminUsersTab({
                          {user.is_active ? 'Actif' : 'Inactif'}
                        </Badge>
                        <div className="flex gap-2">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => onViewActivity(user.id)}
+                           title="Voir l'activité"
+                           className="border-border/60 text-muted-foreground hover:bg-border/20"
+                         >
+                           <Activity className="h-4 w-4" />
+                         </Button>
                          <Button
                            variant="outline"
                            size="sm"
