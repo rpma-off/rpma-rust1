@@ -99,6 +99,7 @@ pub struct UserActivityRecord {
     pub resource_id: Option<String>,
     pub description: String,
     pub result: String,
+    #[ts(type = "number")]
     pub timestamp: i64,
     pub ip_address: Option<String>,
 }
@@ -110,10 +111,12 @@ pub struct AuditActivityFilter {
     pub user_id: Option<String>,
     pub event_type: Option<String>,
     pub resource_type: Option<String>,
+    #[ts(optional, type = "number")]
     pub start_date: Option<i64>,
+    #[ts(optional, type = "number")]
     pub end_date: Option<i64>,
-    pub limit: Option<i64>,
-    pub offset: Option<i64>,
+    pub limit: Option<i32>,
+    pub offset: Option<i32>,
 }
 
 /// Paginated response for activity queries.
@@ -121,7 +124,7 @@ pub struct AuditActivityFilter {
 #[ts(export)]
 pub struct PaginatedUserActivity {
     pub records: Vec<UserActivityRecord>,
-    pub total: i64,
+    pub total: i32,
     pub has_more: bool,
 }
 

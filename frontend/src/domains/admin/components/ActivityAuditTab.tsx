@@ -14,7 +14,7 @@ import { ActivityFilterBar } from './ActivityFilterBar';
 import { UserActivityTable } from './UserActivityTable';
 import type { AuditActivityFilter } from '@/lib/backend';
 
-const PAGE_SIZE = 50n;
+const PAGE_SIZE = 50;
 
 interface ActivityAuditTabProps {
   initialUserId?: string | null;
@@ -25,10 +25,10 @@ export function ActivityAuditTab({ initialUserId }: ActivityAuditTabProps) {
     user_id: initialUserId || null,
     event_type: null,
     resource_type: null,
-    start_date: null,
-    end_date: null,
+    start_date: undefined,
+    end_date: undefined,
     limit: PAGE_SIZE,
-    offset: 0n,
+    offset: 0,
   });
 
   // Update filters if initialUserId changes (e.g., when clicking "View Activity" for a new user)
@@ -37,7 +37,7 @@ export function ActivityAuditTab({ initialUserId }: ActivityAuditTabProps) {
       setFilters(prev => ({
         ...prev,
         user_id: initialUserId,
-        offset: 0n
+        offset: 0
       }));
     }
   }, [initialUserId]);
@@ -49,19 +49,16 @@ export function ActivityAuditTab({ initialUserId }: ActivityAuditTabProps) {
   };
 
   const handlePageChange = (direction: 'next' | 'prev') => {
-    const currentOffset = filters.offset || 0n;
+    const currentOffset = filters.offset || 0;
     const newOffset = direction === 'next' 
       ? currentOffset + PAGE_SIZE 
-      : (currentOffset > PAGE_SIZE ? currentOffset - PAGE_SIZE : 0n);
+      : Math.max(0, currentOffset - PAGE_SIZE);
     
     setFilters({ ...filters, offset: newOffset });
   };
 
-  const offsetNum = Number(filters.offset || 0n);
-  const pageSizeNum = Number(PAGE_SIZE);
-  const totalNum = Number(total);
-  const currentPage = Math.floor(offsetNum / pageSizeNum) + 1;
-  const totalPages = Math.ceil(totalNum / pageSizeNum);
+  const currentPage = Math.floor((filters.offset || 0) / PAGE_SIZE) + 1;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -101,10 +98,10 @@ export function ActivityAuditTab({ initialUserId }: ActivityAuditTabProps) {
       <div className="space-y-4">
         <UserActivityTable records={records} loading={loading} />
         
-        {totalNum > 0 && (
+        {total > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 border-t border-[hsl(var(--rpma-border))] pt-4">
             <div className="text-xs text-muted-foreground font-medium">
-              Affichage de <span className="text-foreground">{offsetNum + 1}</span> à <span className="text-foreground">{Math.min(offsetNum + pageSizeNum, totalNum)}</span> sur <span className="text-foreground font-bold">{totalNum}</span> événements
+              Affichage de <span className="text-foreground">{(filters.offset || 0) + 1}</span> à <span className="text-foreground">{Math.min((filters.offset || 0) + PAGE_SIZE, total)}</span> sur <span className="text-foreground font-bold">{total}</span> événements
             </div>
             
             <div className="flex items-center gap-3">
@@ -116,7 +113,7 @@ export function ActivityAuditTab({ initialUserId }: ActivityAuditTabProps) {
                   variant="outline" 
                   size="sm" 
                   className="h-8 w-8 p-0" 
-                  disabled={offsetNum === 0 || loading}
+                  disabled={(filters.offset || 0) === 0 || loading}
                   onClick={() => handlePageChange('prev')}
                 >
                   <ChevronLeft className="h-4 w-4" />

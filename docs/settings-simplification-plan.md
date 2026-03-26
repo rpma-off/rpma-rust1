@@ -2,68 +2,42 @@
 
 ## Overview
 
-This plan consolidates and simplifies the settings functionality by:
-1. Removing placeholder implementations (GDPR, sessions, avatar)
-2. Consolidating overlapping models
-3. Reducing frontend tabs from 10 to 4
-4. Adding ADR-008 validation
-5. Moving password change to auth domain
+This plan cleans up placeholder implementations and moves password change to the correctdomain boundary:
+
+1. **Move password change to auth domain** (correct bounded context)
+2. **Remove GDPR placeholder implementations** (not needed for offline desktop app)
+3. **Remove DataConsent model** (unused)
+4. **Implement avatar upload with local file storage** (store on user's computer)
+5. **Use app logo as avatar fallback** (when user hasn't uploaded avatar)
+
+### What We Keep
+
+- **Session management** - Fully working, useful security feature
+- **Admin configuration tabs** - Used by admin users, properly gated
+- **Avatar upload UI** - Will store locally instead of placeholder
+
+### What We Remove
+
+- `change_user_password` placeholder → moved to auth domain
+- `export_user_data` placeholder → GDPR, not needed
+- `delete_user_account` placeholder → GDPR, not needed  
+- `get_data_consent` placeholder → GDPR, not needed
+- `update_data_consent` placeholder → GDPR, not needed
+- `DataConsent` model → unused
 
 ---
 
-## Phase 1: Backend - Validation
+## Phase 1: Backend - Add Password Change to Auth Domain
 
-### 1.1 Add Phone Validator
-
-**File**: `src-tauri/src/shared/services/validation/field_validators.rs`
-
-Add to `impl ValidationService`:
-
-```rust
-/// Validate phone number (French format with international support)
-pub fn validate_phone(&self, phone: &str) -> Result<Option<String>, ValidationError> {
-    let trimmed = phone.trim();
-    
-    // Phone is optional
-    if trimmed.is_empty() {
-        return Ok(None);
-    }
-    
-    if trimmed.len() > 20 {
-        return Err(ValidationError::InputTooLong {
-            field: "phone".to_string(),
-            max: 20,
-        });
-    }
-    
-    // Allow: +33, 0X, international formats
-    // Pattern: optional +, digits, spaces, dots, hyphens
-    let phone_regex = Regex::new(r"^\+?[0-9\s\.\-]+$")
-        .map_err(|_| ValidationError::Message("Invalid regex pattern".to_string()))?;
-    
-    if !phone_regex.is_match(trimmed) {
-        return Err(ValidationError::Message(
-            "Phone number can only contain digits, spaces, dots and hyphens".to_string()
-        ));
-    }
-    
-    // Remove spaces and formatting for storage
-    let cleaned = trimmed.chars().filter(|c| c.is_numeric() || *c == '+').collect();
-    Ok(Some(cleaned))
-}
-```
-
----
-
-## Phase 2: Backend - Auth Domain Password Change
-
-### 2.1 Add Password Change Request Type
+### 1.1 Add Password Change Request Type
 
 **File**: `src-tauri/src/domains/auth/domain/models/auth.rs`
 
-Add:
+Add after `SessionTimeoutConfig`:
 
 ```rust
+/// Request payload for password change.
+/// User must provide current password for verification before setting new password.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangePasswordRequest {
@@ -72,13 +46,15 @@ pub struct ChangePasswordRequest {
 }
 ```
 
-### 2.2 Add Password Change IPC Command
+### 1.2 Add Password Change IPC Command
 
 **File**: `src-tauri/src/domains/auth/ipc/auth.rs`
 
-Add:
+Add the following command:
 
 ```rust
+/// Change user password.
+/// ADR-018: Thin IPC layer — validation and password update delegated to AuthService.
 #[tauri::command]
 #[instrument(skip(state))]
 pub async fn change_password(
@@ -89,14 +65,14 @@ pub async fn change_password(
     let ctx = resolve_context!(&state, &correlation_id);
     let correlation_id = crate::commands::init_correlation_context(&correlation_id, Some(&ctx.auth.user_id));
     
-    // Validate new password strength
+    // ADR-008: Validate new password strength
     let validation = ValidationService::new();
     let new_password = validation.validate_password(&request.new_password)
         .map_err(|e| AppError::Validation(e.to_string()))?;
     
     // Verify current password
     let auth_service = state.auth_service.clone();
-    let is_valid = auth_service.verify_user_password(&ctx.auth.user_id, &request.current_password)
+    let is_valid = auth_service.verify_password(&ctx.auth.user_id, &request.current_password)
         .map_err(|e| AppError::Authentication(format!("Invalid current password: {}", e)))?;
     
     if !is_valid {
@@ -107,65 +83,95 @@ pub async fn change_password(
     auth_service.change_password(&ctx.auth.user_id, &new_password)
         .map_err(|e| AppError::Internal(format!("Failed to change password: {}", e)))?;
     
-    info!(user_id =% ctx.auth.user_id, "Password changed successfully");
+    info!(user_id = %ctx.auth.user_id, "Password changed successfully");
     
     Ok(ApiResponse::success(()).with_correlation_id(Some(correlation_id)))
 }
 ```
 
-### 2.3 Register Command in main.rs
+**Note**: This requires `ValidationService` to be imported:
+```rust
+use crate::shared::services::validation::ValidationService;
+```
+
+### 1.3 Register Command in main.rs
 
 **File**: `src-tauri/src/main.rs`
 
-Add to invoke handler:
+Add to invoke handler after `auth_validate_session`:
 ```rust
 domains::auth::ipc::auth::change_password,
 ```
 
-### 2.4 Export Request Type
+### 1.4 Export Request Type from Auth Module
 
 **File**: `src-tauri/src/domains/auth/mod.rs`
 
-Ensure `ChangePasswordRequest` is exported publicly.
+Add export:
+```rust
+pub use domain::models::auth::ChangePasswordRequest;
+```
 
 ---
 
-## Phase 3: Backend - Remove Placeholders
+## Phase 2: Backend - Remove Placeholder Handlers
 
-### 3.1 Remove Placeholder Handlers
+### 2.1 Delete User Settings Handler File
 
 **File**: `src-tauri/src/domains/settings/user_settings_handler.rs`
 
-Remove these functions entirely:
-- `change_user_password` (lines ~108-115)
-- `export_user_data` (lines ~118-125)
-- `delete_user_account` (lines ~128-135)
-- `get_data_consent` (lines ~98-105)
-- `update_data_consent` (lines ~138-145)
-- `upload_user_avatar` (lines ~148-155)
+**Action**: Delete entire file.
 
-### 3.2 Remove Commands from main.rs
+This file contains only placeholder implementations:
+- `get_data_consent` - lines97-105
+- `change_user_password` - lines108-115
+- `export_user_data` - lines118-125
+- `delete_user_account` - lines128-135
+- `update_data_consent` - lines138-145
+
+**Note**: `upload_user_avatar` is removed from this file but will be reimplemented properly in Phase 3.
+
+### 2.2 Update Settings Module Exports
+
+**File**: `src-tauri/src/domains/settings/mod.rs`
+
+Remove the `user_settings_handler` module and its re-exports.
+
+### 2.3 Remove Commands from main.rs
 
 **File**: `src-tauri/src/main.rs`
 
-Remove from invoke handler:
+Remove these lines from the invoke_handler:
 ```rust
-// Remove these:
-domains::settings::user_settings_handler::change_user_password,
-domains::settings::user_settings_handler::export_user_data,
-domains::settings::user_settings_handler::delete_user_account,
-domains::settings::user_settings_handler::get_data_consent,
-domains::settings::user_settings_handler::update_data_consent,
-domains::settings::user_settings_handler::upload_user_avatar,
+domains::settings::change_user_password,
+domains::settings::export_user_data,
+domains::settings::delete_user_account,
+domains::settings::get_data_consent,
+domains::settings::update_data_consent,
+// Note: upload_user_avatar will be reimplemented in Phase 3
 ```
 
-### 3.3 Remove DataConsent Model
+### 2.4 Remove DataConsent Model
 
 **File**: `src-tauri/src/domains/settings/models.rs`
 
-Remove the `DataConsent` struct (lines ~917-928).
+Remove the `DataConsent` struct (lines ~917-928):
+```rust
+// DELETE THIS:
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct DataConsent {
+    pub user_id: String,
+    pub analytics_consent: bool,
+    pub marketing_consent: bool,
+    pub third_party_sharing: bool,
+    pub data_retention_period: u32,
+    #[ts(type = "string")]
+    pub consent_given_at: chrono::DateTime<chrono::Utc>,
+    pub consent_version: String,
+}
+```
 
-### 3.4 Update Repository Trait
+### 2.5 Update Repository Trait
 
 **File**: `src-tauri/src/domains/settings/infrastructure/repository_traits.rs`
 
@@ -174,561 +180,437 @@ Remove from `UserSettingsPort` trait:
 fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError>;
 ```
 
-### 3.5 Update Service
+### 2.6 Update Repository Implementation
+
+**File**: `src-tauri/src/domains/settings/user_settings_repository.rs`
+
+Remove `get_data_consent` implementation.
+
+### 2.7 Update Settings Service
 
 **File**: `src-tauri/src/domains/settings/application/settings_service.rs`
 
-Remove:
-- `get_data_consent` method (lines ~408-412)
+1. Remove `DataConsent` from imports
+2. Remove `get_data_consent` method (lines ~408-412)
 
 ---
 
-## Phase 4: Backend - Add Validation
+## Phase 3: Backend - Implement Avatar Upload
 
-### 4.1 Update Settings Service
+### 3.1 Create Avatar Storage Module
 
-**File**: `src-tauri/src/domains/settings/application/settings_service.rs`
+**File**: `src-tauri/src/domains/settings/avatar_handler.rs` (create new)
 
-Add import:
 ```rust
+//! Avatar upload handler with local file storage.
+//!
+//! Stores avatar images in the app's data directory on the user's computer.
+//! ADR-018: Thin IPC layer — file operations delegated to dedicated module.
+
+use std::fs;
+use std::path::PathBuf;
+use base64::{Engine as _, engine::general_purpose};
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+use tracing::{info, warn, instrument};
+
+use crate::commands::{ApiResponse, AppError, AppState};
+use crate::resolve_context;
 use crate::shared::services::validation::ValidationService;
-```
 
-Update `update_user_profile`:
-```rust
-pub fn update_user_profile(
-    &self,
-    ctx: &RequestContext,
-    profile: UserProfileSettings,
-) -> Result<UserSettings, AppError> {
-    require_at_least_viewer(ctx)?;
+/// Request payload for avatar upload.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadAvatarRequest {
+    /// Base64-encoded image data (without data URL prefix)
+    pub avatar_data: String,
+    /// MIME type (e.g., "image/png", "image/jpeg")
+    pub mime_type: String,
+}
+
+/// Response after successful avatar upload.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct UploadAvatarResponse {
+    /// Path to the stored avatar file (for frontend display)
+    pub avatar_url: String,
+}
+
+/// Supported image formats for avatar upload.
+const SUPPORTED_FORMATS: [&str; 3] = ["image/png", "image/jpeg", "image/gif"];
+const MAX_FILE_SIZE_BYTES: usize = 5* 1024 * 1024; // 5MB
+
+/// Get the avatar storage directory.
+fn get_avatar_directory() -> Result<PathBuf, AppError> {
+    let app_data_dir = dirs::data_dir()
+        .ok_or_else(|| AppError::Internal("Could not determine app data directory".to_string()))?
+        .join("rpma-rust")
+        .join("avatars");
     
-    // ADR-008: Validate inputs
-    let validation = ValidationService::new();
-    let mut profile = profile;
-    
-    // Validate and normalize name
-    if !profile.full_name.trim().is_empty() {
-        profile.full_name = validation.validate_name(&profile.full_name, "Full name")
-            .map_err(|e| AppError::Validation(e.to_string()))?;
+    // Ensure directory exists
+    if !app_data_dir.exists() {
+        fs::create_dir_all(&app_data_dir)
+            .map_err(|e| AppError::Internal(format!("Failed to create avatar directory: {}", e)))?;
     }
     
-    // Validate email if provided
-    if !profile.email.trim().is_empty() {
-        profile.email = validation.validate_email(&profile.email)
-            .map_err(|e| AppError::Validation(e.to_string()))?;
+    Ok(app_data_dir)
+}
+
+/// Get file extension from MIME type.
+fn get_extension(mime_type: &str) -> Result<&'static str, AppError> {
+    match mime_type {
+        "image/png" => Ok("png"),
+        "image/jpeg" => Ok("jpg"),
+        "image/gif" => Ok("gif"),
+        _ => Err(AppError::Validation(format!("Unsupported image format: {}. Supported formats: PNG, JPEG, GIF", mime_type))),
+    }
+}
+
+/// Upload and store user avatar.
+/// ADR-018: Thin IPC layer
+#[tauri::command]
+#[instrument(skip(state))]
+pub async fn upload_user_avatar(
+    request: UploadAvatarRequest,
+    state: AppState<'_>,
+    correlation_id: Option<String>,
+) -> Result<ApiResponse<String>, AppError> {
+    let ctx = resolve_context!(&state, &correlation_id);
+    let correlation_id = crate::commands::init_correlation_context(&correlation_id, Some(&ctx.auth.user_id));
+    
+    // Validate MIME type
+    if !SUPPORTED_FORMATS.contains(&request.mime_type.as_str()) {
+        return Err(AppError::Validation(
+            format!("Unsupported image format: {}. Supported formats: PNG, JPEG, GIF", request.mime_type)
+        ));
     }
     
-    // Validate phone if provided
-    if let Some(ref phone) = profile.phone {
-        if !phone.trim().is_empty() {
-            profile.phone = validation.validate_phone(phone)
-                .map_err(|e| AppError::Validation(e.to_string()))?;
-        }
+    // Decode base64 data
+    let image_data = general_purpose::STANDARD
+        .decode(&request.avatar_data)
+        .map_err(|e| AppError::Validation(format!("Invalid image data: {}", e)))?;
+    
+    // Validate file size
+    if image_data.len() > MAX_FILE_SIZE_BYTES {
+        return Err(AppError::Validation(format!(
+            "Image too large. Maximum size is {}MB",
+            MAX_FILE_SIZE_BYTES / (1024 * 1024)
+        )));
     }
     
-    // ... rest of existing logic
-    let repo = &self.user_settings_repo;
-    let mut current = repo.get_user_settings(&ctx.auth.user_id)?;
-    current.profile = profile;
-    repo.save_user_settings(&ctx.auth.user_id, &current)?;
-    Ok(current)
+    // Get file extension
+    let extension = get_extension(&request.mime_type)?;
+    
+    // Generate file path
+    let avatar_dir = get_avatar_directory()?;
+    let filename = format!("{}.{}", ctx.auth.user_id, extension);
+    let file_path = avatar_dir.join(&filename);
+    
+    // Write file
+    fs::write(&file_path, &image_data)
+        .map_err(|e| AppError::Internal(format!("Failed to save avatar: {}", e)))?;
+    
+    // Generate URL for frontend
+    // Use tauri://localhost or file:// protocol for local files
+    let avatar_url = format!("local-avatar://{}", filename);
+    
+    info!(user_id = %ctx.auth.user_id, avatar_url = %avatar_url, "Avatar uploaded successfully");
+    
+    Ok(ApiResponse::success(avatar_url).with_correlation_id(Some(correlation_id)))
 }
 ```
 
-### 4.2 Update Organization Validation
+### 3.2 Add to Settings Module
 
-**File**: `src-tauri/src/domains/settings/models.rs`
+**File**: `src-tauri/src/domains/settings/mod.rs`
 
-The `CreateOrganizationRequest.validate()` method already exists. Ensure it uses ValidationService:
-
+Add:
 ```rust
-impl CreateOrganizationRequest {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.name.trim().is_empty() {
-            return Err("Organization name is required".to_string());
-        }
-        if self.name.len() > 200 {
-            return Err("Organization name must be 200 characters or less".to_string());
-        }
-        if let Some(ref email) = self.email {
-            if !email.is_empty() {
-                // Use ValidationService pattern
-                if !is_valid_email(email) {
-                    return Err("Invalid email format".to_string());
-                }
-            }
-        }
-        Ok(())
-    }
-}
+pub mod avatar_handler;
+pub use avatar_handler::upload_user_avatar;
+```
+
+### 3.3 Update main.rs
+
+**File**: `src-tauri/src/main.rs`
+
+Add after other settings commands:
+```rust
+domains::settings::avatar_handler::upload_user_avatar,
+```
+
+### 3.4 Add base64 Dependency
+
+**File**: `src-tauri/Cargo.toml`
+
+Add to dependencies:
+```toml
+base64 = "0.22"
 ```
 
 ---
 
-## Phase 5: Frontend - IPC Changes
+## Phase 4: Frontend - Update IPC Commands
 
-### 5.1 Update IPC Commands File
+### 4.1 Update Commands File
 
-**File**: `src-tauri/src/shared/ipc/commands.rs` (or equivalent)
+**File**: `frontend/src/lib/ipc/commands.ts`
 
-Remove:
-```rust
-// Remove from IPC_COMMANDS:
+Remove these commands:
+```typescript
 CHANGE_USER_PASSWORD,
 EXPORT_USER_DATA,
 DELETE_USER_ACCOUNT,
 GET_DATA_CONSENT,
 UPDATE_DATA_CONSENT,
-UPLOAD_USER_AVATAR,
 ```
 
-Add:
-```rust
+Add new command:
+```typescript
 CHANGE_PASSWORD: "change_password",
 ```
 
-### 5.2 Update Frontend IPC
+### 4.2 Keep Upload Avatar Command
 
-**File**: `frontend/src/lib/ipc/commands.ts`
+The `UPLOAD_USER_AVATAR` command remains but will use the new local storage implementation.
 
-Update command mappings accordingly.
+---
 
-### 5.3 Update Settings IPC Client
+## Phase 5: Frontend - Update IPC Clients
 
-**File**: `frontend/src/domains/settings/ipc/settings.ipc.ts`
+### 5.1 Create/Update Auth IPC Client
 
-Remove methods:
-- `changeUserPassword`
-- `exportUserData`
-- `deleteUserAccount`
-- `getDataConsent`
-- `updateDataConsent`
-- `uploadUserAvatar`
+**File**: `frontend/src/domains/auth/ipc/auth.ipc.ts`
 
-Remove session methods:
-- `getActiveSessions`
-- `revokeSession`
-- `revokeAllSessionsExceptCurrent`
-- `updateSessionTimeout`
-- `getSessionTimeoutConfig`
+Add password change method:
 
-### 5.4 Add Auth IPC for Password Change
-
-**File**: `frontend/src/domains/auth/ipc/auth.ipc.ts` (create if needed)
-
-Add:
 ```typescript
+import { safeInvoke } from "@/lib/ipc/core";
+import { IPC_COMMANDS } from "@/lib/ipc/commands";
+
 export const authIpc = {
   changePassword: (currentPassword: string, newPassword: string) =>
     safeInvoke<void>(IPC_COMMANDS.CHANGE_PASSWORD, {
       current_password: currentPassword,
       new_password: newPassword,
-    },
-  // ... other auth methods
+    }),
+  // ... other auth methods (login, logout, etc.)
 };
 ```
+
+### 5.2 Update Settings IPC Client
+
+**File**: `frontend/src/domains/settings/ipc/settings.ipc.ts`
+
+Remove these methods:
+- `changeUserPassword`
+- `exportUserData`
+- `deleteUserAccount`
+- `getDataConsent`
+- `updateDataConsent`
+
+Keep these methods:
+- `uploadUserAvatar` - will use new local storage backend
+- All session methods - `getActiveSessions`, `revokeSession`, `revokeAllSessionsExceptCurrent`, `updateSessionTimeout`, `getSessionTimeoutConfig`
 
 ---
 
-## Phase 6: Frontend - Simplify Components
+## Phase 6: Frontend - Update SecurityTab
 
-### 6.1 Simplify SettingsPageContent
-
-**File**: `frontend/src/domains/settings/components/SettingsPageContent.tsx`
-
-**Changes**:
-
-1. Remove lazy imports for admin tabs:
-```typescript
-// REMOVE these imports
-const SystemSettingsTabLazy = dynamic(...)
-const BusinessRulesTabLazy = dynamic(...)
-const SecurityPoliciesTabLazy = dynamic(...)
-const IntegrationsTabLazy = dynamic(...)
-const PerformanceTabLazy = dynamic(...)
-const MonitoringTabLazy = dynamic(...)
-```
-
-2. Simplify `TabConfig`:
-```typescript
-type TabId = "profile" | "preferences" | "security" | "organization";
-
-interface TabConfig {
-  id: TabId;
-  label: string;
-  icon: React.ElementType;
-  adminOnly?: boolean;
-}
-
-const getTabConfig = (
-  t: (key: string, params?: Record<string, string | number>) => string,
-  isAdmin: boolean,
-): TabConfig[] => {
-  const all: TabConfig[] = [
-    { id: "profile", label: t("nav.profile"), icon: User },
-    { id: "preferences", label: t("settings.preferences"), icon: Settings },
-    { id: "security", label: "Sécurité", icon: Shield },
-    { id: "organization", label: "Atelier", icon: Building2, adminOnly: true },
-  ];
-  return all.filter((tab) => !tab.adminOnly || isAdmin);
-};
-```
-
-3. Remove `TabsContent` for removed tabs:
-```typescript
-// REMOVE these TabContent blocks
-<TabsContent value="system" ... />
-<TabsContent value="business" ... />
-<TabsContent value="security-policies" ... />
-<TabsContent value="integrations" ... />
-<TabsContent value="performance" ... />
-<TabsContent value="monitoring" ... />
-```
-
-4. Remove `useSystemHealth` hook usage
-
-### 6.2 Simplify SecurityTab
-
-**File**: `frontend/src/domains/settings/components/SecurityTab.tsx`
-
-**Changes**:
-
-1. Remove session-related state and hooks
-2. Keep only password change form
-3. Use auth IPC instead of settings IPC:
-
-```typescript
-'use client';
-
-import React, { useState } from 'react';
-import { Shield, Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import type { UserSession } from '@/lib/backend';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useLogger } from '@/shared/hooks/useLogger';
-import { LogDomain } from '@/lib/logging/types';
-import { ipcClient } from '@/lib/ipc';
-
-export interface SecurityTabProps {
-  user: UserSession;
-}
-
-export const SecurityTab: React.FC<SecurityTabProps> = ({ user }) => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChanging, setIsChanging] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const { logInfo, logError, logUserAction } = useLogger({
-    context: LogDomain.USER,
-    component: 'SecurityTab',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(false);
-
-    if (newPassword !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
-      return;
-    }
-    if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
-      return;
-    }
-
-    setIsChanging(true);
-    logUserAction('Password change initiated', { userId: user.user_id });
-
-    try {
-      await ipcClient.auth.changePassword(currentPassword, newPassword);
-      setSuccess(true);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      logInfo('Password changed successfully', { userId: user.user_id });
-      setTimeout(() => setSuccess(false), 4000);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Erreur lors du changement de mot de passe';
-      setError(message);
-      logError('Password change failed', { error: message, userId: user.user_id });
-    } finally {
-      setIsChanging(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Mot de passe modifié avec succès
-          </AlertDescription>
-        </Alert>
-      )}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Changer le mot de passe
-          </CardTitle>
-          <CardDescription>
-            Modifiez votre mot de passe de connexion
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Mot de passe actuel</Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">Nouveau mot de passe</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Minimum 8 caractères, avec majuscules, minuscules et chiffres
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={isChanging ||!currentPassword || !newPassword || !confirmPassword}
-            >
-              {isChanging ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <Shield className="h-4 w-4 mr-2" />
-              )}
-              {isChanging ? 'Modification...' : 'Changer le mot de passe'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-```
-
-### 6.3 Simplify PreferencesTab
-
-**File**: `frontend/src/domains/settings/components/PreferencesTab.tsx`
-
-**Changes**:
-
-1. Merge accessibility settings into preferences form
-2. Remove unused notification channels (email, SMS, push - keep in_app only)
-3. Simplify quiet hours UI
-
-The accessibility fields (`high_contrast`, `large_text`, `reduce_motion`) are already in `UserPreferences` model, so just add them to the form if not present.
-
-### 6.4 Remove useSecurityTabData Hook
+### 6.1 Update Password Change to Use Auth IPC
 
 **File**: `frontend/src/domains/settings/hooks/useSecurityTabData.ts`
 
-Remove file entirely (session management removed).
+Remove the `changePassword` mutation (it will use auth IPC directly).
 
-### 6.5 Update useSettingsActions
+Keep all session-related functionality:
+- `sessionsQuery`
+- `timeoutQuery`
+- `revokeMutation`
+- `revokeAllMutation`
+- `saveTimeoutMutation`
 
-**File**: `frontend/src/domains/settings/api/useSettingsActions.ts`
+### 6.2 Update SecurityTab Component
 
-Remove:
-- `changePassword` mutation -> moved to auth domain
-- Remove session-related mutations if any
+**File**: `frontend/src/domains/settings/components/SecurityTab.tsx`
 
-### 6.6 Remove Session-Related Types
+Update the password change handler to use auth IPC:
 
-**File**: `frontend/src/domains/settings/api/types.ts`
+```typescript
+// In handleChangePassword function, replace:
+await changePassword({ current_password, new_password, confirm_password });
 
-Remove session-related types if present.
+// With:
+import { authIpc } from "@/domains/auth/ipc/auth.ipc";
+// ...
+await authIpc.changePassword(currentPassword, newPassword);
+```
+
+**Important**: Keep all session management UI (sessions list, revoke buttons, timeout selector). Do NOT remove these.
 
 ---
 
-## Phase 7: Type Sync
+## Phase 7: Frontend - Update Avatar Fallback
 
-### 7.1 Run Type Sync
+### 7.1 Update ProfileSettingsTab
+
+**File**: `frontend/src/domains/settings/components/ProfileSettingsTab.tsx`
+
+Update the avatar display to use app logo as fallback:
+
+```typescript
+<Avatar className="h-20 w-20">
+  <AvatarImage
+    src={userSettings?.profile?.avatar_url || "/images/logo.png"}
+    alt={`${profile?.first_name} ${profile?.last_name}`}
+  />
+  <AvatarFallback className="text-lg">
+    {`${profile?.first_name} ${profile?.last_name}`
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("") || "U"}
+  </AvatarFallback>
+</Avatar>
+```
+
+The fallback chain is now:
+1. User's uploaded avatar (`avatar_url`)
+2. App logo (`/images/logo.png`)
+3. Initials (`AvatarFallback`)
+
+---
+
+## Phase 8: Type Sync
+
+### 8.1 Run Type Sync
 
 ```bash
 npm run types:sync
 ```
 
-This will regenerate TypeScript types from Rust models, removing:
-- `DataConsent` type
-- Session-related types
-- Adding `ChangePasswordRequest` type from auth domain
+This will:
+- Generate `ChangePasswordRequest` TypeScript type
+- Remove `DataConsent` type (if it was exported)
+- Update any other type changes
 
-### 7.2 Update Frontend Types
+### 8.2 Verify Generated Types
 
 **File**: `frontend/src/lib/backend.ts` (auto-generated)
 
-Verify that removed types are gone and new types are present.
+Verify:
+- `ChangePasswordRequest` is present
+- `DataConsent` is removed (if it was there)
 
 ---
 
-## Phase 8: Remove Unused Hooks and Files
+## Phase 9: Tests
 
-### 8.1 Files to Remove
-
-```
-frontend/src/domains/settings/hooks/useSecurityTabData.ts
-frontend/src/domains/settings/api/configurationService.ts (if unused)
-```
-
-### 8.2 Files to Keep (Simplified)
-
-- `frontend/src/domains/settings/components/SettingsPageContent.tsx`
-- `frontend/src/domains/settings/components/ProfileSettingsTab.tsx`
-- `frontend/src/domains/settings/components/PreferencesTab.tsx`
-- `frontend/src/domains/settings/components/SecurityTab.tsx`
-- `frontend/src/domains/settings/components/OrganizationSettingsTab.tsx`
-- `frontend/src/domains/settings/api/useSettings.ts`
-- `frontend/src/domains/settings/api/useSettingsActions.ts`
-- `frontend/src/domains/settings/api/useOrganization.ts`
-- `frontend/src/domains/settings/hooks/usePreferencesForm.ts`
-- `frontend/src/domains/settings/hooks/useProfileSettingsActions.ts`
-
----
-
-## Phase 9: Database (No Changes Required)
-
-The database schema already supports the simplified models. No migrations needed because:
-- `user_settings` table keeps all fields (no schema change)
-- `DataConsent` was never persisted (placeholder)
-- Sessions are managed in auth domain
-
----
-
-## Phase 10: Tests
-
-### 10.1 Add Validation Tests
-
-**File**: `src-tauri/src/shared/services/validation/tests.rs`
-
-Add tests for `validate_phone`:
-
-```rust
-#[test]
-fn test_validate_phone_valid() {
-    let svc = ValidationService::new();
-    assert!(svc.validate_phone("+33612345678").is_ok());
-    assert!(svc.validate_phone("0612345678").is_ok());
-    assert!(svc.validate_phone("").is_ok()); // Optional
-}
-
-#[test]
-fn test_validate_phone_invalid() {
-    let svc = ValidationService::new();
-    assert!(svc.validate_phone("abc").is_err());
-    assert!(svc.validate_phone("12345678901234567890123").is_err()); // Too long
-}
-```
-
-### 10.2 Add Password Change Tests
+### 9.1 Add Password Change Tests
 
 **File**: `src-tauri/src/domains/auth/tests/password_change.rs` (create)
 
 ```rust
-#[tokio::test]
-async fn test_change_password_success() {
-    // Setup: create user with known password
-    // Exercise: call change_password
-    // Assert: password changed successfully
+use crate::domains::auth::domain::models::auth::ChangePasswordRequest;
+use crate::shared::services::validation::ValidationService;
+
+#[test]
+fn test_password_validation_passes_strong_password() {
+    let svc = ValidationService::new();
+    let result = svc.validate_password("StrongPass123!");
+    assert!(result.is_ok());
 }
 
-#[tokio::test]
-async fn test_change_password_wrong_current() {
-    // Setup: create user
-    // Exercise: call change_password with wrong current password
-    // Assert: returns Authentication error
+#[test]
+fn test_password_validation_fails_weak_password() {
+    let svc = ValidationService::new();
+    let result = svc.validate_password("weak");
+    assert!(result.is_err());
 }
 
-#[tokio::test]
-async fn test_change_password_weak_new() {
-    // Setup: create user
-    // Exercise: call change_password with weak new password
-    // Assert: returns Validation error
+#[test]
+fn test_change_password_request_deserialization() {
+    let json = r#"{"currentPassword":"oldPass123","newPassword":"newPass456!"}"#;
+    let request: ChangePasswordRequest = serde_json::from_str(json).unwrap();
+    assert_eq!(request.current_password, "oldPass123");
+    assert_eq!(request.new_password, "newPass456!");
 }
 ```
 
-### 10.3 Update Settings Tests
+### 9.2 Remove DataConsent Tests
 
-**File**: `src-tauri/src/domains/settings/tests/unit.rs`
+**File**: `src-tauri/src/domains/settings/tests/` (various)
 
-Remove tests for:
+Remove any tests related to:
 - `get_data_consent`
-- Any removed functionality
+- `DataConsent` model
+
+---
+
+## Phase 10: Update Dependencies
+
+### 10.1 Add base64 Crate
+
+**File**: `src-tauri/Cargo.toml`
+
+```toml
+[dependencies]
+# ... existing dependencies
+base64 = "0.22"
+```
 
 ---
 
 ## Verification Checklist
 
-After implementation, verify:
-
 ### Backend
 - [ ] `cargo check` passes
 - [ ] `cargo test --workspace` passes
-- [ ] All ADRs satisfied:
-  - [ ] ADR-001: Four-layer architecture maintained
-  - [ ] ADR-005: Repository pattern preserved
-  - [ ] ADR-006: RequestContext pattern followed
-  - [ ] ADR-007: RBAC enforced correctly
-  - [ ] ADR-008: Validation uses ValidationService
-  - [ ] ADR-018: IPC handlers are thin
-  - [ ] ADR-019: Errors use AppError
+- [ ] Password change works via auth domain
+- [ ] Avatar upload stores file locally
+- [ ] GDPR endpoints return 404 (removed)
 
 ### Frontend
 - [ ] `npm run frontend:type-check` passes
 - [ ] `npm run frontend:lint` passes
-- [ ] Only 4 tabs visible in Settings
-- [ ] Password change works via Auth IPC
-- [ ] Preferences save correctly
-- [ ] Organization settings save correctly
+- [ ] Password change uses auth IPC
+- [ ] Session management still works
+- [ ] Avatar fallback shows app logo
 
 ### Integration
 - [ ] `npm run types:sync` completes without errors
-- [ ] Type definitions match backend models
-- [ ] IPC commands registered correctly
+- [ ] `npm run doctor -- --full` passes
+
+---
+
+## Files Changed Summary
+
+### Backend Files
+
+| Action | File |
+|--------|------|
+| Create | `src-tauri/src/domains/settings/avatar_handler.rs` |
+| Modify | `src-tauri/src/domains/auth/domain/models/auth.rs` |
+| Modify | `src-tauri/src/domains/auth/ipc/auth.rs` |
+| Modify | `src-tauri/src/domains/auth/mod.rs` |
+| Modify | `src-tauri/src/domains/settings/mod.rs` |
+| Modify | `src-tauri/src/domains/settings/models.rs` |
+| Modify | `src-tauri/src/domains/settings/infrastructure/repository_traits.rs` |
+| Modify | `src-tauri/src/domains/settings/user_settings_repository.rs` |
+| Modify | `src-tauri/src/domains/settings/application/settings_service.rs` |
+| Modify | `src-tauri/src/main.rs` |
+| Modify | `src-tauri/Cargo.toml` |
+| Delete | `src-tauri/src/domains/settings/user_settings_handler.rs` |
+
+### Frontend Files
+
+| Action | File |
+|--------|------|
+| Create | `frontend/src/domains/auth/ipc/auth.ipc.ts` |
+| Modify | `frontend/src/lib/ipc/commands.ts` |
+| Modify | `frontend/src/domains/settings/ipc/settings.ipc.ts` |
+| Modify | `frontend/src/domains/settings/components/SecurityTab.tsx` |
+| Modify | `frontend/src/domains/settings/hooks/useSecurityTabData.ts` |
+| Modify | `frontend/src/domains/settings/components/ProfileSettingsTab.tsx` |
 
 ---
 
@@ -736,31 +618,27 @@ After implementation, verify:
 
 If issues arise:
 
-1. **Phase 1-2 (Validation + Password)**: Can be reverted independently
-2. **Phase 3-5 (Removals)**: Git revert the commit
-3. **Phase 6 (Frontend)**: Restore deleted components from git
-
-Key files to restore:
-- `frontend/src/domains/settings/hooks/useSecurityTabData.ts`
-- `frontend/src/domains/settings/api/configurationService.ts`
+1. **Git revert** the commit
+2. **Restore deleted file**: `git checkout HEAD~1 -- src-tauri/src/domains/settings/user_settings_handler.rs`
+3. **Re-run type sync**: `npm run types:sync`
 
 ---
 
 ## Estimated Effort
 
-| Phase | Effort |
-|-------|--------|
-| Phase 1: Validation | 1 hour |
-| Phase 2: Auth Password | 2 hours |
-| Phase 3: Remove Placeholders | 1 hour |
-| Phase 4: Add Validation | 2 hours |
-| Phase 5: Frontend IPC | 1 hour |
-| Phase 6: Simplify Components | 3 hours |
-| Phase 7: Type Sync | 30 min |
-| Phase 8: Cleanup | 30 min |
-| Phase 9: Database | 0 (no changes) |
-| Phase 10: Tests | 2 hours |
-| **Total** | **~13 hours** |
+| Phase | Time |
+|-------|------|
+| Phase 1: Auth Password Change | 1.5 hours |
+| Phase 2: Remove Placeholders | 1 hour |
+| Phase 3: Avatar Upload | 2 hours |
+| Phase 4: Frontend IPC | 1 hour |
+| Phase 5: Frontend IPC Clients | 1 hour |
+| Phase 6: SecurityTab Update | 30 min |
+| Phase 7: Avatar Fallback | 15 min |
+| Phase 8: Type Sync | 15 min |
+| Phase 9: Tests | 1 hour |
+| Phase 10: Dependencies | 15 min |
+| **Total** | **~8.5 hours** |
 
 ---
 
@@ -771,20 +649,23 @@ Key files to restore:
 cd src-tauri
 cargo check
 
-# 2. Type sync
+# 2. Add base64 dependency (if not already present)
+# Already done in Phase 10
+
+# 3. Type sync
 cd ..
 npm run types:sync
 
-# 3. Frontend changes
+# 4. Frontend changes
 cd frontend
 npm run type-check
 npm run lint
 
-# 4. Run tests
+# 5. Run tests
 cd ../src-tauri
 cargo test
 
-# 5. Integration test
+# 6. Integration test
 cd ..
 npm run doctor -- --full
 ```

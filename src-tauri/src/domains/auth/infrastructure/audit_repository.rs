@@ -74,9 +74,9 @@ impl AuditRepository {
         resource_type: Option<String>,
         start_date: Option<i64>,
         end_date: Option<i64>,
-        limit: i64,
-        offset: i64,
-    ) -> Result<(Vec<ActivityLogQueryResult>, i64), String> {
+        limit: i32,
+        offset: i32,
+    ) -> Result<(Vec<ActivityLogQueryResult>, i32), String> {
         let conn = self.db.get_connection().map_err(|e| e.to_string())?;
 
         let mut where_clauses = Vec::new();
@@ -111,7 +111,7 @@ impl AuditRepository {
 
         // Get total count
         let count_sql = format!("SELECT COUNT(*) FROM audit_events a {}", where_sql);
-        let total: i64 = conn
+        let total: i32 = conn
             .query_row(&count_sql, rusqlite::params_from_iter(params.iter()), |r| {
                 r.get(0)
             })

@@ -31,21 +31,10 @@ export function ActivityFilterBar({
   const { eventTypes } = useAuditEventTypes();
 
   const handleFilterChange = (key: keyof AuditActivityFilter, value: any) => {
-    let processedValue = value;
-    
-    // Convert to BigInt for date and pagination fields
-    if (value !== undefined && value !== null) {
-      if (['start_date', 'end_date', 'limit', 'offset'].includes(key)) {
-        processedValue = BigInt(value);
-      }
-    } else {
-      processedValue = null;
-    }
-
     onFiltersChange({
       ...filters,
-      [key]: processedValue,
-      offset: 0n, // Reset to first page on filter change (BigInt)
+      [key]: value ?? (['start_date', 'end_date'].includes(key) ? undefined : null),
+      offset: 0, // Reset to first page on filter change
     });
   };
 
@@ -54,10 +43,10 @@ export function ActivityFilterBar({
       user_id: null,
       event_type: null,
       resource_type: null,
-      start_date: null,
-      end_date: null,
+      start_date: undefined,
+      end_date: undefined,
       limit: filters.limit, 
-      offset: 0n 
+      offset: 0 
     });
   };
 
@@ -128,7 +117,7 @@ export function ActivityFilterBar({
           <Input
             id="start-date"
             type="date"
-            value={filters.start_date ? new Date(Number(filters.start_date)).toISOString().split('T')[0] : ''}
+            value={filters.start_date ? new Date(filters.start_date).toISOString().split('T')[0] : ''}
             onChange={(e) => handleFilterChange('start_date', e.target.value ? new Date(e.target.value).getTime() : null)}
             className="h-9 bg-background/50 focus-visible:ring-[hsl(var(--rpma-teal))]"
           />
@@ -139,7 +128,7 @@ export function ActivityFilterBar({
           <Input
             id="end-date"
             type="date"
-            value={filters.end_date ? new Date(Number(filters.end_date)).toISOString().split('T')[0] : ''}
+            value={filters.end_date ? new Date(filters.end_date).toISOString().split('T')[0] : ''}
             onChange={(e) => handleFilterChange('end_date', e.target.value ? new Date(e.target.value).getTime() : null)}
             className="h-9 bg-background/50 focus-visible:ring-[hsl(var(--rpma-teal))]"
           />

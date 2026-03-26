@@ -17,7 +17,7 @@ export const auditIpc = {
     safeInvoke<JsonValue>(IPC_COMMANDS.ACKNOWLEDGE_SECURITY_ALERT, { alert_id: alertId }),
 
   getAllUserActivity: (filter?: AuditActivityFilter) =>
-    safeInvoke<PaginatedUserActivity>(IPC_COMMANDS.GET_ALL_USER_ACTIVITY, { filter: filter as any }),
+    safeInvoke<PaginatedUserActivity>(IPC_COMMANDS.GET_ALL_USER_ACTIVITY, filter ? { filter } : {}),
 
   getAuditEventTypes: () =>
     safeInvoke<string[]>(IPC_COMMANDS.GET_AUDIT_EVENT_TYPES, {}),

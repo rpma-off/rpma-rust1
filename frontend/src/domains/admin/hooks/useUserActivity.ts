@@ -10,10 +10,10 @@ export function useUserActivity(filters: AuditActivityFilter = {
   user_id: null,
   event_type: null,
   resource_type: null,
-  start_date: null,
-  end_date: null,
-  limit: null,
-  offset: null,
+  start_date: undefined,
+  end_date: undefined,
+  limit: 50,
+  offset: 0,
 }) {
   const queryClient = useQueryClient();
 

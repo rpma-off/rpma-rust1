@@ -1,0 +1,1348 @@
+app-index.tsx:25 Warning: Cannot update a component (`HotReload`) while rendering a different component (`ActivityAuditTab`). To locate the bad setState() call inside `ActivityAuditTab`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at ActivityAuditTab (webpack-internal:///(app-pages-browser)/./src/domains/admin/components/ActivityAuditTab.tsx:27:11)
+    at div
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
+    at Presence (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-presence/dist/index.mjs:27:13)
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-tabs/dist/index.mjs:176:13)
+    at _c4 (webpack-internal:///(app-pages-browser)/./src/components/ui/tabs.tsx:49:11)
+    at div
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
+    at Provider (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-context/dist/index.mjs:34:15)
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-tabs/dist/index.mjs:44:13)
+    at div
+    at PageShell (webpack-internal:///(app-pages-browser)/./src/shared/ui/layout/PageShell.tsx:13:11)
+    at AdminStaffView (webpack-internal:///(app-pages-browser)/./src/domains/admin/components/AdminStaffView.tsx:38:173)
+    at StaffPage (webpack-internal:///(app-pages-browser)/./src/app/staff/page.tsx:18:79)
+    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at div
+    at main
+    at div
+    at div
+    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
+    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
+    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/app/AppNavigation.tsx:15:11)
+    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:112:11)
+    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
+    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
+    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/shared/ui/theme-provider.tsx:13:11)
+    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/domains/auth/api/AuthProvider.tsx:35:11)
+    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
+    at Providers (webpack-internal:///(app-pages-browser)/./src/app/providers.tsx:42:11)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:632:9)
+    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:414:9)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:497:11)
+    at div
+    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:210:11)
+    at body
+    at html
+    at RootLayout (Server)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
+    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
+    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
+    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
+    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+printWarning @ react-dom.development.js:94
+error @ react-dom.development.js:68
+warnAboutRenderPhaseUpdatesInDEV @ react-dom.development.js:26990
+scheduleUpdateOnFiber @ react-dom.development.js:24395
+dispatchReducerAction @ react-dom.development.js:13001
+eval @ hot-reloader-client.tsx:488
+eval @ use-error-handler.ts:72
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/query-core/build/modern/utils.js","lineno":115,"colno":15,"error":{}} {id: '1774486284473-jhj23iicy1', timestamp: '2026-03-26T00:51:24.473Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284483-z9buqq0mk7h', timestamp: '2026-03-26T00:51:24.483Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284493-y3kbncipdz9', timestamp: '2026-03-26T00:51:24.493Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284503-qf9nu5cfpv', timestamp: '2026-03-26T00:51:24.503Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+utils.js:86 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
+    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
+    at invokeGuardedCallback (react-dom.development.js:20689:1)
+    at beginWork (react-dom.development.js:26949:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24887:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1774486284512-hrso3ombvb', timestamp: '2026-03-26T00:51:24.512Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284522-wbu1vhihuq9', timestamp: '2026-03-26T00:51:24.522Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284529-98kgnld7mul', timestamp: '2026-03-26T00:51:24.529Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284538-5tucaxiybgb', timestamp: '2026-03-26T00:51:24.538Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+redirect-boundary.tsx:59 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24887:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1774486284546-u3451zns16', timestamp: '2026-03-26T00:51:24.546Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284556-d3ic2zs3go', timestamp: '2026-03-26T00:51:24.556Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284561-kuh6nzx4tmj', timestamp: '2026-03-26T00:51:24.561Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284567-fcml91osxc', timestamp: '2026-03-26T00:51:24.567Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+redirect-boundary.tsx:59 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24887:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} {id: '1774486284575-n7z2vi7ej3s', timestamp: '2026-03-26T00:51:24.575Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284582-ex57c6b6zi', timestamp: '2026-03-26T00:51:24.582Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284586-ysmliqyqzq', timestamp: '2026-03-26T00:51:24.586Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284591-c0zk974ugq8', timestamp: '2026-03-26T00:51:24.591Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+not-found-boundary.tsx:69 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24887:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+performSyncWorkOnRoot @ react-dom.development.js:24887
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/query-core/build/modern/utils.js","lineno":115,"colno":15,"error":{}} {id: '1774486284603-36u74x426lg', timestamp: '2026-03-26T00:51:24.603Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284616-lzuxi6a39ka', timestamp: '2026-03-26T00:51:24.616Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284626-ow7kxkds2p', timestamp: '2026-03-26T00:51:24.626Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284638-tcjpfkgwxo', timestamp: '2026-03-26T00:51:24.638Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+utils.js:86 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at HTMLUnknownElement.callCallback (react-dom.development.js:20565:1)
+    at Object.invokeGuardedCallbackImpl (react-dom.development.js:20614:1)
+    at invokeGuardedCallback (react-dom.development.js:20689:1)
+    at beginWork (react-dom.development.js:26949:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24899:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+callCallback @ react-dom.development.js:20565
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1774486284654-53i7444sr6q', timestamp: '2026-03-26T00:51:24.654Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284660-t0ptjqt4jlj', timestamp: '2026-03-26T00:51:24.660Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284665-q1t1kl0jo7c', timestamp: '2026-03-26T00:51:24.665Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284671-f87676mwjz', timestamp: '2026-03-26T00:51:24.671Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+redirect-boundary.tsx:59 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24899:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js","lineno":57,"colno":9,"error":{}} {id: '1774486284679-yxm7hwsv49s', timestamp: '2026-03-26T00:51:24.679Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284685-oorpp9thqi', timestamp: '2026-03-26T00:51:24.685Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284689-t68xmgnr78p', timestamp: '2026-03-26T00:51:24.689Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284694-5njha1sa4bc', timestamp: '2026-03-26T00:51:24.694Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+redirect-boundary.tsx:59 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24899:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 26/03/2026, 01:51:24 [CORR:req-mn6rbfz5-0012-w8i3y4] [FRONTEND] [SYSTEM] [ERROR] Uncaught error | user_id: 3d77e2f3-b7f3-4936-98e1-fb4824848976 | data: {"message":"Uncaught TypeError: Do not know how to serialize a BigInt","filename":"webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js","lineno":37,"colno":9,"error":{}} {id: '1774486284699-ry5uqbgnlh9', timestamp: '2026-03-26T00:51:24.700Z', correlation_id: 'req-mn6rbfz5-0012-w8i3y4', layer: 'FRONTEND', domain: 'SYSTEM', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:181
+error @ logger.ts:283
+eval @ logger.ts:63
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284706-wcy287kgpf', timestamp: '2026-03-26T00:51:24.706Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284711-p7sb3o0td59', timestamp: '2026-03-26T00:51:24.711Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 [26/03/2026, 01:51:24] ERROR [system] Uncaught error {id: '1774486284718-1qyfmitxw17', timestamp: '2026-03-26T00:51:24.718Z', level: 3, context: 'system', message: 'Uncaught error', …}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+log @ logger.ts:258
+error @ logger.ts:355
+eval @ logger.ts:111
+invokeGuardedCallbackImpl @ react-dom.development.js:20614
+invokeGuardedCallback @ react-dom.development.js:20689
+beginWork @ react-dom.development.js:26949
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+not-found-boundary.tsx:69 Uncaught TypeError: Do not know how to serialize a BigInt
+    at JSON.stringify (<anonymous>)
+    at hashKey (utils.js:86:1)
+    at hashQueryKeyByOptions (utils.js:83:1)
+    at QueryClient.defaultQueryOptions (queryClient.js:267:57)
+    at useBaseQuery (useBaseQuery.ts:55:35)
+    at useQuery (useQuery.ts:51:22)
+    at useUserActivity (useUserActivity.ts:20:25)
+    at ActivityAuditTab (ActivityAuditTab.tsx:45:91)
+    at renderWithHooks (react-dom.development.js:11121:1)
+    at mountIndeterminateComponent (react-dom.development.js:16869:1)
+    at beginWork$1 (react-dom.development.js:18458:1)
+    at beginWork (react-dom.development.js:26927:1)
+    at performUnitOfWork (react-dom.development.js:25748:1)
+    at workLoopSync (react-dom.development.js:25464:1)
+    at renderRootSync (react-dom.development.js:25419:1)
+    at recoverFromConcurrentError (react-dom.development.js:24597:1)
+    at performSyncWorkOnRoot (react-dom.development.js:24899:1)
+    at flushSyncWorkAcrossRoots_impl (react-dom.development.js:7758:1)
+    at flushSyncWorkOnAllRoots (react-dom.development.js:7718:1)
+    at processRootScheduleInMicrotask (react-dom.development.js:7863:1)
+    at eval (react-dom.development.js:8034:1)
+hashKey @ utils.js:86
+hashQueryKeyByOptions @ utils.js:83
+defaultQueryOptions @ queryClient.js:267
+useBaseQuery @ useBaseQuery.ts:55
+useQuery @ useQuery.ts:51
+useUserActivity @ useUserActivity.ts:20
+ActivityAuditTab @ ActivityAuditTab.tsx:45
+renderWithHooks @ react-dom.development.js:11121
+mountIndeterminateComponent @ react-dom.development.js:16869
+beginWork$1 @ react-dom.development.js:18458
+beginWork @ react-dom.development.js:26927
+performUnitOfWork @ react-dom.development.js:25748
+workLoopSync @ react-dom.development.js:25464
+renderRootSync @ react-dom.development.js:25419
+recoverFromConcurrentError @ react-dom.development.js:24597
+performSyncWorkOnRoot @ react-dom.development.js:24899
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 The above error occurred in the <NotFoundErrorBoundary> component:
+
+    at ActivityAuditTab (webpack-internal:///(app-pages-browser)/./src/domains/admin/components/ActivityAuditTab.tsx:27:11)
+    at div
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
+    at Presence (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-presence/dist/index.mjs:27:13)
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-tabs/dist/index.mjs:176:13)
+    at _c4 (webpack-internal:///(app-pages-browser)/./src/components/ui/tabs.tsx:49:11)
+    at div
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-primitive/dist/index.mjs:38:13)
+    at Provider (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-context/dist/index.mjs:34:15)
+    at eval (webpack-internal:///(app-pages-browser)/./node_modules/@radix-ui/react-tabs/dist/index.mjs:44:13)
+    at div
+    at PageShell (webpack-internal:///(app-pages-browser)/./src/shared/ui/layout/PageShell.tsx:13:11)
+    at AdminStaffView (webpack-internal:///(app-pages-browser)/./src/domains/admin/components/AdminStaffView.tsx:38:173)
+    at StaffPage (webpack-internal:///(app-pages-browser)/./src/app/staff/page.tsx:18:79)
+    at ClientPageRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/client-page.js:14:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at InnerLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:243:11)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at Suspense
+    at LoadingBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:349:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at InnerScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:153:9)
+    at ScrollAndFocusHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:228:11)
+    at RenderFromTemplateContext (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/render-from-template-context.js:16:44)
+    at OuterLayoutRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/layout-router.js:370:11)
+    at div
+    at main
+    at div
+    at div
+    at AppShell (webpack-internal:///(app-pages-browser)/./src/components/layout/AppShell.tsx:16:11)
+    at RPMALayout (webpack-internal:///(app-pages-browser)/./src/components/RPMALayout.tsx:10:11)
+    at AppNavigation (webpack-internal:///(app-pages-browser)/./src/app/AppNavigation.tsx:15:11)
+    at AppLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:112:11)
+    at V (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:54:24)
+    at J (webpack-internal:///(app-pages-browser)/./node_modules/next-themes/dist/index.mjs:47:47)
+    at ThemeProvider (webpack-internal:///(app-pages-browser)/./src/shared/ui/theme-provider.tsx:13:11)
+    at AuthProvider (webpack-internal:///(app-pages-browser)/./src/domains/auth/api/AuthProvider.tsx:35:11)
+    at QueryClientProvider (webpack-internal:///(app-pages-browser)/./node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:27:11)
+    at Providers (webpack-internal:///(app-pages-browser)/./src/app/providers.tsx:42:11)
+    at GlobalErrorWrapper (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:632:9)
+    at BaseErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/BaseErrorBoundary.tsx:414:9)
+    at GlobalErrorBoundary (webpack-internal:///(app-pages-browser)/./src/error-boundaries/GlobalErrorBoundary.tsx:497:11)
+    at div
+    at RootClientLayout (webpack-internal:///(app-pages-browser)/./src/app/RootClientLayout.tsx:210:11)
+    at body
+    at html
+    at RootLayout (Server)
+    at RedirectErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:74:9)
+    at RedirectBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/redirect-boundary.js:82:11)
+    at NotFoundErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:76:9)
+    at NotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/not-found-boundary.js:84:11)
+    at DevRootNotFoundBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/dev-root-not-found-boundary.js:33:11)
+    at ReactDevOverlay (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/ReactDevOverlay.js:87:9)
+    at HotReload (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/react-dev-overlay/app/hot-reloader-client.js:321:11)
+    at Router (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:207:11)
+    at ErrorBoundaryHandler (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:113:9)
+    at ErrorBoundary (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/error-boundary.js:160:11)
+    at AppRouter (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js:585:13)
+    at ServerRoot (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:112:27)
+    at Root (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/app-index.js:117:11)
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundaryHandler.
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+logCapturedError @ react-dom.development.js:15295
+update.callback @ react-dom.development.js:15344
+callCallback @ react-dom.development.js:8696
+commitCallbacks @ react-dom.development.js:8743
+commitClassCallbacks @ react-dom.development.js:21323
+commitLayoutEffectOnFiber @ react-dom.development.js:21425
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21488
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21418
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21407
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21577
+recursivelyTraverseLayoutEffects @ react-dom.development.js:22926
+commitLayoutEffectOnFiber @ react-dom.development.js:21437
+commitLayoutEffects @ react-dom.development.js:22912
+commitRootImpl @ react-dom.development.js:26226
+commitRoot @ react-dom.development.js:26077
+performSyncWorkOnRoot @ react-dom.development.js:24925
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 Error boundary caught: {message: 'Do not know how to serialize a BigInt', stack: 'TypeError: Do not know how to serialize a BigInt\n …ed/react-dom/cjs/react-dom.development.js:8034:7)', digest: undefined, timestamp: '2026-03-26T00:51:24.736Z'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+eval @ error.tsx:26
+commitHookEffectListMount @ react-dom.development.js:21102
+commitHookPassiveMountEffects @ react-dom.development.js:23154
+commitPassiveMountOnFiber @ react-dom.development.js:23259
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23256
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23370
+recursivelyTraversePassiveMountEffects @ react-dom.development.js:23237
+commitPassiveMountOnFiber @ react-dom.development.js:23267
+commitPassiveMountEffects @ react-dom.development.js:23225
+flushPassiveEffectsImpl @ react-dom.development.js:26497
+flushPassiveEffects @ react-dom.development.js:26438
+commitRootImpl @ react-dom.development.js:26337
+commitRoot @ react-dom.development.js:26077
+performSyncWorkOnRoot @ react-dom.development.js:24925
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
+app-index.tsx:25 Error boundary caught: {message: 'Do not know how to serialize a BigInt', stack: 'TypeError: Do not know how to serialize a BigInt\n …ed/react-dom/cjs/react-dom.development.js:8034:7)', digest: undefined, timestamp: '2026-03-26T00:51:24.737Z'}
+window.console.error @ app-index.tsx:25
+console.error @ hydration-error-info.ts:72
+eval @ error.tsx:26
+commitHookEffectListMount @ react-dom.development.js:21102
+invokePassiveEffectMountInDEV @ react-dom.development.js:23980
+invokeEffectsInDev @ react-dom.development.js:26852
+legacyCommitDoubleInvokeEffectsInDEV @ react-dom.development.js:26835
+commitDoubleInvokeEffectsInDEV @ react-dom.development.js:26816
+flushPassiveEffectsImpl @ react-dom.development.js:26514
+flushPassiveEffects @ react-dom.development.js:26438
+commitRootImpl @ react-dom.development.js:26337
+commitRoot @ react-dom.development.js:26077
+performSyncWorkOnRoot @ react-dom.development.js:24925
+flushSyncWorkAcrossRoots_impl @ react-dom.development.js:7758
+flushSyncWorkOnAllRoots @ react-dom.development.js:7718
+processRootScheduleInMicrotask @ react-dom.development.js:7863
+eval @ react-dom.development.js:8034
