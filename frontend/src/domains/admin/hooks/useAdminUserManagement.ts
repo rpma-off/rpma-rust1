@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateUserRequest, UserAccount } from "@/lib/backend";
 import { adminKeys } from "@/lib/query-keys";
@@ -62,8 +62,10 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     staleTime: 30_000,
   });
 
-  const invalidateUsers = () =>
-    queryClient.invalidateQueries({ queryKey: adminKeys.users() });
+  const invalidateUsers = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: adminKeys.users() }),
+    [queryClient]
+  );
 
   const addUserMutation = useMutation({
     mutationFn: async (userData: CreateUserRequest) => {
@@ -114,9 +116,9 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     onError: (error) => console.error("Failed to update user status:", error),
   });
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     await invalidateUsers();
-  };
+  }, [invalidateUsers]);
 
   const users = usersQuery.data ?? [];
 
