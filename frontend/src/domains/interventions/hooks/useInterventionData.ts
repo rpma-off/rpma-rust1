@@ -1,9 +1,25 @@
-﻿import { useQuery } from '@tanstack/react-query';
-import { interventionKeys } from '@/lib/query-keys';
-import { logger } from '@/lib/logging';
-import { LogDomain } from '@/lib/logging/types';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { interventionsIpc } from '../ipc/interventions.ipc';
+﻿import { useQuery } from "@tanstack/react-query";
+import { interventionKeys } from "@/lib/query-keys";
+import { logger } from "@/lib/logging";
+import { LogDomain } from "@/lib/logging/types";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { interventionsIpc } from "../ipc/interventions.ipc";
+
+/**
+ * Normalise nullable fields on a raw backend step to safe defaults.
+ * Defined at module level (not inside the hook) so it is not re-created on
+ * every render.
+ */
+function normalizeStep(step: InterventionStep): InterventionStep {
+  return {
+    ...step,
+    collected_data: step.collected_data ?? step.step_data ?? {},
+    step_data: step.step_data ?? null,
+    measurements: step.measurements ?? null,
+    observations: step.observations ?? null,
+    validation_data: step.validation_data ?? null,
+  };
+}
 
 interface InterventionStep {
   id: string;
@@ -41,15 +57,6 @@ interface InterventionData {
 export function useInterventionData(taskId: string) {
   const { session } = useAuth();
 
-  const normalizeStep = (step: InterventionStep): InterventionStep => ({
-    ...step,
-    collected_data: step.collected_data ?? step.step_data ?? {},
-    step_data: step.step_data ?? null,
-    measurements: step.measurements ?? null,
-    observations: step.observations ?? null,
-    validation_data: step.validation_data ?? null,
-  });
-
   return useQuery({
     queryKey: interventionKeys.byTaskData(taskId),
     queryFn: async (): Promise<InterventionData | null> => {
@@ -65,14 +72,20 @@ export function useInterventionData(taskId: string) {
         let intervention = null;
 
         // Prefer active intervention over latest.
-        if (activeResult && typeof activeResult === 'object') {
-          const directResult = activeResult as { intervention?: Record<string, unknown> };
+        if (activeResult && typeof activeResult === "object") {
+          const directResult = activeResult as {
+            intervention?: Record<string, unknown>;
+          };
           if (directResult.intervention) {
             intervention = directResult.intervention;
-          } else if ('type' in activeResult) {
-            const typedResult = activeResult as { type: string; intervention?: Record<string, unknown> };
+          } else if ("type" in activeResult) {
+            const typedResult = activeResult as {
+              type: string;
+              intervention?: Record<string, unknown>;
+            };
             if (
-              (typedResult.type === 'ActiveRetrieved' || typedResult.type === 'ActiveByTask') &&
+              (typedResult.type === "ActiveRetrieved" ||
+                typedResult.type === "ActiveByTask") &&
               typedResult.intervention
             ) {
               intervention = typedResult.intervention;
@@ -82,8 +95,14 @@ export function useInterventionData(taskId: string) {
 
         // Fall back to latest if no active.
         if (!intervention) {
-          if (latestResult && typeof latestResult === 'object' && 'intervention' in latestResult) {
-            const typedResult = latestResult as { intervention?: Record<string, unknown> };
+          if (
+            latestResult &&
+            typeof latestResult === "object" &&
+            "intervention" in latestResult
+          ) {
+            const typedResult = latestResult as {
+              intervention?: Record<string, unknown>;
+            };
             if (typedResult.intervention) {
               intervention = typedResult.intervention;
             }
@@ -92,7 +111,9 @@ export function useInterventionData(taskId: string) {
 
         if (!intervention) return null;
 
-        const existingSteps = Array.isArray((intervention as { steps?: InterventionStep[] }).steps)
+        const existingSteps = Array.isArray(
+          (intervention as { steps?: InterventionStep[] }).steps,
+        )
           ? (intervention as { steps?: InterventionStep[] }).steps
           : null;
 
@@ -104,14 +125,23 @@ export function useInterventionData(taskId: string) {
         }
 
         // Get steps data for this intervention
-        const stepsResult = await interventionsIpc.getProgress(intervention.id as string);
+        const stepsResult = await interventionsIpc.getProgress(
+          intervention.id as string,
+        );
 
         return {
           ...intervention,
-          steps: ((stepsResult?.steps || []) as unknown as InterventionStep[]).map(normalizeStep)
+          steps: (
+            (stepsResult?.steps || []) as unknown as InterventionStep[]
+          ).map(normalizeStep),
         } as InterventionData;
       } catch (error) {
-        logger.error(LogDomain.TASK, 'Failed to fetch intervention data', error instanceof Error ? error : new Error(String(error)), { task_id: taskId });
+        logger.error(
+          LogDomain.TASK,
+          "Failed to fetch intervention data",
+          error instanceof Error ? error : new Error(String(error)),
+          { task_id: taskId },
+        );
         return null;
       }
     },
@@ -126,10 +156,17 @@ export function useInterventionData(taskId: string) {
  */
 export function useWorkflowStepData(interventionData: InterventionData | null) {
   return {
-    inspection: interventionData?.steps?.find(step => step.step_type === 'inspection'),
-    preparation: interventionData?.steps?.find(step => step.step_type === 'preparation'),
-    installation: interventionData?.steps?.find(step => step.step_type === 'installation'),
-    finalization: interventionData?.steps?.find(step => step.step_type === 'finalization'),
+    inspection: interventionData?.steps?.find(
+      (step) => step.step_type === "inspection",
+    ),
+    preparation: interventionData?.steps?.find(
+      (step) => step.step_type === "preparation",
+    ),
+    installation: interventionData?.steps?.find(
+      (step) => step.step_type === "installation",
+    ),
+    finalization: interventionData?.steps?.find(
+      (step) => step.step_type === "finalization",
+    ),
   };
 }
-

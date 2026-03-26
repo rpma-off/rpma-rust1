@@ -72,15 +72,11 @@ export const useClient = (options: UseClientOptions = {}): UseClientReturn => {
     await refetch();
   }, [refetch]);
 
-  const handleSetClientId = useCallback((newClientId: string | undefined) => {
-    setClientId(newClientId);
-  }, []);
-
   return {
     client,
     loading: isLoading,
     error: error instanceof Error ? error : null,
     refetch: handleRefetch,
-    setClientId: handleSetClientId,
+    setClientId,
   };
 };

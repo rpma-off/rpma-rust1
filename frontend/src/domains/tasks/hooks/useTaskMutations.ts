@@ -1,9 +1,11 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { taskKeys } from '@/lib/query-keys';
-import type { UpdateTaskRequest } from '@/lib/backend';
-import { useAuth } from '@/shared/hooks/useAuth';
-import type { JsonObject } from '@/types/json';
-import { taskIpc } from '../ipc/task.ipc';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { taskKeys } from "@/lib/query-keys";
+import type { UpdateTaskRequest } from "@/lib/backend";
+import { logger } from "@/lib/logging";
+import { LogDomain } from "@/lib/logging/types";
+import { useAuth } from "@/shared/hooks/useAuth";
+import type { JsonObject } from "@/types/json";
+import { taskIpc } from "../ipc/task.ipc";
 
 /**
  * Hook providing common task mutations with automatic cache invalidation.
@@ -23,10 +25,9 @@ export function useTaskMutations() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  /** Throws a typed error if the session token is absent. */
-  function requireToken(): string {
-    if (!user?.token) throw new Error('Utilisateur non authentifié');
-    return user.token;
+  /** Throws if there is no active authenticated session. */
+  function requireToken(): void {
+    if (!user?.token) throw new Error("Authentication required");
   }
 
   const invalidateTask = (taskId: string) => {
@@ -35,21 +36,30 @@ export function useTaskMutations() {
   };
 
   const updateTaskMutation = useMutation({
-    mutationFn: async ({ taskId, data }: { taskId: string; data: UpdateTaskRequest }) => {
+    mutationFn: async ({
+      taskId,
+      data,
+    }: {
+      taskId: string;
+      data: UpdateTaskRequest;
+    }) => {
       requireToken();
       return taskIpc.update(taskId, data);
     },
     onMutate: async ({ taskId, data }) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.byId(taskId) });
       const previous = queryClient.getQueryData(taskKeys.byId(taskId));
-      if (previous && typeof previous === 'object') {
+      if (previous && typeof previous === "object") {
         const patch: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(data)) {
           if (value !== null && value !== undefined) {
             patch[key] = value;
           }
         }
-        queryClient.setQueryData(taskKeys.byId(taskId), { ...(previous as Record<string, unknown>), ...patch });
+        queryClient.setQueryData(taskKeys.byId(taskId), {
+          ...(previous as Record<string, unknown>),
+          ...patch,
+        });
       }
       return { previous, taskId };
     },
@@ -57,7 +67,12 @@ export function useTaskMutations() {
       if (context?.previous) {
         queryClient.setQueryData(taskKeys.byId(taskId), context.previous);
       }
-      console.error('[useTaskMutations] updateTask failed:', err);
+      logger.error(
+        LogDomain.TASK,
+        "updateTask failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
     onSettled: (_, __, { taskId }) => invalidateTask(taskId),
   });
@@ -71,19 +86,38 @@ export function useTaskMutations() {
       queryClient.removeQueries({ queryKey: taskKeys.byId(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
-    onError: (err: unknown) => {
-      console.error('[useTaskMutations] deleteTask failed:', err);
+    onError: (err: unknown, taskId: string) => {
+      logger.error(
+        LogDomain.TASK,
+        "deleteTask failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
   });
 
   const editTaskMutation = useMutation({
-    mutationFn: async ({ taskId, data }: { taskId: string; data: JsonObject }) => {
+    mutationFn: async ({
+      taskId,
+      data,
+    }: {
+      taskId: string;
+      data: JsonObject;
+    }) => {
       requireToken();
       return taskIpc.editTask(taskId, data);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
-    onError: (err: unknown) => {
-      console.error('[useTaskMutations] editTask failed:', err);
+    onError: (
+      err: unknown,
+      { taskId }: { taskId: string; data: JsonObject },
+    ) => {
+      logger.error(
+        LogDomain.TASK,
+        "editTask failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
   });
 
@@ -92,7 +126,7 @@ export function useTaskMutations() {
       taskId,
       issueType,
       severity,
-      description
+      description,
     }: {
       taskId: string;
       issueType: string;
@@ -103,8 +137,23 @@ export function useTaskMutations() {
       return taskIpc.reportTaskIssue(taskId, issueType, severity, description);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
-    onError: (err: unknown) => {
-      console.error('[useTaskMutations] reportIssue failed:', err);
+    onError: (
+      err: unknown,
+      {
+        taskId,
+      }: {
+        taskId: string;
+        issueType: string;
+        severity: string;
+        description: string;
+      },
+    ) => {
+      logger.error(
+        LogDomain.TASK,
+        "reportIssue failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
   });
 
@@ -112,7 +161,7 @@ export function useTaskMutations() {
     mutationFn: async ({
       taskId,
       newDate,
-      reason
+      reason,
     }: {
       taskId: string;
       newDate: string;
@@ -122,8 +171,16 @@ export function useTaskMutations() {
       return taskIpc.delayTask(taskId, newDate, reason);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
-    onError: (err: unknown) => {
-      console.error('[useTaskMutations] delayTask failed:', err);
+    onError: (
+      err: unknown,
+      { taskId }: { taskId: string; newDate: string; reason: string },
+    ) => {
+      logger.error(
+        LogDomain.TASK,
+        "delayTask failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
   });
 
@@ -131,7 +188,7 @@ export function useTaskMutations() {
     mutationFn: async ({
       taskId,
       message,
-      messageType
+      messageType,
     }: {
       taskId: string;
       message: string;
@@ -141,8 +198,16 @@ export function useTaskMutations() {
       return taskIpc.sendTaskMessage(taskId, message, messageType);
     },
     onSuccess: (_, { taskId }) => invalidateTask(taskId),
-    onError: (err: unknown) => {
-      console.error('[useTaskMutations] sendMessage failed:', err);
+    onError: (
+      err: unknown,
+      { taskId }: { taskId: string; message: string; messageType: string },
+    ) => {
+      logger.error(
+        LogDomain.TASK,
+        "sendMessage failed",
+        err instanceof Error ? err : new Error(String(err)),
+        { task_id: taskId },
+      );
     },
   });
 

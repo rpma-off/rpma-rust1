@@ -84,14 +84,14 @@ export function useEditClientPage({ params }: UseEditClientPageOptions) {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
-      if (!user?.token) throw new Error("Authentification requise");
+      if (!user?.token) throw new Error(t("errors.authRequired"));
       const response = await clientService.updateClient(
         params.id,
         formData,
         user.token,
       );
       if (response.error)
-        throw new Error(response.error || "Échec de la mise à jour du client");
+        throw new Error(response.error || t("errors.unexpectedError"));
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: clientKeys.all });

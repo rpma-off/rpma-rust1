@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { logger } from '@/lib/logging';
-import { LogDomain } from '@/lib/logging/types';
-import type { CreateClientDTO } from '@/shared/types';
-import { useTranslation } from '@/shared/hooks/useTranslation';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { clientService } from '../server';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { logger } from "@/lib/logging";
+import { LogDomain } from "@/lib/logging/types";
+import type { CreateClientDTO } from "@/shared/types";
+import { useTranslation } from "@/shared/hooks/useTranslation";
+import { useAuth } from "@/shared/hooks/useAuth";
+import { clientService } from "../server";
 
 export function useNewClientPage() {
   const router = useRouter();
@@ -16,21 +16,23 @@ export function useNewClientPage() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<CreateClientDTO>({
-    name: '',
-    email: '',
-    phone: '',
-    address_street: '',
-    company_name: '',
-    customer_type: 'individual',
-    notes: '',
+    name: "",
+    email: "",
+    phone: "",
+    address_street: "",
+    company_name: "",
+    customer_type: "individual",
+    notes: "",
   });
-  const [errors, setErrors] = useState<Partial<CreateClientDTO & { general?: string }>>({});
+  const [errors, setErrors] = useState<
+    Partial<CreateClientDTO & { general?: string }>
+  >({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      toast.error(t('errors.unauthorized'));
+      toast.error(t("errors.unauthorized"));
       return;
     }
 
@@ -38,41 +40,36 @@ export function useNewClientPage() {
       setLoading(true);
       setErrors({});
 
-      if (!user?.id) {
-        setErrors({ general: t('auth.authRequired') });
-        return;
-      }
-
-      console.log('Creating client with data:', formData);
       const response = await clientService.createClient(formData, user.token);
-      console.log('Create client response:', response);
       if (!response.success || response.error) {
-        console.error('Client creation failed:', response.error);
-        setErrors({ general: response.error || t('errors.unexpectedError') });
+        setErrors({ general: response.error || t("errors.unexpectedError") });
         return;
       }
 
       if (response.data) {
-        console.log('Client created successfully, redirecting to:', `/clients/${response.data.id}`);
-        toast.success(t('clients.clientCreated'));
+        toast.success(t("clients.clientCreated"));
         router.push(`/clients/${response.data.id}`);
       }
     } catch (err) {
-      logger.error(LogDomain.CLIENT, 'Error creating client', err instanceof Error ? err : new Error(String(err)));
-      setErrors({ general: t('errors.unexpectedError') });
+      logger.error(
+        LogDomain.CLIENT,
+        "Error creating client",
+        err instanceof Error ? err : new Error(String(err)),
+      );
+      setErrors({ general: t("errors.unexpectedError") });
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    router.push('/clients');
+    router.push("/clients");
   };
 
   const handleInputChange = (field: keyof CreateClientDTO, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 

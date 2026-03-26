@@ -15,8 +15,7 @@ pub mod user {
         bootstrap_first_admin, has_admins, user_crud, BootstrapFirstAdminRequest, UserCrudRequest,
     };
 }
-pub mod client {
-}
+
 pub mod auth {
     use crate::shared::app_state::AppState;
     use crate::shared::ipc::{ApiResponse, AppError};

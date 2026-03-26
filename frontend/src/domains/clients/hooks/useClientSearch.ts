@@ -1,8 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMutationCounter } from '@/lib/data-freshness';
-import { clientKeys } from '@/lib/query-keys';
-import type { Client } from '@/lib/backend';
-import { clientIpc } from '../ipc';
+import { useQuery } from "@tanstack/react-query";
+import { useMutationCounter } from "@/lib/data-freshness";
+import { clientKeys } from "@/lib/query-keys";
+import type { Client } from "@/lib/backend";
+import { clientIpc } from "../ipc";
+
+/** Maximum results returned when the user has typed a search query. */
+const SEARCH_RESULTS_LIMIT = 20;
+/** Maximum results returned when browsing with no query (full dropdown list). */
+const BROWSE_RESULTS_LIMIT = 100;
 
 /**
  * Search clients by query string using TanStack Query.
@@ -11,16 +16,16 @@ import { clientIpc } from '../ipc';
  * in ClientSelector (ADR-014: server state must go through TanStack Query).
  */
 export function useClientSearch(query: string) {
-  const mutations = useMutationCounter('clients');
+  const mutations = useMutationCounter("clients");
   return useQuery<Client[]>({
-    queryKey: [...clientKeys.list(), 'search', query, mutations],
+    queryKey: [...clientKeys.list(), "search", query, mutations],
     queryFn: async () => {
       const result = await clientIpc.list({
         page: 1,
-        limit: query.trim() ? 20 : 100,
+        limit: query.trim() ? SEARCH_RESULTS_LIMIT : BROWSE_RESULTS_LIMIT,
         search: query.trim() || undefined,
-        sort_by: 'name',
-        sort_order: 'asc',
+        sort_by: "name",
+        sort_order: "asc",
       });
       return Array.isArray(result.data) ? result.data : [];
     },

@@ -1,8 +1,8 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AuthSecureStorage } from '@/lib/secureStorage';
-import { interventionKeys, taskKeys } from '@/lib/query-keys';
-import { logger } from '@/lib/logging';
-import { LogDomain } from '@/lib/logging/types';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AuthSecureStorage } from "@/lib/secureStorage";
+import { interventionKeys, taskKeys } from "@/lib/query-keys";
+import { logger } from "@/lib/logging";
+import { LogDomain } from "@/lib/logging/types";
 import type {
   PPFInterventionData,
   PPFInterventionStep,
@@ -11,22 +11,33 @@ import type {
   FinalizeInterventionDTO,
   InterventionCreationResponse,
   StepProgressResponse,
-  InterventionFinalizationResponse
-} from '@/types/ppf-intervention';
-import type { BackendStep, BackendIntervention } from '../services/intervention-mappers';
+  InterventionFinalizationResponse,
+} from "@/types/ppf-intervention";
+import type {
+  BackendStep,
+  BackendIntervention,
+} from "../services/intervention-mappers";
 import {
   mapBackendStepToFrontend,
   mapBackendStepPartialUpdate,
   mapBackendInterventionToFrontend,
-} from '../services/intervention-mappers';
-import { InterventionWorkflowService } from '../services/intervention-workflow.service';
+} from "../services/intervention-mappers";
+import { InterventionWorkflowService } from "../services/intervention-workflow.service";
 
 interface UseInterventionActionsProps {
   taskId?: string;
   onError?: (error: string, originalError?: unknown) => void;
-  onInterventionUpdate?: (intervention: PPFInterventionData | ((prev: PPFInterventionData | null) => PPFInterventionData | null)) => void;
+  onInterventionUpdate?: (
+    intervention:
+      | PPFInterventionData
+      | ((prev: PPFInterventionData | null) => PPFInterventionData | null),
+  ) => void;
   onStepUpdate?: (step: PPFInterventionStep | null) => void;
-  onStepsUpdate?: (steps: PPFInterventionStep[] | ((prevSteps: PPFInterventionStep[]) => PPFInterventionStep[])) => void;
+  onStepsUpdate?: (
+    steps:
+      | PPFInterventionStep[]
+      | ((prevSteps: PPFInterventionStep[]) => PPFInterventionStep[]),
+  ) => void;
 }
 
 export function useInterventionActions({
@@ -50,7 +61,7 @@ export function useInterventionActions({
   async function getRequiredSessionToken(): Promise<string> {
     const session = await AuthSecureStorage.getSession();
     if (!session?.token) {
-      throw new Error('Vous devez être connecté pour effectuer cette action');
+      throw new Error("Authentication required");
     }
     return session.token;
   }
@@ -62,55 +73,85 @@ export function useInterventionActions({
   // when taskId is undefined.
   function invalidateInterventionCaches(resolvedTaskId: string) {
     if (!resolvedTaskId) return;
-    queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(resolvedTaskId) });
-    queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(resolvedTaskId) });
+    queryClient.invalidateQueries({
+      queryKey: interventionKeys.byTask(resolvedTaskId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: interventionKeys.activeForTask(resolvedTaskId),
+    });
     queryClient.invalidateQueries({ queryKey: taskKeys.byId(resolvedTaskId) });
     queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
   }
 
   // Create intervention mutation
-  const createInterventionMutation = useMutation<InterventionCreationResponse, Error, StartInterventionDTO>({
+  const createInterventionMutation = useMutation<
+    InterventionCreationResponse,
+    Error,
+    StartInterventionDTO
+  >({
     mutationFn: async (data: StartInterventionDTO) => {
       await getRequiredSessionToken();
 
-      const result = await InterventionWorkflowService.startIntervention(data.taskId!, data);
+      const result = await InterventionWorkflowService.startIntervention(
+        data.taskId!,
+        data,
+      );
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to start intervention');
+        throw new Error(
+          result.error?.message || "Failed to start intervention",
+        );
       }
 
       return result.data as InterventionCreationResponse;
     },
     onSuccess: (result) => {
-      const responseData = (result as { data?: InterventionCreationResponse }).data || result;
+      const responseData =
+        (result as { data?: InterventionCreationResponse }).data || result;
 
       if (!responseData.intervention || !responseData.intervention.id) {
-        onError?.('Invalid response: missing intervention data or id');
+        onError?.("Invalid response: missing intervention data or id");
         return;
       }
 
-      const mappedSteps = ((responseData.steps || []) as unknown as BackendStep[]).map(mapBackendStepToFrontend);
+      const mappedSteps = (
+        (responseData.steps || []) as unknown as BackendStep[]
+      ).map(mapBackendStepToFrontend);
 
       onInterventionUpdate?.(responseData.intervention);
       onStepsUpdate?.(mappedSteps);
-      onStepUpdate?.(mappedSteps.find(s => s.status === 'in_progress') ||
-                    mappedSteps.find(s => s.step_number === responseData.intervention?.currentStep) ||
-                    mappedSteps[0] || null);
+      onStepUpdate?.(
+        mappedSteps.find((s) => s.status === "in_progress") ||
+          mappedSteps.find(
+            (s) => s.step_number === responseData.intervention?.currentStep,
+          ) ||
+          mappedSteps[0] ||
+          null,
+      );
 
-      invalidateInterventionCaches(taskId ?? '');
+      invalidateInterventionCaches(taskId ?? "");
     },
     onError: (err: Error) => {
-      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to create intervention', err, { task_id: taskId });
-      onError?.('Failed to create intervention', err);
+      logger.error(
+        LogDomain.TASK,
+        "PPF Workflow: Failed to create intervention",
+        err,
+        { task_id: taskId },
+      );
+      onError?.("Failed to create intervention", err);
     },
   });
 
   // Advance step mutation
-  const advanceStepMutation = useMutation<StepProgressResponse, Error, AdvanceStepDTO>({
+  const advanceStepMutation = useMutation<
+    StepProgressResponse,
+    Error,
+    AdvanceStepDTO
+  >({
     mutationFn: async (data: AdvanceStepDTO) => {
       const intervention_id = data.intervention_id || data.interventionId;
       if (!intervention_id) {
-        throw new Error('Intervention ID is required');
+        throw new Error("Intervention ID is required");
       }
 
       await getRequiredSessionToken();
@@ -120,15 +161,18 @@ export function useInterventionActions({
         step_id: data.step_id || data.stepNumber?.toString(),
         collected_data: data.collected_data || data.data || {},
         photos: data.photo_urls,
-        notes: data.observations?.join('; '),
+        notes: data.observations?.join("; "),
         quality_check_passed: true,
-        issues: data.observations?.filter(obs => obs.includes('issue')) || [],
+        issues: data.observations?.filter((obs) => obs.includes("issue")) || [],
       };
 
-      const result = await InterventionWorkflowService.advanceStep(intervention_id, apiData);
+      const result = await InterventionWorkflowService.advanceStep(
+        intervention_id,
+        apiData,
+      );
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to advance step');
+        throw new Error(result.error?.message || "Failed to advance step");
       }
 
       return result.data as StepProgressResponse;
@@ -138,45 +182,65 @@ export function useInterventionActions({
       const typedResponseData = responseData as StepProgressResponse;
 
       if (typedResponseData.next_step) {
-        const backendStep = typedResponseData.next_step as unknown as BackendStep;
+        const backendStep =
+          typedResponseData.next_step as unknown as BackendStep;
         onStepUpdate?.(mapBackendStepToFrontend(backendStep));
       } else if (typedResponseData.updated_step) {
-        const backendUpdatedStep = typedResponseData.updated_step as unknown as BackendStep;
-        const mappedUpdatedStep = mapBackendStepPartialUpdate(backendUpdatedStep);
+        const backendUpdatedStep =
+          typedResponseData.updated_step as unknown as BackendStep;
+        const mappedUpdatedStep =
+          mapBackendStepPartialUpdate(backendUpdatedStep);
 
         onStepsUpdate?.((prevSteps: PPFInterventionStep[]) =>
           prevSteps.map((step: PPFInterventionStep) =>
             step.step_number === backendUpdatedStep.step_number
-              ? { ...step, ...mappedUpdatedStep, status: 'completed' }
-              : step
-          )
+              ? { ...step, ...mappedUpdatedStep, status: "completed" }
+              : step,
+          ),
         );
       }
 
       if (typedResponseData.intervention) {
-        onInterventionUpdate?.((prev: PPFInterventionData | null) => prev ? {
-          ...prev,
-          currentStep: typedResponseData.intervention.currentStep,
-          progress_percentage: typedResponseData.intervention.completion_percentage,
-          updated_at: new Date().toISOString(),
-        } : null);
+        onInterventionUpdate?.((prev: PPFInterventionData | null) =>
+          prev
+            ? {
+                ...prev,
+                currentStep: typedResponseData.intervention.currentStep,
+                progress_percentage:
+                  typedResponseData.intervention.completion_percentage,
+                updated_at: new Date().toISOString(),
+              }
+            : null,
+        );
       }
 
       if (taskId) {
-        queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId) });
+        queryClient.invalidateQueries({
+          queryKey: interventionKeys.byTask(taskId),
+        });
       }
     },
     onError: (err: Error, variables) => {
-      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to advance step', err, {
-        intervention_id: variables.intervention_id || variables.interventionId,
-        step_number: variables.stepNumber,
-      });
-      onError?.('Failed to advance step', err);
+      logger.error(
+        LogDomain.TASK,
+        "PPF Workflow: Failed to advance step",
+        err,
+        {
+          intervention_id:
+            variables.intervention_id || variables.interventionId,
+          step_number: variables.stepNumber,
+        },
+      );
+      onError?.("Failed to advance step", err);
     },
   });
 
   // Finalize intervention mutation
-  const finalizeInterventionMutation = useMutation<InterventionFinalizationResponse, Error, FinalizeInterventionDTO>({
+  const finalizeInterventionMutation = useMutation<
+    InterventionFinalizationResponse,
+    Error,
+    FinalizeInterventionDTO
+  >({
     mutationFn: async (data: FinalizeInterventionDTO) => {
       const intervention_id = data.interventionId || data.intervention_id;
 
@@ -191,39 +255,71 @@ export function useInterventionActions({
         customer_comments: data.customer_comments,
       };
 
-      const result = await InterventionWorkflowService.finalizeIntervention(intervention_id!, apiData);
+      const result = await InterventionWorkflowService.finalizeIntervention(
+        intervention_id!,
+        apiData,
+      );
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to finalize intervention');
+        throw new Error(
+          result.error?.message || "Failed to finalize intervention",
+        );
       }
 
       return result.data as InterventionFinalizationResponse;
     },
     onSuccess: (result) => {
-      const backendIntervention = result.intervention as unknown as BackendIntervention;
-      onInterventionUpdate?.(mapBackendInterventionToFrontend(backendIntervention, taskId ?? ''));
-      invalidateInterventionCaches(taskId ?? '');
+      const backendIntervention =
+        result.intervention as unknown as BackendIntervention;
+      onInterventionUpdate?.(
+        mapBackendInterventionToFrontend(backendIntervention, taskId ?? ""),
+      );
+      invalidateInterventionCaches(taskId ?? "");
     },
     onError: (err: Error, variables) => {
-      logger.error(LogDomain.TASK, 'PPF Workflow: Failed to finalize intervention', err, {
-        intervention_id: variables.interventionId || variables.intervention_id,
-      });
-      onError?.('Failed to finalize intervention', err);
+      logger.error(
+        LogDomain.TASK,
+        "PPF Workflow: Failed to finalize intervention",
+        err,
+        {
+          intervention_id:
+            variables.interventionId || variables.intervention_id,
+        },
+      );
+      onError?.("Failed to finalize intervention", err);
     },
   });
 
   // Save step progress mutation
-  const saveStepProgressMutation = useMutation<unknown, Error, { stepId: string; collectedData: unknown; notes?: string; photos?: string[] }>({
+  const saveStepProgressMutation = useMutation<
+    unknown,
+    Error,
+    {
+      stepId: string;
+      collectedData: unknown;
+      notes?: string;
+      photos?: string[];
+    }
+  >({
     mutationFn: async ({ stepId, collectedData, notes, photos }) => {
-      const result = await InterventionWorkflowService.saveStepProgress(stepId, collectedData, notes, photos);
+      const result = await InterventionWorkflowService.saveStepProgress(
+        stepId,
+        collectedData,
+        notes,
+        photos,
+      );
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to save step progress');
+        throw new Error(
+          result.error?.message || "Failed to save step progress",
+        );
       }
       return result.data;
     },
     onSuccess: () => {
       if (taskId) {
-        queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(taskId) });
+        queryClient.invalidateQueries({
+          queryKey: interventionKeys.byTask(taskId),
+        });
       }
     },
   });

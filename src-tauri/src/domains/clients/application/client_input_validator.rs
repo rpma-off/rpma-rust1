@@ -28,6 +28,29 @@ pub fn sanitize_client_action(action: ClientAction) -> Result<ClientAction, IpcA
     }
 }
 
+/// Parse, validate, and re-serialise the JSON `tags` field.
+///
+/// Shared by both `sanitize_create_request` and `sanitize_update_request` to
+/// avoid duplicating the same 14-line block in two places.
+fn validate_tags_json(
+    tags: Option<&str>,
+    validator: &ValidationService,
+) -> Result<Option<String>, IpcAppError> {
+    let Some(tags_str) = tags else {
+        return Ok(None);
+    };
+    let tags: Vec<String> = serde_json::from_str(tags_str)
+        .map_err(|e| IpcAppError::Validation(format!("Invalid tags JSON: {}", e)))?;
+    let mut validated = Vec::new();
+    for tag in tags {
+        let sanitized = validator
+            .sanitize_text_input(&tag, "tag", 50)
+            .map_err(|e| IpcAppError::Validation(format!("Tag validation failed: {}", e)))?;
+        validated.push(sanitized);
+    }
+    Ok(Some(serde_json::to_string(&validated).unwrap_or_default()))
+}
+
 pub(crate) fn sanitize_create_request(
     data: CreateClientRequest,
 ) -> Result<CreateClientRequest, IpcAppError> {
@@ -50,20 +73,7 @@ pub(crate) fn sanitize_create_request(
     let validated_notes = validator
         .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
         .map_err(|e| IpcAppError::Validation(format!("Notes validation failed: {}", e)))?;
-    let validated_tags = if let Some(tags_str) = &data.tags {
-        let tags: Vec<String> = serde_json::from_str(tags_str)
-            .map_err(|e| IpcAppError::Validation(format!("Invalid tags JSON: {}", e)))?;
-        let mut validated = Vec::new();
-        for tag in tags {
-            let sanitized = validator
-                .sanitize_text_input(&tag, "tag", 50)
-                .map_err(|e| IpcAppError::Validation(format!("Tag validation failed: {}", e)))?;
-            validated.push(sanitized);
-        }
-        Some(serde_json::to_string(&validated).unwrap_or_default())
-    } else {
-        None
-    };
+    let validated_tags = validate_tags_json(data.tags.as_deref(), &validator)?;
     Ok(CreateClientRequest {
         name: validated_name,
         email: validated_email,
@@ -110,20 +120,7 @@ pub(crate) fn sanitize_update_request(
     let validated_notes = validator
         .sanitize_optional_text(data.notes.as_deref(), "notes", 1000)
         .map_err(|e| IpcAppError::Validation(format!("Notes validation failed: {}", e)))?;
-    let validated_tags = if let Some(tags_str) = &data.tags {
-        let tags: Vec<String> = serde_json::from_str(tags_str)
-            .map_err(|e| IpcAppError::Validation(format!("Invalid tags JSON: {}", e)))?;
-        let mut validated = Vec::new();
-        for tag in tags {
-            let sanitized = validator
-                .sanitize_text_input(&tag, "tag", 50)
-                .map_err(|e| IpcAppError::Validation(format!("Tag validation failed: {}", e)))?;
-            validated.push(sanitized);
-        }
-        Some(serde_json::to_string(&validated).unwrap_or_default())
-    } else {
-        None
-    };
+    let validated_tags = validate_tags_json(data.tags.as_deref(), &validator)?;
     Ok(UpdateClientRequest {
         id,
         name: validated_name,
