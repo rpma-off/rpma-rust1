@@ -373,7 +373,7 @@ export function ProfileSettingsTab({ user, profile }: ProfileSettingsTabProps) {
           <div className="flex items-center gap-6">
             <Avatar className="h-20 w-20">
               <AvatarImage
-                src={userSettings?.profile?.avatar_url || undefined}
+                src={userSettings?.profile?.avatar_url || "/images/logo.png"}
                 alt={`${profile?.first_name} ${profile?.last_name}`}
               />
               <AvatarFallback className="text-lg">

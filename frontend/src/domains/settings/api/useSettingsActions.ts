@@ -74,8 +74,11 @@ export function useSettingsActions() {
   });
 
   const changePassword = useMutation({
-    mutationFn: (data: JsonObject) =>
-      ipcClient.settings.changeUserPassword(data),
+    mutationFn: (data: JsonObject) => {
+      const currentPassword = String(data.current_password ?? data.currentPassword ?? "");
+      const newPassword = String(data.new_password ?? data.newPassword ?? "");
+      return ipcClient.auth.changePassword(currentPassword, newPassword);
+    },
     onSuccess,
   });
 

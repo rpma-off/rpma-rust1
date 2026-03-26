@@ -154,10 +154,6 @@ export const IPC_COMMANDS = {
   UPDATE_SESSION_TIMEOUT: "update_session_timeout",
   GET_SESSION_TIMEOUT_CONFIG: "get_session_timeout_config",
   UPLOAD_USER_AVATAR: "upload_user_avatar",
-  EXPORT_USER_DATA: "export_user_data",
-  DELETE_USER_ACCOUNT: "delete_user_account",
-  GET_DATA_CONSENT: "get_data_consent",
-  UPDATE_DATA_CONSENT: "update_data_consent",
 
   // Dashboard commands
   DASHBOARD_GET_STATS: "dashboard_get_stats",
@@ -176,6 +172,7 @@ export const IPC_COMMANDS = {
   UPDATE_USER_STATUS: "update_user_status",
   DELETE_USER: "delete_user",
   CHANGE_USER_PASSWORD: "change_user_password",
+  CHANGE_PASSWORD: "change_password",
 
   // Bootstrap commands
   BOOTSTRAP_FIRST_ADMIN: "bootstrap_first_admin",

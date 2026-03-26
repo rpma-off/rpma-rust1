@@ -211,6 +211,17 @@ impl std::fmt::Debug for UserAccount {
     }
 }
 
+/// Request payload for password change.
+///
+/// User must provide their current password for verification before setting a new one.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangePasswordRequest {
+    pub current_password: String,
+    pub new_password: String,
+}
+
 /// Input DTO for the signup flow.
 ///
 /// Defined in domain/ so both application and infrastructure layers can reference

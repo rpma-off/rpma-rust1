@@ -296,37 +296,4 @@ impl UserSettingsRepository {
         Ok(())
     }
 
-    pub fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError> {
-        let conn = self
-            .db
-            .get_connection()
-            .map_err(|_| AppError::Database("Connection failed".to_string()))?;
-        let result = conn.query_row(
-            "SELECT analytics_consent, marketing_consent, third_party_sharing, data_retention_period, consent_given_at, consent_version 
-             FROM user_consent WHERE user_id = ?",
-            params![user_id],
-            |row| {
-                let given_at_str: String = row.get(4)?;
-                let given_at = chrono::DateTime::parse_from_rfc3339(&given_at_str)
-                    .map(|dt| dt.with_timezone(&chrono::Utc))
-                    .unwrap_or_else(|_| chrono::Utc::now());
-
-                Ok(DataConsent {
-                    user_id: user_id.to_string(),
-                    analytics_consent: row.get::<_, i32>(0)? != 0,
-                    marketing_consent: row.get::<_, i32>(1)? != 0,
-                    third_party_sharing: row.get::<_, i32>(2)? != 0,
-                    data_retention_period: row.get(3)?,
-                    consent_given_at: given_at,
-                    consent_version: row.get(5)?,
-                })
-            },
-        );
-
-        match result {
-            Ok(consent) => Ok(Some(consent)),
-            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(AppError::Database(format!("Consent query failed: {}", e))),
-        }
-    }
 }

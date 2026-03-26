@@ -12,6 +12,7 @@ use crate::commands::AppError;
 use crate::domains::auth::infrastructure::session::SessionService;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
+use crate::shared::services::validation::ValidationService;
 
 /// Orchestrates security-related session operations.
 pub struct AuthSecurityService {
@@ -106,6 +107,46 @@ impl AuthSecurityService {
             }
             None => Err(AppError::Authentication("Not authenticated".to_string())),
         }
+    }
+}
+
+// ── Password change — ADR-008: validation in application layer ────────────────
+
+impl AuthSecurityService {
+    /// Change the authenticated user's password.
+    ///
+    /// Validates new password strength (ADR-008), verifies the current password,
+    /// then updates the hash in the database.
+    pub fn change_password(
+        &self,
+        ctx: &RequestContext,
+        auth_service: &crate::domains::auth::infrastructure::auth::AuthService,
+        current_password: &str,
+        new_password: &str,
+    ) -> Result<(), AppError> {
+        // Validate new password strength (ADR-008: validation in application layer)
+        ValidationService::new()
+            .validate_password(new_password)
+            .map_err(|e| AppError::Validation(e.to_string()))?;
+
+        // Verify current password
+        let is_valid = auth_service
+            .verify_user_password(&ctx.auth.user_id, current_password)
+            .map_err(|e| AppError::Authentication(format!("Password verification failed: {}", e)))?;
+
+        if !is_valid {
+            return Err(AppError::Authentication(
+                "Current password is incorrect".to_string(),
+            ));
+        }
+
+        // Update password hash in the database
+        auth_service
+            .change_password(&ctx.auth.user_id, new_password)
+            .map_err(|e| AppError::Internal(format!("Failed to change password: {}", e)))?;
+
+        info!(user_id = %ctx.auth.user_id, "Password changed successfully");
+        Ok(())
     }
 }
 

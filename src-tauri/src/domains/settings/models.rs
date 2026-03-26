@@ -913,18 +913,6 @@ pub struct UpdateOrganizationSettingsRequest {
 
 // ── Other Models ─────────────────────────────────────────────────────
 
-/// Data consent for GDPR compliance
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct DataConsent {
-    pub user_id: String,
-    pub analytics_consent: bool,
-    pub marketing_consent: bool,
-    pub third_party_sharing: bool,
-    pub data_retention_period: u32,
-    #[ts(type = "string")]
-    pub consent_given_at: chrono::DateTime<chrono::Utc>,
-    pub consent_version: String,
-}
 
 // ── Default Accessors ────────────────────────────────────────────────
 

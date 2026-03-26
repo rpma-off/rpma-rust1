@@ -12,4 +12,5 @@ pub use application::audit_service::{
     AuditActivityFilter, PaginatedUserActivity, SecurityAlert, SecurityEventRecord,
     SecurityMetrics, UserActivityRecord,
 };
+pub use domain::models::auth::ChangePasswordRequest;
 pub use domain::models::auth::SessionTimeoutConfig;

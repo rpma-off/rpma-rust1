@@ -128,8 +128,8 @@ export function useSecurityTabData(user: UserSession) {
     Error,
     { current_password: string; new_password: string; confirm_password: string }
   >({
-    mutationFn: async (request) => {
-      await ipcClient.settings.changeUserPassword(request);
+    mutationFn: async ({ current_password, new_password }) => {
+      await ipcClient.auth.changePassword(current_password, new_password);
     },
     onSuccess: () => {
       logger.logInfo("Password changed successfully", {

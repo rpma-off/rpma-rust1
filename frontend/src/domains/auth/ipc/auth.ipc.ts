@@ -28,4 +28,9 @@ export const authIpc = {
     safeInvoke<UserSession>(IPC_COMMANDS.AUTH_VALIDATE_SESSION, token ? { session_token: token } : {}, validateUserSession),
 
   getUserProfile,
+
+  changePassword: (currentPassword: string, newPassword: string): Promise<void> =>
+    safeInvoke<void>(IPC_COMMANDS.CHANGE_PASSWORD, {
+      request: { currentPassword, newPassword },
+    }),
 };

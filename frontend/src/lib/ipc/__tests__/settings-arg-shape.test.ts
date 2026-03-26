@@ -88,14 +88,6 @@ describe('ipcClient.settings IPC argument shapes', () => {
     expect(safeInvoke).toHaveBeenCalledWith('get_session_timeout_config', {});
   });
 
-  it('calls export and consent commands without sessionToken in payload', async () => {
-    await ipcClient.settings.exportUserData();
-    expect(safeInvoke).toHaveBeenCalledWith('export_user_data', {});
-
-    await ipcClient.settings.getDataConsent();
-    expect(safeInvoke).toHaveBeenCalledWith('get_data_consent', {});
-  });
-
   it('calls struct-based settings commands without session_token in nested request', async () => {
     await ipcClient.settings.updateUserProfile(
       { full_name: 'Alice Example' }

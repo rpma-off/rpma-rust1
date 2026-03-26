@@ -19,7 +19,7 @@ use crate::shared::ipc::errors::AppError;
 
 use super::super::infrastructure::{AppSettingsRepository, SettingsRepository, UserSettingsPort};
 use super::super::models::{
-    AppSettings, CreateOrganizationRequest, DataConsent, GeneralSettings, NotificationSettings,
+    AppSettings, CreateOrganizationRequest, GeneralSettings, NotificationSettings,
     OnboardingData, OnboardingStatus, Organization, OrganizationSettings, SecuritySettings,
     UpdateOrganizationRequest, UpdateOrganizationSettingsRequest, UserAccessibilitySettings,
     UserNotificationSettings, UserPerformanceSettings, UserPreferences, UserProfileSettings,
@@ -99,9 +99,6 @@ impl UserSettingsPort for SqliteUserSettingsRepository {
         self.save_user_settings(user_id, settings)
     }
 
-    fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError> {
-        self.get_data_consent(user_id)
-    }
 }
 
 // ── RBAC helpers ──────────────────────────────────────────────────────────────
@@ -403,12 +400,6 @@ impl SettingsService {
         current.notifications = notifications;
         repo.save_user_settings(&ctx.auth.user_id, &current)?;
         Ok(current)
-    }
-
-    /// Retrieve the GDPR data-consent record for the authenticated user.
-    pub fn get_data_consent(&self, ctx: &RequestContext) -> Result<Option<DataConsent>, AppError> {
-        require_at_least_viewer(ctx)?;
-        self.user_settings_repo.get_data_consent(&ctx.auth.user_id)
     }
 
     // ── Organization ──────────────────────────────────────────────────────────

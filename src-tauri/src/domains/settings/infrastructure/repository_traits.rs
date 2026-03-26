@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use crate::shared::ipc::errors::AppError;
 
 use crate::domains::settings::models::{
-    AppSettings, CreateOrganizationRequest, DataConsent, Organization, OrganizationSettings,
+    AppSettings, CreateOrganizationRequest, Organization, OrganizationSettings,
     UpdateOrganizationRequest, UserSettings,
 };
 
@@ -78,7 +78,4 @@ pub trait UserSettingsPort: Send + Sync {
 
     /// Persist a user's settings record atomically.
     fn save_user_settings(&self, user_id: &str, settings: &UserSettings) -> Result<(), AppError>;
-
-    /// Retrieve the GDPR data-consent record for a user.
-    fn get_data_consent(&self, user_id: &str) -> Result<Option<DataConsent>, AppError>;
 }

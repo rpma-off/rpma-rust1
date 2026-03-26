@@ -129,14 +129,6 @@ export const settingsIpc = {
     });
   },
 
-  changeUserPassword: async (request: JsonObject) => {
-    const result = await safeInvoke<string>(IPC_COMMANDS.CHANGE_USER_PASSWORD, {
-      request,
-    });
-    invalidateUserSettingsCache();
-    return result;
-  },
-
   // Security operations
   getActiveSessions: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {}),
@@ -163,22 +155,4 @@ export const settingsIpc = {
       return result;
     }),
 
-  exportUserData: () =>
-    safeInvoke<JsonObject>(IPC_COMMANDS.EXPORT_USER_DATA, {}),
-
-  deleteUserAccount: async (confirmation: string) => {
-    const result = await safeInvoke<string>(IPC_COMMANDS.DELETE_USER_ACCOUNT, {
-      request: { confirmation },
-    });
-    invalidateUserSettingsCache();
-    return result;
-  },
-
-  getDataConsent: () =>
-    safeInvoke<JsonObject>(IPC_COMMANDS.GET_DATA_CONSENT, {}),
-
-  updateDataConsent: (request: JsonObject) =>
-    safeInvoke<JsonObject>(IPC_COMMANDS.UPDATE_DATA_CONSENT, {
-      request,
-    }),
 };

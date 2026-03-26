@@ -203,8 +203,6 @@ export const ipcClient = {
       mockSafeInvoke("update_performance_configs", { request: { configs } }),
     updateBusinessHours: (hours: JsonObject) =>
       mockSafeInvoke("update_business_hours", { request: { hours } }),
-    changeUserPassword: (request: JsonObject) =>
-      mockSafeInvoke("change_user_password", { request }),
     getActiveSessions: () => mockSafeInvoke("get_active_sessions", {}),
     revokeSession: (sessionId: string) =>
       mockSafeInvoke("revoke_session", { sessionId }),
@@ -218,12 +216,6 @@ export const ipcClient = {
       mockSafeInvoke("upload_user_avatar", {
         request: { avatar_data: fileData, mime_type: mimeType },
       }),
-    exportUserData: () => mockSafeInvoke("export_user_data", {}),
-    deleteUserAccount: (confirmation: string) =>
-      mockSafeInvoke("delete_user_account", { request: { confirmation } }),
-    getDataConsent: () => mockSafeInvoke("get_data_consent", {}),
-    updateDataConsent: (request: JsonObject) =>
-      mockSafeInvoke("update_data_consent", { request }),
   },
   organization: {
     getOnboardingStatus: (): Promise<OnboardingStatus> =>
