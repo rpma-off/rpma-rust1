@@ -3,7 +3,6 @@
   TaskQuery,
   CreateTaskRequest,
   PaginationInfo,
-  JsonValue,
 } from "@/lib/backend";
 import { AuthSecureStorage } from "@/lib/secureStorage";
 import {
@@ -17,19 +16,12 @@ import {
 } from "@/lib/validation/api-schemas";
 import type { TaskWithDetails } from "@/types/task.types";
 import type { ServiceResponse } from "@/types/unified.types";
-// DEBT: Cross-domain import — tasks service directly imports `interventionsIpc` from the
-// interventions domain, coupling two bounded contexts at the service layer.
-// Rationale: violates ADR-003 (cross-domain communication must go through the event bus or
-// shared contracts); prevents independent testing of each domain's service.
-// Next step: expose the needed intervention lookup via a shared contract or an event (ADR-016)
-// and remove this direct import.
-// ❌ CROSS-DOMAIN IMPORT
-import { interventionsIpc } from "@/domains/interventions";
-import { taskIpc } from "../ipc/task.ipc";
 import {
   generateUniqueTaskNumber,
   isValidTaskNumberFormat,
 } from "../utils/number-generator";
+import { taskIpc } from "../ipc/task.ipc";
+import { taskStepService } from "./task-step.service";
 
 /**
  * Frontend Task Service - Client-side task management
@@ -56,16 +48,6 @@ export class TaskService {
       TaskService.instance = new TaskService();
     }
     return TaskService.instance;
-  }
-
-  private normalizeStepData(data: unknown): Record<string, unknown> {
-    return typeof data === "object" && data !== null
-      ? { ...(data as Record<string, unknown>) }
-      : {};
-  }
-
-  private toJsonValue(value: unknown): JsonValue {
-    return value as JsonValue;
   }
 
   private async getSessionToken(): Promise<string> {
@@ -113,22 +95,6 @@ export class TaskService {
       technician_id: null,
       ...partial,
     };
-  }
-
-  /**
-   * Sets the user context for the service
-   * @param userId - The user ID
-   * @param user - Optional user data
-   */
-  setUserContext(_userId: string, _user?: Record<string, unknown>): void {
-    // Implementation
-  }
-
-  /**
-   * Clears the current user context
-   */
-  clearUserContext(): void {
-    // Implementation
   }
 
   /**
@@ -217,14 +183,6 @@ export class TaskService {
       const err = error instanceof Error ? error : new Error(String(error));
       return { success: false, error: err.message, status: 500 };
     }
-  }
-
-  /**
-   * Sets the current user for the service
-   * @param userId - The user ID to set
-   */
-  setUser(_userId: string): void {
-    // Implementation
   }
 
   /**
@@ -354,114 +312,7 @@ export class TaskService {
     _userId?: string,
     _updatedAt?: string,
   ): Promise<ServiceResponse<unknown>> {
-    try {
-      // First, get the active intervention for this task
-      const interventionResponse =
-        await interventionsIpc.getActiveByTask(taskId);
-      let interventionId: string | null = null;
-
-      if (interventionResponse && typeof interventionResponse === "object") {
-        if ("intervention" in interventionResponse) {
-          const intervention = (
-            interventionResponse as { intervention?: { id?: string } }
-          ).intervention;
-          interventionId = intervention?.id ?? null;
-        } else if (
-          "interventions" in interventionResponse &&
-          Array.isArray(
-            (interventionResponse as { interventions?: unknown }).interventions,
-          )
-        ) {
-          const interventions = (
-            interventionResponse as { interventions: Array<{ id?: string }> }
-          ).interventions;
-          interventionId = interventions[0]?.id ?? null;
-        } else if ("type" in interventionResponse) {
-          const typedResponse = interventionResponse as {
-            type?: string;
-            intervention?: { id?: string };
-            interventions?: Array<{ id?: string }>;
-          };
-          if (
-            typedResponse.type === "ActiveRetrieved" &&
-            typedResponse.intervention?.id
-          ) {
-            interventionId = typedResponse.intervention.id;
-          } else if (
-            typedResponse.type === "ActiveByTask" &&
-            typedResponse.interventions?.length
-          ) {
-            interventionId = typedResponse.interventions[0]?.id ?? null;
-          }
-        }
-      }
-
-      if (!interventionId) {
-        return {
-          success: false,
-          error: `No active intervention found for task ${taskId}. Please start the intervention first.`,
-          status: 404,
-        };
-      }
-
-      const normalizedData = this.normalizeStepData(data);
-
-      // Prepare step progress data
-      const stepProgressData: Record<string, unknown> = {
-        intervention_id: interventionId,
-        step_id: stepId,
-        progress_data: normalizedData,
-        notes:
-          typeof normalizedData.notes === "string" ? normalizedData.notes : "",
-        quality_score: normalizedData.quality_score ?? null,
-        completion_percentage:
-          typeof normalizedData.completion_percentage === "number"
-            ? normalizedData.completion_percentage
-            : 0,
-        estimated_time_remaining:
-          normalizedData.estimated_time_remaining ?? null,
-        issues_encountered: Array.isArray(normalizedData.issues_encountered)
-          ? normalizedData.issues_encountered
-          : [],
-        materials_used: Array.isArray(normalizedData.materials_used)
-          ? normalizedData.materials_used
-          : [],
-        photos_taken: Array.isArray(normalizedData.photos_taken)
-          ? normalizedData.photos_taken
-          : [],
-        location_data: normalizedData.location_data ?? null,
-        weather_conditions: normalizedData.weather_conditions ?? null,
-        equipment_used: Array.isArray(normalizedData.equipment_used)
-          ? normalizedData.equipment_used
-          : [],
-        safety_checks_completed: Array.isArray(
-          normalizedData.safety_checks_completed,
-        )
-          ? normalizedData.safety_checks_completed
-          : [],
-        customer_feedback: normalizedData.customer_feedback ?? null,
-      };
-
-      // Save step progress using intervention service
-      const savedStep = await interventionsIpc.saveStepProgress({
-        step_id: stepId,
-        collected_data: this.toJsonValue(stepProgressData),
-        notes:
-          typeof stepProgressData.notes === "string"
-            ? stepProgressData.notes
-            : null,
-        photos: null,
-      });
-
-      return {
-        success: true,
-        data: savedStep,
-        status: 200,
-      };
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
-    }
+    return taskStepService.updateTaskStepData(taskId, stepId, data, _userId, _updatedAt);
   }
 
   /**
@@ -482,24 +333,7 @@ export class TaskService {
       taskStatus: string | null;
     }>
   > {
-    try {
-      // Get step data directly using intervention service
-      const stepData = await interventionsIpc.getStep(stepId);
-
-      // Step exists, return success
-      return {
-        success: true,
-        data: {
-          stepData: stepData.collected_data || stepData.step_data || {},
-          lastUpdated: stepData.updated_at ? String(stepData.updated_at) : null,
-          taskStatus: stepData.step_status ?? null,
-        },
-        status: 200,
-      };
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
-    }
+    return taskStepService.getTaskStepData(taskId, stepId, _userId);
   }
 
   /**

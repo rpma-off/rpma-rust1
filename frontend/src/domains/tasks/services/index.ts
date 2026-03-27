@@ -1,4 +1,5 @@
 export { TaskService, taskService } from './task.service';
+export { TaskStepService, taskStepService } from './task-step.service';
 export { TaskHistoryService, taskHistoryService } from './task-history.service';
 export type { TaskHistoryEntry, TaskHistorySummary } from './task-history.service';
 export { TaskApiService, taskApiService } from './task.api.service';
