@@ -13,7 +13,6 @@ The app is distributed as a **Tauri desktop client** with a **Rust backend**, **
 
 Use the real command surfaces below; do not invent shortcuts.
 
-
 - **Run App (Dev)**: `npm run dev` (Starts Tauri dev environment with hot reloading). **Does NOT run type sync automatically.**
 - **Run App (Dev, with type sync)**: `npm run dev:types` (runs `types:sync` then starts Tauri). Prefer this when IPC structs changed.
 - **Run App (Dev, strict)**: `npm run dev:strict` (runs `types:sync` + drift check then starts Tauri).
@@ -27,15 +26,40 @@ Use the real command surfaces below; do not invent shortcuts.
 - **Frontend Type Check**: `npm run frontend:type-check`.
 - **Frontend Unit Tests**: `cd frontend && npm run test:ci`.
 - **Integration Tests (Harness)**: `cd src-tauri && cargo test --test integration`.
-* **Backend tests (domain):** `cd src-tauri && cargo test <domain> -- --nocapture`
+- **Backend tests (domain)**: `cd src-tauri && cargo test <domain> -- --nocapture`
+
+### Doctor Command (Comprehensive Health Check)
+
+`npm run doctor` runs all verification checks in one command. Use this before declaring a task complete.
+
+| Command | Purpose |
+|---------|---------|
+| `npm run doctor` | Run fast checks (cargo check, tsc, lint, architecture, schema drift) |
+| `npm run doctor -- --serial` | Run the same checks sequentially. Prefer this on Windows or when parallel checks contend for Cargo/build locks. |
+| `npm run doctor -- --quick --serial` | Lightweight sequential check for active development loops. |
+| `npm run doctor -- --fix` | Auto-fix fixable issues (e.g., `types:sync`) |
+| `npm run doctor -- --full` | Include slow checks (cargo test, frontend tests) |
+| `npm run doctor -- --json` | JSON output (auto-detected for non-TTY/agents) |
+
+**Exit codes:**
+- `0`: All checks passed
+- `1`: One or more failures
+- `2`: Warnings only (no failures)
+
+**For AI agents:** Prefer targeted checks while iterating:
+- `cargo check` for backend-only changes
+- `npm run frontend:type-check` for frontend-only changes
+- `npm run types:sync` when `#[derive(TS)]` structs or IPC-facing Rust models change
+
+Before declaring a task complete, run `npm run doctor -- --serial`. If fixable failures occur, run `npm run doctor -- --fix --serial` and re-verify. Use `npm run doctor -- --full --serial` for high-risk changes, auth/security work, migrations, or before major merges.
 
 ## Useful Scripts (`scripts/`)
+
 - `validate-migration-system.js`: Ensures migrations are consistent and applied correctly.
 - `detect-schema-drift.js`: Compares local DB schema with migrations.
 - `backend-architecture-check.js`: Validates the four-layer rule in Rust source.
 - `generate-docs-index.js`: Rebuilds the documentation TOC.
-- `scaffold-domain.ts`: **Domain scaffolder** — generates all boilerplate for a new bounded context.
-
+- `scaffold-domain.ts`: **Domain scaffolder** - generates all boilerplate for a new bounded context.
 
 ### Tech Stack (source of truth: `/package.json`, `/frontend/package.json`, `/src-tauri/Cargo.toml`)
 
@@ -110,83 +134,83 @@ Before writing any code, the agent **MUST** read the relevant ADR(s) listed belo
 
 ```text
 rpma-rust/
-├── README.md                          # Project overview
-├── Makefile                           # Canonical backend build/test/lint command aliases
-├── package.json                       # Root task runner (frontend/backend/types scripts)
-├── Cargo.toml                         # Workspace manifest
-├── docs/                              # Architecture + ADR documentation
-│   ├── README.md                      # Generated docs index and ADR quick links
-│   ├── adr/                           # Formal Architecture Decision Records (001-020)
-│   └── agent-pack/                    # Deep architecture guides for engineers/agents
-├── scripts/                           # Validation, architecture checks, type sync, automation
-├── frontend/                          # Next.js 14 frontend app
-│   ├── package.json                   # Frontend toolchain/test scripts
-│   └── src/
-│       ├── app/                       # App Router pages/layouts
-│       ├── components/                # Shared UI components
-│       ├── domains/                   # Frontend bounded contexts/features
-│       │   ├── admin/
-│       │   ├── auth/
-│       │   ├── bootstrap/
-│       │   ├── calendar/
-│       │   ├── clients/
-│       │   ├── dashboard/
-│       │   ├── interventions/
-│       │   ├── inventory/
-│       │   ├── notifications/
-│       │   ├── performance/
-│       │   ├── quotes/
-│       │   ├── reports/
-│       │   ├── settings/
-│       │   ├── tasks/
-│       │   ├── trash/
-│       │   └── users/
-│       ├── lib/
-│       │   ├── ipc/                   # IPC client abstractions, adapters, command maps, tests
-│       │   └── query-keys.ts          # Centralized TanStack query key factories
-│       ├── shared/                    # Shared frontend contracts/utilities
-│       └── types/                     # AUTO-GENERATED TS types (never hand edit)
-└── src-tauri/                         # Rust backend + Tauri app host
-    ├── Cargo.toml                     # Backend dependencies, bins, integration test targets
-    ├── migrations/                    # Numbered SQL migrations (ADR-010)
-    ├── src/
-    │   ├── main.rs                    # Tauri app bootstrap, command registration, shutdown hooks
-    │   ├── lib.rs                     # Library entry point
-    │   ├── commands/                  # Cross-domain/system command modules
-    │   ├── db/                        # DB bootstrap, pragmas, migration plumbing
-    │   ├── domains/                   # Backend bounded contexts (core business code)
-    │   │   ├── auth/                  # Full 4-layer domain: ipc/application/domain/infrastructure/tests
-    │   │   ├── calendar/              # Hybrid domain shape (calendar_handler + infrastructure/tests)
-    │   │   ├── clients/               # Full domain plus client_handler
-    │   │   ├── documents/             # Report/document domain modules
-    │   │   ├── interventions/         # Core intervention workflow domain
-    │   │   ├── inventory/             # Inventory + material lifecycle domain
-    │   │   ├── notifications/         # Notifications + notification_handler
-    │   │   ├── quotes/                # Quotes/devis bounded context
-    │   │   ├── settings/              # Settings and security policies
-    │   │   ├── tasks/                 # Task lifecycle bounded context
-    │   │   ├── trash/                 # Soft-delete recycle/trash context
-    │   │   └── users/                 # User management + RBAC context
-    │   ├── shared/                    # Cross-domain shared kernel
-    │   │   ├── context/               # RequestContext + session resolution helpers
-    │   │   ├── contracts/             # Shared enums/contracts (roles, statuses, etc.)
-    │   │   ├── db/                    # Shared DB-level contracts/helpers
-    │   │   ├── error/                 # Shared error types
-    │   │   ├── event_bus/             # In-memory event bus primitives
-    │   │   ├── ipc/                   # IPC boundary result/error adapters
-    │   │   ├── logging/               # Tracing + correlation ID propagation
-    │   │   ├── policies/              # Shared policy definitions
-    │   │   ├── repositories/          # Shared repository abstractions
-    │   │   ├── services/              # Shared services (incl. centralized validation)
-    │   │   └── utils/                 # Shared backend utilities
-    │   └── bin/
-    │       └── export-types.rs        # ts-rs type export binary used by `npm run types:sync`
-    └── tests/
-        ├── commands/                  # Command-level integration suites
-        ├── harness/                   # Test harness infrastructure (TestApp, fixtures, auth ctx)
-        ├── integration.rs             # Harness test entrypoint
-        ├── domain_invariants.rs       # Domain invariant suites
-        └── *_e2e_test.rs              # End-to-end workflow tests
+|- README.md                          # Project overview
+|- Makefile                           # Canonical backend build/test/lint command aliases
+|- package.json                       # Root task runner (frontend/backend/types scripts)
+|- Cargo.toml                         # Workspace manifest
+|- docs/                              # Architecture + ADR documentation
+|  |- README.md                       # Generated docs index and ADR quick links
+|  |- adr/                            # Formal Architecture Decision Records (001-020)
+|  `- agent-pack/                     # Deep architecture guides for engineers/agents
+|- scripts/                           # Validation, architecture checks, type sync, automation
+|- frontend/                          # Next.js 14 frontend app
+|  |- package.json                    # Frontend toolchain/test scripts
+|  `- src/
+|     |- app/                         # App Router pages/layouts
+|     |- components/                  # Shared UI components
+|     |- domains/                     # Frontend bounded contexts/features
+|     |  |- admin/
+|     |  |- auth/
+|     |  |- bootstrap/
+|     |  |- calendar/
+|     |  |- clients/
+|     |  |- dashboard/
+|     |  |- interventions/
+|     |  |- inventory/
+|     |  |- notifications/
+|     |  |- performance/
+|     |  |- quotes/
+|     |  |- reports/
+|     |  |- settings/
+|     |  |- tasks/
+|     |  |- trash/
+|     |  `- users/
+|     |- lib/
+|     |  |- ipc/                      # IPC client abstractions, adapters, command maps, tests
+|     |  `- query-keys.ts             # Centralized TanStack query key factories
+|     |- shared/                      # Shared frontend contracts/utilities
+|     `- types/                       # AUTO-GENERATED TS types (never hand edit)
+`- src-tauri/                         # Rust backend + Tauri app host
+   |- Cargo.toml                      # Backend dependencies, bins, integration test targets
+   |- migrations/                     # Numbered SQL migrations (ADR-010)
+   |- src/
+   |  |- main.rs                      # Tauri app bootstrap, command registration, shutdown hooks
+   |  |- lib.rs                       # Library entry point
+   |  |- commands/                    # Cross-domain/system command modules
+   |  |- db/                          # DB bootstrap, pragmas, migration plumbing
+   |  |- domains/                     # Backend bounded contexts (core business code)
+   |  |  |- auth/                     # Full 4-layer domain: ipc/application/domain/infrastructure/tests
+   |  |  |- calendar/                 # Hybrid domain shape (calendar_handler + infrastructure/tests)
+   |  |  |- clients/                  # Full domain plus client_handler
+   |  |  |- documents/                # Report/document domain modules
+   |  |  |- interventions/            # Core intervention workflow domain
+   |  |  |- inventory/                # Inventory + material lifecycle domain
+   |  |  |- notifications/            # Notifications + notification_handler
+   |  |  |- quotes/                   # Quotes/devis bounded context
+   |  |  |- settings/                 # Settings and security policies
+   |  |  |- tasks/                    # Task lifecycle bounded context
+   |  |  |- trash/                    # Soft-delete recycle/trash context
+   |  |  `- users/                    # User management + RBAC context
+   |  |- shared/                      # Cross-domain shared kernel
+   |  |  |- context/                  # RequestContext + session resolution helpers
+   |  |  |- contracts/                # Shared enums/contracts (roles, statuses, etc.)
+   |  |  |- db/                       # Shared DB-level contracts/helpers
+   |  |  |- error/                    # Shared error types
+   |  |  |- event_bus/                # In-memory event bus primitives
+   |  |  |- ipc/                      # IPC boundary result/error adapters
+   |  |  |- logging/                  # Tracing + correlation ID propagation
+   |  |  |- policies/                 # Shared policy definitions
+   |  |  |- repositories/             # Shared repository abstractions
+   |  |  |- services/                 # Shared services (incl. centralized validation)
+   |  |  `- utils/                    # Shared backend utilities
+   |  `- bin/
+   |     `- export-types.rs           # ts-rs type export binary used by `npm run types:sync`
+   `- tests/
+      |- commands/                    # Command-level integration suites
+      |- harness/                     # Test harness infrastructure (TestApp, fixtures, auth ctx)
+      |- integration.rs               # Harness test entrypoint
+      |- domain_invariants.rs         # Domain invariant suites
+      `- *_e2e_test.rs                # End-to-end workflow tests
 ```
 
 ### Critical sub-layout contracts
@@ -209,32 +233,33 @@ For ANY task:
 3. Locate exact files in domain structure
 4. Implement changes ONLY in correct layer
 5. Run:
-   - cargo check
-   - npm run frontend:type-check
+   - `cargo check`
+   - `npm run frontend:type-check`
 6. Run types sync if Rust structs changed
 7. Run tests
 8. Validate no forbidden patterns introduced
+9. Before declaring completion, run `npm run doctor -- --serial`
 
-##  Definition of Done (STRICT)
+## Definition of Done (STRICT)
 
 A task is complete ONLY if:
 
-* ✅ Rust compiles (`cargo check`)
-* ✅ TypeScript compiles
-* ✅ Tests pass (unit + integration)
-* ✅ No architecture violations
-* ✅ Types synced (`types:sync`)
-* ✅ No business logic outside domain
-* ✅ Errors follow `AppError` contract
+* OK Rust compiles (`cargo check`)
+* OK TypeScript compiles
+* OK Tests pass (unit + integration)
+* OK No architecture violations
+* OK Types synced (`types:sync`)
+* OK No business logic outside domain
+* OK Errors follow `AppError` contract
 
 ---
 
-##  Forbidden Patterns (CRITICAL)
+## Forbidden Patterns (CRITICAL)
 
-❌ Business logic in repositories
-❌ Validation inside IPC
-❌ Direct DB access from application layer
-❌ Cross-domain imports
-❌ Manual TypeScript edits
-❌ Skipping transaction boundaries
-❌ Returning raw SQL errors to frontend
+- Business logic in repositories
+- Validation inside IPC
+- Direct DB access from application layer
+- Cross-domain imports
+- Manual TypeScript edits
+- Skipping transaction boundaries
+- Returning raw SQL errors to frontend
