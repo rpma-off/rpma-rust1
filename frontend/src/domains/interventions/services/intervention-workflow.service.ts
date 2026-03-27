@@ -1,4 +1,4 @@
-﻿// PPF Intervention Workflow Service
+// PPF Intervention Workflow Service
 import type { AdvanceStepRequest, FinalizeInterventionRequest, JsonValue, StartInterventionRequest } from '@/lib/backend';
 import type { ApiResponse } from '@/types/api';
 import { ApiError } from '@/types/api';
@@ -10,12 +10,26 @@ import type { PPFIntervention } from './ppf';
 export type { AdvanceStepDTO };
 
 export class InterventionWorkflowService {
+  private static readonly SAVE_STEP_PROGRESS_MAX_RETRIES = 2;
+  private static readonly SAVE_STEP_PROGRESS_BASE_DELAY_MS = 1000;
+  private static readonly SAVE_STEP_PROGRESS_TIMEOUT_MS = 25000;
+
   private static notImplemented<T>(message: string): ApiResponse<T> {
     return {
       success: false,
       error: new ApiError(message, 'NOT_IMPLEMENTED'),
       data: undefined
     };
+  }
+
+  private static toApiError(
+    error: unknown,
+    fallbackMessage: string,
+    code: string = 'INTERNAL_ERROR',
+  ): ApiError {
+    return error instanceof Error
+      ? new ApiError(error.message, code)
+      : new ApiError(fallbackMessage, code);
   }
 
   private static log(operation: string, data: Record<string, unknown>, level: 'info' | 'warn' | 'error' = 'info') {
@@ -38,6 +52,131 @@ export class InterventionWorkflowService {
     }
   }
 
+  private static buildStartRequest(
+    taskId: string,
+    payload: Record<string, unknown>,
+  ): StartInterventionRequest {
+    return {
+      ...payload,
+      task_id: taskId,
+      intervention_type: (payload.intervention_type as string | undefined) ?? 'ppf',
+      priority: (payload.priority as string | undefined) ?? 'medium',
+    } as unknown as StartInterventionRequest;
+  }
+
+  private static mapInterventionStatus(status: string): PPFIntervention['status'] {
+    switch (status) {
+      case 'in_progress':
+        return 'in_progress';
+      case 'pending':
+      case 'paused':
+        return 'pending';
+      case 'completed':
+      case 'cancelled':
+        return 'completed';
+      default:
+        return 'pending';
+    }
+  }
+
+  private static toIsoString(value: unknown): string {
+    return new Date(String(value)).toISOString();
+  }
+
+  private static mapIntervention(result: Record<string, unknown>): PPFIntervention {
+    return {
+      id: String(result.id ?? ''),
+      taskId: String(result.task_id ?? result.taskId ?? ''),
+      steps: [],
+      status: this.mapInterventionStatus(String(result.status ?? 'pending')),
+      progress: Number(result.completion_percentage ?? 0),
+      currentStep: typeof result.current_step === 'number' ? result.current_step : undefined,
+      createdAt: this.toIsoString(result.created_at),
+      updatedAt: this.toIsoString(result.updated_at),
+      technicianId: result.technician_id ? String(result.technician_id) : undefined,
+      clientId: result.client_id ? String(result.client_id) : undefined,
+      vehicleMake: result.vehicle_make ? String(result.vehicle_make) : undefined,
+      vehicleModel: result.vehicle_model ? String(result.vehicle_model) : undefined,
+      vehicleYear: typeof result.vehicle_year === 'number' ? result.vehicle_year : 0,
+      vehicleVin: result.vehicle_vin ? String(result.vehicle_vin) : '',
+    };
+  }
+
+  private static mapInterventionStep(
+    step: Record<string, unknown>,
+  ): PPFInterventionStep {
+    return {
+      id: String(step.id ?? ''),
+      interventionId: String(step.intervention_id ?? ''),
+      intervention_id: String(step.intervention_id ?? ''),
+      stepNumber: Number(step.step_number ?? 0),
+      step_number: Number(step.step_number ?? 0),
+      step_name: String(step.step_name ?? ''),
+      step_type: String(step.step_type ?? ''),
+      status: step.step_status as PPFInterventionStep['status'],
+      step_status: String(step.step_status ?? 'pending'),
+      description: step.description as string | undefined,
+      photos: [],
+      startedAt: step.started_at ? String(step.started_at) : undefined,
+      started_at: step.started_at ? String(step.started_at) : undefined,
+      completedAt: step.completed_at ? String(step.completed_at) : undefined,
+      completed_at: step.completed_at ? String(step.completed_at) : undefined,
+      duration_seconds: Number(step.duration_seconds ?? 0),
+      requires_photos: Boolean(step.requires_photos ?? false),
+      min_photos_required: Number(step.min_photos_required ?? 0),
+      photo_count: Number(step.photo_count ?? 0),
+      quality_checkpoints: step.quality_checkpoints as PPFInterventionStep['quality_checkpoints'],
+      qualityChecks: step.quality_checkpoints as PPFInterventionStep['qualityChecks'],
+      approved_by: step.approved_by as string | undefined,
+      observations: step.observations as string[] | undefined,
+      collected_data: (step.collected_data as Record<string, unknown>) || {},
+      paused_at: step.paused_at as number | null | undefined,
+      created_at: step.created_at ? String(step.created_at) : undefined,
+      updated_at: step.updated_at ? String(step.updated_at) : undefined,
+      required: Boolean(step.is_mandatory ?? false),
+    };
+  }
+
+  private static buildListPagination(
+    total: number,
+  ): ListResponse<PPFInterventionStep>['pagination'] {
+    return {
+      page: 1,
+      limit: total,
+      total,
+      pageSize: total,
+      totalPages: 1,
+      hasNext: false,
+      hasPrev: false,
+    };
+  }
+
+  private static async saveStepProgressOnce(
+    stepId: string,
+    collectedData: unknown,
+    notes?: string,
+    photos?: string[],
+  ): Promise<unknown> {
+    return Promise.race([
+      interventionsIpc.saveStepProgress({
+        step_id: stepId,
+        collected_data: collectedData as JsonValue,
+        notes: notes || null,
+        photos: photos || null
+      }),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('Request timeout')),
+          this.SAVE_STEP_PROGRESS_TIMEOUT_MS,
+        )
+      )
+    ]);
+  }
+
+  private static async delay(ms: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   static async startIntervention(
     taskId: string,
     data: object,
@@ -47,14 +186,8 @@ export class InterventionWorkflowService {
 
     try {
       // CRITICAL FIX: Include taskId in the data payload as task_id
-    const requestData = {
-        ...payload,
-        task_id: taskId,
-        intervention_type: (payload.intervention_type as string | undefined) ?? 'ppf',
-        priority: (payload.priority as string | undefined) ?? 'medium',
-      };
-      
-      const validatedResponse = await interventionsIpc.start(requestData as unknown as StartInterventionRequest);
+      const requestData = this.buildStartRequest(taskId, payload);
+      const validatedResponse = await interventionsIpc.start(requestData);
 
       this.log('startIntervention.success', {
         interventionId: validatedResponse.intervention.id,
@@ -79,7 +212,11 @@ export class InterventionWorkflowService {
         errorDetails: error
       }, 'error');
 
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to start intervention', 'INTERNAL_ERROR'), data: undefined };
+      return {
+        success: false,
+        error: this.toApiError(error, 'Failed to start intervention'),
+        data: undefined
+      };
     }
   }
 
@@ -88,41 +225,17 @@ export class InterventionWorkflowService {
 
     try {
       const result = await interventionsIpc.get(id);
-
-      // Map backend Intervention to frontend PPFIntervention format
-      const intervention = result;
-      const interventionRecord = intervention as Record<string, unknown>;
-      const data: PPFIntervention = {
-        id: intervention.id,
-        taskId: (interventionRecord.task_id as string) || (interventionRecord.taskId as string) || '',
-        steps: [], // Will be populated separately
-        status: (() => {
-          switch (intervention.status) {
-            case 'in_progress': return 'in_progress';
-            case 'pending': return 'pending';
-            case 'paused': return 'pending';  // Map paused to pending for UI
-            case 'completed': return 'completed';
-            case 'cancelled': return 'completed';  // Map cancelled to completed for UI
-            default: return 'pending';
-          }
-        })(),
-        progress: intervention.completion_percentage,
-        currentStep: intervention.current_step,
-        createdAt: new Date(String(intervention.created_at)).toISOString(),
-        updatedAt: new Date(String(intervention.updated_at)).toISOString(),
-        technicianId: intervention.technician_id || undefined,
-        clientId: intervention.client_id || undefined,
-        vehicleMake: intervention.vehicle_make || undefined,
-        vehicleModel: intervention.vehicle_model || undefined,
-        vehicleYear: intervention.vehicle_year || 0,
-        vehicleVin: intervention.vehicle_vin || '',
-      };
+      const data = this.mapIntervention(result as Record<string, unknown>);
 
       this.log('getInterventionById.success', { id, interventionId: data.id });
       return { success: true, data, error: undefined };
     } catch (error) {
       this.log('getInterventionById.error', { id, error: error instanceof Error ? error.message : 'Unknown error' }, 'error');
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to get intervention', 'INTERNAL_ERROR'), data: undefined };
+      return {
+        success: false,
+        error: this.toApiError(error, 'Failed to get intervention'),
+        data: undefined
+      };
     }
   }
 
@@ -131,44 +244,14 @@ export class InterventionWorkflowService {
 
     try {
       const result = await interventionsIpc.getProgress(interventionId);
-
-      const data: PPFInterventionStep[] = result.steps.map((step: Record<string, unknown>) => ({
-        id: String(step.id ?? ''),
-        interventionId: String(step.intervention_id ?? ''),
-        intervention_id: String(step.intervention_id ?? ''),
-        stepNumber: Number(step.step_number ?? 0),
-        step_number: Number(step.step_number ?? 0),
-        step_name: String(step.step_name ?? ''),
-        step_type: String(step.step_type ?? ''),
-        status: step.step_status as PPFInterventionStep['status'],
-        step_status: String(step.step_status ?? 'pending'),
-        description: step.description as string | undefined,
-        photos: [],
-        startedAt: step.started_at ? String(step.started_at) : undefined,
-        started_at: step.started_at ? String(step.started_at) : undefined,
-        completedAt: step.completed_at ? String(step.completed_at) : undefined,
-        completed_at: step.completed_at ? String(step.completed_at) : undefined,
-        duration_seconds: Number(step.duration_seconds ?? 0),
-        requires_photos: Boolean(step.requires_photos ?? false),
-        min_photos_required: Number(step.min_photos_required ?? 0),
-        photo_count: Number(step.photo_count ?? 0),
-        quality_checkpoints: step.quality_checkpoints as PPFInterventionStep['quality_checkpoints'],
-        qualityChecks: step.quality_checkpoints as PPFInterventionStep['qualityChecks'],
-        approved_by: step.approved_by as string | undefined,
-        observations: step.observations as string[] | undefined,
-        collected_data: (step.collected_data as Record<string, unknown>) || {},
-        paused_at: step.paused_at as number | null | undefined,
-        created_at: step.created_at ? String(step.created_at) : undefined,
-        updated_at: step.updated_at ? String(step.updated_at) : undefined,
-        required: Boolean(step.is_mandatory ?? false),
-      }));
+      const data = result.steps.map((step: Record<string, unknown>) => this.mapInterventionStep(step));
 
       this.log('getInterventionSteps.success', { interventionId, stepCount: data.length });
       return {
         success: true,
         data: {
           data,
-          pagination: { page: 1, limit: data.length, total: data.length, pageSize: data.length, totalPages: 1, hasNext: false, hasPrev: false },
+          pagination: this.buildListPagination(data.length),
           statistics: undefined
         },
         error: undefined
@@ -177,7 +260,7 @@ export class InterventionWorkflowService {
       this.log('getInterventionSteps.error', { interventionId, error: error instanceof Error ? error.message : 'Unknown error' }, 'error');
       return {
         success: false,
-        error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to get intervention steps', 'INTERNAL_ERROR'),
+        error: this.toApiError(error, 'Failed to get intervention steps'),
         data: undefined
       };
     }
@@ -194,7 +277,11 @@ export class InterventionWorkflowService {
       return { success: true, data: result.intervention, error: undefined };
     } catch (error) {
       this.log('getActiveByTask.error', { taskId, error: error instanceof Error ? error.message : 'Unknown error' }, 'error');
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to get active intervention by task', 'INTERNAL_ERROR'), data: null };
+      return {
+        success: false,
+        error: this.toApiError(error, 'Failed to get active intervention by task'),
+        data: null
+      };
     }
   }
 
@@ -214,7 +301,11 @@ export class InterventionWorkflowService {
         error: undefined
       };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to advance step', 'INTERNAL_ERROR'), data: undefined };
+      return {
+        success: false,
+        error: this.toApiError(error, 'Failed to advance step'),
+        data: undefined
+      };
     }
   }
 
@@ -238,7 +329,11 @@ export class InterventionWorkflowService {
         error: undefined
       };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? new ApiError(error.message, 'INTERNAL_ERROR') : new ApiError('Failed to finalize intervention', 'INTERNAL_ERROR'), data: undefined };
+      return {
+        success: false,
+        error: this.toApiError(error, 'Failed to finalize intervention'),
+        data: undefined
+      };
     }
   }
 
@@ -258,43 +353,41 @@ export class InterventionWorkflowService {
     notes?: string,
     photos?: string[]
   ): Promise<ApiResponse<unknown>> {
-    const maxRetries = 2;
-    const baseDelay = 1000; // 1 second
-    
-    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+    for (
+      let attempt = 1;
+      attempt <= this.SAVE_STEP_PROGRESS_MAX_RETRIES + 1;
+      attempt++
+    ) {
       try {
-        // Add timeout to the IPC call
-        const result = await Promise.race([
-          interventionsIpc.saveStepProgress({
-            step_id: stepId,
-            collected_data: collectedData as JsonValue,
-            notes: notes || null,
-            photos: photos || null
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 25000) // 25s frontend timeout
-          )
-        ]);
+        const result = await this.saveStepProgressOnce(
+          stepId,
+          collectedData,
+          notes,
+          photos,
+        );
 
         return { success: true, data: result, error: undefined };
       } catch (error) {
         console.error(`[DEBUG] saveStepProgress attempt ${attempt} failed:`, error);
-        
-        // If this is the last attempt, return the error
-        if (attempt > maxRetries) {
-          return { 
-            success: false, 
-            error: error instanceof Error ? new ApiError(error.message, 'TIMEOUT_ERROR') : new ApiError('Failed to save step progress after retries', 'TIMEOUT_ERROR'), 
-            data: undefined 
+
+        if (attempt > this.SAVE_STEP_PROGRESS_MAX_RETRIES) {
+          return {
+            success: false,
+            error: this.toApiError(
+              error,
+              'Failed to save step progress after retries',
+              'TIMEOUT_ERROR',
+            ),
+            data: undefined
           };
         }
-        
-        // Wait before retrying with exponential backoff
-        await new Promise(resolve => setTimeout(resolve, baseDelay * Math.pow(2, attempt - 1)));
+
+        await this.delay(
+          this.SAVE_STEP_PROGRESS_BASE_DELAY_MS * Math.pow(2, attempt - 1),
+        );
       }
     }
-    
-    // This should never be reached, but TypeScript needs it
+
     return { success: false, error: new ApiError('Unexpected error in saveStepProgress', 'INTERNAL_ERROR'), data: undefined };
   }
 
@@ -337,4 +430,3 @@ export class InterventionWorkflowService {
 }
 
 export const interventionWorkflowService = InterventionWorkflowService;
-
