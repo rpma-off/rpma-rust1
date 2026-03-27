@@ -18,6 +18,7 @@ pub enum InterventionStatus {
     Paused,
     Completed,
     Cancelled,
+    Archived,
 }
 
 impl Default for InterventionStatus {
@@ -34,6 +35,7 @@ impl std::fmt::Display for InterventionStatus {
             Self::Paused => "paused",
             Self::Completed => "completed",
             Self::Cancelled => "cancelled",
+            Self::Archived => "archived",
         };
         write!(f, "{}", s)
     }
@@ -49,6 +51,7 @@ impl std::str::FromStr for InterventionStatus {
             "paused" => Ok(Self::Paused),
             "completed" => Ok(Self::Completed),
             "cancelled" => Ok(Self::Cancelled),
+            "archived" => Ok(Self::Archived),
             _ => Err(format!("Invalid intervention status: {}", s)),
         }
     }

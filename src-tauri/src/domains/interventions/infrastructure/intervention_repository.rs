@@ -524,10 +524,13 @@ mod tests {
             .save_step(&orphan_step)
             .expect("Failed to save orphan step");
         db.execute(
-            "DELETE FROM tasks WHERE id = ?",
-            rusqlite::params!["task-for-orphan-intervention"],
+            "UPDATE tasks SET deleted_at = ? WHERE id = ?",
+            rusqlite::params![
+                chrono::Utc::now().timestamp_millis(),
+                "task-for-orphan-intervention"
+            ],
         )
-        .expect("delete orphan task");
+        .expect("soft-delete orphan task");
 
         seed_completed_intervention(&db, "archive-intervention", old_completed_at);
 

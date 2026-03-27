@@ -78,6 +78,7 @@ pub(super) fn intervention_status_label(status: &InterventionStatus) -> String {
         InterventionStatus::Pending => "En attente".to_string(),
         InterventionStatus::Paused => "En pause".to_string(),
         InterventionStatus::Cancelled => "Annulee".to_string(),
+        InterventionStatus::Archived => "Archivee".to_string(),
     }
 }
 
@@ -88,6 +89,7 @@ pub(super) fn intervention_status_badge(status: &InterventionStatus) -> String {
         InterventionStatus::Pending => "[..]".to_string(),
         InterventionStatus::Paused => "[||]".to_string(),
         InterventionStatus::Cancelled => "[X]".to_string(),
+        InterventionStatus::Archived => "[A]".to_string(),
     }
 }
 

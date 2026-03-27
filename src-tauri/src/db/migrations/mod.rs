@@ -289,6 +289,7 @@ impl Database {
             33 => self.apply_migration_33(),
             34 => self.apply_migration_34(),
             40 => self.apply_migration_40(),
+            65 => self.apply_migration_65(),
             _ => {
                 // Try to apply generic SQL migration for all other versions.
                 self.apply_sql_migration(version)

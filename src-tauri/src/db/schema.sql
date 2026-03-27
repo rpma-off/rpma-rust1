@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS interventions (
 
   -- Statut
   status TEXT NOT NULL DEFAULT 'pending'
-    CHECK(status IN ('pending', 'in_progress', 'paused', 'completed', 'cancelled')),
+    CHECK(status IN ('pending', 'in_progress', 'paused', 'completed', 'cancelled', 'archived')),
 
   -- Véhicule
   vehicle_plate TEXT NOT NULL,

@@ -3,4 +3,4 @@
 /**
  * Intervention status enum
  */
-export type InterventionStatus = "pending" | "in_progress" | "paused" | "completed" | "cancelled";
+export type InterventionStatus = "pending" | "in_progress" | "paused" | "completed" | "cancelled" | "archived";

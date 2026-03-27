@@ -24,6 +24,7 @@ pub fn allowed_transitions(current: &InterventionStatus) -> Vec<InterventionStat
         ],
         InterventionStatus::Completed => vec![],
         InterventionStatus::Cancelled => vec![],
+        InterventionStatus::Archived => vec![],
     }
 }
 

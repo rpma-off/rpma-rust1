@@ -404,7 +404,9 @@ impl super::InterventionWorkflowService {
 
         match intervention.status {
             InterventionStatus::Pending | InterventionStatus::InProgress => {}
-            InterventionStatus::Completed | InterventionStatus::Cancelled => {
+            InterventionStatus::Completed
+            | InterventionStatus::Cancelled
+            | InterventionStatus::Archived => {
                 return Err(InterventionError::BusinessRule(format!(
                     "Cannot cancel intervention in {} state",
                     intervention.status

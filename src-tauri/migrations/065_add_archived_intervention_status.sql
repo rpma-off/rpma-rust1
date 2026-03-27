@@ -1,0 +1,2 @@
+-- Migration 065: Add 'archived' to interventions.status CHECK constraint
+-- Handled in Rust for idempotency (table rebuild required for CHECK constraint changes in SQLite)
