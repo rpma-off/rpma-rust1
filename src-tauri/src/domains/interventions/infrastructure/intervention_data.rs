@@ -312,6 +312,10 @@ impl InterventionDataService {
         self.repository.get_latest_intervention_by_task(task_id)
     }
 
+    pub fn get_interventions_by_task(&self, task_id: &str) -> InterventionResult<Vec<Intervention>> {
+        self.repository.get_interventions_by_task(task_id)
+    }
+
     /// Get step by ID
     pub fn get_step(&self, id: &str) -> InterventionResult<Option<InterventionStep>> {
         self.repository.get_step(id)

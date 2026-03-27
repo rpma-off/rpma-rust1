@@ -111,6 +111,19 @@ impl InterventionRepository {
         Ok(intervention)
     }
 
+    pub fn get_interventions_by_task(&self, task_id: &str) -> InterventionResult<Vec<Intervention>> {
+        let conn = self.db.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT * FROM interventions WHERE task_id = ? AND deleted_at IS NULL ORDER BY created_at DESC",
+        )?;
+
+        let interventions = stmt
+            .query_map([task_id], Intervention::from_row)?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(interventions)
+    }
+
     fn _get_active_intervention_by_task_with_conn(
         &self,
         conn: &rusqlite::Connection,

@@ -8,7 +8,10 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::domains::interventions::domain::models::intervention::InterventionProgress;
+use crate::domains::interventions::domain::models::intervention::{
+    InterventionProgress, InterventionStatus,
+};
+use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
@@ -28,18 +31,12 @@ impl InterventionScoringService {
         }
     }
 
-    /// Calculate intervention progress based on completed steps.
-    pub fn get_progress(&self, intervention_id: &str) -> InterventionResult<InterventionProgress> {
-        let intervention = self
-            .data
-            .get_intervention(intervention_id)?
-            .ok_or_else(|| {
-                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
-            })?;
-
-        let steps = self.data.get_intervention_steps(intervention_id)?;
-
-        let summary = InterventionCalculationService::summarize_steps(&steps);
+    pub fn build_progress(
+        intervention_id: &str,
+        status: InterventionStatus,
+        steps: &[InterventionStep],
+    ) -> InterventionProgress {
+        let summary = InterventionCalculationService::summarize_steps(steps);
         let total_steps = summary.total_steps as i32;
         let completed_steps = summary.completed_steps as i32;
         let current_step = if total_steps > 0 {
@@ -53,15 +50,32 @@ impl InterventionScoringService {
             0.0
         };
 
-        Ok(InterventionProgress {
+        InterventionProgress {
             intervention_id: intervention_id.to_string(),
             current_step,
             total_steps,
             completed_steps,
             completion_percentage,
             estimated_time_remaining: None,
-            status: intervention.status,
-        })
+            status,
+        }
+    }
+
+    /// Calculate intervention progress based on completed steps.
+    pub fn get_progress(&self, intervention_id: &str) -> InterventionResult<InterventionProgress> {
+        let intervention = self
+            .data
+            .get_intervention(intervention_id)?
+            .ok_or_else(|| {
+                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+
+        let steps = self.data.get_intervention_steps(intervention_id)?;
+        Ok(Self::build_progress(
+            intervention_id,
+            intervention.status,
+            &steps,
+        ))
     }
 
     /// Compute aggregate statistics for a given technician (or all technicians when `None`).

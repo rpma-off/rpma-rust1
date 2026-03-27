@@ -10,3 +10,5 @@ node_modules
 /coverage
 /.env.local
 /.env.development.local
+/playwright-report
+/playwright-report.zip

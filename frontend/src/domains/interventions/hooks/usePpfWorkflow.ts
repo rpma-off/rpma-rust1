@@ -92,7 +92,6 @@ export function usePpfWorkflow(taskIdOverride?: string) {
       if (options?.invalidate) {
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(step.intervention_id) });
         queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
-        queryClient.invalidateQueries({ queryKey: interventionKeys.byTaskData(taskId) });
       }
 
       if (options?.showToast) {
@@ -113,13 +112,8 @@ export function usePpfWorkflow(taskIdOverride?: string) {
       }
 
       await workflow.advanceToStep(stepType, collectedData as never, photos);
-
-      if (intervention?.id) {
-        await queryClient.refetchQueries({ queryKey: interventionKeys.ppfInterventionSteps(intervention.id) });
-        await queryClient.refetchQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
-      }
     },
-    [workflow, intervention?.id, queryClient, taskId]
+    [workflow]
   );
 
   const toggleChecklistItem = useCallback(

@@ -62,7 +62,7 @@ describe('usePpfWorkflow', () => {
     jest.clearAllMocks();
   });
 
-  it('invalidates completed-page intervention query when saving a draft', async () => {
+  it('invalidates the workflow-owned intervention queries when saving a draft', async () => {
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -79,6 +79,11 @@ describe('usePpfWorkflow', () => {
     await result.current.saveDraft('inspection', { notes: 'draft' }, { invalidate: true });
 
     expect(mockPpfWorkflowIpc.saveStepDraft).toHaveBeenCalledTimes(1);
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['interventions', 'data', 'task-1'] });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
+      queryKey: ['interventions', 'ppf-steps', 'int-1'],
+    });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
+      queryKey: ['interventions', 'ppf-intervention', 'task-1'],
+    });
   });
 });

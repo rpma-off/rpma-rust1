@@ -129,11 +129,14 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   // ── Cache helpers ─────────────────────────────────────────────────────────
   //
   // Every PPF mutation must refresh the workflow view and the active
-  // intervention record.  Centralise the two always-invalidated keys here so
-  // that individual `onSuccess` handlers only add the extra keys that differ.
+  // intervention record. Keep this list limited to queries owned by this provider.
   function invalidatePPFWorkflowCaches() {
-    queryClient.invalidateQueries({ queryKey: interventionKeys.ppfWorkflow(taskId) });
     queryClient.invalidateQueries({ queryKey: interventionKeys.ppfIntervention(taskId) });
+    if (interventionData?.intervention?.id) {
+      queryClient.invalidateQueries({
+        queryKey: interventionKeys.ppfInterventionSteps(interventionData.intervention.id),
+      });
+    }
   }
 
   // Get intervention for this task
@@ -334,7 +337,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     },
     onSuccess: () => {
       invalidatePPFWorkflowCaches();
-      queryClient.invalidateQueries({ queryKey: interventionKeys.ppfInterventionSteps(interventionData?.intervention?.id || '') });
       toast.success('Avancé à l\'étape suivante');
     },
     onError: (error) => {
@@ -371,7 +373,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     },
     onSuccess: () => {
       invalidatePPFWorkflowCaches();
-      queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
       toast.success('Étape terminée');
     },
     onError: () => {
@@ -403,7 +404,6 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     },
     onSuccess: () => {
       invalidatePPFWorkflowCaches();
-      queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
       toast.success('Intervention finalisée avec succès');

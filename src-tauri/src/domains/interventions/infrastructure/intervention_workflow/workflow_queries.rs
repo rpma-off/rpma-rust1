@@ -24,13 +24,7 @@ impl super::InterventionWorkflowService {
         &self,
         task_id: &str,
     ) -> crate::db::InterventionResult<Vec<Intervention>> {
-        let (interventions, _) = self
-            .data
-            .list_interventions(None, None, Some(1000), Some(0))?;
-        Ok(interventions
-            .into_iter()
-            .filter(|i| i.task_id == task_id)
-            .collect())
+        self.data.get_interventions_by_task(task_id)
     }
 
     /// List interventions with pagination
