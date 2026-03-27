@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+﻿import { redirect } from 'next/navigation';
 
 export default function PerformancePage() {
-  redirect('/settings/observability');
+  redirect('/settings/system');
 }

@@ -1,15 +1,10 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { LoadingState } from '@/shared/ui/layout/LoadingState';
 import { useAuth } from '@/domains/auth';
-
-const SystemSettingsTab = dynamic(
-  () => import('@/domains/admin').then(mod => ({ default: mod.SystemSettingsTab })),
-  { loading: () => <LoadingState /> }
-);
+import { AppSettingsTab } from '@/domains/settings/components/AppSettingsTab';
 
 export default function SystemPage() {
   const { user, loading } = useAuth();
@@ -25,7 +20,7 @@ export default function SystemPage() {
 
   return (
     <Suspense fallback={<LoadingState message="Chargement des paramètres système..." />}>
-      <SystemSettingsTab />
+      <AppSettingsTab />
     </Suspense>
   );
 }

@@ -1,4 +1,4 @@
-import { safeInvoke, cachedInvoke, invalidatePattern } from "@/lib/ipc/core";
+﻿import { safeInvoke, cachedInvoke, invalidatePattern } from "@/lib/ipc/core";
 import { IPC_COMMANDS } from "@/lib/ipc/commands";
 import type { UserSettings } from "@/lib/backend";
 import type { JsonObject, JsonValue } from "@/types/json";
@@ -17,7 +17,12 @@ export const settingsIpc = {
     });
   },
 
-  // User settings operations
+  updateSecuritySettings: async (request: JsonObject) => {
+    return safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_SECURITY_SETTINGS, {
+      settings: request,
+    });
+  },
+
   getUserSettings: () =>
     cachedInvoke<UserSettings>(
       "user-settings",
@@ -88,13 +93,9 @@ export const settingsIpc = {
   },
 
   updateGeneralSettings: async (request: JsonObject): Promise<JsonValue> => {
-    const result = await safeInvoke<JsonValue>(
-      IPC_COMMANDS.UPDATE_GENERAL_SETTINGS,
-      {
-        settings: request,
-      },
-    );
-    return result;
+    return safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_GENERAL_SETTINGS, {
+      settings: request,
+    });
   },
 
   updateBusinessRules: async (rules: JsonValue[]): Promise<JsonValue> => {
@@ -115,9 +116,7 @@ export const settingsIpc = {
     });
   },
 
-  updatePerformanceConfigs: async (
-    configs: JsonValue[],
-  ): Promise<JsonValue> => {
+  updatePerformanceConfigs: async (configs: JsonValue[]): Promise<JsonValue> => {
     return safeInvoke<JsonValue>(IPC_COMMANDS.UPDATE_PERFORMANCE_CONFIGS, {
       configs,
     });
@@ -129,7 +128,6 @@ export const settingsIpc = {
     });
   },
 
-  // Security operations
   getActiveSessions: () =>
     safeInvoke<JsonValue>(IPC_COMMANDS.GET_ACTIVE_SESSIONS, {}),
 
@@ -154,5 +152,4 @@ export const settingsIpc = {
       invalidateUserSettingsCache();
       return result;
     }),
-
 };
