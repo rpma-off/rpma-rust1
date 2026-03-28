@@ -120,7 +120,7 @@ export function useInventory(query?: InventoryQuery) {
 
       return inventoryIpc.material.create(request);
     },
-    onSuccess: invalidateMaterials,
+    onSuccess: invalidateBoth,
   });
 
   const updateMaterialMutation = useMutation({
@@ -134,7 +134,7 @@ export function useInventory(query?: InventoryQuery) {
 
       return inventoryIpc.material.update(id, request);
     },
-    onSuccess: invalidateMaterials,
+    onSuccess: invalidateBoth,
   });
 
   const updateStockMutation = useMutation({

@@ -5,6 +5,7 @@
 
 use async_trait::async_trait;
 use chrono::Utc;
+use futures_util::FutureExt;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use tauri::Emitter;
@@ -70,12 +71,23 @@ impl InMemoryEventBus {
             let event_type_owned = event_type_owned.clone();
 
             // Spawn each handler in its own task so panics are isolated
-            let join_result = tokio::spawn(async move { handler.handle(&event_clone).await }).await;
+            let join_result = tokio::spawn(async move {
+                std::panic::AssertUnwindSafe(handler.handle(&event_clone))
+                    .catch_unwind()
+                    .await
+            })
+            .await;
 
             match join_result {
-                Ok(Ok(())) => {}
-                Ok(Err(e)) => {
+                Ok(Ok(Ok(()))) => {}
+                Ok(Ok(Err(e))) => {
                     tracing::error!("Event handler failed for {}: {}", event_type_owned, e);
+                }
+                Ok(Err(_)) => {
+                    tracing::error!(
+                        "Event handler panicked for {}, isolating failure",
+                        event_type_owned
+                    );
                 }
                 Err(_) => {
                     tracing::error!(

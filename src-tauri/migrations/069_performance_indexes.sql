@@ -34,17 +34,15 @@ CREATE INDEX IF NOT EXISTS idx_photos_step_captured
 
 -- interventions: covering index for task_id + status filter + created_at sort
 CREATE INDEX IF NOT EXISTS idx_interventions_task_status_created
-  ON interventions(task_id, status, created_at DESC)
-  WHERE deleted_at IS NULL;
+  ON interventions(task_id, status, created_at DESC);
 
 -- materials: covering index for stats aggregation (is_active filter, no GROUP BY)
 CREATE INDEX IF NOT EXISTS idx_materials_active_deleted
-  ON materials(is_active, deleted_at);
+  ON materials(is_active);
 
 -- materials: covering index for GROUP BY material_type stats (type + active filter)
 CREATE INDEX IF NOT EXISTS idx_materials_type_active
-  ON materials(material_type, is_active)
-  WHERE deleted_at IS NULL;
+  ON materials(material_type, is_active);
 
 -- tasks: covering index for status + technician_id filter + created_at sort
 CREATE INDEX IF NOT EXISTS idx_tasks_status_technician_created

@@ -32,12 +32,15 @@ impl super::MaterialService {
                 r#"
                 SELECT
                   COUNT(*)                                                                     AS total_materials,
-                  SUM(CASE WHEN is_active = 1                              THEN 1 ELSE 0 END) AS active_materials,
-                  SUM(CASE WHEN is_active = 1
-                           AND current_stock <= COALESCE(minimum_stock, ?) THEN 1 ELSE 0 END) AS low_stock_materials,
-                  SUM(CASE WHEN is_active = 1
-                           AND expiry_date IS NOT NULL
-                           AND expiry_date <= ?                            THEN 1 ELSE 0 END) AS expired_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                                    THEN 1 ELSE 0 END), 0)                AS active_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                                    AND current_stock <= COALESCE(minimum_stock, ?)
+                                    THEN 1 ELSE 0 END), 0)                AS low_stock_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                                    AND expiry_date IS NOT NULL
+                                    AND expiry_date <= ?
+                                    THEN 1 ELSE 0 END), 0)                AS expired_materials,
                   COALESCE(SUM(CASE WHEN is_active = 1
                                    THEN current_stock * COALESCE(unit_cost, 0)
                                    ELSE 0 END), 0.0)                                         AS total_value
