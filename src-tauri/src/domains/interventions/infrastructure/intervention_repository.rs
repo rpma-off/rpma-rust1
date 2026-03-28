@@ -230,6 +230,26 @@ impl InterventionRepository {
         Ok(())
     }
 
+    /// Builds the shared WHERE clause and parameter list for list_interventions queries.
+    /// Returns `(where_clause, params)` — reused for both the COUNT and SELECT passes
+    /// so the filter logic is defined exactly once.
+    fn build_list_where(
+        status: Option<&str>,
+        technician_id: Option<&str>,
+    ) -> (String, Vec<rusqlite::types::Value>) {
+        let mut sql = " WHERE deleted_at IS NULL".to_string();
+        let mut params: Vec<rusqlite::types::Value> = Vec::new();
+        if let Some(s) = status {
+            sql.push_str(" AND status = ?");
+            params.push(rusqlite::types::Value::Text(s.to_string()));
+        }
+        if let Some(t) = technician_id {
+            sql.push_str(" AND technician_id = ?");
+            params.push(rusqlite::types::Value::Text(t.to_string()));
+        }
+        (sql, params)
+    }
+
     /// TODO: document
     pub fn list_interventions(
         &self,
@@ -240,52 +260,34 @@ impl InterventionRepository {
     ) -> InterventionResult<(Vec<Intervention>, i64)> {
         let conn = self.db.get_connection()?;
 
-        // First, get total count
-        let mut count_sql =
-            "SELECT COUNT(*) FROM interventions WHERE 1=1 AND deleted_at IS NULL".to_string();
-        let mut count_params: Vec<rusqlite::types::Value> = Vec::new();
+        let (where_clause, where_params) = Self::build_list_where(status, technician_id);
 
-        if let Some(status) = status {
-            count_sql.push_str(" AND status = ?");
-            count_params.push(rusqlite::types::Value::Text(status.to_string()));
-        }
-
-        if let Some(technician_id) = technician_id {
-            count_sql.push_str(" AND technician_id = ?");
-            count_params.push(rusqlite::types::Value::Text(technician_id.to_string()));
-        }
-
+        // COUNT — reuses the same WHERE clause and params
+        let count_sql = format!("SELECT COUNT(*) FROM interventions{}", where_clause);
         let mut count_stmt = conn.prepare(&count_sql)?;
-        let total: i64 =
-            count_stmt.query_row(rusqlite::params_from_iter(count_params), |row| row.get(0))?;
+        let total: i64 = count_stmt
+            .query_row(rusqlite::params_from_iter(where_params.iter()), |row| {
+                row.get(0)
+            })?;
 
-        // Then, get the paginated results
-        let mut sql = "SELECT * FROM interventions WHERE 1=1 AND deleted_at IS NULL".to_string();
-        let mut params: Vec<rusqlite::types::Value> = Vec::new();
-
-        if let Some(status) = status {
-            sql.push_str(" AND status = ?");
-            params.push(rusqlite::types::Value::Text(status.to_string()));
-        }
-
-        if let Some(technician_id) = technician_id {
-            sql.push_str(" AND technician_id = ?");
-            params.push(rusqlite::types::Value::Text(technician_id.to_string()));
-        }
-
-        sql.push_str(" ORDER BY created_at DESC");
+        // SELECT — extends shared params with LIMIT / OFFSET
+        let mut data_sql = format!(
+            "SELECT * FROM interventions{} ORDER BY created_at DESC",
+            where_clause
+        );
+        let mut params = where_params;
 
         if let Some(limit_val) = limit {
-            sql.push_str(" LIMIT ?");
+            data_sql.push_str(" LIMIT ?");
             params.push(limit_val.into());
         }
 
         if let Some(offset_val) = offset {
-            sql.push_str(" OFFSET ?");
+            data_sql.push_str(" OFFSET ?");
             params.push(offset_val.into());
         }
 
-        let mut stmt = conn.prepare(&sql)?;
+        let mut stmt = conn.prepare(&data_sql)?;
         let interventions: Vec<Intervention> = stmt
             .query_map(rusqlite::params_from_iter(params), |row| {
                 Intervention::from_row(row)
