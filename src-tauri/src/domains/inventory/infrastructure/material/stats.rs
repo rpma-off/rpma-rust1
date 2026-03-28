@@ -15,19 +15,48 @@ impl super::MaterialService {
     // ── Stats and read queries ────────────────────────────────────────────────
 
     /// Get material statistics.
+    ///
+    /// Perf: the five scalar aggregations (total, active, low-stock, expired, value) are
+    /// merged into a single SELECT with CASE WHEN expressions, reducing 5 DB round-trips
+    /// to 1.  The GROUP BY (materials_by_type) must stay as a separate query because it
+    /// returns multiple rows and cannot be folded into a single-row aggregate.
     pub fn get_material_stats(&self) -> MaterialResult<MaterialStats> {
         debug!("Fetching material statistics");
-        let total_materials: i32 = self.db.query_single_value(
-            "SELECT COUNT(*) FROM materials WHERE deleted_at IS NULL",
-            [],
-        )?;
 
-        let active_materials: i32 = self.db.query_single_value(
-            "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
-            [],
-        )?;
+        let threshold_fallback = effective_threshold(None);
+        let now = crate::shared::contracts::common::now();
 
-        // materials_by_type uses GROUP BY — kept as separate query (incompatible with above aggregation).
+        // Single-row aggregation replaces the previous 5 separate queries.
+        let (total_materials, active_materials, low_stock_materials, expired_materials, total_value) =
+            self.db.query_row_tuple(
+                r#"
+                SELECT
+                  COUNT(*)                                                                     AS total_materials,
+                  SUM(CASE WHEN is_active = 1                              THEN 1 ELSE 0 END) AS active_materials,
+                  SUM(CASE WHEN is_active = 1
+                           AND current_stock <= COALESCE(minimum_stock, ?) THEN 1 ELSE 0 END) AS low_stock_materials,
+                  SUM(CASE WHEN is_active = 1
+                           AND expiry_date IS NOT NULL
+                           AND expiry_date <= ?                            THEN 1 ELSE 0 END) AS expired_materials,
+                  COALESCE(SUM(CASE WHEN is_active = 1
+                                   THEN current_stock * COALESCE(unit_cost, 0)
+                                   ELSE 0 END), 0.0)                                         AS total_value
+                FROM materials
+                WHERE deleted_at IS NULL
+                "#,
+                params![threshold_fallback, now],
+                |row| {
+                    Ok((
+                        row.get::<_, i32>(0)?,
+                        row.get::<_, i32>(1)?,
+                        row.get::<_, i32>(2)?,
+                        row.get::<_, i32>(3)?,
+                        row.get::<_, f64>(4)?,
+                    ))
+                },
+            )?;
+
+        // materials_by_type uses GROUP BY — kept as separate query (returns multiple rows).
         let type_rows: Vec<(String, i32)> = self.db.query_multiple(
             "SELECT material_type, COUNT(*) AS count FROM materials WHERE is_active = 1 AND deleted_at IS NULL GROUP BY material_type",
             [],
@@ -35,23 +64,6 @@ impl super::MaterialService {
         )?;
 
         let materials_by_type: HashMap<String, i32> = type_rows.into_iter().collect();
-
-        let threshold_fallback = effective_threshold(None);
-        let low_stock_materials: i32 = self.db.query_single_value(
-            "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL AND current_stock <= COALESCE(minimum_stock, ?)",
-            params![threshold_fallback],
-        )?;
-
-        let now = crate::shared::contracts::common::now();
-        let expired_materials: i32 = self.db.query_single_value(
-            "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL AND expiry_date IS NOT NULL AND expiry_date <= ?",
-            params![now],
-        )?;
-
-        let total_value: f64 = self.db.query_single_value(
-            "SELECT COALESCE(SUM(current_stock * COALESCE(unit_cost, 0)), 0.0) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
-            [],
-        )?;
 
         Ok(MaterialStats {
             total_materials,

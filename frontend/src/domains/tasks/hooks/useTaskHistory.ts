@@ -16,6 +16,7 @@ export function useTaskHistory(taskId: string) {
       if (!user?.token) throw new Error('Utilisateur non authentifié');
       return taskGateway.getTaskHistory(taskId);
     },
-    enabled: !!user?.token && !!taskId
+    enabled: !!user?.token && !!taskId,
+    staleTime: 5 * 60_000, // history is append-only; 5 min before background refetch
   });
 }

@@ -62,10 +62,12 @@ impl InMemoryEventBus {
             handlers.get(event_type).cloned().unwrap_or_default()
         };
 
+        // Allocate once outside the loop; value is the same for every handler.
+        let event_type_owned = event_type.to_string();
         for handler in handlers {
             let handler = handler.clone();
             let event_clone = event.clone();
-            let event_type_owned = event_type.to_string();
+            let event_type_owned = event_type_owned.clone();
 
             // Spawn each handler in its own task so panics are isolated
             let join_result = tokio::spawn(async move { handler.handle(&event_clone).await }).await;

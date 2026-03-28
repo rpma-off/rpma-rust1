@@ -21,6 +21,7 @@ export function useTaskChecklist(taskId: string | undefined) {
     queryKey,
     queryFn: () => taskIpc.checklistItemsGet(taskId!),
     enabled: !!taskId,
+    staleTime: 30_000, // mutations call invalidateQueries onSettled; 30s prevents redundant background refetches
   });
 
   const toggleMutation = useMutation({
