@@ -14,7 +14,9 @@ export function useNotifications() {
       if (!result.success) throw new Error(result.error || 'Failed to fetch notifications');
       return result.data;
     },
-    refetchInterval: 120000, // 2 minutes
+    refetchInterval: 120_000,         // re-fetch every 2 minutes
+    refetchIntervalInBackground: false, // stop polling when window is not focused
+    staleTime: 60_000,                 // treat data as fresh for 1 minute to avoid mount refetch
   });
 
   const markReadMutation = useMutation({

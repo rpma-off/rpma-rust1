@@ -74,84 +74,63 @@ impl InventoryTransactionService {
 
     /// Get inventory statistics.
     ///
+    /// Perf: acquires one DB connection and runs two queries (aggregates + categories)
+    /// instead of the previous 5 separate connection acquisitions.
+    ///
     /// Root cause fix: GROUP BY used `mc.name` but SELECT used `COALESCE(mc.name, ...)`,
     /// causing inconsistent grouping when categories are NULL. Fixed to use COALESCE
     /// in both SELECT and GROUP BY. Defensive `.unwrap_or()` handling ensures an empty
     /// database returns safe defaults instead of an error.
     pub fn get_inventory_stats(&self) -> MaterialResult<InventoryStats> {
-        let total_materials: i32 = self
-            .db
-            .query_single_value(
-                "SELECT COUNT(*) FROM materials WHERE is_active = 1 AND deleted_at IS NULL",
-                [],
+        let conn = self.db.get_connection().map_err(MaterialError::Database)?;
+
+        // Single query: all four aggregate values in one round-trip.
+        let now_ts = crate::shared::contracts::common::now();
+        let (total_materials, low_stock_materials, expired_materials, total_value): (
+            i32,
+            i32,
+            i32,
+            f64,
+        ) = conn
+            .query_row(
+                r#"
+                SELECT
+                  COUNT(*),
+                  SUM(CASE WHEN (current_stock - 0.0) <= COALESCE(minimum_stock, ?) THEN 1 ELSE 0 END),
+                  SUM(CASE WHEN expiry_date IS NOT NULL AND expiry_date <= ? THEN 1 ELSE 0 END),
+                  COALESCE(SUM(CASE WHEN unit_cost IS NOT NULL THEN current_stock * unit_cost END), 0.0)
+                FROM materials
+                WHERE is_active = 1 AND deleted_at IS NULL
+                "#,
+                params![DEFAULT_LOW_STOCK_THRESHOLD, now_ts],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
             )
-            .unwrap_or(0);
+            .unwrap_or((0, 0, 0, 0.0));
 
         let active_materials = total_materials;
 
-        let low_stock_materials: i32 = self
-            .db
-            .query_single_value(
+        // Category breakdown on the same connection — gracefully handles missing table.
+        let materials_by_category: HashMap<String, i32> = conn
+            .prepare(
                 r#"
-                SELECT COUNT(*) FROM materials
-                WHERE is_active = 1 AND deleted_at IS NULL
-                  AND (current_stock - 0.0) <= COALESCE(minimum_stock, ?)
+                SELECT COALESCE(mc.name, 'Uncategorized') as cat_name, COUNT(*)
+                FROM materials m
+                LEFT JOIN material_categories mc ON m.category_id = mc.id
+                WHERE m.is_active = 1 AND m.deleted_at IS NULL
+                GROUP BY cat_name
                 "#,
-                params![DEFAULT_LOW_STOCK_THRESHOLD],
             )
-            .unwrap_or(0);
-
-        let expired_materials: i32 = self
-            .db
-            .query_single_value(
-                r#"
-                SELECT COUNT(*) FROM materials
-                WHERE is_active = 1 AND deleted_at IS NULL
-                  AND expiry_date IS NOT NULL AND expiry_date <= ?
-                "#,
-                params![crate::shared::contracts::common::now()],
-            )
-            .unwrap_or(0);
-
-        let total_value: f64 = self
-            .db
-            .query_single_value(
-                r#"
-                SELECT COALESCE(SUM(current_stock * unit_cost), 0.0)
-                FROM materials
-                WHERE unit_cost IS NOT NULL AND is_active = 1 AND deleted_at IS NULL
-                "#,
-                [],
-            )
-            .unwrap_or(0.0);
-
-        // Materials by category — gracefully handles missing `material_categories` table.
-        let materials_by_category: HashMap<String, i32> = match self.db.get_connection() {
-            Ok(conn) => {
-                match conn.prepare(
-                    r#"
-                    SELECT COALESCE(mc.name, 'Uncategorized') as cat_name, COUNT(*)
-                    FROM materials m
-                    LEFT JOIN material_categories mc ON m.category_id = mc.id
-                    WHERE m.is_active = 1 AND m.deleted_at IS NULL
-                    GROUP BY cat_name
-                    "#,
-                ) {
-                    Ok(mut stmt) => {
-                        let category_rows = stmt
-                            .query_map([], |row| {
-                                Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
-                            })
-                            .ok()
-                            .map(|rows| rows.filter_map(|r| r.ok()).collect::<Vec<_>>())
-                            .unwrap_or_default();
-                        category_rows.into_iter().collect()
-                    }
-                    Err(_) => HashMap::new(),
-                }
-            }
-            Err(_) => HashMap::new(),
-        };
+            .map(|mut stmt| {
+                stmt.query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, i32>(1)?))
+                })
+                .ok()
+                .map(|rows| rows.filter_map(|r| r.ok()).collect::<Vec<_>>())
+                .unwrap_or_default()
+            })
+            .unwrap_or_default()
+            .into_iter()
+            .collect();
 
         let recent_transactions = self
             .list_recent_inventory_transactions(10)

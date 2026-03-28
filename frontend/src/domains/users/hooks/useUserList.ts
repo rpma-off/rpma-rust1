@@ -35,6 +35,7 @@ export function useUserList(
       return (response?.data ?? []) as UserAccount[];
     },
     enabled: isAuthenticated,
+    staleTime: 5 * 60_000,
   });
 
   return {

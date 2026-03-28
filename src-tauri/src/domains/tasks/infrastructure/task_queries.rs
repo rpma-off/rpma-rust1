@@ -10,6 +10,7 @@ use crate::domains::tasks::infrastructure::task_constants::{
     SINGLE_TASK_TIMEOUT_SECS, TASK_LIST_TIMEOUT_SECS, TASK_QUERY_COLUMNS,
 };
 use rusqlite::params;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -257,5 +258,96 @@ impl TaskQueriesService {
         self.db
             .query_as::<Task>(&sql, params.as_slice())
             .map_err(|e| AppError::Database(format!("Failed to get user assigned tasks: {}", e)))
+    }
+
+    /// Batch-load the most-recent `limit_per_client` tasks for each of the given client IDs.
+    ///
+    /// Returns `client_id → Vec<Task>` ordered by `created_at DESC` within each group.
+    /// Clients with no tasks are absent from the map.  Uses a window function
+    /// (`ROW_NUMBER() OVER (PARTITION BY client_id ORDER BY created_at DESC)`) so only
+    /// a single DB round-trip is needed regardless of the number of clients.
+    ///
+    /// This is an internal, non-IPC method used by the client orchestrator to eliminate
+    /// the N+1 query pattern in `get_clients_with_tasks`.
+    pub fn get_tasks_for_clients_sync(
+        &self,
+        client_ids: &[String],
+        limit_per_client: i32,
+    ) -> Result<HashMap<String, Vec<Task>>, String> {
+        if client_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let placeholders = client_ids
+            .iter()
+            .map(|_| "?")
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // The outer SELECT lists the same 49 columns as TASK_QUERY_COLUMNS so that
+        // Task::from_row (which maps by positional index) continues to work unchanged.
+        let sql = format!(
+            r#"
+            SELECT{cols}
+            FROM (
+                SELECT{cols},
+                       ROW_NUMBER() OVER (
+                           PARTITION BY client_id
+                           ORDER BY created_at DESC
+                       ) AS rn
+                FROM tasks
+                WHERE deleted_at IS NULL
+                  AND client_id IN ({placeholders})
+            ) ranked
+            WHERE rn <= ?
+            "#,
+            cols = TASK_QUERY_COLUMNS,
+            placeholders = placeholders,
+        );
+
+        // Bind all client_ids followed by the per-client row limit.
+        let mut params_vec: Vec<Box<dyn rusqlite::ToSql>> = client_ids
+            .iter()
+            .map(|id| -> Box<dyn rusqlite::ToSql> { Box::new(id.clone()) })
+            .collect();
+        params_vec.push(Box::new(limit_per_client));
+        let params_refs: Vec<&dyn rusqlite::ToSql> =
+            params_vec.iter().map(|p| p.as_ref()).collect();
+
+        let tasks = self
+            .db
+            .query_as::<Task>(&sql, params_refs.as_slice())
+            .map_err(|e| format!("Failed to batch-load tasks for clients: {}", e))?;
+
+        let mut map: HashMap<String, Vec<Task>> = HashMap::new();
+        for task in tasks {
+            if let Some(cid) = &task.client_id {
+                map.entry(cid.clone()).or_default().push(task);
+            }
+        }
+        Ok(map)
+    }
+
+    /// Async wrapper for [`get_tasks_for_clients_sync`].
+    pub async fn get_tasks_for_clients_async(
+        &self,
+        client_ids: Vec<String>,
+        limit_per_client: i32,
+    ) -> Result<HashMap<String, Vec<Task>>, String> {
+        use tokio::time::{timeout, Duration};
+        let db = self.db.clone();
+        let result = timeout(
+            Duration::from_secs(TASK_LIST_TIMEOUT_SECS),
+            tokio::task::spawn_blocking(move || {
+                let service = TaskQueriesService { db };
+                service.get_tasks_for_clients_sync(&client_ids, limit_per_client)
+            }),
+        )
+        .await;
+        match result {
+            Ok(Ok(map)) => Ok(map?),
+            Ok(Err(e)) => Err(format!("Batch task retrieval failed: {}", e)),
+            Err(_) => Err("Batch task retrieval timeout".to_string()),
+        }
     }
 }
