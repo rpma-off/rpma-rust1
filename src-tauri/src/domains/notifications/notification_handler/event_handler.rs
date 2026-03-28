@@ -2,35 +2,19 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::db::Database;
+use crate::domains::notifications::NotificationsFacade;
 use crate::shared::event_bus::{DomainEvent, DomainEventHandler};
-use crate::shared::repositories::cache::Cache;
-use crate::shared::services::event_bus::InMemoryEventBus;
 
 use super::helper::NotificationHelper;
-use super::message_service::MessageService;
 
 /// Handles system-wide domain events and translates them into user notifications.
 pub struct NotificationEventHandler {
-    db: Arc<Database>,
-    cache: Arc<Cache>,
-    message_service: Arc<MessageService>,
-    event_bus: Arc<InMemoryEventBus>,
+    facade: Arc<NotificationsFacade>,
 }
 
 impl NotificationEventHandler {
-    pub fn new(
-        db: Arc<Database>,
-        cache: Arc<Cache>,
-        message_service: Arc<MessageService>,
-        event_bus: Arc<InMemoryEventBus>,
-    ) -> Self {
-        Self {
-            db,
-            cache,
-            message_service,
-            event_bus,
-        }
+    pub fn new(facade: Arc<NotificationsFacade>) -> Self {
+        Self { facade }
     }
 }
 
@@ -43,14 +27,9 @@ impl DomainEventHandler for NotificationEventHandler {
                 technician_id,
                 ..
             } => {
-                // Here we might not have the full task title readily available in the event
-                // but we map what we have. In a real scenario we'd fetch the task or add it to the event.
                 let task_title = format!("Tâche {}", task_id);
                 if let Err(e) = NotificationHelper::create_task_assigned(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     technician_id,
                     task_id,
                     &task_title,
@@ -68,10 +47,7 @@ impl DomainEventHandler for NotificationEventHandler {
             } => {
                 let task_title = format!("Tâche {}", task_id);
                 if let Err(e) = NotificationHelper::create_task_updated(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     user_id,
                     task_id,
                     &task_title,
@@ -89,10 +65,7 @@ impl DomainEventHandler for NotificationEventHandler {
                 ..
             } => {
                 if let Err(e) = NotificationHelper::create_intervention_created(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     user_id,
                     intervention_id,
                     task_id,
@@ -110,10 +83,7 @@ impl DomainEventHandler for NotificationEventHandler {
             } => {
                 let client_name = format!("Client {}", client_id);
                 if let Err(e) = NotificationHelper::create_quote_created(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     created_by,
                     quote_id,
                     &client_name,
@@ -131,10 +101,7 @@ impl DomainEventHandler for NotificationEventHandler {
             } => {
                 let client_name = format!("Client {}", client_id);
                 if let Err(e) = NotificationHelper::create_quote_approved(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     accepted_by,
                     quote_id,
                     &client_name,
@@ -151,10 +118,7 @@ impl DomainEventHandler for NotificationEventHandler {
                 ..
             } => {
                 if let Err(e) = NotificationHelper::create_client_created(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     user_id,
                     client_id,
                     name,
@@ -169,13 +133,9 @@ impl DomainEventHandler for NotificationEventHandler {
                 component,
                 ..
             } => {
-                // Use a default system user or broadcast? For now use a placeholder or admin ID
                 let title = format!("Erreur Système: {}", component);
                 if let Err(e) = NotificationHelper::create_system_alert(
-                    &self.db,
-                    &self.cache,
-                    &self.message_service,
-                    &self.event_bus,
+                    &self.facade,
                     "system",
                     &title,
                     error_message,

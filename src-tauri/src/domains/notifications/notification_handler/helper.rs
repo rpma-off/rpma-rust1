@@ -1,41 +1,16 @@
-use std::sync::Arc;
-
-use crate::db::Database;
 use crate::domains::notifications::models::Notification;
 use crate::domains::notifications::NotificationsFacade;
-use crate::shared::repositories::cache::Cache;
 use crate::shared::services::domain_event::DomainEvent;
-use crate::shared::services::event_bus::InMemoryEventBus;
-
-use super::message_service::MessageService;
 
 pub struct NotificationHelper;
 
 impl NotificationHelper {
-    fn facade(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
-    ) -> NotificationsFacade {
-        NotificationsFacade::new(
-            db.clone(),
-            cache.clone(),
-            message_service.clone(),
-            event_bus.clone(),
-        )
-    }
-
     pub async fn create_task_assigned(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         task_id: &str,
         task_title: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -52,16 +27,12 @@ impl NotificationHelper {
     }
 
     pub async fn create_task_updated(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         task_id: &str,
         task_title: &str,
         status: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -78,15 +49,11 @@ impl NotificationHelper {
     }
 
     pub async fn create_intervention_created(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         intervention_id: &str,
         task_id: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -103,15 +70,11 @@ impl NotificationHelper {
     }
 
     pub async fn create_quote_created(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         quote_id: &str,
         client_name: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -131,15 +94,11 @@ impl NotificationHelper {
     }
 
     pub async fn create_quote_approved(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         quote_id: &str,
         client_name: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -156,15 +115,11 @@ impl NotificationHelper {
     }
 
     pub async fn create_client_created(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         client_id: &str,
         client_name: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),
@@ -181,15 +136,11 @@ impl NotificationHelper {
     }
 
     pub async fn create_system_alert(
-        db: &Arc<Database>,
-        cache: &Arc<Cache>,
-        message_service: &Arc<MessageService>,
-        event_bus: &Arc<InMemoryEventBus>,
+        facade: &NotificationsFacade,
         user_id: &str,
         title: &str,
         message: &str,
     ) -> Result<(), String> {
-        let facade = Self::facade(db, cache, message_service, event_bus);
         facade
             .create_notification(Notification::new(
                 user_id.to_string(),

@@ -414,13 +414,14 @@ impl ServiceBuilder {
 
         register_handler(inventory_service.intervention_finalized_handler());
 
+        let notification_facade = Arc::new(crate::domains::notifications::NotificationsFacade::new(
+            self.db.clone(),
+            self.repositories.cache.clone(),
+            message_service.clone(),
+            event_bus.clone(),
+        ));
         let notification_event_handler =
-            crate::domains::notifications::NotificationEventHandler::new(
-                self.db.clone(),
-                self.repositories.cache.clone(),
-                message_service.clone(),
-                event_bus.clone(),
-            );
+            crate::domains::notifications::NotificationEventHandler::new(notification_facade);
         register_handler(Arc::new(notification_event_handler));
 
         // Register Quote Event Handlers

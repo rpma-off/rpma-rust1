@@ -1,8 +1,18 @@
 //! IPC layer for the notifications domain (ADR-018).
 //!
-//! Tauri command handlers live in notification_handler/mod.rs during
-//! the incremental migration.
-
-pub use crate::domains::notifications::notification_handler::helper::*;
-// IPC commands are re-exported at the notification_handler level via pub use notification_handler::*
-// in notifications/mod.rs — accessible as notifications::* from main.rs.
+//! # Current state (historical layout)
+//!
+//! Tauri command handlers for this domain live in `notification_handler/mod.rs`,
+//! not here. The domain root re-exports them via `pub use notification_handler::*`,
+//! making all IPC commands accessible as `crate::domains::notifications::<command>`
+//! for registration in `main.rs`.
+//!
+//! # Migration intent
+//!
+//! To fully migrate to the ADR-001 four-layer layout:
+//! 1. Move `#[tauri::command]` fns from `notification_handler/mod.rs` into this file.
+//! 2. Drop the `pub use notification_handler::*` glob from `notifications/mod.rs`.
+//! 3. Re-export only the command functions from this module.
+//!
+//! Do NOT move handlers here incrementally without also updating the re-export chain
+//! and `main.rs` command registration — partial moves will cause duplicate symbol errors.
