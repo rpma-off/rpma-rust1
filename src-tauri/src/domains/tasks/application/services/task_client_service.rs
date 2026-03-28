@@ -4,6 +4,7 @@
 //! validation, and permission checks that were previously inline in
 //! `ipc/task/client_integration.rs`.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info};
 
@@ -15,7 +16,7 @@ use crate::domains::tasks::domain::models::task::{TaskPriority, TaskQuery, TaskS
 use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
-use crate::shared::contracts::client_ops::ClientResolver;
+use crate::shared::contracts::client_ops::{ClientContactInfo, ClientResolver};
 
 /// Orchestrates task-client integration queries and relationship operations.
 pub struct TaskClientService {
@@ -77,7 +78,8 @@ impl TaskClientService {
                 AppError::db_sanitized("get_tasks_with_clients", &e)
             })?;
 
-        let mut enhanced_tasks = Vec::new();
+        let mut enhanced_tasks = Vec::with_capacity(tasks_with_clients.data.len());
+        let mut client_contact_cache: HashMap<String, Option<ClientContactInfo>> = HashMap::new();
 
         for task_with_client in tasks_with_clients.data {
             let client_contact_info = if include_client_details {
@@ -85,11 +87,12 @@ impl TaskClientService {
                 if client_id.is_empty() {
                     None
                 } else {
-                    self.client_service
-                        .get_client_contact(client_id)
-                        .await
-                        .ok()
-                        .flatten()
+                    get_cached_client_contact(
+                        self.client_service.as_ref(),
+                        &mut client_contact_cache,
+                        client_id,
+                    )
+                    .await
                 }
             } else {
                 None
@@ -178,5 +181,60 @@ impl TaskClientService {
             ));
         }
         Ok(())
+    }
+}
+
+async fn get_cached_client_contact(
+    client_service: &dyn ClientResolver,
+    cache: &mut HashMap<String, Option<ClientContactInfo>>,
+    client_id: &str,
+) -> Option<ClientContactInfo> {
+    if let Some(cached_contact) = cache.get(client_id) {
+        return cached_contact.clone();
+    }
+
+    let fetched_contact = client_service.get_client_contact(client_id).await.ok().flatten();
+    cache.insert(client_id.to_string(), fetched_contact.clone());
+    fetched_contact
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use async_trait::async_trait;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[derive(Default)]
+    struct CountingClientResolver {
+        lookups: AtomicUsize,
+    }
+
+    #[async_trait]
+    impl ClientResolver for CountingClientResolver {
+        async fn get_client_contact(&self, id: &str) -> Result<Option<ClientContactInfo>, String> {
+            self.lookups.fetch_add(1, Ordering::Relaxed);
+
+            Ok(Some(ClientContactInfo {
+                email: Some(format!("{id}@example.com")),
+                address_state: Some("IDF".to_string()),
+            }))
+        }
+
+        async fn client_exists(&self, _id: &str) -> Result<bool, String> {
+            Ok(true)
+        }
+    }
+
+    #[tokio::test]
+    async fn caches_client_contact_lookups_per_client_id() {
+        let client_service = Arc::new(CountingClientResolver::default());
+        let mut cache = HashMap::new();
+
+        let first = get_cached_client_contact(client_service.as_ref(), &mut cache, "client-1").await;
+        let second =
+            get_cached_client_contact(client_service.as_ref(), &mut cache, "client-1").await;
+
+        assert_eq!(first, second);
+        assert_eq!(client_service.lookups.load(Ordering::Relaxed), 1);
     }
 }
