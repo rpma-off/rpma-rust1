@@ -322,7 +322,10 @@ impl InterventionDataService {
         self.repository.get_latest_intervention_by_task(task_id)
     }
 
-    pub fn get_interventions_by_task(&self, task_id: &str) -> InterventionResult<Vec<Intervention>> {
+    pub fn get_interventions_by_task(
+        &self,
+        task_id: &str,
+    ) -> InterventionResult<Vec<Intervention>> {
         self.repository.get_interventions_by_task(task_id)
     }
 
@@ -676,7 +679,9 @@ impl InterventionDataService {
     pub fn get_aggregate_stats(
         &self,
         technician_id: Option<&str>,
-    ) -> InterventionResult<crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats> {
+    ) -> InterventionResult<
+        crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats,
+    > {
         self.repository.get_aggregate_stats(technician_id)
     }
 

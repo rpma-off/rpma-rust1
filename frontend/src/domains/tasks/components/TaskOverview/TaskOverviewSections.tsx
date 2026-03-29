@@ -16,7 +16,6 @@ import {
   User,
 } from 'lucide-react';
 import type { UpdateTaskRequest } from '@/lib/backend';
-import { Badge } from '@/components/ui/badge';
 import { taskPriorityLabels } from '@/lib/i18n/status-labels';
 import { getUserFullName } from '@/lib/types';
 import {
@@ -27,6 +26,10 @@ import {
   InlineEditableTime,
 } from '@/shared/ui/inline-edit';
 import type { TaskWithDetails } from '@/types/task.types';
+import {
+  PriorityBadge as OverviewPriorityBadge,
+  StatusBadge as OverviewStatusBadge,
+} from './taskOverviewPresentation';
 
 export const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Basse' },
@@ -291,10 +294,7 @@ export function VehicleAndPlanningSection({
                 fieldName="status"
                 isDisabled={!canEdit('status')}
                 disabledReason={getDisabledReason('status')}
-                displayFormatter={(value) => {
-                  const option = STATUS_OPTIONS.find((entry) => entry.value === value);
-                  return <Badge variant="outline">{option?.label || value}</Badge>;
-                }}
+                displayFormatter={(value) => <OverviewStatusBadge status={value || ''} />}
               />
             </InfoRow>
             <InfoRow label="Priorité">
@@ -305,11 +305,7 @@ export function VehicleAndPlanningSection({
                 fieldName="priority"
                 isDisabled={!canEdit('priority')}
                 disabledReason={getDisabledReason('priority')}
-                displayFormatter={(value) => (
-                  <Badge variant="outline" className={`px-2 py-0.5 text-xs font-medium ${getPriorityColor(value || 'medium')}`}>
-                    {getPriorityLabel(value || 'medium')}
-                  </Badge>
-                )}
+                displayFormatter={(value) => <OverviewPriorityBadge priority={value || 'medium'} />}
               />
             </InfoRow>
             <InfoRow

@@ -44,8 +44,8 @@
 //! 22. InterventionFinalizedHandler   <- InventoryFacade + global EventBus registration
 //! 23. QuoteAcceptedHandler           <- InterventionWorkflowService + global EventBus registration
 // TODO(scaffold): ("TrashService", &["Database"]),   // ← wire real deps
-    // TODO(scaffold): ("RulesService", &["Database"]),   // ← wire real deps
-    // TODO(scaffold): ("IntegrationsService", &["Database"]),   // ← wire real deps
+// TODO(scaffold): ("RulesService", &["Database"]),   // ← wire real deps
+// TODO(scaffold): ("IntegrationsService", &["Database"]),   // ← wire real deps
 //! 24. QuoteConvertedHandler          <- InterventionWorkflowService + global EventBus registration
 //!
 //! The graph is intentionally acyclic: every edge points from a root resource or an
@@ -414,12 +414,13 @@ impl ServiceBuilder {
 
         register_handler(inventory_service.intervention_finalized_handler());
 
-        let notification_facade = Arc::new(crate::domains::notifications::NotificationsFacade::new(
-            self.db.clone(),
-            self.repositories.cache.clone(),
-            message_service.clone(),
-            event_bus.clone(),
-        ));
+        let notification_facade =
+            Arc::new(crate::domains::notifications::NotificationsFacade::new(
+                self.db.clone(),
+                self.repositories.cache.clone(),
+                message_service.clone(),
+                event_bus.clone(),
+            ));
         let notification_event_handler =
             crate::domains::notifications::NotificationEventHandler::new(notification_facade);
         register_handler(Arc::new(notification_event_handler));

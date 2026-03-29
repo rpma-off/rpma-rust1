@@ -8,7 +8,9 @@ mod tests {
         CreateIntegrationRequest, IntegrationStatus, UpdateIntegrationRequest,
     };
     use crate::shared::context::RequestContext;
-    use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, IntegrationEventSink};
+    use crate::shared::contracts::integration_sink::{
+        IntegrationDispatchRequest, IntegrationEventSink,
+    };
     use serde_json::json;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -18,7 +20,11 @@ mod tests {
     }
 
     async fn service_and_db() -> (Arc<Database>, IntegrationsService) {
-        let db = Arc::new(Database::new_in_memory().await.expect("integrations test db"));
+        let db = Arc::new(
+            Database::new_in_memory()
+                .await
+                .expect("integrations test db"),
+        );
         let service = IntegrationsService::new(db.clone());
         (db, service)
     }
@@ -81,7 +87,9 @@ mod tests {
 
         let conn = db.get_connection().expect("outbox connection");
         let outbox_count: i64 = conn
-            .query_row("SELECT COUNT(*) FROM integration_outbox", [], |row| row.get(0))
+            .query_row("SELECT COUNT(*) FROM integration_outbox", [], |row| {
+                row.get(0)
+            })
             .expect("count outbox");
         let has_secret: i64 = conn
             .query_row(
@@ -149,7 +157,9 @@ mod tests {
             .expect("retry dead letters");
 
         let status: String = conn
-            .query_row("SELECT status FROM integration_outbox LIMIT 1", [], |row| row.get(0))
+            .query_row("SELECT status FROM integration_outbox LIMIT 1", [], |row| {
+                row.get(0)
+            })
             .expect("read retried status");
 
         assert_eq!(retried, 1);

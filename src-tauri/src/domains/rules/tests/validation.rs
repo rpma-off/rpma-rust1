@@ -17,7 +17,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_rule_requires_name() {
-        let db = Arc::new(Database::new_in_memory().await.expect("rules validation db"));
+        let db = Arc::new(
+            Database::new_in_memory()
+                .await
+                .expect("rules validation db"),
+        );
         let service = RulesService::new(db);
 
         let result = service

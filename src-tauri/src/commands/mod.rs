@@ -51,9 +51,8 @@ pub mod inventory {
         Material, MaterialType, UnitOfMeasure,
     };
     pub use crate::domains::inventory::infrastructure::material::{
-        CreateInventoryTransactionRequest, CreateMaterialCategoryRequest,
-        CreateMaterialRequest, CreateSupplierRequest, RecordConsumptionRequest,
-        UpdateStockRequest,
+        CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
+        CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,
     };
     pub use crate::domains::inventory::ipc::material::{
         material_create, material_delete, material_get, material_list,

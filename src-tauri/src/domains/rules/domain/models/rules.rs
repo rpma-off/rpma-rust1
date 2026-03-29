@@ -39,7 +39,9 @@ impl RuleTrigger {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum RuleAction {
-    Block { message: String },
+    Block {
+        message: String,
+    },
     QueueIntegration {
         event_name: String,
         integration_ids: Option<Vec<String>>,

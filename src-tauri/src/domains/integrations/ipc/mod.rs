@@ -70,7 +70,10 @@ pub async fn retry_dead_letter_integrations(
     correlation_id: Option<String>,
 ) -> AppResult<usize> {
     let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin);
-    state.integrations_service.retry_dead_letters(&ctx, &id).await
+    state
+        .integrations_service
+        .retry_dead_letters(&ctx, &id)
+        .await
 }
 
 #[tauri::command]

@@ -2,6 +2,8 @@
 //!
 //! SQLite repositories and file-system storage implementations.
 
+pub mod photo_processing;
+pub mod photo_service;
 pub mod report_repository;
 
 pub use crate::domains::documents::document_storage::*;

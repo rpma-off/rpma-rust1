@@ -193,7 +193,11 @@ async fn get_cached_client_contact(
         return cached_contact.clone();
     }
 
-    let fetched_contact = client_service.get_client_contact(client_id).await.ok().flatten();
+    let fetched_contact = client_service
+        .get_client_contact(client_id)
+        .await
+        .ok()
+        .flatten();
     cache.insert(client_id.to_string(), fetched_contact.clone());
     fetched_contact
 }
@@ -230,7 +234,8 @@ mod tests {
         let client_service = Arc::new(CountingClientResolver::default());
         let mut cache = HashMap::new();
 
-        let first = get_cached_client_contact(client_service.as_ref(), &mut cache, "client-1").await;
+        let first =
+            get_cached_client_contact(client_service.as_ref(), &mut cache, "client-1").await;
         let second =
             get_cached_client_contact(client_service.as_ref(), &mut cache, "client-1").await;
 

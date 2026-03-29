@@ -41,7 +41,6 @@
 use crate::commands::AppResult;
 use crate::db::Database;
 use crate::domains::tasks::domain::models::task::*;
-use std::collections::HashMap;
 use crate::domains::tasks::infrastructure::task_client_integration::TaskClientIntegrationService;
 use crate::domains::tasks::infrastructure::task_constants::convert_to_app_error;
 use crate::domains::tasks::infrastructure::task_creation::TaskCreationService;
@@ -51,6 +50,7 @@ use crate::domains::tasks::infrastructure::task_rules_repository::{
     validate_status_transition, TaskRulesRepository,
 };
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsService;
+use std::collections::HashMap;
 
 use std::sync::Arc;
 

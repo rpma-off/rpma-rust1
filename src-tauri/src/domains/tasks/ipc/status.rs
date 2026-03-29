@@ -4,7 +4,9 @@ use crate::domains::tasks::application::services::task_policy_service;
 use crate::domains::tasks::domain::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::domains::tasks::domain::models::task::Task;
 use crate::resolve_context;
-use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, IntegrationEventSink};
+use crate::shared::contracts::integration_sink::{
+    IntegrationDispatchRequest, IntegrationEventSink,
+};
 use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use crate::shared::services::event_bus::{event_factory, EventPublisher};
 use tracing::warn;
@@ -69,9 +71,9 @@ pub async fn task_transition_status(
         })
         .await?;
     if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(|| {
-            "Task status change blocked by active rule".to_string()
-        })));
+        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+            || "Task status change blocked by active rule".to_string(),
+        )));
     }
 
     let task = state.task_service.transition_status(

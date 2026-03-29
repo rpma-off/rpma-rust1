@@ -14,6 +14,7 @@ mod test_utils;
 use commands::navigation;
 
 use crate::shared::constants::{APP_BRAND, APP_COPYRIGHT_NOTICE, APP_WATERMARK};
+use crate::shared::contracts::integration_sink::IntegrationEventSink;
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::async_runtime;
@@ -22,7 +23,6 @@ use tauri_plugin_dialog;
 use tokio::time;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-use crate::shared::contracts::integration_sink::IntegrationEventSink;
 
 // Import logging modules
 // use crate::logging::{RPMARequestLogger, LogDomain};

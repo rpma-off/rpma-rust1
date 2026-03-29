@@ -329,8 +329,11 @@ impl InterventionsFacade {
             .intervention_service
             .get_intervention_steps(&intervention_id)
             .map_err(|_| AppError::Database("Failed to get intervention steps".to_string()))?;
-        let progress =
-            InterventionScoringService::build_progress(&intervention_id, intervention.status, &steps);
+        let progress = InterventionScoringService::build_progress(
+            &intervention_id,
+            intervention.status,
+            &steps,
+        );
         Ok((progress, steps))
     }
 

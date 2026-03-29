@@ -67,9 +67,9 @@ impl TaskCommandService {
             })
             .await?;
         if !rule_check.allowed {
-            return Err(AppError::Validation(rule_check.message.unwrap_or_else(|| {
-                "Task creation blocked by active rule".to_string()
-            })));
+            return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+                || "Task creation blocked by active rule".to_string(),
+            )));
         }
 
         let task = self

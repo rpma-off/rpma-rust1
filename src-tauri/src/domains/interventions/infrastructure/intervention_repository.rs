@@ -111,7 +111,10 @@ impl InterventionRepository {
         Ok(intervention)
     }
 
-    pub fn get_interventions_by_task(&self, task_id: &str) -> InterventionResult<Vec<Intervention>> {
+    pub fn get_interventions_by_task(
+        &self,
+        task_id: &str,
+    ) -> InterventionResult<Vec<Intervention>> {
         let conn = self.db.get_connection()?;
         let mut stmt = conn.prepare(
             "SELECT * FROM interventions WHERE task_id = ? AND deleted_at IS NULL ORDER BY created_at DESC",
@@ -340,12 +343,15 @@ impl InterventionRepository {
     pub fn get_aggregate_stats(
         &self,
         technician_id: Option<&str>,
-    ) -> InterventionResult<crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats> {
+    ) -> InterventionResult<
+        crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats,
+    > {
         use crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats;
         let conn = self.db.get_connection()?;
         // COALESCE guards against NULL: SUM() returns NULL on an empty result set
         // in SQLite, which cannot be deserialized into u64.
-        let (total, completed, in_progress): (u64, u64, u64) = if let Some(tech_id) = technician_id {
+        let (total, completed, in_progress): (u64, u64, u64) = if let Some(tech_id) = technician_id
+        {
             conn.query_row(
                 "SELECT
                    COUNT(*),
