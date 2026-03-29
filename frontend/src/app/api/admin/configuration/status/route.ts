@@ -1,7 +1,7 @@
 ﻿ import { NextRequest, NextResponse } from 'next/server';
  
  import { getAuthenticatedUser } from '@/lib/api-auth';
- import { configurationService } from '@/domains/admin/server';
+ import { configurationService } from '@/domains/settings';
 
  export const dynamic = 'force-dynamic';
 

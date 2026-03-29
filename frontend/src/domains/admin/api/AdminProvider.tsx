@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { configurationService } from '../server';
+import { configurationService } from '@/domains/settings';
 import { useSystemHealth, type UseSystemHealthReturn } from '../hooks/useSystemHealth';
 
 interface AdminContextValue {

@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminKeys } from "@/lib/query-keys";
-import { configurationService } from "../server";
+import { configurationService } from "@/domains/settings";
 import type { AdminConfiguration, AdminConfigurationState } from "./types";
 
 export function useAdminConfiguration(

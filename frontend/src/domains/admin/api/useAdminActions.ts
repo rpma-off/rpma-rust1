@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { configurationService } from '../server';
+import { configurationService } from '@/domains/settings';
 import type { AdminBusinessRule, AdminConfiguration, UseAdminActionsResult } from './types';
 
 export function useAdminActions(): UseAdminActionsResult {

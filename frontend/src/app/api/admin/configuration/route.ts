@@ -1,6 +1,6 @@
 ﻿ import { NextRequest, NextResponse } from 'next/server';
  import { withAuth } from '@/lib/middleware/auth.middleware';
- import { configurationService } from '@/domains/admin/server';
+ import { configurationService } from '@/domains/settings';
  import { ConfigurationFiltersData } from '@/domains/admin/server';
 
  export const dynamic = 'force-dynamic';
