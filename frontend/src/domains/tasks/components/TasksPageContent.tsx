@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-import dynamic from 'next/dynamic';
-import { Plus, Shield, AlertCircle, Download, Filter, RefreshCw, ChevronRight, SearchX } from 'lucide-react';
+import { Plus, AlertCircle, Download, Filter, RefreshCw, ChevronRight, SearchX } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -21,16 +20,6 @@ import {
 import { useTasksPage } from '@/domains/tasks/hooks/useTasksPage';
 import { TaskListCard } from './TaskListCard';
 import { TaskListFilters } from './TaskListFilters';
-
-const CalendarView = dynamic(
-  () => import('@/domains/calendar').then((mod) => mod.CalendarView),
-  { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
-);
-
-const KanbanBoard = dynamic(
-  () => import('./KanbanBoard').then((mod) => mod.KanbanBoard),
-  { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-[10px] bg-muted/20" /> }
-);
 
 // Main tasks page component
 export default function TasksPageContent() {
@@ -102,10 +91,6 @@ export default function TasksPageContent() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold text-foreground">{t('nav.tasks')}</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="rounded-[6px] gap-2">
-              <Shield className="h-4 w-4" />
-              {t('tasks.showProgress')}
-            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -195,10 +180,7 @@ export default function TasksPageContent() {
             </div>
           ) : viewMode === 'table' ? (
             <div className="bg-white border border-[hsl(var(--rpma-border))] rounded-[10px] shadow-[var(--rpma-shadow-soft)] overflow-hidden">
-              <div className="grid grid-cols-[36px_140px_1fr_140px_24px] gap-2 px-4 py-2 text-xs rpma-table-header">
-                <div className="flex items-center">
-                  <input type="checkbox" className="h-4 w-4 rounded border-border" aria-label="Select all" />
-                </div>
+              <div className="grid grid-cols-[140px_1fr_140px_24px] gap-2 px-4 py-2 text-xs rpma-table-header">
                 <div>{t('time.dateTime')}</div>
                 <div>{t('tasks.taskNumber')} - {t('tasks.taskTitle')}</div>
                 <div className="text-right">{t('tasks.status')}</div>
@@ -214,12 +196,9 @@ export default function TasksPageContent() {
                   return (
                     <div
                       key={task.id}
-                      className="grid grid-cols-[36px_140px_1fr_140px_24px] gap-2 px-4 py-3 hover:bg-[hsl(var(--rpma-surface))] cursor-pointer"
+                      className="grid grid-cols-[140px_1fr_140px_24px] gap-2 px-4 py-3 hover:bg-[hsl(var(--rpma-surface))] cursor-pointer"
                       onClick={() => handleViewTask(task)}
                     >
-                      <div className="flex items-start pt-1">
-                        <input type="checkbox" className="h-4 w-4 rounded border-border" aria-label={`Select ${task.task_number}`} />
-                      </div>
                       <div className="text-xs text-muted-foreground">
                         {formatTaskDateTime(task)}
                       </div>
@@ -245,14 +224,6 @@ export default function TasksPageContent() {
                   );
                 })}
               </div>
-            </div>
-          ) : viewMode === 'calendar' ? (
-            <div className="h-[800px]">
-              <CalendarView />
-            </div>
-          ) : viewMode === 'kanban' ? (
-            <div className="h-[800px]">
-              <KanbanBoard />
             </div>
           ) : (
             <div className="space-y-2">

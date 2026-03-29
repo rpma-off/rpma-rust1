@@ -22,7 +22,7 @@ export function useTasksPage() {
   const [technicianFilter, setTechnicianFilter] = useState<string>('all');
   const [ppfZoneFilter, setPpfZoneFilter] = useState<string>('all');
   const [technicians, setTechnicians] = useState<Array<{ id: string; name: string }>>([]);
-  const [viewMode, setViewMode] = useState<'cards' | 'table' | 'calendar' | 'kanban'>('table');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [selectedDateRange] = useState<{ from?: Date; to?: Date } | undefined>();
   const [showFilters, setShowFilters] = useState(false);
 

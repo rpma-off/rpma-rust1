@@ -17,8 +17,8 @@ interface TaskListFiltersProps {
   ppfZoneFilter: string;
   setPpfZoneFilter: (zone: string) => void;
   technicians: Array<{ id: string; name: string }>;
-  viewMode: 'cards' | 'table' | 'calendar' | 'kanban';
-  setViewMode: (mode: 'cards' | 'table' | 'calendar' | 'kanban') => void;
+  viewMode: 'cards' | 'table';
+  setViewMode: (mode: 'cards' | 'table') => void;
   onExport: () => void;
   onImport: () => void;
 }
@@ -73,24 +73,6 @@ export const TaskListFilters = React.memo(({
                 onClick={() => setViewMode('cards')}
                 className={viewMode === 'cards' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
                 title="Vue cartes"
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('calendar')}
-                className={viewMode === 'calendar' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue calendrier"
-              >
-                <Calendar className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('kanban')}
-                className={viewMode === 'kanban' ? 'bg-[hsl(var(--rpma-teal))] text-white rounded-full' : 'rounded-full'}
-                title="Vue Kanban"
               >
                 <Grid className="h-4 w-4" />
               </Button>
