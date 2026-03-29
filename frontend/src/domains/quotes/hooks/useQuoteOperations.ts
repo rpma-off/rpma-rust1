@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { quoteKeys } from "@/lib/query-keys";
+import { quoteKeys, taskKeys } from "@/lib/query-keys";
 import type {
   Quote,
   QuoteExportResponse,
@@ -137,7 +137,7 @@ export function useConvertQuoteToTask() {
       void queryClient.invalidateQueries({ queryKey: quoteKeys.lists() });
       void queryClient.invalidateQueries({ queryKey: quoteKeys.stats() });
       // Also invalidate task list since a new task was created
-      void queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      void queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
 

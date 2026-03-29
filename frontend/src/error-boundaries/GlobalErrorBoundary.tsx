@@ -240,8 +240,9 @@ export const GlobalErrorBoundary: React.FC<GlobalErrorBoundaryProps> = ({
 }) => {
   const handleGlobalError = (error: Error, errorInfo: React.ErrorInfo) => {
     // If it's a Next.js internal control-flow error, don't log it
-    const isNextJsControlError = (error as any)?.digest?.startsWith('NEXT_REDIRECT') || 
-                                (error as any)?.digest?.startsWith('NEXT_NOT_FOUND') ||
+    const digest = (error as Error & { digest?: string }).digest;
+    const isNextJsControlError = digest?.startsWith('NEXT_REDIRECT') || 
+                                digest?.startsWith('NEXT_NOT_FOUND') ||
                                 error.message?.includes('NEXT_REDIRECT') ||
                                 error.message?.includes('NEXT_NOT_FOUND');
     

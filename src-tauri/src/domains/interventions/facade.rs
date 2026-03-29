@@ -8,6 +8,7 @@ use crate::domains::interventions::domain::models::intervention::{
 };
 use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
+use crate::domains::interventions::infrastructure::intervention_scoring_service::InterventionScoringService;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, AdvanceStepResponse,
     FinalizeInterventionRequest as ServiceFinalizeInterventionRequest,
@@ -324,14 +325,15 @@ impl InterventionsFacade {
                 AppError::NotFound(format!("Intervention {} not found", intervention_id))
             })?;
         self.check_intervention_access(ctx.user_id(), &ctx.auth.role, &intervention)?;
-        let progress = self
-            .intervention_service
-            .get_progress(&intervention_id)
-            .map_err(|_| AppError::Database("Failed to get intervention progress".to_string()))?;
         let steps = self
             .intervention_service
             .get_intervention_steps(&intervention_id)
             .map_err(|_| AppError::Database("Failed to get intervention steps".to_string()))?;
+        let progress = InterventionScoringService::build_progress(
+            &intervention_id,
+            intervention.status,
+            &steps,
+        );
         Ok((progress, steps))
     }
 

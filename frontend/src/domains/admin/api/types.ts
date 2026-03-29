@@ -1,4 +1,4 @@
-import type { Configuration, BusinessRule } from '../server';
+import type { Configuration, BusinessRule } from '@/domains/settings';
 
 export type AdminConfiguration = Configuration;
 export type AdminBusinessRule = BusinessRule;

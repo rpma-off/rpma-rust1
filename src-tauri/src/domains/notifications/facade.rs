@@ -193,6 +193,12 @@ impl NotificationsFacade {
             .map_err(|e| AppError::Database(e.to_string()))
     }
 
+    // STORAGE NOTE: Preferences are stored in the `user_settings` table via
+    // UserSettingsRepository, NOT in `notification_preferences`. The separate
+    // NotificationPreferencesRepository (notification_preferences table) is registered
+    // in the shared factory and used in tests, but the live IPC path does not call it.
+    // These two paths are not synchronized. Future work: consolidate to one storage strategy.
+
     /// Retrieve notification preferences for the given user.
     pub async fn get_preferences(
         &self,

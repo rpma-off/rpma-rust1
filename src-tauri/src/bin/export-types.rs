@@ -3,7 +3,12 @@
 // Note: serde_json::Value is handled via #[ts(type = "JsonValue")] attributes in the model definitions
 use ts_rs::TS;
 
+use rpma_ppf_intervention::commands::inventory::{
+    CreateInventoryTransactionRequest, CreateMaterialCategoryRequest, CreateMaterialRequest,
+    CreateSupplierRequest, RecordConsumptionRequest, UpdateStockRequest,
+};
 use rpma_ppf_intervention::commands::system::{DeviceInfo, HealthStatus};
+use rpma_ppf_intervention::commands::ui::EntityCountsResponse;
 
 // Import models from canonical domain paths
 use rpma_ppf_intervention::domains::auth::{
@@ -159,6 +164,11 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&HealthStatus::export_to_string().expect("Failed to export HealthStatus type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &EntityCountsResponse::export_to_string()
+            .expect("Failed to export EntityCountsResponse type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: auth
@@ -389,6 +399,35 @@ fn main() {
     type_definitions.push_str(
         &InventoryDashboardData::export_to_string()
             .expect("Failed to export InventoryDashboardData type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateMaterialRequest::export_to_string()
+            .expect("Failed to export CreateMaterialRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &UpdateStockRequest::export_to_string().expect("Failed to export UpdateStockRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &RecordConsumptionRequest::export_to_string()
+            .expect("Failed to export RecordConsumptionRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateInventoryTransactionRequest::export_to_string()
+            .expect("Failed to export CreateInventoryTransactionRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateMaterialCategoryRequest::export_to_string()
+            .expect("Failed to export CreateMaterialCategoryRequest type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateSupplierRequest::export_to_string()
+            .expect("Failed to export CreateSupplierRequest type"),
     );
     type_definitions.push_str("\n\n");
 
@@ -1068,6 +1107,7 @@ fn main() {
         "ApiError",
         "DeviceInfo",
         "HealthStatus",
+        "EntityCountsResponse",
         "UserAccount",
         "UserRole",
         "UserSession",
@@ -1219,6 +1259,12 @@ fn main() {
         "LowStockMaterial",
         "LowStockMaterialsResponse",
         "InventoryDashboardData",
+        "CreateMaterialRequest",
+        "UpdateStockRequest",
+        "RecordConsumptionRequest",
+        "CreateInventoryTransactionRequest",
+        "CreateMaterialCategoryRequest",
+        "CreateSupplierRequest",
         // Organization types
         "Organization",
         "CreateOrganizationRequest",

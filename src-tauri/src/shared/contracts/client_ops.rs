@@ -6,6 +6,7 @@
 use async_trait::async_trait;
 
 /// Minimal client contact information needed outside the clients domain.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ClientContactInfo {
     pub email: Option<String>,
     pub address_state: Option<String>,

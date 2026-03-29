@@ -29,7 +29,9 @@ interface FilterDrawerProps {
 }
 
 export function FilterDrawer({ isOpen, onClose }: FilterDrawerProps) {
-  const { filters, setFilters, resetFilters } = useCalendarStore();
+  const filters = useCalendarStore(state => state.filters);
+  const setFilters = useCalendarStore(state => state.setFilters);
+  const resetFilters = useCalendarStore(state => state.resetFilters);
 
   const [statusExpanded, setStatusExpanded] = useState(true);
   const [priorityExpanded, setPriorityExpanded] = useState(true);

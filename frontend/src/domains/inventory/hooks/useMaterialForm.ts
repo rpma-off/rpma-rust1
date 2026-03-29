@@ -181,8 +181,11 @@ export function useMaterialForm(initialMaterial?: Material | null) {
       }
     },
     onSuccess: () => {
-      // Invalidate all inventory queries so lists/dashboard refresh
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.all });
+      // Material CRUD only affects the materials list and dashboard stats.
+      // Categories, suppliers, reports, and intervention-consumption are
+      // unrelated to material form saves and must not be invalidated here.
+      void queryClient.invalidateQueries({ queryKey: inventoryKeys.materials() });
+      void queryClient.invalidateQueries({ queryKey: inventoryKeys.dashboard() });
     },
   });
 

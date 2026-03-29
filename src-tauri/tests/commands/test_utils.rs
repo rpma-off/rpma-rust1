@@ -22,7 +22,8 @@ pub struct TestContext {
 /// Create test database with app state
 pub async fn create_test_db() -> TestContext {
     let test_db = TestDatabase::new().expect("Failed to create test database");
-    let app_state = std::sync::Arc::new(rpma_ppf_intervention::test_utils::build_test_app_state().await);
+    let app_state =
+        std::sync::Arc::new(rpma_ppf_intervention::test_utils::build_test_app_state().await);
 
     TestContext {
         db: test_db.db(),

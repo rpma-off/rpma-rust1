@@ -13,11 +13,26 @@ import {
   Search,
 } from "lucide-react";
 import { Client } from "@/lib/backend";
-import { isValidEmailFormat } from "@/lib/utils/validators";
 import { useClients, useClient } from "@/domains/clients";
 import { FormStepProps } from "../types";
 import { ClientSelectorModal } from "./ClientSelectorModal";
 import { CustomerInfoSummary } from "./CustomerInfoSummary";
+import {
+  FieldError,
+  FieldStatusIcon,
+  focusFirstInvalidField,
+  getInputClassName,
+} from "./stepFieldShared";
+import {
+  formatFrenchPhoneNumber,
+  getClearedCustomerForm,
+  getCustomerFieldStatus,
+  getPrefilledCustomerForm,
+  isCustomerFormEmpty,
+  mapClientToCustomerForm,
+  validateEmail,
+  validatePhone,
+} from "./customerStep.helpers";
 
 export const CustomerStep: React.FC<FormStepProps> = ({
   formData,
@@ -36,13 +51,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
 
   // Focus on the first field with error
   useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      const firstErrorField = Object.keys(errors)[0];
-      const element = document.querySelector(`[name="${firstErrorField}"]`);
-      if (element) {
-        (element as HTMLElement).focus();
-      }
-    }
+    focusFirstInvalidField(errors);
   }, [errors]);
 
   // Handle pre-filled client_id
@@ -51,13 +60,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
     if (client && !selectedClient) {
       setSelectedClient(client);
       setUseExistingClient(true);
-      // Pre-fill customer information
-      onChange({
-        customer_name: client.name,
-        customer_email: client.email || '',
-        customer_phone: client.phone || '',
-        customer_address: client.address_street ? `${client.address_street}, ${client.address_city || ''} ${client.address_zip || ''}`.trim() : '',
-      });
+      onChange(getPrefilledCustomerForm(client));
     }
   }, [formData.client_id, clients, prefilledClient, selectedClient, onChange]);
 
@@ -67,29 +70,14 @@ export const CustomerStep: React.FC<FormStepProps> = ({
     setUseExistingClient(true);
     setShowClientSelector(false);
 
-    // Update form data with client information
-    onChange({
-      client_id: client.id,
-      customer_name: client.name,
-      customer_email: client.email || "",
-      customer_phone: client.phone || "",
-      customer_address: [client.address_street, client.address_city, client.address_zip, client.address_country]
-        .filter(Boolean)
-        .join(', ') || "",
-    });
+    onChange(mapClientToCustomerForm(client));
   };
 
   // Handle manual customer entry
   const handleManualEntry = () => {
     setUseExistingClient(false);
     setSelectedClient(null);
-    onChange({
-      client_id: null,
-      customer_name: "",
-      customer_email: "",
-      customer_phone: "",
-      customer_address: "",
-    });
+    onChange(getClearedCustomerForm());
   };
 
   const handleChange = (
@@ -100,65 +88,9 @@ export const CustomerStep: React.FC<FormStepProps> = ({
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-
-    if (value.startsWith("33")) {
-      value = "0" + value.slice(2);
-    }
-
-    if (value.length >= 2) {
-      value = value.slice(0, 2) + " " + value.slice(2);
-    }
-    if (value.length >= 5) {
-      value = value.slice(0, 5) + " " + value.slice(5);
-    }
-    if (value.length >= 8) {
-      value = value.slice(0, 8) + " " + value.slice(8);
-    }
-    if (value.length >= 11) {
-      value = value.slice(0, 11) + " " + value.slice(11);
-    }
-
-    onChange({ customer_phone: value.slice(0, 14) });
+    onChange({ customer_phone: formatFrenchPhoneNumber(e.target.value) });
   };
-
-  const validateEmail = (email: string) => isValidEmailFormat(email);
-
-  const validatePhone = (phone: string) => {
-    if (!phone) return true;
-    const cleanPhone = phone.replace(/\s/g, "");
-    return /^(\+33|0)[1-9](\d{8})$/.test(cleanPhone);
-  };
-
-  const getFieldStatus = (fieldName: string) => {
-    if (errors[fieldName]) return "error";
-
-    if (fieldName === "customer_email" && formData.customer_email) {
-      return validateEmail(formData.customer_email) ? "success" : "error";
-    }
-    if (fieldName === "customer_phone" && formData.customer_phone) {
-      return validatePhone(formData.customer_phone) ? "success" : "error";
-    }
-
-    if (formData[fieldName as keyof typeof formData]) return "success";
-    return "default";
-  };
-
-  const renderFieldIcon = (fieldName: string) => {
-    const status = getFieldStatus(fieldName);
-    if (status === "error") {
-      return <AlertCircle className="w-4 h-4 text-red-500" />;
-    } else if (status === "success") {
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
-    }
-    return null;
-  };
-
-  const isFormEmpty =
-    !formData.customer_name &&
-    !formData.customer_email &&
-    !formData.customer_phone &&
-    !formData.customer_address;
+  const isFormEmpty = isCustomerFormEmpty(formData);
 
   return (
     <div className="p-3 sm:p-6 max-w-2xl mx-auto">
@@ -299,30 +231,18 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     value={formData.customer_name || ""}
                     onChange={handleChange}
                     placeholder="Ex: Jean Dupont"
-                    className={`
-                  w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
-                  ${
-                    errors.customer_name
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
-                      : formData.customer_name
-                        ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
-                        : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
-                  }
-                  focus:ring-2 focus:outline-none
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                `}
+                    className={getInputClassName(
+                      "w-full rounded-lg border bg-white px-3 py-2 text-foreground placeholder-muted-foreground transition-all duration-200",
+                      getCustomerFieldStatus("customer_name", formData, errors),
+                      "border-[hsl(var(--rpma-border))] focus:border-border-light focus:ring-border-light/50",
+                    )}
                     disabled={isLoading}
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {renderFieldIcon("customer_name")}
+                    <FieldStatusIcon status={getCustomerFieldStatus("customer_name", formData, errors)} />
                   </div>
                 </div>
-                {errors.customer_name && (
-                  <p className="text-sm text-red-400 flex items-center mt-1">
-                    <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                    {errors.customer_name}
-                  </p>
-                )}
+                <FieldError message={errors.customer_name} />
               </div>
 
               {/* Email and Phone */}
@@ -340,40 +260,22 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       value={formData.customer_email || ""}
                       onChange={handleChange}
                       placeholder="client@example.com"
-                      className={`
-                    w-full px-3 py-2 border rounded-lg transition-all duration-200 bg-white text-foreground placeholder-muted-foreground
-                    ${
-                      errors.customer_email ||
-                      (formData.customer_email &&
-                        !validateEmail(formData.customer_email))
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/50"
-                        : formData.customer_email &&
-                            validateEmail(formData.customer_email)
-                          ? "border-[hsl(var(--rpma-teal))] focus:border-[hsl(var(--rpma-teal))] focus:ring-[hsl(var(--rpma-teal))]/20/50"
-                          : "border-[hsl(var(--rpma-border))] focus:border-[hsl(var(--rpma-border))]-light focus:ring-border-light/50"
-                    }
-                    focus:ring-2 focus:outline-none
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  `}
+                      className={getInputClassName(
+                        "w-full rounded-lg border bg-white px-3 py-2 text-foreground placeholder-muted-foreground transition-all duration-200",
+                        getCustomerFieldStatus("customer_email", formData, errors),
+                        "border-[hsl(var(--rpma-border))] focus:border-border-light focus:ring-border-light/50",
+                      )}
                       disabled={isLoading}
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {renderFieldIcon("customer_email")}
+                      <FieldStatusIcon status={getCustomerFieldStatus("customer_email", formData, errors)} />
                     </div>
                   </div>
                   {formData.customer_email &&
                     !validateEmail(formData.customer_email) && (
-                      <p className="text-sm text-red-400 flex items-center mt-1">
-                        <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                        Format d&apos;email invalide
-                      </p>
+                      <FieldError message="Format d'email invalide" />
                     )}
-                  {errors.customer_email && (
-                    <p className="text-sm text-red-400 flex items-center mt-1">
-                      <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0" />
-                      {errors.customer_email}
-                    </p>
-                  )}
+                  <FieldError message={errors.customer_email} />
                 </div>
 
                 {/* Phone */}
@@ -407,7 +309,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                       disabled={isLoading}
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      {renderFieldIcon("customer_phone")}
+                      <FieldStatusIcon status={getCustomerFieldStatus("customer_phone", formData, errors)} />
                     </div>
                   </div>
                   {formData.customer_phone &&
@@ -455,7 +357,7 @@ export const CustomerStep: React.FC<FormStepProps> = ({
                     disabled={isLoading}
                   />
                   <div className="absolute right-3 top-3">
-                    {renderFieldIcon("customer_address")}
+                    <FieldStatusIcon status={getCustomerFieldStatus("customer_address", formData, errors)} />
                   </div>
                 </div>
                 {errors.customer_address && (

@@ -9,7 +9,7 @@ use crate::shared::repositories::Repositories;
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(tag = "type", rename_all = "lowercase")]
-#[ts(export, export_to = "GlobalSearchResult.ts")]
+#[ts(export_to = "GlobalSearchResult.ts")]
 pub enum GlobalSearchResult {
     Task {
         id: String,
@@ -35,7 +35,7 @@ pub enum GlobalSearchResult {
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "GlobalSearchResponse.ts")]
+#[ts(export_to = "GlobalSearchResponse.ts")]
 pub struct GlobalSearchResponse {
     pub results: Vec<GlobalSearchResult>,
 }

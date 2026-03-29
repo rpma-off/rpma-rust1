@@ -328,10 +328,7 @@ pub async fn get_app_info(correlation_id: Option<String>) -> Result<serde_json::
     info.insert("name".to_string(), env!("CARGO_PKG_NAME").to_string());
     info.insert("brand".to_string(), APP_BRAND.to_string());
     info.insert("watermark".to_string(), APP_WATERMARK.to_string());
-    info.insert(
-        "copyright".to_string(),
-        APP_COPYRIGHT_NOTICE.to_string(),
-    );
+    info.insert("copyright".to_string(), APP_COPYRIGHT_NOTICE.to_string());
     info.insert("license".to_string(), APP_LICENSE_NAME.to_string());
     info.insert(
         "description".to_string(),

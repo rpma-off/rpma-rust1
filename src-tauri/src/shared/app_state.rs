@@ -2,8 +2,8 @@
 
 use crate::db::Database;
 use crate::domains::clients::application::client_service::ClientService;
-use crate::domains::inventory::InventoryFacade;
 use crate::domains::integrations::application::services::integrations_service::IntegrationsService;
+use crate::domains::inventory::InventoryFacade;
 use crate::domains::rules::application::services::rules_service::RulesService;
 use crate::domains::settings::application::settings_service::SettingsService;
 use crate::domains::tasks::infrastructure::task::TaskService;

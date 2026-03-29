@@ -8,7 +8,7 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useAuth } from "@/shared/hooks/useAuth";
 import { convertTimestamps } from "@/shared/utils";
 import { useUserActions } from "@/domains/users/api/useUserActions";
-import { userIpc } from "@/domains/users/ipc/users.ipc";
+import { useUsers } from "@/domains/users/api/useUsers";
 
 export interface UseAdminUserManagementReturn {
   users: UserAccount[];
@@ -45,26 +45,13 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
 
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  const usersQuery = useQuery({
-    queryKey: adminKeys.usersFiltered(debouncedSearch, roleFilter),
-    queryFn: async () => {
-      const result = await userIpc.list(
-        50,
-        0,
-        debouncedSearch || undefined,
-        roleFilter,
-      );
-      return (result?.data || []).map((u) =>
-        convertTimestamps(u),
-      ) as UserAccount[];
-    },
-    enabled: !!user?.token,
-    staleTime: 30_000,
-  });
+  // Use the public `useUsers` hook and apply client-side filtering for search & role.
+  // This avoids a cross-domain import of low-level IPC and sticks to the domain public API.
+  const usersQuery = useUsers(50, 0);
 
   const invalidateUsers = useCallback(
     () => queryClient.invalidateQueries({ queryKey: adminKeys.users() }),
-    [queryClient]
+    [queryClient],
   );
 
   const addUserMutation = useMutation({
@@ -120,12 +107,26 @@ export function useAdminUserManagement(): UseAdminUserManagementReturn {
     await invalidateUsers();
   }, [invalidateUsers]);
 
-  const users = usersQuery.data ?? [];
+  const rawUsers = usersQuery.users ?? [];
+  // Normalize timestamps and ensure typed array
+  const users = (rawUsers as UserAccount[]).map((u) =>
+    convertTimestamps(u),
+  ) as UserAccount[];
+
+  // Client-side filtering (search + role). Keep server-side filtering for very large data if needed later.
+  const filteredUsers = users.filter((u) => {
+    const q = (debouncedSearch || "").trim().toLowerCase();
+    const haystack =
+      `${u.email ?? ""} ${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase();
+    const matchesSearch = q === "" || haystack.includes(q);
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   return {
     users,
-    filteredUsers: users,
-    isLoading: usersQuery.isLoading || usersQuery.isFetching,
+    filteredUsers: filteredUsers,
+    isLoading: usersQuery.loading,
     searchQuery,
     roleFilter,
     showAddModal,

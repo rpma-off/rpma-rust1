@@ -6,6 +6,7 @@ interface TaskCardProps {
   mode?: 'compact' | 'full';
   className?: string;
   onClick?: () => void;
+  onTaskClick?: (task: CalendarTask) => void;
   isDragging?: boolean;
 }
 
@@ -72,8 +73,10 @@ const TaskCardComponent = memo<TaskCardProps>(({
   mode = 'compact',
   className = '',
   onClick,
+  onTaskClick,
   isDragging = false,
 }) => {
+  const handleClick = onTaskClick ? () => onTaskClick(task) : onClick;
   const statusColors = getStatusColor(task.status);
   const priorityColor = getPriorityColor(task.priority);
   const taskLabel = getCalendarTaskLabel(task);
@@ -93,7 +96,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
           ${isDragging ? 'opacity-60' : ''}
           ${className}
         `}
-        onClick={onClick}
+        onClick={handleClick}
         role="button"
         tabIndex={0}
         aria-label={ariaLabel}
@@ -162,6 +165,7 @@ const TaskCardComponent = memo<TaskCardProps>(({
     prevProps.task.priority === nextProps.task.priority &&
     prevProps.mode === nextProps.mode &&
     prevProps.onClick === nextProps.onClick &&
+    prevProps.onTaskClick === nextProps.onTaskClick &&
     prevProps.isDragging === nextProps.isDragging &&
     prevProps.className === nextProps.className
   );

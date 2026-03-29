@@ -2,21 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle } from 'lucide-react';
-import {
-  Camera,
-  CheckCircle,
-  CheckSquare,
-  FileText,
-  MessageSquare,
-  Package,
-  Signature,
-  Star,
-  TrendingUp,
-  X,
-} from 'lucide-react';
-import { resolveLocalImageUrl } from '@/shared/utils/media';
-import { formatDateTime } from '@/shared/utils/date-formatters';
+import { AlertTriangle, FileText } from 'lucide-react';
 import {
   Alert,
   AlertDescription,
@@ -30,17 +16,32 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { useTranslation } from '@/shared/hooks';
-import type { MaterialConsumption } from '@/shared/types/inventory.types';
 import { useCompletedTaskPage } from '../../hooks/useCompletedTaskPage';
-import {
-  CompletedActionBar,
-} from './CompletedActionBar';
+import { CompletedActionBar } from './CompletedActionBar';
 import { CompletedHero } from './CompletedHero';
 import { CompletedSidebar } from './CompletedSidebar';
 import { SummaryStats } from './SummaryStats';
 import { WorkflowCompletionTimeline } from './WorkflowCompletionTimeline';
+import {
+  AuditTrailSection,
+  ChecklistSection,
+  MaterialsSection,
+  PhotoGallerySection,
+  QualitySection,
+  SelectedPhotoOverlay,
+} from './CompletedTaskSections';
+
+function mapPhotoUrls(photos: unknown[] | null | undefined): string[] {
+  return (photos || []).map((photo) => {
+    if (typeof photo === 'string') return photo;
+    if (photo && typeof photo === 'object') {
+      const record = photo as Record<string, unknown>;
+      return String(record.url || record.path || record.file_path || '');
+    }
+    return '';
+  }).filter(Boolean);
+}
 
 export function CompletedTaskPageContent() {
   const router = useRouter();
@@ -83,7 +84,7 @@ export function CompletedTaskPageContent() {
           <Skeleton className="h-16 w-3/4" />
           <Skeleton className="h-6 w-1/2" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Skeleton className="h-96" />
           </div>
@@ -113,9 +114,7 @@ export function CompletedTaskPageContent() {
       <PageShell>
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            {t('tasks.notFoundById')}
-          </AlertDescription>
+          <AlertDescription>{t('tasks.notFoundById')}</AlertDescription>
         </Alert>
       </PageShell>
     );
@@ -136,7 +135,7 @@ export function CompletedTaskPageContent() {
         taskId={taskId}
       />
 
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <div className="container mx-auto max-w-7xl px-4 py-6">
         <CompletedHero
           task={task}
           duration={duration}
@@ -146,8 +145,8 @@ export function CompletedTaskPageContent() {
           progressPercentage={progressPercentage}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
             <SummaryStats
               checklistCompleted={checklistCount}
               checklistTotal={checklistTotal}
@@ -161,7 +160,7 @@ export function CompletedTaskPageContent() {
 
             <Card className="rounded-xl border-gray-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5 text-emerald-600" />
                   Workflow d&apos;Intervention
                 </CardTitle>
@@ -180,340 +179,37 @@ export function CompletedTaskPageContent() {
               </CardContent>
             </Card>
 
-            {task.checklist_items && task.checklist_items.length > 0 && (
-              <Card className="rounded-xl border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <CheckSquare className="h-5 w-5 text-emerald-600" />
-                    Checklist
-                  </CardTitle>
-                  <CardDescription>
-                    {checklistCount}/{checklistTotal} éléments complétés
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="divide-y divide-gray-100">
-                    {task.checklist_items.map((item) => (
-                      <div key={item.id} className="flex items-start gap-3 py-2.5">
-                        <CheckCircle
-                          className={`mt-0.5 h-4 w-4 flex-shrink-0 ${item.is_completed ? 'text-emerald-500' : 'text-gray-300'}`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${item.is_completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-                            {item.description}
-                          </p>
-                          {item.completed_at && (
-                            <p className="text-[10px] text-gray-400 mt-0.5">
-                              {formatDateTime(item.completed_at)}
-                            </p>
-                          )}
-                          {item.notes && (
-                            <p className="text-xs text-gray-500 mt-0.5 italic">{item.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <ChecklistSection
+              checklistItems={task.checklist_items || []}
+              checklistCount={checklistCount}
+              checklistTotal={checklistTotal}
+            />
 
-            {fullInterventionData && (
-              <Card className="rounded-xl border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Star className="h-5 w-5 text-amber-600" />
-                    Qualité & Satisfaction
-                  </CardTitle>
-                  <CardDescription>
-                    Évaluation client et scores de qualité
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {(fullInterventionData.customer_satisfaction !== null || fullInterventionData.quality_score !== null) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {fullInterventionData.customer_satisfaction !== null && (
-                        <div className="rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 p-4 border border-amber-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
-                              Satisfaction Client
-                            </div>
-                            <Star className="h-4 w-4 text-amber-500" />
-                          </div>
-                          <div className="text-3xl font-extrabold text-amber-600 mb-2">
-                            {fullInterventionData.customer_satisfaction}/5
-                          </div>
-                          <div className="flex gap-0.5">
-                            {[...Array(5)].map((_, i) => (
-                              <span key={i} className={`text-lg ${i < fullInterventionData.customer_satisfaction! ? 'text-amber-500' : 'text-amber-200'}`}>
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+            <QualitySection fullInterventionData={fullInterventionData} />
 
-                      {fullInterventionData.quality_score !== null && (
-                        <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 p-4 border border-purple-200">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="text-xs font-semibold uppercase tracking-wider text-purple-700">
-                              Score Qualité
-                            </div>
-                            <TrendingUp className="h-4 w-4 text-purple-500" />
-                          </div>
-                          <div className="text-3xl font-extrabold text-purple-600 mb-2">
-                            {fullInterventionData.quality_score}%
-                          </div>
-                          <div className="w-full bg-purple-200 rounded-full h-2">
-                            <div
-                              className="bg-purple-600 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${fullInterventionData.quality_score}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <MaterialsSection materials={materials} />
 
-                  {fullInterventionData.final_observations && fullInterventionData.final_observations.length > 0 && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          Observations Finales
-                        </div>
-                        <div className="space-y-2">
-                          {fullInterventionData.final_observations.map((observation: string, index: number) => (
-                            <div key={index} className="flex items-start gap-2 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                              <CheckCircle className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-gray-700">{observation}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
+            <PhotoGallerySection
+              photoCount={photoCount}
+              allStepPhotoUrls={allStepPhotoUrls}
+              photosBefore={mapPhotoUrls(task.photos_before)}
+              photosAfter={mapPhotoUrls(task.photos_after)}
+              photosDuring={mapPhotoUrls(task.photos?.during)}
+              onSelectPhoto={setSelectedPhoto}
+            />
 
-                  {(fullInterventionData.customer_signature || fullInterventionData.customer_comments) && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                          <Signature className="h-4 w-4 text-blue-600" />
-                          Signature & Commentaires Client
-                        </div>
-                        <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-4 border border-blue-200">
-                          {fullInterventionData.customer_signature && (
-                            <div className="mb-3">
-                              <div className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
-                                Signataire
-                              </div>
-                              <div className="text-sm font-medium text-blue-900">
-                                {String(fullInterventionData.customer_signature)}
-                              </div>
-                            </div>
-                          )}
-                          {fullInterventionData.customer_comments && (
-                            <div className="flex items-start gap-2">
-                              <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <div className="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-1">
-                                  Commentaires
-                                </div>
-                                <div className="text-sm text-blue-900 italic">
-                                  &quot;{fullInterventionData.customer_comments}&quot;
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {materials.length > 0 && (
-              <Card className="rounded-xl border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Package className="h-5 w-5 text-indigo-600" />
-                    Matériaux Utilisés
-                  </CardTitle>
-                  <CardDescription>
-                    Consommation de matériaux durant l&apos;intervention
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {materials.map((m: MaterialConsumption) => (
-                      <div
-                        key={m.id}
-                        className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs text-gray-600" title={m.material_id}>
-                            {m.material_id.slice(0, 8)}&hellip;{m.material_id.slice(-4)}
-                          </span>
-                          {m.batch_used && (
-                            <span className="text-xs text-gray-500">Lot: {m.batch_used}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-gray-600">
-                          <span>Qté: <span className="font-semibold text-gray-900">{m.quantity_used}</span></span>
-                          {m.waste_quantity > 0 && (
-                            <span className="text-amber-600">Déchet: {m.waste_quantity}</span>
-                          )}
-                          {m.total_cost != null && (
-                            <span className="font-semibold text-indigo-700">
-                              {m.total_cost.toFixed(2)} €
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {materials.some((m: MaterialConsumption) => m.total_cost != null) && (
-                      <div className="mt-3 flex justify-end border-t border-gray-200 pt-3">
-                        <span className="text-sm font-extrabold text-indigo-700">
-                          Total:{' '}
-                          {materials
-                            .reduce((sum: number, m: MaterialConsumption) => sum + (m.total_cost ?? 0), 0)
-                            .toFixed(2)}{' '}
-                          €
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {(photoCount > 0 || allStepPhotoUrls.length > 0) && (
-              <Card className="rounded-xl border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Camera className="h-5 w-5 text-cyan-600" />
-                    Galerie Photos
-                  </CardTitle>
-                  <CardDescription>
-                    Photos documentées pendant l&apos;intervention
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 p-4 border border-blue-200 text-center">
-                      <div className="text-3xl font-extrabold text-blue-600 mb-1">
-                        {allStepPhotoUrls.length || photoCount}
-                      </div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">
-                        Total
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 border border-emerald-200 text-center">
-                      <div className="text-3xl font-extrabold text-emerald-600 mb-1">
-                        {task.photos_before?.length || 0}
-                      </div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-                        Avant
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 p-4 border border-purple-200 text-center">
-                      <div className="text-3xl font-extrabold text-purple-600 mb-1">
-                        {task.photos_after?.length || 0}
-                      </div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-purple-700">
-                        Après
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 p-4 border border-amber-200 text-center">
-                      <div className="text-3xl font-extrabold text-amber-600 mb-1">
-                        {task.photos?.during?.length || 0}
-                      </div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">
-                        Pendant
-                      </div>
-                    </div>
-                  </div>
-
-                  {allStepPhotoUrls.length > 0 && (
-                    <>
-                      <Separator />
-                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {allStepPhotoUrls.map((url, index) => (
-                          <button
-                            key={`${url}-${index}`}
-                            type="button"
-                            onClick={() => setSelectedPhoto(resolveLocalImageUrl(url))}
-                            className="aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                          >
-                            <img
-                              src={resolveLocalImageUrl(url)}
-                              alt={`Photo ${index + 1}`}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            <Card className="rounded-xl border-gray-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-gray-600" />
-                  Audit Trail
-                </CardTitle>
-                <CardDescription>
-                  Informations système et historique
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Tâche
-                    </div>
-                    <div className="space-y-1 text-gray-700">
-                      <div><span className="font-medium">ID:</span> {task.id?.slice(-8) || 'N/A'}</div>
-                      <div><span className="font-medium">Créé:</span> {task.created_at ? formatDateTime(task.created_at) : 'N/A'}</div>
-                      <div><span className="font-medium">Modifié:</span> {task.updated_at ? formatDateTime(task.updated_at as unknown as string) : 'N/A'}</div>
-                    </div>
-                  </div>
-                  {fullInterventionData && (
-                    <div className="space-y-2">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        Intervention
-                      </div>
-                      <div className="space-y-1 text-gray-700">
-                        <div><span className="font-medium">ID:</span> {fullInterventionData.id?.slice(-8) || 'N/A'}</div>
-                        <div><span className="font-medium">Créé:</span> {formatDateTime(fullInterventionData.created_at as unknown as string)}</div>
-                        <div><span className="font-medium">Modifié:</span> {formatDateTime(fullInterventionData.updated_at as unknown as string)}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 text-xs">
-                  <div className={`w-2 h-2 rounded-full ${task.synced ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-                  <span className="text-gray-700">
-                    {task.synced ? 'Synchronisé' : 'Non synchronisé'}
-                  </span>
-                  {task.last_synced_at && (
-                    <span className="text-gray-500">
-                      · Dernière sync: {formatDateTime(task.last_synced_at as unknown as string)}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <AuditTrailSection
+              task={task}
+              fullInterventionData={
+                fullInterventionData
+                  ? {
+                      id: fullInterventionData.id,
+                      created_at: fullInterventionData.created_at,
+                      updated_at: fullInterventionData.updated_at,
+                    }
+                  : null
+              }
+            />
           </div>
 
           <div className="lg:col-span-1">
@@ -535,28 +231,7 @@ export function CompletedTaskPageContent() {
         </div>
       </div>
 
-      {selectedPhoto && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <button
-            type="button"
-            onClick={() => setSelectedPhoto(null)}
-            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="h-6 w-6" />
-          </button>
-          <img
-            src={selectedPhoto}
-            alt="Aperçu photo"
-            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      <SelectedPhotoOverlay selectedPhoto={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </div>
   );
 }
-

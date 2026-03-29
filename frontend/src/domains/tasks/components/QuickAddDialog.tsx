@@ -22,7 +22,7 @@ interface QuickAddDialogProps {
 
 export function QuickAddDialog({ isOpen, onClose }: QuickAddDialogProps) {
   const { user: _user } = useAuth();
-  const { selectedDate } = useCalendarStore();
+  const selectedDate = useCalendarStore(state => state.selectedDate);
 
   const [title, setTitle] = useState('');
   const [vehicle, setVehicle] = useState('');

@@ -46,6 +46,7 @@ export function useTaskDetailPage() {
       return result as TaskWithDetails;
     },
     enabled: !!taskId,
+    staleTime: 5 * 60_000,
   });
 
   // Derive a user-facing error string from the query error
@@ -62,20 +63,22 @@ export function useTaskDetailPage() {
     }
   }, [error]);
 
-  // Assignment check — dependent on task being loaded
+  // Assignment check — fires in parallel with the task query (only needs taskId)
   const { data: assignmentData } = useQuery({
     queryKey: taskKeys.assignment(taskId, user?.user_id ?? ""),
     queryFn: () => taskIpc.checkTaskAssignment(taskId, user!.user_id),
-    enabled: !!task && !!user?.token && !!user?.user_id,
+    enabled: !!taskId && !!user?.token && !!user?.user_id,
     retry: false,
+    staleTime: 2 * 60_000,
   });
 
-  // Availability check — dependent on task being loaded
+  // Availability check — fires in parallel with the task query (only needs taskId)
   const { data: availabilityData } = useQuery({
     queryKey: taskKeys.availability(taskId),
     queryFn: () => taskIpc.checkTaskAvailability(taskId),
-    enabled: !!task && !!user?.token,
+    enabled: !!taskId && !!user?.token,
     retry: false,
+    staleTime: 2 * 60_000,
   });
 
   const isAssignedToCurrentUser = assignmentData?.status === "assigned";

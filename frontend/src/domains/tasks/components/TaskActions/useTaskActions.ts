@@ -181,7 +181,8 @@ export function useTaskActions(task: TaskWithDetails) {
     onSuccess: (result) => {
       if (result.success && result.intervention) {
         queryClient.invalidateQueries({ queryKey: taskKeys.byId(task.id) });
-        queryClient.invalidateQueries({ queryKey: interventionKeys.all });
+        queryClient.invalidateQueries({ queryKey: interventionKeys.byTask(task.id) });
+        queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(task.id) });
         toast.success("Intervention demarree avec succes");
         router.push(`/tasks/${task.id}/workflow/ppf/steps/preparation`);
       }

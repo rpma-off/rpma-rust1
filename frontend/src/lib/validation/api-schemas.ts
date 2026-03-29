@@ -88,15 +88,15 @@ export type CreateClientInput = z.infer<typeof CreateClientSchema>;
 export type UpdateClientInput = z.infer<typeof UpdateClientSchema>;
 
 export const TasksListResponseSchema = z.object({
-  data: z.array(z.any()),
-  pagination: z.any(),
-  statistics: z.any().optional(),
+  data: z.array(z.unknown()),
+  pagination: z.record(z.string(), z.unknown()),
+  statistics: z.record(z.string(), z.unknown()).optional(),
 });
 
 export const TaskApiResponseSchema = z.object({
   success: z.boolean(),
-  data: z.any(),
-  error: z.any().optional(),
+  data: z.unknown(),
+  error: z.unknown().optional(),
 });
 
 export const validateApiResponse = <T>(schema: z.ZodSchema<T>, data: unknown): T => schema.parse(data);

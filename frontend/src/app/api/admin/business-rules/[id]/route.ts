@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { UserRole } from '@/lib/backend';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { configurationService } from '@/domains/admin/server';
+import { configurationService } from '@/domains/settings';
 
 type UserProfile = {
   role: UserRole;

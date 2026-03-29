@@ -6,25 +6,22 @@
 //! - Data persistence operations
 //! - Query operations
 
+mod creation;
+mod steps;
+mod task_link;
+
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus, InterventionType,
-};
+use crate::domains::interventions::domain::models::intervention::{Intervention, InterventionStatus};
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepType};
-use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_repository::InterventionRepository;
 use crate::domains::interventions::infrastructure::intervention_types::{
     AdvanceStepRequest, InterventionPhoto, StartInterventionRequest, UpdateInterventionRequest,
 };
 use crate::shared::contracts::common::*;
-use crate::shared::contracts::task_status::TaskStatus;
-use rusqlite::{params, OptionalExtension, Transaction};
-use std::str::FromStr;
-
+use rusqlite::{params, Transaction};
 use std::sync::Arc;
-use tracing::warn;
 
 /// Service for intervention data operations
 #[derive(Debug)]
@@ -47,123 +44,7 @@ impl InterventionDataService {
         request: &StartInterventionRequest,
         user_id: &str,
     ) -> InterventionResult<Intervention> {
-        // Get task_number, vehicle_plate, and client info from task
-        let (task_number, vehicle_plate, client_id, customer_name, customer_email, customer_phone):
-            (String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>) = tx
-            .query_row(
-                "SELECT task_number, vehicle_plate, client_id, customer_name, customer_email, customer_phone FROM tasks WHERE id = ?",
-                params![request.task_id],
-                |row| Ok((
-                    row.get(0)?,
-                    row.get(1)?,
-                    row.get(2)?,
-                    row.get(3)?,
-                    row.get(4)?,
-                    row.get(5)?,
-                )),
-            )
-            .map_err(|e| {
-                InterventionError::NotFound(format!("Task {} not found: {}", request.task_id, e))
-            })?;
-        let vehicle_plate = vehicle_plate.unwrap_or_else(|| "UNKNOWN".to_string());
-
-        let intervention_id = crate::shared::utils::uuid::generate_uuid_string();
-
-        let mut intervention =
-            Intervention::new(request.task_id.clone(), task_number.clone(), vehicle_plate);
-        intervention.id = intervention_id;
-
-        // Set client info from task
-        intervention.client_id = client_id;
-        intervention.client_name = customer_name;
-        intervention.client_email = customer_email;
-        intervention.client_phone = customer_phone;
-
-        // Set vehicle info from task (fetch full vehicle details).
-        // BUG-3: tasks.vehicle_year is stored as TEXT, not INTEGER.  Reading it
-        // directly as Option<i32> causes a rusqlite type error that the
-        // .unwrap_or silently swallows — making ALL four fields None.  Read
-        // vehicle_year as Option<String> and parse it to i32 afterward.
-        let (vehicle_model, vehicle_make, vehicle_year_str, vehicle_vin): (
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-        ) = tx
-            .query_row(
-                "SELECT vehicle_model, vehicle_make, vehicle_year, vin FROM tasks WHERE id = ?",
-                params![request.task_id],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
-            )
-            .unwrap_or((None, None, None, None));
-        intervention.vehicle_model = vehicle_model;
-        intervention.vehicle_make = vehicle_make;
-        intervention.vehicle_year = vehicle_year_str
-            .as_deref()
-            .and_then(|y| y.parse::<i32>().ok());
-        intervention.vehicle_vin = vehicle_vin;
-
-        // Set audit fields
-        intervention.created_by = Some(user_id.to_string());
-        intervention.updated_by = Some(user_id.to_string());
-        intervention.updated_at = now();
-
-        // Set intervention properties from request
-        intervention_state_machine::validate_transition(
-            &intervention.status,
-            &InterventionStatus::InProgress,
-        )
-        .map_err(InterventionError::BusinessRule)?;
-        intervention.status = InterventionStatus::InProgress;
-        intervention.started_at = TimestampString::now();
-        intervention.technician_id = Some(request.technician_id.clone());
-        intervention.intervention_type = InterventionType::Ppf;
-        intervention.ppf_zones_config = Some(request.ppf_zones.clone());
-        intervention.film_type =
-            Some(FilmType::from_str(&request.film_type).unwrap_or(FilmType::Matte));
-        intervention.film_brand = request.film_brand.clone();
-        intervention.film_model = request.film_model.clone();
-        intervention.scheduled_at = TimestampString(Some(
-            chrono::DateTime::parse_from_rfc3339(&request.scheduled_start)
-                .map(|dt| dt.timestamp_millis())
-                .unwrap_or(now()),
-        ));
-        intervention.estimated_duration = Some(request.estimated_duration);
-        intervention.weather_condition = Some(
-            WeatherCondition::from_str(&request.weather_condition)
-                .unwrap_or(WeatherCondition::Sunny),
-        );
-        intervention.lighting_condition = Some(
-            LightingCondition::from_str(&request.lighting_condition)
-                .unwrap_or(LightingCondition::Natural),
-        );
-        intervention.work_location =
-            Some(WorkLocation::from_str(&request.work_location).unwrap_or(WorkLocation::Indoor));
-        intervention.temperature_celsius = request.temperature.map(|t| t as f64);
-        intervention.humidity_percentage = request.humidity.map(|h| h as f64);
-        if let Some(gps) = &request.gps_coordinates {
-            intervention.start_location_lat = Some(gps.latitude);
-            intervention.start_location_lon = Some(gps.longitude);
-            intervention.start_location_accuracy = None;
-        }
-        intervention.notes = request.notes.clone();
-        intervention.special_instructions = request
-            .customer_requirements
-            .clone()
-            .map(|reqs| reqs.join("; "));
-
-        // Enforce domain invariants before persisting: validate ranges for
-        // completion_percentage, GPS coordinates, vehicle_year, satisfaction
-        // score, etc.  A validation failure here means the task data contains
-        // out-of-range values that should not propagate into the intervention.
-        intervention
-            .validate()
-            .map_err(|errors| InterventionError::BusinessRule(errors.join("; ")))?;
-
-        self.repository
-            .create_intervention_with_tx(tx, &intervention)?;
-
-        Ok(intervention)
+        creation::create_intervention_with_tx(self, tx, request, user_id)
     }
 
     /// Create a new intervention
@@ -172,7 +53,6 @@ impl InterventionDataService {
         request: &StartInterventionRequest,
         user_id: &str,
     ) -> InterventionResult<Intervention> {
-        // For backward compatibility, use a transaction internally
         self.db
             .with_transaction(|tx| {
                 self.create_intervention_with_tx(tx, request, user_id)
@@ -189,32 +69,7 @@ impl InterventionDataService {
         tx: &Transaction,
         intervention: &Intervention,
     ) -> InterventionResult<Vec<InterventionStep>> {
-        // Use synchronous version of workflow strategy to avoid runtime creation
-        use crate::domains::interventions::infrastructure::workflow_strategy::{
-            WorkflowContext, WorkflowStrategyFactory,
-        };
-
-        let workflow_context = WorkflowContext {
-            intervention: intervention.clone(),
-            user_id: "system".to_string(), // Not used in this context
-            environment_conditions: None,  // Not available in this context
-        };
-
-        let strategy = WorkflowStrategyFactory::create_strategy(intervention, &workflow_context);
-
-        // Use synchronous version instead of creating runtime
-        let workflow_result = strategy
-            .initialize_workflow_sync(intervention, &workflow_context)
-            .map_err(|e| {
-                InterventionError::Database(format!("Failed to initialize workflow: {}", e))
-            })?;
-
-        // Save steps to database
-        for step in &workflow_result.steps {
-            self.save_step_with_tx(tx, step)?;
-        }
-
-        Ok(workflow_result.steps)
+        steps::initialize_workflow_steps_with_tx(self, tx, intervention)
     }
 
     /// Initialize workflow steps for an intervention
@@ -222,7 +77,6 @@ impl InterventionDataService {
         &self,
         intervention: &Intervention,
     ) -> InterventionResult<Vec<InterventionStep>> {
-        // For backward compatibility, use a transaction internally
         self.db
             .with_transaction(|tx| {
                 self.initialize_workflow_steps_with_tx(tx, intervention)
@@ -237,37 +91,7 @@ impl InterventionDataService {
         step: &mut InterventionStep,
         request: &AdvanceStepRequest,
     ) -> InterventionResult<()> {
-        step.collected_data = Some(request.collected_data.clone());
-        step.step_data = step.collected_data.clone();
-        step.notes = request.notes.clone();
-
-        if let Some(photos) = &request.photos {
-            step.photo_count = photos.len() as i32;
-            step.photo_urls = Some(photos.clone());
-        }
-
-        // Handle quality checks and issues
-        if let Ok(mut data) =
-            serde_json::from_value::<serde_json::Value>(request.collected_data.clone())
-        {
-            if let Some(obj) = data.as_object_mut() {
-                obj.insert(
-                    "quality_check_passed".to_string(),
-                    serde_json::Value::Bool(request.quality_check_passed),
-                );
-                if let Some(issues) = &request.issues {
-                    obj.insert(
-                        "issues".to_string(),
-                        serde_json::to_value(issues).unwrap_or(serde_json::Value::Array(vec![])),
-                    );
-                }
-                step.collected_data =
-                    Some(serde_json::to_value(obj).unwrap_or(request.collected_data.clone()));
-                step.step_data = step.collected_data.clone();
-            }
-        }
-
-        Ok(())
+        steps::update_step_with_data(step, request)
     }
 
     /// Update intervention progress
@@ -275,16 +99,11 @@ impl InterventionDataService {
         &self,
         intervention: &mut Intervention,
     ) -> InterventionResult<()> {
-        // Get all steps
         let steps = self.get_intervention_steps(&intervention.id)?;
-
         let summary = InterventionCalculationService::summarize_steps(&steps);
 
-        // Update current step and progress
         intervention.current_step = summary.completed_steps as i32;
         intervention.completion_percentage = summary.completion_percentage;
-        // Note: status is finalized explicitly in the finalization flow, even if progress reaches 100%.
-
         intervention.updated_at = now();
 
         self.save_intervention(intervention)?;
@@ -310,6 +129,13 @@ impl InterventionDataService {
         task_id: &str,
     ) -> InterventionResult<Option<Intervention>> {
         self.repository.get_latest_intervention_by_task(task_id)
+    }
+
+    pub fn get_interventions_by_task(
+        &self,
+        task_id: &str,
+    ) -> InterventionResult<Vec<Intervention>> {
+        self.repository.get_interventions_by_task(task_id)
     }
 
     /// Get step by ID
@@ -376,7 +202,7 @@ impl InterventionDataService {
         self.repository.save_step_with_tx(tx, step)
     }
 
-    /// QW-3: batch variant — prepare once, execute N times within the provided transaction.
+    /// QW-3: batch variant â€” prepare once, execute N times within the provided transaction.
     pub fn save_steps_batch_with_tx(
         &self,
         tx: &Transaction,
@@ -400,7 +226,6 @@ impl InterventionDataService {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
 
-        // Apply updates — each field is Option<T>; None means "leave unchanged".
         if let Some(notes) = updates.notes {
             intervention.notes = Some(notes);
         }
@@ -414,14 +239,6 @@ impl InterventionDataService {
     }
 
     /// Apply administrative field updates to an existing intervention.
-    ///
-    /// Handles management-level fields (`status`, `technician_id`) that are
-    /// separate from the user-facing `UpdateInterventionRequest` (notes /
-    /// special_instructions). Passing `None` for a field leaves it unchanged.
-    ///
-    /// Previously these fields were passed through a `serde_json::Value` that
-    /// was never extracted, so they were silently dropped. This method
-    /// guarantees the values reach the database.
     pub fn bulk_apply_update(
         &self,
         intervention_id: &str,
@@ -432,11 +249,11 @@ impl InterventionDataService {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
 
-        if let Some(s) = status {
-            intervention.status = s.parse().unwrap_or(intervention.status);
+        if let Some(status) = status {
+            intervention.status = status.parse().unwrap_or(intervention.status);
         }
-        if let Some(tid) = technician_id {
-            intervention.technician_id = Some(tid.to_string());
+        if let Some(technician_id) = technician_id {
+            intervention.technician_id = Some(technician_id.to_string());
         }
 
         intervention.updated_at = now();
@@ -446,27 +263,17 @@ impl InterventionDataService {
 
     /// Delete intervention
     pub fn delete_intervention(&self, intervention_id: &str) -> InterventionResult<()> {
-        // Check if intervention exists
         let intervention = self.get_intervention(intervention_id)?.ok_or_else(|| {
             InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
         })?;
 
-        // Only allow deletion of pending interventions
         if intervention.status != InterventionStatus::Pending {
             return Err(InterventionError::BusinessRule(
                 "Can only delete pending interventions".to_string(),
             ));
         }
 
-        // Delete steps first
-        self.db.get_connection()?.execute(
-            "DELETE FROM intervention_steps WHERE intervention_id = ?",
-            params![intervention_id],
-        )?;
-
-        // Delete intervention
         self.repository.delete_intervention(intervention_id)?;
-
         Ok(())
     }
 
@@ -490,68 +297,7 @@ impl InterventionDataService {
         intervention_id: &str,
         first_step_id: &str,
     ) -> InterventionResult<()> {
-        // Verify task exists before updating
-        let task_exists: i64 = tx
-            .query_row(
-                "SELECT COUNT(*) FROM tasks WHERE id = ?",
-                params![task_id],
-                |row| row.get(0),
-            )
-            .map_err(|e| {
-                InterventionError::Database(format!("Failed to verify task exists: {}", e))
-            })?;
-
-        if task_exists == 0 {
-            return Err(InterventionError::NotFound(format!(
-                "Task {} not found",
-                task_id
-            )));
-        }
-
-        // Get task number for intervention synchronization
-        let task_number: Option<String> = tx
-            .query_row(
-                "SELECT task_number FROM tasks WHERE id = ?",
-                params![task_id],
-                |row| row.get(0),
-            )
-            .optional()
-            .map_err(|e| {
-                InterventionError::Database(format!("Failed to get task number: {}", e))
-            })?;
-
-        let result = tx.execute(
-            "UPDATE tasks SET
-                workflow_id = ?,
-                current_workflow_step_id = ?,
-                status = 'in_progress',
-                started_at = ?
-            WHERE id = ?",
-            params![intervention_id, first_step_id, now(), task_id],
-        )?;
-
-        // Update intervention with task number for consistency
-        if let Some(task_num) = task_number {
-            tx.execute(
-                "UPDATE interventions SET task_number = ? WHERE id = ?",
-                params![task_num, intervention_id],
-            )
-            .map_err(|e| {
-                InterventionError::Database(format!(
-                    "Failed to update intervention task number: {}",
-                    e
-                ))
-            })?;
-        }
-
-        if result == 0 {
-            return Err(InterventionError::Database(format!(
-                "Failed to update task {} - no rows affected",
-                task_id
-            )));
-        }
-
-        Ok(())
+        task_link::link_task_to_intervention_with_tx(self, tx, task_id, intervention_id, first_step_id)
     }
 
     /// Link task to intervention and set initial workflow state
@@ -561,7 +307,6 @@ impl InterventionDataService {
         intervention_id: &str,
         first_step_id: &str,
     ) -> InterventionResult<()> {
-        // For backward compatibility, use a transaction internally
         self.db
             .with_transaction(|tx| {
                 self.link_task_to_intervention_with_tx(tx, task_id, intervention_id, first_step_id)
@@ -572,96 +317,7 @@ impl InterventionDataService {
 
     /// Reconcile Task/Intervention state consistency
     pub fn reconcile_task_intervention_state(&self, task_id: &str) -> InterventionResult<()> {
-        // Get current task state
-        let workflow_id: Option<String> = self.db.query_single_value(
-            "SELECT workflow_id FROM tasks WHERE id = ?",
-            params![task_id],
-        )?;
-
-        let current_step_id: Option<String> = self.db.query_single_value(
-            "SELECT current_workflow_step_id FROM tasks WHERE id = ?",
-            params![task_id],
-        )?;
-
-        let task_status: String = self
-            .db
-            .query_single_value("SELECT status FROM tasks WHERE id = ?", params![task_id])?;
-
-        // If task has workflow_id, verify intervention exists and is active
-        if let Some(intervention_id) = &workflow_id {
-            let intervention_count: i64 = self.db.query_single_value(
-                "SELECT COUNT(*) FROM interventions WHERE id = ? AND status IN ('pending', 'in_progress', 'paused') AND deleted_at IS NULL",
-                params![intervention_id],
-            )?;
-
-            if intervention_count == 0 {
-                // Intervention doesn't exist or is not active, clean up task references
-                warn!(
-                    "Intervention {} not found or not active, cleaning up task {} references",
-                    intervention_id, task_id
-                );
-                self.db.get_connection()?.execute(
-                    "UPDATE tasks SET workflow_id = NULL, current_workflow_step_id = NULL, status = ? WHERE id = ?",
-                    params![TaskStatus::Draft.to_string(), task_id],
-                )?;
-                return Ok(());
-            }
-
-            // Verify current step exists and belongs to the intervention
-            if let Some(step_id) = &current_step_id {
-                let step_count: i64 = self.db.query_single_value(
-                    "SELECT COUNT(*) FROM intervention_steps WHERE id = ? AND intervention_id = ?",
-                    params![step_id, intervention_id],
-                )?;
-
-                if step_count == 0 {
-                    warn!(
-                        "Current step {} invalid for task {}, clearing reference",
-                        step_id, task_id
-                    );
-                    self.db.get_connection()?.execute(
-                        "UPDATE tasks SET current_workflow_step_id = NULL WHERE id = ?",
-                        params![task_id],
-                    )?;
-                }
-            }
-
-            // Sync task status with intervention status
-            let intervention_status: Option<String> = self.db.query_single_value(
-                "SELECT status FROM interventions WHERE id = ? AND deleted_at IS NULL",
-                params![intervention_id],
-            )?;
-
-            if let Some(int_status) = intervention_status {
-                let intervention_status_enum = int_status
-                    .parse::<InterventionStatus>()
-                    .unwrap_or(InterventionStatus::InProgress);
-
-                let expected_task_status = match intervention_status_enum {
-                    InterventionStatus::Completed => TaskStatus::Completed,
-                    InterventionStatus::Cancelled => TaskStatus::Cancelled,
-                    InterventionStatus::Paused => TaskStatus::Paused,
-                    _ => TaskStatus::InProgress,
-                };
-
-                if task_status != expected_task_status.to_string() {
-                    self.db.get_connection()?.execute(
-                        "UPDATE tasks SET status = ? WHERE id = ?",
-                        params![expected_task_status.to_string(), task_id],
-                    )?;
-                }
-            }
-        } else {
-            // Task has no workflow_id but might have orphaned step reference
-            if current_step_id.is_some() {
-                warn!("Task {} has current_workflow_step_id but no workflow_id, clearing step reference", task_id);
-                self.db.get_connection()?.execute(
-                    "UPDATE tasks SET current_workflow_step_id = NULL WHERE id = ?",
-                    params![task_id],
-                )?;
-            }
-        }
-        Ok(())
+        task_link::reconcile_task_intervention_state(self, task_id)
     }
 
     /// Get PPF workflow steps configuration
@@ -676,13 +332,23 @@ impl InterventionDataService {
             .list_interventions(status, technician_id, limit, offset)
     }
 
+    /// Delegate to the repository's SQL aggregate query for intervention stats.
+    pub fn get_aggregate_stats(
+        &self,
+        technician_id: Option<&str>,
+    ) -> InterventionResult<
+        crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats,
+    > {
+        self.repository.get_aggregate_stats(technician_id)
+    }
+
     /// Get legacy PPF workflow steps configuration
     /// NOTE: This method is deprecated. Use WorkflowStrategyFactory instead
     /// which provides flexible workflow strategies based on intervention type.
     pub fn get_ppf_workflow_steps(&self) -> Vec<(String, StepType)> {
         vec![
             ("Inspection".to_string(), StepType::Inspection),
-            ("PrÃƒÂ©paration".to_string(), StepType::Preparation),
+            ("PrÃƒÆ’Ã‚Â©paration".to_string(), StepType::Preparation),
             ("Installation".to_string(), StepType::Installation),
             ("Finalisation".to_string(), StepType::Finalization),
         ]
@@ -690,142 +356,4 @@ impl InterventionDataService {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domains::interventions::domain::models::step::InterventionStep;
-    use crate::domains::interventions::infrastructure::intervention_types::{
-        AdvanceStepRequest, StartInterventionRequest,
-    };
-    use crate::test_utils::TestDatabase;
-
-    fn make_start_request(task_id: &str) -> StartInterventionRequest {
-        StartInterventionRequest {
-            task_id: task_id.to_string(),
-            intervention_number: None,
-            ppf_zones: vec!["full_front".to_string()],
-            custom_zones: None,
-            film_type: "matte".to_string(),
-            film_brand: None,
-            film_model: None,
-            weather_condition: "sunny".to_string(),
-            lighting_condition: "natural".to_string(),
-            work_location: "indoor".to_string(),
-            temperature: None,
-            humidity: None,
-            technician_id: "tech-001".to_string(),
-            assistant_ids: None,
-            scheduled_start: "2026-01-01T08:00:00Z".to_string(),
-            estimated_duration: 120,
-            gps_coordinates: None,
-            address: None,
-            notes: None,
-            customer_requirements: None,
-            special_instructions: None,
-        }
-    }
-
-    // BUG-3 regression: vehicle_year stored as TEXT in tasks must not prevent
-    // vehicle_model/vehicle_make/vehicle_vin from being copied to the new intervention.
-    #[test]
-    fn test_create_intervention_copies_vehicle_fields_despite_text_year() {
-        let test_db = TestDatabase::new().expect("Failed to create test database");
-        let db = test_db.db();
-        let now = chrono::Utc::now().timestamp_millis();
-        // Use a valid UUID so Intervention::validate() accepts the task_id.
-        let task_id = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
-        let tech_id = "b2c3d4e5-f6a7-8901-bcde-f12345678901";
-        // Seed a task with vehicle fields — year stored as TEXT (SQLite stores it as TEXT).
-        db.execute(
-            "INSERT INTO tasks \
-             (id, task_number, title, vehicle_plate, vehicle_model, vehicle_make, vehicle_year, vin, \
-              ppf_zones, scheduled_date, status, priority, created_at, updated_at, synced) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)",
-            rusqlite::params![
-                task_id, "T-VEH", "Vehicle test task", "CV-234-DO",
-                "Model 3", "Tesla", "2022", "VIN999",
-                r#"["full_front"]"#, "2026-01-01", "draft", "medium", now, now
-            ],
-        ).expect("seed task");
-
-        // Seed a user so the interventions.technician_id FK is satisfied.
-        db.execute(
-            "INSERT INTO users \
-             (id, email, username, password_hash, full_name, role, created_at, updated_at, synced) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)",
-            rusqlite::params![
-                tech_id,
-                "tech@test.com",
-                "tech_test",
-                "hash",
-                "Tech Test",
-                "technician",
-                now,
-                now
-            ],
-        )
-        .expect("seed user");
-
-        let service = InterventionDataService::new(db.clone());
-        let mut req = make_start_request(task_id);
-        req.technician_id = tech_id.to_string();
-
-        // Use the public API rather than manually opening a pool connection +
-        // transaction: holding raw_conn open while the service also borrows from
-        // the pool triggers SQLITE_LOCKED under parallel test execution.
-        let intervention = service
-            .create_intervention(&req, tech_id)
-            .expect("create_intervention failed");
-
-        assert_eq!(
-            intervention.vehicle_model.as_deref(),
-            Some("Model 3"),
-            "vehicle_model must be copied"
-        );
-        assert_eq!(
-            intervention.vehicle_make.as_deref(),
-            Some("Tesla"),
-            "vehicle_make must be copied"
-        );
-        assert_eq!(
-            intervention.vehicle_year,
-            Some(2022),
-            "vehicle_year must be parsed from TEXT"
-        );
-        assert_eq!(
-            intervention.vehicle_vin.as_deref(),
-            Some("VIN999"),
-            "vehicle_vin must be copied"
-        );
-    }
-
-    #[test]
-    fn update_step_with_data_mirrors_collected_data_to_step_data() {
-        let test_db = TestDatabase::new().expect("Failed to create test database");
-        let service = InterventionDataService::new(test_db.db());
-        let mut step = InterventionStep::new(
-            "intervention-1".to_string(),
-            1,
-            "Inspection".to_string(),
-            StepType::Inspection,
-        );
-        let request = AdvanceStepRequest {
-            intervention_id: "intervention-1".to_string(),
-            step_id: step.id.clone(),
-            collected_data: serde_json::json!({
-                "checklist": { "clean_dry": true },
-                "notes": "ok"
-            }),
-            photos: None,
-            notes: Some("draft note".to_string()),
-            quality_check_passed: true,
-            issues: None,
-        };
-
-        service
-            .update_step_with_data(&mut step, &request)
-            .expect("Failed to update step");
-
-        assert_eq!(step.collected_data, step.step_data);
-        assert_eq!(step.notes, Some("draft note".to_string()));
-    }
-}
+mod tests;

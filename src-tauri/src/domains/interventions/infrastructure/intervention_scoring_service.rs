@@ -8,7 +8,10 @@
 
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
-use crate::domains::interventions::domain::models::intervention::InterventionProgress;
+use crate::domains::interventions::domain::models::intervention::{
+    InterventionProgress, InterventionStatus,
+};
+use crate::domains::interventions::domain::models::step::InterventionStep;
 use crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
@@ -28,18 +31,12 @@ impl InterventionScoringService {
         }
     }
 
-    /// Calculate intervention progress based on completed steps.
-    pub fn get_progress(&self, intervention_id: &str) -> InterventionResult<InterventionProgress> {
-        let intervention = self
-            .data
-            .get_intervention(intervention_id)?
-            .ok_or_else(|| {
-                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
-            })?;
-
-        let steps = self.data.get_intervention_steps(intervention_id)?;
-
-        let summary = InterventionCalculationService::summarize_steps(&steps);
+    pub fn build_progress(
+        intervention_id: &str,
+        status: InterventionStatus,
+        steps: &[InterventionStep],
+    ) -> InterventionProgress {
+        let summary = InterventionCalculationService::summarize_steps(steps);
         let total_steps = summary.total_steps as i32;
         let completed_steps = summary.completed_steps as i32;
         let current_step = if total_steps > 0 {
@@ -53,45 +50,42 @@ impl InterventionScoringService {
             0.0
         };
 
-        Ok(InterventionProgress {
+        InterventionProgress {
             intervention_id: intervention_id.to_string(),
             current_step,
             total_steps,
             completed_steps,
             completion_percentage,
             estimated_time_remaining: None,
-            status: intervention.status,
-        })
+            status,
+        }
+    }
+
+    /// Calculate intervention progress based on completed steps.
+    pub fn get_progress(&self, intervention_id: &str) -> InterventionResult<InterventionProgress> {
+        let intervention = self
+            .data
+            .get_intervention(intervention_id)?
+            .ok_or_else(|| {
+                InterventionError::NotFound(format!("Intervention {} not found", intervention_id))
+            })?;
+
+        let steps = self.data.get_intervention_steps(intervention_id)?;
+        Ok(Self::build_progress(
+            intervention_id,
+            intervention.status,
+            &steps,
+        ))
     }
 
     /// Compute aggregate statistics for a given technician (or all technicians when `None`).
     ///
-    /// Counts total, completed and in-progress interventions from the database.
+    /// Delegates to a single SQL COUNT/SUM aggregate query instead of loading all
+    /// intervention rows into memory and filtering with iterator passes.
     pub fn get_stats_by_technician(
         &self,
         technician_id: Option<&str>,
     ) -> InterventionResult<InterventionAggregateStats> {
-        use crate::domains::interventions::domain::models::intervention::InterventionStatus;
-
-        let (interventions, _) = self
-            .data
-            .list_interventions(None, technician_id, None, None)?;
-
-        let total = interventions.len() as u64;
-        let completed = interventions
-            .iter()
-            .filter(|i| i.status == InterventionStatus::Completed)
-            .count() as u64;
-        let in_progress = interventions
-            .iter()
-            .filter(|i| i.status == InterventionStatus::InProgress)
-            .count() as u64;
-
-        Ok(InterventionAggregateStats {
-            total_interventions: total,
-            completed_interventions: completed,
-            in_progress_interventions: in_progress,
-            average_completion_time: None,
-        })
+        self.data.get_aggregate_stats(technician_id)
     }
 }

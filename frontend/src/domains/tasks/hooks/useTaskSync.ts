@@ -109,6 +109,7 @@ export function useTaskSync({
       return taskIpc.list(queryParams);
     },
     enabled: autoFetch && !!userToken,
+    staleTime: 5 * 60_000,
   });
 
   // ── Bridge effects: forward query state to legacy callbacks ───────────────

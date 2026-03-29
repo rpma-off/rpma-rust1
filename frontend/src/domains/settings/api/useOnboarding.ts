@@ -11,7 +11,7 @@ export function useOnboardingStatus() {
   return useQuery({
     queryKey: onboardingKeys.status(),
     queryFn: () => ipcClient.organization.getOnboardingStatus(),
-    staleTime: 0,
+    staleTime: 5 * 60_000, // 5 min — completion sets cache directly via setQueryData in useCompleteOnboarding
     retry: false,
   });
 }

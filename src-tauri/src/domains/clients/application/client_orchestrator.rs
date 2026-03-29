@@ -1,6 +1,7 @@
 use crate::domains::clients::application::client_service::ClientService;
 use crate::domains::clients::domain::models::{Client, ClientQuery, ClientWithTasks};
 use crate::shared::services::cross_domain::{Task, TaskQuery, TaskService};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct ClientOrchestrator {
@@ -54,30 +55,19 @@ impl ClientOrchestrator {
     ) -> Result<Vec<ClientWithTasks>, String> {
         let clients = self.client_service.get_clients_async(filters).await?;
         let task_limit = limit_tasks.unwrap_or(5);
-        let mut clients_with_tasks = Vec::new();
 
+        // Collect all client IDs then batch-load tasks in a single DB round-trip,
+        // replacing the previous N+1 pattern (one task query per client).
+        let client_ids: Vec<String> = clients.data.iter().map(|c| c.id.clone()).collect();
+        let mut tasks_by_client: HashMap<String, Vec<Task>> = self
+            .task_service
+            .get_tasks_for_clients_async(client_ids, task_limit)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let mut clients_with_tasks = Vec::with_capacity(clients.data.len());
         for client in clients.data {
-            let task_query = TaskQuery {
-                client_id: Some(client.id.clone()),
-                pagination: crate::shared::repositories::base::PaginationParams {
-                    page: Some(1),
-                    page_size: Some(task_limit),
-                    sort_by: Some("created_at".to_string()),
-                    sort_order: Some("desc".to_string()),
-                },
-                status: None,
-                technician_id: None,
-                priority: None,
-                search: None,
-                from_date: None,
-                to_date: None,
-            };
-            let tasks_response = self
-                .task_service
-                .get_tasks_async(task_query)
-                .await
-                .map_err(|e| e.to_string())?;
-            let tasks: Vec<Task> = tasks_response.data.into_iter().map(|t| t.task).collect();
+            let tasks = tasks_by_client.remove(&client.id).unwrap_or_default();
             clients_with_tasks.push(client_into_client_with_tasks(client, tasks));
         }
         Ok(clients_with_tasks)

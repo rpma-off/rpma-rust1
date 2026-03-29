@@ -3,9 +3,11 @@
 use crate::domains::inventory::domain::models::material::{
     InventoryTransactionType, MaterialType, UnitOfMeasure,
 };
+use ts_rs::TS;
 
 /// Request to create a new material.
-#[derive(Debug, serde::Deserialize, Default)]
+#[derive(Debug, serde::Deserialize, Default, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct CreateMaterialRequest {
     pub sku: String,
@@ -17,6 +19,7 @@ pub struct CreateMaterialRequest {
     pub category_id: Option<String>,
     pub brand: Option<String>,
     pub model: Option<String>,
+    #[ts(type = "JsonValue | null")]
     pub specifications: Option<serde_json::Value>,
     pub unit_of_measure: UnitOfMeasure,
     pub current_stock: Option<f64>,
@@ -30,6 +33,7 @@ pub struct CreateMaterialRequest {
     pub supplier_sku: Option<String>,
     pub quality_grade: Option<String>,
     pub certification: Option<String>,
+    #[ts(type = "number | null")]
     pub expiry_date: Option<i64>,
     pub batch_number: Option<String>,
     pub storage_location: Option<String>,
@@ -44,7 +48,8 @@ pub use crate::domains::inventory::domain::models::requests::{
 };
 
 /// Request to create a material category.
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct CreateMaterialCategoryRequest {
     pub name: String,
@@ -56,7 +61,8 @@ pub struct CreateMaterialCategoryRequest {
 }
 
 /// Request to create a supplier.
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct CreateSupplierRequest {
     pub name: String,
@@ -83,7 +89,8 @@ pub struct CreateSupplierRequest {
 }
 
 /// Request to create an inventory transaction.
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct CreateInventoryTransactionRequest {
     pub material_id: String,
@@ -97,6 +104,7 @@ pub struct CreateInventoryTransactionRequest {
     pub location_from: Option<String>,
     pub location_to: Option<String>,
     pub batch_number: Option<String>,
+    #[ts(type = "number | null")]
     pub expiry_date: Option<i64>,
     pub quality_status: Option<String>,
     pub intervention_id: Option<String>,

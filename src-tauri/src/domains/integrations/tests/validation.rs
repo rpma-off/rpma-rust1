@@ -15,7 +15,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_integration_rejects_non_http_endpoint() {
-        let db = Arc::new(Database::new_in_memory().await.expect("integrations validation db"));
+        let db = Arc::new(
+            Database::new_in_memory()
+                .await
+                .expect("integrations validation db"),
+        );
         let service = IntegrationsService::new(db);
 
         let result = service

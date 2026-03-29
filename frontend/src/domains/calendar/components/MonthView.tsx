@@ -16,6 +16,21 @@ export const MonthView: React.FC<MonthViewProps> = ({
   onTaskClick,
   className = '',
 }) => {
+  // O(n) grouping pass — recomputes only when tasks list changes, not on date navigation.
+  const tasksByDate = useMemo(() => {
+    const map = new Map<string, CalendarTask[]>();
+    for (const task of tasks) {
+      if (!task.scheduled_date) continue;
+      const bucket = map.get(task.scheduled_date);
+      if (bucket) {
+        bucket.push(task);
+      } else {
+        map.set(task.scheduled_date, [task]);
+      }
+    }
+    return map;
+  }, [tasks]);
+
   const monthData = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -40,11 +55,10 @@ export const MonthView: React.FC<MonthViewProps> = ({
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const date = new Date(year, month, day);
       const dateString = format(date, 'yyyy-MM-dd');
-      const dayTasks = tasks.filter(task => task.scheduled_date === dateString);
       days.push({
         date,
         isCurrentMonth: true,
-        tasks: dayTasks,
+        tasks: tasksByDate.get(dateString) ?? [],
       });
     }
 
@@ -58,7 +72,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
     }
 
     return days;
-  }, [tasks, currentDate]);
+  }, [currentDate, tasksByDate]);
 
   const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
   const today = new Date();
@@ -110,7 +124,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                     task={task}
                     mode="compact"
                     className="text-xs"
-                    onClick={() => onTaskClick?.(task)}
+                    onTaskClick={onTaskClick}
                   />
                 ))}
               </div>

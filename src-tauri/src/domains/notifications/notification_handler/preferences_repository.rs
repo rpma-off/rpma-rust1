@@ -1,3 +1,17 @@
+//! Repository for the `notification_preferences` table.
+//!
+//! # Dual-store warning
+//!
+//! The live application facade (`NotificationsFacade`) stores and reads notification
+//! preferences via `UserSettingsRepository` (the `user_settings` table), NOT via this
+//! repository. This repository is registered in the shared factory and exercised by
+//! integration tests, but the IPC path for `get_preferences` / `update_preferences`
+//! does not call it.
+//!
+//! Before adding any code that uses `NotificationPreferencesRepository` in the
+//! application path, confirm which table is the intended source of truth and
+//! consolidate both paths. See `facade.rs` for context.
+
 use async_trait::async_trait;
 use rusqlite::params;
 use std::sync::Arc;

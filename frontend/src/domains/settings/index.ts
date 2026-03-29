@@ -4,6 +4,7 @@ export { useSettingsActions } from './api/useSettingsActions';
 export { useOrganization, useUpdateOrganization, useUploadLogo, useOrganizationSettings, useUpdateOrganizationSettings } from './api/useOrganization';
 export { useOnboardingStatus, useCompleteOnboarding, useNeedsOnboarding } from './api/useOnboarding';
 export { useOnboardingCheck } from './hooks/useOnboardingCheck';
+export { configurationService } from './api/configurationService';
 export { ProfileSettingsTab } from './components/ProfileSettingsTab';
 export { PreferencesTab } from './components/PreferencesTab';
 export { SecurityTab } from './components/SecurityTab';

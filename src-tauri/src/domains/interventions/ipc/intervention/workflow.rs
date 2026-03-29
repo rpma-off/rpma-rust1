@@ -10,7 +10,9 @@ use crate::domains::interventions::application::{
 use crate::domains::interventions::infrastructure::intervention_types::UpdateInterventionRequest;
 use crate::domains::interventions::InterventionsFacade;
 use crate::resolve_context;
-use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, IntegrationEventSink};
+use crate::shared::contracts::integration_sink::{
+    IntegrationDispatchRequest, IntegrationEventSink,
+};
 use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use tracing::instrument;
 
@@ -45,9 +47,9 @@ pub async fn intervention_start(
         })
         .await?;
     if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(|| {
-            "Intervention start blocked by active rule".to_string()
-        })));
+        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+            || "Intervention start blocked by active rule".to_string(),
+        )));
     }
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());
@@ -123,9 +125,9 @@ pub async fn intervention_finalize(
         })
         .await?;
     if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(|| {
-            "Intervention finalization blocked by active rule".to_string()
-        })));
+        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+            || "Intervention finalization blocked by active rule".to_string(),
+        )));
     }
 
     let facade = InterventionsFacade::new(state.intervention_service.clone());

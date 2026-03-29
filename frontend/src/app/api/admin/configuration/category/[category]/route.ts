@@ -2,7 +2,7 @@
 
 import { getAuthenticatedUser } from "@/lib/api-auth";
 import type { SystemConfiguration } from "@/lib/backend";
-import { configurationService } from "@/domains/admin/server";
+import { configurationService } from "@/domains/settings";
 import { ServiceResponse } from "@/domains/admin/server";
 
 /**

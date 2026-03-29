@@ -12,6 +12,7 @@ use crate::domains::calendar::domain::repositories::CalendarEventQueries;
 use crate::domains::calendar::models::CalendarEvent;
 use crate::shared::repositories::base::{RepoError, RepoResult};
 use async_trait::async_trait;
+use chrono::TimeZone as _;
 use std::sync::Arc;
 
 // ── SQL helpers ───────────────────────────────────────────────────────────────
@@ -50,17 +51,27 @@ impl CalendarEventQueries for CalendarRepository {
         to: i64,
         technician_id: Option<&str>,
     ) -> RepoResult<Vec<CalendarEvent>> {
-        // `unixepoch(start_datetime)` converts ISO-8601 strings stored in the
-        // database to Unix seconds; multiplying by 1000 gives milliseconds so
-        // the comparison is consistent with the `from`/`to` parameters.
+        // Convert i64 ms epoch boundaries to ISO-8601 strings for direct
+        // lexicographic comparison.  ISO-8601 strings ("2025-06-15T09:00:00")
+        // sort identically to chronological order, so this is behavior-identical
+        // to the previous unixepoch() approach while enabling the partial index
+        // idx_calendar_events_start_end (migration 068).  Wrapping a column in
+        // a scalar function prevents SQLite from using any index on that column.
+        let from_iso = chrono::DateTime::from_timestamp_millis(from)
+            .map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string())
+            .unwrap_or_default();
+        let to_iso = chrono::DateTime::from_timestamp_millis(to)
+            .map(|dt| dt.format("%Y-%m-%dT%H:%M:%S").to_string())
+            .unwrap_or_default();
+
         let mut sql = format!(
             "{} WHERE deleted_at IS NULL \
-             AND unixepoch(start_datetime) * 1000 >= ? \
-             AND unixepoch(end_datetime) * 1000 <= ?",
+             AND start_datetime >= ? \
+             AND end_datetime <= ?",
             EVENT_SELECT
         );
 
-        let mut params_vec: Vec<rusqlite::types::Value> = vec![from.into(), to.into()];
+        let mut params_vec: Vec<rusqlite::types::Value> = vec![from_iso.into(), to_iso.into()];
 
         if let Some(tech_id) = technician_id {
             sql.push_str(" AND technician_id = ?");

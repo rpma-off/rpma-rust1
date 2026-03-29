@@ -84,7 +84,9 @@ impl Database {
             .map_err(|e| format!("Migration 065: failed to read table DDL: {}", e))?;
 
         if sql.contains("'archived'") {
-            tracing::info!("Migration 065: 'archived' already present in CHECK constraint, skipping rebuild");
+            tracing::info!(
+                "Migration 065: 'archived' already present in CHECK constraint, skipping rebuild"
+            );
             conn.execute(
                 "INSERT INTO schema_version (version) VALUES (?1)",
                 params![65],
@@ -249,7 +251,9 @@ impl Database {
         )
         .map_err(|e| e.to_string())?;
 
-        tracing::info!("Migration 065: 'archived' status added to interventions table successfully");
+        tracing::info!(
+            "Migration 065: 'archived' status added to interventions table successfully"
+        );
         Ok(())
     }
 }

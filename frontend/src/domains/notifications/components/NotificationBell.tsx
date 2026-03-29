@@ -6,7 +6,7 @@ import { useNotificationStore } from '../stores/notificationStore';
 import { useNotifications } from '../hooks/useNotifications';
 
 export function NotificationBell() {
-  const { setPanelOpen } = useNotificationStore();
+  const setPanelOpen = useNotificationStore(state => state.setPanelOpen);
   const { unreadCount } = useNotifications();
 
   return (

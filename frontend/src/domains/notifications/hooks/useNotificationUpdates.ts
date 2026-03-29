@@ -3,11 +3,10 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { notificationKeys } from "@/lib/query-keys";
+import { notificationKeys, userSettingsKeys } from "@/lib/query-keys";
 import { notificationApi } from "@/lib/ipc/notification";
 import { useAuth } from "@/shared/hooks/useAuth";
-// ❌ CROSS-DOMAIN IMPORT — TODO(ADR-002): Move to shared/ or use public index
-import { useSettings } from "@/domains/settings/api/useSettings";
+import { ipcClient } from "@/lib/ipc";
 import type { Notification } from "../api/notificationTypes";
 import { isInQuietHoursAt } from "../services/quietHours";
 
@@ -15,7 +14,14 @@ const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 export function useNotificationUpdates() {
   const { user } = useAuth();
-  const { settings } = useSettings();
+  const { data: settings } = useQuery({
+    queryKey: userSettingsKeys.byUser(user?.user_id),
+    queryFn: async () => {
+      return await ipcClient.settings.getUserSettings();
+    },
+    enabled: !!user?.token && !!user?.user_id,
+    staleTime: 30_000,
+  });
 
   // Keep a ref of previously-known notification IDs so we can detect new ones
   // across refetches without causing re-renders or stale closure issues.

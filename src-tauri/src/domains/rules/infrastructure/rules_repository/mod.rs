@@ -3,7 +3,9 @@ use rusqlite::{params, OptionalExtension};
 use std::sync::Arc;
 
 use crate::db::Database;
-use crate::domains::rules::domain::models::rules::{RuleAction, RuleDefinition, RuleMode, RuleStatus, RuleTrigger};
+use crate::domains::rules::domain::models::rules::{
+    RuleAction, RuleDefinition, RuleMode, RuleStatus, RuleTrigger,
+};
 use crate::shared::error::{AppError, AppResult};
 
 #[derive(Debug, Clone)]
@@ -48,16 +50,41 @@ impl SqliteRulesRepository {
             name: row.get("name")?,
             description: row.get("description")?,
             template_key: row.get("template_key")?,
-            trigger: serde_json::from_str(&format!("\"{}\"", trigger))
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-            mode: serde_json::from_str(&format!("\"{}\"", mode))
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-            status: serde_json::from_str(&format!("\"{}\"", status))
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-            conditions: serde_json::from_str(&conditions)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
-            actions: serde_json::from_str::<Vec<RuleAction>>(&actions)
-                .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e)))?,
+            trigger: serde_json::from_str(&format!("\"{}\"", trigger)).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
+            mode: serde_json::from_str(&format!("\"{}\"", mode)).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
+            status: serde_json::from_str(&format!("\"{}\"", status)).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
+            conditions: serde_json::from_str(&conditions).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
+            actions: serde_json::from_str::<Vec<RuleAction>>(&actions).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    0,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?,
             created_at: row.get("created_at")?,
             updated_at: row.get("updated_at")?,
             deleted_at: row.get("deleted_at")?,
@@ -159,8 +186,14 @@ impl RulesRepository for SqliteRulesRepository {
                 rule.description,
                 rule.template_key,
                 rule.trigger.as_str(),
-                serde_json::to_string(&rule.mode).unwrap_or_else(|_| "\"blocking\"".to_string()).trim_matches('"').to_string(),
-                serde_json::to_string(&rule.status).unwrap_or_else(|_| "\"draft\"".to_string()).trim_matches('"').to_string(),
+                serde_json::to_string(&rule.mode)
+                    .unwrap_or_else(|_| "\"blocking\"".to_string())
+                    .trim_matches('"')
+                    .to_string(),
+                serde_json::to_string(&rule.status)
+                    .unwrap_or_else(|_| "\"draft\"".to_string())
+                    .trim_matches('"')
+                    .to_string(),
                 serde_json::to_string(&rule.conditions).unwrap_or_else(|_| "{}".to_string()),
                 serde_json::to_string(&rule.actions).unwrap_or_else(|_| "[]".to_string()),
                 rule.updated_at,

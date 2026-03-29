@@ -14,7 +14,8 @@ import { useCalendarStore } from "../stores/calendarStore";
 
 export function useCalendarEvents() {
   const { user } = useAuth();
-  const { currentDate, filters } = useCalendarStore();
+  const currentDate = useCalendarStore(state => state.currentDate);
+  const filters = useCalendarStore(state => state.filters);
 
   const dateRange = React.useMemo(() => {
     const start = startOfMonth(subMonths(currentDate, 1));

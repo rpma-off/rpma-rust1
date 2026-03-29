@@ -63,7 +63,10 @@ mod tests {
 
         assert_eq!(active.status, RuleStatus::Active);
         assert!(!result.allowed);
-        assert_eq!(result.message.as_deref(), Some("Completion blocked by policy"));
+        assert_eq!(
+            result.message.as_deref(),
+            Some("Completion blocked by policy")
+        );
         assert_eq!(result.matched_rule_ids, vec![created.id]);
     }
 

@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  ChevronDown, 
-  Calendar, 
-  Users, 
-  Filter, 
-  X,
-  Search
-} from 'lucide-react';
+import { Calendar, Users, Filter, X, Search, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TaskStatus, TaskPriority } from '@/lib/backend';
 import { Button } from '@/components/ui/button';
@@ -20,9 +13,55 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useCalendarStore } from '../stores/calendarStore';
+import {
+  EVENT_TYPE_OPTIONS,
+  INITIAL_EVENT_TYPE_FILTERS,
+  INITIAL_EXPANDED_SECTIONS,
+  INITIAL_PARTICIPANT_FILTERS,
+  PARTICIPANT_OPTIONS,
+  PRIORITY_OPTIONS as CALENDAR_PRIORITY_OPTIONS,
+  STATUS_OPTIONS as CALENDAR_STATUS_OPTIONS,
+  toDateInputValue,
+  updateExclusiveFilterState,
+  withEndDate,
+  withStartDate,
+} from './calendarFilterConfig';
 
 interface CalendarFiltersProps {
   className?: string;
+}
+
+function FilterOptionList<T extends string>({
+  options,
+  checkedValues,
+  getId,
+  onChange,
+}: {
+  options: Array<{ id: T; label: string }>;
+  checkedValues: Record<string, boolean>;
+  getId?: (value: T) => string;
+  onChange: (value: T, checked: boolean) => void;
+}) {
+  return (
+    <>
+      {options.map((option) => {
+        const checkboxId = getId ? getId(option.id) : option.id;
+
+        return (
+          <div key={option.id} className="flex items-center space-x-2">
+            <Checkbox
+              id={checkboxId}
+              checked={checkedValues[option.id] || false}
+              onCheckedChange={(checked) => onChange(option.id, checked === true)}
+            />
+            <Label htmlFor={checkboxId} className="text-sm font-normal cursor-pointer">
+              {option.label}
+            </Label>
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 export function CalendarFilters({ className }: CalendarFiltersProps) {
@@ -35,27 +74,12 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Local state for event types (meeting types)
-  const [eventTypes, setEventTypes] = useState({
-    all: true,
-    with_meeting: false,
-    without_meeting: false
-  });
+  const [eventTypes, setEventTypes] = useState(INITIAL_EVENT_TYPE_FILTERS);
 
   // Local state for participants
-  const [participants, setParticipants] = useState({
-    all: true,
-    with_participants: false,
-    without_participants: false
-  });
+  const [participants, setParticipants] = useState(INITIAL_PARTICIPANT_FILTERS);
 
-  const [expandedSections, setExpandedSections] = useState({
-    search: true,
-    eventType: true,
-    participants: true,
-    dateRange: true,
-    status: true,
-    priority: true
-  });
+  const [expandedSections, setExpandedSections] = useState(INITIAL_EXPANDED_SECTIONS);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
@@ -65,35 +89,11 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
   };
 
   const handleEventTypeChange = (type: keyof typeof eventTypes, checked: boolean) => {
-    if (type === 'all') {
-      setEventTypes({
-        all: checked,
-        with_meeting: false,
-        without_meeting: false
-      });
-    } else {
-      setEventTypes(prev => ({
-        ...prev,
-        [type]: checked,
-        all: false
-      }));
-    }
+    setEventTypes((prev) => updateExclusiveFilterState(prev, type, checked));
   };
 
   const handleParticipantChange = (type: keyof typeof participants, checked: boolean) => {
-    if (type === 'all') {
-      setParticipants({
-        all: checked,
-        with_participants: false,
-        without_participants: false
-      });
-    } else {
-      setParticipants(prev => ({
-        ...prev,
-        [type]: checked,
-        all: false
-      }));
-    }
+    setParticipants((prev) => updateExclusiveFilterState(prev, type, checked));
   };
 
   const handleStatusChange = (status: TaskStatus, checked: boolean) => {
@@ -123,16 +123,8 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
 
   const clearAllFilters = () => {
     setSearchQuery('');
-    setEventTypes({
-      all: true,
-      with_meeting: false,
-      without_meeting: false
-    });
-    setParticipants({
-      all: true,
-      with_participants: false,
-      without_participants: false
-    });
+    setEventTypes(INITIAL_EVENT_TYPE_FILTERS);
+    setParticipants(INITIAL_PARTICIPANT_FILTERS);
     resetFilters();
   };
 
@@ -143,17 +135,6 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
     (filters.priorities && filters.priorities.length > 0) ||
     filters.showMyEventsOnly;
 
-  const eventTypeOptions = [
-    { id: 'all' as const, label: 'Tous les types' },
-    { id: 'with_meeting' as const, label: 'Avec rendez-vous' },
-    { id: 'without_meeting' as const, label: 'Sans rendez-vous' }
-  ];
-
-  const participantOptions = [
-    { id: 'all' as const, label: 'Tous les participants' },
-    { id: 'with_participants' as const, label: 'Avec participants' },
-    { id: 'without_participants' as const, label: 'Sans participants' }
-  ];
 
   const statusOptions: { id: TaskStatus; label: string }[] = [
     { id: 'pending', label: 'En attente' },
@@ -242,7 +223,7 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
             )}
             {filters.statuses?.map(status => (
               <Badge key={status} variant="secondary" className="text-xs">
-                {statusOptions.find(s => s.id === status)?.label || status}
+                {CALENDAR_STATUS_OPTIONS.find(s => s.id === status)?.label || status}
                 <X 
                   className="ml-1 h-3 w-3 cursor-pointer" 
                   onClick={() => handleStatusChange(status, false)}
@@ -251,7 +232,7 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
             ))}
             {filters.priorities?.map(priority => (
               <Badge key={priority} variant="secondary" className="text-xs">
-                {priorityOptions.find(p => p.id === priority)?.label || priority}
+                {CALENDAR_PRIORITY_OPTIONS.find(p => p.id === priority)?.label || priority}
                 <X 
                   className="ml-1 h-3 w-3 cursor-pointer" 
                   onClick={() => handlePriorityChange(priority, false)}
@@ -312,23 +293,11 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 pb-2">
-          {eventTypeOptions.map((option) => (
-            <div key={option.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={option.id}
-                checked={eventTypes[option.id] || false}
-                onCheckedChange={(checked) => 
-                  handleEventTypeChange(option.id, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={option.id}
-                className="text-sm font-normal cursor-pointer"
-              >
-                {option.label}
-              </Label>
-            </div>
-          ))}
+          <FilterOptionList
+            options={EVENT_TYPE_OPTIONS}
+            checkedValues={eventTypes}
+            onChange={handleEventTypeChange}
+          />
         </CollapsibleContent>
       </Collapsible>
 
@@ -352,23 +321,11 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2 pb-2">
-          {participantOptions.map((option) => (
-            <div key={option.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={option.id}
-                checked={participants[option.id] || false}
-                onCheckedChange={(checked) => 
-                  handleParticipantChange(option.id, checked as boolean)
-                }
-              />
-              <Label 
-                htmlFor={option.id}
-                className="text-sm font-normal cursor-pointer"
-              >
-                {option.label}
-              </Label>
-            </div>
-          ))}
+          <FilterOptionList
+            options={PARTICIPANT_OPTIONS}
+            checkedValues={participants}
+            onChange={handleParticipantChange}
+          />
         </CollapsibleContent>
       </Collapsible>
 
@@ -398,12 +355,8 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
               <Input
                 id="start-date"
                 type="date"
-                value={filters.dateRange?.start ? new Date(filters.dateRange.start).toISOString().split('T')[0] : ''}
-                onChange={(e) => setFilters({ 
-                  dateRange: filters.dateRange 
-                    ? { ...filters.dateRange, start: new Date(e.target.value) }
-                    : { start: new Date(e.target.value), end: new Date() }
-                })}
+                value={toDateInputValue(filters.dateRange?.start)}
+                onChange={(e) => setFilters({ dateRange: withStartDate(filters.dateRange?.end, e.target.value) })}
                 className="text-sm"
               />
             </div>
@@ -412,12 +365,8 @@ export function CalendarFilters({ className }: CalendarFiltersProps) {
               <Input
                 id="end-date"
                 type="date"
-                value={filters.dateRange?.end ? new Date(filters.dateRange.end).toISOString().split('T')[0] : ''}
-                onChange={(e) => setFilters({ 
-                  dateRange: filters.dateRange 
-                    ? { ...filters.dateRange, end: new Date(e.target.value) }
-                    : { start: new Date(), end: new Date(e.target.value) }
-                })}
+                value={toDateInputValue(filters.dateRange?.end)}
+                onChange={(e) => setFilters({ dateRange: withEndDate(filters.dateRange?.start, e.target.value) })}
                 className="text-sm"
               />
             </div>

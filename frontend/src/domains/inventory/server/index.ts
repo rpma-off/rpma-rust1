@@ -9,12 +9,12 @@ export {
   inventoryOperations,
 } from './inventory-operations';
 export type {
-  CreateMaterialRequest,
-  UpdateMaterialRequest,
-  UpdateStockRequest,
-  AdjustStockRequest,
-  RecordConsumptionRequest,
   CreateInventoryTransactionRequest,
   CreateMaterialCategoryRequest,
+  CreateMaterialRequest,
   CreateSupplierRequest,
+  RecordConsumptionRequest,
+  UpdateStockRequest,
+  UpdateMaterialRequest,
+  AdjustStockRequest,
 } from './inventory-operations';

@@ -5,7 +5,20 @@
 use crate::resolve_context;
 use crate::shared::policies::phone_policy::normalize_dialable_phone_number;
 use crate::shared::policies::url_policy::validate_https_url;
+use serde::Serialize;
 use tauri::{command, Window};
+use ts_rs::TS;
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export)]
+pub struct EntityCountsResponse {
+    #[ts(type = "number")]
+    pub tasks: i64,
+    #[ts(type = "number")]
+    pub clients: i64,
+    #[ts(type = "number")]
+    pub interventions: i64,
+}
 
 /// Minimize the application window
 #[command]
@@ -101,7 +114,7 @@ pub async fn dashboard_get_stats(
 pub async fn get_entity_counts(
     state: super::AppState<'_>,
     correlation_id: Option<String>,
-) -> Result<super::ApiResponse<serde_json::Value>, super::AppError> {
+) -> Result<super::ApiResponse<EntityCountsResponse>, super::AppError> {
     let ctx = resolve_context!(&state, &correlation_id, super::UserRole::Viewer);
 
     let pool = state.db.pool().clone();
@@ -112,11 +125,11 @@ pub async fn get_entity_counts(
     .map_err(|e| super::AppError::Internal(format!("Task join error: {}", e)))?
     .map_err(super::AppError::Database)?;
 
-    let payload = serde_json::json!({
-        "tasks": counts.0,
-        "clients": counts.1,
-        "interventions": counts.2
-    });
+    let payload = EntityCountsResponse {
+        tasks: counts.0,
+        clients: counts.1,
+        interventions: counts.2,
+    };
 
     Ok(super::ApiResponse::success(payload).with_correlation_id(Some(ctx.correlation_id)))
 }

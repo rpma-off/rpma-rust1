@@ -10,6 +10,7 @@ import type {
   AdvanceStepDTO,
   FinalizeInterventionDTO,
 } from '@/types/ppf-intervention';
+import { interventionKeys, taskKeys } from '@/lib/query-keys';
 import { useInterventionState } from './useInterventionState';
 import { useInterventionActions } from './useInterventionActions';
 import { useInterventionSync } from './useInterventionSync';
@@ -135,11 +136,14 @@ export function useInterventionWorkflow({
     return result;
   }, [actions.finalizeInterventionMutation, state]);
 
-  // Reset function
+  // Reset function — targeted invalidation instead of clear() to avoid nuking unrelated caches
   const reset = useCallback(() => {
     state.reset();
-    queryClient.clear();
-  }, [state, queryClient]);
+    if (taskId) {
+      void queryClient.invalidateQueries({ queryKey: interventionKeys.activeForTask(taskId) });
+      void queryClient.invalidateQueries({ queryKey: taskKeys.byId(taskId) });
+    }
+  }, [state, queryClient, taskId]);
 
   // Destructure state for cleaner return
   const { intervention, currentStep, allSteps, isDirty, lastSaved } = state;

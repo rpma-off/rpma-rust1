@@ -163,9 +163,8 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
             .map_err(|error| AppError::db_sanitized("integrations.list.query", error))?;
         let mut integrations = Vec::new();
         for row in rows {
-            integrations.push(
-                row.map_err(|error| AppError::db_sanitized("integrations.list.row", error))?,
-            );
+            integrations
+                .push(row.map_err(|error| AppError::db_sanitized("integrations.list.row", error))?);
         }
         Ok(integrations)
     }
@@ -213,9 +212,10 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
         integration: &IntegrationConfig,
         encrypted_secret: Option<String>,
     ) -> AppResult<()> {
-        let conn = self.db.get_connection().map_err(|error| {
-            AppError::db_sanitized("integrations.create.get_connection", error)
-        })?;
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|error| AppError::db_sanitized("integrations.create.get_connection", error))?;
         conn.execute(
             "INSERT INTO integration_configs (
                 id, name, description, endpoint_url, headers_json, subscribed_events_json, encrypted_secret, status, last_tested_at, created_at, updated_at, deleted_at
@@ -244,9 +244,10 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
         integration: &IntegrationConfig,
         encrypted_secret: Option<String>,
     ) -> AppResult<()> {
-        let conn = self.db.get_connection().map_err(|error| {
-            AppError::db_sanitized("integrations.update.get_connection", error)
-        })?;
+        let conn = self
+            .db
+            .get_connection()
+            .map_err(|error| AppError::db_sanitized("integrations.update.get_connection", error))?;
         conn.execute(
             "UPDATE integration_configs
              SET name = ?2,
@@ -266,9 +267,13 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
                 integration.description,
                 integration.endpoint_url,
                 serde_json::to_string(&integration.headers).unwrap_or_else(|_| "{}".to_string()),
-                serde_json::to_string(&integration.subscribed_events).unwrap_or_else(|_| "[]".to_string()),
+                serde_json::to_string(&integration.subscribed_events)
+                    .unwrap_or_else(|_| "[]".to_string()),
                 encrypted_secret,
-                serde_json::to_string(&integration.status).unwrap_or_else(|_| "\"draft\"".to_string()).trim_matches('"').to_string(),
+                serde_json::to_string(&integration.status)
+                    .unwrap_or_else(|_| "\"draft\"".to_string())
+                    .trim_matches('"')
+                    .to_string(),
                 integration.last_tested_at,
                 integration.updated_at,
                 integration.deleted_at,
@@ -286,7 +291,9 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
             "UPDATE integration_configs SET last_tested_at = ?2, updated_at = ?2 WHERE id = ?1",
             params![id, tested_at],
         )
-        .map_err(|error| AppError::db_sanitized("integrations.update_last_tested_at.execute", error))?;
+        .map_err(|error| {
+            AppError::db_sanitized("integrations.update_last_tested_at.execute", error)
+        })?;
         Ok(())
     }
 
@@ -314,7 +321,10 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
             .into_iter()
             .filter(|integration| {
                 integration.status == IntegrationStatus::Active
-                    && integration.subscribed_events.iter().any(|value| value == event_name)
+                    && integration
+                        .subscribed_events
+                        .iter()
+                        .any(|value| value == event_name)
                     && requested_ids
                         .map(|ids| ids.iter().any(|value| value == &integration.id))
                         .unwrap_or(true)
@@ -364,14 +374,14 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
             .map_err(|error| AppError::db_sanitized("integrations.list_due_deliveries.prepare", error))?;
         let rows = stmt
             .query_map(params![now, limit as i64], Self::map_delivery)
-            .map_err(|error| AppError::db_sanitized("integrations.list_due_deliveries.query", error))?;
+            .map_err(|error| {
+                AppError::db_sanitized("integrations.list_due_deliveries.query", error)
+            })?;
         let mut deliveries = Vec::new();
         for row in rows {
-            deliveries.push(
-                row.map_err(|error| {
-                    AppError::db_sanitized("integrations.list_due_deliveries.row", error)
-                })?,
-            );
+            deliveries.push(row.map_err(|error| {
+                AppError::db_sanitized("integrations.list_due_deliveries.row", error)
+            })?);
         }
         Ok(deliveries)
     }
@@ -398,14 +408,19 @@ impl IntegrationsRepository for SqliteIntegrationsRepository {
              WHERE id = ?1",
             params![
                 delivery_id,
-                serde_json::to_string(&status).unwrap_or_else(|_| "\"pending\"".to_string()).trim_matches('"').to_string(),
+                serde_json::to_string(&status)
+                    .unwrap_or_else(|_| "\"pending\"".to_string())
+                    .trim_matches('"')
+                    .to_string(),
                 attempt_count,
                 last_error,
                 next_retry_at,
                 updated_at,
             ],
         )
-        .map_err(|error| AppError::db_sanitized("integrations.mark_delivery_result.execute", error))?;
+        .map_err(|error| {
+            AppError::db_sanitized("integrations.mark_delivery_result.execute", error)
+        })?;
         Ok(())
     }
 }

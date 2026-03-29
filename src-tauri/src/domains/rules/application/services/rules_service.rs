@@ -165,7 +165,9 @@ impl RulesService {
             return Err(AppError::Validation("Rule name is required".to_string()));
         }
         if template_key.trim().is_empty() {
-            return Err(AppError::Validation("Rule template_key is required".to_string()));
+            return Err(AppError::Validation(
+                "Rule template_key is required".to_string(),
+            ));
         }
         if actions.is_empty() {
             return Err(AppError::Validation(
@@ -181,22 +183,36 @@ impl RulesService {
             None => return true,
         };
 
-        if let Some(task_ids) = conditions.get("task_id_in").and_then(|value| value.as_array()) {
+        if let Some(task_ids) = conditions
+            .get("task_id_in")
+            .and_then(|value| value.as_array())
+        {
             let entity_id = match request.entity_id.as_deref() {
                 Some(value) => value,
                 None => return false,
             };
-            if !task_ids.iter().any(|value| value.as_str() == Some(entity_id)) {
+            if !task_ids
+                .iter()
+                .any(|value| value.as_str() == Some(entity_id))
+            {
                 return false;
             }
         }
 
-        if let Some(statuses) = conditions.get("status_in").and_then(|value| value.as_array()) {
+        if let Some(statuses) = conditions
+            .get("status_in")
+            .and_then(|value| value.as_array())
+        {
             let current_status = request
                 .payload
                 .get("new_status")
                 .and_then(|value| value.as_str())
-                .or_else(|| request.payload.get("status").and_then(|value| value.as_str()));
+                .or_else(|| {
+                    request
+                        .payload
+                        .get("status")
+                        .and_then(|value| value.as_str())
+                });
             match current_status {
                 Some(status) if statuses.iter().any(|value| value.as_str() == Some(status)) => {}
                 _ => return false,
@@ -207,7 +223,10 @@ impl RulesService {
             .get("priority_in")
             .and_then(|value| value.as_array())
         {
-            let current_priority = request.payload.get("priority").and_then(|value| value.as_str());
+            let current_priority = request
+                .payload
+                .get("priority")
+                .and_then(|value| value.as_str());
             match current_priority {
                 Some(priority)
                     if priorities

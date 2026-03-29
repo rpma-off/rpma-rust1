@@ -129,7 +129,20 @@ export function useInterventionActions({
           null,
       );
 
-      invalidateInterventionCaches(taskId ?? "");
+      // Narrow invalidation for the start path: only the specific task's detail
+      // and intervention caches need to refresh while the user is inside the
+      // active workflow.  taskKeys.lists() is intentionally omitted here —
+      // the finalize path calls invalidateInterventionCaches() which includes it.
+      const tid = taskId ?? "";
+      if (tid) {
+        void queryClient.invalidateQueries({
+          queryKey: interventionKeys.byTask(tid),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: interventionKeys.activeForTask(tid),
+        });
+        void queryClient.invalidateQueries({ queryKey: taskKeys.byId(tid) });
+      }
     },
     onError: (err: Error) => {
       logger.error(

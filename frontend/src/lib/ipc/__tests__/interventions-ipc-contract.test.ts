@@ -92,7 +92,8 @@ describe('interventionOperations IPC contract tests', () => {
 
       const mockResponse = {
         intervention: { id: 'intervention-123' },
-        steps: [{ id: 'step-1', name: 'Preparation' }]
+        steps: [{ id: 'step-1', name: 'Preparation' }],
+        initial_requirements: [],
       };
 
       safeInvoke.mockResolvedValue(mockResponse);
@@ -632,16 +633,17 @@ describe('interventionOperations IPC contract tests', () => {
           task_id: 'task-123',
           status: 'in_progress',
           technician_id: 'tech-123',
-          created_at: '2025-02-09T10:00:00Z'
+          created_at: '2025-02-09T10:00:00Z',
         },
         steps: [
           {
             id: 'step-1',
             name: 'Preparation',
             status: 'pending',
-            order: 1
-          }
-        ]
+            order: 1,
+          },
+        ],
+        initial_requirements: [],
       };
 
       safeInvoke.mockResolvedValue(mockResponse);

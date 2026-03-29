@@ -15,7 +15,9 @@ use crate::domains::integrations::infrastructure::integrations_repository::{
     DeliveryRecord, IntegrationsRepository, SqliteIntegrationsRepository,
 };
 use crate::shared::context::RequestContext;
-use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, IntegrationEventSink};
+use crate::shared::contracts::integration_sink::{
+    IntegrationDispatchRequest, IntegrationEventSink,
+};
 use crate::shared::error::{AppError, AppResult};
 
 pub struct IntegrationsService {
@@ -63,7 +65,10 @@ impl IntegrationsService {
             endpoint_url: request.endpoint_url.trim().to_string(),
             headers: request.headers,
             subscribed_events: request.subscribed_events,
-            has_secret: request.secret_token.as_ref().is_some_and(|value| !value.is_empty()),
+            has_secret: request
+                .secret_token
+                .as_ref()
+                .is_some_and(|value| !value.is_empty()),
             last_tested_at: None,
             created_at: now,
             updated_at: now,
@@ -124,14 +129,19 @@ impl IntegrationsService {
         for (key, value) in &integration.config.headers {
             request = request.header(key, value);
         }
-        if let Some(secret) = integration.secret_token.as_deref().and_then(|value| self.decrypt_secret(value)) {
+        if let Some(secret) = integration
+            .secret_token
+            .as_deref()
+            .and_then(|value| self.decrypt_secret(value))
+        {
             request = request.bearer_auth(secret);
         }
         let result = request.send().await;
         let (success, message) = match result {
-            Ok(response) if response.status().is_success() => {
-                (true, format!("Connection test succeeded with {}", response.status()))
-            }
+            Ok(response) if response.status().is_success() => (
+                true,
+                format!("Connection test succeeded with {}", response.status()),
+            ),
             Ok(response) => (
                 false,
                 format!("Connection test failed with HTTP {}", response.status()),
@@ -146,11 +156,7 @@ impl IntegrationsService {
         })
     }
 
-    pub async fn retry_dead_letters(
-        &self,
-        _ctx: &RequestContext,
-        id: &str,
-    ) -> AppResult<usize> {
+    pub async fn retry_dead_letters(&self, _ctx: &RequestContext, id: &str) -> AppResult<usize> {
         self.repo.retry_dead_letters(id).await
     }
 
@@ -207,7 +213,10 @@ impl IntegrationEventSink for IntegrationsService {
     async fn enqueue(&self, request: IntegrationDispatchRequest) -> Result<usize, AppError> {
         let integrations = self
             .repo
-            .list_active_for_event(&request.event_name, request.requested_integration_ids.as_ref())
+            .list_active_for_event(
+                &request.event_name,
+                request.requested_integration_ids.as_ref(),
+            )
             .await?;
         let now = Utc::now().timestamp_millis();
         for integration in &integrations {

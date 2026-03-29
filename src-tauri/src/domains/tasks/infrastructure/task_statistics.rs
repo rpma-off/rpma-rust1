@@ -122,16 +122,27 @@ impl TaskStatisticsService {
 
     /// Get task completion rate over time
     pub fn get_completion_rate(&self, days: i32) -> Result<f64, String> {
+        // Pre-compute cutoff in Rust so SQLite can use the index on created_at (ms epochs).
+        // strftime() in SQL prevents index use; a literal epoch bound enables a range scan.
+        let cutoff_ms = {
+            use std::time::{SystemTime, UNIX_EPOCH};
+            let now_ms = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as i64;
+            now_ms - (days as i64 * 86_400_000)
+        };
+
         let sql = r#"
             SELECT
                 COUNT(CASE WHEN status = 'completed' THEN 1 END) * 100.0 / COUNT(*)
             FROM tasks
-            WHERE created_at >= strftime('%s000', 'now', '-' || ? || ' days') * 1000
+            WHERE created_at >= ?
               AND deleted_at IS NULL
         "#;
 
         self.db
-            .query_single_value(sql, params![days])
+            .query_single_value(sql, params![cutoff_ms])
             .map(|rate: Option<f64>| rate.unwrap_or(0.0))
             .map_err(|e| format!("Failed to get completion rate: {}", e))
     }
@@ -154,7 +165,7 @@ impl TaskStatisticsService {
         "#;
 
         let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare_cached(sql).map_err(|e| e.to_string())?;
         let result: Result<Vec<(String, f64)>, _> = stmt
             .query_map([], |row| {
                 Ok((
@@ -178,7 +189,7 @@ impl TaskStatisticsService {
         "#;
 
         let conn = self.db.get_connection()?;
-        let mut stmt = conn.prepare(sql).map_err(|e| e.to_string())?;
+        let mut stmt = conn.prepare_cached(sql).map_err(|e| e.to_string())?;
         let result: Result<Vec<(String, i64)>, _> = stmt
             .query_map([], |row| {
                 Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))

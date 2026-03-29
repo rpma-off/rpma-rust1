@@ -50,6 +50,7 @@ use crate::domains::tasks::infrastructure::task_rules_repository::{
     validate_status_transition, TaskRulesRepository,
 };
 use crate::domains::tasks::infrastructure::task_statistics::TaskStatisticsService;
+use std::collections::HashMap;
 
 use std::sync::Arc;
 
@@ -183,6 +184,22 @@ impl TaskService {
     pub async fn get_tasks_async(&self, query: TaskQuery) -> AppResult<TaskListResponse> {
         self.queries
             .get_tasks_async(query)
+            .await
+            .map_err(convert_to_app_error)
+    }
+
+    /// Batch-load tasks for multiple clients in a single DB round-trip.
+    ///
+    /// Returns `client_id → Vec<Task>` (up to `limit_per_client` tasks per client,
+    /// ordered by `created_at DESC`).  Used by the client orchestrator to replace
+    /// the N+1 loop in `get_clients_with_tasks`.
+    pub async fn get_tasks_for_clients_async(
+        &self,
+        client_ids: Vec<String>,
+        limit_per_client: i32,
+    ) -> AppResult<HashMap<String, Vec<Task>>> {
+        self.queries
+            .get_tasks_for_clients_async(client_ids, limit_per_client)
             .await
             .map_err(convert_to_app_error)
     }

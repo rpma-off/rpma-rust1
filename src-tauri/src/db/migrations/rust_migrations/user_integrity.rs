@@ -5,45 +5,78 @@
 //! to interventions and tasks, and session activity indexes.
 
 use crate::db::{Database, DbResult};
-use rusqlite::params;
+use rusqlite::{params, Connection};
+
+fn table_exists(conn: &Connection, table: &str) -> DbResult<bool> {
+    let count: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name = ?1",
+            params![table],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Failed to check {} table: {}", table, e))?;
+    Ok(count > 0)
+}
+
+fn column_exists(conn: &Connection, table: &str, column: &str) -> DbResult<bool> {
+    let count: i64 = conn
+        .query_row(
+            &format!("SELECT COUNT(*) FROM pragma_table_info('{}') WHERE name = ?1", table),
+            params![column],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Failed to check {}.{} column: {}", table, column, e))?;
+    Ok(count > 0)
+}
+
+fn table_sql(conn: &Connection, table: &str) -> DbResult<String> {
+    conn.query_row(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name = ?1",
+        params![table],
+        |row| row.get(0),
+    )
+    .map_err(|e| format!("Failed to get {} SQL: {}", table, e))
+}
+
+fn foreign_key_exists(conn: &Connection, table: &str, ref_table: &str, from_column: &str) -> DbResult<bool> {
+    let count: i64 = conn
+        .query_row(
+            &format!(
+                "SELECT COUNT(*) FROM pragma_foreign_key_list('{}') WHERE \"table\" = ?1 AND \"from\" = ?2",
+                table
+            ),
+            params![ref_table, from_column],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Failed to check FK on {}.{}: {}", table, from_column, e))?;
+    Ok(count > 0)
+}
+
+fn insert_schema_version(conn: &Connection, version: i32) -> DbResult<()> {
+    conn.execute(
+        "INSERT INTO schema_version (version) VALUES (?1)",
+        params![version],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
 
 impl Database {
     pub(in crate::db::migrations) fn apply_migration_28(&self) -> DbResult<()> {
         let conn = self.get_connection()?;
         tracing::info!("Applying migration 28: Add 2FA backup codes/verified_at columns");
 
-        let backup_codes_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='backup_codes'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check backup_codes column: {}", e))?;
-
-        if backup_codes_exists == 0 {
+        if !column_exists(&conn, "users", "backup_codes")? {
             conn.execute("ALTER TABLE users ADD COLUMN backup_codes TEXT", [])
                 .map_err(|e| format!("Failed to add backup_codes column: {}", e))?;
         }
 
-        let verified_at_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='verified_at'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check verified_at column: {}", e))?;
-
-        if verified_at_exists == 0 {
+        if !column_exists(&conn, "users", "verified_at")? {
             conn.execute("ALTER TABLE users ADD COLUMN verified_at TEXT", [])
                 .map_err(|e| format!("Failed to add verified_at column: {}", e))?;
         }
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![28],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 28)?;
         Ok(())
     }
 
@@ -51,15 +84,7 @@ impl Database {
         let conn = self.get_connection()?;
         tracing::info!("Applying migration 29: Add first_name and last_name columns to users");
 
-        let first_name_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='first_name'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check first_name column: {}", e))?;
-
-        if first_name_exists == 0 {
+        if !column_exists(&conn, "users", "first_name")? {
             conn.execute(
                 "ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT ''",
                 [],
@@ -67,15 +92,7 @@ impl Database {
             .map_err(|e| format!("Failed to add first_name column: {}", e))?;
         }
 
-        let last_name_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='last_name'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check last_name column: {}", e))?;
-
-        if last_name_exists == 0 {
+        if !column_exists(&conn, "users", "last_name")? {
             conn.execute(
                 "ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''",
                 [],
@@ -104,12 +121,7 @@ impl Database {
         )
         .map_err(|e| format!("Failed to backfill user names: {}", e))?;
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![29],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 29)?;
         Ok(())
     }
 
@@ -117,35 +129,15 @@ impl Database {
         let conn = self.get_connection()?;
         tracing::info!("Applying migration 30: Add updated_at to user_sessions");
 
-        let user_sessions_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check user_sessions table: {}", e))?;
-
-        if user_sessions_exists == 0 {
+        if !table_exists(&conn, "user_sessions")? {
             tracing::info!(
                 "Migration 030: user_sessions table absent, skipping ALTER TABLE for fresh/new schema"
             );
-            conn.execute(
-                "INSERT INTO schema_version (version) VALUES (?1)",
-                params![30],
-            )
-            .map_err(|e| e.to_string())?;
+            insert_schema_version(&conn, 30)?;
             return Ok(());
         }
 
-        let updated_at_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_table_info('user_sessions') WHERE name='updated_at'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check updated_at column: {}", e))?;
-
-        if updated_at_exists == 0 {
+        if !column_exists(&conn, "user_sessions", "updated_at")? {
             conn.execute(
                 "ALTER TABLE user_sessions ADD COLUMN updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)",
                 [],
@@ -153,12 +145,7 @@ impl Database {
             .map_err(|e| format!("Failed to add updated_at column: {}", e))?;
         }
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![30],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 30)?;
         Ok(())
     }
 
@@ -169,23 +156,8 @@ impl Database {
         );
 
         // --- Rebuild inventory_transactions with CHECK constraints ---
-        let inv_tx_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='inventory_transactions'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
-
-        if inv_tx_exists > 0 {
-            // Check if CHECK constraint already present
-            let table_sql: String = conn
-                .query_row(
-                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='inventory_transactions'",
-                    [],
-                    |row| row.get(0),
-                )
-                .map_err(|e| format!("Failed to get inventory_transactions SQL: {}", e))?;
+        if table_exists(&conn, "inventory_transactions")? {
+            let table_sql = table_sql(&conn, "inventory_transactions")?;
 
             if !table_sql.contains("quantity >= 0") {
                 let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
@@ -245,23 +217,8 @@ impl Database {
         }
 
         // --- Rebuild materials with CHECK constraints on stock fields ---
-        let materials_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='materials'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
-
-        if materials_exists > 0 {
-            // Check if non-negative CHECK constraint already present on current_stock
-            let table_sql: String = conn
-                .query_row(
-                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='materials'",
-                    [],
-                    |row| row.get(0),
-                )
-                .map_err(|e| format!("Failed to get materials table SQL: {}", e))?;
+        if table_exists(&conn, "materials")? {
+            let table_sql = table_sql(&conn, "materials")?;
 
             let needs_rebuild = !table_sql.contains("current_stock >= 0");
 
@@ -352,23 +309,8 @@ impl Database {
         }
 
         // --- Rebuild material_consumption with CHECK constraints ---
-        let mc_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='material_consumption'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| e.to_string())?;
-
-        if mc_exists > 0 {
-            // Check if CHECK constraint already present
-            let table_sql: String = conn
-                .query_row(
-                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='material_consumption'",
-                    [],
-                    |row| row.get(0),
-                )
-                .map_err(|e| format!("Failed to get material_consumption SQL: {}", e))?;
+        if table_exists(&conn, "material_consumption")? {
+            let table_sql = table_sql(&conn, "material_consumption")?;
 
             if !table_sql.contains("quantity_used >= 0") {
                 let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
@@ -430,12 +372,7 @@ impl Database {
             }
         }
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![31],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 31)?;
         tracing::info!("Migration 31: Non-negative CHECK constraints applied successfully");
         Ok(())
     }
@@ -445,21 +382,9 @@ impl Database {
         tracing::info!("Applying migration 32: Add FK for interventions.task_id -> tasks(id)");
 
         // Check if FK already exists by inspecting foreign_key_list
-        let has_task_fk: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_foreign_key_list('interventions') WHERE \"table\" = 'tasks' AND \"from\" = 'task_id'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check FK: {}", e))?;
-
-        if has_task_fk > 0 {
+        if foreign_key_exists(&conn, "interventions", "tasks", "task_id")? {
             tracing::info!("Migration 32: FK for interventions.task_id already exists, skipping");
-            conn.execute(
-                "INSERT INTO schema_version (version) VALUES (?1)",
-                params![32],
-            )
-            .map_err(|e| e.to_string())?;
+            insert_schema_version(&conn, 32)?;
             return Ok(());
         }
 
@@ -612,12 +537,7 @@ impl Database {
 
         tx.commit().map_err(|e| e.to_string())?;
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![32],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 32)?;
         tracing::info!("Migration 32: FK for interventions.task_id added successfully");
         Ok(())
     }
@@ -629,21 +549,9 @@ impl Database {
         );
 
         // Check if workflow_id FK already exists
-        let has_workflow_fk: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM pragma_foreign_key_list('tasks') WHERE \"table\" = 'interventions' AND \"from\" = 'workflow_id'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check FK: {}", e))?;
-
-        if has_workflow_fk > 0 {
+        if foreign_key_exists(&conn, "tasks", "interventions", "workflow_id")? {
             tracing::info!("Migration 33: FKs already exist in tasks table, skipping");
-            conn.execute(
-                "INSERT INTO schema_version (version) VALUES (?1)",
-                params![33],
-            )
-            .map_err(|e| e.to_string())?;
+            insert_schema_version(&conn, 33)?;
             return Ok(());
         }
 
@@ -806,12 +714,7 @@ impl Database {
 
         tx.commit().map_err(|e| e.to_string())?;
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![33],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 33)?;
         tracing::info!("Migration 33: Task workflow FKs added successfully");
         Ok(())
     }
@@ -820,15 +723,7 @@ impl Database {
         let conn = self.get_connection()?;
         tracing::info!("Applying migration 34: Add session activity index");
 
-        let user_sessions_exists: i64 = conn
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='user_sessions'",
-                [],
-                |row| row.get(0),
-            )
-            .map_err(|e| format!("Failed to check user_sessions table: {}", e))?;
-
-        if user_sessions_exists > 0 {
+        if table_exists(&conn, "user_sessions")? {
             conn.execute_batch(
                 "CREATE INDEX IF NOT EXISTS idx_user_sessions_user_expires_activity \
                  ON user_sessions(user_id, expires_at, last_activity DESC);",
@@ -840,15 +735,7 @@ impl Database {
                 )
             })?;
         } else {
-            let sessions_exists: i64 = conn
-                .query_row(
-                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='sessions'",
-                    [],
-                    |row| row.get(0),
-                )
-                .map_err(|e| format!("Failed to check sessions table: {}", e))?;
-
-            if sessions_exists > 0 {
+            if table_exists(&conn, "sessions")? {
                 conn.execute_batch(
                     "CREATE INDEX IF NOT EXISTS idx_sessions_user_expires_activity \
                      ON sessions(user_id, expires_at, last_activity DESC);",
@@ -866,12 +753,7 @@ impl Database {
             }
         }
 
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (?1)",
-            params![34],
-        )
-        .map_err(|e| e.to_string())?;
-
+        insert_schema_version(&conn, 34)?;
         Ok(())
     }
 }

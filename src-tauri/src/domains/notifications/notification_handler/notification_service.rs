@@ -1,3 +1,16 @@
+//! Quiet-hours configuration state for the notifications domain.
+//!
+//! Despite the name, `NotificationService` is NOT a business service. It is a
+//! process-wide configuration holder for quiet-hours windows and timezone. It
+//! does not send, route, or process any notifications.
+//!
+//! Actual notification business logic lives in:
+//! - `facade::NotificationsFacade` — application facade used by IPC handlers
+//! - `message_service::MessageService` — multi-channel message dispatch
+//!
+//! The `lazy_static` singleton is initialized at startup via the
+//! `initialize_notification_service` IPC command and read by `get_notification_status`.
+
 use lazy_static::lazy_static;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -9,6 +22,10 @@ lazy_static! {
         Arc::new(Mutex::new(None));
 }
 
+/// Process-wide holder for notification quiet-hours configuration.
+///
+/// This is a config/state container, not a business service. For notification
+/// creation and retrieval, use `NotificationsFacade`.
 #[derive(Clone)]
 pub struct NotificationService {
     config: Arc<Mutex<NotificationConfig>>,

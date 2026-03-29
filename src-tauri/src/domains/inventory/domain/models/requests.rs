@@ -4,8 +4,11 @@
 //! both the application layer and infrastructure layer without violating
 //! ADR-001 layering rules.
 
+use ts_rs::TS;
+
 /// Request to update material stock.
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, Clone, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct UpdateStockRequest {
     pub material_id: String,
@@ -15,7 +18,8 @@ pub struct UpdateStockRequest {
 }
 
 /// Request to record material consumption.
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, Clone, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct RecordConsumptionRequest {
     pub intervention_id: String,

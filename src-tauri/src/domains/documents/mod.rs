@@ -11,6 +11,7 @@ pub mod document_storage;
 pub mod models;
 pub mod photo_handler;
 pub mod photo_repository;
+pub mod photo_types;
 pub mod report_export;
 pub mod report_handler;
 pub mod report_pdf;
@@ -24,11 +25,14 @@ pub use document_storage::*;
 pub use photo_handler::{
     document_delete_photo, document_get_photo, document_get_photo_data, document_get_photos,
     document_store_photo, document_update_photo_metadata, export_intervention_report,
-    save_intervention_report, DocumentsCommand, DocumentsResponse, DocumentsServices, PhotoError,
-    PhotoMetadataUpdate, PhotoResult, PhotoService, PhotoStats, PhotoStorageSettings,
-    StorageProvider, StorePhotoRequest, StorePhotoResponse,
+    save_intervention_report, DocumentsCommand, DocumentsResponse, DocumentsServices, PhotoService,
 };
 pub use photo_repository::*;
+pub use photo_types::{
+    CloudProvider, GetPhotosRequest, GetPhotosResponse, PhotoError, PhotoMetadataUpdate,
+    PhotoResult, PhotoStats, PhotoStorageSettings, StorageProvider, StorePhotoRequest,
+    StorePhotoResponse,
+};
 // These are used by report_handler but we can also export them
 pub use report_export::{check_intervention_export_permissions, get_intervention_with_details};
 pub use report_pdf::*;

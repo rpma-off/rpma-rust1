@@ -85,6 +85,7 @@ export function useInventory(query?: InventoryQuery) {
     },
     enabled: !authError,
     retry: false,
+    staleTime: 5 * 60_000,
   });
 
   const materialsQuery = useQuery({
@@ -92,14 +93,21 @@ export function useInventory(query?: InventoryQuery) {
     queryFn: async () => extractMaterialList(await inventoryIpc.material.list(normalizedQuery)),
     enabled: !authError && hasMaterialFilters,
     retry: false,
+    staleTime: 5 * 60_000,
   });
 
-  const invalidateInventoryData = useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.dashboard() }),
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.materials() }),
-    ]);
-  }, [queryClient]);
+  const invalidateMaterials = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: inventoryKeys.materials() }),
+    [queryClient],
+  );
+  const invalidateDashboard = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: inventoryKeys.dashboard() }),
+    [queryClient],
+  );
+  const invalidateBoth = useCallback(
+    () => Promise.all([invalidateMaterials(), invalidateDashboard()]),
+    [invalidateMaterials, invalidateDashboard],
+  );
 
   const createMaterialMutation = useMutation({
     mutationFn: async (request: CreateMaterialRequest) => {
@@ -112,7 +120,7 @@ export function useInventory(query?: InventoryQuery) {
 
       return inventoryIpc.material.create(request);
     },
-    onSuccess: invalidateInventoryData,
+    onSuccess: invalidateBoth,
   });
 
   const updateMaterialMutation = useMutation({
@@ -126,7 +134,7 @@ export function useInventory(query?: InventoryQuery) {
 
       return inventoryIpc.material.update(id, request);
     },
-    onSuccess: invalidateInventoryData,
+    onSuccess: invalidateBoth,
   });
 
   const updateStockMutation = useMutation({
@@ -140,7 +148,7 @@ export function useInventory(query?: InventoryQuery) {
 
       return inventoryIpc.stock.updateStock(request);
     },
-    onSuccess: invalidateInventoryData,
+    onSuccess: invalidateDashboard,
   });
 
   const recordConsumptionMutation = useMutation({
@@ -154,7 +162,7 @@ export function useInventory(query?: InventoryQuery) {
 
       await inventoryIpc.consumption.recordConsumption(request);
     },
-    onSuccess: invalidateInventoryData,
+    onSuccess: invalidateBoth,
   });
 
   const getMaterial = useCallback(async (id: string): Promise<Material | null> => {
@@ -221,8 +229,8 @@ export function useInventory(query?: InventoryQuery) {
     }
 
     await inventoryIpc.material.delete(id);
-    await invalidateInventoryData();
-  }, [hasInventoryAccess, invalidateInventoryData, sessionToken]);
+    await invalidateBoth();
+  }, [hasInventoryAccess, invalidateBoth, sessionToken]);
 
   const materials = authError
     ? []

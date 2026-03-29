@@ -339,7 +339,7 @@ class Logger {
   info(context: LogContext, message: string, metadata?: LogMetadata): void;
   info(message: string, data?: unknown, context?: LogMetadata): void;
   info(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as LogContext) && (typeof messageOrData === 'string' || messageOrData === undefined);
     if (isContext) {
       this.log(LogLevel.INFO, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
@@ -350,7 +350,7 @@ class Logger {
   error(context: LogContext, message: string, metadata?: LogMetadata): void;
   error(message: string, error?: unknown, context?: LogMetadata): void;
   error(contextOrMessage: LogContext | string, messageOrError?: string | unknown, metadataOrContext?: LogMetadata): void {
-    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrError === 'string' || messageOrError === undefined);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as LogContext) && (typeof messageOrError === 'string' || messageOrError === undefined);
     if (isContext) {
       this.log(LogLevel.ERROR, contextOrMessage as LogContext, messageOrError as string, undefined, metadataOrContext);
     } else {
@@ -361,7 +361,7 @@ class Logger {
   warn(context: LogContext, message: string, metadata?: LogMetadata): void;
   warn(message: string, data?: unknown, context?: LogMetadata): void;
   warn(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as LogContext) && (typeof messageOrData === 'string' || messageOrData === undefined);
     if (isContext) {
       this.log(LogLevel.WARN, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
@@ -372,7 +372,7 @@ class Logger {
   debug(context: LogContext, message: string, metadata?: LogMetadata): void;
   debug(message: string, data?: unknown, context?: LogMetadata): void;
   debug(contextOrMessage: LogContext | string, messageOrData?: string | unknown, metadataOrContext?: LogMetadata): void {
-    const isContext = Object.values(LogContext).includes(contextOrMessage as any) && (typeof messageOrData === 'string' || messageOrData === undefined);
+    const isContext = Object.values(LogContext).includes(contextOrMessage as LogContext) && (typeof messageOrData === 'string' || messageOrData === undefined);
     if (isContext) {
       this.log(LogLevel.DEBUG, contextOrMessage as LogContext, messageOrData as string, undefined, metadataOrContext);
     } else {
