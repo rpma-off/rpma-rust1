@@ -61,7 +61,7 @@ export function useClientDetailPage({ params }: UseClientDetailPageOptions) {
         throw new Error(response.error || t("errors.deleteFailed"));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: clientKeys.all });
+      queryClient.invalidateQueries({ queryKey: clientKeys.list() });
       router.push("/clients");
     },
     onError: (err) => {

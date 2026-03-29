@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { notificationKeys } from "@/lib/query-keys";
+import { notificationKeys, userSettingsKeys } from "@/lib/query-keys";
 import { notificationApi } from "@/lib/ipc/notification";
 import { useAuth } from "@/shared/hooks/useAuth";
 import { ipcClient } from "@/lib/ipc";
@@ -15,11 +15,11 @@ const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 export function useNotificationUpdates() {
   const { user } = useAuth();
   const { data: settings } = useQuery({
-    queryKey: ["user-settings"],
+    queryKey: userSettingsKeys.byUser(user?.user_id),
     queryFn: async () => {
       return await ipcClient.settings.getUserSettings();
     },
-    enabled: !!user?.token,
+    enabled: !!user?.token && !!user?.user_id,
     staleTime: 30_000,
   });
 
