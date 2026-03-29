@@ -43,7 +43,11 @@ describe('inventory server IPC contracts', () => {
     await materialOperations.create(request);
 
     expect(mockSafeInvoke).toHaveBeenCalledWith('material_create', {
-      request
+      request: {
+        ...request,
+        expiry_date: null,
+        is_discontinued: null,
+      },
     });
   });
 

@@ -1,38 +1,8 @@
 "use client";
 
-// RESOLVED(ADR-014): Data-fetching operations extracted into `hooks/useSecurityPolicies.ts`.
-// Component now consumes the hook and contains only UI state and thin operation wrappers.
-
 import { useState } from "react";
-import {
-  Shield,
-  Plus,
-  Edit,
-  Trash2,
-  Play,
-  Pause,
-  Save,
-  RefreshCw,
-  Lock,
-  Clock,
-  Globe,
-  Key,
-} from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-
 import {
   Dialog,
   DialogContent,
@@ -41,182 +11,112 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SecurityPolicy, SecurityPolicyType } from "@/shared/types";
+import { Button } from "@/components/ui/button";
+import type { SecurityPolicy } from "@/shared/types";
 import { useSecurityPolicies } from "../hooks/useSecurityPolicies";
+import {
+  DEFAULT_SECURITY_POLICY_FORM,
+  SecurityPolicyForm,
+  type SecurityPolicyFormState,
+} from "./security-policies/security-policy-form";
+import { SecurityPolicyList } from "./security-policies/security-policy-list";
+
+function buildPolicyPayload(
+  formData: SecurityPolicyFormState,
+  editingPolicy: SecurityPolicy | null,
+): SecurityPolicy {
+  const now = new Date().toISOString();
+
+  return {
+    id: editingPolicy?.id || crypto.randomUUID(),
+    name: formData.name,
+    description: formData.description || formData.name,
+    policy_type: formData.type,
+    type: formData.type,
+    is_active: formData.isActive,
+    isActive: formData.isActive,
+    applies_to: formData.appliesTo,
+    appliesTo: formData.appliesTo,
+    settings: formData.settings as unknown as Record<string, unknown>,
+    exceptions: [],
+    created_at: editingPolicy?.created_at || now,
+    updated_at: now,
+    createdAt: editingPolicy?.createdAt || now,
+    updatedAt: now,
+  };
+}
 
 export function SecurityPoliciesTab() {
   const {
-    policies: securityPolicies,
+    policies,
     loading,
     saving,
-    save: savePolicyData,
-    remove: removePolicyData,
-    toggle: togglePolicyData,
+    save,
+    remove,
+    toggle,
   } = useSecurityPolicies();
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(
-    null,
-  );
+  const [editingPolicy, setEditingPolicy] = useState<SecurityPolicy | null>(null);
   const [activeSubTab, setActiveSubTab] = useState("password");
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [policyToDelete, setPolicyToDelete] = useState<SecurityPolicy | null>(
-    null,
+  const [policyToDelete, setPolicyToDelete] = useState<SecurityPolicy | null>(null);
+  const [formData, setFormData] = useState<SecurityPolicyFormState>(
+    DEFAULT_SECURITY_POLICY_FORM,
   );
 
-  // Form state for creating/editing policies
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    type: "password" as SecurityPolicyType,
-    isActive: true,
-    settings: {
-      minLength: 8,
-      requireUppercase: true,
-      requireLowercase: true,
-      requireNumbers: true,
-      requireSpecialChars: true,
-      maxAge: 90,
-      preventReuse: 5,
-      sessionTimeout: 30,
-      maxLoginAttempts: 5,
-      lockoutDuration: 15,
-      requireTwoFactor: false,
-      allowedIPs: [] as string[],
-      blockedIPs: [] as string[],
-      rateLimit: 100,
-      rateLimitWindow: 15,
-    },
-    appliesTo: [] as string[],
-    exceptions: [] as string[],
-  });
+  const resetForm = () => {
+    setFormData(DEFAULT_SECURITY_POLICY_FORM);
+    setActiveSubTab("password");
+  };
 
-  const saveSecurityPolicy = async () => {
-    const newPolicy: SecurityPolicy = {
-      id: editingPolicy?.id || crypto.randomUUID(),
-      name: formData.name,
-      description: formData.description || formData.name,
-      policy_type: formData.type,
-      type: formData.type,
-      is_active: formData.isActive,
-      isActive: formData.isActive,
-      applies_to: formData.appliesTo,
-      appliesTo: formData.appliesTo,
-      settings: formData.settings as unknown as Record<string, unknown>,
-      exceptions: [],
-      created_at: editingPolicy?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      createdAt: editingPolicy?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    await savePolicyData(newPolicy, !!editingPolicy);
+  const handleCreateOpen = () => {
+    resetForm();
+    setEditingPolicy(null);
+  };
+
+  const handleEditOpen = (policy: SecurityPolicy) => {
+    setEditingPolicy(policy);
+    setFormData({
+      ...DEFAULT_SECURITY_POLICY_FORM,
+      name: policy.name,
+      description: policy.description || "",
+      type: policy.type,
+      isActive: policy.isActive || policy.is_active || false,
+      settings: {
+        ...DEFAULT_SECURITY_POLICY_FORM.settings,
+        ...policy.settings,
+      },
+      appliesTo: policy.appliesTo || policy.applies_to || [],
+      exceptions: (policy.exceptions || []).map((exception) => exception.id),
+    });
+    setShowCreateDialog(true);
+  };
+
+  const handleSave = async () => {
+    await save(buildPolicyPayload(formData, editingPolicy), !!editingPolicy);
     setShowCreateDialog(false);
     setEditingPolicy(null);
     resetForm();
   };
 
-  const deleteSecurityPolicy = async () => {
+  const handleDelete = async () => {
     if (!policyToDelete) return;
-    await removePolicyData(policyToDelete.id);
+    await remove(policyToDelete.id);
     setDeleteConfirmOpen(false);
     setPolicyToDelete(null);
   };
 
-  const togglePolicyStatus = async (policy: SecurityPolicy) => {
-    await togglePolicyData(policy);
-  };
-
-  const confirmDeleteSecurityPolicy = (policy: SecurityPolicy) => {
-    setPolicyToDelete(policy);
-    setDeleteConfirmOpen(true);
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      description: "",
-      type: "password",
-      isActive: true,
-      settings: {
-        minLength: 8,
-        requireUppercase: true,
-        requireLowercase: true,
-        requireNumbers: true,
-        requireSpecialChars: true,
-        maxAge: 90,
-        preventReuse: 5,
-        sessionTimeout: 30,
-        maxLoginAttempts: 5,
-        lockoutDuration: 15,
-        requireTwoFactor: false,
-        allowedIPs: [],
-        blockedIPs: [],
-        rateLimit: 100,
-        rateLimitWindow: 15,
-      },
-      appliesTo: [],
-      exceptions: [],
-    });
-  };
-
-  const openEditDialog = (policy: SecurityPolicy) => {
-    setEditingPolicy(policy);
-    setFormData({
-      name: policy.name,
-      description: policy.description || "",
-      type: policy.type as SecurityPolicyType,
-      isActive: policy.isActive || policy.is_active || false,
-      settings: { ...formData.settings, ...policy.settings },
-      appliesTo: policy.appliesTo || policy.applies_to || [],
-      exceptions: (policy.exceptions || []).map((e) => e.id),
-    });
-    setShowCreateDialog(true);
-  };
-
-  const getPolicyTypeLabel = (type: SecurityPolicyType) => {
-    const labels = {
-      password: "Mot de passe",
-      session: "Session",
-      api_rate_limit: "Limite API",
-      encryption: "Chiffrement",
-      access_control: "Contrôle d'accès",
-      authentication: "Authentification",
-      authorization: "Autorisation",
-      data_protection: "Protection des données",
-      compliance: "Conformité",
-    };
-    return labels[type] || type;
-  };
-
-  const getPolicyTypeIcon = (type: SecurityPolicyType) => {
-    switch (type) {
-      case "password":
-        return <Key className="h-4 w-4" />;
-      case "session":
-        return <Clock className="h-4 w-4" />;
-      case "api_rate_limit":
-        return <Globe className="h-4 w-4" />;
-      case "encryption":
-        return <Lock className="h-4 w-4" />;
-      case "access_control":
-        return <Shield className="h-4 w-4" />;
-      default:
-        return <Shield className="h-4 w-4" />;
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Politiques de Sécurité</h2>
@@ -226,17 +126,12 @@ export function SecurityPoliciesTab() {
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                resetForm();
-                setEditingPolicy(null);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
+            <Button onClick={handleCreateOpen}>
+              <Plus className="mr-2 h-4 w-4" />
               Nouvelle Politique
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingPolicy
@@ -249,409 +144,30 @@ export function SecurityPoliciesTab() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="policy-name">Nom de la politique</Label>
-                  <Input
-                    id="policy-name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    placeholder="Nom de la politique"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="policy-type">Type de politique</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        type: value as SecurityPolicyType,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="password">Mot de passe</SelectItem>
-                      <SelectItem value="session">Session</SelectItem>
-                      <SelectItem value="api_rate_limit">Limite API</SelectItem>
-                      <SelectItem value="encryption">Chiffrement</SelectItem>
-                      <SelectItem value="access_control">
-                        Contrôle d&apos;accès
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({ ...prev, isActive: checked }))
-                  }
-                />
-                <Label>Politique active</Label>
-              </div>
-
-              {/* Policy Settings */}
-              <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="password">Mot de Passe</TabsTrigger>
-                  <TabsTrigger value="session">Session</TabsTrigger>
-                  <TabsTrigger value="access">Accès</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="password" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="min-length">Longueur minimale</Label>
-                      <Input
-                        id="min-length"
-                        type="number"
-                        min="6"
-                        max="32"
-                        value={formData.settings.minLength}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              minLength: parseInt(e.target.value) || 8,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="max-age">Âge maximum (jours)</Label>
-                      <Input
-                        id="max-age"
-                        type="number"
-                        min="30"
-                        max="365"
-                        value={formData.settings.maxAge}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              maxAge: parseInt(e.target.value) || 90,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Exiger des majuscules</Label>
-                      <Switch
-                        checked={formData.settings.requireUppercase}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              requireUppercase: checked,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label>Exiger des minuscules</Label>
-                      <Switch
-                        checked={formData.settings.requireLowercase}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              requireLowercase: checked,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label>Exiger des chiffres</Label>
-                      <Switch
-                        checked={formData.settings.requireNumbers}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              requireNumbers: checked,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <Label>Exiger des caractères spéciaux</Label>
-                      <Switch
-                        checked={formData.settings.requireSpecialChars}
-                        onCheckedChange={(checked) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              requireSpecialChars: checked,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="session" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="session-timeout">
-                        Timeout de session (minutes)
-                      </Label>
-                      <Input
-                        id="session-timeout"
-                        type="number"
-                        min="5"
-                        max="480"
-                        value={formData.settings.sessionTimeout}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              sessionTimeout: parseInt(e.target.value) || 30,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="max-attempts">Tentatives max</Label>
-                      <Input
-                        id="max-attempts"
-                        type="number"
-                        min="3"
-                        max="10"
-                        value={formData.settings.maxLoginAttempts}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              maxLoginAttempts: parseInt(e.target.value) || 5,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label>
-                      Exiger l&apos;authentification à deux facteurs
-                    </Label>
-                    <Switch
-                      checked={formData.settings.requireTwoFactor}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          settings: {
-                            ...prev.settings,
-                            requireTwoFactor: checked,
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="access" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="rate-limit">
-                        Limite de taux (requêtes/heure)
-                      </Label>
-                      <Input
-                        id="rate-limit"
-                        type="number"
-                        min="10"
-                        max="10000"
-                        value={formData.settings.rateLimit}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              rateLimit: parseInt(e.target.value) || 100,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="lockout-duration">
-                        Durée de verrouillage (minutes)
-                      </Label>
-                      <Input
-                        id="lockout-duration"
-                        type="number"
-                        min="5"
-                        max="60"
-                        value={formData.settings.lockoutDuration}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            settings: {
-                              ...prev.settings,
-                              lockoutDuration: parseInt(e.target.value) || 15,
-                            },
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              {/* Actions */}
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Annuler
-                </Button>
-                <Button onClick={saveSecurityPolicy} disabled={saving}>
-                  {saving ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  {editingPolicy ? "Mettre à jour" : "Créer"}
-                </Button>
-              </div>
-            </div>
+            <SecurityPolicyForm
+              formData={formData}
+              activeSubTab={activeSubTab}
+              saving={saving}
+              editing={!!editingPolicy}
+              onActiveSubTabChange={setActiveSubTab}
+              onFormChange={setFormData}
+              onCancel={() => setShowCreateDialog(false)}
+              onSave={handleSave}
+            />
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Security Policies List */}
-      <div className="grid gap-4">
-        {securityPolicies.map((policy) => (
-          <Card key={policy.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    {getPolicyTypeIcon(policy.type as SecurityPolicyType)}
-                    <h3 className="text-lg font-semibold">{policy.name}</h3>
-                    <Badge variant="outline">
-                      {getPolicyTypeLabel(policy.type as SecurityPolicyType)}
-                    </Badge>
-                    <Badge variant={policy.isActive ? "default" : "secondary"}>
-                      {policy.isActive ? "Actif" : "Inactif"}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <h4 className="font-medium mb-2">Paramètres:</h4>
-                      <ul className="space-y-1">
-                        {Object.entries(policy.settings).map(([key, value]) => (
-                          <li key={key} className="text-gray-600">
-                            {key}:{" "}
-                            {typeof value === "boolean"
-                              ? value
-                                ? "Oui"
-                                : "Non"
-                              : String(value)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Appliquer à:</h4>
-                      <p className="text-gray-600">
-                        {policy.appliesTo?.length
-                          ? policy.appliesTo.join(", ")
-                          : "Tous les utilisateurs"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2 ml-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => togglePolicyStatus(policy)}
-                  >
-                    {policy.isActive ? (
-                      <Pause className="h-4 w-4" />
-                    ) : (
-                      <Play className="h-4 w-4" />
-                    )}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openEditDialog(policy)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => confirmDeleteSecurityPolicy(policy)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {securityPolicies.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Aucune politique de sécurité
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Créez votre première politique de sécurité pour protéger votre
-                système
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Créer une politique
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <SecurityPolicyList
+        policies={policies}
+        onCreate={() => setShowCreateDialog(true)}
+        onEdit={handleEditOpen}
+        onToggle={toggle}
+        onDelete={(policy) => {
+          setPolicyToDelete(policy);
+          setDeleteConfirmOpen(true);
+        }}
+      />
 
       <ConfirmDialog
         open={deleteConfirmOpen}
@@ -661,7 +177,7 @@ export function SecurityPoliciesTab() {
         confirmText="Supprimer"
         cancelText="Annuler"
         variant="destructive"
-        onConfirm={deleteSecurityPolicy}
+        onConfirm={handleDelete}
       />
     </div>
   );

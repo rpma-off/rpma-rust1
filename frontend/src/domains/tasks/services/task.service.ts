@@ -22,6 +22,15 @@ import {
 } from "../utils/number-generator";
 import { taskIpc } from "../ipc/task.ipc";
 import { taskStepService } from "./task-step.service";
+import {
+  appendInvalidReason,
+  buildUpdateRequest,
+  buildValidatedTaskQuery,
+  errorResponse,
+  mapTaskListResult,
+  notFoundResponse,
+  successResponse,
+} from "./task.service.helpers";
 
 /**
  * Frontend Task Service - Client-side task management
@@ -61,40 +70,7 @@ export class TaskService {
   private buildUpdateRequest(
     partial: Partial<UpdateTaskRequest>,
   ): UpdateTaskRequest {
-    return {
-      id: null,
-      title: null,
-      description: null,
-      priority: null,
-      status: null,
-      vehicle_plate: null,
-      vehicle_model: null,
-      vehicle_year: null,
-      vehicle_make: null,
-      vin: null,
-      ppf_zones: null,
-      custom_ppf_zones: null,
-      client_id: null,
-      customer_name: null,
-      customer_email: null,
-      customer_phone: null,
-      customer_address: null,
-      external_id: null,
-      lot_film: null,
-      checklist_completed: null,
-      scheduled_date: null,
-      start_time: null,
-      end_time: null,
-      date_rdv: null,
-      heure_rdv: null,
-      template_id: null,
-      workflow_id: null,
-      estimated_duration: null,
-      notes: null,
-      tags: null,
-      technician_id: null,
-      ...partial,
-    };
+    return buildUpdateRequest(partial);
   }
 
   /**
@@ -132,17 +108,9 @@ export class TaskService {
   > {
     try {
       const result = await taskIpc.list(query || {});
-      return {
-        success: true,
-        data: {
-          data: result.data as TaskWithDetails[],
-          pagination: result.pagination,
-        },
-        status: 200,
-      };
+      return mapTaskListResult(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -178,10 +146,9 @@ export class TaskService {
   ): Promise<ServiceResponse<{ id: string }>> {
     try {
       const result = await taskIpc.create(data);
-      return { success: true, data: { id: result.id }, status: 200 };
+      return successResponse({ id: result.id });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -211,10 +178,9 @@ export class TaskService {
   ): Promise<ServiceResponse<{ id: string }>> {
     try {
       await taskIpc.update(id, data);
-      return { success: true, data: { id }, status: 200 };
+      return successResponse({ id });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -234,10 +200,9 @@ export class TaskService {
         technician_id: technicianId,
       });
       const result = await taskIpc.update(taskId, updateData);
-      return { success: true, data: result as TaskWithDetails, status: 200 };
+      return successResponse(result as TaskWithDetails);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -255,24 +220,18 @@ export class TaskService {
     try {
       const task = await taskIpc.get(taskId);
       if (!task) {
-        return { success: false, error: "Task not found", status: 404 };
+        return notFoundResponse();
       }
-
-      const existingNotes = task.notes ? String(task.notes) : "";
-      const appendedNotes = reason
-        ? `${existingNotes}${existingNotes ? "\n" : ""}Invalid: ${reason}`
-        : existingNotes || null;
 
       const updateData = this.buildUpdateRequest({
         status: "invalid",
-        notes: appendedNotes,
+        notes: appendInvalidReason(task, reason),
       });
 
       await taskIpc.update(taskId, updateData);
-      return { success: true, data: { id: taskId }, status: 200 };
+      return successResponse({ id: taskId });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -357,13 +316,12 @@ export class TaskService {
       const result = await taskIpc.get(id);
 
       if (result === null) {
-        return { success: false, error: "Task not found", status: 404 };
+        return notFoundResponse();
       }
 
-      return { success: true, data: result as TaskWithDetails, status: 200 };
+      return successResponse(result as TaskWithDetails);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -382,14 +340,9 @@ export class TaskService {
           status: 500,
         };
       }
-      return {
-        success: true,
-        data: { task_number: result.taskNumber },
-        status: 200,
-      };
+      return successResponse({ task_number: result.taskNumber });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -401,14 +354,9 @@ export class TaskService {
   ): Promise<ServiceResponse<{ task_number: string; is_valid: boolean }>> {
     try {
       const isValid = isValidTaskNumberFormat(taskNumber);
-      return {
-        success: true,
-        data: { task_number: taskNumber, is_valid: isValid },
-        status: 200,
-      };
+      return successResponse({ task_number: taskNumber, is_valid: isValid });
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -420,27 +368,10 @@ export class TaskService {
   ): Promise<ServiceResponse<unknown>> {
     try {
       const validated = validateAndSanitizeInput(TaskQuerySchema, query);
-      const limit = validated.limit ?? 20;
-      const offset = validated.offset ?? 0;
-      const page = Math.floor(offset / limit) + 1;
-      const result = await taskIpc.list({
-        pagination: {
-          page,
-          page_size: limit,
-          sort_by: null,
-          sort_order: null,
-        },
-        status: validated.status ?? null,
-        priority: validated.priority ?? null,
-        technician_id: validated.technician_id ?? null,
-        client_id: validated.client_id ?? null,
-        search: validated.search ?? null,
-      });
-
-      return { success: true, data: result, status: 200 };
+      const result = await taskIpc.list(buildValidatedTaskQuery(validated));
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -453,10 +384,9 @@ export class TaskService {
     try {
       const validated = validateAndSanitizeInput(CreateTaskSchema, data);
       const result = await taskIpc.create(validated as CreateTaskRequest);
-      return { success: true, data: result, status: 200 };
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -477,10 +407,9 @@ export class TaskService {
         technician_id: validated.assigned_to ?? null,
       });
       const result = await taskIpc.update(taskId, updateData);
-      return { success: true, data: result, status: 200 };
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -492,10 +421,9 @@ export class TaskService {
       const { TaskWorkflowSyncService } =
         await import("./task-workflow-sync.service");
       const result = await TaskWorkflowSyncService.syncTaskWithWorkflow(taskId);
-      return { success: true, data: result, status: 200 };
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -510,10 +438,9 @@ export class TaskService {
         await import("./task-workflow-sync.service");
       const result =
         await TaskWorkflowSyncService.getTaskWithWorkflowProgress(taskId);
-      return { success: true, data: result, status: 200 };
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 
@@ -525,10 +452,9 @@ export class TaskService {
       const { TaskWorkflowSyncService } =
         await import("./task-workflow-sync.service");
       const result = await TaskWorkflowSyncService.syncAllTasksWithWorkflows();
-      return { success: true, data: result, status: 200 };
+      return successResponse(result);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      return { success: false, error: err.message, status: 500 };
+      return errorResponse(error);
     }
   }
 }
