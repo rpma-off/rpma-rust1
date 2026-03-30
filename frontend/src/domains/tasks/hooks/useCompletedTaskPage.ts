@@ -88,6 +88,10 @@ export function useCompletedTaskPage() {
   // Derive loading/error for backward-compatible return interface
   const loading = taskLoading;
   const error = taskError?.message ?? null;
+  const isTaskCompleted =
+    task?.status === "completed" ||
+    task?.workflow_status === "completed" ||
+    !!task?.completed_at;
 
   const workflowStepsArray = useMemo(
     () =>
@@ -112,10 +116,14 @@ export function useCompletedTaskPage() {
 
   // Redirect if the intervention is loaded but not yet completed
   useEffect(() => {
+    if (loading || isTaskCompleted) {
+      return;
+    }
+
     if (interventionData && interventionData.status !== "completed") {
       router.push(`/tasks/${taskId}/workflow/ppf`);
     }
-  }, [interventionData, router, taskId]);
+  }, [interventionData, isTaskCompleted, loading, router, taskId]);
 
   const handleSaveReport = useCallback(async () => {
     if (!task || !fullInterventionData?.id) {

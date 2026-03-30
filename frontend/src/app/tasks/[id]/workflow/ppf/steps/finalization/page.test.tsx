@@ -92,5 +92,9 @@ describe('FinalizationStepPage confirmation dialog', () => {
         notes: 'Done',
       }, ['photo-1', 'photo-2', 'photo-3']);
     });
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith('/tasks/task-1/completed');
+    });
   });
 });

@@ -137,12 +137,7 @@ export default function FinalizationStepPage() {
     setIsValidating(true);
     try {
       await validateStep('finalization', { checklist, notes }, photos);
-      const nextStepId = getNextPPFStepId(steps, 'finalization');
-      if (nextStepId) {
-        router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`);
-      } else {
-        router.push(`/tasks/${taskId}/workflow/ppf`);
-      }
+      router.push(`/tasks/${taskId}/completed`);
     } finally {
       setIsValidating(false);
     }

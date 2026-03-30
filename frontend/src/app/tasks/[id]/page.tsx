@@ -232,7 +232,10 @@ export default function TaskDetailPage() {
                   id="task-admin"
                   className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm"
                 >
-                  <InterventionReportSection interventionId={interventionId} />
+                  <InterventionReportSection
+                    interventionId={interventionId}
+                    canGenerate={isCompleted}
+                  />
                 </div>
               )}
             </aside>
