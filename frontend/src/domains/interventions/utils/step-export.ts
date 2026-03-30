@@ -25,7 +25,11 @@ export function getEffectiveStepData(step: {
   return step.collected_data ?? step.step_data ?? {};
 }
 
-function getEffectiveStepNote(step: InterventionStep): InterventionStep['notes'] {
+export function getEffectiveStepNote(step: {
+  notes?: InterventionStep['notes'];
+  collected_data?: unknown | null;
+  step_data?: unknown | null;
+}): InterventionStep['notes'] {
   if (step.notes) {
     return step.notes;
   }
