@@ -39,18 +39,21 @@ describe('useInstallationStep', () => {
     };
   });
 
-  it('does not reset local notes when task zones rerender with same server step data', () => {
+  it('does not reset local draft when task zones rerender with same server step data', () => {
     const { result, rerender } = renderHook(() => useInstallationStep());
 
     act(() => {
+      result.current.handleToggleChecklist('surface_ready');
       result.current.setNotes('note en cours de saisie');
     });
 
     expect(result.current.notes).toBe('note en cours de saisie');
+    expect(result.current.activeZone?.checklist?.surface_ready).toBe(true);
 
     currentTaskZones = ['Capot'];
     rerender();
 
     expect(result.current.notes).toBe('note en cours de saisie');
+    expect(result.current.activeZone?.checklist?.surface_ready).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { StepType } from '@/lib/backend';
@@ -52,6 +52,24 @@ export default function InspectionStepPage() {
   const [isValidating, setIsValidating] = useState(false);
   const autosaveReady = useRef(false);
   const hasHydratedFromServerRef = useRef(false);
+  const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPersistedSignatureRef = useRef<string | null>(null);
+  const lastHydratedVersionRef = useRef<string | null>(null);
+
+  const currentDraft = useMemo(
+    () => ({
+      checklist,
+      defects,
+      notes,
+      environment,
+    }),
+    [checklist, defects, notes, environment]
+  );
+
+  const currentSignature = useMemo(
+    () => JSON.stringify({ draft: currentDraft, photos }),
+    [currentDraft, photos]
+  );
 
   useEffect(() => {
     if (!stepRecord) return;
@@ -70,16 +88,39 @@ export default function InspectionStepPage() {
         }))
       : [];
 
-    setChecklist(collected.checklist ?? {});
-    setDefects(normalizedDefects);
-    setNotes(getEffectiveStepNote(stepRecord) ?? collected.notes ?? '');
-    setEnvironment({
+    const serverDraft = {
+      checklist: collected.checklist ?? {},
+      defects: normalizedDefects,
+      notes: getEffectiveStepNote(stepRecord) ?? collected.notes ?? '',
+      environment: {
       temp_celsius: collected.environment?.temp_celsius ?? intervention?.temperature_celsius ?? null,
       humidity_percent: collected.environment?.humidity_percent ?? intervention?.humidity_percentage ?? null,
-    });
-    setPhotos(stepRecord?.photo_urls ?? []);
+      },
+    };
+    const serverPhotos = stepRecord?.photo_urls ?? [];
+    const serverSignature = JSON.stringify({ draft: serverDraft, photos: serverPhotos });
+    const serverVersion = `${stepRecord.id}:${String(stepRecord.updated_at ?? '')}`;
+    const hasUnsavedLocalChanges =
+      hasHydratedFromServerRef.current && currentSignature !== lastPersistedSignatureRef.current;
+    const serverIsBehindPersisted =
+      hasHydratedFromServerRef.current &&
+      lastPersistedSignatureRef.current !== null &&
+      serverSignature !== lastPersistedSignatureRef.current &&
+      serverVersion === lastHydratedVersionRef.current;
+
+    if (hasUnsavedLocalChanges || serverIsBehindPersisted) {
+      return;
+    }
+
+    setChecklist(serverDraft.checklist);
+    setDefects(serverDraft.defects);
+    setNotes(serverDraft.notes);
+    setEnvironment(serverDraft.environment);
+    setPhotos(serverPhotos);
     hasHydratedFromServerRef.current = true;
     autosaveReady.current = false;
+    lastPersistedSignatureRef.current = serverSignature;
+    lastHydratedVersionRef.current = serverVersion;
   }, [
     stepRecord,
     stepRecord?.updated_at,
@@ -87,7 +128,35 @@ export default function InspectionStepPage() {
     stepRecord?.photo_urls,
     intervention?.humidity_percentage,
     intervention?.temperature_celsius,
+    currentSignature,
   ]);
+
+  const saveNow = useCallback(
+    async (options?: { showToast?: boolean; invalidate?: boolean }) => {
+      if (!stepRecord) {
+        return false;
+      }
+
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+
+      if (currentSignature === lastPersistedSignatureRef.current) {
+        return false;
+      }
+
+      await saveDraft('inspection', currentDraft, {
+        photos,
+        showToast: options?.showToast,
+        invalidate: options?.invalidate,
+      });
+
+      lastPersistedSignatureRef.current = currentSignature;
+      return true;
+    },
+    [currentDraft, currentSignature, photos, saveDraft, stepRecord]
+  );
 
   useEffect(() => {
     if (!hasHydratedFromServerRef.current) return;
@@ -95,20 +164,19 @@ export default function InspectionStepPage() {
       autosaveReady.current = true;
       return;
     }
-    const timeout = setTimeout(() => {
-      void saveDraft(
-        'inspection',
-        {
-          checklist,
-          defects,
-          notes,
-          environment,
-        },
-        { photos }
-      );
+    if (currentSignature === lastPersistedSignatureRef.current) {
+      return;
+    }
+    autosaveTimeoutRef.current = setTimeout(() => {
+      void saveNow();
     }, 800);
-    return () => clearTimeout(timeout);
-  }, [checklist, defects, notes, environment, photos, saveDraft]);
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+    };
+  }, [currentSignature, saveNow]);
 
   const checklistCount = CHECKLIST_ITEMS.filter((item) => checklist[item.id]).length;
   const checklistTotal = CHECKLIST_ITEMS.length;
@@ -125,11 +193,7 @@ export default function InspectionStepPage() {
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      await saveDraft(
-        'inspection',
-        { checklist, defects, notes, environment },
-        { photos, showToast: true, invalidate: true }
-      );
+      await saveNow({ showToast: true, invalidate: true });
     } finally {
       setIsSaving(false);
     }
@@ -170,6 +234,11 @@ export default function InspectionStepPage() {
         saveDisabled: isSaving,
         downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
+      }}
+      draftGuard={{
+        hasPendingDraft:
+          hasHydratedFromServerRef.current && currentSignature !== lastPersistedSignatureRef.current,
+        saveNow,
       }}
     >
       <PpfStepHero

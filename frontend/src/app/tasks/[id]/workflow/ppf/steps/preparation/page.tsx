@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { StepType } from '@/lib/backend';
 import {
@@ -35,18 +35,86 @@ export default function PreparationStepPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const hasHydratedFromServerRef = useRef(false);
+  const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPersistedSignatureRef = useRef<string | null>(null);
+  const lastHydratedVersionRef = useRef<string | null>(null);
+
+  const currentDraft = useMemo(
+    () => ({
+      surfaceChecklist,
+      cutChecklist,
+      materialsChecklist,
+      notes,
+    }),
+    [surfaceChecklist, cutChecklist, materialsChecklist, notes]
+  );
+
+  const currentSignature = useMemo(
+    () => JSON.stringify({ draft: currentDraft, photos }),
+    [currentDraft, photos]
+  );
 
   useEffect(() => {
     if (!stepRecord) return;
     const collected = getEffectiveStepData(stepRecord) as PreparationDraft;
-    setSurfaceChecklist(collected.surfaceChecklist ?? {});
-    setCutChecklist(collected.cutChecklist ?? {});
-    setMaterialsChecklist(collected.materialsChecklist ?? {});
-    setNotes(collected.notes ?? '');
-    setPhotos(stepRecord?.photo_urls ?? []);
+    const serverDraft = {
+      surfaceChecklist: collected.surfaceChecklist ?? {},
+      cutChecklist: collected.cutChecklist ?? {},
+      materialsChecklist: collected.materialsChecklist ?? {},
+      notes: collected.notes ?? '',
+    };
+    const serverPhotos = stepRecord?.photo_urls ?? [];
+    const serverSignature = JSON.stringify({ draft: serverDraft, photos: serverPhotos });
+    const serverVersion = `${stepRecord.id}:${String(stepRecord.updated_at ?? '')}`;
+    const hasUnsavedLocalChanges =
+      hasHydratedFromServerRef.current && currentSignature !== lastPersistedSignatureRef.current;
+    const serverIsBehindPersisted =
+      hasHydratedFromServerRef.current &&
+      lastPersistedSignatureRef.current !== null &&
+      serverSignature !== lastPersistedSignatureRef.current &&
+      serverVersion === lastHydratedVersionRef.current;
+
+    if (hasUnsavedLocalChanges || serverIsBehindPersisted) {
+      return;
+    }
+
+    setSurfaceChecklist(serverDraft.surfaceChecklist);
+    setCutChecklist(serverDraft.cutChecklist);
+    setMaterialsChecklist(serverDraft.materialsChecklist);
+    setNotes(serverDraft.notes);
+    setPhotos(serverPhotos);
     hasHydratedFromServerRef.current = true;
     autosaveReady.current = false;
-  }, [stepRecord, stepRecord?.updated_at, stepRecord?.collected_data, stepRecord?.photo_urls]);
+    lastPersistedSignatureRef.current = serverSignature;
+    lastHydratedVersionRef.current = serverVersion;
+  }, [stepRecord, stepRecord?.updated_at, stepRecord?.collected_data, stepRecord?.photo_urls, currentSignature]);
+
+  const saveNow = useCallback(
+    async (options?: { showToast?: boolean; invalidate?: boolean }) => {
+      if (!stepRecord) {
+        return false;
+      }
+
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+
+      if (currentSignature === lastPersistedSignatureRef.current) {
+        return false;
+      }
+
+      await saveDraft('preparation', currentDraft, {
+        photos,
+        showToast: options?.showToast,
+        invalidate: options?.invalidate,
+      });
+
+      lastPersistedSignatureRef.current = currentSignature;
+      return true;
+    },
+    [currentDraft, currentSignature, photos, saveDraft, stepRecord]
+  );
 
   useEffect(() => {
     if (!hasHydratedFromServerRef.current) return;
@@ -54,20 +122,19 @@ export default function PreparationStepPage() {
       autosaveReady.current = true;
       return;
     }
-    const timeout = setTimeout(() => {
-      void saveDraft(
-        'preparation',
-        {
-          surfaceChecklist,
-          cutChecklist,
-          materialsChecklist,
-          notes,
-        },
-        { photos }
-      );
+    if (currentSignature === lastPersistedSignatureRef.current) {
+      return;
+    }
+    autosaveTimeoutRef.current = setTimeout(() => {
+      void saveNow();
     }, 800);
-    return () => clearTimeout(timeout);
-  }, [surfaceChecklist, cutChecklist, materialsChecklist, notes, photos, saveDraft]);
+    return () => {
+      if (autosaveTimeoutRef.current) {
+        clearTimeout(autosaveTimeoutRef.current);
+        autosaveTimeoutRef.current = null;
+      }
+    };
+  }, [currentSignature, saveNow]);
 
   const surfaceCompleted = SURFACE_CHECKLIST.filter((item) => surfaceChecklist[item.id]).length;
   const surfaceTotal = SURFACE_CHECKLIST.length;
@@ -83,11 +150,7 @@ export default function PreparationStepPage() {
   const handleSaveDraft = async () => {
     setIsSaving(true);
     try {
-      await saveDraft(
-        'preparation',
-        { surfaceChecklist, cutChecklist, materialsChecklist, notes },
-        { photos, showToast: true, invalidate: true }
-      );
+      await saveNow({ showToast: true, invalidate: true });
     } finally {
       setIsSaving(false);
     }
@@ -128,6 +191,11 @@ export default function PreparationStepPage() {
         saveDisabled: isSaving,
         downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
+      }}
+      draftGuard={{
+        hasPendingDraft:
+          hasHydratedFromServerRef.current && currentSignature !== lastPersistedSignatureRef.current,
+        saveNow,
       }}
     >
       <PpfStepHero

@@ -31,6 +31,7 @@ export default function InstallationStepPage() {
     badge,
     stepRecord,
     intervention,
+    draftGuard,
     handleSelectZone,
     handleToggleChecklist,
     handleQualityChange,
@@ -54,6 +55,7 @@ export default function InstallationStepPage() {
         downloadDisabled: !stepRecord,
         validateDisabled: !canValidate || isValidating,
       }}
+      draftGuard={draftGuard}
     >
       <PpfStepHero
         stepLabel={stepLabel}

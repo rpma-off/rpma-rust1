@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Download, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import type { StepType } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -28,14 +29,26 @@ type ActionBarConfig = {
   isValidating?: boolean;
 };
 
+export type PpfDraftGuard = {
+  hasPendingDraft: boolean;
+  saveNow: () => Promise<boolean>;
+};
+
 type PpfWorkflowLayoutProps = {
   stepId?: StepType;
   actionBar?: ActionBarConfig;
+  draftGuard?: PpfDraftGuard;
   children: React.ReactNode;
 };
 
-export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLayoutProps) {
+export function PpfWorkflowLayout({
+  stepId,
+  actionBar,
+  draftGuard,
+  children,
+}: PpfWorkflowLayoutProps) {
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
   const {
     taskId,
     task,
@@ -107,6 +120,34 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
     [steps]
   );
 
+  const navigateWithDraftSave = useCallback(
+    async (href: string) => {
+      if (isNavigating) {
+        return;
+      }
+
+      if (!draftGuard?.hasPendingDraft) {
+        router.push(href);
+        return;
+      }
+
+      setIsNavigating(true);
+      try {
+        await draftGuard.saveNow();
+        router.push(href);
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'Impossible de sauvegarder le brouillon avant de changer de page.';
+        toast.error(message);
+      } finally {
+        setIsNavigating(false);
+      }
+    },
+    [draftGuard, isNavigating, router]
+  );
+
   useEffect(() => {
     // Do not redirect while workflow steps are still hydrating; the fallback default steps
     // would otherwise send the user back to step 1 on transient remounts/reloads.
@@ -166,7 +207,7 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
         currentStepId={currentStep?.id}
         canAccessStep={canAccessStep}
         onStepClick={(nextStepId) =>
-          router.push(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`)
+          void navigateWithDraftSave(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`)
         }
       />
       <main className="flex-1 px-5 py-5 space-y-6">
@@ -177,7 +218,8 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
               <Button
                 variant="ghost"
                 className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => router.push(backHref)}
+                onClick={() => void navigateWithDraftSave(backHref)}
+                disabled={isNavigating}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 {backLabel}
@@ -189,7 +231,7 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
                 variant="outline"
                 className={cn('h-9 text-xs font-semibold', actionBar.saveDisabled && 'opacity-50')}
                 onClick={actionBar.onSaveDraft}
-                disabled={actionBar.saveDisabled}
+                disabled={actionBar.saveDisabled || isNavigating}
               >
                 <Save className="mr-2 h-4 w-4" />
                 Sauvegarder brouillon
@@ -199,7 +241,7 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
                   variant="outline"
                   className={cn('h-9 text-xs font-semibold', actionBar.downloadDisabled && 'opacity-50')}
                   onClick={actionBar.onDownloadData}
-                  disabled={actionBar.downloadDisabled}
+                  disabled={actionBar.downloadDisabled || isNavigating}
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {actionBar.downloadLabel ?? 'Télécharger données'}
@@ -211,7 +253,7 @@ export function PpfWorkflowLayout({ stepId, actionBar, children }: PpfWorkflowLa
                   actionBar.validateDisabled && 'opacity-50'
                 )}
                 onClick={actionBar.onValidate}
-                disabled={actionBar.validateDisabled}
+                disabled={actionBar.validateDisabled || isNavigating}
               >
                 Valider {actionBar.validateLabel ?? 'étape'}
                 <ArrowRight className="ml-2 h-4 w-4" />

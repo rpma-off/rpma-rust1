@@ -4,7 +4,7 @@
 /.next
 _tmp_
 /src-tauri/frontend-prod
-/frontend/out
+
 
 # Tauri generated
 /WixTools
