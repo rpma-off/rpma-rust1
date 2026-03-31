@@ -1,90 +1,145 @@
 import "@testing-library/jest-dom";
 
-// Mock useTranslation to return English for tests
+const translations: Record<string, string> = {
+  // Common actions
+  "common.assignToMe": "Assigner à moi",
+  "common.edit": "Modifier",
+  "common.delete": "Supprimer",
+  "common.cancel": "Annuler",
+  "common.close": "Fermer",
+  "common.save": "Enregistrer",
+  "common.submit": "Envoyer",
+  "common.confirm": "Confirmer",
+  "common.start": "Démarrer",
+  "common.complete": "Terminer",
+  "common.create": "Créer",
+  "common.update": "Mettre à jour",
+  "common.loading": "Chargement...",
+
+  // Task-related
+  "tasks.unassigned": "Non assigné",
+  "tasks.assignToMe": "Assigner à moi",
+  "tasks.startTask": "Démarrer la tâche",
+  "tasks.completeTask": "Terminer la tâche",
+  "tasks.markInvalid": "Marquer comme invalide",
+  "tasks.deleteTask": "Supprimer la tâche",
+  "tasks.checklist": "Checklist",
+  "tasks.photos": "Photos",
+  "tasks.history": "Historique",
+  "tasks.tabs.checklist": "Checklist",
+  "tasks.tabs.photos": "Photos",
+  "tasks.tabs.history": "Historique",
+  "tasks.deleteConfirm.title": "Êtes-vous sûr de vouloir supprimer cette tâche ?",
+  "tasks.deleteConfirm.description": "Cette action est irréversible",
+  "tasks.ppfZone": "Zone PPF",
+  "tasks.assignedTechnician": "Technicien assigné",
+  "tasks.scheduledDate": "Date prévue",
+  "tasks.notScheduled": "Non planifié",
+
+  // Completed / Summary
+  "completed.pageLabel": "Intervention terminée",
+  "completed.checklist": "Checklist",
+  "completed.photos": "Photos",
+  "completed.stepCompleted": "complété",
+  "completed.documented": "documenté",
+  "completed.treated": "traité",
+  "completed.duration": "Durée",
+  "completed.totalDuration": "Durée totale",
+  "completed.client": "Client",
+  "completed.recipient": "Destinataire",
+  "completed.stepDetails.checklist": "Checklist:",
+  "completed.stepDetails.surfaceChecklist": "Surface checklist",
+  "completed.stepDetails.cutChecklist": "Cut checklist",
+  "completed.stepDetails.materialsChecklist": "Matériaux",
+  "completed.stepDetails.unrecognized": "Structure non reconnue",
+  "completed.stepDetails.viewRawJson": "Voir le JSON brut",
+  "completed.steps.preparation.label": "Préparation",
+  "completed.editStep": "Modifier",
+  "completed.downloadStepData": "Télécharger",
+  "completed.actionBar.downloadPdf": "Télécharger le PDF",
+  "completed.actionBar.downloadJson": "Télécharger les données JSON",
+  "completed.actionBar.print": "Imprimer",
+  "completed.actionBar.share": "Partager",
+  "completed.actionBar.lastExport": "Dernier export",
+  "completed.actionBar.generating": "Génération en cours...",
+  "completed.actionBar.details": "Détails",
+  "completed.actionBar.tasks": "Tâches",
+
+  // Navigation
+  "nav.tasks": "Tâches",
+
+  // Error fallback
+  "error.title": "Erreur",
+  "error.retry": "Réessayer",
+  "error.dismiss": "Ignorer",
+
+  // Users
+  "users.createNewUser": "Créer un nouvel utilisateur",
+  "users.editUser": "Modifier l'utilisateur",
+  "users.email": "Email",
+  "users.emailRequired": "L'email est requis",
+  "users.invalidEmail": "Format d'email invalide",
+  "users.firstName": "Prénom",
+  "users.firstNameRequired": "Le prénom est requis",
+  "users.lastName": "Nom",
+  "users.lastNameRequired": "Le nom est requis",
+  "users.role": "Rôle",
+  "users.active": "Actif",
+  "users.saving": "Enregistrement...",
+  "users.passwordRequired": "Le mot de passe est requis",
+  "users.passwordMinLength": "Le mot de passe doit faire au moins 6 caractères",
+  "users.userCreated": "Utilisateur créé avec succès",
+  "users.userUpdated": "Utilisateur mis à jour avec succès",
+  "users.notAuthenticated": "Non authentifié",
+  "users.saveFailed": "Échec de l'enregistrement",
+  "users.roleAdmin": "Administrateur",
+  "users.roleSupervisor": "Superviseur",
+  "users.roleTechnician": "Technicien",
+  "users.roleViewer": "Observateur",
+
+  // Auth
+  "auth.password": "Mot de passe",
+};
+
+const tMock = (key: string, params?: Record<string, string | number>) => {
+  let value = translations[key] || key;
+  if (params && typeof value === "string") {
+    Object.entries(params).forEach(([paramKey, paramValue]) => {
+      value = value.replace(new RegExp(`\\{${paramKey}\\}`, "g"), String(paramValue));
+    });
+  }
+  return value;
+};
+
+// Mock shared hooks index
+jest.mock("@/shared/hooks", () => ({
+  useTranslation: () => ({
+    t: tMock,
+    locale: "fr",
+  }),
+  useLogger: () => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  }),
+  useFormLogger: () => ({
+    logChange: jest.fn(),
+    logSubmit: jest.fn(),
+    logError: jest.fn(),
+  }),
+  useApiLogger: () => ({
+    logRequest: jest.fn(),
+    logResponse: jest.fn(),
+    logError: jest.fn(),
+  }),
+}));
+
+// Mock useTranslation leaf file
 jest.mock("@/shared/hooks/useTranslation", () => ({
   useTranslation: () => ({
-    t: (key: string, params?: Record<string, string | number>) => {
-      // English translations for test compatibility
-      const translations: Record<string, string> = {
-        // Common actions
-        "common.assignToMe": "Assign to Me",
-        "common.edit": "Edit",
-        "common.delete": "Delete",
-        "common.cancel": "Cancel",
-        "common.close": "Close",
-        "common.save": "Save",
-        "common.submit": "Submit",
-        "common.confirm": "Confirm",
-        "common.start": "Start",
-        "common.complete": "Complete",
-        "common.create": "Create",
-        "common.update": "Update",
-        "common.loading": "Loading...",
-
-        // Task-related
-        "tasks.unassigned": "Unassigned",
-        "tasks.assignToMe": "Assign to Me",
-        "tasks.startTask": "Start Task",
-        "tasks.completeTask": "Complete Task",
-        "tasks.markInvalid": "Mark as Invalid",
-        "tasks.deleteTask": "Delete Task",
-        "tasks.checklist": "Checklist",
-        "tasks.photos": "Photos",
-        "tasks.history": "History",
-        "tasks.tabs.checklist": "Checklist",
-        "tasks.tabs.photos": "Photos",
-        "tasks.tabs.history": "History",
-        "tasks.deleteConfirm.title": "Are you sure you want to delete this task?",
-        "tasks.deleteConfirm.description": "This action cannot be undone",
-
-        // Navigation
-        "nav.tasks": "Tasks",
-
-        // Error fallback
-        "error.title": "Error",
-        "error.retry": "Retry",
-        "error.dismiss": "Dismiss",
-
-        // Users
-        "users.createNewUser": "Create New User",
-        "users.editUser": "Edit User",
-        "users.email": "Email",
-        "users.emailRequired": "Email is required",
-        "users.invalidEmail": "Invalid email format",
-        "users.firstName": "First Name",
-        "users.firstNameRequired": "First name is required",
-        "users.lastName": "Last Name",
-        "users.lastNameRequired": "Last name is required",
-        "users.role": "Role",
-        "users.active": "Active",
-        "users.saving": "Saving...",
-        "users.passwordRequired": "Password is required",
-        "users.passwordMinLength": "Password must be at least 6 characters",
-        "users.userCreated": "User created successfully",
-        "users.userUpdated": "User updated successfully",
-        "users.notAuthenticated": "Not authenticated",
-        "users.saveFailed": "Save failed",
-
-        // Auth
-        "auth.password": "Password",
-      };
-
-      let value = translations[key] || key;
-
-      // Replace parameters
-      if (params && typeof value === "string") {
-        Object.entries(params).forEach(([paramKey, paramValue]) => {
-          value = value.replace(new RegExp(`\\{${paramKey}\\}`, "g"), String(paramValue));
-        });
-      }
-
-      return value;
-    },
-    locale: "en",
-  }),
-  default: () => ({
-    t: (key: string) => key,
-    locale: "en",
+    t: tMock,
+    locale: "fr",
   }),
 }));
 

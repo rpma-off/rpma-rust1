@@ -309,7 +309,7 @@ mod tests {
         use crate::shared::services::cross_domain::StepStatus;
         assert_eq!(
             report_view_model::step_status_label(&StepStatus::Completed),
-            "Termine"
+            "Terminé"
         );
         assert_eq!(
             report_view_model::step_status_label(&StepStatus::Pending),
@@ -321,7 +321,7 @@ mod tests {
         );
         assert_eq!(
             report_view_model::step_status_label(&StepStatus::Failed),
-            "Echec"
+            "Échec"
         );
     }
 

@@ -206,8 +206,8 @@ describe('TaskDetails', () => {
       expect(screen.getByText('Toyota Camry')).toBeInTheDocument();
       expect(screen.getByText('draft')).toBeInTheDocument();
       expect(screen.getByText('#task-1')).toBeInTheDocument();
-      expect(screen.getByText('hood, bumper')).toBeInTheDocument();
-      expect(screen.getByText('Unassigned')).toBeInTheDocument();
+      expect(screen.getByText('Capot, Bumper')).toBeInTheDocument();
+      expect(screen.getByText('Non assigné')).toBeInTheDocument();
       const expectedDate = format(new Date(mockTask.scheduled_date), 'PPp');
       expect(screen.getByText(expectedDate)).toBeInTheDocument();
     });
@@ -255,10 +255,10 @@ describe('TaskDetails', () => {
       );
 
       // For draft status
-      expect(screen.getByText('Assign to Me')).toBeInTheDocument();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
-      expect(screen.getByText('Delete')).toBeInTheDocument();
-      expect(screen.getByText('Start Task')).toBeInTheDocument();
+      expect(screen.getByText('Assigner à moi')).toBeInTheDocument();
+      expect(screen.getByText('Modifier')).toBeInTheDocument();
+      expect(screen.getByText('Supprimer')).toBeInTheDocument();
+      expect(screen.getByText('Démarrer la tâche')).toBeInTheDocument();
     });
 
     it('renders different buttons for in_progress status', () => {
@@ -276,11 +276,11 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      expect(screen.getByText('Assign to Me')).toBeInTheDocument();
-      expect(screen.getByText('Edit')).toBeInTheDocument();
-      expect(screen.getByText('Delete')).toBeInTheDocument();
-      expect(screen.getByText('Mark as Invalid')).toBeInTheDocument();
-      expect(screen.getByText('Complete Task')).toBeInTheDocument();
+      expect(screen.getByText('Assigner à moi')).toBeInTheDocument();
+      expect(screen.getByText('Modifier')).toBeInTheDocument();
+      expect(screen.getByText('Supprimer')).toBeInTheDocument();
+      expect(screen.getByText('Marquer comme invalide')).toBeInTheDocument();
+      expect(screen.getByText('Terminer la tâche')).toBeInTheDocument();
     });
 
     it('renders tabs correctly', () => {
@@ -299,7 +299,7 @@ describe('TaskDetails', () => {
 
       expect(screen.getByText('Checklist')).toBeInTheDocument();
       expect(screen.getByText('Photos')).toBeInTheDocument();
-      expect(screen.getByText('History')).toBeInTheDocument();
+      expect(screen.getByText('Historique')).toBeInTheDocument();
       expect(screen.getByTestId('task-checklist')).toBeInTheDocument();
       expect(screen.getByText('Checklist for task-1')).toBeInTheDocument();
     });
@@ -349,14 +349,14 @@ describe('TaskDetails', () => {
       expect(screen.getByText('Photos for task-1')).toBeInTheDocument();
 
       // Switch to history tab
-      await user.click(screen.getByRole('tab', { name: 'History' }));
+      await user.click(screen.getByRole('tab', { name: 'Historique' }));
       expect(await screen.findByTestId('task-history')).toBeInTheDocument();
       expect(screen.getByText('History for task-1')).toBeInTheDocument();
     });
   });
 
   describe('Task Assignment', () => {
-    it('assigns task to current user when clicking Assign to Me', async () => {
+    it('assigns task to current user when clicking Assigner à moi', async () => {
       const Wrapper = createTestWrapper();
       
       render(
@@ -370,7 +370,7 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Assign to Me'));
+      fireEvent.click(screen.getByText('Assigner à moi'));
 
       await waitFor(() => {
         expect(mockUpdateTask).toHaveBeenCalledWith(
@@ -384,7 +384,7 @@ describe('TaskDetails', () => {
   });
 
   describe('Task Status Updates', () => {
-    it('starts task when clicking Start Task button', async () => {
+    it('starts task when clicking Démarrer la tâche button', async () => {
       const Wrapper = createTestWrapper();
       
       render(
@@ -398,7 +398,7 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Start Task'));
+      fireEvent.click(screen.getByText('Démarrer la tâche'));
 
       await waitFor(() => {
         expect(mockUpdateTask).toHaveBeenCalledWith(
@@ -410,7 +410,7 @@ describe('TaskDetails', () => {
       });
     });
 
-    it('completes task when clicking Complete Task button', async () => {
+    it('completes task when clicking Terminer la tâche button', async () => {
       const inProgressTask = { ...mockTask, status: 'in_progress' as const };
       const Wrapper = createTestWrapper();
       
@@ -425,7 +425,7 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Complete Task'));
+      fireEvent.click(screen.getByText('Terminer la tâche'));
 
       await waitFor(() => {
         expect(mockUpdateTask).toHaveBeenCalledWith(
@@ -437,7 +437,7 @@ describe('TaskDetails', () => {
       });
     });
 
-    it('marks task as invalid when clicking Mark as Invalid button', async () => {
+    it('marks task as invalid when clicking Marquer comme invalide button', async () => {
       const inProgressTask = { ...mockTask, status: 'in_progress' as const };
       const Wrapper = createTestWrapper();
       
@@ -452,7 +452,7 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Mark as Invalid'));
+      fireEvent.click(screen.getByText('Marquer comme invalide'));
 
       await waitFor(() => {
         expect(mockUpdateTask).toHaveBeenCalledWith(
@@ -466,7 +466,7 @@ describe('TaskDetails', () => {
   });
 
   describe('Task Deletion', () => {
-    it('opens confirmation dialog when clicking Delete button', async () => {
+    it('opens confirmation dialog when clicking Supprimer button', async () => {
       const Wrapper = createTestWrapper();
       
       render(
@@ -480,12 +480,12 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Delete'));
+      fireEvent.click(screen.getByText('Supprimer'));
 
-      expect(screen.getByText('Are you sure you want to delete this task?')).toBeInTheDocument();
-      expect(screen.getByText(/This action cannot be undone/)).toBeInTheDocument();
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
-      expect(screen.getByText('Delete Task')).toBeInTheDocument();
+      expect(screen.getByText('Êtes-vous sûr de vouloir supprimer cette tâche ?')).toBeInTheDocument();
+      expect(screen.getByText(/Cette action est irréversible/)).toBeInTheDocument();
+      expect(screen.getByText('Annuler')).toBeInTheDocument();
+      expect(screen.getByText('Supprimer la tâche')).toBeInTheDocument();
     });
 
     it('closes dialog when canceling deletion', async () => {
@@ -502,11 +502,11 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Delete'));
-      fireEvent.click(screen.getByText('Cancel'));
+      fireEvent.click(screen.getByText('Supprimer'));
+      fireEvent.click(screen.getByText('Annuler'));
 
       await waitFor(() => {
-        expect(screen.queryByText('Are you sure you want to delete this task?')).not.toBeInTheDocument();
+        expect(screen.queryByText('Êtes-vous sûr de vouloir supprimer cette tâche ?')).not.toBeInTheDocument();
       });
     });
   });
@@ -546,7 +546,7 @@ describe('TaskDetails', () => {
         </Wrapper>
       );
 
-      fireEvent.click(screen.getByText('Assign to Me'));
+      fireEvent.click(screen.getByText('Assigner à moi'));
 
       await waitFor(() => {
         expect(mockOnTaskUpdated).toHaveBeenCalled();

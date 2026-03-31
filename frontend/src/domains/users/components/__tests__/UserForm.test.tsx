@@ -100,14 +100,14 @@ describe('UserForm', () => {
         <UserForm user={null} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      expect(screen.getByText('Create New User')).toBeInTheDocument();
+      expect(screen.getByText('Créer un nouvel utilisateur')).toBeInTheDocument();
       expect(screen.getByLabelText('Email')).toBeInTheDocument();
-      expect(screen.getByLabelText('First Name')).toBeInTheDocument();
-      expect(screen.getByLabelText('Last Name')).toBeInTheDocument();
-      expect(screen.getByLabelText('Role')).toBeInTheDocument();
-      expect(screen.getByLabelText('Password')).toBeInTheDocument();
-      expect(screen.getByText('Create')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Active')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Prénom')).toBeInTheDocument();
+      expect(screen.getByLabelText('Nom')).toBeInTheDocument();
+      expect(screen.getByLabelText('Rôle')).toBeInTheDocument();
+      expect(screen.getByLabelText('Mot de passe')).toBeInTheDocument();
+      expect(screen.getByText('Créer')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Actif')).not.toBeInTheDocument();
     });
 
     it('creates new user with valid data', async () => {
@@ -117,15 +117,15 @@ describe('UserForm', () => {
 
       // Fill form
       await userEvent.type(screen.getByLabelText('Email'), 'newuser@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Jane');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'Smith');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Jane');
+      await userEvent.type(screen.getByLabelText('Nom'), 'Smith');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
       
       // Select role
-      await userEvent.selectOptions(screen.getByLabelText('Role'), 'supervisor');
+      await userEvent.selectOptions(screen.getByLabelText('Rôle'), 'supervisor');
 
       // Submit form
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
         expect(mockUsersCreate).toHaveBeenCalledWith(
@@ -140,7 +140,7 @@ describe('UserForm', () => {
       });
 
       expect(mockOnSuccess).toHaveBeenCalled();
-      expect(mockToast.success).toHaveBeenCalledWith('User created successfully');
+      expect(mockToast.success).toHaveBeenCalledWith('Utilisateur créé avec succès');
     });
 
     it('validates required fields for new user', async () => {
@@ -149,13 +149,13 @@ describe('UserForm', () => {
       );
 
       // Submit form without filling required fields
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(screen.getByText('Email is required')).toBeInTheDocument();
-        expect(screen.getByText('First name is required')).toBeInTheDocument();
-        expect(screen.getByText('Last name is required')).toBeInTheDocument();
-        expect(screen.getByText('Password is required')).toBeInTheDocument();
+        expect(screen.getByText('L\'email est requis')).toBeInTheDocument();
+        expect(screen.getByText('Le prénom est requis')).toBeInTheDocument();
+        expect(screen.getByText('Le nom est requis')).toBeInTheDocument();
+        expect(screen.getByText('Le mot de passe est requis')).toBeInTheDocument();
       });
 
       expect(mockUsersCreate).not.toHaveBeenCalled();
@@ -167,11 +167,11 @@ describe('UserForm', () => {
       );
 
       await userEvent.type(screen.getByLabelText('Email'), 'invalid-email');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Jane');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'Smith');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Jane');
+      await userEvent.type(screen.getByLabelText('Nom'), 'Smith');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
 
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
         expect(mockUsersCreate).not.toHaveBeenCalled();
@@ -185,14 +185,14 @@ describe('UserForm', () => {
       );
 
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Jane');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'Smith');
-      await userEvent.type(screen.getByLabelText('Password'), '123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Jane');
+      await userEvent.type(screen.getByLabelText('Nom'), 'Smith');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), '123');
 
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(screen.getByText('Password must be at least 6 characters')).toBeInTheDocument();
+        expect(screen.getByText('Le mot de passe doit faire au moins 6 caractères')).toBeInTheDocument();
       });
 
       expect(mockUsersCreate).not.toHaveBeenCalled();
@@ -204,17 +204,17 @@ describe('UserForm', () => {
       );
 
       // Submit empty form to trigger errors
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(screen.getByText('Email is required')).toBeInTheDocument();
+        expect(screen.getByText('L\'email est requis')).toBeInTheDocument();
       });
 
       // Start typing in email field
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
 
       await waitFor(() => {
-        expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('L\'email est requis')).not.toBeInTheDocument();
       });
     });
   });
@@ -225,14 +225,14 @@ describe('UserForm', () => {
         <UserForm user={mockUser} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      expect(screen.getByText('Edit User')).toBeInTheDocument();
+      expect(screen.getByText('Modifier l\'utilisateur')).toBeInTheDocument();
       expect(screen.getByDisplayValue('existing@example.com')).toBeInTheDocument();
       expect(screen.getByDisplayValue('John')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
-      expect(screen.getByLabelText('Role')).toHaveValue('technician');
-      expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
-      expect(screen.getByLabelText('Active')).toBeInTheDocument();
-      expect(screen.getByText('Update')).toBeInTheDocument();
+      expect(screen.getByLabelText('Rôle')).toHaveValue('technician');
+      expect(screen.queryByLabelText('Mot de passe')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Actif')).toBeInTheDocument();
+      expect(screen.getByText('Mettre à jour')).toBeInTheDocument();
     });
 
     it('updates existing user with valid data', async () => {
@@ -244,14 +244,14 @@ describe('UserForm', () => {
       await userEvent.clear(screen.getByLabelText('Email'));
       await userEvent.type(screen.getByLabelText('Email'), 'updated@example.com');
       
-      await userEvent.clear(screen.getByLabelText('First Name'));
-      await userEvent.type(screen.getByLabelText('First Name'), 'Jane');
+      await userEvent.clear(screen.getByLabelText('Prénom'));
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Jane');
       
       // Change role
-      await userEvent.selectOptions(screen.getByLabelText('Role'), 'admin');
+      await userEvent.selectOptions(screen.getByLabelText('Rôle'), 'admin');
 
       // Submit form
-      fireEvent.click(screen.getByText('Update'));
+      fireEvent.click(screen.getByText('Mettre à jour'));
 
       await waitFor(() => {
         expect(mockUsersUpdate).toHaveBeenCalledWith(
@@ -267,7 +267,7 @@ describe('UserForm', () => {
       });
 
       expect(mockOnSuccess).toHaveBeenCalled();
-      expect(mockToast.success).toHaveBeenCalledWith('User updated successfully');
+      expect(mockToast.success).toHaveBeenCalledWith('Utilisateur mis à jour avec succès');
     });
 
     it('toggles active status', async () => {
@@ -276,10 +276,10 @@ describe('UserForm', () => {
       );
 
       // Uncheck active
-      fireEvent.click(screen.getByLabelText('Active'));
+      fireEvent.click(screen.getByLabelText('Actif'));
 
       // Submit form
-      fireEvent.click(screen.getByText('Update'));
+      fireEvent.click(screen.getByText('Mettre à jour'));
 
       await waitFor(() => {
         expect(mockUsersUpdate).toHaveBeenCalledWith(
@@ -298,16 +298,16 @@ describe('UserForm', () => {
 
       // Clear required fields
       await userEvent.clear(screen.getByLabelText('Email'));
-      await userEvent.clear(screen.getByLabelText('First Name'));
-      await userEvent.clear(screen.getByLabelText('Last Name'));
+      await userEvent.clear(screen.getByLabelText('Prénom'));
+      await userEvent.clear(screen.getByLabelText('Nom'));
 
       // Submit form
-      fireEvent.click(screen.getByText('Update'));
+      fireEvent.click(screen.getByText('Mettre à jour'));
 
       await waitFor(() => {
-        expect(screen.getByText('Email is required')).toBeInTheDocument();
-        expect(screen.getByText('First name is required')).toBeInTheDocument();
-        expect(screen.getByText('Last name is required')).toBeInTheDocument();
+        expect(screen.getByText('L\'email est requis')).toBeInTheDocument();
+        expect(screen.getByText('Le prénom est requis')).toBeInTheDocument();
+        expect(screen.getByText('Le nom est requis')).toBeInTheDocument();
       });
 
       expect(mockUsersUpdate).not.toHaveBeenCalled();
@@ -315,12 +315,12 @@ describe('UserForm', () => {
   });
 
   describe('Form Behavior', () => {
-    it('calls onClose when clicking Cancel', () => {
+    it('calls onClose when clicking Annuler', () => {
       renderWithAuth(
         <UserForm user={null} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      fireEvent.click(screen.getByText('Cancel'));
+      fireEvent.click(screen.getByText('Annuler'));
       expect(mockOnClose).toHaveBeenCalled();
     });
 
@@ -333,15 +333,15 @@ describe('UserForm', () => {
 
       // Fill form
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Test');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'User');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Test');
+      await userEvent.type(screen.getByLabelText('Nom'), 'User');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
 
       // Submit form
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
-      expect(screen.getByRole('button', { name: /Saving/ })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Saving/ })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Enregistrement.../ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Enregistrement.../ })).toBeDisabled();
     });
 
     it('disables submit button during loading', async () => {
@@ -353,15 +353,15 @@ describe('UserForm', () => {
 
       // Fill form
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Test');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'User');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Test');
+      await userEvent.type(screen.getByLabelText('Nom'), 'User');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
 
       // Submit form
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /Saving/ })).toBeDisabled();
+        expect(screen.getByRole('button', { name: /Enregistrement.../ })).toBeDisabled();
       });
     });
   });
@@ -377,15 +377,15 @@ describe('UserForm', () => {
 
       // Fill form
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Test');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'User');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Test');
+      await userEvent.type(screen.getByLabelText('Nom'), 'User');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
 
       // Submit form
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(mockToast.error).toHaveBeenCalledWith('Save failed' + errorMessage);
+        expect(mockToast.error).toHaveBeenCalledWith('Échec de l\'enregistrement' + errorMessage);
       });
 
     });
@@ -399,10 +399,10 @@ describe('UserForm', () => {
       );
 
       // Submit form
-      fireEvent.click(screen.getByText('Update'));
+      fireEvent.click(screen.getByText('Mettre à jour'));
 
       await waitFor(() => {
-        expect(mockToast.error).toHaveBeenCalledWith('Save failed' + errorMessage);
+        expect(mockToast.error).toHaveBeenCalledWith('Échec de l\'enregistrement' + errorMessage);
       });
 
     });
@@ -419,15 +419,15 @@ describe('UserForm', () => {
 
       // Fill form
       await userEvent.type(screen.getByLabelText('Email'), 'test@example.com');
-      await userEvent.type(screen.getByLabelText('First Name'), 'Test');
-      await userEvent.type(screen.getByLabelText('Last Name'), 'User');
-      await userEvent.type(screen.getByLabelText('Password'), 'password123');
+      await userEvent.type(screen.getByLabelText('Prénom'), 'Test');
+      await userEvent.type(screen.getByLabelText('Nom'), 'User');
+      await userEvent.type(screen.getByLabelText('Mot de passe'), 'password123');
 
       // Submit form
-      fireEvent.click(screen.getByText('Create'));
+      fireEvent.click(screen.getByText('Créer'));
 
       await waitFor(() => {
-        expect(mockToast.error).toHaveBeenCalledWith('Not authenticated');
+        expect(mockToast.error).toHaveBeenCalledWith('Non authentifié');
       });
       expect(mockOnSuccess).not.toHaveBeenCalled();
     });
@@ -442,8 +442,8 @@ describe('UserForm', () => {
       expect(screen.getByDisplayValue('existing@example.com')).toBeInTheDocument();
       expect(screen.getByDisplayValue('John')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Doe')).toBeInTheDocument();
-      expect(screen.getByLabelText('Role')).toHaveValue('technician');
-      expect(screen.getByLabelText('Active')).toBeChecked();
+      expect(screen.getByLabelText('Rôle')).toHaveValue('technician');
+      expect(screen.getByLabelText('Actif')).toBeChecked();
     });
 
     it('resets password field when switching users', async () => {
@@ -458,8 +458,8 @@ describe('UserForm', () => {
       expect(screen.getByDisplayValue('')).toBeInTheDocument(); // Email
       expect(screen.getByDisplayValue('')).toBeInTheDocument(); // First name
       expect(screen.getByDisplayValue('')).toBeInTheDocument(); // Last name
-      expect(screen.getByLabelText('Role')).toHaveValue('technician'); // Default role
-      expect(screen.getByLabelText('Password')).toBeInTheDocument();
+      expect(screen.getByLabelText('Rôle')).toHaveValue('technician'); // Default role
+      expect(screen.getByLabelText('Mot de passe')).toBeInTheDocument();
     });
   });
 
@@ -480,7 +480,7 @@ describe('UserForm', () => {
         <UserForm user={null} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      const roleSelect = screen.getByLabelText('Role');
+      const roleSelect = screen.getByLabelText('Rôle');
       await userEvent.selectOptions(roleSelect, 'admin');
 
       expect(roleSelect).toHaveValue('admin');
@@ -491,7 +491,7 @@ describe('UserForm', () => {
         <UserForm user={mockUser} onClose={mockOnClose} onSuccess={mockOnSuccess} />
       );
 
-      const activeCheckbox = screen.getByLabelText('Active');
+      const activeCheckbox = screen.getByLabelText('Actif');
       fireEvent.click(activeCheckbox);
 
       expect(activeCheckbox).not.toBeChecked();
