@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminKeys } from "@/lib/query-keys";
 import { ipcClient } from "@/lib/ipc";
+import { makeMutationErrorHandler } from "./mutation-error";
 import type {
   BackendIntegrationConfig,
   IntegrationConfig,
@@ -124,12 +125,7 @@ export function useIntegrations() {
       toast.success(successMessage);
       void queryClient.invalidateQueries({ queryKey: adminKeys.integrations() });
     },
-    onError: (error) => {
-      console.error("Error saving integrations:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Erreur lors de la sauvegarde",
-      );
-    },
+    onError: makeMutationErrorHandler("la sauvegarde"),
   });
 
   const deleteMutation = useMutation({
@@ -138,10 +134,7 @@ export function useIntegrations() {
       toast.success("Intégration supprimée avec succès");
       void queryClient.invalidateQueries({ queryKey: adminKeys.integrations() });
     },
-    onError: (error) => {
-      console.error("Error deleting integration:", error);
-      toast.error("Erreur lors de la suppression");
-    },
+    onError: makeMutationErrorHandler("la suppression"),
   });
 
   const testMutation = useMutation({

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { makeMutationErrorHandler } from "./mutation-error";
 import {
   AlertTriangle,
   Bell,
@@ -276,10 +277,7 @@ export function useBusinessRules() {
       setEditingRule(null);
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error saving business rule:", error);
-      toast.error("Erreur lors de la sauvegarde");
-    },
+    onError: makeMutationErrorHandler("la sauvegarde"),
   });
 
   const deleteRuleMutation = useMutation({
@@ -290,10 +288,7 @@ export function useBusinessRules() {
       setDeleteConfirmOpen(false);
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error deleting business rule:", error);
-      toast.error("Erreur lors de la suppression");
-    },
+    onError: makeMutationErrorHandler("la suppression"),
   });
 
   const toggleRuleStatusMutation = useMutation({
@@ -305,10 +300,7 @@ export function useBusinessRules() {
       );
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error toggling business rule:", error);
-      toast.error("Erreur lors de la mise à jour");
-    },
+    onError: makeMutationErrorHandler("la mise à jour"),
   });
 
   const openEditDialog = (rule: BusinessRule) => {

@@ -10,6 +10,7 @@ import {
 import { settingsOperations } from "@/shared/utils";
 import type { JsonValue } from "@/shared/types";
 import { useAuth } from "@/shared/hooks/useAuth";
+import { makeMutationErrorHandler } from "./mutation-error";
 
 const DEFAULT_FORM_DATA: CreatePerformanceConfigDTO = {
   category: "caching" as PerformanceCategory,
@@ -125,10 +126,7 @@ export function usePerformanceConfig() {
       setFormData({ ...DEFAULT_FORM_DATA });
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error saving performance config:", error);
-      toast.error("Erreur lors de la sauvegarde");
-    },
+    onError: makeMutationErrorHandler("la sauvegarde"),
   });
 
   const deleteConfigMutation = useMutation({
@@ -146,10 +144,7 @@ export function usePerformanceConfig() {
       setConfigToDelete(null);
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error deleting performance config:", error);
-      toast.error("Erreur lors de la suppression");
-    },
+    onError: makeMutationErrorHandler("la suppression"),
   });
 
   const toggleStatusMutation = useMutation({
@@ -168,10 +163,7 @@ export function usePerformanceConfig() {
       );
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error updating config status:", error);
-      toast.error("Erreur lors de la mise à jour");
-    },
+    onError: makeMutationErrorHandler("la mise à jour"),
   });
 
   const openEditDialog = (config: PerformanceConfig) => {

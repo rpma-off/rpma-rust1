@@ -99,9 +99,8 @@ export function IntegrationsTab() {
       setShowCreateDialog(false);
       setEditingIntegration(null);
       resetForm();
-    } catch (error) {
-      console.error('Error saving integration:', error);
-      toast.error('Erreur lors de la sauvegarde');
+    } catch {
+      // Error already surfaced by useIntegrations onError (toast shown there)
     }
   };
 
@@ -109,9 +108,8 @@ export function IntegrationsTab() {
     if (!integrationToDelete) return;
     try {
       await deleteIntegration(integrationToDelete.id);
-    } catch (error) {
-      console.error('Error deleting integration:', error);
-      toast.error('Erreur lors de la suppression');
+    } catch {
+      // Error already surfaced by useIntegrations onError (toast shown there)
     } finally {
       setDeleteConfirmOpen(false);
       setIntegrationToDelete(null);
@@ -148,9 +146,8 @@ export function IntegrationsTab() {
         `Intégration ${integration.isActive ? 'désactivée' : 'activée'} avec succès`,
         integration,
       );
-    } catch (error) {
-      console.error('Error updating integration status:', error);
-      toast.error('Erreur lors de la mise à jour');
+    } catch {
+      // Error already surfaced by useIntegrations onError (toast shown there)
     }
   };
 
