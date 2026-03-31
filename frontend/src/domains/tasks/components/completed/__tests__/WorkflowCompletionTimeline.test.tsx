@@ -35,10 +35,10 @@ describe('WorkflowCompletionTimeline', () => {
     expect(screen.getByText(/Cut checklist/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Mat.riaux/i).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: /Modifier l'etape|Modifier l'étape/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Modifier - Pr.paration/i }));
     expect(onEditStep).toHaveBeenCalledWith('preparation');
 
-    fireEvent.click(screen.getByRole('button', { name: /Telecharger donnees|Télécharger données/i }));
+    fireEvent.click(screen.getByRole('button', { name: /T.l.charger - Pr.paration/i }));
     expect(onDownloadStep).toHaveBeenCalledWith('preparation');
   });
 

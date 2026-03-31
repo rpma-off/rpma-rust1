@@ -165,8 +165,8 @@ describe('WorkflowProgressCard Integration', () => {
       );
 
       expect(screen.getByText('60%')).toBeInTheDocument();
-      expect(screen.getByText('3 of 5')).toBeInTheDocument();
-      expect(screen.getByText('3 steps')).toBeInTheDocument();
+      expect(screen.getByText('3 sur 5')).toBeInTheDocument();
+      expect(screen.getByText('3 étapes')).toBeInTheDocument();
     });
 
     it('shows correct status badge colors', () => {
@@ -183,7 +183,7 @@ describe('WorkflowProgressCard Integration', () => {
         />
       );
 
-      expect(screen.getByText('Not Started')).toBeInTheDocument();
+      expect(screen.getByText('Non démarré')).toBeInTheDocument();
 
       rerender(
         <WorkflowProgressCard
@@ -198,7 +198,7 @@ describe('WorkflowProgressCard Integration', () => {
         />
       );
 
-      expect(screen.getByText('In Progress')).toBeInTheDocument();
+      expect(screen.getByText('En cours')).toBeInTheDocument();
     });
   });
 
