@@ -322,6 +322,45 @@ describe('buildInterventionReportViewModel', () => {
       collected_data: { zones: ['full_front', 'full_vehicle'] } as unknown as import('@/lib/backend/common').JsonValue,
     });
     const vm = buildInterventionReportViewModel(makeIntervention(), [step], null);
-    expect(vm.steps[0].zones).toEqual(['full_front', 'full_vehicle']);
+    expect(vm.steps[0].zones).toEqual(['Face avant complète', 'Véhicule complet']);
+  });
+
+  it('maps english checklist labels to French for preview', () => {
+    const step = makeStep({
+      collected_data: {
+        checklist: [
+          { label: 'clean_dry', checked: true },
+          { label: 'film_ready', checked: false },
+        ],
+      } as unknown as import('@/lib/backend/common').JsonValue,
+    });
+    const vm = buildInterventionReportViewModel(makeIntervention(), [step], null);
+    expect(vm.steps[0].checklist).toEqual([
+      { label: 'Surface propre et sèche', checked: true },
+      { label: 'Film prêt', checked: false },
+    ]);
+  });
+
+  it('maps legacy checklist objects to French for preview', () => {
+    const step = makeStep({
+      collected_data: {
+        checklist: { client_informed: true, temp_ok: false },
+      } as unknown as import('@/lib/backend/common').JsonValue,
+    });
+    const vm = buildInterventionReportViewModel(makeIntervention(), [step], null);
+    expect(vm.steps[0].checklist).toEqual([
+      { label: 'Client informé', checked: true },
+      { label: 'Température conforme', checked: false },
+    ]);
+  });
+
+  it('maps structured english defects to French for preview', () => {
+    const step = makeStep({
+      collected_data: {
+        defects: [{ zone: 'front_bumper', type: 'scratch', severity: 'HIGH', notes: 'impact visible' }],
+      } as unknown as import('@/lib/backend/common').JsonValue,
+    });
+    const vm = buildInterventionReportViewModel(makeIntervention(), [step], null);
+    expect(vm.steps[0].defects).toEqual(['Pare-chocs avant · Rayure · Élevé (impact visible)']);
   });
 });

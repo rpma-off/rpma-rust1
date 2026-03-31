@@ -100,6 +100,88 @@ function label(map: Record<string, string>, key: string | null | undefined): str
   return map[key] ?? key;
 }
 
+function normalizeLookupKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[-\s]+/g, '_');
+}
+
+function humanizeToken(value: string): string {
+  return value
+    .trim()
+    .replace(/[_-]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function checklistLabel(value: string): string {
+  const normalized = normalizeLookupKey(value);
+  const labels: Record<string, string> = {
+    clean_dry: 'Surface propre et sèche',
+    client_informed: 'Client informé',
+    client_briefed: 'Client informé',
+    defects_logged: 'Défauts enregistrés',
+    film_ready: 'Film prêt',
+    humidity_ok: 'Humidité conforme',
+    temp_ok: 'Température conforme',
+    alignment_ok: 'Alignement conforme',
+    clean_finish: 'Finition propre',
+    edges_sealed: 'Bords scellés',
+    no_bubbles: 'Aucune bulle',
+    smooth_surface: 'Surface lisse',
+    wash: 'Lavage effectué',
+    clay_bar: 'Décontamination à la clay',
+    ipa_wipe: 'Nettoyage IPA',
+  };
+  return labels[normalized] ?? value;
+}
+
+function zoneLabel(value: string): string {
+  const normalized = normalizeLookupKey(value);
+  const labels: Record<string, string> = {
+    front_bumper: 'Pare-chocs avant',
+    bumper: 'Pare-chocs avant',
+    rear_bumper: 'Pare-chocs arrière',
+    hood: 'Capot',
+    roof: 'Toit',
+    trunk: 'Coffre',
+    full_front: 'Face avant complète',
+    full_vehicle: 'Véhicule complet',
+    front_left_fender: 'Aile avant gauche',
+    front_right_fender: 'Aile avant droite',
+    rear_left_fender: 'Aile arrière gauche',
+    rear_right_fender: 'Aile arrière droite',
+    left_door: 'Porte gauche',
+    right_door: 'Porte droite',
+  };
+  return labels[normalized] ?? humanizeToken(value);
+}
+
+function defectTypeLabel(value: string): string {
+  const normalized = normalizeLookupKey(value);
+  const labels: Record<string, string> = {
+    scratch: 'Rayure',
+    dent: 'Bosse',
+    bubble: 'Bulle',
+    contamination: 'Contamination',
+    peeling: 'Décollement',
+    edge_lift: 'Relèvement',
+    lift: 'Relèvement',
+  };
+  return labels[normalized] ?? value;
+}
+
+function severityLabel(value: string): string {
+  const normalized = normalizeLookupKey(value);
+  const labels: Record<string, string> = {
+    high: 'Élevé',
+    medium: 'Moyen',
+    low: 'Faible',
+    critical: 'Critique',
+  };
+  return labels[normalized] ?? humanizeToken(value);
+}
+
 /** Safely parse collected_data / step_data to a plain object. */
 function parseStepData(step: InterventionStep): Record<string, unknown> {
   const raw = step.collected_data ?? step.step_data;
@@ -129,13 +211,51 @@ function toNumberArray(value: unknown): number[] {
 }
 
 function parseChecklist(value: unknown): { label: string; checked: boolean }[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null && !Array.isArray(item))
-    .map((item) => ({
-      label: typeof item['label'] === 'string' ? item['label'] : String(item['label'] ?? ''),
-      checked: item['checked'] === true,
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => {
+      if (typeof item === 'string') {
+        return [{ label: checklistLabel(item), checked: true }];
+      }
+      if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+        const labelValue = typeof item['label'] === 'string' ? item['label'] : String(item['label'] ?? '');
+        return [{ label: checklistLabel(labelValue), checked: item['checked'] === true }];
+      }
+      return [];
+    });
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return Object.entries(value as Record<string, unknown>).map(([key, raw]) => ({
+      label: checklistLabel(key),
+      checked: raw === true,
     }));
+  }
+
+  return [];
+}
+
+function parseDefects(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (typeof item === 'string') {
+      return [defectTypeLabel(item)];
+    }
+
+    if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+      const zone = typeof item['zone'] === 'string' && item['zone'].trim() !== '' ? zoneLabel(item['zone']) : '';
+      const defectType = typeof item['type'] === 'string' && item['type'].trim() !== '' ? defectTypeLabel(item['type']) : '';
+      const severity = typeof item['severity'] === 'string' && item['severity'].trim() !== '' ? severityLabel(item['severity']) : '';
+      const notes = typeof item['notes'] === 'string' && item['notes'].trim() !== '' ? item['notes'].trim() : '';
+
+      const summary = [zone, defectType, severity].filter(Boolean).join(' · ');
+      if (summary && notes) return [`${summary} (${notes})`];
+      if (summary) return [summary];
+      if (notes) return [notes];
+    }
+
+    return [];
+  });
 }
 
 function parseMeasurements(measurements: unknown): { key: string; value: string }[] {
@@ -199,9 +319,9 @@ function buildStepViewModel(step: InterventionStep): ReportStepViewModel {
     duration: formatDurationSeconds(step.duration_seconds),
     photoCount: step.photo_count ?? 0,
     notes: nullable(getEffectiveStepNote(step, data), PLACEHOLDERS.noObservation),
-    defects: toStringArray(data['defects']),
+    defects: parseDefects(data['defects']),
     observations: allObservations,
-    zones,
+    zones: zones.map(zoneLabel),
     qualityScore,
     qualityScores,
     checklist: parseChecklist(data['checklist']),

@@ -98,7 +98,7 @@ export function ReportPreviewStepCard({ step }: ReportPreviewStepCardProps) {
               <div className="flex flex-wrap gap-1.5">
                 {step.zones.map((z) => (
                   <Badge key={z} variant="secondary" className="text-xs font-normal">
-                    {z.replace(/_/g, ' ')}
+                    {z}
                   </Badge>
                 ))}
               </div>
@@ -108,7 +108,7 @@ export function ReportPreviewStepCard({ step }: ReportPreviewStepCardProps) {
           {/* Checklist */}
           {step.checklist.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1.5">Checklist</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5">Liste de contrôle</p>
               <ul className="space-y-1">
                 {step.checklist.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">

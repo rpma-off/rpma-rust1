@@ -364,7 +364,7 @@ pub async fn get_app_info(correlation_id: Option<String>) -> Result<serde_json::
 ///
 /// Requires Admin role (data export is a privileged operation).
 #[tracing::instrument(skip_all)]
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn export_data_backup(
     state: AppState<'_>,
     dest_path: String,
@@ -393,7 +393,7 @@ pub async fn export_data_backup(
 ///
 /// Requires Admin role (restore overwrites all local data).
 #[tracing::instrument(skip_all)]
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn restore_data_backup(
     state: AppState<'_>,
     source_path: String,

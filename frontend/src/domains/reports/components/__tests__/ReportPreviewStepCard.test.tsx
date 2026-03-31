@@ -62,6 +62,19 @@ describe('ReportPreviewStepCard', () => {
     await user.click(header);
 
     expect(screen.getByText('Surface propre')).toBeInTheDocument();
+    expect(screen.getByText('Liste de contrôle')).toBeInTheDocument();
+  });
+
+  it('renders localized zone labels without snake_case fallback formatting', async () => {
+    const user = userEvent.setup();
+    const step = makeStep({ zones: ['Pare-chocs avant'] });
+
+    render(<ReportPreviewStepCard step={step} />);
+
+    const header = screen.getByRole('button');
+    await user.click(header);
+
+    expect(screen.getByText('Pare-chocs avant')).toBeInTheDocument();
   });
 
   it('shows rejection reason when present and card is open', () => {

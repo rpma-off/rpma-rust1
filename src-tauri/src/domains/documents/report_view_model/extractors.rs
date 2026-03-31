@@ -1,6 +1,9 @@
 //! JSON extraction helpers for the report view model.
 
-use super::formatters::humanize_key;
+use super::formatters::{
+    checklist_label, defect_type_label, humanize_key, severity_label, workflow_status_label,
+    zone_label,
+};
 use super::{ReportChecklistItem, ReportDefect, ReportKeyValue, ReportZone};
 
 pub(super) fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportChecklistItem> {
@@ -14,7 +17,7 @@ pub(super) fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportC
         serde_json::Value::Object(map) => map
             .iter()
             .map(|(k, v)| ReportChecklistItem {
-                label: humanize_key(k),
+                label: checklist_label(k),
                 checked: v.as_bool().unwrap_or(false),
             })
             .collect(),
@@ -22,7 +25,7 @@ pub(super) fn extract_checklist(data: Option<&serde_json::Value>) -> Vec<ReportC
             .iter()
             .filter_map(|item| {
                 item.as_str().map(|s| ReportChecklistItem {
-                    label: s.to_string(),
+                    label: checklist_label(s),
                     checked: true,
                 })
             })
@@ -90,21 +93,11 @@ pub(super) fn extract_defects(data: Option<&serde_json::Value>) -> Vec<ReportDef
     arr.iter()
         .filter_map(|item| match item {
             serde_json::Value::Object(obj) => Some(ReportDefect {
-                zone: obj
-                    .get("zone")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
-                defect_type: obj
-                    .get("type")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
-                severity: obj
-                    .get("severity")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                zone: zone_label(obj.get("zone").and_then(|v| v.as_str()).unwrap_or("")),
+                defect_type: defect_type_label(
+                    obj.get("type").and_then(|v| v.as_str()).unwrap_or(""),
+                ),
+                severity: severity_label(obj.get("severity").and_then(|v| v.as_str()).unwrap_or("")),
                 notes: obj
                     .get("notes")
                     .and_then(|v| v.as_str())
@@ -113,7 +106,7 @@ pub(super) fn extract_defects(data: Option<&serde_json::Value>) -> Vec<ReportDef
             }),
             serde_json::Value::String(s) => Some(ReportDefect {
                 zone: String::new(),
-                defect_type: s.clone(),
+                defect_type: defect_type_label(s),
                 severity: String::new(),
                 notes: String::new(),
             }),
@@ -149,21 +142,22 @@ pub(super) fn extract_ppf_zones(data: Option<&serde_json::Value>) -> Vec<ReportZ
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string(),
-                name: obj
-                    .get("name")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                name: {
+                    let explicit_name = obj.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                    if explicit_name.trim().is_empty() {
+                        zone_label(obj.get("id").and_then(|v| v.as_str()).unwrap_or(""))
+                    } else {
+                        zone_label(explicit_name)
+                    }
+                },
                 quality_score: obj.get("quality_score").and_then(|v| v.as_f64()),
-                status: obj
-                    .get("status")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or("")
-                    .to_string(),
+                status: workflow_status_label(
+                    obj.get("status").and_then(|v| v.as_str()).unwrap_or(""),
+                ),
             }),
             serde_json::Value::String(s) => Some(ReportZone {
                 id: s.clone(),
-                name: s.clone(),
+                name: zone_label(s),
                 quality_score: None,
                 status: String::new(),
             }),

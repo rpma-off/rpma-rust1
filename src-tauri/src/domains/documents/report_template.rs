@@ -4,7 +4,7 @@
 //! from a [`ReportViewModel`]. The output is intended to be converted to PDF by a
 //! headless browser via [`headless_chrome`].
 
-use super::report_view_model::{ReportStep, ReportViewModel};
+use super::report_view_model::{severity_label, ReportStep, ReportViewModel};
 
 // ---------------------------------------------------------------------------
 // Public entry point
@@ -290,7 +290,7 @@ fn push_step(out: &mut String, step: &ReportStep, placeholder_ns: &str) {
 
     // Checklist
     if !step.checklist.is_empty() {
-        out.push_str(r#"<div class="sub-title">Checklist</div>"#);
+        out.push_str(r#"<div class="sub-title">Liste de contrôle</div>"#);
         out.push_str(r#"<table class="data"><thead><tr><th style="width:50px"></th><th>Élément</th></tr></thead><tbody>"#);
         for item in &step.checklist {
             let (mark, cls) = if item.checked {
@@ -487,7 +487,8 @@ fn badge_html(label: &str, css_type: &str) -> String {
     format!(r#"<span class="badge badge-{}">{}</span>"#, css_type, label)
 }
 
-fn severity_badge(severity: &str) -> String {
+#[allow(dead_code)]
+fn legacy_severity_badge(severity: &str) -> String {
     let label = match severity {
         "high" => "🔴 HIGH",
         "medium" => "🟡 MEDIUM",
@@ -499,6 +500,28 @@ fn severity_badge(severity: &str) -> String {
         "high" => "severity-high",
         "medium" => "severity-medium",
         "low" => "severity-low",
+        _ => "",
+    };
+    format!(r#"<span class="badge {}">{}</span>"#, cls, label)
+}
+
+fn severity_badge(severity: &str) -> String {
+    let trimmed = severity.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+
+    let normalized = trimmed.to_lowercase();
+    let label = match normalized.as_str() {
+        "high" => "🔴 Élevé".to_string(),
+        "medium" => "🟡 Moyen".to_string(),
+        "low" => "🟢 Faible".to_string(),
+        _ => severity_label(trimmed),
+    };
+    let cls = match normalized.as_str() {
+        "high" | "élevé" => "severity-high",
+        "medium" | "moyen" => "severity-medium",
+        "low" | "faible" => "severity-low",
         _ => "",
     };
     format!(r#"<span class="badge {}">{}</span>"#, cls, label)
@@ -638,9 +661,9 @@ mod tests {
             notes: String::new(),
             checklist: vec![],
             defects: vec![ReportDefect {
-                zone: "trunk".to_string(),
-                defect_type: "scratch".to_string(),
-                severity: "high".to_string(),
+                zone: "Coffre".to_string(),
+                defect_type: "Rayure".to_string(),
+                severity: "Élevé".to_string(),
                 notes: "deep scratch".to_string(),
             }],
             observations: vec![],
@@ -656,13 +679,48 @@ mod tests {
             },
         }];
         let html = render_report_html(&vm);
-        assert!(html.contains("trunk"), "zone missing");
-        assert!(html.contains("scratch"), "type missing");
-        assert!(
-            html.contains("HIGH") || html.contains("high"),
-            "severity missing"
-        );
+        assert!(html.contains("Coffre"), "zone missing");
+        assert!(html.contains("Rayure"), "type missing");
+        assert!(html.contains("Élevé"), "severity missing");
+        assert!(!html.contains(">HIGH<"), "raw english severity leaked");
+        assert!(!html.contains(">scratch<"), "raw english defect type leaked");
         assert!(html.contains("deep scratch"), "notes missing");
+    }
+
+    #[test]
+    fn test_render_html_uses_french_checklist_title() {
+        let mut vm = minimal_vm();
+        vm.steps = vec![ReportStep {
+            id: "s1".to_string(),
+            title: "Inspection".to_string(),
+            number: 1,
+            status: "Terminée".to_string(),
+            status_badge: "[OK]".to_string(),
+            started_at: String::new(),
+            completed_at: String::new(),
+            duration: String::new(),
+            photo_count: 0,
+            notes: String::new(),
+            checklist: vec![ReportChecklistItem {
+                label: "Surface propre et sèche".to_string(),
+                checked: true,
+            }],
+            defects: vec![],
+            observations: vec![],
+            measurements: vec![],
+            environment: vec![],
+            zones: vec![],
+            quality_score: String::new(),
+            validation_data: vec![],
+            approval_data: ReportApproval {
+                approved_by: String::new(),
+                approved_at: String::new(),
+                rejection_reason: String::new(),
+            },
+        }];
+        let html = render_report_html(&vm);
+        assert!(html.contains("Liste de contrôle"), "localized checklist title missing");
+        assert!(!html.contains(">Checklist<"), "raw english checklist title leaked");
     }
 
     #[test]
@@ -688,7 +746,7 @@ mod tests {
                 id: "capot".to_string(),
                 name: "Capot avant".to_string(),
                 quality_score: Some(9.5),
-                status: "completed".to_string(),
+                status: "Terminé".to_string(),
             }],
             quality_score: String::new(),
             validation_data: vec![],
@@ -701,6 +759,8 @@ mod tests {
         let html = render_report_html(&vm);
         assert!(html.contains("Capot avant"), "zone name missing");
         assert!(html.contains("9.5"), "quality score missing");
+        assert!(html.contains("Terminé"), "localized zone status missing");
+        assert!(!html.contains(">completed<"), "raw english zone status leaked");
     }
 
     // --- BUG-1 regression: status must not appear twice ---
