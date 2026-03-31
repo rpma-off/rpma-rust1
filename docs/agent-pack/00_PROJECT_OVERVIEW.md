@@ -1,42 +1,90 @@
-# PROJECT OVERVIEW: RPMA v2
+# 00 — Project Overview: RPMA v2
 
-RPMA v2 (Resource Planning & Management Application) is a specialized, offline-first desktop application designed for the planning, execution, and auditing of Paint Protection Film (PPF) field interventions.
+RPMA v2 (Resource Planning & Management Application) is an **offline-first desktop application** for planning, executing, and auditing **PPF (Paint Protection Film)** field interventions. It runs as a Tauri desktop client with a Rust backend, Next.js frontend, and SQLite local persistence.
 
 ## Primary Users
-- **Field Technicians**: Execute interventions, log steps, and capture photos in the field.
-- **Supervisors**: Coordinate planning, schedule tasks via the calendar, and ensure quality control.
-- **Administrators**: Manage users, security policies, system configuration, and organizational settings.
+| Role | Responsibilities |
+|------|----------------|
+| **Field Technician** | Execute interventions, log steps, upload photos |
+| **Supervisor** | Create/assign tasks, manage quotes, schedule via calendar |
+| **Administrator** | Manage users, security policies, system configuration |
+| **Viewer** | Read-only access to dashboards and reports |
 
 ## Core Goals
-- **Offline-First**: Reliable operation in environments with poor or no connectivity. Data is persisted locally and synchronized when online.
-- **Surgical Accuracy**: Precise tracking of intervention steps and material usage.
-- **Auditability**: Complete history of tasks, interventions, and system changes.
+- **Offline-First**: SQLite WAL is the local source of truth. No remote dependency at runtime.
+- **Surgical Accuracy**: Precise tracking of PPF intervention steps and material consumption.
+- **Auditability**: Complete history of tasks, interventions, and system changes via domain event audit trail.
 
 ## Tech Stack
-| Layer | Technology | Role |
-|---|---|---|
-| **Desktop Shell** | Tauri 2.1 | Native runtime and IPC transport |
-| **Backend** | Rust (Edition 2021) | Domain logic, persistence, and system integration |
-| **Frontend** | Next.js 14 (App Router) | UI framework and state management |
-| **Database** | SQLite (WAL Mode) | Local persistence with high concurrency support |
-| **Server State** | TanStack Query v5 | Backend state caching and synchronization |
-| **Local State** | Zustand | Client-only UI state management |
-| **Styling** | Tailwind CSS + shadcn/ui | Utility-first styling and accessible components |
-| **Contract Gen** | ts-rs | Automated Rust-to-TypeScript type synchronization |
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Desktop shell | Tauri | 2.1 |
+| Backend language | Rust | Edition 2021, min 1.85 |
+| Frontend framework | Next.js (App Router) | ^14.2.35 |
+| UI runtime | React | ^18.3.1 |
+| Frontend language | TypeScript | ^5.3.0 |
+| Database | SQLite WAL | via rusqlite + r2d2 (pool max 10) |
+| Server state | TanStack Query | ^5.90.2 |
+| UI local state | Zustand | ^5.0.8 |
+| Styling | Tailwind CSS + shadcn/ui | ^3.4.0 |
+| Type generation | ts-rs | 10.1 |
 
-## High-Level Modules
-- **Tasks**: Lifecycle management of field work orders.
-- **Interventions**: The core workflow engine for executing PPF installations.
-- **Clients**: CRM for managing customer profiles and statistics.
-- **Calendar**: Visual scheduling and technician assignment.
-- **Inventory**: Material tracking (rolls, kits) and consumption logging.
-- **Reports**: Document generation for completed interventions and audits.
-- **Admin/System**: Security, RBAC, and organization-wide settings.
-- **Auth**: Secure session management and 2FA.
+Source of truth: `package.json`, `frontend/package.json`, `src-tauri/Cargo.toml`.
 
-## Golden Paths (Start Here)
-1. **[Domain Model](./01_DOMAIN_MODEL.md)**: Understand the core entities (Tasks, Interventions, etc.).
-2. **[Architecture & Dataflows](./02_ARCHITECTURE_AND_DATAFLOWS.md)**: How data moves from the UI to SQLite.
-3. **[Frontend Guide](./03_FRONTEND_GUIDE.md)**: Conventions for UI development.
-4. **[Backend Guide](./04_BACKEND_GUIDE.md)**: Conventions for Rust domain development.
-5. **[IPC API & Contracts](./05_IPC_API_AND_CONTRACTS.md)**: The bridge between Frontend and Backend.
+## Backend Bounded Contexts (`src-tauri/src/domains/`)
+| Domain | Purpose |
+|--------|---------|
+| `auth` | Login, session management, rate limiting, audit |
+| `users` | User CRUD, RBAC role assignment |
+| `clients` | Client CRM, statistics (denormalized via triggers) |
+| `tasks` | Task lifecycle, checklists, status transitions |
+| `interventions` | PPF workflow execution, photos, step progression |
+| `inventory` | Material stock, consumption, low-stock alerts |
+| `quotes` | Quote/devis lifecycle, items, PDF export |
+| `calendar` | Event scheduling, conflict detection |
+| `notifications` | In-app notifications, messaging |
+| `documents` | Photo storage, intervention report generation |
+| `settings` | App/user/org config — **SQLite-backed since migration 035** |
+| `trash` | Soft-delete recycle bin (restore / hard-delete) |
+| `rules` | Business rules engine (validation, escalation) |
+| `integrations` | Third-party API integration stubs |
+
+## Frontend Bounded Contexts (`frontend/src/domains/`)
+Mirrors backend: `auth`, `users`, `clients`, `tasks`, `interventions`, `inventory`, `quotes`, `calendar`, `notifications`, `reports`, `settings`, `admin`, `bootstrap`, `trash`, `rules`, `integrations`, `dashboard`.
+
+## Repository Layout
+```
+rpma-rust/
+├── CLAUDE.md                         # Dev rules + ADR index (mandatory reading)
+├── Makefile                          # Backend build/test aliases
+├── package.json                      # Root task runner (71 scripts)
+├── src-tauri/
+│   ├── migrations/                   # 70 numbered SQL migrations (002–070)
+│   ├── src/
+│   │   ├── main.rs                   # Tauri bootstrap + 100+ command registration
+│   │   ├── service_builder.rs        # 26-step service initialization order
+│   │   ├── shared/                   # Cross-domain kernel
+│   │   └── domains/                  # 14 bounded contexts
+│   └── tests/harness/                # TestApp, fixtures, auth contexts
+└── frontend/
+    ├── src/
+    │   ├── app/                      # 18 Next.js App Router routes
+    │   ├── domains/                  # 18 frontend feature modules
+    │   ├── lib/ipc/                  # safeInvoke, ipcClient singleton, cache
+    │   ├── lib/query-keys.ts         # TanStack Query key factories
+    │   ├── lib/rbac.ts               # Frontend permission matrix (26 permissions)
+    │   └── types/                    # AUTO-GENERATED from ts-rs (never hand-edit)
+    └── package.json                  # 36 frontend scripts
+```
+
+## Golden Paths
+| Question | Document |
+|----------|----------|
+| Add a feature end-to-end | [04_BACKEND_GUIDE.md](04_BACKEND_GUIDE.md) + [03_FRONTEND_GUIDE.md](03_FRONTEND_GUIDE.md) |
+| Which IPC command handles X? | [05_IPC_API_AND_CONTRACTS.md](05_IPC_API_AND_CONTRACTS.md) |
+| What tables store Y? How do migrations work? | [07_DATABASE_AND_MIGRATIONS.md](07_DATABASE_AND_MIGRATIONS.md) |
+| RBAC roles and enforcement points | [06_SECURITY_AND_RBAC.md](06_SECURITY_AND_RBAC.md) |
+| Core entities and business rules | [01_DOMAIN_MODEL.md](01_DOMAIN_MODEL.md) |
+| Architecture diagrams and dataflows | [02_ARCHITECTURE_AND_DATAFLOWS.md](02_ARCHITECTURE_AND_DATAFLOWS.md) |
+| Dev commands, scripts, CI checklist | [08_DEV_WORKFLOWS_AND_TOOLING.md](08_DEV_WORKFLOWS_AND_TOOLING.md) |
+| User flows and UX patterns | [09_USER_FLOWS_AND_UX.md](09_USER_FLOWS_AND_UX.md) |

@@ -1,48 +1,133 @@
-# 02. ARCHITECTURE AND DATAFLOWS
+# 02 — Architecture and Dataflows
 
-## 4-Layer Architecture Pattern
-The backend is structured strictly following a four-layer architecture per bounded context (Domain-Driven Design).
-See [ADR-001](../adr/001-four-layer-architecture.md) and `GEMINI.md`.
+## 4-Layer Architecture (ADR-001)
 
-1. **Frontend (Next.js)**: Responsible for UI, state (Zustand), and server-caching (TanStack Query).
-2. **IPC Boundary (Tauri)**: Thin wrappers (`src-tauri/src/domains/*/ipc/`) passing data via `#[tauri::command]`.
-3. **Application Layer**: Use cases and orchestration logic (`src-tauri/src/domains/*/application/`). Enforces Auth via `RequestContext`.
-4. **Domain Layer**: Core business models, rules, and invariants.
-5. **Infrastructure Layer**: Repositories for data access (`SQLite WAL mode`) and external integrations.
+Each bounded context under `src-tauri/src/domains/<domain>/` follows a strict layer hierarchy:
 
-## Data Flows
+| Layer | Location | Responsibility |
+|-------|----------|---------------|
+| **IPC** | `domains/*/ipc/` | Thin Tauri command adapters — no business logic |
+| **Application** | `domains/*/application/` | Use-case orchestration, validation, event emission |
+| **Domain** | `domains/*/domain/` | Pure business models, invariants, errors |
+| **Infrastructure** | `domains/*/infrastructure/` | SQL repositories, external adapters |
 
-### 1. Task Creation Flow
-```text
-Frontend Component -> TanStack Mutation -> IPC Wrapper (frontend/src/lib/ipc/)
-  -> Tauri Command (src-tauri/src/domains/tasks/ipc/)
-    -> Auth Check (RequestContext)
-      -> TaskApplicationService (src-tauri/src/domains/tasks/application/)
-        -> TaskDomainModel Creation (src-tauri/src/domains/tasks/domain/)
-          -> TaskRepository (src-tauri/src/domains/tasks/infrastructure/)
-            -> SQLite Insert
-  -> Returns ApiResponse<Task> to Frontend -> Cache Invalidation
+Rules:
+- Each layer may only import the layer **below** it, never above.
+- Cross-domain communication goes only through `shared/contracts/` traits (ADR-003).
+- Business logic forbidden in IPC or infrastructure layers.
+
+## Service Initialization (`src-tauri/src/service_builder.rs`)
+
+Services are wired in a specific acyclic order (26 steps). Key dependencies:
+
+```
+Database + Repositories (roots)
+  → TaskService, ClientService
+  → EventBus (in-memory)
+  → InterventionService, InterventionWorkflowService
+  → SettingsService, AuthService, UserService
+  → SessionService, SessionStore
+  → MaterialService, InventoryFacade
+  → QuoteService, MessageService, AuditService
+  → EventBus handlers registered (AuditLogHandler, InterventionFinalizedHandler, QuoteAcceptedHandler)
+  → TrashService, GlobalSearchService
 ```
 
-### 2. Intervention Workflow
-```text
-Technician UI (Advance Step) -> IPC (advance_intervention_step)
-  -> Application Service validates step logic
-    -> Domain Model updates step status / timestamps
-      -> EventBus emits "InterventionStepAdvanced" (ADR-016)
-        -> Repository persists status
-          -> UI Polls or receives Event via WebSockets/Tauri Events to update view
+All services exposed as `Arc<T>` fields on `AppStateType` (`shared/app_state.rs`).
+
+## Dataflows
+
+### Task Creation
+```
+Frontend Component
+  → useMutation (TanStack Query)
+  → taskIpc.create() [frontend/src/domains/tasks/ipc/task.ipc.ts]
+  → safeInvoke("task_create", payload + session_token + correlation_id)
+  → Tauri IPC boundary
+  → task_create handler [domains/tasks/ipc/task/facade.rs]
+    → resolve_context!(&state, &correlation_id, UserRole::Supervisor)
+    → TaskCommandService.create_task(&ctx, request)
+      → Application layer: validate, build domain model
+      → TaskRepository.insert(task) [infrastructure/]
+        → SQLite INSERT (WAL)
+    → EventBus.publish(TaskCreated { ... })
+  → ApiResponse<Task> returned
+  → TanStack Query cache invalidated (taskKeys.lists())
 ```
 
-### 3. Calendar Scheduling
-```text
-Calendar UI -> IPC (reschedule_task)
-  -> Task Application Service
-    -> Domain Logic (Check overlapping / Supervisor Role check)
-      -> Transaction boundary -> Update SQLite DB
+### Intervention Step Advance
+```
+Technician UI (advance step button)
+  → interventionsIpc.advanceStep() [domains/interventions/ipc/interventions.ipc.ts]
+  → safeInvoke("intervention_advance_step", ...)
+  → intervention_advance_step handler [domains/interventions/ipc/intervention/facade.rs]
+    → resolve_context!(&state, &correlation_id, UserRole::Technician)
+    → InterventionService.advance_step(&ctx, step_id)
+      → Domain: validate step ordering, update status
+      → Repository: persist step status + timestamps
+      → EventBus.publish(InterventionStepAdvanced { ... })
+  → Tauri emits UI event → TanStack Query invalidates interventionKeys
 ```
 
-## Offline-First & Sync
-- **Database**: `SQLite` in WAL mode (ADR-009) ensures atomic local writes without relying on a remote server.
-- **Event Bus**: In-Memory Event Bus (ADR-016) at `src-tauri/src/shared/event_bus/` decouples logic (e.g., triggering audit logs when a task completes).
-- **Sync Queue**: TODO (verify in code - sync queue mechanism to remote server, if implemented).
+### Calendar Scheduling
+```
+Calendar UI (drag/reschedule)
+  → calendarIpc.scheduleTask() [lib/ipc/calendar.ts]
+  → safeInvoke("calendar_schedule_task", { task_id, date })
+  → calendar_schedule_task handler [domains/calendar/]
+    → resolve_context!(&state, &correlation_id, UserRole::Supervisor)
+    → CalendarService.schedule_task()
+      → Conflict check → Update task scheduled_date → SQLite UPDATE
+```
+
+## Request Context & Auth Flow (`src-tauri/src/shared/context/`)
+
+Every protected command uses:
+```rust
+let ctx = resolve_context!(&state, &correlation_id);           // any role
+let ctx = resolve_context!(&state, &correlation_id, UserRole::Admin); // min role
+```
+
+`session_resolver.rs` flow:
+1. Retrieve active `UserSession` from `SessionStore` (in-memory `Arc<Mutex<T>>`)
+2. Gate: call `has_permission(user_role, required_role)` → 403 if insufficient
+3. Build `RequestContext { auth: AuthContext, correlation_id }` — no raw tokens downstream
+
+## Event Bus (`src-tauri/src/shared/event_bus/bus.rs`)
+
+- **Process-global singleton** (`OnceLock<Arc<InMemoryEventBus>>`)
+- **Fire-and-forget**: `tokio::spawn` per handler — failures logged, bus never crashes
+- **Registered handlers** (registered during service_builder init):
+  - `AuditLogHandler` — writes audit entries for sensitive actions
+  - `InterventionFinalizedHandler` — triggers inventory deduction on completion
+  - `QuoteAcceptedHandler` / `QuoteConvertedHandler` — lifecycle side-effects
+
+```rust
+// Publishing (from application layer):
+event_bus.publish(DomainEvent::TaskCreated { task_id, ... }).await;
+
+// Subscribing (registered once in service_builder):
+event_bus.register_handler(Arc::new(AuditLogHandler::new(audit_service)));
+```
+
+## IPC Transport Layer
+
+```
+Frontend                          │  Rust Backend
+──────────────────────────────────┼──────────────────────────────────
+safeInvoke(command, args)         │  #[tauri::command]
+  + correlation_id injected       │  async fn command_name(
+  + session_token injected        │      request: RequestDTO,
+  + timeout 15s                   │      state: AppState<'_>
+  + error normalization           │  ) -> Result<ApiResponse<T>, AppError>
+  + retry logic                   │
+                                  │
+frontend/src/lib/ipc/utils.ts     │  domains/*/ipc/facade.rs
+```
+
+## Offline-First Architecture
+
+- All writes go to local SQLite (WAL mode) — no blocking on remote calls.
+- `synced` flag on records tracks what has been confirmed to any remote service.
+- No remote server dependency at runtime; the app functions fully offline.
+- `shared/contracts/sync.rs` defines sync-queue types for future remote sync.
