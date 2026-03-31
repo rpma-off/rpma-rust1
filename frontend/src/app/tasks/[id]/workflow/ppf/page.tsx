@@ -41,19 +41,19 @@ export default function PPFWorkflowPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="text-xl font-extrabold text-foreground">
-            🛡 Workflow PPF — {task?.vehicle_make ?? ''} {task?.vehicle_model ?? ''}
+            Parcours PPF · {task?.vehicle_make ?? ''} {task?.vehicle_model ?? ''}
           </div>
           <div className="text-sm text-muted-foreground">
             Sélectionnez une étape pour commencer ou reprendre l&apos;intervention
           </div>
         </div>
         <div className="rounded-full bg-[hsl(var(--rpma-surface))] px-3 py-1 text-xs text-muted-foreground shadow-sm">
-          Sauvegarde auto activée
+          Sauvegarde automatique activée
         </div>
       </div>
 
       <div className="rounded-md border border-info/30 bg-info/10 px-4 py-3 text-xs text-info">
-        L&apos;intervention démarre à l&apos;Étape 1 — Inspection. Chaque étape doit être complétée dans l&apos;ordre. Les données sont sauvegardées automatiquement en local (offline-first).
+        L&apos;intervention démarre à l&apos;étape 1 · Inspection. Chaque étape doit être complétée dans l&apos;ordre. Les données sont sauvegardées automatiquement en local.
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -109,7 +109,7 @@ export default function PPFWorkflowPage() {
                 ))}
               </div>
               <Button className="w-full" variant={isActive ? 'default' : 'outline'} disabled={isLocked}>
-                {isLocked ? 'Verrouillé' : isDone ? 'Consulter' : 'Commencer'}
+                {isLocked ? 'Verrouillée' : isDone ? 'Ouvrir' : 'Commencer'}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               {lockReason && (

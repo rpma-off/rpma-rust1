@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Car, Calendar, User, Shield, Eye, Edit, Trash2 } from 'lucide-react';
+import { getPpfZoneLabel } from '@/lib/i18n/status-labels';
 import type { TaskWithDetails, TaskStatus } from '@/types/task.types';
 import {
   AlertDialog,
@@ -115,7 +116,7 @@ export const TaskListCard = React.memo(({
                         key={index}
                         className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-md border border-primary/30"
                       >
-                        {zone}
+                        {getPpfZoneLabel(zone)}
                       </span>
                     ))}
                     {task.ppf_zones.length > 3 && (

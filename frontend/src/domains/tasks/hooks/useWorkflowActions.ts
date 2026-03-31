@@ -22,17 +22,17 @@ interface WorkflowButtonConfig {
 export function getStatusInfo(status?: string | null): WorkflowStatusInfo {
   switch (status) {
     case 'not_started':
-      return { color: 'bg-gray-100 text-gray-800', iconName: 'Clock', label: 'Not Started' };
+      return { color: 'bg-gray-100 text-gray-800', iconName: 'Clock', label: 'Non démarré' };
     case 'in_progress':
-      return { color: 'bg-blue-100 text-blue-800', iconName: 'Play', label: 'In Progress' };
+      return { color: 'bg-blue-100 text-blue-800', iconName: 'Play', label: 'En cours' };
     case 'paused':
-      return { color: 'bg-yellow-100 text-yellow-800', iconName: 'Pause', label: 'Paused' };
+      return { color: 'bg-yellow-100 text-yellow-800', iconName: 'Pause', label: 'En pause' };
     case 'completed':
-      return { color: 'bg-green-100 text-green-800', iconName: 'CheckCircle', label: 'Completed' };
+      return { color: 'bg-green-100 text-green-800', iconName: 'CheckCircle', label: 'Terminé' };
     case 'cancelled':
-      return { color: 'bg-red-100 text-red-800', iconName: 'AlertCircle', label: 'Cancelled' };
+      return { color: 'bg-red-100 text-red-800', iconName: 'AlertCircle', label: 'Annulé' };
     default:
-      return { color: 'bg-gray-100 text-gray-800', iconName: 'Clock', label: 'Unknown' };
+      return { color: 'bg-gray-100 text-gray-800', iconName: 'Clock', label: 'Inconnu' };
   }
 }
 

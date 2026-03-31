@@ -63,10 +63,10 @@ describe('WorkflowProgressCard', () => {
     it('renders with correct initial state for not_started workflow', () => {
       renderWithAuth(<WorkflowProgressCard {...defaultProps} />);
 
-      expect(screen.getByText('Workflow Progress')).toBeInTheDocument();
-      expect(screen.getByText('Not Started')).toBeInTheDocument();
+      expect(screen.getByText('Progression du workflow')).toBeInTheDocument();
+      expect(screen.getByText('Non démarré')).toBeInTheDocument();
       expect(screen.getByText('Commencer le workflow')).toBeInTheDocument();
-      expect(screen.getByText('Template: PPF Workflow')).toBeInTheDocument();
+      expect(screen.getByText('Modèle : PPF Workflow')).toBeInTheDocument();
     });
 
     it('renders with correct state for in_progress workflow', () => {
@@ -83,10 +83,10 @@ describe('WorkflowProgressCard', () => {
 
       renderWithAuth(<WorkflowProgressCard {...props} />);
 
-      expect(screen.getByText('In Progress')).toBeInTheDocument();
+      expect(screen.getByText('En cours')).toBeInTheDocument();
       expect(screen.getByText('Continuer le workflow')).toBeInTheDocument();
       expect(screen.getByText('40%')).toBeInTheDocument();
-      expect(screen.getByText('2 of 5')).toBeInTheDocument();
+      expect(screen.getByText('2 sur 5')).toBeInTheDocument();
     });
 
     it('renders with correct state for completed workflow', () => {
@@ -104,7 +104,7 @@ describe('WorkflowProgressCard', () => {
       renderWithAuth(<WorkflowProgressCard {...props} />);
 
       // Check for the status badge specifically (should be in a badge element)
-      const statusBadges = screen.getAllByText('Completed');
+      const statusBadges = screen.getAllByText('Terminé');
       const statusBadge = statusBadges.find(badge =>
         badge.closest('[class*="bg-green-100"]')
       );

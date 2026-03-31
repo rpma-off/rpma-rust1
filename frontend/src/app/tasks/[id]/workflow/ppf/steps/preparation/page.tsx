@@ -200,7 +200,7 @@ export default function PreparationStepPage() {
     >
       <PpfStepHero
         stepLabel={stepLabel}
-        title="🛠️ Préparation de surface"
+        title="Préparation de surface"
         subtitle="Préparation méticuleuse des zones et contrôle des matériaux"
         badge={inspectionDone ? '✓ Inspection' : undefined}
         rightSlot={
@@ -218,7 +218,7 @@ export default function PreparationStepPage() {
         <div className="space-y-4">
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-semibold text-foreground">✅ Checklist Préparation</div>
+              <div className="text-sm font-semibold text-foreground">Checklist de préparation</div>
               <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 {surfaceCompleted} / {surfaceTotal}
               </span>
@@ -231,7 +231,7 @@ export default function PreparationStepPage() {
           </div>
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <div className="mb-3 text-sm font-semibold text-foreground">✂️ Pré-découpe Film PPF</div>
+            <div className="mb-3 text-sm font-semibold text-foreground">Pré-découpe du film PPF</div>
             <div className="overflow-hidden rounded-lg border border-[hsl(var(--rpma-border))]">
               <div className="grid grid-cols-[2fr_70px_70px_90px] gap-3 bg-[hsl(var(--rpma-surface))] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 <span>Zone</span>
@@ -268,7 +268,7 @@ export default function PreparationStepPage() {
 
         <div className="space-y-4">
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <div className="mb-3 text-sm font-semibold text-foreground">📦 Vérification Matériaux</div>
+            <div className="mb-3 text-sm font-semibold text-foreground">Vérification des matériaux</div>
             <PpfChecklist
               items={MATERIALS_CHECKLIST}
               values={materialsChecklist}
@@ -277,7 +277,7 @@ export default function PreparationStepPage() {
           </div>
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <label className="mb-2 block text-xs font-semibold text-foreground">Notes préparation</label>
+            <label className="mb-2 block text-xs font-semibold text-foreground">Notes de préparation</label>
             <textarea
               className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
               rows={4}
@@ -296,7 +296,7 @@ export default function PreparationStepPage() {
               photos={photos}
               minPhotos={0}
               onChange={setPhotos}
-              title="📷 Photos de préparation"
+              title="Photos de préparation"
               hint="Documentation visuelle (optionnel)"
             />
           </div>

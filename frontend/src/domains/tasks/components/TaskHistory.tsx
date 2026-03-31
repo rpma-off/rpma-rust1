@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { Check, History, AlertCircle } from 'lucide-react';
+import { taskStatusLabels } from '@/lib/i18n/status-labels';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { TaskHistoryEntry } from '../api/types';
 
@@ -19,18 +20,18 @@ function toDate(value: number | string): Date {
 }
 
 function formatStatusLabel(status?: string | null): string {
-  return (status || 'unknown').split('_').join(' ');
+  if (!status) return 'Inconnu';
+  return taskStatusLabels[status] || status.split('_').join(' ');
 }
 
 function entryTitle(entry: TaskHistoryEntry): string {
   if (!entry.old_status) {
-    return `Creation (${formatStatusLabel(entry.new_status)})`;
+    return `Création (${formatStatusLabel(entry.new_status)})`;
   }
   return `${formatStatusLabel(entry.old_status)} -> ${formatStatusLabel(entry.new_status)}`;
 }
 
 export function TaskHistory({ taskId: _taskId, historyEntries, isLoading, error }: TaskHistoryProps) {
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -66,7 +67,7 @@ export function TaskHistory({ taskId: _taskId, historyEntries, isLoading, error 
     return (
       <div className="text-center py-8 text-muted-foreground">
         <History className="h-12 w-12 mx-auto mb-4 opacity-30" />
-        <p>Aucun evenement disponible pour cette tache.</p>
+        <p>Aucun événement disponible pour cette tâche.</p>
       </div>
     );
   }
@@ -77,7 +78,7 @@ export function TaskHistory({ taskId: _taskId, historyEntries, isLoading, error 
         <div className="absolute left-5 top-0 bottom-0 w-px bg-border -ml-px" />
 
         <div className="relative space-y-6">
-          {historyEntries.map(entry => (
+          {historyEntries.map((entry) => (
             <div key={entry.id} className="relative flex items-start group">
               <div className="absolute left-0 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-background border-2 border-primary">
                 {entry.new_status === 'completed' ? (
@@ -89,7 +90,7 @@ export function TaskHistory({ taskId: _taskId, historyEntries, isLoading, error 
 
               <div className="ml-16">
                 <div className="flex items-center space-x-2">
-                  <h4 className="font-medium">{entry.changed_by || 'Systeme'}</h4>
+                  <h4 className="font-medium">{entry.changed_by || 'Système'}</h4>
                   <span className="text-sm text-muted-foreground">
                     {format(toDate(entry.changed_at), 'dd/MM/yyyy HH:mm')}
                   </span>

@@ -25,7 +25,7 @@ const DEFECT_TYPE_LABELS: Record<PpfDefectType, string> = {
   scratch: 'Rayure',
   dent: 'Bosselure',
   chip: 'Impact',
-  paint_issue: 'Défaut peinture',
+  paint_issue: 'Défaut de peinture',
   crack: 'Fissure',
 };
 
@@ -63,14 +63,14 @@ export function PpfDefectsPanel({ defects, onAdd, onRemove }: PpfDefectsPanelPro
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold text-foreground">⚠️ Défauts constatés</div>
+        <div className="text-sm font-semibold text-foreground">Défauts constatés</div>
         <button
           type="button"
           className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--rpma-border))] px-2 py-1 text-xs font-semibold text-foreground transition hover:border-emerald-400/60 hover:bg-emerald-50"
           onClick={() => setIsAdding((prev) => !prev)}
         >
           <Plus className="h-3.5 w-3.5" />
-          Ajouter défaut
+          Ajouter un défaut
         </button>
       </div>
 
@@ -79,7 +79,7 @@ export function PpfDefectsPanel({ defects, onAdd, onRemove }: PpfDefectsPanelPro
           <div className="grid gap-2">
             <input
               type="text"
-              placeholder="Zone (ex: Aile avant droite)"
+              placeholder="Zone (ex : Aile avant droite)"
               className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
               value={form.zone}
               onChange={(event) => setForm((prev) => ({ ...prev, zone: event.target.value }))}
@@ -95,7 +95,7 @@ export function PpfDefectsPanel({ defects, onAdd, onRemove }: PpfDefectsPanelPro
                 <option value="scratch">Rayure</option>
                 <option value="dent">Bosselure</option>
                 <option value="chip">Impact</option>
-                <option value="paint_issue">Défaut peinture</option>
+                <option value="paint_issue">Défaut de peinture</option>
                 <option value="crack">Fissure</option>
               </select>
               <select
@@ -156,7 +156,8 @@ export function PpfDefectsPanel({ defects, onAdd, onRemove }: PpfDefectsPanelPro
               <div className="font-semibold text-foreground">{defect.zone}</div>
               <div className="text-muted-foreground">
                 {DEFECT_TYPE_LABELS[defect.type] ?? defect.type} · Sévérité :{' '}
-                {defect.severity ? DEFECT_SEVERITY_LABELS[defect.severity] : '—'} {defect.notes ? `· ${defect.notes}` : ''}
+                {defect.severity ? DEFECT_SEVERITY_LABELS[defect.severity] : '—'}
+                {defect.notes ? ` · ${defect.notes}` : ''}
               </div>
             </div>
             <button

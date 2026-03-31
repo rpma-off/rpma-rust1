@@ -1,7 +1,8 @@
 import React from 'react';
 import { Car, Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getPpfZoneLabel } from '@/lib/i18n/status-labels';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TaskWithDetails } from '@/types/task.types';
 
 interface VehicleInfoCardProps {
@@ -13,7 +14,7 @@ export function VehicleInfoCard({ task }: VehicleInfoCardProps) {
     {
       label: 'Plaque',
       value: task.vehicle_plate || 'Non définie',
-      icon: <Car className="h-5 w-5 text-blue-500 mr-2" />,
+      icon: <Car className="mr-2 h-5 w-5 text-blue-500" />,
     },
     {
       label: 'Modèle',
@@ -23,31 +24,31 @@ export function VehicleInfoCard({ task }: VehicleInfoCardProps) {
     {
       label: 'Marque',
       value: task.vehicle_make || 'Non définie',
-      icon: <Info className="h-3 w-3 mr-1 text-gray-400" />,
+      icon: <Info className="mr-1 h-3 w-3 text-gray-400" />,
     },
     {
       label: 'Année',
       value: task.vehicle_year || 'Non définie',
-      icon: <Info className="h-3 w-3 mr-1 text-gray-400" />,
+      icon: <Info className="mr-1 h-3 w-3 text-gray-400" />,
     },
     {
       label: 'VIN',
       value: task.vin || 'Non disponible',
-      icon: <Info className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />,
+      icon: <Info className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" />,
     },
   ];
 
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center">
-          <Car className="h-5 w-5 text-blue-500 mr-2" />
-          Informations Véhicule
+        <CardTitle className="flex items-center text-lg font-semibold">
+          <Car className="mr-2 h-5 w-5 text-blue-500" />
+          Informations véhicule
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {vehicleInfo.map((info, index) => (
             <div key={index} className="flex items-center space-x-3">
               {info.icon}
@@ -59,13 +60,12 @@ export function VehicleInfoCard({ task }: VehicleInfoCardProps) {
           ))}
         </div>
 
-        {/* PPF Zone */}
         {task.ppf_zones && task.ppf_zones.length > 0 && (
           <div className="border-t pt-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">Zone PPF</span>
+              <span className="text-sm font-medium text-gray-700">Zones PPF</span>
               <Badge variant="secondary" className="text-xs">
-                {task.ppf_zones.join(', ')}
+                {task.ppf_zones.map((zone) => getPpfZoneLabel(zone)).join(', ')}
               </Badge>
             </div>
           </div>

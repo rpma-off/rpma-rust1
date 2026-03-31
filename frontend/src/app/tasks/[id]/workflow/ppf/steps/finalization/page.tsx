@@ -18,8 +18,6 @@ import {
   PpfPhotoGrid,
   PpfStepHero,
   PpfWorkflowLayout,
-  getPPFStepPath,
-  getNextPPFStepId,
   usePpfWorkflow,
 } from '@/domains/interventions';
 import { buildStepExportPayload, downloadJsonFile, getEffectiveStepData } from '@/domains/interventions';
@@ -40,7 +38,7 @@ const FINAL_CHECKLIST = [
   {
     id: 'smooth_surface',
     title: 'Surface lisse',
-    description: 'Pas de plis ni sur-épaisseurs',
+    description: 'Pas de plis ni surépaisseurs',
     required: true,
   },
   {
@@ -180,7 +178,7 @@ export default function FinalizationStepPage() {
   const checklistTotal = FINAL_CHECKLIST.length;
   const canValidate = checklistCount === checklistTotal;
 
-  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
+  const summaryText = `${checklistCount}/${checklistTotal} points de contrôle · ${photos.length} photo${photos.length !== 1 ? 's' : ''}`;
 
   const stepLabel = `ÉTAPE 4 / ${steps.length || 4}`;
   const completedBadges = steps
@@ -247,7 +245,7 @@ export default function FinalizationStepPage() {
       >
         <PpfStepHero
           stepLabel={stepLabel}
-          title="🏁 Finalisation et Validation"
+          title="Finalisation et validation"
           subtitle="Contrôle qualité final et validation client"
           badge={badge}
           rightSlot={
@@ -265,7 +263,7 @@ export default function FinalizationStepPage() {
           <div className="space-y-4">
             <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <div className="text-sm font-semibold text-foreground">✅ Checklist Finale</div>
+                <div className="text-sm font-semibold text-foreground">Checklist finale</div>
                 <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                   {checklistCount} / {checklistTotal}
                 </span>
@@ -299,7 +297,7 @@ export default function FinalizationStepPage() {
                 photos={photos}
                 minPhotos={0}
                 onChange={setPhotos}
-                title="📷 Photos de finalisation"
+                title="Photos de finalisation"
                 hint="Vue avant · latérales · arrière"
               />
             </div>
@@ -317,7 +315,7 @@ export default function FinalizationStepPage() {
             <AlertDialogTitle>Finaliser l&apos;intervention ?</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Assurez-vous que toutes les étapes sont complètes et que les photos ont
-              était prises.
+              été prises.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

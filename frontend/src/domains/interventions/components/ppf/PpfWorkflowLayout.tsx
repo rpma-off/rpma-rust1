@@ -64,15 +64,15 @@ export function PpfWorkflowLayout({
   const hasBackendSteps = Boolean(stepsData?.steps && stepsData.steps.length > 0);
 
   const stepLabel = useMemo(() => {
-    if (!currentStep) return 'Workflow complété';
+    if (!currentStep) return 'Parcours terminé';
     const index = steps.findIndex((step) => step.id === currentStep.id);
-    if (index < 0) return 'Workflow PPF';
+    if (index < 0) return 'Parcours PPF';
     return `Étape ${index + 1} / ${steps.length}`;
   }, [currentStep, steps]);
 
   const headerTitle = useMemo(() => {
     const vehicle = [task?.vehicle_make, task?.vehicle_model].filter(Boolean).join(' ');
-    return vehicle || 'Workflow PPF';
+    return vehicle || 'Parcours PPF';
   }, [task?.vehicle_make, task?.vehicle_model]);
 
   const headerSubtitle = useMemo(() => {
@@ -149,8 +149,6 @@ export function PpfWorkflowLayout({
   );
 
   useEffect(() => {
-    // Do not redirect while workflow steps are still hydrating; the fallback default steps
-    // would otherwise send the user back to step 1 on transient remounts/reloads.
     if (!stepId || isLoading || !intervention || !hasBackendSteps) return;
     if (!canAccessStep(stepId)) {
       const redirectStep = allowedStepId ?? steps[0]?.id;
@@ -164,7 +162,7 @@ export function PpfWorkflowLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--rpma-bg))] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--rpma-bg))]">
         <LoadingState message="Chargement du workflow..." />
       </div>
     );
@@ -172,7 +170,7 @@ export function PpfWorkflowLayout({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--rpma-bg))] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--rpma-bg))]">
         <ErrorState message={error.message} onRetry={() => window.location.reload()} />
       </div>
     );
@@ -180,7 +178,7 @@ export function PpfWorkflowLayout({
 
   if (!intervention) {
     return (
-      <div className="min-h-screen bg-[hsl(var(--rpma-bg))] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[hsl(var(--rpma-bg))]">
         <ErrorState message="Aucune intervention PPF active." onRetry={() => router.push(`/tasks/${taskId}`)} />
       </div>
     );
@@ -192,7 +190,7 @@ export function PpfWorkflowLayout({
   const backLabel = prevStep ? `← Étape ${currentIndex}` : '← Retour';
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--rpma-bg))] flex flex-col">
+    <div className="flex min-h-screen flex-col bg-[hsl(var(--rpma-bg))]">
       <PpfHeaderBand
         stepLabel={stepLabel}
         title={headerTitle}
@@ -210,7 +208,7 @@ export function PpfWorkflowLayout({
           void navigateWithDraftSave(`/tasks/${taskId}/workflow/ppf/${getPPFStepPath(nextStepId)}`)
         }
       />
-      <main className="flex-1 px-5 py-5 space-y-6">
+      <main className="flex-1 space-y-6 px-5 py-5">
         {children}
         {actionBar && (
           <div className="sticky bottom-0 z-40 mt-8 flex flex-col gap-3 border-t-2 border-[hsl(var(--rpma-border))] bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:justify-between">
@@ -234,7 +232,7 @@ export function PpfWorkflowLayout({
                 disabled={actionBar.saveDisabled || isNavigating}
               >
                 <Save className="mr-2 h-4 w-4" />
-                Sauvegarder brouillon
+                Sauvegarder le brouillon
               </Button>
               {actionBar.onDownloadData && (
                 <Button
@@ -244,12 +242,12 @@ export function PpfWorkflowLayout({
                   disabled={actionBar.downloadDisabled || isNavigating}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  {actionBar.downloadLabel ?? 'Télécharger données'}
+                  {actionBar.downloadLabel ?? 'Télécharger les données'}
                 </Button>
               )}
               <Button
                 className={cn(
-                  'h-10 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700',
+                  'h-10 bg-emerald-600 text-xs font-semibold hover:bg-emerald-700',
                   actionBar.validateDisabled && 'opacity-50'
                 )}
                 onClick={actionBar.onValidate}

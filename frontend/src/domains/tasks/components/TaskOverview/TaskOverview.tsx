@@ -12,7 +12,7 @@ import {
   User
 } from 'lucide-react';
 import { getUserFullName } from '@/lib/types';
-import { taskPriorityLabels } from '@/lib/i18n/status-labels';
+import { getPpfZoneLabel, taskPriorityLabels } from '@/lib/i18n/status-labels';
 import { Badge } from '@/components/ui/badge';
 import { TaskWithDetails } from '@/types/task.types';
 import { formatDate, formatTime } from '@/shared/utils/date-formatters';
@@ -247,7 +247,7 @@ export function TaskOverview({ task, defaultExpandedSections = [] }: TaskOvervie
                 />
                 <InfoRow
                   label="Détail zones"
-                  value={task.ppf_zones.join(', ')}
+                  value={task.ppf_zones.map((zone) => getPpfZoneLabel(zone)).join(', ')}
                 />
               </>
             )}

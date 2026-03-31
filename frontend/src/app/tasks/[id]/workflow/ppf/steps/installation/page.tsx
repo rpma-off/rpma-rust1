@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { getPpfZoneLabel } from '@/lib/i18n/status-labels';
 import { Button } from '@/components/ui/button';
 import {
   PpfChecklist,
@@ -59,12 +60,12 @@ export default function InstallationStepPage() {
     >
       <PpfStepHero
         stepLabel={stepLabel}
-        title="🎯 Installation du Film PPF"
+        title="Installation du film PPF"
         subtitle="Application zone par zone avec contrôle qualité continu"
         badge={badge}
         rightSlot={
           <div>
-            <div className="text-[10px] uppercase font-semibold text-white/70">Progression</div>
+            <div className="text-[10px] font-semibold uppercase text-white/70">Progression</div>
             <div className="text-2xl font-extrabold">
               {completedZones} / {zones.length || 1} zones
             </div>
@@ -86,7 +87,7 @@ export default function InstallationStepPage() {
             <PpfZoneTracker
               zones={zones.map((zone) => ({
                 id: zone.id,
-                name: zone.name,
+                name: getPpfZoneLabel(zone.name || zone.id),
                 area: zone.area,
                 film: zone.film,
                 status: zone.status ?? 'pending',
@@ -105,7 +106,7 @@ export default function InstallationStepPage() {
                     Zone active
                   </div>
                   <div className="text-sm font-semibold text-foreground">
-                    {activeZone.name} · {activeZone.area}
+                    {getPpfZoneLabel(activeZone.name || activeZone.id)} · {activeZone.area}
                   </div>
                 </div>
                 <Button size="sm" onClick={handleValidateZone} disabled={!canValidateZone}>
@@ -133,9 +134,9 @@ export default function InstallationStepPage() {
           {activeZone && (
             <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
               <div className="mb-2 flex items-center justify-between">
-                <div className="text-sm font-semibold text-foreground">📷 Photos Après Pose</div>
+                <div className="text-sm font-semibold text-foreground">Photos après pose</div>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                  {activeZone.name}
+                  {getPpfZoneLabel(activeZone.name || activeZone.id)}
                 </span>
               </div>
               <PpfPhotoGrid
@@ -146,21 +147,21 @@ export default function InstallationStepPage() {
                 photos={activeZone.photos ?? []}
                 minPhotos={1}
                 maxPhotos={6}
-                requiredLabels={[activeZone.name]}
+                requiredLabels={[getPpfZoneLabel(activeZone.name || activeZone.id)]}
                 onChange={handlePhotosChange}
-                title="Photo zone active"
+                title="Photo de la zone active"
                 hint="Ajoutez au moins 1 photo"
               />
             </div>
           )}
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <div className="mb-3 text-sm font-semibold text-foreground">🏆 Scores Qualité</div>
+            <div className="mb-3 text-sm font-semibold text-foreground">Scores qualité</div>
             <div className="space-y-3 text-xs">
               {zones.map((zone) => (
                 <div key={`score-${zone.id}`}>
                   <div className="flex items-center justify-between">
-                    <span>{zone.name}</span>
+                    <span>{getPpfZoneLabel(zone.name || zone.id)}</span>
                     <span className={zone.status === 'completed' ? 'font-semibold text-emerald-600' : 'text-muted-foreground'}>
                       {typeof zone.quality_score === 'number' ? `${zone.quality_score.toFixed(1)} / 10` : '—'}
                     </span>
@@ -182,7 +183,7 @@ export default function InstallationStepPage() {
           </div>
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
-            <label className="mb-2 block text-xs font-semibold text-foreground">Notes installation</label>
+            <label className="mb-2 block text-xs font-semibold text-foreground">Notes d&apos;installation</label>
             <textarea
               className="w-full rounded-md border border-[hsl(var(--rpma-border))] px-3 py-2 text-sm"
               rows={3}

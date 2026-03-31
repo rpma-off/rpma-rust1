@@ -54,7 +54,7 @@ describe('PPFWorkflowPage', () => {
 
     expect(screen.getByText("Complétez d'abord « Inspection » pour déverrouiller cette étape.")).toBeInTheDocument();
 
-    const lockedLabels = screen.getAllByText('Verrouillé');
+    const lockedLabels = screen.getAllByText('Verrouillée');
     expect(lockedLabels.length).toBeGreaterThan(0);
     expect(lockedLabels[0].closest('button')).toBeDisabled();
   });
@@ -72,5 +72,12 @@ describe('PPFWorkflowPage', () => {
     render(<PPFWorkflowPage />);
 
     expect(screen.getByText("Complétez d'abord « Installation » pour déverrouiller cette étape.")).toBeInTheDocument();
+  });
+
+  it('renders French workflow entry copy', () => {
+    render(<PPFWorkflowPage />);
+
+    expect(screen.getByText(/Parcours PPF/)).toBeInTheDocument();
+    expect(screen.getByText('Sauvegarde automatique activée')).toBeInTheDocument();
   });
 });

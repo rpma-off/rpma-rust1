@@ -25,14 +25,14 @@ import { InspectionEnvironmentCard } from '@/domains/interventions/components/pp
 import { CHECKLIST_ITEMS, type InspectionDefect, type InspectionDraft } from './inspection.data';
 
 const VehicleDiagram = dynamic(
-  () => import('@/domains/interventions').then(mod => ({ default: mod.VehicleDiagram })),
+  () => import('@/domains/interventions').then((mod) => ({ default: mod.VehicleDiagram })),
   {
     loading: () => (
       <div className="h-[400px] w-full rounded-lg border border-border bg-card animate-pulse flex items-center justify-center">
         <div className="text-muted-foreground">Chargement du diagramme...</div>
       </div>
     ),
-    ssr: false
+    ssr: false,
   }
 );
 
@@ -82,9 +82,10 @@ export default function InspectionStepPage() {
           )
             ? (defect.type as Defect['type'])
             : 'scratch',
-          severity: (defect.severity === 'low' || defect.severity === 'medium' || defect.severity === 'high')
-            ? defect.severity
-            : 'low',
+          severity:
+            defect.severity === 'low' || defect.severity === 'medium' || defect.severity === 'high'
+              ? defect.severity
+              : 'low',
         }))
       : [];
 
@@ -93,8 +94,8 @@ export default function InspectionStepPage() {
       defects: normalizedDefects,
       notes: getEffectiveStepNote(stepRecord) ?? collected.notes ?? '',
       environment: {
-      temp_celsius: collected.environment?.temp_celsius ?? intervention?.temperature_celsius ?? null,
-      humidity_percent: collected.environment?.humidity_percent ?? intervention?.humidity_percentage ?? null,
+        temp_celsius: collected.environment?.temp_celsius ?? intervention?.temperature_celsius ?? null,
+        humidity_percent: collected.environment?.humidity_percent ?? intervention?.humidity_percentage ?? null,
       },
     };
     const serverPhotos = stepRecord?.photo_urls ?? [];
@@ -183,9 +184,7 @@ export default function InspectionStepPage() {
   const defectsCount = defects.length;
   const canValidate = checklistCount === checklistTotal;
 
-  const summaryText = `${checklistCount}/${checklistTotal} checklist · ${photos.length} photo${photos.length !== 1 ? 's' : ''} · ${defectsCount} ${
-    defectsCount > 1 ? 'défauts' : 'défaut'
-  }`;
+  const summaryText = `${checklistCount}/${checklistTotal} points de contrôle · ${photos.length} photo${photos.length !== 1 ? 's' : ''} · ${defectsCount} ${defectsCount > 1 ? 'défauts' : 'défaut'}`;
 
   const stepLabel = `ÉTAPE 1 / ${steps.length || 4}`;
   const meta = task?.vehicle_model ? `${task.vehicle_model} · ${task.ppf_zones?.length ?? 0} zones` : undefined;
@@ -243,8 +242,8 @@ export default function InspectionStepPage() {
     >
       <PpfStepHero
         stepLabel={stepLabel}
-        title="🔍 Inspection du véhicule"
-        subtitle="Documentez l'état pré-existant et vérifiez les conditions d'application"
+        title="Inspection du véhicule"
+        subtitle="Documentez l'état préexistant et vérifiez les conditions d'application"
         meta={meta}
         rightSlot={
           <div>
@@ -261,7 +260,7 @@ export default function InspectionStepPage() {
         <div className="space-y-4">
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-semibold text-foreground">✅ Checklist Pré-Inspection</div>
+              <div className="text-sm font-semibold text-foreground">Checklist de pré-inspection</div>
               <span className="rounded-full bg-[hsl(var(--rpma-surface))] px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                 {checklistCount} / {checklistTotal}
               </span>
@@ -283,7 +282,7 @@ export default function InspectionStepPage() {
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-sm font-semibold text-foreground">📐 Diagramme véhicule</div>
+              <div className="text-sm font-semibold text-foreground">Diagramme du véhicule</div>
               <span className="text-[10px] text-muted-foreground">Cliquez pour marquer</span>
             </div>
             <VehicleDiagram
@@ -309,10 +308,7 @@ export default function InspectionStepPage() {
         </div>
 
         <div className="space-y-4">
-          <InspectionEnvironmentCard
-            environment={environment}
-            onChange={setEnvironment}
-          />
+          <InspectionEnvironmentCard environment={environment} onChange={setEnvironment} />
 
           <div className="rounded-xl border border-[hsl(var(--rpma-border))] bg-white p-4 shadow-sm">
             <PpfPhotoGrid
@@ -324,8 +320,8 @@ export default function InspectionStepPage() {
               minPhotos={0}
               requiredLabels={['Face', 'Capot', 'Ailes', 'Pare-choc']}
               onChange={setPhotos}
-              title="📷 Photos Avant Pose"
-              hint="Face · Capot · Ailes G/D · Pare-choc"
+              title="Photos avant pose"
+              hint="Face · Capot · Ailes G/D · Pare-chocs"
             />
           </div>
         </div>

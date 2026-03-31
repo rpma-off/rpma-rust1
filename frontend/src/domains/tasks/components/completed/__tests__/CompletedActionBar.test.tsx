@@ -22,4 +22,23 @@ describe('CompletedActionBar', () => {
     fireEvent.click(screen.getByRole('button', { name: /JSON/i }));
     expect(onDownloadDataJson).toHaveBeenCalledTimes(1);
   });
+
+  it('renders French action labels', () => {
+    render(
+      <CompletedActionBar
+        onSaveReport={async () => {}}
+        onDownloadDataJson={() => {}}
+        onShareTask={() => {}}
+        onPrintReport={async () => {}}
+        isExporting={false}
+        exportProgress=""
+        lastExportTime={null}
+        taskId="task-1"
+      />
+    );
+
+    expect(screen.getByText('Intervention terminée')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Télécharger le PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Télécharger les données JSON' })).toBeInTheDocument();
+  });
 });

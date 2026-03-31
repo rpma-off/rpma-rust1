@@ -1,5 +1,6 @@
 import React from 'react';
 import { Workflow, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { workflowExecutionStatusLabels } from '@/lib/i18n/status-labels';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -19,8 +20,10 @@ export const WorkflowStatusCard: React.FC<WorkflowStatusCardProps> = ({
   status,
   progress,
 }) => {
-  const getStatusIcon = (status?: string) => {
-    switch (status?.toLowerCase()) {
+  const statusLabel = status ? workflowExecutionStatusLabels[status.toLowerCase()] || status : 'Non démarré';
+
+  const getStatusIcon = (nextStatus?: string) => {
+    switch (nextStatus?.toLowerCase()) {
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'in_progress':
@@ -32,8 +35,8 @@ export const WorkflowStatusCard: React.FC<WorkflowStatusCardProps> = ({
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status?.toLowerCase()) {
+  const getStatusColor = (nextStatus?: string) => {
+    switch (nextStatus?.toLowerCase()) {
       case 'completed':
         return 'bg-green-100 text-green-800';
       case 'in_progress':
@@ -60,25 +63,22 @@ export const WorkflowStatusCard: React.FC<WorkflowStatusCardProps> = ({
           <span className="text-sm text-gray-600">État actuel</span>
           <Badge className={getStatusColor(status)}>
             {getStatusIcon(status)}
-            <span className="ml-1 capitalize">
-              {status || 'Non démarré'}
-            </span>
+            <span className="ml-1 capitalize">{statusLabel}</span>
           </Badge>
         </div>
 
         {workflowId && (
           <div className="text-xs text-gray-500">
-            Workflow ID: {workflowId}
+            Identifiant du workflow : {workflowId}
           </div>
         )}
 
         {currentStepId && (
           <div className="text-xs text-gray-500">
-            Étape actuelle: {currentStepId}
+            Étape actuelle : {currentStepId}
           </div>
         )}
 
-        {/* Real progress bar with actual progress data */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-gray-600">
             <span>Progression</span>

@@ -65,7 +65,7 @@ export function WorkflowProgressCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Workflow className="h-5 w-5 text-blue-600" />
-            <CardTitle className="text-lg">Workflow Progress</CardTitle>
+            <CardTitle className="text-lg">Progression du workflow</CardTitle>
           </div>
           <Badge className={statusInfo.color}>
             <StatusIcon className="h-3 w-3 mr-1" />
@@ -74,7 +74,7 @@ export function WorkflowProgressCard({
         </div>
         {templateName && (
           <CardDescription>
-            Template: {templateName}
+            Modèle : {templateName}
           </CardDescription>
         )}
       </CardHeader>
@@ -85,7 +85,7 @@ export function WorkflowProgressCard({
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">Avancement</span>
                 <span className="font-medium">{workflowProgress.percentage}%</span>
               </div>
               <Progress
@@ -97,15 +97,15 @@ export function WorkflowProgressCard({
             {/* Step Information */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
-                <div className="text-muted-foreground">Current Step</div>
+                <div className="text-muted-foreground">Étape actuelle</div>
                 <div className="font-medium">
-                  {workflowProgress.currentStep} of {workflowProgress.totalSteps}
+                  {workflowProgress.currentStep} sur {workflowProgress.totalSteps}
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="text-muted-foreground">Completed</div>
+                <div className="text-muted-foreground">Étapes terminées</div>
                 <div className="font-medium">
-                  {workflowProgress.completedSteps} steps
+                  {workflowProgress.completedSteps} étape{workflowProgress.completedSteps > 1 ? 's' : ''}
                 </div>
               </div>
             </div>

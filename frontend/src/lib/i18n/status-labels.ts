@@ -257,3 +257,18 @@ export function getStatusLabel(status: string, type: 'task' | 'priority' | 'role
   const map = labelMaps[type] || statusLabels;
   return map[status] || status;
 }
+
+export function getPpfZoneLabel(zone: string | null | undefined): string {
+  if (!zone) return '';
+
+  const normalized = zone.trim().toLowerCase();
+  if (!normalized) return '';
+
+  return (
+    ppfZoneLabels[normalized] ||
+    ppfZoneExtendedLabels[normalized] ||
+    normalized
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  );
+}

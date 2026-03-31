@@ -15,9 +15,9 @@ import { usePhotoUpload } from '@/shared/features/documents/usePhotoUpload';
  */
 function toAssetUrl(url: string): string {
   if (!url) return url;
-  // Already a web/data/blob URL — leave unchanged
+  // Already a web/data/blob URL - leave unchanged
   if (/^(https?|data|blob):/.test(url)) return url;
-  // file:// URI — strip the scheme so convertFileSrc gets a plain path
+  // file:// URI - strip the scheme so convertFileSrc gets a plain path
   if (url.startsWith('file://')) {
     const path = decodeURIComponent(url.replace(/^file:\/\/\//, '').replace(/^file:\/\//, ''));
     return convertFileSrc(path);
@@ -25,7 +25,6 @@ function toAssetUrl(url: string): string {
   // Windows absolute path (e.g. C:\... or C:/...) or Unix absolute path
   return convertFileSrc(url);
 }
-
 
 type PpfPhotoGridProps = {
   taskId: string;
@@ -117,18 +116,18 @@ export function PpfPhotoGrid({
         type="button"
         className={cn(
           'flex w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition',
-          isUploading ? 'border-emerald-400 bg-emerald-50' : 'border-[hsl(var(--rpma-border))] hover:border-emerald-400/60 hover:bg-emerald-50/50'
+          isUploading
+            ? 'border-emerald-400 bg-emerald-50'
+            : 'border-[hsl(var(--rpma-border))] hover:border-emerald-400/60 hover:bg-emerald-50/50'
         )}
         onClick={() => inputRef.current?.click()}
       >
         <Camera className="h-6 w-6 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">
-          Appuyer pour prendre une photo
-        </span>
+        <span className="text-xs text-muted-foreground">Appuyer pour prendre une photo</span>
         {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
         {!isOnline && (
           <span className="text-[10px] font-semibold text-orange-600">
-            Mode hors ligne: capture non synchronisée non supportée pour l&apos;instant
+            Mode hors ligne : capture non synchronisée non prise en charge pour le moment
           </span>
         )}
       </button>
@@ -145,8 +144,6 @@ export function PpfPhotoGrid({
           const photoUrl = photos[index];
           const label = requiredLabels[index];
           if (photoUrl) {
-            // Convert local filesystem paths to Tauri asset:// URLs so the webview can load them.
-            // Tauri blocks direct file:// URLs; convertFileSrc maps them to asset://localhost/...
             const displaySrc = toAssetUrl(photoUrl);
             return (
               <div

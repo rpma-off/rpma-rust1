@@ -10,6 +10,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import type { UpdateTaskRequest } from "@/lib/backend";
+import { getPpfZoneLabel } from "@/lib/i18n/status-labels";
 import {
   Button,
   Dialog,
@@ -279,7 +280,7 @@ export function TaskDetails({
               <h4 className="text-sm font-medium text-muted-foreground">
                 {t("tasks.ppfZone")}
               </h4>
-              <p>{task.ppf_zones?.join(", ") || "N/A"}</p>
+              <p>{task.ppf_zones?.map((zone) => getPpfZoneLabel(zone)).join(", ") || "N/A"}</p>
             </div>
             <div className="space-y-1">
               <h4 className="text-sm font-medium text-muted-foreground">

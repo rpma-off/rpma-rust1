@@ -11,6 +11,7 @@ import {
   Badge,
   CheckCircle,
 } from 'lucide-react';
+import { getPpfZoneLabel } from '@/lib/i18n/status-labels';
 import { Badge as UIBadge } from '@/components/ui/badge';
 
 type CompletedSidebarProps = {
@@ -151,7 +152,7 @@ export function CompletedSidebar({
                     variant="secondary"
                     className="text-[10px] font-normal"
                   >
-                    {zone}
+                    {getPpfZoneLabel(zone)}
                   </UIBadge>
                 ))}
                 {task.ppf_zones.length > 5 && (

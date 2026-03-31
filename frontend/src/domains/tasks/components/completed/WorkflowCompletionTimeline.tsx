@@ -6,15 +6,15 @@ import { formatDateTimeShort } from '@/shared/utils/date-formatters';
 const STEP_META: Record<string, { label: string; description: string }> = {
   inspection: {
     label: 'Inspection',
-    description: 'Etat du vehicule, defauts pre-existants, photos, conditions (temp/hum)',
+    description: 'État du véhicule, défauts préexistants, photos, conditions (température/humidité)',
   },
   preparation: {
-    label: 'Preparation',
-    description: 'Degraissage surface, decoupe du film, verification materiaux',
+    label: 'Préparation',
+    description: 'Dégraissage de la surface, découpe du film, vérification des matériaux',
   },
   installation: {
     label: 'Installation',
-    description: 'Pose du film PPF zone par zone avec controle qualite continu',
+    description: 'Pose du film PPF zone par zone avec contrôle qualité continu',
   },
   finalization: {
     label: 'Finalisation',
@@ -63,7 +63,6 @@ export function WorkflowCompletionTimeline({
   onEditStep,
   onDownloadStep,
 }: WorkflowCompletionTimelineProps) {
-
   return (
     <div className="space-y-3">
       {steps.map((step, index) => {
@@ -71,7 +70,7 @@ export function WorkflowCompletionTimeline({
         const isCompleted = step.status === 'completed';
         const hasDetails = Boolean(
           (step.collected_data && Object.keys(step.collected_data).length > 0) ||
-          (step.step_data && Object.keys(step.step_data).length > 0)
+            (step.step_data && Object.keys(step.step_data).length > 0)
         );
 
         return (
@@ -118,9 +117,7 @@ export function WorkflowCompletionTimeline({
                         {isCompleted ? 'Terminé' : 'En cours'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">
-                      {STEP_META[step.id]?.description}
-                    </p>
+                    <p className="text-xs text-gray-500">{STEP_META[step.id]?.description}</p>
                   </div>
 
                   {hasDetails && (
@@ -151,7 +148,7 @@ export function WorkflowCompletionTimeline({
                   onClick={() => onEditStep(step.id)}
                 >
                   <Pencil className="h-3.5 w-3.5" />
-                  Modifier l&apos;etape
+                  Modifier l&apos;étape
                 </button>
               )}
               {onDownloadStep && (
@@ -161,7 +158,7 @@ export function WorkflowCompletionTimeline({
                   onClick={() => onDownloadStep(step.id)}
                 >
                   <Download className="h-3.5 w-3.5" />
-                  Télécharger données
+                  Télécharger les données
                 </button>
               )}
             </div>
@@ -195,22 +192,22 @@ function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
       <div className="space-y-3">
         {checklist && checklistCounts.total > 0 && (
           <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
-            Checklist: {checklistCounts.checked}/{checklistCounts.total}
+            Liste de contrôle : {checklistCounts.checked}/{checklistCounts.total}
           </div>
         )}
         {Array.isArray(defects) && defects.length > 0 && (
-          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Défauts: {defects.length}</div>
+          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Défauts : {defects.length}</div>
         )}
         {environment && (
           <div className="grid grid-cols-2 gap-2">
             {environment.temp_celsius != null && (
               <div className="rounded-lg bg-red-50 p-2 text-xs text-red-700">
-                Température: {String(environment.temp_celsius)}°C
+                Température : {String(environment.temp_celsius)}°C
               </div>
             )}
             {environment.humidity_percent != null && (
               <div className="rounded-lg bg-blue-50 p-2 text-xs text-blue-700">
-                Humidité: {String(environment.humidity_percent)}%
+                Humidité : {String(environment.humidity_percent)}%
               </div>
             )}
           </div>
@@ -234,17 +231,17 @@ function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
       <div className="space-y-2">
         {surfaceCounts.total > 0 && (
           <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
-            Surface checklist: {surfaceCounts.checked}/{surfaceCounts.total}
+            Liste de contrôle surface : {surfaceCounts.checked}/{surfaceCounts.total}
           </div>
         )}
         {cutCounts.total > 0 && (
           <div className="rounded-lg bg-violet-50 p-2 text-xs text-violet-700">
-            Cut checklist: {cutCounts.checked}/{cutCounts.total}
+            Liste de découpe : {cutCounts.checked}/{cutCounts.total}
           </div>
         )}
         {materialsCounts.total > 0 && (
           <div className="rounded-lg bg-sky-50 p-2 text-xs text-sky-700">
-            Matériaux: {materialsCounts.checked}/{materialsCounts.total}
+            Matériaux : {materialsCounts.checked}/{materialsCounts.total}
           </div>
         )}
         {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
@@ -271,19 +268,19 @@ function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
       <div className="space-y-2">
         {zones.length > 0 && (
           <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
-            Zones terminées: {completed}/{zones.length}
+            Zones terminées : {completed}/{zones.length}
           </div>
         )}
         {zones.length > 0 && (
           <div className="rounded-lg bg-indigo-50 p-2 text-xs text-indigo-700">
-            Zones avec photos: {withPhotos}/{zones.length}
+            Zones avec photos : {withPhotos}/{zones.length}
           </div>
         )}
         {avgScore && (
-          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Score moyen: {avgScore}/10</div>
+          <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">Score moyen : {avgScore}/10</div>
         )}
         {activeZoneId && (
-          <div className="rounded-lg bg-gray-50 p-2 text-xs text-gray-600">Zone active: {activeZoneId}</div>
+          <div className="rounded-lg bg-gray-50 p-2 text-xs text-gray-600">Zone active : {activeZoneId}</div>
         )}
         {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
       </div>
@@ -304,7 +301,7 @@ function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
       <div className="space-y-2">
         {checklist && checklistCounts.total > 0 && (
           <div className="rounded-lg bg-emerald-50 p-2 text-xs text-emerald-700">
-            Checklist final: {checklistCounts.checked}/{checklistCounts.total}
+            Liste de contrôle finale : {checklistCounts.checked}/{checklistCounts.total}
           </div>
         )}
         {notes && <div className="rounded-lg bg-gray-50 p-2 text-sm text-gray-700">{notes}</div>}
@@ -314,7 +311,7 @@ function WorkflowStepDetails({ step }: { step: WorkflowStep }) {
 
   const renderRawFallback = () => (
     <div className="space-y-2">
-      <div className="text-xs font-semibold text-gray-600">Structure non reconnue, affichage brut:</div>
+      <div className="text-xs font-semibold text-gray-600">Structure non reconnue, affichage brut :</div>
       <pre className="max-h-64 overflow-auto rounded-lg bg-gray-900 p-3 text-[11px] text-gray-100">{rawJson}</pre>
     </div>
   );

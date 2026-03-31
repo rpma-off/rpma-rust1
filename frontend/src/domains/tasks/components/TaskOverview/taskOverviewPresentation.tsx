@@ -15,11 +15,11 @@ export const PRIORITY_OPTIONS = [
 export const STATUS_OPTIONS = [
   { value: 'draft', label: 'Brouillon' },
   { value: 'pending', label: 'En attente' },
-  { value: 'scheduled', label: 'Planifiee' },
+  { value: 'scheduled', label: 'Planifiée' },
   { value: 'in_progress', label: 'En cours' },
-  { value: 'completed', label: 'Terminee' },
+  { value: 'completed', label: 'Terminée' },
   { value: 'on_hold', label: 'En pause' },
-  { value: 'cancelled', label: 'Annulee' },
+  { value: 'cancelled', label: 'Annulée' },
 ];
 
 export function getPriorityColor(priority: string): string {
@@ -38,7 +38,7 @@ export function getPriorityColor(priority: string): string {
 }
 
 export function getPriorityLabel(priority: string): string {
-  return taskPriorityLabels[priority?.toLowerCase()] || 'Non definie';
+  return taskPriorityLabels[priority?.toLowerCase()] || 'Non définie';
 }
 
 interface SectionHeaderProps {

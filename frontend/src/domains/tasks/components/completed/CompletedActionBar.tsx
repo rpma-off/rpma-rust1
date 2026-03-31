@@ -32,7 +32,7 @@ export function CompletedActionBar({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <ArrowLeft className="h-4 w-4" />
-            <span>Intervention terminee</span>
+            <span>Intervention terminée</span>
           </div>
 
           {lastExportTime && (
@@ -60,7 +60,7 @@ export function CompletedActionBar({
             size="sm"
           >
             <Download className="mr-2 h-4 w-4" />
-            Telecharger le PDF
+            Télécharger le PDF
           </Button>
 
           <Button
@@ -70,7 +70,7 @@ export function CompletedActionBar({
             size="sm"
           >
             <Download className="mr-2 h-4 w-4" />
-            Telecharger donnees JSON
+            Télécharger les données JSON
           </Button>
 
           <Button
@@ -83,7 +83,7 @@ export function CompletedActionBar({
             {isExporting ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-600 border-t-transparent" />
-                Generation...
+                Génération...
               </>
             ) : (
               <>
@@ -123,7 +123,7 @@ export function CompletedActionBar({
               size="sm"
             >
               <Home className="mr-2 h-4 w-4" />
-              Taches
+              Tâches
             </Button>
           )}
         </div>
