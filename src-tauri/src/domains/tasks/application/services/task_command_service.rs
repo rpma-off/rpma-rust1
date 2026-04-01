@@ -23,7 +23,7 @@ use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, Int
 use crate::shared::contracts::notification::NotificationSender;
 use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use crate::shared::contracts::task_scheduler::TaskScheduler;
-use crate::shared::services::event_bus::{event_factory, InMemoryEventBus};
+use crate::shared::services::event_bus::{event_factory, EventPublisher, InMemoryEventBus};
 use crate::shared::services::validation::ValidationService;
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.

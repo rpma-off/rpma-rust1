@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Camera, ListChecks, Car, User, Clock } from 'lucide-react';
+import { AlertTriangle, Camera, Car, CheckCircle, Clock, ListChecks, User } from 'lucide-react';
 import { formatDate } from '@/shared/utils/date-formatters';
 import { useTranslation } from '@/shared/hooks';
 
@@ -11,7 +11,6 @@ type CompletedHeroProps = {
     vehicle_model?: string | null;
     vehicle_year?: string | null;
     customer_name?: string | null;
-    start_time?: string | null;
     end_time?: string | null;
   };
   duration: string | null;
@@ -19,25 +18,31 @@ type CompletedHeroProps = {
   checklistCount: number;
   checklistTotal: number;
   progressPercentage: number;
+  completedSteps: number;
+  totalSteps: number;
+  defectCount: number;
+  zonesCompleted: number;
+  zonesTotal: number;
 };
 
 export function CompletedHero({
   task,
   duration,
   photoCount,
-  checklistCount,
-  checklistTotal,
   progressPercentage,
+  completedSteps,
+  totalSteps,
+  defectCount,
+  zonesCompleted,
+  zonesTotal,
 }: CompletedHeroProps) {
   const { t } = useTranslation();
-  const vehicleInfo = [task.vehicle_make, task.vehicle_model, task.vehicle_year]
-    .filter(Boolean)
-    .join(' ');
+  const vehicleInfo = [task.vehicle_make, task.vehicle_model, task.vehicle_year].filter(Boolean).join(' ');
   const displayTitle = task.title || `#${task.external_id?.slice(-8) || ''}`;
 
   return (
-    <div className="animate-fadeIn rounded-xl border border-rpma-primary/20 bg-gradient-to-br from-rpma-primary/10 via-rpma-primary/5 to-success/5 px-6 py-6 shadow-md">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div className="animate-fadeIn rounded-[28px] border border-rpma-primary/20 bg-[radial-gradient(circle_at_top_left,_rgba(60,212,160,0.22),_transparent_35%),linear-gradient(135deg,_rgba(15,23,42,0.03),_rgba(16,185,129,0.09))] px-6 py-6 shadow-md">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex-1">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-rpma-primary/15 px-3 py-1 text-xs font-semibold text-rpma-primary">
@@ -45,7 +50,7 @@ export function CompletedHero({
             </span>
             <span className="rounded-full bg-success/15 px-3 py-1 text-xs font-semibold text-success">
               <CheckCircle className="mr-1 inline h-3 w-3" />
-              {t('completed.progressBadge')}
+              Workflow PPF cloture
             </span>
           </div>
 
@@ -54,12 +59,8 @@ export function CompletedHero({
               <CheckCircle className="h-7 w-7" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                {t('completed.title')}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t('completed.subtitle', { title: displayTitle })}
-              </p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('completed.title')}</h1>
+              <p className="text-sm text-muted-foreground">{t('completed.subtitle', { title: displayTitle })}</p>
             </div>
           </div>
 
@@ -81,10 +82,12 @@ export function CompletedHero({
           </div>
         </div>
 
-        <div className="flex flex-shrink-0 gap-3">
-          <StatMini icon={<Clock className="h-4 w-4 text-muted-foreground" />} label={t('completed.duration')} value={duration || '—'} />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <StatMini icon={<ListChecks className="h-4 w-4 text-muted-foreground" />} label="Etapes" value={`${completedSteps}/${totalSteps}`} />
+          <StatMini icon={<CheckCircle className="h-4 w-4 text-muted-foreground" />} label="Zones" value={`${zonesCompleted}/${zonesTotal}`} />
+          <StatMini icon={<AlertTriangle className="h-4 w-4 text-muted-foreground" />} label="Defauts" value={String(defectCount)} />
           <StatMini icon={<Camera className="h-4 w-4 text-muted-foreground" />} label={t('completed.photos')} value={String(photoCount)} />
-          <StatMini icon={<ListChecks className="h-4 w-4 text-muted-foreground" />} label={t('completed.checklist')} value={`${checklistCount}/${checklistTotal}`} />
+          <StatMini icon={<Clock className="h-4 w-4 text-muted-foreground" />} label={t('completed.duration')} value={duration || '—'} />
         </div>
       </div>
 
@@ -110,9 +113,7 @@ function StatMini({ icon, label, value }: { icon: React.ReactNode; label: string
       <div className="flex items-center gap-2">
         {icon}
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {label}
-          </div>
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
           <div className="text-lg font-bold text-foreground">{value}</div>
         </div>
       </div>

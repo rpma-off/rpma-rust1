@@ -29,12 +29,20 @@ use chrono::Utc;
 ///
 /// Provides intervention lifecycle management — start, advance, finalize —
 /// with input validation and error mapping.
-#[derive(Debug)]
 pub struct InterventionsFacade {
     intervention_service: Arc<InterventionService>,
     /// Optional blocking rules engine. When present, `workflow_start` and
     /// `workflow_finalize` evaluate configurable rules before mutating state.
     rules_engine: Option<Arc<dyn BlockingRuleEngine>>,
+}
+
+impl std::fmt::Debug for InterventionsFacade {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("InterventionsFacade")
+            .field("intervention_service", &self.intervention_service)
+            .field("rules_engine_attached", &self.rules_engine.is_some())
+            .finish()
+    }
 }
 
 impl InterventionsFacade {

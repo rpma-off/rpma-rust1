@@ -13,8 +13,9 @@ describe('SummaryStats', () => {
       />
     );
 
-    expect(screen.getByText('0/0')).toBeInTheDocument();
+    expect(screen.getAllByText('0/0')).toHaveLength(2);
     expect(screen.getByText('0% complété')).toBeInTheDocument();
+    expect(screen.getByText('QC final')).toBeInTheDocument();
   });
 
   it('renders correct checklist percentage when total is non-zero', () => {
@@ -28,7 +29,7 @@ describe('SummaryStats', () => {
       />
     );
 
-    expect(screen.getByText('3/4')).toBeInTheDocument();
+    expect(screen.getAllByText('3/4')).toHaveLength(2);
     expect(screen.getByText('75% complété')).toBeInTheDocument();
     expect(screen.getByText('5')).toBeInTheDocument();
   });
