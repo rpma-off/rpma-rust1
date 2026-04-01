@@ -1,20 +1,19 @@
 use crate::db::Database;
+use crate::domains::clients::application::client_input_validator::validate_client_id;
 use crate::domains::clients::application::ClientService;
 use crate::domains::clients::domain::models::{CreateClientRequest, CustomerType};
 use crate::shared::ipc::errors::AppError;
 use std::sync::Arc;
 
 #[tokio::test]
-#[allow(deprecated)]
 async fn validate_client_id_rejects_empty_string() {
-    let err = ClientService::validate_client_id("").unwrap_err();
+    let err = validate_client_id("").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
 
 #[tokio::test]
-#[allow(deprecated)]
 async fn validate_client_id_rejects_whitespace_string() {
-    let err = ClientService::validate_client_id("   ").unwrap_err();
+    let err = validate_client_id("   ").unwrap_err();
     assert!(matches!(err, AppError::Validation(_)));
 }
 
