@@ -19,11 +19,11 @@ use crate::domains::tasks::infrastructure::task::TaskService;
 use crate::domains::tasks::infrastructure::task_import::TaskImportService;
 use crate::domains::tasks::TasksFacade;
 use crate::shared::context::RequestContext;
-use crate::shared::contracts::integration_sink::IntegrationEventSink;
+use crate::shared::contracts::integration_sink::{IntegrationDispatchRequest, IntegrationEventSink};
 use crate::shared::contracts::notification::NotificationSender;
-use crate::shared::contracts::rules_engine::BlockingRuleEngine;
+use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use crate::shared::contracts::task_scheduler::TaskScheduler;
-use crate::shared::services::event_bus::InMemoryEventBus;
+use crate::shared::services::event_bus::{event_factory, InMemoryEventBus};
 use crate::shared::services::validation::ValidationService;
 
 /// Lightweight orchestration service constructed per-request by IPC handlers.
@@ -485,6 +485,98 @@ impl TaskCommandService {
                 error!("Task retrieval failed: {}", e);
                 AppError::db_sanitized("tasks.get", e)
             })
+    }
+
+    // ------------------------------------------------------------------
+    // transition_status
+    // ------------------------------------------------------------------
+
+    /// Validate and apply a status transition for a task.
+    ///
+    /// Orchestrates the full pipeline:
+    /// 1. Fetch the task once (avoids double-fetch that was in the IPC layer).
+    /// 2. Enforce technician assignment policy for Technician-role callers.
+    /// 3. Evaluate the blocking rules engine for the `task_status_changed` trigger.
+    /// 4. Persist the new status via the domain service.
+    /// 5. Emit a `TaskStatusChanged` domain event.
+    /// 6. Dispatch an integration notification.
+    ///
+    /// Returns the updated [`Task`] on success.
+    #[instrument(skip(self, ctx), fields(user_id = %ctx.auth.user_id, task_id = %task_id))]
+    pub async fn transition_status(
+        &self,
+        ctx: &RequestContext,
+        task_id: &str,
+        new_status: &str,
+        reason: Option<&str>,
+    ) -> Result<Task, AppError> {
+        // Single fetch — shared by both the permission check and the transition.
+        let task = self.fetch_task(task_id).await?;
+        let old_status = task.status.to_string();
+
+        // Technician callers may only transition tasks they are assigned to.
+        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
+
+        // Evaluate configurable business rules before mutating state.
+        let rule_check = self
+            .rules_engine
+            .evaluate(&RuleCheckRequest {
+                trigger: "task_status_changed".to_string(),
+                entity_id: Some(task_id.to_string()),
+                payload: serde_json::json!({
+                    "old_status": old_status,
+                    "new_status": new_status,
+                }),
+                user_id: ctx.auth.user_id.clone(),
+                correlation_id: ctx.correlation_id.clone(),
+            })
+            .await?;
+        if !rule_check.allowed {
+            return Err(AppError::Validation(
+                rule_check
+                    .message
+                    .unwrap_or_else(|| "Task status change blocked by active rule".to_string()),
+            ));
+        }
+
+        let task = self
+            .task_service
+            .transition_status(task_id, new_status, reason, &ctx.auth.user_id)?;
+
+        // Publish domain event — best-effort; a failed publish must not abort the transition.
+        let status_event = event_factory::task_status_changed_with_ctx(
+            task.id.clone(),
+            old_status.clone(),
+            task.status.to_string(),
+            ctx.auth.user_id.clone(),
+            ctx.correlation_id.clone(),
+            reason.map(String::from),
+        );
+        if let Err(e) = self.event_bus.publish(status_event) {
+            warn!(
+                task_id = %task.id,
+                correlation_id = %ctx.correlation_id,
+                "Failed to publish TaskStatusChanged event: {}",
+                e
+            );
+        }
+
+        let _ = self
+            .integration_sink
+            .enqueue(IntegrationDispatchRequest {
+                event_name: "task_status_changed".to_string(),
+                payload: serde_json::json!({
+                    "task_id": task.id,
+                    "old_status": old_status,
+                    "new_status": task.status.to_string(),
+                }),
+                correlation_id: ctx.correlation_id.clone(),
+                requested_integration_ids: None,
+            })
+            .await;
+
+        info!("Task {} transitioned to {}", task_id, new_status);
+        Ok(task)
     }
 
     // ------------------------------------------------------------------

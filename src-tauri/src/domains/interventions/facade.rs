@@ -19,6 +19,7 @@ use crate::shared::context::RequestContext;
 use crate::shared::contracts::auth::UserRole;
 use crate::shared::contracts::common::now as now_ms;
 use crate::shared::contracts::events::InterventionFinalized;
+use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use crate::shared::contracts::task_assignment::TaskAssignmentChecker;
 use crate::shared::event_bus::publish_event;
 use crate::shared::ipc::errors::AppError;
@@ -31,6 +32,9 @@ use chrono::Utc;
 #[derive(Debug)]
 pub struct InterventionsFacade {
     intervention_service: Arc<InterventionService>,
+    /// Optional blocking rules engine. When present, `workflow_start` and
+    /// `workflow_finalize` evaluate configurable rules before mutating state.
+    rules_engine: Option<Arc<dyn BlockingRuleEngine>>,
 }
 
 impl InterventionsFacade {
@@ -38,7 +42,18 @@ impl InterventionsFacade {
     pub fn new(intervention_service: Arc<InterventionService>) -> Self {
         Self {
             intervention_service,
+            rules_engine: None,
         }
+    }
+
+    /// Attach a blocking rules engine to the facade.
+    ///
+    /// Call this in production IPC handlers so that `workflow_start` and
+    /// `workflow_finalize` enforce configurable business rules. Test code that
+    /// does not care about rule evaluation can omit this call.
+    pub fn with_rules_engine(mut self, rules_engine: Arc<dyn BlockingRuleEngine>) -> Self {
+        self.rules_engine = Some(rules_engine);
+        self
     }
 
     /// TODO: document
@@ -586,6 +601,29 @@ impl InterventionsFacade {
         self.ensure_intervention_permission(ctx)?;
         self.ensure_task_assignment(ctx, task_checker, &request.task_id, "start interventions")
             .await?;
+
+        // Evaluate configurable business rules before mutating state.
+        if let Some(engine) = &self.rules_engine {
+            let rule_check = engine
+                .evaluate(&RuleCheckRequest {
+                    trigger: "intervention_started".to_string(),
+                    entity_id: Some(request.task_id.clone()),
+                    payload: serde_json::json!({
+                        "task_id": request.task_id.clone(),
+                        "estimated_duration_minutes": request.estimated_duration_minutes,
+                        "priority": request.priority,
+                    }),
+                    user_id: ctx.auth.user_id.clone(),
+                    correlation_id: ctx.correlation_id.clone(),
+                })
+                .await?;
+            if !rule_check.allowed {
+                return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+                    || "Intervention start blocked by active rule".to_string(),
+                )));
+            }
+        }
+
         match self
             .intervention_service
             .get_active_intervention_by_task(&request.task_id)
@@ -696,6 +734,29 @@ impl InterventionsFacade {
             intervention.technician_id.as_deref(),
             "finalize interventions",
         )?;
+
+        // Evaluate configurable business rules before mutating state.
+        if let Some(engine) = &self.rules_engine {
+            let rule_check = engine
+                .evaluate(&RuleCheckRequest {
+                    trigger: "intervention_finalized".to_string(),
+                    entity_id: Some(request.intervention_id.clone()),
+                    payload: serde_json::json!({
+                        "intervention_id": request.intervention_id.clone(),
+                        "quality_score": request.quality_score,
+                        "customer_satisfaction": request.customer_satisfaction,
+                    }),
+                    user_id: ctx.auth.user_id.clone(),
+                    correlation_id: ctx.correlation_id.clone(),
+                })
+                .await?;
+            if !rule_check.allowed {
+                return Err(AppError::Validation(rule_check.message.unwrap_or_else(
+                    || "Intervention finalization blocked by active rule".to_string(),
+                )));
+            }
+        }
+
         let response = self
             .intervention_service
             .finalize_intervention(

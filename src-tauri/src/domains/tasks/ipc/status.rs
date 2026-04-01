@@ -1,15 +1,26 @@
 use crate::check_task_permission;
 use crate::commands::{ApiResponse, AppError, AppState};
-use crate::domains::tasks::application::services::task_policy_service;
+use crate::domains::tasks::application::services::task_command_service::TaskCommandService;
 use crate::domains::tasks::domain::models::status::{StatusDistribution, StatusTransitionRequest};
 use crate::domains::tasks::domain::models::task::Task;
 use crate::resolve_context;
-use crate::shared::contracts::integration_sink::{
-    IntegrationDispatchRequest, IntegrationEventSink,
-};
-use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
-use crate::shared::services::event_bus::{event_factory, EventPublisher};
-use tracing::warn;
+
+/// Construct a per-request [`TaskCommandService`] from shared application state.
+fn cmd_service(state: &AppState<'_>) -> TaskCommandService {
+    TaskCommandService::new(
+        state.task_service.clone(),
+        state.task_import_service.clone(),
+        state.message_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::notification::NotificationSender>,
+        state.calendar_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::task_scheduler::TaskScheduler>,
+        state.event_bus.clone(),
+        state.rules_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::rules_engine::BlockingRuleEngine>,
+        state.integrations_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::integration_sink::IntegrationEventSink>,
+    )
+}
 
 /// Transition a task to a new status with validation.
 ///
@@ -29,7 +40,7 @@ pub async fn task_transition_status(
         check_task_permission!(&ctx.auth.role, "update");
         Ok(())
     })() {
-        warn!(
+        tracing::warn!(
             action = "DENY_TASK_STATUS_TRANSITION",
             user_role = ?ctx.auth.role,
             task_id = %request.task_id,
@@ -39,80 +50,14 @@ pub async fn task_transition_status(
         return Err(err);
     }
 
-    let old_status = state
-        .task_service
-        .get_task_async(&request.task_id)
-        .await?
-        .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?
-        .status;
-
-    // For Technicians, verify they are assigned to this task.
-    if ctx.auth.role == crate::shared::contracts::auth::UserRole::Technician {
-        let task = state
-            .task_service
-            .get_task_async(&request.task_id)
-            .await?
-            .ok_or_else(|| AppError::NotFound(format!("Task not found: {}", request.task_id)))?;
-
-        task_policy_service::check_task_permissions(&ctx.auth, &task, "edit")?;
-    }
-
-    let rule_check = state
-        .rules_service
-        .evaluate(&RuleCheckRequest {
-            trigger: "task_status_changed".to_string(),
-            entity_id: Some(request.task_id.clone()),
-            payload: serde_json::json!({
-                "old_status": old_status.to_string(),
-                "new_status": request.new_status.clone(),
-            }),
-            user_id: ctx.auth.user_id.clone(),
-            correlation_id: ctx.correlation_id.clone(),
-        })
+    let task = cmd_service(&state)
+        .transition_status(
+            &ctx,
+            &request.task_id,
+            &request.new_status,
+            request.reason.as_deref(),
+        )
         .await?;
-    if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
-            || "Task status change blocked by active rule".to_string(),
-        )));
-    }
-
-    let task = state.task_service.transition_status(
-        &request.task_id,
-        &request.new_status,
-        request.reason.as_deref(),
-        &ctx.auth.user_id,
-    )?;
-
-    let status_event = event_factory::task_status_changed_with_ctx(
-        task.id.clone(),
-        old_status.to_string(),
-        task.status.to_string(),
-        ctx.auth.user_id.clone(),
-        ctx.correlation_id.clone(),
-        request.reason.clone(),
-    );
-    if let Err(e) = state.event_bus.publish(status_event) {
-        warn!(
-            task_id = %task.id,
-            correlation_id = %ctx.correlation_id,
-            "Failed to publish TaskStatusChanged event from task_transition_status: {}",
-            e
-        );
-    }
-
-    let _ = state
-        .integrations_service
-        .enqueue(IntegrationDispatchRequest {
-            event_name: "task_status_changed".to_string(),
-            payload: serde_json::json!({
-                "task_id": task.id,
-                "old_status": old_status.to_string(),
-                "new_status": task.status.to_string(),
-            }),
-            correlation_id: ctx.correlation_id.clone(),
-            requested_integration_ids: None,
-        })
-        .await;
 
     Ok(ApiResponse::success(task).with_correlation_id(Some(ctx.correlation_id.clone())))
 }
