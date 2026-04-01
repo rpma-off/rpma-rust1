@@ -3,18 +3,15 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSystemHealth } from "@/domains/admin";
 
-// ── Mock ipcClient so the hook never hits real Tauri IPC ─────────────────────
+// ── Mock adminIpc so the hook never hits real Tauri IPC ──────────────────────
 const mockGetHealthStatus = jest.fn();
 
-jest.mock("@/lib/ipc", () => ({
-  ipcClient: {
-    system: {
-      getHealthStatus: (...args: unknown[]) => mockGetHealthStatus(...args),
-    },
+jest.mock("@/domains/admin/ipc/admin.ipc", () => ({
+  adminIpc: {
+    getHealthStatus: (...args: unknown[]) => mockGetHealthStatus(...args),
+    healthCheck: jest.fn(),
+    getDatabaseStats: jest.fn(),
   },
-  // Keep the rest of the barrel exports as no-ops so imports don't explode.
-  safeInvoke: jest.fn(),
-  IPC_COMMANDS: {},
 }));
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

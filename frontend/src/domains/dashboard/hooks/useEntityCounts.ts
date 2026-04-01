@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ipcClient } from "@/lib/ipc";
+import { entityCountsIpc } from "../ipc";
 import { dashboardKeys } from "@/lib/query-keys";
 
 export interface EntityCounts {
@@ -21,7 +21,7 @@ export function useEntityCounts(): UseEntityCountsReturn {
   const { data, isLoading, error } = useQuery({
     queryKey: dashboardKeys.entityCounts(),
     queryFn: async () => {
-      const response = await ipcClient.entityCounts.getCounts();
+      const response = await entityCountsIpc.getCounts();
       return {
         tasks: response.tasks ?? 0,
         clients: response.clients ?? 0,

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { adminKeys } from "@/lib/query-keys";
-import { ipcClient } from "@/lib/ipc";
+import { integrationsIpc } from "@/domains/integrations/ipc/integrations.ipc";
 import { makeMutationErrorHandler } from "./mutation-error";
 import type {
   BackendIntegrationConfig,
@@ -64,7 +64,7 @@ export function useIntegrations() {
     refetch: refresh,
   } = useQuery({
     queryKey: adminKeys.integrations(),
-    queryFn: () => ipcClient.integrations.list(),
+    queryFn: () => integrationsIpc.list(),
     staleTime: 60_000,
   });
 
@@ -108,14 +108,14 @@ export function useIntegrations() {
       } as const;
 
       if (previous?.id) {
-        await ipcClient.integrations.update(previous.id, {
+        await integrationsIpc.update(previous.id, {
           ...request,
           status: current.isActive ? "active" : "disabled",
         });
       } else {
-        const created = await ipcClient.integrations.create(request);
+        const created = await integrationsIpc.create(request);
         if (current.isActive) {
-          await ipcClient.integrations.update(created.id, { status: "active" });
+          await integrationsIpc.update(created.id, { status: "active" });
         }
       }
 
@@ -129,7 +129,7 @@ export function useIntegrations() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => ipcClient.integrations.delete(id),
+    mutationFn: async (id: string) => integrationsIpc.delete(id),
     onSuccess: () => {
       toast.success("Intégration supprimée avec succès");
       void queryClient.invalidateQueries({ queryKey: adminKeys.integrations() });
@@ -138,7 +138,7 @@ export function useIntegrations() {
   });
 
   const testMutation = useMutation({
-    mutationFn: async (id: string) => ipcClient.integrations.test(id),
+    mutationFn: async (id: string) => integrationsIpc.test(id),
   });
 
   const persistIntegration = useCallback(

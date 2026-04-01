@@ -1,17 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ipcClient } from '@/lib/ipc';
+import { userIpc } from '@/domains/users/ipc/users.ipc';
 import { UserAccount } from '@/types';
 import { UserForm } from '../UserForm';
 
 // Mock dependencies
-jest.mock('@/lib/ipc', () => ({
-  ipcClient: {
-    users: {
-      create: jest.fn(),
-      update: jest.fn(),
-    },
+jest.mock('@/domains/users/ipc/users.ipc', () => ({
+  userIpc: {
+    create: jest.fn(),
+    update: jest.fn(),
   },
 }));
 
@@ -30,8 +28,8 @@ jest.mock('@/shared/hooks/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-const mockUsersCreate = ipcClient.users.create as jest.MockedFunction<typeof ipcClient.users.create>;
-const mockUsersUpdate = ipcClient.users.update as jest.MockedFunction<typeof ipcClient.users.update>;
+const mockUsersCreate = userIpc.create as jest.MockedFunction<typeof userIpc.create>;
+const mockUsersUpdate = userIpc.update as jest.MockedFunction<typeof userIpc.update>;
 const mockToast = require('sonner').toast;
 
 // Mock session data

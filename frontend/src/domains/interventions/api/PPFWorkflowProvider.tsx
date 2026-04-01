@@ -3,13 +3,13 @@
 import React, { createContext, useContext, useMemo, useCallback, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ipcClient } from '@/lib/ipc';
 import { interventionKeys, taskKeys } from '@/lib/query-keys';
 import type { Intervention, InterventionStep, Task } from '@/lib/backend';
 import type { StepType } from '@/lib/StepType';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { buildPPFStepsFromData, getCurrentPPFStepId } from '../utils/ppf-workflow';
 import { interventionsIpc } from '../ipc/interventions.ipc';
+import { taskIpc } from '@/domains/tasks/ipc';
 
 const extractStepNote = (value: unknown): string | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -280,7 +280,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     queryKey: taskKeys.byId(taskId),
     queryFn: async (): Promise<Task | null> => {
       if (!session?.token || !taskId) return null;
-      const result = await ipcClient.tasks.get(taskId);
+      const result = await taskIpc.get(taskId);
       return result as Task;
     },
     enabled: !!session?.token && !!taskId,

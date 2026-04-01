@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ipcClient } from "@/lib/ipc";
+import { adminIpc } from "../ipc/admin.ipc";
 import { adminKeys } from "@/lib/query-keys";
 import type { SystemStatus } from "@/shared/types";
 import type { JsonValue } from "@/shared/types";
@@ -72,7 +72,7 @@ export function useSystemHealth(
 
   const { data, isLoading, isFetching, isError } = useQuery({
     queryKey: HEALTH_QUERY_KEY,
-    queryFn: () => ipcClient.system.getHealthStatus(),
+    queryFn: () => adminIpc.getHealthStatus(),
     enabled: autoStart,
     staleTime: Math.max(pollInterval - 5_000, 5_000),
     // TanStack Query stops polling when the browser tab is hidden by default

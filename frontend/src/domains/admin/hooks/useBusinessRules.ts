@@ -13,7 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { adminKeys } from "@/lib/query-keys";
-import { ipcClient } from "@/lib/ipc";
+import { rulesIpc } from "@/domains/rules/ipc/rules.ipc";
 import type {
   BackendRuleAction,
   BackendRuleDefinition,
@@ -233,7 +233,7 @@ export function useBusinessRules() {
     refetch,
   } = useQuery({
     queryKey: adminKeys.businessRules(),
-    queryFn: () => ipcClient.rules.list(),
+    queryFn: () => rulesIpc.list(),
     staleTime: 60_000,
   });
 
@@ -255,15 +255,15 @@ export function useBusinessRules() {
       } as const;
 
       if (editingRule) {
-        return ipcClient.rules.update(editingRule.id, {
+        return rulesIpc.update(editingRule.id, {
           ...request,
           status: data.isActive ? "active" : "disabled",
         });
       }
 
-      const created = await ipcClient.rules.create(request);
+      const created = await rulesIpc.create(request);
       if (data.isActive) {
-        return ipcClient.rules.activate(created.id);
+        return rulesIpc.activate(created.id);
       }
       return created;
     },
@@ -281,7 +281,7 @@ export function useBusinessRules() {
   });
 
   const deleteRuleMutation = useMutation({
-    mutationFn: async (ruleId: string) => ipcClient.rules.delete(ruleId),
+    mutationFn: async (ruleId: string) => rulesIpc.delete(ruleId),
     onSuccess: () => {
       toast.success("Règle supprimée avec succès");
       setRuleToDelete(null);
@@ -293,7 +293,7 @@ export function useBusinessRules() {
 
   const toggleRuleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
-      isActive ? ipcClient.rules.disable(id) : ipcClient.rules.activate(id),
+      isActive ? rulesIpc.disable(id) : rulesIpc.activate(id),
     onSuccess: (_, variables) => {
       toast.success(
         `Règle ${variables.isActive ? "désactivée" : "activée"} avec succès`,
@@ -333,7 +333,7 @@ export function useBusinessRules() {
         return;
       }
 
-      const result = await ipcClient.rules.test(buildTestPayload(uiRule, backendRule));
+      const result = await rulesIpc.test(buildTestPayload(uiRule, backendRule));
       toast.success(
         result.allowed
           ? "Test réussi: aucune règle bloquante détectée"
