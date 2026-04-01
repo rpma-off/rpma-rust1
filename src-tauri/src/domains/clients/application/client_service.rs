@@ -415,69 +415,60 @@ impl ClientService {
         self.get_client_stats().await
     }
 
-    // ── IPC-boundary helpers moved from client_handler/ipc.rs (ADR-001) ──────
+    // ── IPC-boundary helpers (DEPRECATED — use ipc::error_mapping) ─────────────
+    //
+    // These methods were originally placed here for convenience, but they are
+    // IPC-layer concerns (ADR-018), not application-layer business logic
+    // (ADR-001).  New code should import the canonical functions from
+    // `crate::domains::clients::ipc::error_mapping` instead.
 
     /// Validate that a client_id string is non-empty.
+    ///
+    /// **Deprecated**: use
+    /// [`client_input_validator::validate_client_id`](crate::domains::clients::application::client_input_validator::validate_client_id)
+    /// (the canonical single-source implementation) instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use client_input_validator::validate_client_id instead"
+    )]
     pub fn validate_client_id(client_id: &str) -> Result<(), crate::shared::ipc::errors::AppError> {
-        if client_id.trim().is_empty() {
-            return Err(crate::shared::ipc::errors::AppError::Validation(
-                "client_id is required".to_string(),
-            ));
-        }
-        Ok(())
+        crate::domains::clients::application::client_input_validator::validate_client_id(client_id)
     }
 
     /// Classify a raw service error string into the appropriate `AppError` variant.
+    ///
+    /// **Deprecated**: use
+    /// [`ipc::error_mapping::map_service_error`](crate::domains::clients::ipc::error_mapping::map_service_error)
+    /// instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use crate::domains::clients::ipc::error_mapping::map_service_error instead"
+    )]
     pub fn map_service_error(context: &str, error: &str) -> crate::shared::ipc::errors::AppError {
-        let normalized = error.to_lowercase();
-        if normalized.contains("not found") {
-            crate::shared::ipc::errors::AppError::NotFound(format!("{}: {}", context, error))
-        } else if normalized.contains("permission")
-            || normalized.contains("only update")
-            || normalized.contains("only delete")
-        {
-            crate::shared::ipc::errors::AppError::Authorization(error.to_string())
-        } else if normalized.contains("validation")
-            || normalized.contains("invalid")
-            || normalized.contains("required")
-            || normalized.contains("cannot")
-            || normalized.contains("must")
-            || normalized.contains("already exists")
-            || normalized.contains("too long")
-            || normalized.contains("duplicate")
-        {
-            crate::shared::ipc::errors::AppError::Validation(error.to_string())
-        } else {
-            crate::shared::ipc::errors::AppError::db_sanitized(context, error)
-        }
+        crate::domains::clients::ipc::error_mapping::map_service_error(context, error)
     }
 
     /// Enforce rate-limiting and RBAC for client operations.
+    ///
+    /// **Deprecated**: use
+    /// [`ipc::error_mapping::check_client_access`](crate::domains::clients::ipc::error_mapping::check_client_access)
+    /// instead.
+    #[deprecated(
+        since = "0.2.0",
+        note = "Use crate::domains::clients::ipc::error_mapping::check_client_access instead"
+    )]
     pub fn check_client_access(
         rate_limiter: &crate::domains::auth::infrastructure::rate_limiter::RateLimiterService,
         user_id: &str,
         role: &crate::shared::contracts::auth::UserRole,
         permission: &str,
     ) -> Result<(), crate::shared::ipc::errors::AppError> {
-        let rate_limit_key = format!("client_ops:{}", user_id);
-        if !rate_limiter
-            .check_and_record(&rate_limit_key, 100, 60)
-            .map_err(|e| {
-                crate::shared::ipc::errors::AppError::internal_sanitized("rate_limit_check", &e)
-            })?
-        {
-            return Err(crate::shared::ipc::errors::AppError::Validation(
-                "Rate limit exceeded. Please try again later.".to_string(),
-            ));
-        }
-        if !crate::shared::auth_middleware::AuthMiddleware::can_perform_client_operation(
-            role, permission,
-        ) {
-            return Err(crate::shared::ipc::errors::AppError::Authorization(
-                format!("Insufficient permissions to {} clients", permission),
-            ));
-        }
-        Ok(())
+        crate::domains::clients::ipc::error_mapping::check_client_access(
+            rate_limiter,
+            user_id,
+            role,
+            permission,
+        )
     }
 
     async fn validate_create_request(&self, req: &CreateClientRequest) -> Result<(), String> {
