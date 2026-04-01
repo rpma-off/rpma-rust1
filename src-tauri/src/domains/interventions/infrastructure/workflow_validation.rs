@@ -348,33 +348,4 @@ impl WorkflowValidationService {
 
         Ok(())
     }
-
-    /// Validate start intervention request
-    pub fn validate_start_intervention(
-        &self,
-        task_id: &str,
-        technician_id: &str,
-        logger: &RPMARequestLogger,
-    ) -> InterventionResult<()> {
-        // Basic validation - ensure required fields are present
-        if task_id.is_empty() {
-            logger.error("Task ID is required for intervention start", None, None);
-            return Err(InterventionError::Validation(
-                "Task ID is required".to_string(),
-            ));
-        }
-
-        if technician_id.is_empty() {
-            logger.error(
-                "Technician ID is required for intervention start",
-                None,
-                None,
-            );
-            return Err(InterventionError::Validation(
-                "Technician ID is required".to_string(),
-            ));
-        }
-
-        Ok(())
-    }
 }
