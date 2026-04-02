@@ -4,7 +4,7 @@ import React, { createContext, useContext, useMemo, useCallback, ReactNode } fro
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { interventionKeys, taskKeys } from '@/lib/query-keys';
-import type { Intervention, InterventionStep, Task } from '@/lib/backend';
+import type { Intervention, InterventionStep, InterventionWorkflowState, Task } from '@/lib/backend';
 import type { StepType } from '@/lib/StepType';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { buildPPFStepsFromData, getCurrentPPFStepId } from '../utils/ppf-workflow';
@@ -48,6 +48,7 @@ type PPFStepId = StepType;
 type PPFStepsData = {
   steps: InterventionStep[];
   progress_percentage: number;
+  workflow_state: InterventionWorkflowState | null;
 };
 
 type PPFInterventionData = {
@@ -123,6 +124,7 @@ interface PPFWorkflowContextType {
   error: Error | null;
   interventionData: PPFInterventionData | null;
   stepsData: PPFStepsData | null;
+  workflowState: InterventionWorkflowState | null;
   task: Task | null;
   canAdvanceToStep: (stepId: PPFStepId) => boolean;
   advanceToStep: <TStep extends PPFStepId>(
@@ -298,8 +300,10 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
   }, [stepsData?.steps]);
 
   const currentStepId = useMemo(
-    () => getCurrentPPFStepId(stepsData?.steps, interventionData?.intervention?.status),
-    [stepsData?.steps, interventionData?.intervention?.status]
+    () =>
+      stepsData?.workflow_state?.active_step_type ??
+      getCurrentPPFStepId(stepsData?.steps, interventionData?.intervention?.status),
+    [stepsData?.workflow_state?.active_step_type, stepsData?.steps, interventionData?.intervention?.status]
   );
 
   const currentStep = currentStepId
@@ -310,13 +314,24 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     const step = steps.find(s => s.id === stepId);
     if (!step) return false;
 
-    // Can access first step
+    if (step.status === 'completed') return true;
+
+    const backendState = stepsData?.workflow_state;
+    const backendStep = stepsData?.steps?.find((item) => item.step_type === stepId);
+
+    if (backendState && backendStep) {
+      if (backendState.active_step_type === stepId) {
+        return true;
+      }
+
+      return backendState.next_allowed_step_ids.includes(backendStep.id);
+    }
+
     if (step.order === 1) return true;
 
-    // Can access step if previous step is completed
     const previousStep = steps.find(s => s.order === step.order - 1);
     return previousStep?.status === 'completed';
-  }, [steps]);
+  }, [steps, stepsData?.steps, stepsData?.workflow_state]);
 
   const advanceToStepMutation = useMutation<
     { success: boolean; stepId: PPFStepId },
@@ -458,6 +473,7 @@ export function PPFWorkflowProvider({ taskId, children }: PPFWorkflowProviderPro
     error,
     interventionData: interventionData || null,
     stepsData: stepsData || null,
+    workflowState: stepsData?.workflow_state || null,
     task: taskData || null,
     canAdvanceToStep,
     advanceToStep,

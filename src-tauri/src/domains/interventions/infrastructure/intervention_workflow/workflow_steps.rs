@@ -345,6 +345,19 @@ impl super::InterventionWorkflowService {
                 InterventionError::NotFound(format!("Step {} not found", request.step_id))
             })?;
 
+        let intervention = self
+            .data
+            .get_intervention(&step.intervention_id)?
+            .ok_or_else(|| {
+                InterventionError::NotFound(format!(
+                    "Intervention {} not found",
+                    step.intervention_id
+                ))
+            })?;
+
+        self.validation
+            .validate_step_progress_save(&intervention, &step, &logger)?;
+
         eprintln!(
             "[DEBUG] Found step: id={}, intervention_id={}, step_number={}, step_status={:?}",
             step.id, step.intervention_id, step.step_number, step.step_status

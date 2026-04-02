@@ -5,6 +5,7 @@
 use crate::db::InterventionError;
 use crate::domains::interventions::domain::models::intervention::InterventionStatus;
 use crate::domains::interventions::domain::models::step::StepStatus;
+use crate::domains::interventions::domain::services::workflow_state::build_workflow_state;
 use crate::domains::interventions::domain::services::intervention_state_machine;
 use crate::domains::interventions::infrastructure::intervention_types::{
     FinalizeInterventionRequest, FinalizeInterventionResponse, InterventionMetrics,
@@ -393,13 +394,24 @@ impl super::InterventionWorkflowService {
             logger.debug("Marked finalization step as completed", None);
         }
 
+        let mut workflow_steps = steps;
+        if let Some(step) = updated_step.clone() {
+            if let Some(existing) = workflow_steps.iter_mut().find(|candidate| candidate.id == step.id) {
+                *existing = step;
+            } else {
+                workflow_steps.push(step);
+            }
+        }
+
+        let workflow_state = build_workflow_state(&intervention, &workflow_steps);
+
         let metrics = InterventionMetrics {
             total_duration_minutes: intervention.actual_duration.unwrap_or(0),
-            completion_rate: 100.0,
+            completion_rate: workflow_state.progress_percentage,
             quality_score: intervention.quality_score,
             customer_satisfaction: intervention.customer_satisfaction,
-            steps_completed: intervention.current_step,
-            total_steps: intervention.current_step,
+            steps_completed: workflow_state.completed_steps,
+            total_steps: workflow_state.total_steps,
             photos_taken: 0,
         };
 

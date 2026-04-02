@@ -4,9 +4,10 @@ use crate::domains::interventions::application::{
     FinalizeInterventionRequest, InterventionWorkflowResponse, StartInterventionRequest,
 };
 use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionProgress,
+    Intervention, InterventionProgress, InterventionWorkflowState,
 };
 use crate::domains::interventions::domain::models::step::InterventionStep;
+use crate::domains::interventions::domain::services::workflow_state::build_workflow_state;
 use crate::domains::interventions::infrastructure::intervention::InterventionService;
 use crate::domains::interventions::infrastructure::intervention_scoring_service::InterventionScoringService;
 use crate::domains::interventions::infrastructure::intervention_types::{
@@ -363,7 +364,7 @@ impl InterventionsFacade {
         &self,
         intervention_id: String,
         ctx: &RequestContext,
-    ) -> Result<(InterventionProgress, Vec<InterventionStep>), AppError> {
+    ) -> Result<(InterventionProgress, InterventionWorkflowState, Vec<InterventionStep>), AppError> {
         self.ensure_intervention_permission(ctx)?;
         self.validate_intervention_id(&intervention_id)?;
         let intervention = self
@@ -378,12 +379,13 @@ impl InterventionsFacade {
             .intervention_service
             .get_intervention_steps(&intervention_id)
             .map_err(|_| AppError::Database("Failed to get intervention steps".to_string()))?;
-        let progress = InterventionScoringService::build_progress(
+        let workflow_state = build_workflow_state(&intervention, &steps);
+        let progress = InterventionScoringService::build_progress_from_state(
             &intervention_id,
             intervention.status,
-            &steps,
+            &workflow_state,
         );
-        Ok((progress, steps))
+        Ok((progress, workflow_state, steps))
     }
 
     pub async fn advance_step(

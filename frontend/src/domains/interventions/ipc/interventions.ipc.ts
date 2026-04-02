@@ -12,6 +12,7 @@ import type {
   FinalizeInterventionResponse,
   Intervention,
   InterventionProgressResponse,
+  InterventionWorkflowState,
   InterventionStep,
   SaveStepProgressRequest,
   StartInterventionRequest,
@@ -43,6 +44,7 @@ type InterventionWithOptionalProgress = {
     completion_percentage?: number;
   };
   steps?: InterventionStep[];
+  workflow_state?: InterventionWorkflowState | null;
 };
 
 const bumpInterventionCaches = (includeTasks = false): void => {
@@ -208,7 +210,11 @@ export const interventionsIpc = {
   getProgress: async (
     interventionId: string,
     correlationId?: string,
-  ): Promise<{ steps: InterventionStep[]; progress_percentage: number }> => {
+  ): Promise<{
+    steps: InterventionStep[];
+    progress_percentage: number;
+    workflow_state: InterventionWorkflowState | null;
+  }> => {
     const result = await safeInvoke<
       InterventionProgressResponse | InterventionWithOptionalProgress
     >(IPC_COMMANDS.INTERVENTION_GET_PROGRESS, {
@@ -220,23 +226,27 @@ export const interventionsIpc = {
         return {
           steps: result.steps.map(validateInterventionStep),
           progress_percentage: result.progress.completion_percentage ?? 0,
+          workflow_state: result.workflow_state ?? null,
         };
       }
       if (result.type === 'StepAdvanced') {
         return {
           steps: [validateInterventionStep(result.step)],
           progress_percentage: result.progress_percentage,
+          workflow_state: null,
         };
       }
       return {
         steps: [validateInterventionStep(result.step)],
         progress_percentage: 0,
+        workflow_state: null,
       };
     }
 
     return {
       steps: (result.steps ?? []).map(validateInterventionStep),
       progress_percentage: result.progress?.completion_percentage ?? 0,
+      workflow_state: result.workflow_state ?? null,
     };
   },
 

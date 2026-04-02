@@ -47,6 +47,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
   const intervention = workflow.interventionData?.intervention ?? null;
   const stepsData = workflow.stepsData;
   const steps = workflow.steps;
+  const workflowState = workflow.workflowState;
   const currentStep = workflow.currentStep;
   const task = workflow.task;
 
@@ -226,6 +227,7 @@ export function usePpfWorkflow(taskIdOverride?: string) {
     intervention,
     steps,
     stepsData,
+    workflowState,
     currentStep,
     allowedStepId,
     canAccessStep,

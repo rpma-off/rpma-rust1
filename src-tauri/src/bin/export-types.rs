@@ -33,7 +33,8 @@ use rpma_ppf_intervention::domains::documents::models::{
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
     BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
-    InterventionStatus, InterventionType,
+    InterventionStatus, InterventionType, InterventionWorkflowState, WorkflowAnomaly,
+    WorkflowAnomalyCode, WorkflowIntegrityStatus,
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::step::{
     InterventionStep, StepStatus, StepType,
@@ -765,6 +766,25 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &WorkflowIntegrityStatus::export_to_string()
+            .expect("Failed to export WorkflowIntegrityStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &WorkflowAnomalyCode::export_to_string()
+            .expect("Failed to export WorkflowAnomalyCode type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &WorkflowAnomaly::export_to_string().expect("Failed to export WorkflowAnomaly type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionWorkflowState::export_to_string()
+            .expect("Failed to export InterventionWorkflowState type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &InterventionMetrics::export_to_string()
             .expect("Failed to export InterventionMetrics type"),
     );
@@ -1199,6 +1219,10 @@ fn main() {
         "InterventionStep",
         "StepType",
         "InterventionProgress",
+        "WorkflowIntegrityStatus",
+        "WorkflowAnomalyCode",
+        "WorkflowAnomaly",
+        "InterventionWorkflowState",
         "InterventionMetrics",
         "StepStatus",
         "StartInterventionRequest",
