@@ -141,7 +141,7 @@ export interface StartInterventionDTO {
   priority?: string;
   technicianId?: string;
   technician_id?: string;
-  scheduled_start?: string;
+  scheduled_start?: number; // Unix milliseconds (ADR-012)
   estimated_duration?: number;
   weather_condition?: string;
   lighting_condition?: string;

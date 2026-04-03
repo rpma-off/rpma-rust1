@@ -61,7 +61,7 @@ export class WorkflowServiceAdapter {
       humidity: null,
       technician_id: "",
       assistant_ids: null,
-      scheduled_start: new Date().toISOString(),
+      scheduled_start: Date.now(),
       estimated_duration: 0,
       gps_coordinates: null,
       address: null,

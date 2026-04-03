@@ -25,9 +25,9 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('SettingsProvider', () => {
   it('throws when useSettingsContext is used outside provider', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => renderHook(() => useSettingsContext())).toThrow(
-      'useSettingsContext must be used within SettingsProvider'
+    const { result } = renderHook(() => useSettingsContext());
+    expect(result.error).toEqual(
+      new Error('useSettingsContext must be used within SettingsProvider')
     );
   });
 

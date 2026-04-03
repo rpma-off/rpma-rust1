@@ -24,9 +24,9 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('ClientsProvider', () => {
   it('throws when useClientsContext is used outside provider', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => renderHook(() => useClientsContext())).toThrow(
-      'useClientsContext must be used within ClientsProvider'
+    const { result } = renderHook(() => useClientsContext());
+    expect(result.error).toEqual(
+      new Error('useClientsContext must be used within ClientsProvider')
     );
   });
 

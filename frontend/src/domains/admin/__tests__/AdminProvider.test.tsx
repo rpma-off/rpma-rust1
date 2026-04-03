@@ -21,9 +21,9 @@ function wrapper({ children }: { children: React.ReactNode }) {
 
 describe('AdminProvider', () => {
   it('throws when useAdminContext is used outside provider', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect(() => renderHook(() => useAdminContext())).toThrow(
-      'useAdminContext must be used within AdminProvider'
+    const { result } = renderHook(() => useAdminContext());
+    expect(result.error).toEqual(
+      new Error('useAdminContext must be used within AdminProvider')
     );
   });
 

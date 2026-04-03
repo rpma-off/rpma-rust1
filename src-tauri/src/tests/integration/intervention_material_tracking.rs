@@ -209,7 +209,7 @@ impl InterventionMaterialTrackingTestFixture {
             humidity: Some(45.0),
             technician_id: "test_technician".to_string(),
             assistant_ids: Some(vec!["assistant_001".to_string()]),
-            scheduled_start: Utc::now().to_rfc3339(),
+            scheduled_start: Utc::now().timestamp_millis(),
             estimated_duration: 180,
             gps_coordinates: Some((48.8566, 2.3522)), // Paris coordinates
             address: Some("123 Test Street, Test City".to_string()),

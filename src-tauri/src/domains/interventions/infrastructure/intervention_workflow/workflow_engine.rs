@@ -512,9 +512,7 @@ impl super::InterventionWorkflowService {
                             temperature: None,
                             humidity: None,
                             assistant_ids: None,
-                            scheduled_start: Utc::now()
-                                .format("%Y-%m-%dT%H:%M:%S%.3fZ")
-                                .to_string(),
+                            scheduled_start: Utc::now().timestamp_millis(),
                             estimated_duration: 60,
                             gps_coordinates: None,
                             address: None,

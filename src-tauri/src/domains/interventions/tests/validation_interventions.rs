@@ -75,7 +75,7 @@ fn create_intervention_rejects_invalid_gps_coordinates() {
         humidity: None,
         technician_id: uuid::Uuid::new_v4().to_string(),
         assistant_ids: None,
-        scheduled_start: "2025-01-01T09:00:00Z".to_string(),
+        scheduled_start: chrono::Utc::now().timestamp_millis() + 3_600_000,
         estimated_duration: 120,
         // Latitude 200° is outside the valid [-90, 90] range.
         gps_coordinates: Some(GpsCoordinates {

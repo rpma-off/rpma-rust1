@@ -26,8 +26,7 @@ pub struct StartInterventionRequest {
     pub humidity: Option<f32>,
     pub technician_id: String,
     pub assistant_ids: Option<Vec<String>>,
-    /// // TODO: ADR Violation (ADR-012) - scheduled_start should be i64 (milliseconds)
-    pub scheduled_start: String, // ISO datetime
+    pub scheduled_start: i64, // Unix milliseconds (ADR-012)
     pub estimated_duration: i32, // minutes
     pub gps_coordinates: Option<GpsCoordinates>,
     pub address: Option<String>,

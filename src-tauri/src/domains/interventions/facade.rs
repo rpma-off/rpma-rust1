@@ -200,7 +200,7 @@ impl InterventionsFacade {
             humidity: None,
             technician_id: technician_id.to_string(),
             assistant_ids: None,
-            scheduled_start: Utc::now().to_rfc3339(),
+            scheduled_start: Utc::now().timestamp_millis(),
             estimated_duration: request.estimated_duration_minutes.unwrap_or(60) as i32,
             gps_coordinates: None,
             address: None,

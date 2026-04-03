@@ -284,7 +284,7 @@ impl NetworkResilienceTestFixture {
             humidity: Some(45.0),
             technician_id: "resilience_technician".to_string(),
             assistant_ids: None,
-            scheduled_start: Utc::now().to_rfc3339(),
+            scheduled_start: Utc::now().timestamp_millis(),
             estimated_duration: 120,
             gps_coordinates: None,
             address: task.customer_address.clone(),

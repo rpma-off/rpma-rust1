@@ -89,7 +89,7 @@ impl InterventionValidationService {
         }
 
         // Validate scheduled start is in future
-        self.validate_datetime(&request.scheduled_start)?;
+        self.validate_datetime(request.scheduled_start)?;
 
         Ok(())
     }
@@ -162,27 +162,15 @@ impl InterventionValidationService {
         Ok(())
     }
 
-    /// Validate datetime format and business rules
-    pub fn validate_datetime(&self, scheduled_start: &str) -> InterventionResult<()> {
-        // Parse the datetime - allow current time or future times
-        match chrono::DateTime::parse_from_rfc3339(scheduled_start) {
-            Ok(dt) => {
-                let now = chrono::Utc::now();
-                // Allow up to MAX_PAST_START_MINUTES in the past for immediate starts
-                let five_minutes_ago = now
-                    - chrono::Duration::minutes(crate::shared::constants::MAX_PAST_START_MINUTES);
-                if dt < five_minutes_ago {
-                    return Err(InterventionError::Validation(
-                        "Scheduled start time cannot be more than 5 minutes in the past"
-                            .to_string(),
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(InterventionError::Validation(
-                    "Invalid datetime format for scheduled_start".to_string(),
-                ));
-            }
+    /// Validate datetime business rules (ADR-012: timestamps are Unix milliseconds)
+    pub fn validate_datetime(&self, scheduled_start: i64) -> InterventionResult<()> {
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let max_past_ms =
+            crate::shared::constants::MAX_PAST_START_MINUTES * 60 * 1000;
+        if scheduled_start < now_ms - max_past_ms {
+            return Err(InterventionError::Validation(
+                "Scheduled start time cannot be more than 5 minutes in the past".to_string(),
+            ));
         }
         Ok(())
     }
