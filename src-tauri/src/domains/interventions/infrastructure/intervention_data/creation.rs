@@ -93,11 +93,7 @@ pub(super) fn create_intervention_with_tx(
         Some(FilmType::from_str(&request.film_type).unwrap_or(FilmType::Matte));
     intervention.film_brand = request.film_brand.clone();
     intervention.film_model = request.film_model.clone();
-    intervention.scheduled_at = TimestampString(Some(
-        chrono::DateTime::parse_from_rfc3339(&request.scheduled_start)
-            .map(|dt| dt.timestamp_millis())
-            .unwrap_or(now()),
-    ));
+    intervention.scheduled_at = TimestampString(Some(request.scheduled_start));
     intervention.estimated_duration = Some(request.estimated_duration);
     intervention.weather_condition = Some(
         WeatherCondition::from_str(&request.weather_condition)

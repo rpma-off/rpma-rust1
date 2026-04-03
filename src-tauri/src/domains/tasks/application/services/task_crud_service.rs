@@ -100,7 +100,7 @@ impl TaskCommandService {
         self.notify_assignment(&task, &ctx.auth.user_id, &ctx.correlation_id)
             .await;
 
-        let _ = self
+        if let Err(e) = self
             .integration_sink
             .enqueue(IntegrationDispatchRequest {
                 event_name: "task_created".to_string(),
@@ -113,7 +113,16 @@ impl TaskCommandService {
                 correlation_id: ctx.correlation_id.clone(),
                 requested_integration_ids: None,
             })
-            .await;
+            .await
+        {
+            warn!(
+                action = "ENQUEUE_TASK_CREATED_INTEGRATION",
+                task_id = %task.id,
+                correlation_id = %ctx.correlation_id,
+                error = %e,
+                "Failed to enqueue integration dispatch"
+            );
+        }
 
         info!(
             action = "CREATE_TASK",
@@ -182,7 +191,7 @@ impl TaskCommandService {
             })?;
 
         if status_updated && existing_task.status != task.status {
-            let _ = self
+            if let Err(e) = self
                 .integration_sink
                 .enqueue(IntegrationDispatchRequest {
                     event_name: "task_status_changed".to_string(),
@@ -195,7 +204,18 @@ impl TaskCommandService {
                     correlation_id: ctx.correlation_id.clone(),
                     requested_integration_ids: None,
                 })
-                .await;
+                .await
+            {
+                warn!(
+                    action = "ENQUEUE_TASK_STATUS_CHANGED_INTEGRATION",
+                    task_id = %task.id,
+                    correlation_id = %ctx.correlation_id,
+                    old_status = %existing_task.status,
+                    new_status = %task.status,
+                    error = %e,
+                    "Failed to enqueue integration dispatch"
+                );
+            }
         }
 
         let updated_event = event_factory::task_updated_with_ctx(

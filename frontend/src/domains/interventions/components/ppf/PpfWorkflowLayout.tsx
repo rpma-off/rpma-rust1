@@ -55,6 +55,7 @@ export function PpfWorkflowLayout({
     intervention,
     steps,
     stepsData,
+    workflowState,
     currentStep,
     allowedStepId,
     canAccessStep,
@@ -65,10 +66,13 @@ export function PpfWorkflowLayout({
 
   const stepLabel = useMemo(() => {
     if (!currentStep) return 'Parcours terminé';
+    if (typeof workflowState?.active_step_number === 'number' && workflowState.active_step_number > 0) {
+      return `Étape ${workflowState.active_step_number} / ${steps.length}`;
+    }
     const index = steps.findIndex((step) => step.id === currentStep.id);
     if (index < 0) return 'Parcours PPF';
     return `Étape ${index + 1} / ${steps.length}`;
-  }, [currentStep, steps]);
+  }, [currentStep, steps, workflowState?.active_step_number]);
 
   const headerTitle = useMemo(() => {
     const vehicle = [task?.vehicle_make, task?.vehicle_model].filter(Boolean).join(' ');
@@ -209,6 +213,13 @@ export function PpfWorkflowLayout({
         }
       />
       <main className="flex-1 space-y-6 px-5 py-5">
+        {workflowState && workflowState.anomalies.length > 0 && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {workflowState.integrity_status === 'invalid'
+              ? 'Workflow PPF incohérent détecté. Les actions sont bloquées jusqu\'à correction backend.'
+              : 'Workflow PPF en état dégradé. La position courante est calculée depuis le backend avec diagnostic.'}
+          </div>
+        )}
         {children}
         {actionBar && (
           <div className="sticky bottom-0 z-40 mt-8 flex flex-col gap-3 border-t-2 border-[hsl(var(--rpma-border))] bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] md:flex-row md:items-center md:justify-between">

@@ -415,6 +415,161 @@ impl DomainEvent {
     pub const QUOTE_APPROVED_NOTIF: &'static str = "QuoteApproved";
     pub const SYSTEM_ALERT_NOTIF: &'static str = "SystemAlert";
 
+    pub fn id(&self) -> &str {
+        match self {
+            DomainEvent::TaskCreated { id, .. }
+            | DomainEvent::TaskUpdated { id, .. }
+            | DomainEvent::TaskAssigned { id, .. }
+            | DomainEvent::TaskStatusChanged { id, .. }
+            | DomainEvent::TaskCompleted { id, .. }
+            | DomainEvent::TaskDeleted { id, .. }
+            | DomainEvent::ClientCreated { id, .. }
+            | DomainEvent::ClientUpdated { id, .. }
+            | DomainEvent::ClientDeactivated { id, .. }
+            | DomainEvent::InterventionCreated { id, .. }
+            | DomainEvent::InterventionStarted { id, .. }
+            | DomainEvent::InterventionStepStarted { id, .. }
+            | DomainEvent::InterventionStepCompleted { id, .. }
+            | DomainEvent::InterventionCompleted { id, .. }
+            | DomainEvent::InterventionFinalized { id, .. }
+            | DomainEvent::InterventionCancelled { id, .. }
+            | DomainEvent::MaterialConsumed { id, .. }
+            | DomainEvent::QuoteCreated { id, .. }
+            | DomainEvent::QuoteUpdated { id, .. }
+            | DomainEvent::QuoteDeleted { id, .. }
+            | DomainEvent::QuoteDuplicated { id, .. }
+            | DomainEvent::QuoteShared { id, .. }
+            | DomainEvent::QuoteCustomerResponded { id, .. }
+            | DomainEvent::UserCreated { id, .. }
+            | DomainEvent::UserUpdated { id, .. }
+            | DomainEvent::UserLoggedIn { id, .. }
+            | DomainEvent::UserLoggedOut { id, .. }
+            | DomainEvent::AuthenticationFailed { id, .. }
+            | DomainEvent::AuthenticationSuccess { id, .. }
+            | DomainEvent::SystemError { id, .. }
+            | DomainEvent::SystemMaintenance { id, .. }
+            | DomainEvent::PerformanceAlert { id, .. }
+            | DomainEvent::NotificationReceived { id, .. }
+            | DomainEvent::QuoteAccepted { id, .. }
+            | DomainEvent::QuoteRejected { id, .. }
+            | DomainEvent::QuoteConverted { id, .. }
+            | DomainEvent::EntityRestored { id, .. }
+            | DomainEvent::EntityHardDeleted { id, .. } => id,
+        }
+    }
+
+    pub fn metadata(&self) -> Option<&serde_json::Value> {
+        match self {
+            DomainEvent::TaskCreated { metadata, .. }
+            | DomainEvent::TaskUpdated { metadata, .. }
+            | DomainEvent::TaskAssigned { metadata, .. }
+            | DomainEvent::TaskStatusChanged { metadata, .. }
+            | DomainEvent::TaskCompleted { metadata, .. }
+            | DomainEvent::TaskDeleted { metadata, .. }
+            | DomainEvent::ClientCreated { metadata, .. }
+            | DomainEvent::ClientUpdated { metadata, .. }
+            | DomainEvent::ClientDeactivated { metadata, .. }
+            | DomainEvent::InterventionCreated { metadata, .. }
+            | DomainEvent::InterventionStarted { metadata, .. }
+            | DomainEvent::InterventionStepStarted { metadata, .. }
+            | DomainEvent::InterventionStepCompleted { metadata, .. }
+            | DomainEvent::InterventionCompleted { metadata, .. }
+            | DomainEvent::InterventionFinalized { metadata, .. }
+            | DomainEvent::InterventionCancelled { metadata, .. }
+            | DomainEvent::MaterialConsumed { metadata, .. }
+            | DomainEvent::QuoteCreated { metadata, .. }
+            | DomainEvent::QuoteUpdated { metadata, .. }
+            | DomainEvent::QuoteDeleted { metadata, .. }
+            | DomainEvent::QuoteDuplicated { metadata, .. }
+            | DomainEvent::QuoteShared { metadata, .. }
+            | DomainEvent::QuoteCustomerResponded { metadata, .. }
+            | DomainEvent::UserCreated { metadata, .. }
+            | DomainEvent::UserUpdated { metadata, .. }
+            | DomainEvent::UserLoggedIn { metadata, .. }
+            | DomainEvent::UserLoggedOut { metadata, .. }
+            | DomainEvent::AuthenticationFailed { metadata, .. }
+            | DomainEvent::AuthenticationSuccess { metadata, .. }
+            | DomainEvent::SystemError { metadata, .. }
+            | DomainEvent::SystemMaintenance { metadata, .. }
+            | DomainEvent::PerformanceAlert { metadata, .. }
+            | DomainEvent::NotificationReceived { metadata, .. }
+            | DomainEvent::QuoteAccepted { metadata, .. }
+            | DomainEvent::QuoteRejected { metadata, .. }
+            | DomainEvent::QuoteConverted { metadata, .. }
+            | DomainEvent::EntityRestored { metadata, .. }
+            | DomainEvent::EntityHardDeleted { metadata, .. } => metadata.as_ref(),
+        }
+    }
+
+    pub fn correlation_id(&self) -> Option<&str> {
+        self.metadata()
+            .and_then(|metadata| metadata.get("correlation_id"))
+            .and_then(|value| value.as_str())
+    }
+
+    pub fn subject(&self) -> (&'static str, &str) {
+        match self {
+            DomainEvent::TaskCreated { task_id, .. }
+            | DomainEvent::TaskUpdated { task_id, .. }
+            | DomainEvent::TaskAssigned { task_id, .. }
+            | DomainEvent::TaskStatusChanged { task_id, .. }
+            | DomainEvent::TaskCompleted { task_id, .. }
+            | DomainEvent::TaskDeleted { task_id, .. } => ("task", task_id),
+            DomainEvent::ClientCreated { client_id, .. }
+            | DomainEvent::ClientUpdated { client_id, .. }
+            | DomainEvent::ClientDeactivated { client_id, .. } => ("client", client_id),
+            DomainEvent::InterventionCreated {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionStarted {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionStepStarted {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionStepCompleted {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionCompleted {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionFinalized {
+                intervention_id, ..
+            }
+            | DomainEvent::InterventionCancelled {
+                intervention_id, ..
+            } => ("intervention", intervention_id),
+            DomainEvent::MaterialConsumed { material_id, .. } => ("material", material_id),
+            DomainEvent::QuoteCreated { quote_id, .. }
+            | DomainEvent::QuoteUpdated { quote_id, .. }
+            | DomainEvent::QuoteDeleted { quote_id, .. }
+            | DomainEvent::QuoteAccepted { quote_id, .. }
+            | DomainEvent::QuoteRejected { quote_id, .. }
+            | DomainEvent::QuoteConverted { quote_id, .. }
+            | DomainEvent::QuoteShared { quote_id, .. }
+            | DomainEvent::QuoteCustomerResponded { quote_id, .. } => ("quote", quote_id),
+            DomainEvent::QuoteDuplicated { new_quote_id, .. } => ("quote", new_quote_id),
+            DomainEvent::UserCreated { user_id, .. }
+            | DomainEvent::UserUpdated { user_id, .. }
+            | DomainEvent::UserLoggedIn { user_id, .. }
+            | DomainEvent::UserLoggedOut { user_id, .. }
+            | DomainEvent::AuthenticationSuccess { user_id, .. } => ("user", user_id),
+            DomainEvent::AuthenticationFailed { user_id, .. } => {
+                ("user", user_id.as_deref().unwrap_or("unknown"))
+            }
+            DomainEvent::SystemError { component, .. } => ("component", component),
+            DomainEvent::SystemMaintenance {
+                maintenance_type, ..
+            } => ("maintenance", maintenance_type),
+            DomainEvent::PerformanceAlert { metric_name, .. } => ("metric", metric_name),
+            DomainEvent::NotificationReceived {
+                notification_id, ..
+            } => ("notification", notification_id),
+            DomainEvent::EntityRestored { entity_id, .. }
+            | DomainEvent::EntityHardDeleted { entity_id, .. } => ("entity", entity_id),
+        }
+    }
+
     pub fn event_type(&self) -> &'static str {
         match self {
             DomainEvent::TaskCreated { .. } => Self::TASK_CREATED,
@@ -499,5 +654,56 @@ impl DomainEvent {
             | DomainEvent::EntityRestored { timestamp, .. }
             | DomainEvent::EntityHardDeleted { timestamp, .. } => *timestamp,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::Utc;
+    use serde_json::json;
+
+    use super::DomainEvent;
+
+    #[test]
+    fn extracts_log_context_for_task_events() {
+        let event = DomainEvent::TaskStatusChanged {
+            id: "evt-1".to_string(),
+            task_id: "task-42".to_string(),
+            old_status: "planned".to_string(),
+            new_status: "in_progress".to_string(),
+            user_id: "user-7".to_string(),
+            timestamp: Utc::now(),
+            metadata: Some(json!({
+                "correlation_id": "corr-123",
+                "reason": "manual_update"
+            })),
+        };
+
+        assert_eq!(event.id(), "evt-1");
+        assert_eq!(event.correlation_id(), Some("corr-123"));
+        assert_eq!(event.subject(), ("task", "task-42"));
+    }
+
+    #[test]
+    fn falls_back_to_useful_subject_when_metadata_is_missing() {
+        let notification_event = DomainEvent::NotificationReceived {
+            id: "evt-2".to_string(),
+            notification_id: "notif-9".to_string(),
+            user_id: "user-1".to_string(),
+            message: "hello".to_string(),
+            timestamp: Utc::now(),
+            metadata: None,
+        };
+        let auth_failed_event = DomainEvent::AuthenticationFailed {
+            id: "evt-3".to_string(),
+            user_id: None,
+            reason: "bad password".to_string(),
+            timestamp: Utc::now(),
+            metadata: None,
+        };
+
+        assert_eq!(notification_event.correlation_id(), None);
+        assert_eq!(notification_event.subject(), ("notification", "notif-9"));
+        assert_eq!(auth_failed_event.subject(), ("user", "unknown"));
     }
 }

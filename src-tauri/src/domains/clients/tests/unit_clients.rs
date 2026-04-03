@@ -1,4 +1,5 @@
 use crate::db::Database;
+use crate::domains::clients::application::client_input_validator::validate_client_id;
 use crate::domains::clients::application::client_orchestrator::client_into_client_with_tasks;
 use crate::domains::clients::application::ClientService;
 use crate::domains::clients::domain::models::{
@@ -18,7 +19,7 @@ async fn clients_facade_is_ready() {
 
 #[tokio::test]
 async fn validate_client_id_accepts_valid_id() {
-    assert!(ClientService::validate_client_id("client-123").is_ok());
+    assert!(validate_client_id("client-123").is_ok());
 }
 
 /// Regression: `client_into_client_with_tasks` must attach all tasks and

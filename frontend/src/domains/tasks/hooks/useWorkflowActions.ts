@@ -81,7 +81,7 @@ export function useWorkflowActions(taskId: string) {
             humidity: null,
             technician_id: session?.id || '',
             assistant_ids: null,
-            scheduled_start: new Date().toISOString(),
+            scheduled_start: Date.now(),
             estimated_duration: 120,
             gps_coordinates: null,
             address: null,

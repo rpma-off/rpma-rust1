@@ -212,7 +212,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        if quote.status != QuoteStatus::Draft {
+        if !quote.status.is_draft() {
             return Err("Only draft quotes can be edited".to_string());
         }
 
@@ -237,7 +237,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "delete")?;
         let quote = self.fetch_quote(id)?;
 
-        if quote.status != QuoteStatus::Draft {
+        if !quote.status.is_draft() {
             return Err("Only draft quotes can be deleted".to_string());
         }
 
@@ -343,7 +343,7 @@ impl QuoteService {
 
         let quote = self.fetch_quote(quote_id)?;
 
-        if quote.status != QuoteStatus::Draft {
+        if !quote.status.is_draft() {
             return Err("Items can only be added to draft quotes".to_string());
         }
 
@@ -382,7 +382,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
-        if quote.status != QuoteStatus::Draft {
+        if !quote.status.is_draft() {
             return Err("Items can only be updated on draft quotes".to_string());
         }
 
@@ -405,7 +405,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
-        if quote.status != QuoteStatus::Draft {
+        if !quote.status.is_draft() {
             return Err("Items can only be deleted from draft quotes".to_string());
         }
 

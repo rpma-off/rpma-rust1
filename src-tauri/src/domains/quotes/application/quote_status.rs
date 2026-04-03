@@ -26,22 +26,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        if quote.status != QuoteStatus::Draft {
-            return Err(format!(
-                "Cannot mark as sent: quote is in '{}' status (expected 'draft')",
-                quote.status
-            ));
-        }
-
-        // Business rule: cannot send an empty quote
-        if quote.items.is_empty() {
-            return Err("Impossible d'envoyer un devis sans lignes.".to_string());
-        }
-
-        // Business rule: cannot send a zero-value quote
-        if quote.total == 0 {
-            return Err("Impossible d'envoyer un devis avec un montant total nul.".to_string());
-        }
+        quote.can_be_sent()?;
 
         self.repo
             .update_status(id, &QuoteStatus::Sent)
@@ -65,7 +50,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        if quote.status != QuoteStatus::Sent {
+        if !quote.status.can_transition_to(&QuoteStatus::Accepted) {
             return Err(format!(
                 "Cannot accept: quote is in '{}' status (expected 'sent')",
                 quote.status
@@ -104,8 +89,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        // Only allow rejection from Sent status
-        if quote.status != QuoteStatus::Sent {
+        if !quote.status.can_transition_to(&QuoteStatus::Rejected) {
             return Err(format!(
                 "Un devis ne peut être rejeté que depuis l'état 'envoyé' (statut actuel: '{}')",
                 quote.status
@@ -136,7 +120,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "delete")?;
         let quote = self.fetch_quote(id)?;
 
-        if !matches!(quote.status, QuoteStatus::Draft | QuoteStatus::Sent) {
+        if !quote.status.can_transition_to(&QuoteStatus::Expired) {
             return Err(format!(
                 "Seuls les devis en état 'draft' ou 'envoyé' peuvent expirer (statut actuel: '{}')",
                 quote.status
@@ -159,7 +143,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        if quote.status != QuoteStatus::Sent {
+        if !quote.status.can_transition_to(&QuoteStatus::ChangesRequested) {
             return Err(format!(
                 "Des modifications ne peuvent être demandées que depuis l'état 'envoyé' (statut actuel: '{}')",
                 quote.status
@@ -182,10 +166,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(id)?;
 
-        if !matches!(
-            quote.status,
-            QuoteStatus::ChangesRequested | QuoteStatus::Rejected
-        ) {
+        if !quote.status.can_transition_to(&QuoteStatus::Draft) {
             return Err(format!(
                 "Seuls les devis 'rejeté' ou 'modifications demandées' peuvent être rouverts (statut actuel: '{}')",
                 quote.status
@@ -224,7 +205,7 @@ impl QuoteService {
         Self::check_quote_permission(role, "update")?;
         let quote = self.fetch_quote(quote_id)?;
 
-        if quote.status != QuoteStatus::Accepted {
+        if !quote.status.can_transition_to(&QuoteStatus::Converted) {
             return Err(format!(
                 "Seuls les devis acceptés peuvent être convertis en tâche (statut actuel: '{}')",
                 quote.status

@@ -18,6 +18,7 @@ import {
   useInterventionData,
   useWorkflowStepData,
 } from "@/domains/interventions";
+import { buildPpfCompletionSnapshot } from "@/domains/interventions/utils/ppf-completion-summary";
 // TODO(ADR-003): Cross-domain import — tasks should not import directly from interventions.
 //   **Problem**: downloadJsonFile is a utility that belongs in shared/utils, not interventions.
 //   **ADRs violated**: ADR-003, ADR-002
@@ -112,6 +113,10 @@ export function useCompletedTaskPage() {
         validation_data: stepData?.validation_data ?? null,
       })),
     [workflowSteps],
+  );
+  const workflowSnapshot = useMemo(
+    () => buildPpfCompletionSnapshot(workflowStepsArray as unknown as InterventionStep[]),
+    [workflowStepsArray]
   );
 
   // Redirect if the intervention is loaded but not yet completed
@@ -316,16 +321,13 @@ export function useCompletedTaskPage() {
     [workflowStepsArray],
   );
 
-  const photoCount =
-    (task?.photos_before?.length || 0) +
-    (task?.photos_after?.length || 0) +
-    (task?.photos?.during?.length || 0);
-  const checklistCount =
-    task?.checklist_items?.filter(
-      (item: { is_completed?: boolean }) => item.is_completed,
-    ).length || 0;
-  const checklistTotal = task?.checklist_items?.length || 0;
-  const progressPercentage = interventionData?.progress_percentage || 100;
+  const photoCount = workflowSnapshot.summary.totalPhotos;
+  const checklistCount = workflowSnapshot.summary.finalChecklistChecked;
+  const checklistTotal = workflowSnapshot.summary.finalChecklistTotal;
+  const progressPercentage =
+    workflowSnapshot.summary.totalSteps > 0
+      ? Math.round((workflowSnapshot.summary.completedSteps / workflowSnapshot.summary.totalSteps) * 100)
+      : interventionData?.progress_percentage || 100;
 
   return {
     taskId,
@@ -338,6 +340,7 @@ export function useCompletedTaskPage() {
     materials,
     workflowStepsArray,
     workflowSteps,
+    workflowSnapshot,
     expandedWorkflowSteps,
     duration,
     photoCount,

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { userKeys } from "@/lib/query-keys";
 import { useAuth } from "@/shared/hooks/useAuth";
-import { ipcClient } from "@/lib/ipc";
+import { userIpc } from "../ipc/users.ipc";
 import type { UseUsersResult } from "./types";
 
 export function useUsers(
@@ -16,7 +16,7 @@ export function useUsers(
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: userKeys.list(limit, offset),
     queryFn: async () => {
-      const response = await ipcClient.users.list(limit, offset);
+      const response = await userIpc.list(limit, offset);
       return response?.data ?? [];
     },
     enabled: isAuthenticated,

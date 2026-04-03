@@ -13,7 +13,6 @@ use crate::resolve_context;
 use crate::shared::contracts::integration_sink::{
     IntegrationDispatchRequest, IntegrationEventSink,
 };
-use crate::shared::contracts::rules_engine::{BlockingRuleEngine, RuleCheckRequest};
 use tracing::instrument;
 
 fn workflow_ctx(
@@ -25,6 +24,14 @@ fn workflow_ctx(
     Ok(ctx)
 }
 
+/// Build a facade wired with the production rules engine.
+fn facade(state: &AppState<'_>) -> InterventionsFacade {
+    InterventionsFacade::new(state.intervention_service.clone()).with_rules_engine(
+        state.rules_service.clone()
+            as std::sync::Arc<dyn crate::shared::contracts::rules_engine::BlockingRuleEngine>,
+    )
+}
+
 #[tauri::command]
 #[instrument(skip(state, request), fields(task_id = %request.task_id, user_id))]
 pub async fn intervention_start(
@@ -32,28 +39,7 @@ pub async fn intervention_start(
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &request.correlation_id)?;
-    let rule_check = state
-        .rules_service
-        .evaluate(&RuleCheckRequest {
-            trigger: "intervention_started".to_string(),
-            entity_id: Some(request.task_id.clone()),
-            payload: serde_json::json!({
-                "task_id": request.task_id.clone(),
-                "estimated_duration_minutes": request.estimated_duration_minutes,
-                "priority": request.priority,
-            }),
-            user_id: ctx.auth.user_id.clone(),
-            correlation_id: ctx.correlation_id.clone(),
-        })
-        .await?;
-    if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
-            || "Intervention start blocked by active rule".to_string(),
-        )));
-    }
-
-    let facade = InterventionsFacade::new(state.intervention_service.clone());
-    let response = facade
+    let response = facade(&state)
         .workflow_start(request, &ctx, state.task_service.as_ref())
         .await?;
 
@@ -110,28 +96,7 @@ pub async fn intervention_finalize(
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &request.correlation_id)?;
-    let rule_check = state
-        .rules_service
-        .evaluate(&RuleCheckRequest {
-            trigger: "intervention_finalized".to_string(),
-            entity_id: Some(request.intervention_id.clone()),
-            payload: serde_json::json!({
-                "intervention_id": request.intervention_id.clone(),
-                "quality_score": request.quality_score,
-                "customer_satisfaction": request.customer_satisfaction,
-            }),
-            user_id: ctx.auth.user_id.clone(),
-            correlation_id: ctx.correlation_id.clone(),
-        })
-        .await?;
-    if !rule_check.allowed {
-        return Err(AppError::Validation(rule_check.message.unwrap_or_else(
-            || "Intervention finalization blocked by active rule".to_string(),
-        )));
-    }
-
-    let facade = InterventionsFacade::new(state.intervention_service.clone());
-    let response = facade.workflow_finalize(request, &ctx).await?;
+    let response = facade(&state).workflow_finalize(request, &ctx).await?;
 
     let _ = state
         .integrations_service
@@ -154,7 +119,7 @@ pub async fn intervention_workflow(
     state: AppState<'_>,
 ) -> Result<ApiResponse<InterventionWorkflowResponse>, AppError> {
     let ctx = workflow_ctx(&state, &correlation_id)?;
-    let facade = InterventionsFacade::new(state.intervention_service.clone());
+    let facade = facade(&state);
 
     let response = match action {
         InterventionWorkflowAction::Start { data } => {

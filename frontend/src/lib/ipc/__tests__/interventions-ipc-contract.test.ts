@@ -304,7 +304,7 @@ describe('interventionOperations IPC contract tests', () => {
         interventionId: 'intervention-123',
         correlation_id: null,
       });
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         steps: mockResponse.steps,
         progress_percentage: 65
       });
@@ -686,7 +686,7 @@ describe('interventionOperations IPC contract tests', () => {
 
       const result = await interventionOperations.getProgress('intervention-123');
 
-      expect(result).toEqual({
+      expect(result).toMatchObject({
         steps: mockResponse.steps,
         progress_percentage: 65
       });

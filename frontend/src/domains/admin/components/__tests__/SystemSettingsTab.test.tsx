@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { settingsOperations } from "@/shared/utils";
-import { ipcClient } from "@/lib/ipc";
+import { rulesIpc } from "@/domains/rules/ipc/rules.ipc";
 import { SystemSettingsTab } from "../SystemSettingsTab";
 import { MonitoringTab } from "../MonitoringTab";
 import { BusinessRulesTab } from "../BusinessRulesTab";
@@ -12,17 +12,15 @@ jest.mock("@/shared/hooks/useAuth", () => ({
   useAuth: () => ({ session: { token: "test-token" } }),
 }));
 
-jest.mock("@/lib/ipc", () => ({
-  ipcClient: {
-    rules: {
-      list: jest.fn(),
-      delete: jest.fn(),
-      activate: jest.fn(),
-      disable: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      test: jest.fn(),
-    },
+jest.mock("@/domains/rules/ipc/rules.ipc", () => ({
+  rulesIpc: {
+    list: jest.fn(),
+    delete: jest.fn(),
+    activate: jest.fn(),
+    disable: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    test: jest.fn(),
   },
 }));
 
@@ -124,8 +122,8 @@ const mockUpdateGeneralSettings =
   settingsOperations.updateGeneralSettings as jest.Mock;
 const mockUpdateBusinessRules =
   settingsOperations.updateBusinessRules as jest.Mock;
-const mockRulesList = (ipcClient as any).rules.list as jest.Mock;
-const mockRulesDelete = (ipcClient as any).rules.delete as jest.Mock;
+const mockRulesList = rulesIpc.list as jest.Mock;
+const mockRulesDelete = rulesIpc.delete as jest.Mock;
 
 const createWrapper = () => {
   const queryClient = new QueryClient({

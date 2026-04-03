@@ -4,8 +4,8 @@ import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { authKeys } from "@/lib/query-keys";
+import { bootstrapIpc } from "@/domains/bootstrap/ipc/bootstrap.ipc";
 import {
-  ipcClient,
   structuredLogger as logger,
   LogDomain,
 } from "@/shared/utils";
@@ -27,7 +27,7 @@ export function useAdminBootstrapCheck(
     isError,
   } = useQuery({
     queryKey: authKeys.hasAdmins(),
-    queryFn: () => ipcClient.bootstrap.hasAdmins(),
+    queryFn: () => bootstrapIpc.hasAdmins(),
     enabled: isReady,
     retry: false,
     staleTime: 1000 * 60 * 5,

@@ -166,7 +166,7 @@ impl TaskMaterialTestFixture {
             humidity: None,
             technician_id: "test_user".to_string(),
             assistant_ids: None,
-            scheduled_start: chrono::Utc::now().to_rfc3339(),
+            scheduled_start: chrono::Utc::now().timestamp_millis(),
             estimated_duration: 120,
             gps_coordinates: None,
             address: None,

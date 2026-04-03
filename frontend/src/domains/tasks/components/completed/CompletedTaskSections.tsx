@@ -42,7 +42,7 @@ export function ChecklistSection({
   checklistTotal: number;
 }) {
   const { t } = useTranslation();
-  if (checklistItems.length === 0) return null;
+  if (checklistItems.length === 0 && checklistTotal === 0) return null;
 
   return (
     <Card className="rounded-xl border-border shadow-sm">
@@ -56,28 +56,32 @@ export function ChecklistSection({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="divide-y divide-border">
-          {checklistItems.map((item) => (
-            <div key={item.id} className="flex items-start gap-3 py-2.5">
-              <CheckCircle
-                className={`mt-0.5 h-4 w-4 flex-shrink-0 ${item.is_completed ? 'text-success' : 'text-muted-foreground/30'}`}
-              />
-              <div className="min-w-0 flex-1">
-                <p className={`text-sm ${item.is_completed ? 'line-through text-muted-foreground/50' : 'text-foreground'}`}>
-                  {item.description}
-                </p>
-                {item.completed_at && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground/50">
-                    {formatDateTime(item.completed_at)}
+        {checklistItems.length > 0 ? (
+          <div className="divide-y divide-border">
+            {checklistItems.map((item) => (
+              <div key={item.id} className="flex items-start gap-3 py-2.5">
+                <CheckCircle
+                  className={`mt-0.5 h-4 w-4 flex-shrink-0 ${item.is_completed ? 'text-success' : 'text-muted-foreground/30'}`}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm ${item.is_completed ? 'line-through text-muted-foreground/50' : 'text-foreground'}`}>
+                    {item.description}
                   </p>
-                )}
-                {item.notes && (
-                  <p className="mt-0.5 text-xs italic text-muted-foreground">{item.notes}</p>
-                )}
+                  {item.completed_at && (
+                    <p className="mt-0.5 text-[10px] text-muted-foreground/50">
+                      {formatDateTime(item.completed_at)}
+                    </p>
+                  )}
+                  {item.notes && <p className="mt-0.5 text-xs italic text-muted-foreground">{item.notes}</p>}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-success/20 bg-success/5 p-4 text-sm text-success">
+            Checklist QC finale: {checklistCount}/{checklistTotal}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -190,9 +194,17 @@ export function QualitySection({
                     <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-info">
                       {t('completed.signer')}
                     </div>
-                    <div className="text-sm font-medium text-foreground">
-                      {String(fullInterventionData.customer_signature ?? '')}
-                    </div>
+                    {String(fullInterventionData.customer_signature ?? '').startsWith('data:image/') ? (
+                      <img
+                        src={String(fullInterventionData.customer_signature)}
+                        alt="Signature client"
+                        className="max-h-24 rounded border border-info/20 bg-white p-2"
+                      />
+                    ) : (
+                      <div className="text-sm font-medium text-foreground">
+                        {String(fullInterventionData.customer_signature ?? '')}
+                      </div>
+                    )}
                   </div>
                 )}
                 {fullInterventionData.customer_comments && (

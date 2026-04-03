@@ -117,6 +117,45 @@ impl std::str::FromStr for QuoteStatus {
     }
 }
 
+impl QuoteStatus {
+    /// Returns `true` when the state machine allows a direct transition from
+    /// `self` to `next`.
+    ///
+    /// Transition table (mirrors the application-layer business rules):
+    ///
+    /// | From              | To                              |
+    /// |-------------------|---------------------------------|
+    /// | Draft             | Sent, Expired                   |
+    /// | Sent              | Accepted, Rejected, Expired, ChangesRequested |
+    /// | Accepted          | Converted                       |
+    /// | ChangesRequested  | Draft                           |
+    /// | Rejected          | Draft                           |
+    /// | Expired, Converted| *(terminal — no outgoing edges)*|
+    pub fn can_transition_to(&self, next: &QuoteStatus) -> bool {
+        match (self, next) {
+            (Self::Draft, Self::Sent)
+            | (Self::Draft, Self::Expired)
+            | (Self::Sent, Self::Accepted)
+            | (Self::Sent, Self::Rejected)
+            | (Self::Sent, Self::Expired)
+            | (Self::Sent, Self::ChangesRequested)
+            | (Self::Accepted, Self::Converted)
+            | (Self::ChangesRequested, Self::Draft)
+            | (Self::Rejected, Self::Draft) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` when this quote is in `Draft` status.
+    ///
+    /// Only draft quotes are mutable (items, totals, metadata can be edited).
+    /// Prefer this predicate over `status == QuoteStatus::Draft` at call sites
+    /// to keep the rule in one place.
+    pub fn is_draft(&self) -> bool {
+        matches!(self, Self::Draft)
+    }
+}
+
 /// Quote item kind enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, TS)]
 pub enum QuoteItemKind {
@@ -193,6 +232,36 @@ pub struct Quote {
     /// Items included in this quote (populated when loading by ID)
     #[serde(default)]
     pub items: Vec<QuoteItem>,
+}
+
+impl Quote {
+    /// Returns `Ok(())` when this quote satisfies all invariants required
+    /// before it can be sent to a customer.
+    ///
+    /// A quote can only be sent when:
+    /// 1. Its status allows the `Draft → Sent` transition.
+    /// 2. It has at least one line item.
+    /// 3. Its total is non-zero.
+    ///
+    /// Placing these checks here removes duplication across every call site and
+    /// keeps the "sendability" rule as a single, testable domain fact.
+    pub fn can_be_sent(&self) -> Result<(), String> {
+        if !self.status.can_transition_to(&QuoteStatus::Sent) {
+            return Err(format!(
+                "Cannot mark as sent: quote is in '{}' status (expected 'draft')",
+                self.status
+            ));
+        }
+        if self.items.is_empty() {
+            return Err("Impossible d'envoyer un devis sans lignes.".to_string());
+        }
+        if self.total == 0 {
+            return Err(
+                "Impossible d'envoyer un devis avec un montant total nul.".to_string(),
+            );
+        }
+        Ok(())
+    }
 }
 
 /// Quote item entity
@@ -479,4 +548,189 @@ impl CreateQuoteAttachmentRequest {
 pub struct UpdateQuoteAttachmentRequest {
     pub description: Option<String>,
     pub attachment_type: Option<AttachmentType>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ------------------------------------------------------------------
+    // QuoteStatus::can_transition_to — state machine coverage
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_draft_can_transition_to_sent() {
+        assert!(QuoteStatus::Draft.can_transition_to(&QuoteStatus::Sent));
+    }
+
+    #[test]
+    fn test_draft_can_transition_to_expired() {
+        assert!(QuoteStatus::Draft.can_transition_to(&QuoteStatus::Expired));
+    }
+
+    #[test]
+    fn test_sent_can_transition_to_accepted() {
+        assert!(QuoteStatus::Sent.can_transition_to(&QuoteStatus::Accepted));
+    }
+
+    #[test]
+    fn test_sent_can_transition_to_rejected() {
+        assert!(QuoteStatus::Sent.can_transition_to(&QuoteStatus::Rejected));
+    }
+
+    #[test]
+    fn test_sent_can_transition_to_expired() {
+        assert!(QuoteStatus::Sent.can_transition_to(&QuoteStatus::Expired));
+    }
+
+    #[test]
+    fn test_sent_can_transition_to_changes_requested() {
+        assert!(QuoteStatus::Sent.can_transition_to(&QuoteStatus::ChangesRequested));
+    }
+
+    #[test]
+    fn test_accepted_can_transition_to_converted() {
+        assert!(QuoteStatus::Accepted.can_transition_to(&QuoteStatus::Converted));
+    }
+
+    #[test]
+    fn test_changes_requested_can_reopen_to_draft() {
+        assert!(QuoteStatus::ChangesRequested.can_transition_to(&QuoteStatus::Draft));
+    }
+
+    #[test]
+    fn test_rejected_can_reopen_to_draft() {
+        assert!(QuoteStatus::Rejected.can_transition_to(&QuoteStatus::Draft));
+    }
+
+    #[test]
+    fn test_terminal_statuses_have_no_outgoing_transitions() {
+        // Expired and Converted are terminal.
+        for terminal in &[QuoteStatus::Expired, QuoteStatus::Converted] {
+            for next in &[
+                QuoteStatus::Draft,
+                QuoteStatus::Sent,
+                QuoteStatus::Accepted,
+                QuoteStatus::Rejected,
+                QuoteStatus::ChangesRequested,
+                QuoteStatus::Converted,
+                QuoteStatus::Expired,
+            ] {
+                assert!(
+                    !terminal.can_transition_to(next),
+                    "{:?} should not transition to {:?}",
+                    terminal,
+                    next
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_invalid_transitions_are_rejected() {
+        // Draft cannot jump directly to Accepted/Rejected/Converted/ChangesRequested.
+        assert!(!QuoteStatus::Draft.can_transition_to(&QuoteStatus::Accepted));
+        assert!(!QuoteStatus::Draft.can_transition_to(&QuoteStatus::Rejected));
+        assert!(!QuoteStatus::Draft.can_transition_to(&QuoteStatus::Converted));
+        assert!(!QuoteStatus::Draft.can_transition_to(&QuoteStatus::ChangesRequested));
+        // Accepted cannot go back to Sent or Draft.
+        assert!(!QuoteStatus::Accepted.can_transition_to(&QuoteStatus::Sent));
+        assert!(!QuoteStatus::Accepted.can_transition_to(&QuoteStatus::Draft));
+    }
+
+    // ------------------------------------------------------------------
+    // QuoteStatus::is_draft
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn test_is_draft_returns_true_only_for_draft() {
+        assert!(QuoteStatus::Draft.is_draft());
+        assert!(!QuoteStatus::Sent.is_draft());
+        assert!(!QuoteStatus::Accepted.is_draft());
+        assert!(!QuoteStatus::Rejected.is_draft());
+        assert!(!QuoteStatus::Expired.is_draft());
+        assert!(!QuoteStatus::Converted.is_draft());
+        assert!(!QuoteStatus::ChangesRequested.is_draft());
+    }
+
+    // ------------------------------------------------------------------
+    // Quote::can_be_sent
+    // ------------------------------------------------------------------
+
+    fn make_quote(status: QuoteStatus, items: Vec<QuoteItem>, total: i64) -> Quote {
+        Quote {
+            id: "q1".to_string(),
+            quote_number: "Q-001".to_string(),
+            client_id: "c1".to_string(),
+            task_id: None,
+            status,
+            valid_until: None,
+            description: None,
+            notes: None,
+            terms: None,
+            subtotal: total,
+            tax_total: 0,
+            total,
+            discount_type: None,
+            discount_value: None,
+            discount_amount: None,
+            vehicle_plate: None,
+            vehicle_make: None,
+            vehicle_model: None,
+            vehicle_year: None,
+            vehicle_vin: None,
+            created_at: 0,
+            updated_at: 0,
+            created_by: None,
+            items,
+        }
+    }
+
+    fn dummy_item() -> QuoteItem {
+        QuoteItem {
+            id: "i1".to_string(),
+            quote_id: "q1".to_string(),
+            kind: QuoteItemKind::Service,
+            label: "PPF Hood".to_string(),
+            description: None,
+            qty: 1.0,
+            unit_price: 10000,
+            tax_rate: None,
+            material_id: None,
+            position: 0,
+            created_at: 0,
+            updated_at: 0,
+        }
+    }
+
+    #[test]
+    fn test_can_be_sent_ok_for_draft_with_items_and_nonzero_total() {
+        let quote = make_quote(QuoteStatus::Draft, vec![dummy_item()], 10000);
+        assert!(quote.can_be_sent().is_ok());
+    }
+
+    #[test]
+    fn test_can_be_sent_fails_for_non_draft_status() {
+        let quote = make_quote(QuoteStatus::Sent, vec![dummy_item()], 10000);
+        let err = quote.can_be_sent().unwrap_err();
+        assert!(
+            err.contains("Cannot mark as sent"),
+            "expected status error, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn test_can_be_sent_fails_when_no_items() {
+        let quote = make_quote(QuoteStatus::Draft, vec![], 0);
+        let err = quote.can_be_sent().unwrap_err();
+        assert!(err.contains("sans lignes"), "expected empty-items error, got: {}", err);
+    }
+
+    #[test]
+    fn test_can_be_sent_fails_when_total_is_zero() {
+        let quote = make_quote(QuoteStatus::Draft, vec![dummy_item()], 0);
+        let err = quote.can_be_sent().unwrap_err();
+        assert!(err.contains("montant total nul"), "expected zero-total error, got: {}", err);
+    }
 }

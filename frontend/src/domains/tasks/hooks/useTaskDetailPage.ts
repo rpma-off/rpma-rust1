@@ -255,7 +255,7 @@ export function useTaskDetailPage() {
           humidity: null,
           technician_id: task.technician_id || user.user_id,
           assistant_ids: null,
-          scheduled_start: new Date().toISOString(),
+          scheduled_start: Date.now(),
           estimated_duration: task.estimated_duration || 120,
           gps_coordinates: null,
           address: task.customer_address || null,

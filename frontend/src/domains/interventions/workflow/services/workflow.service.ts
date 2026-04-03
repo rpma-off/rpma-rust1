@@ -160,7 +160,7 @@ function buildStartRequest(task: Task): StartInterventionRequest {
     humidity: null,
     technician_id: task.technician_id ?? task.created_by ?? 'system',
     assistant_ids: null,
-    scheduled_start: task.scheduled_date ?? new Date().toISOString(),
+    scheduled_start: task.scheduled_date ? new Date(task.scheduled_date).getTime() : Date.now(),
     estimated_duration: task.estimated_duration ?? 120,
     gps_coordinates: null,
     address: task.customer_address ?? null,

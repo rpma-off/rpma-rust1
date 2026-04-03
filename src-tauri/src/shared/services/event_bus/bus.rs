@@ -42,6 +42,11 @@ impl InMemoryEventBus {
     /// Handler panics are caught so one faulty handler cannot break others.
     pub async fn dispatch(&self, event: DomainEvent) -> Result<(), String> {
         let event_type = event.event_type();
+        let event_id = event.id().to_string();
+        let correlation_id = event.correlation_id().unwrap_or("unknown").to_string();
+        let (subject_type, subject_id) = event.subject();
+        let subject_type = subject_type.to_string();
+        let subject_id = subject_id.to_string();
         let handlers = {
             let handlers = self.handlers.read().unwrap_or_else(|e| e.into_inner());
             handlers.get(event_type).cloned().unwrap_or_default()
@@ -63,12 +68,24 @@ impl InMemoryEventBus {
             match join_result {
                 Ok(Ok(Ok(()))) => {}
                 Ok(Ok(Err(e))) => {
-                    tracing::error!("Event handler failed for {}: {}", event_type_owned, e);
+                    tracing::error!(
+                        event_type = %event_type_owned,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        subject_type = %subject_type,
+                        subject_id = %subject_id,
+                        error = %e,
+                        "Event handler failed"
+                    );
                 }
                 Ok(Err(_)) | Err(_) => {
                     tracing::error!(
-                        "Event handler panicked for {}, isolating failure",
-                        event_type_owned
+                        event_type = %event_type_owned,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        subject_type = %subject_type,
+                        subject_id = %subject_id,
+                        "Event handler panicked; isolating failure"
                     );
                 }
             }
@@ -116,9 +133,23 @@ impl Clone for InMemoryEventBus {
 impl EventPublisher for InMemoryEventBus {
     fn publish(&self, event: DomainEvent) -> Result<(), String> {
         let bus = self.clone();
+        let event_type = event.event_type().to_string();
+        let event_id = event.id().to_string();
+        let correlation_id = event.correlation_id().unwrap_or("unknown").to_string();
+        let (subject_type, subject_id) = event.subject();
+        let subject_type = subject_type.to_string();
+        let subject_id = subject_id.to_string();
         tokio::spawn(async move {
             if let Err(e) = bus.dispatch(event).await {
-                tracing::error!("Failed to publish event: {}", e);
+                tracing::error!(
+                    event_type = %event_type,
+                    event_id = %event_id,
+                    correlation_id = %correlation_id,
+                    subject_type = %subject_type,
+                    subject_id = %subject_id,
+                    error = %e,
+                    "Failed to publish event"
+                );
             }
         });
         Ok(())

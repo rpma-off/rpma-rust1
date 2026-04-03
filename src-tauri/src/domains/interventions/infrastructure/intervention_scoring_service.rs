@@ -9,9 +9,10 @@
 use crate::db::Database;
 use crate::db::{InterventionError, InterventionResult};
 use crate::domains::interventions::domain::models::intervention::{
-    InterventionProgress, InterventionStatus,
+    InterventionProgress, InterventionStatus, InterventionWorkflowState,
 };
 use crate::domains::interventions::domain::models::step::InterventionStep;
+use crate::domains::interventions::domain::services::workflow_state::build_workflow_state;
 use crate::domains::interventions::infrastructure::intervention::InterventionAggregateStats;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
@@ -39,8 +40,8 @@ impl InterventionScoringService {
         let summary = InterventionCalculationService::summarize_steps(steps);
         let total_steps = summary.total_steps as i32;
         let completed_steps = summary.completed_steps as i32;
-        let current_step = if total_steps > 0 {
-            completed_steps + 1
+        let current_step = if matches!(status, InterventionStatus::Completed) {
+            total_steps
         } else {
             0
         };
@@ -61,6 +62,24 @@ impl InterventionScoringService {
         }
     }
 
+    pub fn build_progress_from_state(
+        intervention_id: &str,
+        status: InterventionStatus,
+        workflow_state: &InterventionWorkflowState,
+    ) -> InterventionProgress {
+        InterventionProgress {
+            intervention_id: intervention_id.to_string(),
+            current_step: workflow_state
+                .active_step_number
+                .unwrap_or_else(|| if workflow_state.is_complete { workflow_state.total_steps } else { 0 }),
+            total_steps: workflow_state.total_steps,
+            completed_steps: workflow_state.completed_steps,
+            completion_percentage: workflow_state.progress_percentage,
+            estimated_time_remaining: None,
+            status,
+        }
+    }
+
     /// Calculate intervention progress based on completed steps.
     pub fn get_progress(&self, intervention_id: &str) -> InterventionResult<InterventionProgress> {
         let intervention = self
@@ -71,10 +90,11 @@ impl InterventionScoringService {
             })?;
 
         let steps = self.data.get_intervention_steps(intervention_id)?;
-        Ok(Self::build_progress(
+        let workflow_state = build_workflow_state(&intervention, &steps);
+        Ok(Self::build_progress_from_state(
             intervention_id,
             intervention.status,
-            &steps,
+            &workflow_state,
         ))
     }
 

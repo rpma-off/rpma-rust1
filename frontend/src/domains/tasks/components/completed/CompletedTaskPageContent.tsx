@@ -56,6 +56,7 @@ export function CompletedTaskPageContent() {
     fullInterventionData,
     materials,
     workflowStepsArray,
+    workflowSnapshot,
     expandedWorkflowSteps,
     duration,
     photoCount,
@@ -150,20 +151,29 @@ export function CompletedTaskPageContent() {
             task={task}
             duration={duration}
             photoCount={photoCount}
-            checklistCount={checklistCount}
-            checklistTotal={checklistTotal}
+            checklistCount={workflowSnapshot.summary.completedSteps}
+            checklistTotal={workflowSnapshot.summary.totalSteps}
             progressPercentage={progressPercentage}
+            completedSteps={workflowSnapshot.summary.completedSteps}
+            totalSteps={workflowSnapshot.summary.totalSteps}
+            defectCount={workflowSnapshot.summary.defectCount}
+            zonesCompleted={workflowSnapshot.summary.zonesCompleted}
+            zonesTotal={workflowSnapshot.summary.zonesTotal}
           />
 
           <SummaryStats
-            checklistCompleted={checklistCount}
-            checklistTotal={checklistTotal}
+            checklistCompleted={workflowSnapshot.summary.completedSteps}
+            checklistTotal={workflowSnapshot.summary.totalSteps}
             photoCount={photoCount}
-            satisfaction={fullInterventionData?.customer_satisfaction || null}
-            qualityScore={fullInterventionData?.quality_score || null}
-            zonesCount={task.ppf_zones?.length || 0}
+            satisfaction={fullInterventionData?.customer_satisfaction ?? workflowSnapshot.summary.customerSatisfaction}
+            qualityScore={fullInterventionData?.quality_score ?? workflowSnapshot.summary.qualityScore}
+            zonesCount={workflowSnapshot.summary.zonesTotal}
             duration={duration}
             customerName={customerDisplayName}
+            defectCount={workflowSnapshot.summary.defectCount}
+            completedSteps={workflowSnapshot.summary.completedSteps}
+            totalSteps={workflowSnapshot.summary.totalSteps}
+            signatureCaptured={workflowSnapshot.summary.hasSignature}
           />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -190,9 +200,9 @@ export function CompletedTaskPageContent() {
               </Card>
 
               <ChecklistSection
-                checklistItems={task.checklist_items || []}
-                checklistCount={checklistCount}
-                checklistTotal={checklistTotal}
+                checklistItems={[]}
+                checklistCount={workflowSnapshot.summary.finalChecklistChecked}
+                checklistTotal={workflowSnapshot.summary.finalChecklistTotal}
               />
 
               <QualitySection fullInterventionData={fullInterventionData} />
@@ -238,6 +248,7 @@ export function CompletedTaskPageContent() {
                   }}
                   workflowProgress={progressPercentage}
                   duration={duration}
+                  workflowSnapshot={workflowSnapshot.summary}
                 />
               </div>
             </div>

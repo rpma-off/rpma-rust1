@@ -21,6 +21,10 @@ impl NotificationEventHandler {
 #[async_trait]
 impl DomainEventHandler for NotificationEventHandler {
     async fn handle(&self, event: &DomainEvent) -> Result<(), String> {
+        let event_type = event.event_type();
+        let event_id = event.id();
+        let correlation_id = event.correlation_id().unwrap_or("unknown");
+
         match event {
             DomainEvent::TaskAssigned {
                 task_id,
@@ -36,7 +40,16 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle TaskAssigned notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_task_assigned_notification",
+                        task_id = %task_id,
+                        technician_id = %technician_id,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::TaskStatusChanged {
@@ -55,7 +68,17 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle TaskStatusChanged notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_task_updated_notification",
+                        task_id = %task_id,
+                        user_id = %user_id,
+                        new_status = %new_status,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::InterventionCreated {
@@ -72,7 +95,17 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle InterventionCreated notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_intervention_created_notification",
+                        intervention_id = %intervention_id,
+                        task_id = %task_id,
+                        user_id = %user_id,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::QuoteCreated {
@@ -90,7 +123,17 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle QuoteCreated notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_quote_created_notification",
+                        quote_id = %quote_id,
+                        client_id = %client_id,
+                        created_by = %created_by,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::QuoteAccepted {
@@ -108,7 +151,17 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle QuoteAccepted notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_quote_approved_notification",
+                        quote_id = %quote_id,
+                        client_id = %client_id,
+                        accepted_by = %accepted_by,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::ClientCreated {
@@ -125,7 +178,16 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle ClientCreated notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_client_created_notification",
+                        client_id = %client_id,
+                        user_id = %user_id,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             DomainEvent::SystemError {
@@ -142,7 +204,15 @@ impl DomainEventHandler for NotificationEventHandler {
                 )
                 .await
                 {
-                    tracing::error!("Failed to handle SystemError notification: {}", e);
+                    tracing::error!(
+                        event_type = %event_type,
+                        event_id = %event_id,
+                        correlation_id = %correlation_id,
+                        action = "create_system_alert_notification",
+                        component = %component,
+                        error = %e,
+                        "Failed to handle notification event"
+                    );
                 }
             }
             _ => {}

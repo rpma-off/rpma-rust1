@@ -33,7 +33,8 @@ use rpma_ppf_intervention::domains::documents::models::{
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::intervention::{
     BulkUpdateInterventionRequest, Intervention, InterventionFilter, InterventionProgress,
-    InterventionStatus, InterventionType,
+    InterventionStatus, InterventionType, InterventionWorkflowState, WorkflowAnomaly,
+    WorkflowAnomalyCode, WorkflowIntegrityStatus,
 };
 use rpma_ppf_intervention::domains::interventions::domain::models::step::{
     InterventionStep, StepStatus, StepType,
@@ -106,7 +107,11 @@ use rpma_ppf_intervention::domains::interventions::{
 };
 
 // Import command request types
+use rpma_ppf_intervention::domains::auth::ChangePasswordRequest;
+use rpma_ppf_intervention::domains::notifications::CreateNotificationRequest;
+use rpma_ppf_intervention::domains::notifications::GetNotificationsResponse;
 use rpma_ppf_intervention::domains::notifications::SendNotificationRequest;
+use rpma_ppf_intervention::domains::notifications::SuccessResponse;
 use rpma_ppf_intervention::domains::notifications::UpdateNotificationConfigRequest;
 use rpma_ppf_intervention::domains::users::CreateUserRequest;
 use rpma_ppf_intervention::domains::users::UpdateUserRequest;
@@ -761,6 +766,25 @@ fn main() {
     );
     type_definitions.push_str("\n");
     type_definitions.push_str(
+        &WorkflowIntegrityStatus::export_to_string()
+            .expect("Failed to export WorkflowIntegrityStatus type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &WorkflowAnomalyCode::export_to_string()
+            .expect("Failed to export WorkflowAnomalyCode type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &WorkflowAnomaly::export_to_string().expect("Failed to export WorkflowAnomaly type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &InterventionWorkflowState::export_to_string()
+            .expect("Failed to export InterventionWorkflowState type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
         &InterventionMetrics::export_to_string()
             .expect("Failed to export InterventionMetrics type"),
     );
@@ -840,6 +864,20 @@ fn main() {
             .expect("Failed to export SendNotificationRequest type"),
     );
     type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &GetNotificationsResponse::export_to_string()
+            .expect("Failed to export GetNotificationsResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &SuccessResponse::export_to_string().expect("Failed to export SuccessResponse type"),
+    );
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &CreateNotificationRequest::export_to_string()
+            .expect("Failed to export CreateNotificationRequest type"),
+    );
+    type_definitions.push_str("\n");
     type_definitions.push_str(&Message::export_to_string().expect("Failed to export Message type"));
     type_definitions.push_str("\n");
     type_definitions
@@ -902,6 +940,11 @@ fn main() {
     type_definitions.push_str("\n");
     type_definitions
         .push_str(&UserResponse::export_to_string().expect("Failed to export UserResponse type"));
+    type_definitions.push_str("\n");
+    type_definitions.push_str(
+        &ChangePasswordRequest::export_to_string()
+            .expect("Failed to export ChangePasswordRequest type"),
+    );
     type_definitions.push_str("\n\n");
 
     // Domain: navigation / global search
@@ -1176,6 +1219,10 @@ fn main() {
         "InterventionStep",
         "StepType",
         "InterventionProgress",
+        "WorkflowIntegrityStatus",
+        "WorkflowAnomalyCode",
+        "WorkflowAnomaly",
+        "InterventionWorkflowState",
         "InterventionMetrics",
         "StepStatus",
         "StartInterventionRequest",
@@ -1200,6 +1247,9 @@ fn main() {
         "NotificationConfig",
         "UpdateNotificationConfigRequest",
         "SendNotificationRequest",
+        "GetNotificationsResponse",
+        "SuccessResponse",
+        "CreateNotificationRequest",
         "Message",
         "MessageType",
         "MessageStatus",
@@ -1216,6 +1266,7 @@ fn main() {
         "UserAction",
         "UserListResponse",
         "UserResponse",
+        "ChangePasswordRequest",
         "StatusDistribution",
         "StatusTransitionRequest",
         "UserSettings",

@@ -21,7 +21,7 @@ fn make_start_request(task_id: &str) -> StartInterventionRequest {
         humidity: None,
         technician_id: "tech-001".to_string(),
         assistant_ids: None,
-        scheduled_start: "2026-01-01T08:00:00Z".to_string(),
+        scheduled_start: chrono::Utc::now().timestamp_millis() + 3_600_000,
         estimated_duration: 120,
         gps_coordinates: None,
         address: None,

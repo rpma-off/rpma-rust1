@@ -62,6 +62,8 @@ pub enum InterventionProgressAction {
 pub enum InterventionProgressResponse {
     Retrieved {
         progress: crate::domains::interventions::domain::models::intervention::InterventionProgress,
+        workflow_state:
+            crate::domains::interventions::domain::models::intervention::InterventionWorkflowState,
         steps: Vec<crate::domains::interventions::domain::models::step::InterventionStep>,
     },
     StepAdvanced {
@@ -97,8 +99,12 @@ pub async fn intervention_get_progress(
     let facade = InterventionsFacade::new(state.intervention_service.clone());
 
     match facade.get_progress_with_steps(intervention_id, &ctx).await {
-        Ok((progress, steps)) => Ok(ApiResponse::success(
-            InterventionProgressResponse::Retrieved { progress, steps },
+        Ok((progress, workflow_state, steps)) => Ok(ApiResponse::success(
+            InterventionProgressResponse::Retrieved {
+                progress,
+                workflow_state,
+                steps,
+            },
         )
         .with_correlation_id(Some(ctx.correlation_id))),
         Err(e) => Err(e),
@@ -190,8 +196,12 @@ pub async fn intervention_progress(
     match action {
         InterventionProgressAction::Get { intervention_id } => {
             match facade.get_progress_with_steps(intervention_id, &ctx).await {
-                Ok((progress, steps)) => Ok(ApiResponse::success(
-                    InterventionProgressResponse::Retrieved { progress, steps },
+                Ok((progress, workflow_state, steps)) => Ok(ApiResponse::success(
+                    InterventionProgressResponse::Retrieved {
+                        progress,
+                        workflow_state,
+                        steps,
+                    },
                 )
                 .with_correlation_id(Some(ctx.correlation_id))),
                 Err(e) => Err(e),

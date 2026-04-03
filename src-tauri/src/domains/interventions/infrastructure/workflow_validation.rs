@@ -5,9 +5,10 @@
 
 use crate::db::{InterventionError, InterventionResult};
 use crate::domains::interventions::domain::models::intervention::{
-    Intervention, InterventionStatus,
+    Intervention, InterventionStatus, WorkflowIntegrityStatus,
 };
 use crate::domains::interventions::domain::models::step::{InterventionStep, StepStatus};
+use crate::domains::interventions::domain::services::workflow_state::build_workflow_state;
 use crate::domains::interventions::infrastructure::intervention_calculation::InterventionCalculationService;
 use crate::domains::interventions::infrastructure::intervention_data::InterventionDataService;
 use crate::logging::RPMARequestLogger;
@@ -31,6 +32,41 @@ impl WorkflowValidationService {
         }
     }
 
+    fn validate_workflow_integrity(
+        &self,
+        intervention: &Intervention,
+        logger: &RPMARequestLogger,
+    ) -> InterventionResult<crate::domains::interventions::domain::models::intervention::InterventionWorkflowState> {
+        let steps = self
+            .data
+            .get_intervention_steps(&intervention.id)
+            .map_err(|e| InterventionError::Database(format!("Failed to load workflow steps: {e}")))?;
+        let workflow_state = build_workflow_state(intervention, &steps);
+
+        if workflow_state.integrity_status == WorkflowIntegrityStatus::Invalid {
+            let mut error_context = std::collections::HashMap::new();
+            error_context.insert(
+                "intervention_id".to_string(),
+                serde_json::json!(intervention.id),
+            );
+            error_context.insert(
+                "anomalies".to_string(),
+                serde_json::json!(workflow_state
+                    .anomalies
+                    .iter()
+                    .map(|item| item.message.clone())
+                    .collect::<Vec<_>>()),
+            );
+            logger.error("Workflow integrity validation failed", None, Some(error_context));
+            return Err(InterventionError::Workflow(
+                "Workflow integrity check failed; resolve workflow anomalies before continuing"
+                    .to_string(),
+            ));
+        }
+
+        Ok(workflow_state)
+    }
+
     /// Validate that a step advancement is allowed based on current workflow state
     pub fn validate_step_advancement(
         &self,
@@ -38,6 +74,8 @@ impl WorkflowValidationService {
         current_step: &InterventionStep,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<()> {
+        let workflow_state = self.validate_workflow_integrity(intervention, logger)?;
+
         if current_step.intervention_id != intervention.id {
             let mut error_context = std::collections::HashMap::new();
             error_context.insert(
@@ -56,6 +94,13 @@ impl WorkflowValidationService {
             return Err(InterventionError::Workflow(
                 "Invalid step for this intervention".to_string(),
             ));
+        }
+
+        if workflow_state.active_step_id.as_deref() != Some(current_step.id.as_str()) {
+            return Err(InterventionError::Workflow(format!(
+                "Step {} is not the active workflow step",
+                current_step.step_number
+            )));
         }
 
         // Check intervention status
@@ -223,12 +268,43 @@ impl WorkflowValidationService {
         Ok(())
     }
 
+    pub fn validate_step_progress_save(
+        &self,
+        intervention: &Intervention,
+        current_step: &InterventionStep,
+        logger: &RPMARequestLogger,
+    ) -> InterventionResult<()> {
+        self.validate_workflow_integrity(intervention, logger)?;
+
+        if current_step.step_status == StepStatus::Completed {
+            return Ok(());
+        }
+
+        let workflow_state = crate::domains::interventions::domain::services::workflow_state::build_workflow_state(
+            intervention,
+            &self.data.get_intervention_steps(&intervention.id).map_err(|e| {
+                InterventionError::Database(format!("Failed to load workflow steps: {e}"))
+            })?,
+        );
+
+        if workflow_state.active_step_id.as_deref() != Some(current_step.id.as_str()) {
+            return Err(InterventionError::Workflow(format!(
+                "Step {} is not the active workflow step",
+                current_step.step_number
+            )));
+        }
+
+        Ok(())
+    }
+
     /// Validate that an intervention can be finalized
     pub fn validate_intervention_finalization(
         &self,
         intervention: &Intervention,
         logger: &RPMARequestLogger,
     ) -> InterventionResult<()> {
+        self.validate_workflow_integrity(intervention, logger)?;
+
         // Check intervention status
         if intervention.status == InterventionStatus::Completed {
             let mut error_context = std::collections::HashMap::new();
@@ -344,35 +420,6 @@ impl WorkflowValidationService {
                 incomplete_steps.len(),
                 incomplete_names.join(", ")
             )));
-        }
-
-        Ok(())
-    }
-
-    /// Validate start intervention request
-    pub fn validate_start_intervention(
-        &self,
-        task_id: &str,
-        technician_id: &str,
-        logger: &RPMARequestLogger,
-    ) -> InterventionResult<()> {
-        // Basic validation - ensure required fields are present
-        if task_id.is_empty() {
-            logger.error("Task ID is required for intervention start", None, None);
-            return Err(InterventionError::Validation(
-                "Task ID is required".to_string(),
-            ));
-        }
-
-        if technician_id.is_empty() {
-            logger.error(
-                "Technician ID is required for intervention start",
-                None,
-                None,
-            );
-            return Err(InterventionError::Validation(
-                "Technician ID is required".to_string(),
-            ));
         }
 
         Ok(())

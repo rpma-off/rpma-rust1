@@ -24,6 +24,8 @@ impl TauriEmitter {
         task_id: &str,
         old_status: &str,
         new_status: &str,
+        event_id: &str,
+        correlation_id: Option<&str>,
     ) -> Result<(), String> {
         self.app_handle
             .emit(
@@ -32,6 +34,8 @@ impl TauriEmitter {
                     "task_id": task_id,
                     "old_status": old_status,
                     "new_status": new_status,
+                    "event_id": event_id,
+                    "correlation_id": correlation_id,
                 }),
             )
             .map_err(|e| e.to_string())
@@ -41,6 +45,8 @@ impl TauriEmitter {
         &self,
         intervention_id: &str,
         task_id: &str,
+        event_id: &str,
+        correlation_id: Option<&str>,
     ) -> Result<(), String> {
         self.app_handle
             .emit(
@@ -48,6 +54,8 @@ impl TauriEmitter {
                 serde_json::json!({
                     "intervention_id": intervention_id,
                     "task_id": task_id,
+                    "event_id": event_id,
+                    "correlation_id": correlation_id,
                 }),
             )
             .map_err(|e| e.to_string())
@@ -58,6 +66,8 @@ impl TauriEmitter {
         notification_id: &str,
         user_id: &str,
         message: &str,
+        event_id: &str,
+        correlation_id: Option<&str>,
     ) -> Result<(), String> {
         self.app_handle
             .emit(
@@ -66,6 +76,8 @@ impl TauriEmitter {
                     "notification_id": notification_id,
                     "user_id": user_id,
                     "message": message,
+                    "event_id": event_id,
+                    "correlation_id": correlation_id,
                 }),
             )
             .map_err(|e| e.to_string())
@@ -75,24 +87,41 @@ impl TauriEmitter {
 #[async_trait]
 impl EventHandler for TauriEmitter {
     async fn handle(&self, event: &DomainEvent) -> Result<(), String> {
+        let event_id = event.id();
+        let correlation_id = event.correlation_id();
+
         match event {
             DomainEvent::TaskStatusChanged {
                 task_id,
                 old_status,
                 new_status,
                 ..
-            } => self.emit_task_status_changed(task_id, old_status, new_status)?,
+            } => self.emit_task_status_changed(
+                task_id,
+                old_status,
+                new_status,
+                event_id,
+                correlation_id,
+            )?,
             DomainEvent::InterventionStarted {
                 intervention_id,
                 task_id,
                 ..
-            } => self.emit_intervention_started(intervention_id, task_id)?,
+            } => {
+                self.emit_intervention_started(intervention_id, task_id, event_id, correlation_id)?
+            }
             DomainEvent::NotificationReceived {
                 notification_id,
                 user_id,
                 message,
                 ..
-            } => self.emit_notification_received(notification_id, user_id, message)?,
+            } => self.emit_notification_received(
+                notification_id,
+                user_id,
+                message,
+                event_id,
+                correlation_id,
+            )?,
             // TODO: ADD_MORE_EVENTS - register additional domain-to-Tauri event mappings here
             _ => {}
         }

@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ipcClient } from "@/lib/ipc";
+import { auditIpc } from "../ipc/audit.ipc";
+import { securityIpc } from "../ipc/security.ipc";
 import { adminKeys } from "@/lib/query-keys";
 import { useAuth } from "@/shared/hooks/useAuth";
 
@@ -46,19 +47,19 @@ export function useSecurityDashboard() {
     queries: [
       {
         queryKey: adminKeys.securityMetrics(),
-        queryFn: () => ipcClient.audit.getMetrics(),
+        queryFn: () => auditIpc.getMetrics(),
         enabled,
         staleTime: 30_000,
       },
       {
         queryKey: adminKeys.securityAlerts(),
-        queryFn: () => ipcClient.audit.getAlerts(),
+        queryFn: () => auditIpc.getAlerts(),
         enabled,
         staleTime: 30_000,
       },
       {
         queryKey: adminKeys.sessions(),
-        queryFn: () => ipcClient.settings.getActiveSessions(),
+        queryFn: () => securityIpc.getActiveSessions(),
         enabled,
         staleTime: 30_000,
       },
@@ -90,7 +91,7 @@ export function useSecurityDashboard() {
 
   const acknowledgeAlert = useCallback(
     async (alertId: string) => {
-      await ipcClient.audit.acknowledgeAlert(alertId);
+      await auditIpc.acknowledgeAlert(alertId);
       toast.success("Alerte acquittée");
       await queryClient.invalidateQueries({
         queryKey: adminKeys.securityAlerts(),
@@ -101,7 +102,7 @@ export function useSecurityDashboard() {
 
   const revokeSession = useCallback(
     async (sessionId: string) => {
-      await ipcClient.settings.revokeSession(sessionId);
+      await securityIpc.revokeSession(sessionId);
       toast.success("Session révoquée");
       await queryClient.invalidateQueries({ queryKey: adminKeys.sessions() });
     },

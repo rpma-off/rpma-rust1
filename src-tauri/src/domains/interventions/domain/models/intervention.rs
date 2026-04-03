@@ -8,6 +8,7 @@ use crate::shared::contracts::common::*;
 use serde::{Deserialize, Serialize};
 // Conditional import removed
 use ts_rs::TS;
+use super::step::StepType;
 
 /// Intervention status enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, TS)]
@@ -488,6 +489,50 @@ pub struct InterventionProgress {
     pub completion_percentage: f32,
     pub estimated_time_remaining: Option<i32>, // minutes
     pub status: InterventionStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowIntegrityStatus {
+    Healthy,
+    Degraded,
+    Invalid,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkflowAnomalyCode {
+    NoSteps,
+    DuplicateStepNumber,
+    MissingStepNumber,
+    MultipleInProgressSteps,
+    PendingAfterCompletedLaterStep,
+    FinalStepCompletedBeforeMandatorySteps,
+    InterventionStatusMismatch,
+    LegacyCompletedStepsMismatch,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct WorkflowAnomaly {
+    pub code: WorkflowAnomalyCode,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct InterventionWorkflowState {
+    pub active_step_id: Option<String>,
+    pub active_step_type: Option<StepType>,
+    pub active_step_number: Option<i32>,
+    pub total_steps: i32,
+    pub completed_steps: i32,
+    pub pending_steps: i32,
+    pub in_progress_steps: i32,
+    pub completed_step_ids: Vec<String>,
+    pub next_allowed_step_ids: Vec<String>,
+    pub is_complete: bool,
+    pub progress_percentage: f32,
+    pub integrity_status: WorkflowIntegrityStatus,
+    pub anomalies: Vec<WorkflowAnomaly>,
 }
 
 /// Filter for intervention queries

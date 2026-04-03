@@ -2,15 +2,17 @@
 
 use crate::commands::{ApiResponse, AppError, AppState};
 use crate::domains::clients::application::client_input_validator::{
-    sanitize_create_request, sanitize_update_request,
+    sanitize_create_request, sanitize_update_request, validate_client_id,
 };
-use crate::domains::clients::application::client_service::{ClientService, ClientStats};
 use crate::domains::clients::application::ClientOrchestrator;
 use crate::domains::clients::domain::models::{
     Client, ClientListResponse, ClientQuery, ClientWithTasks, CreateClientRequest,
     UpdateClientRequest,
 };
+use crate::domains::clients::ipc::error_mapping;
 use tracing::instrument;
+
+use super::error_mapping::check_client_access as check_access_impl;
 
 // ── Individual thin handlers (ADR-018) ────────────────────────────────────────
 
@@ -22,7 +24,7 @@ fn check_client_access(
     permission: &str,
 ) -> Result<(), AppError> {
     let rate_limiter = state.auth_service.rate_limiter();
-    ClientService::check_client_access(&rate_limiter, user_id, role, permission)
+    check_access_impl(&rate_limiter, user_id, role, permission)
 }
 
 /// Create a new client.
@@ -40,7 +42,7 @@ pub async fn client_create(
         .client_service
         .create_client_async(sanitized, ctx.user_id())
         .await
-        .map_err(|e| ClientService::map_service_error("create_client", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("create_client", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         client,
         Some(ctx.correlation_id),
@@ -57,12 +59,12 @@ pub async fn client_get(
 ) -> Result<ApiResponse<Option<Client>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    ClientService::validate_client_id(&id)?;
+    validate_client_id(&id)?;
     let client = state
         .client_service
         .get_client_async(&id)
         .await
-        .map_err(|e| ClientService::map_service_error("get_client", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("get_client", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         client,
         Some(ctx.correlation_id),
@@ -79,14 +81,14 @@ pub async fn client_get_with_tasks(
 ) -> Result<ApiResponse<Option<ClientWithTasks>>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
-    ClientService::validate_client_id(&id)?;
+    validate_client_id(&id)?;
 
     let orchestrator =
         ClientOrchestrator::new(state.client_service.clone(), state.task_service.clone());
     let client_with_tasks = orchestrator
         .get_client_with_tasks(&id)
         .await
-        .map_err(|e| ClientService::map_service_error("get_client_with_tasks", &e))?;
+        .map_err(|e| error_mapping::map_service_error("get_client_with_tasks", &e))?;
 
     Ok(ApiResponse::success_with_correlation(
         client_with_tasks,
@@ -105,13 +107,13 @@ pub async fn client_update(
 ) -> Result<ApiResponse<Client>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "update")?;
-    ClientService::validate_client_id(&id)?;
+    validate_client_id(&id)?;
     let sanitized = sanitize_update_request(id.clone(), data)?;
     let client = state
         .client_service
         .update_client_async(sanitized, ctx.user_id())
         .await
-        .map_err(|e| ClientService::map_service_error("update_client", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("update_client", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         client,
         Some(ctx.correlation_id),
@@ -128,12 +130,12 @@ pub async fn client_delete(
 ) -> Result<ApiResponse<()>, AppError> {
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "delete")?;
-    ClientService::validate_client_id(&id)?;
+    validate_client_id(&id)?;
     state
         .client_service
         .delete_client_async(&id, ctx.user_id())
         .await
-        .map_err(|e| ClientService::map_service_error("delete_client", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("delete_client", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         (),
         Some(ctx.correlation_id),
@@ -154,7 +156,7 @@ pub async fn client_list(
         .client_service
         .get_clients_async(filters)
         .await
-        .map_err(|e| ClientService::map_service_error("list_clients", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("list_clients", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         clients,
         Some(ctx.correlation_id),
@@ -178,7 +180,7 @@ pub async fn client_list_with_tasks(
     let clients_with_tasks = orchestrator
         .get_clients_with_tasks(filters, limit_tasks)
         .await
-        .map_err(|e| ClientService::map_service_error("list_clients_with_tasks", &e))?;
+        .map_err(|e| error_mapping::map_service_error("list_clients_with_tasks", &e))?;
 
     Ok(ApiResponse::success_with_correlation(
         clients_with_tasks,
@@ -201,7 +203,7 @@ pub async fn client_search(
         .client_service
         .search_clients_async(&query, 1, limit)
         .await
-        .map_err(|e| ClientService::map_service_error("search_clients", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("search_clients", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         clients,
         Some(ctx.correlation_id),
@@ -214,14 +216,15 @@ pub async fn client_search(
 pub async fn client_get_stats(
     correlation_id: Option<String>,
     state: AppState<'_>,
-) -> Result<ApiResponse<ClientStats>, AppError> {
+) -> Result<ApiResponse<crate::domains::clients::application::client_service::ClientStats>, AppError>
+{
     let ctx = crate::resolve_context!(&state, &correlation_id);
     check_client_access(&state, ctx.user_id(), &ctx.auth.role, "read")?;
     let stats = state
         .client_service
         .get_client_stats_async()
         .await
-        .map_err(|e| ClientService::map_service_error("get_client_stats", e.as_str()))?;
+        .map_err(|e| error_mapping::map_service_error("get_client_stats", e.as_str()))?;
     Ok(ApiResponse::success_with_correlation(
         stats,
         Some(ctx.correlation_id),

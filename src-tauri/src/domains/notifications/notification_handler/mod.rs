@@ -38,20 +38,24 @@ pub struct UpdateNotificationConfigRequest {
     pub correlation_id: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct GetNotificationsResponse {
     pub notifications: Vec<Notification>,
     pub unread_count: i32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct SuccessResponse {
     pub success: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct CreateNotificationRequest {
     pub user_id: String,
+    #[ts(rename = "type")]
     pub r#type: String,
     pub title: String,
     pub message: String,

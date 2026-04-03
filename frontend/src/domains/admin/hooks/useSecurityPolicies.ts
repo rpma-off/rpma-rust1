@@ -5,6 +5,7 @@ import { adminKeys } from "@/lib/query-keys";
 import { SecurityPolicy } from "@/shared/types";
 import { settingsOperations } from "@/shared/utils";
 import type { JsonValue } from "@/shared/types";
+import { makeMutationErrorHandler } from "./mutation-error";
 
 export function useSecurityPolicies() {
   const queryClient = useQueryClient();
@@ -52,10 +53,7 @@ export function useSecurityPolicies() {
       );
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error saving security policy:", error);
-      toast.error("Erreur lors de la sauvegarde");
-    },
+    onError: makeMutationErrorHandler("la sauvegarde"),
   });
 
   const removeMutation = useMutation({
@@ -69,10 +67,7 @@ export function useSecurityPolicies() {
       toast.success("Politique supprimée avec succès");
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error deleting security policy:", error);
-      toast.error("Erreur lors de la suppression");
-    },
+    onError: makeMutationErrorHandler("la suppression"),
   });
 
   const toggleMutation = useMutation({
@@ -93,10 +88,7 @@ export function useSecurityPolicies() {
       );
       void invalidate();
     },
-    onError: (error) => {
-      console.error("Error updating policy status:", error);
-      toast.error("Erreur lors de la mise à jour");
-    },
+    onError: makeMutationErrorHandler("la mise à jour"),
   });
 
   const save = useCallback(

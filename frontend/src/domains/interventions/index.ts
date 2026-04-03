@@ -32,6 +32,8 @@ export type { Defect } from './components/workflow/ppf/VehicleDiagram';
 export { getPPFStepPath, getNextPPFStepId, getPPFStepTitle, getPPFStepDescription, buildPPFStepsFromData, getCurrentPPFStepId } from './utils/ppf-workflow';
 export { buildStepExportPayload, downloadJsonFile, getEffectiveStepData, getEffectiveStepNote } from './utils/step-export';
 export type { StepExportPayload } from './utils/step-export';
+export { buildPpfCompletionSnapshot } from './utils/ppf-completion-summary';
+export type { PpfCompletionSnapshot, PpfStepSummary, PpfWorkflowSummary } from './utils/ppf-completion-summary';
 export { WorkflowService, workflowService, WorkflowTemplatesService, workflowTemplatesService } from './workflow/services';
 export type { CreateWorkflowExecutionDTO, StartTimingDTO, SignatureDTO, WorkflowTemplate, WorkflowStepTemplate, SOPInstruction } from './workflow/services';
 export type { PPFInterventionData, PPFInterventionStep, PPFInterventionStepStatus, PPFStepId, StartInterventionDTO, AdvanceStepDTO, FinalizeInterventionDTO, InterventionCreationResponse, StepProgressResponse, InterventionFinalizationResponse, WorkflowExecution, WorkflowExecutionStep, WorkflowStepStatus, TaskWorkflowProgress } from './api/types';
